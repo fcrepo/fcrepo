@@ -13,7 +13,7 @@
 
   <bean id="connectionFactory"
     class="org.apache.activemq.ActiveMQConnectionFactory" depends-on="jmsBroker"
-    p:brokerURL="vm://localhost:${jms.port:61616}?create=false"/>
+    p:brokerURL="vm://${jms.host:localhost}:${jms.port:61616}?create=false"/>
 
   <bean name="jmsBroker" class="org.apache.activemq.xbean.BrokerFactoryBean"
     p:config="classpath:/config/activemq.xml" p:start="true"/>
