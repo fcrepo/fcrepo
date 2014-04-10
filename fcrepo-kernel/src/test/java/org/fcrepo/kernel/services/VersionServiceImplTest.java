@@ -256,7 +256,7 @@ public class VersionServiceImplTest {
         verify(mockVersionManager).restore(mockVersion1, true);
     }
 
-    @Test
+    @Test(expected = PathNotFoundException.class)
     public void testRevertToUnknownVersion() throws RepositoryException {
         String versionUUID = "uuid";
         VersionManager mockVersionManager = mock(VersionManager.class);
@@ -269,11 +269,7 @@ public class VersionServiceImplTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
 
-        try {
-            testObj.revertToVersion(mockWorkspace, "/example-versioned", versionUUID);
-            fail("Exception should have been thrown!");
-        } catch (PathNotFoundException ex) {
-        }
+        testObj.revertToVersion(mockWorkspace, "/example-versioned", versionUUID);
     }
 
     @Test

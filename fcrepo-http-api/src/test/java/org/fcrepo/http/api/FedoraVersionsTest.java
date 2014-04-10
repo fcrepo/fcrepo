@@ -154,7 +154,7 @@ public class FedoraVersionsTest {
         assertNotNull(response);
     }
 
-    @Test
+    @Test (expected = PathNotFoundException.class)
     public void testRevertToVersionFailure() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
         final String versionLabel = UUID.randomUUID().toString();
@@ -162,12 +162,7 @@ public class FedoraVersionsTest {
                 mockResource);
         doThrow(PathNotFoundException.class)
                 .when(mockVersions).revertToVersion(any(Workspace.class), anyString(), anyString());
-        try {
-            final Response response =
-                    testObj.revertToVersion(createPathList(pid), versionLabel);
-            fail("Exception should have been thrown!");
-        } catch (PathNotFoundException ex) {
-        }
+        testObj.revertToVersion(createPathList(pid), versionLabel);
     }
 
 }

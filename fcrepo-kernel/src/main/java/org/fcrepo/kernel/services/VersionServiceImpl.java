@@ -110,8 +110,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     @Override
-    public void revertToVersion(Workspace workspace, String absPath,
-                                String label) throws RepositoryException {
+    public void revertToVersion(final Workspace workspace, final String absPath,
+                                final String label) throws RepositoryException {
         final Version v = getVersionForLabel(workspace, absPath, label);
         if (v == null) {
             throw new PathNotFoundException("Unknown version \"" + label + "\"!");
@@ -125,7 +125,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
     }
 
-    private Version getVersionForLabel(Workspace workspace, String absPath, String label) throws RepositoryException {
+    private Version getVersionForLabel(final Workspace workspace, final String absPath,
+                                       final String label) throws RepositoryException {
         // first see if there's a version label
         final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);
         try {
