@@ -29,6 +29,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -258,6 +259,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore
     public void testRepositoryWideAutoVersioning() throws IOException {
         postNodeTypeCNDSnippet("[fedora:autoVersioned] mixin\n" +
                 "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated");
