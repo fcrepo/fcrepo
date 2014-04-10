@@ -57,6 +57,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -991,6 +992,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
     **/
     @Test
     public void testUploadToProjection() throws IOException {
+        // make sure directory is writable
+        final File dir = new File("./target/test-classes/test-objects");
+        logger.debug("dir: " + dir.getAbsolutePath());
+        logger.debug("  e: " + dir.exists());
+        logger.debug("  d: " + dir.isDirectory());
+        logger.debug("  r: " + dir.canRead());
+        logger.debug("  w: " + dir.canWrite());
+        File tmp = File.createTempFile("test",null,dir);
+        logger.debug("tmp: " + tmp.getAbsolutePath());
+
         // upload file to federated filesystem using rest api
         final String pid = randomUUID().toString();
         final String uploadLocation = serverAddress + "files/" + pid + "/ds1/fcr:content";
