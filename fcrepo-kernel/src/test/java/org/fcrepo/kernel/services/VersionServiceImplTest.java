@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -271,7 +272,7 @@ public class VersionServiceImplTest {
         try {
             testObj.revertToVersion(mockWorkspace, "/example-versioned", versionUUID);
             fail("Exception should have been thrown!");
-        } catch (RuntimeException ex) {
+        } catch (PathNotFoundException ex) {
         }
     }
 

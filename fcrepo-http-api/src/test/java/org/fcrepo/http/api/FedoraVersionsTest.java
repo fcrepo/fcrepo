@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -159,14 +160,13 @@ public class FedoraVersionsTest {
         final String versionLabel = UUID.randomUUID().toString();
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
-        doThrow(RuntimeException.class)
+        doThrow(PathNotFoundException.class)
                 .when(mockVersions).revertToVersion(any(Workspace.class), anyString(), anyString());
         try {
             final Response response =
                     testObj.revertToVersion(createPathList(pid), versionLabel);
             fail("Exception should have been thrown!");
-        } catch (RuntimeException ex) {
-
+        } catch (PathNotFoundException ex) {
         }
     }
 

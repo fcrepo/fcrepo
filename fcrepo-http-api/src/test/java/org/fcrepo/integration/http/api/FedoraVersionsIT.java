@@ -77,7 +77,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         addMixin( pid, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
-        patchLiteralProperty(serverAddress + pid, "http://purl.org/dc/elements/1.1/title", "First Title");
+        patchLiteralProperty(serverAddress + pid, DC_TITLE.getURI(), "First Title");
 
         final GraphStore nodeResults = getContent(serverAddress + pid);
         assertTrue("Should find original title", nodeResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), NodeFactory.createLiteral("First Title")));
@@ -86,7 +86,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         postObjectVersion(pid, "v0.0.1");
 
         logger.info("Replacing the title");
-        patchLiteralProperty(serverAddress + pid, "http://purl.org/dc/elements/1.1/title", "Second Title");
+        patchLiteralProperty(serverAddress + pid, DC_TITLE.getURI(), "Second Title");
 
         final GraphStore versionResults = getContent(serverAddress + pid + "/fcr:versions/v0.0.1");
         logger.info("Got version profile:");
@@ -137,7 +137,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         addMixin( objId, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Example Title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Example Title");
 
         logger.info("Posting an unlabeled version");
         postObjectVersion(objId);
@@ -151,19 +151,19 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         addMixin( objId, MIX_NAMESPACE + "versionable" );
 
         logger.info("Setting a title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "First title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "First title");
 
         logger.info("posting a version with label \"label\"");
         postObjectVersion(objId, "label");
 
         logger.info("Resetting the title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Second title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Second title");
 
         logger.info("posting a version with label \"label\"");
         postObjectVersion(objId, "label");
 
         logger.info("Resetting the title");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "Third title");
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Third title");
 
         final GraphStore versionResults = getContent(serverAddress + objId + "/fcr:versions/label");
         logger.info("Got version profile:");
@@ -279,6 +279,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     @Test
     public void testInvalidVersionReversion() throws Exception {
         final String objId = UUID.randomUUID().toString();
+        createObject(objId);
+        addMixin(objId, MIX_NAMESPACE + "versionable");
         final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/invalid-version-label");
         execute(patch);
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(patch));
@@ -297,10 +299,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         createObject(objId);
         addMixin(objId, MIX_NAMESPACE + "versionable");
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", title1);
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title1);
         postObjectVersion(objId, firstVersionLabel);
 
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", title2);
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title2);
         postObjectVersion(objId, secondVersionLabel);
 
         final GraphStore preRollback = getGraphStore(new HttpGet(serverAddress + objId));
@@ -317,7 +319,15 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertFalse("Second title must NOT be present!", postRollback.contains(Node.ANY, subject.asNode(), DC_TITLE.asNode(),
                 NodeFactory.createLiteral(title2)));
 
-        patchLiteralProperty(serverAddress + objId, "http://purl.org/dc/elements/1.1/title", "aditional change");
+        /*
+         * Make the sure the node is checked out and able to be updated.
+         *
+         * Because the JCR concept of checked-out is something we don't
+         * intend to expose through Fedora in the future, the following
+         * line is simply to test that writes can be completed after a
+         * reversion.
+         */
+        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "additional change");
     }
 
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {

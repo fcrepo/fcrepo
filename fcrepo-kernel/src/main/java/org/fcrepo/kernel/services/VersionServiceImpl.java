@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -113,7 +114,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
                                 String label) throws RepositoryException {
         final Version v = getVersionForLabel(workspace, absPath, label);
         if (v == null) {
-            throw new RuntimeException("Unknown version!");
+            throw new PathNotFoundException("Unknown version \"" + label + "\"!");
         } else {
             final VersionManager versionManager = workspace.getVersionManager();
             versionManager.checkin(absPath);

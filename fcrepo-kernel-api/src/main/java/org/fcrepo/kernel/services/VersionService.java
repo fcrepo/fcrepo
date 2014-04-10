@@ -65,7 +65,7 @@ public interface VersionService extends Service {
 
     /**
      * Reverts the node to the version identified by the label.  This method
-     * will throw a RuntimeException if no version with the given label is
+     * will throw a PathNotFoundException if no version with the given label is
      * found.
      *
      * @param workspace the workspace in which the node resides
