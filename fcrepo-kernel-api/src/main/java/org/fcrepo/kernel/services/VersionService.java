@@ -77,6 +77,18 @@ public interface VersionService extends Service {
         throws RepositoryException;
 
     /**
+     * Remove a version of a node.  This method will throw a PathNotFoundException
+     * if no version with the given label is found.
+     *
+     * @param workspace the workspace in which the node resides
+     * @param absPath the path to the node whose version is to be removed
+     * @param label identifies the historic version
+     * @throws RepositoryException
+     */
+    void removeVersion(Workspace workspace, String absPath, String label)
+        throws RepositoryException;
+
+    /**
      * Creates a version checkpoint for the given node if versioning is enabled
      * for that node type. When versioning is enabled this is the equivalent of
      * VersionManager#checkpoint(node.getPath()), except that it is aware of

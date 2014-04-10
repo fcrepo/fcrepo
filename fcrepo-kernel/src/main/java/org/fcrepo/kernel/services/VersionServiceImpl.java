@@ -125,6 +125,19 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
     }
 
+    @Override
+    public void removeVersion(final Workspace workspace, final String absPath,
+                              final String label) throws RepositoryException {
+        final Version v = getVersionForLabel(workspace, absPath, label);
+        if (v == null) {
+            throw new PathNotFoundException("Unknown version \"" + label + "\"!");
+        } else {
+            v.remove();
+            nodeUpdated(workspace.getSession(), absPath);
+        }
+    }
+
+
     private Version getVersionForLabel(final Workspace workspace, final String absPath,
                                        final String label) throws RepositoryException {
         // first see if there's a version label
