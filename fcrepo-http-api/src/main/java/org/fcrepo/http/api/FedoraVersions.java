@@ -34,7 +34,9 @@ import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.version.VersionException;
 import javax.jcr.Session;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -55,6 +57,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
@@ -149,6 +152,29 @@ public class FedoraVersions extends ContentExposingResource {
         try {
             versionService.revertToVersion(session.getWorkspace(), path, label);
             return noContent().build();
+        } finally {
+            session.logout();
+        }
+    }
+
+    /**
+     * Removes the version specified by the label.
+     * @param pathList The resource the version is associated with.
+     * @param label The version label
+     * @return 204 No Content
+     * @throws RepositoryException
+    **/
+    @DELETE
+    @Path("/{label:.+}")
+    public Response removeVersion(@PathParam("path") final List<PathSegment> pathList,
+            @PathParam("label") final String label) throws RepositoryException {
+        final String path = toPath(pathList);
+        LOGGER.info("Removing {} version {}.", path, label);
+        try {
+            versionService.removeVersion(session.getWorkspace(), path, label);
+            return noContent().build();
+        } catch ( VersionException ex ) {
+            return status(BAD_REQUEST).entity(ex.getMessage()).build();
         } finally {
             session.logout();
         }

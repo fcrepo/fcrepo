@@ -113,6 +113,7 @@ $(function() {
     $('#action_cnd_update').submit(sendCndUpdate);
     $('#action_sparql_select').submit(sendSparqlQuery);
     $('#action_revert').submit(patchAndReload);
+    $('#action_remove_version').submit(removeVersion);
 
 });
 
@@ -128,6 +129,24 @@ function submitAndFollowLocation() {
     return false;
 }
 
+function removeVersion() {
+    var $form = $(this);
+
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 204 ) {
+                window.location = $form.attr('data-redirect-after-submit');
+            } else {
+                ajaxErrorHandler(xhr, "", "Error removing version");
+            }
+        }
+    }
+    xhr.open( "DELETE", $form.attr('action') );
+    xhr.send(null);
+
+    return false;
+}
 function patchAndReload() {
     var $form = $(this);
     var patchURI = $form.attr('action');

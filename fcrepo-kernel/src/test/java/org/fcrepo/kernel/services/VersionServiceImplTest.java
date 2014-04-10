@@ -284,9 +284,81 @@ public class VersionServiceImplTest {
 
         testObj.revertToVersion(mockWorkspace, "/example-auto-versioned", versionLabel);
         verify(mockVersionManager).restore(mockVersion1, true);
-
         verify(mockVersionManager).checkpoint("/example-auto-versioned");
     }
 
+    @Test
+    public void testRemoveVersionByLabel() throws RepositoryException {
+        String versionLabel = "versionName";
+        String versionUUID = "uuid";
+        String versionName = "Bob";
+        String[] versionLabels = new String[]{ versionLabel };
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockHistory = mock(VersionHistory.class);
+        Version mockVersion1 = mock(Version.class);
+        Version mockVersion2 = mock(Version.class);
+        when(mockVersion1.getContainingHistory()).thenReturn(mockHistory);
+        when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
+        when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
+        when(mockHistory.getVersionLabels(mockVersion1)).thenReturn(versionLabels);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory("/example")).thenReturn(mockHistory);
+        when(mockVersionManager.getBaseVersion("/example")).thenReturn(mockVersion2);
+        Node mockFrozenNode = mock(Node.class);
+        when(mockVersion1.getFrozenNode()).thenReturn(mockFrozenNode);
+        when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
+        when(mockVersion1.getIdentifier()).thenReturn(versionUUID);
+        when(mockVersion1.getName()).thenReturn(versionName);
+
+        testObj.removeVersion(mockWorkspace, "/example", versionLabel);
+        verify(mockHistory).removeVersion(versionName);
+        verify(mockHistory).removeVersionLabel(versionLabel);
+        verify(mockVersionManager, never()).checkpoint("/example");
+    }
+
+    @Test
+    public void testRemoveVersionByUUID() throws RepositoryException {
+        String versionName = "Bob";
+        String versionUUID = "uuid";
+        String[] versionLabels = new String[]{ };
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockHistory = mock(VersionHistory.class);
+        Version mockVersion1 = mock(Version.class);
+        Version mockVersion2 = mock(Version.class);
+        when(mockVersion1.getContainingHistory()).thenReturn(mockHistory);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
+        when(mockHistory.getVersionLabels(mockVersion1)).thenReturn(versionLabels);
+        when(mockVersionIterator.hasNext()).thenReturn(true);
+        when(mockVersionIterator.nextVersion()).thenReturn(mockVersion1);
+        Node mockFrozenNode = mock(Node.class);
+        when(mockVersion1.getFrozenNode()).thenReturn(mockFrozenNode);
+        when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
+        when(mockVersion1.getIdentifier()).thenReturn(versionUUID);
+        when(mockVersion1.getName()).thenReturn(versionName);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory("/example")).thenReturn(mockHistory);
+        when(mockVersionManager.getBaseVersion("/example")).thenReturn(mockVersion2);
+
+        testObj.removeVersion(mockWorkspace, "/example", versionUUID);
+        verify(mockHistory).removeVersion(versionName);
+    }
+
+    @Test(expected = PathNotFoundException.class)
+    public void testRemoveUnknownVersion() throws RepositoryException {
+        String versionUUID = "uuid";
+        VersionManager mockVersionManager = mock(VersionManager.class);
+        VersionHistory mockHistory = mock(VersionHistory.class);
+        Version mockVersion = mock(Version.class);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
+        when(mockVersionIterator.hasNext()).thenReturn(false);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory("/example")).thenReturn(mockHistory);
+
+        testObj.removeVersion(mockWorkspace, "/example", versionUUID);
+    }
 
 }

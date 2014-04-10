@@ -22,6 +22,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
@@ -41,6 +42,8 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
@@ -292,7 +295,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         createObject(objId);
         addMixin(objId, MIX_NAMESPACE + "versionable");
         final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/invalid-version-label");
-        execute(patch);
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(patch));
     }
 
@@ -338,6 +340,57 @@ public class FedoraVersionsIT extends AbstractResourceIT {
          * reversion.
          */
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "additional change");
+    }
+
+    @Test
+    public void testRemoveVersion() throws Exception {
+        // create an object and a named version
+        final String objId = UUID.randomUUID().toString();
+        final String versionLabel1 = "versionLabelNumberOne";
+        final String versionLabel2 = "versionLabelNumberTwo";
+        final Resource subject = createResource(serverAddress + objId);
+        createObject(objId);
+        addMixin(objId, MIX_NAMESPACE + "versionable");
+        postObjectVersion(objId, versionLabel1);
+        postObjectVersion(objId, versionLabel2);
+
+        // make sure the version exists
+        final HttpGet get1 = new HttpGet(serverAddress + objId + "/fcr:versions/" + versionLabel1);
+        assertEquals(OK.getStatusCode(), getStatus(get1));
+
+        // remove the version we created
+        final HttpDelete remove = new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel1);
+        assertEquals(NO_CONTENT.getStatusCode(),getStatus(remove));
+
+        // make sure the version is gone
+        final HttpGet get2 = new HttpGet(serverAddress + objId + "/fcr:versions/" + versionLabel1);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(get2));
+    }
+
+    @Test
+    public void testRemoveInvalidVersion() throws Exception {
+        // create an object
+        final String objId = UUID.randomUUID().toString();
+        createObject(objId);
+        addMixin(objId, MIX_NAMESPACE + "versionable");
+
+        // removing a non-existent version should 404
+        final HttpDelete delete = new HttpDelete(serverAddress + objId + "/fcr:versions/invalid-version-label");
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(delete));
+    }
+
+    @Test
+    public void testRemoveCurrentVersion() throws Exception {
+        // create an object
+        final String versionLabel = "testVersionNumberUno";
+        final String objId = UUID.randomUUID().toString();
+        createObject(objId);
+        addMixin(objId, MIX_NAMESPACE + "versionable");
+        postObjectVersion(objId, versionLabel);
+
+        // removing a non-existent version should 404
+        final HttpDelete delete = new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(delete));
     }
 
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {
@@ -440,13 +493,11 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     public void postVersion(final String path, final String label) throws IOException {
         logger.info("Posting version");
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions" + (label == null ? "" : "/" + label));
-        execute(postVersion);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(postVersion));
     }
 
     private void revertToVersion(String objId, String versionLabel) throws IOException {
         final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/" + versionLabel);
-        execute(patch);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
     }
 }

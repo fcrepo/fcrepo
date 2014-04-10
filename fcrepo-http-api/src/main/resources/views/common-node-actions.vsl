@@ -9,6 +9,9 @@
 <form id="action_revert" method="PATCH" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)" >
     <button type="submit" class="btn btn-primary">Revert to this Version</button>
 </form>
+<form id="action_remove_version" method="DELETE" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)/fcr:versions" >
+    <button type="submit" class="btn btn-danger">Delete this Version</button>
+</form>
 #end
 
 #if ($content != "")
