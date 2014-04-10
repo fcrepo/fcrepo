@@ -57,7 +57,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -999,7 +998,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Uploading to federated filesystem via rest api: " + uploadLocation);
         final HttpPost post = postDSMethod("files/" + pid, "ds1", uploadContent);
         final HttpResponse response = client.execute(post);
-        logger.debug( "upload response: " + EntityUtils.toString(response.getEntity()) );
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
         final String actualLocation = response.getFirstHeader("Location").getValue();
         assertEquals("Wrong URI in Location header", uploadLocation, actualLocation);
@@ -1026,7 +1024,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String pid = randomUUID().toString();
         final HttpPost post = postDSMethod(pid, "ds1", "abc123");
         final HttpResponse response = client.execute(post);
-        logger.debug( "upload response: " + EntityUtils.toString(response.getEntity()) );
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
         // copy to federated filesystem
@@ -1055,7 +1052,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String pid = randomUUID().toString();
         final HttpPost post = postDSMethod("files/" + pid, "ds1", "abc123");
         final HttpResponse response = client.execute(post);
-        logger.debug( "upload response: " + EntityUtils.toString(response.getEntity()) );
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
         // copy to repository
