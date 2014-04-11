@@ -82,7 +82,7 @@ public interface VersionService extends Service {
      *
      * @param workspace the workspace in which the node resides
      * @param absPath the path to the node whose version is to be removed
-     * @param label identifies the historic version
+     * @param label identifies the historic version by label or id
      * @throws RepositoryException
      */
     void removeVersion(Workspace workspace, String absPath, String label)

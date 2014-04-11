@@ -165,4 +165,26 @@ public class FedoraVersionsTest {
         testObj.revertToVersion(createPathList(pid), versionLabel);
     }
 
+    @Test
+    public void testRemoveVersion() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final String versionLabel = UUID.randomUUID().toString();
+        when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
+                mockResource);
+        final Response response = testObj.removeVersion(createPathList(pid), versionLabel);
+        verify(mockVersions).removeVersion(testObj.session.getWorkspace(), "/" + pid, versionLabel);
+        assertNotNull(response);
+    }
+
+    @Test (expected = PathNotFoundException.class)
+    public void testRemoveVersionFailure() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final String versionLabel = UUID.randomUUID().toString();
+        when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
+                mockResource);
+        doThrow(PathNotFoundException.class)
+                .when(mockVersions).removeVersion(any(Workspace.class), anyString(), anyString());
+        testObj.removeVersion(createPathList(pid), versionLabel);
+    }
+
 }
