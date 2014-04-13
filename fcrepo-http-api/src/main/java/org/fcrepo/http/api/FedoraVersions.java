@@ -58,7 +58,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
@@ -173,7 +172,7 @@ public class FedoraVersions extends ContentExposingResource {
         LOGGER.info("Removing {} version {}.", path, label);
         try {
             versionService.removeVersion(session.getWorkspace(), path, label);
-            return status(GONE).build();
+            return noContent().build();
         } catch ( VersionException ex ) {
             return status(BAD_REQUEST).entity(ex.getMessage()).build();
         } finally {

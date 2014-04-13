@@ -43,7 +43,6 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -361,8 +360,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         // remove the version we created
         final HttpDelete remove = new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel1);
-        assertEquals(GONE.getStatusCode(),getStatus(remove));
-// XXX getting 404
+        assertEquals(NO_CONTENT.getStatusCode(),getStatus(remove));
 
         // make sure the version is gone
         final HttpGet get2 = new HttpGet(serverAddress + objId + "/fcr:versions/" + versionLabel1);

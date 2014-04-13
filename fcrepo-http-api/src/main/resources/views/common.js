@@ -135,7 +135,7 @@ function removeVersion() {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4) {
-            if (xhr.status == 410 ) {
+            if (xhr.status == 204 ) {
                 window.location = $form.attr('data-redirect-after-submit');
             } else {
                 ajaxErrorHandler(xhr, "", "Error removing version");
