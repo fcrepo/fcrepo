@@ -255,7 +255,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastream() throws Exception {
-
         final String pid = UUID.randomUUID().toString();
 
         createObject(pid);
@@ -266,6 +265,18 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(EntityUtils.toString(response.getEntity()), 200, response
                 .getStatusLine().getStatusCode());
         assertEquals(TURTLE, response.getFirstHeader("Content-Type").getValue());
+
+        final Collection<String> links =
+            map(response.getHeaders("Link"), new Function<Header, String>() {
+
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+        assertTrue("Didn't find 'describes' link header!",
+                      links.contains(serverAddress + pid + "/ds1/fcr:content;rel=\"describes\""));
+
     }
 
     @Test

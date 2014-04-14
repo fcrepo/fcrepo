@@ -219,6 +219,12 @@ public class FedoraNodes extends AbstractResource {
             servletResponse.addDateHeader("Last-Modified", resource
                     .getLastModifiedDate().getTime());
         }
+
+        if (resource.hasContent()) {
+            servletResponse.addHeader("Link", subjects.getSubject(
+                resource.getNode().getNode(JCR_CONTENT).getPath()) + ";rel=\"describes\"");
+        }
+
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
         servletResponse.addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
 
