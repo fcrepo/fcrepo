@@ -23,14 +23,13 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.lang.Boolean.TRUE;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.RdfLexicon.INLINED_RESOURCE;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_OBJECT;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_PREDICATE;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_SUBJECT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERS_INLINED;
-import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
@@ -105,10 +104,9 @@ public class HierarchyRdfContext extends NodeRdfContext {
                 create(pageContext, MEMBERS_INLINED.asNode(),
                         createLiteral(TRUE.toString())),
                 create(subject(), type.asNode(), CONTAINER.asNode()),
-                create(subject(), MEMBERSHIP_SUBJECT.asNode(), subject()),
-                create(subject(), MEMBERSHIP_PREDICATE.asNode(), HAS_CHILD
-                        .asNode()),
-                create(subject(), MEMBERSHIP_OBJECT.asNode(), MEMBER_SUBJECT
+                create(subject(), type.asNode(), DIRECT_CONTAINER.asNode()),
+                create(subject(), MEMBERSHIP_RESOURCE.asNode(), subject()),
+                create(subject(), HAS_MEMBER_RELATION.asNode(), HAS_CHILD
                         .asNode())};
     }
 
