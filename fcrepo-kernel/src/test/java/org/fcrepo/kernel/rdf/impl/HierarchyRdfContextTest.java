@@ -21,13 +21,12 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_OBJECT;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_PREDICATE;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_SUBJECT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERS_INLINED;
-import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
@@ -135,13 +134,12 @@ public class HierarchyRdfContextTest {
         assertFalse(actual.contains(testPage, MEMBERS_INLINED, actual
                 .createTypedLiteral(true)));
         assertFalse(actual.contains(testSubject, type, CONTAINER));
+        assertFalse(actual.contains(testSubject, type, DIRECT_CONTAINER));
 
-        assertFalse(actual.contains(testSubject, MEMBERSHIP_SUBJECT,
+        assertFalse(actual.contains(testSubject, MEMBERSHIP_RESOURCE,
                 testSubject));
-        assertFalse(actual.contains(testSubject, MEMBERSHIP_PREDICATE,
+        assertFalse(actual.contains(testSubject, HAS_MEMBER_RELATION,
                 HAS_CHILD));
-        assertFalse(actual.contains(testSubject, MEMBERSHIP_OBJECT,
-                MEMBER_SUBJECT));
 
     }
 
@@ -165,15 +163,14 @@ public class HierarchyRdfContextTest {
         // check for LDP-specified node information
         assertTrue(
                 "Didn't find node described as being the subject of membership!",
-                results.contains(testSubject, MEMBERSHIP_SUBJECT, testSubject));
+                results.contains(testSubject, MEMBERSHIP_RESOURCE, testSubject));
         assertTrue("Didn't find node described as being an LDP Container!",
                 results.contains(testSubject, type, CONTAINER));
-        assertTrue(
-                "Didn't find node described as have an LDP membership object!",
-                results.contains(testSubject, MEMBERSHIP_OBJECT, MEMBER_SUBJECT));
+        assertTrue("Didn't find node described as being an LDP DirectContainer!",
+                results.contains(testSubject, type, DIRECT_CONTAINER));
         assertTrue(
                 "Didn't find node described as using the correct LDP membership predicate!",
-                results.contains(testSubject, MEMBERSHIP_PREDICATE, HAS_CHILD));
+                results.contains(testSubject, HAS_MEMBER_RELATION, HAS_CHILD));
     }
 
     @Before

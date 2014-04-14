@@ -400,6 +400,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 http://www.jcp.org/jcr/nt/1.0folder 
                 http://www.jcp.org/jcr/nt/1.0hierarchyNode 
                 http://www.w3.org/ns/ldp#Container 
+                http://www.w3.org/ns/ldp#DirectContainer 
                 http://www.w3.org/ns/ldp#Page 
         */
 
@@ -407,6 +408,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
         verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
+        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "DirectContainer");
         verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Page");
         verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
