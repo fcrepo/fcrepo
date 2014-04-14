@@ -300,17 +300,14 @@ public class JcrRdfToolsTest {
 
         final Resource graphSubject = testSubjects.getSubject(mockNode.getPath());
         assertTrue(actual.contains(graphSubject, type, actual
-                .createProperty(LDP_NAMESPACE + "Container")));
+                .createProperty(LDP_NAMESPACE + "DirectContainer")));
 
         assertTrue(actual.contains(graphSubject, actual
-                .createProperty(LDP_NAMESPACE + "membershipSubject"),
+                .createProperty(LDP_NAMESPACE + "membershipResource"),
                 graphSubject));
-        assertTrue(actual.contains(graphSubject,actual
-                .createProperty(LDP_NAMESPACE + "membershipPredicate"),
+        assertTrue(actual.contains(graphSubject, actual
+                .createProperty(LDP_NAMESPACE + "hasMemberRelation"),
                 HAS_CHILD));
-        assertTrue(actual.contains(graphSubject,actual
-                .createProperty(LDP_NAMESPACE + "membershipObject"),
-                actual.createResource(LDP_NAMESPACE + "MemberSubject")));
     }
 
     @Test
