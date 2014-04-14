@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+ 
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+  <Call class="org.slf4j.bridge.SLF4JBridgeHandler" name="removeHandlersForRootLogger"/>
+  <Call class="org.slf4j.bridge.SLF4JBridgeHandler" name="install"/>
+</Configure>

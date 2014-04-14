@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration>
 <configuration>
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+      <resetJUL>true</resetJUL>
+    </contextListener>
+    
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>                                                           
             <pattern>%p %d{HH:mm:ss.SSS} \(%c{0}\) %m%n</pattern>
@@ -10,7 +14,7 @@
   <logger name="org.fcrepo" additivity="false" level="INFO">
     <appender-ref ref="STDOUT"/>
   </logger>
-    <root additivity="false" level="WARN">
+    <root additivity="false" level="OFF">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
