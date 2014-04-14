@@ -45,6 +45,9 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator.RESOURCE_NAMESPACE;
@@ -299,18 +302,10 @@ public class JcrRdfToolsTest {
                 actual.createLiteral(TRUE.toString())));
 
         final Resource graphSubject = testSubjects.getSubject(mockNode.getPath());
-        assertTrue(actual.contains(graphSubject, type, actual
-                .createProperty(LDP_NAMESPACE + "Container")));
+        assertTrue(actual.contains(graphSubject, type, DIRECT_CONTAINER));
 
-        assertTrue(actual.contains(graphSubject, actual
-                .createProperty(LDP_NAMESPACE + "membershipSubject"),
-                graphSubject));
-        assertTrue(actual.contains(graphSubject,actual
-                .createProperty(LDP_NAMESPACE + "membershipPredicate"),
-                HAS_CHILD));
-        assertTrue(actual.contains(graphSubject,actual
-                .createProperty(LDP_NAMESPACE + "membershipObject"),
-                actual.createResource(LDP_NAMESPACE + "MemberSubject")));
+        assertTrue(actual.contains(graphSubject, MEMBERSHIP_RESOURCE, graphSubject));
+        assertTrue(actual.contains(graphSubject, HAS_MEMBER_RELATION, HAS_CHILD));
     }
 
     @Test
