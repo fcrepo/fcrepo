@@ -461,7 +461,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     return h.getValue();
                 }
             });
-        assertTrue("Didn't find LDP link header!", links.contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
+        assertTrue("Didn't find LDP resource link header!", links.contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
+        assertTrue("Didn't find LDP container link header!", links.contains(LDP_NAMESPACE + "DirectContainer;rel=\"type\""));
     }
 
     @Test

@@ -219,6 +219,7 @@ public class FedoraNodes extends AbstractResource {
         }
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
         servletResponse.addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
+        servletResponse.addHeader("Link", LDP_NAMESPACE + "DirectContainer;rel=\"type\"");
 
         addResponseInformationToStream(resource, rdfStream, uriInfo,
                 subjects);
