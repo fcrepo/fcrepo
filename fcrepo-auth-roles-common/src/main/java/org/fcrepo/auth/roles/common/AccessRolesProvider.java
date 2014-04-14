@@ -25,8 +25,8 @@ import java.util.Set;
 
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -67,13 +67,12 @@ public class AccessRolesProvider {
     public Map<String, List<String>>
     getRoles(Node node, final boolean effective)
         throws RepositoryException {
-        final Map<String, List<String>> data =
+        Map<String, List<String>> data =
                 new HashMap<>();
         final Session session = node.getSession();
         registerPrefixes(session);
         if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
             getAssignments(node, data);
-            return data;
         }
         if (effective) { // look up the tree
             try {
@@ -91,15 +90,16 @@ public class AccessRolesProvider {
                                 LOGGER.debug("{} has role(s) {}", entry.getKey(), entry.getValue());
                             }
                         }
-                        return data;
                     }
                 }
             } catch (final ItemNotFoundException e) {
                 LOGGER.trace("Subject not found, using default access roles", e);
                 return DEFAULT_ACCESS_ROLES;
             }
+        } else {
         }
-        return null;
+        if (data.size()==0) data = null;
+        return data;
     }
 
     /**
@@ -111,40 +111,45 @@ public class AccessRolesProvider {
         throws RepositoryException {
 
         if (node.isNodeType(rbaclAssignable.getQualified())) {
-            try {
-                final Node rbacl = node.getNode(JcrName.rbacl.getQualified());
-                LOGGER.debug("got rbacl: {}", rbacl);
-                for (final NodeIterator ni = rbacl.getNodes(); ni.hasNext();) {
-                    final Node assign = ni.nextNode();
+            int cnt = 1;
+            while (true) {
+                try {
+                    Property property = node.getProperty(JcrName.principal.getQualified() + Integer.toString(cnt));
+                    if (property == null) break;
+                } catch (PathNotFoundException ex) {
+                    break;
+                }
+                try {
                     final String principalName =
-                            assign.getProperty(principal.getQualified())
-                                    .getString();
+                        node.getProperty(principal.getQualified() + Integer.toString(cnt))
+                                .getString();
                     if (principalName == null ||
-                            principalName.trim().length() == 0) {
+                        principalName.trim().length() == 0) {
                         LOGGER.warn("found empty principal name on node {}",
-                                    node.getPath());
+                             node.getPath());
                     } else {
                         List<String> roles = data.get(principalName);
                         if (roles == null) {
                             roles = new ArrayList<>();
                             data.put(principalName, roles);
                         }
-                        for (final Value v : assign.getProperty(
-                                JcrName.role.getQualified()).getValues()) {
+                        for (final Value v : node.getProperty(
+                            JcrName.role.getQualified() + Integer.toString(cnt)).getValues()) {
                             if (v == null || v.toString().trim().length() == 0) {
                                 LOGGER.warn("found empty role name on node {}",
-                                            node.getPath());
+                                    node.getPath());
                             } else {
                                 roles.add(v.toString());
                             }
                         }
                     }
-                }
-            } catch (final PathNotFoundException e) {
-                LOGGER.error(
+                } catch (final PathNotFoundException e) {
+                    LOGGER.error(
                              "Found rbaclAssignable mixin without a corresponding node at {}",
                              node.getPath(),
                              e);
+                }
+                cnt++;
             }
         }
     }
@@ -159,29 +164,18 @@ public class AccessRolesProvider {
         throws RepositoryException {
         final Session session = node.getSession();
         Constants.registerPrefixes(session);
+        deleteRoles(node);
         if (!node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
             node.addMixin(JcrName.rbaclAssignable.getQualified());
             LOGGER.debug("added rbaclAssignable type");
         }
 
-        Node acl;
-
-        if (node.hasNode(JcrName.rbacl.getQualified())) {
-            acl = node.getNode(JcrName.rbacl.getQualified());
-            for (final NodeIterator ni = acl.getNodes(); ni.hasNext();) {
-                ni.nextNode().remove();
-            }
-        } else {
-            acl = node.addNode(JcrName.rbacl.getQualified(), JcrName.Rbacl
-                                                                 .getQualified());
-        }
-
+        int cnt = 1;
         for (final Map.Entry<String, Set<String>> entry : data.entrySet()) {
-            final Node assign =
-                    acl.addNode(JcrName.assignment.getQualified(),
-                            JcrName.Assignment.getQualified());
-            assign.setProperty(JcrName.principal.getQualified(), entry.getKey());
-            assign.setProperty(JcrName.role.getQualified(), toArray(entry.getValue(), String.class));
+            node.setProperty(JcrName.principal.getQualified() + Integer.toString(cnt), entry.getKey());
+            node.setProperty(JcrName.role.getQualified() + Integer.toString(cnt),
+                    toArray(entry.getValue(), String.class));
+            cnt++;
         }
     }
 
@@ -194,14 +188,19 @@ public class AccessRolesProvider {
         final Session session = node.getSession();
         Constants.registerPrefixes(session);
         if (node.isNodeType(JcrName.rbaclAssignable.getQualified())) {
-            // remove rbacl child
-            try {
-                final Node rbacl = node.getNode(JcrName.rbacl.getQualified());
-                rbacl.remove();
-            } catch (final PathNotFoundException e) {
-                LOGGER.debug("Cannot find node: {}", node, e);
-            }
             // remove mixin
+            int cnt = 1;
+            while (true) {
+                try {
+                    Property property = node.getProperty(JcrName.principal.getQualified() + Integer.toString(cnt));
+                    if (property == null) break;
+                } catch (PathNotFoundException ex) {
+                    break;
+                }
+                node.setProperty(JcrName.principal.getQualified() + Integer.toString(cnt), (String) null);
+                node.setProperty(JcrName.role.getQualified() + Integer.toString(cnt),(String) null);
+                cnt++;
+            }
             node.removeMixin(JcrName.rbaclAssignable.getQualified());
         }
     }
