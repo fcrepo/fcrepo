@@ -74,8 +74,10 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import javax.jcr.Node;
@@ -102,6 +104,7 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
@@ -295,12 +298,6 @@ public class JcrRdfToolsTest {
         when(mockNodes.hasNext()).thenReturn(false);
         final Model actual = testObj.getTreeTriples(mockNode).asModel();
 
-        assertTrue(actual.contains(testSubjects.getContext(), type, actual
-                .createProperty(LDP_NAMESPACE + "Page")));
-        assertTrue(actual.contains(testSubjects.getContext(), actual
-                .createProperty(LDP_NAMESPACE + "membersInlined"),
-                actual.createLiteral(TRUE.toString())));
-
         final Resource graphSubject = testSubjects.getSubject(mockNode.getPath());
         assertTrue(actual.contains(graphSubject, type, DIRECT_CONTAINER));
 
@@ -309,16 +306,20 @@ public class JcrRdfToolsTest {
     }
 
     @Test
-    @Ignore("Disabled until we shift from 'window' to iterated modality")
     public void shouldIncludeFullChildNodeInformationInsideWindow()
         throws RepositoryException {
         reset(mockChildNode, mockNodes, mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockNode.getPath()).thenReturn("/test/jcr");
         when(mockNode.getNodes()).thenReturn(mockNodes);
+        when(mockNode.hasNodes()).thenReturn(true);
         when(mockNode.getName()).thenReturn("mockNode");
         when(mockNode.getProperties()).thenReturn(mockProperties);
         when(mockNode.getDepth()).thenReturn(0);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { });
+        when(mockNodes.hasNext()).thenReturn(true, true, true, false);
+        when(mockNodes.next()).thenReturn(mockFullChildNode, mockFullChildNode, mockChildNode);
         when(mockChildNode.getName()).thenReturn("some-name");
         when(mockChildNode.getPath()).thenReturn("/test/jcr/1", "/test/jcr/4",
                 "/test/jcr/5");
@@ -328,8 +329,12 @@ public class JcrRdfToolsTest {
         when(mockFullChildNode.getProperties()).thenReturn(mockProperties);
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode.hasNodes()).thenReturn(true);
+        HierarchyRdfContextOptions options = new HierarchyRdfContextOptions(2, 0);
+
+        options.containment = false;
+
         final Model actual =
-            testObj.getTreeTriples(mockNode).limit(2).asModel();
+            testObj.getTreeTriples(mockNode, options).asModel();
         assertEquals(2, Iterators.size(actual
                 .listSubjectsWithProperty(HAS_PARENT)));
         verify(mockChildNode, never()).getProperties();

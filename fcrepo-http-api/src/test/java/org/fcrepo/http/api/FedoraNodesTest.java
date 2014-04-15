@@ -36,6 +36,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
@@ -50,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -70,10 +72,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
@@ -337,7 +341,8 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
-        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class))).thenReturn(
+        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
+                                               any(HierarchyRdfContextOptions.class))).thenReturn(
                 mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
@@ -353,7 +358,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testDescribeObjectNoInlining() throws RepositoryException {
+    public void testDescribeObjectNoInlining() throws RepositoryException, ParseException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
 
@@ -364,14 +369,15 @@ public class FedoraNodesTest {
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
         when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
-        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class))).thenReturn(
-                mockRdfStream2);
+        when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
+                                               any(HierarchyRdfContextOptions.class))).thenReturn(mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
+        final Prefer prefer = new Prefer("return=representation;"
+                                            + "include=\"http://www.w3.org/ns/ldp#PreferEmptyContainer\"");
         final RdfStream rdfStream =
-            testObj.describe(createPathList(path), 0, -1, "", mockRequest, mockResponse,
-                                mockUriInfo);
+            testObj.describe(createPathList(path), 0, -1, prefer, mockRequest, mockResponse, mockUriInfo);
         assertEquals("Got wrong RDF!", mockRdfStream.concat(mockRdfStream2),
                 rdfStream);
 

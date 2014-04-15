@@ -314,8 +314,20 @@ public class JcrRdfTools {
      * @param node
      * @throws RepositoryException
      */
+    public RdfStream getTreeTriples(final Node node,
+                                    final HierarchyRdfContextOptions options) throws RepositoryException {
+        return new HierarchyRdfContext(node, graphSubjects, llstore, options);
+    }
+
+    /**
+     * Add the properties of a Node's parent and immediate children using the default
+     * serialization options
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
     public RdfStream getTreeTriples(final Node node) throws RepositoryException {
-        return new HierarchyRdfContext(node, graphSubjects, llstore);
+        return getTreeTriples(node, HierarchyRdfContextOptions.DEFAULT);
     }
 
     /**
