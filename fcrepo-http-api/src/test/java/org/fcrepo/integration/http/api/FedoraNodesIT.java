@@ -60,6 +60,7 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -171,6 +172,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
                         .asNode()));
+
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+        assertNotNull("Should set Last-Modified for new nodes", lastmod);
+        assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
     }
 
     @Test
@@ -197,6 +203,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
                         .asNode()));
 
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+        assertNotNull("Should set Last-Modified for new nodes", lastmod);
+        assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
     }
 
     @Test

@@ -59,6 +59,7 @@ import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 
 /**
  * Content controller for adding, reading, and manipulating
@@ -152,8 +153,14 @@ public class FedoraContent extends ContentExposingResource {
 
             session.save();
             versionService.nodeUpdated(datastreamNode);
-            return created(new URI(subjects.getSubject(datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()))
-                    .build();
+
+            final ResponseBuilder builder = created(new URI(subjects.getSubject(
+                    datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()));
+            if ( datastreamNode.hasProperty(JCR_LASTMODIFIED) ) {
+                builder.lastModified(datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTime());
+            }
+
+            return builder.build();
 
         } finally {
             session.logout();
@@ -232,20 +239,24 @@ public class FedoraContent extends ContentExposingResource {
             session.save();
             versionService.nodeUpdated(datastreamNode);
 
+            ResponseBuilder builder = null;
             if (isNew) {
                 final HttpIdentifierTranslator subjects =
                         new HttpIdentifierTranslator(session, FedoraNodes.class,
                                 uriInfo);
 
-                return created(
-                        new URI(subjects.getSubject(datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()))
-                        .build();
+                builder = created(new URI(subjects.getSubject(
+                        datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()));
+            } else {
+                builder = noContent();
             }
-            return noContent().build();
+            if (datastreamNode.hasProperty(JCR_LASTMODIFIED)) {
+                builder.lastModified(datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTime());
+            }
+            return builder.build();
         } finally {
             session.logout();
         }
-
     }
 
     /**

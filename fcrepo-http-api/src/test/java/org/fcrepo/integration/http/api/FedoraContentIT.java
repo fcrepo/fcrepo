@@ -19,6 +19,8 @@ package org.fcrepo.integration.http.api;
 import static java.util.TimeZone.getTimeZone;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
@@ -55,6 +57,11 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
                 serverAddress + "FedoraDatastreamsTest2/zxc/fcr:content", location);
+
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+        assertNotNull("Should set Last-Modified for new nodes", lastmod);
+        assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
     }
 
     @Test
@@ -86,6 +93,11 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
                 serverAddress + pid + "/zxc/fcr:content", location);
+
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+        assertNotNull("Should set Last-Modified for new nodes", lastmod);
+        assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
     }
 
     @Test
