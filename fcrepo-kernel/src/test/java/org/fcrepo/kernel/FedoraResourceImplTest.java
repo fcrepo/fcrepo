@@ -30,7 +30,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,6 +55,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
@@ -225,8 +229,8 @@ public class FedoraResourceImplTest {
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
                 propertiesStream);
         final RdfStream treeStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(
-                treeStream);
+        when(mockJcrRdfTools.getTreeTriples(eq(mockNode),
+                                               any(HierarchyRdfContextOptions.class))).thenReturn(treeStream);
         final Model problemsModel = new RdfStream().asModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset =
@@ -252,7 +256,8 @@ public class FedoraResourceImplTest {
         final RdfStream propertiesStream = new RdfStream(mockTriple);
         when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
         final RdfStream treeStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(treeStream);
+        when(mockJcrRdfTools.getTreeTriples(eq(mockNode),
+                                               any(HierarchyRdfContextOptions.class))).thenReturn(treeStream);
         final Model problemsModel = createDefaultModel();
         when(getProblemsModel()).thenReturn(problemsModel);
         final Dataset dataset = testObj.getPropertiesDataset(mockSubjects);

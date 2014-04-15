@@ -46,6 +46,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
@@ -74,6 +75,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 import javax.ws.rs.core.Variant;
 
@@ -96,6 +98,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
@@ -379,8 +382,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final Model model = createModelForGraph(results.getDefaultGraph());
 
         final Resource nodeUri = createResource(serverAddress + pid);
-        assertTrue("Didn't find inlined resources!", model.contains(nodeUri,
-                createProperty(LDP_NAMESPACE + "inlinedResource")));
 
         assertTrue("Didn't find an expected triple!", model.contains(nodeUri,
                 createProperty(REPOSITORY_NAMESPACE + "mixinTypes"),
@@ -429,9 +430,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
-        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
         verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "DirectContainer");
-        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Page");
         verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
@@ -490,10 +489,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetObjectGraphNonMemberProperties() throws Exception {
-        createObject("FedoraDescribeTestGraph");
+    public void testGetObjectGraphMinimal() throws Exception {
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
+        createObject(pid + "/a");
         final HttpGet getObjMethod =
-            new HttpGet(serverAddress + "FedoraDescribeTestGraph?non-member-properties");
+            new HttpGet(serverAddress + pid);
+        getObjMethod.addHeader("Prefer", "return=minimal");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
@@ -503,13 +505,74 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Retrieved object graph:\n" + content);
 
         assertFalse(
-                "Didn't expect inlined resources",
+                "Didn't expect member resources",
                 compile(
                         "<"
                                 + serverAddress
-                                + "FedoraDescribeTestGraph> <" + LDP_NAMESPACE + "inlinedResource>",
+                                + pid + "> <" + HAS_CHILD + ">",
                         DOTALL).matcher(content).find());
 
+    }
+
+    @Test
+    public void testGetObjectOmitMembership() throws Exception {
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
+        createObject(pid + "/a");
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + pid);
+        getObjMethod.addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                                             .getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        logger.debug("Retrieved object graph:\n" + content);
+
+        assertFalse(
+                       "Didn't expect inlined member resources",
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + HAS_CHILD + ">",
+                                  DOTALL).matcher(content).find());
+
+    }
+
+    @Test
+    public void testGetObjectOmitContainment() throws Exception {
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
+        createObject(pid + "/a");
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + pid);
+        getObjMethod.addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment\"");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                                             .getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        logger.debug("Retrieved object graph:\n" + content);
+
+        assertTrue("Didn't find member resources",
+                      compile(
+                                 "<"
+                                     + serverAddress
+                                     + pid + "> <" + HAS_CHILD + ">",
+                                 DOTALL).matcher(content).find());
+
+        int count = 0;
+
+        final Matcher matcher = compile("<http://fedora.info/definitions/v4/repository#uuid>",
+                                           DOTALL).matcher(content);
+
+        while (matcher.find()) {
+            count++;
+        }
+
+        assertEquals("Didn't expect to find inlined resources", 1, count);
     }
 
     @Test

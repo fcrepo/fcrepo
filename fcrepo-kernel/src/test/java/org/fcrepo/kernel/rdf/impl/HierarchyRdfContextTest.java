@@ -17,7 +17,6 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.collect.ImmutableSet.of;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
@@ -26,9 +25,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERS_INLINED;
-import static org.fcrepo.kernel.RdfLexicon.PAGE;
-import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
@@ -56,6 +52,7 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
 
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
@@ -81,11 +78,11 @@ public class HierarchyRdfContextTest {
         when(mockNode.hasNodes()).thenReturn(false);
         // not really a child of the root node, but this is just for test
         when(mockNode.getDepth()).thenReturn(1);
-        final Model results = getResults();
-        logRdf("Retrieved RDF for testParentTriples(): ", results);
-        assertTrue("Node doesn't have a parent!", results.contains(testSubject,
+        final Model actual = getResults();
+        logRdf("Retrieved RDF for testParentTriples(): ", actual);
+        assertTrue("Node doesn't have a parent!", actual.contains(testSubject,
                 HAS_PARENT, testParentSubject));
-        assertTrue("Node doesn't have a parent!", results.contains(
+        assertTrue("Node doesn't have a parent!", actual.contains(
                 testParentSubject, HAS_CHILD, testSubject));
     }
 
@@ -130,9 +127,6 @@ public class HierarchyRdfContextTest {
         when(mockNode.hasNodes()).thenReturn(false);
         final Model actual = getResults();
         logRdf("Created RDF for testNotContainer()", actual);
-        assertTrue(actual.contains(testPage, type, PAGE));
-        assertFalse(actual.contains(testPage, MEMBERS_INLINED, actual
-                .createTypedLiteral(true)));
         assertFalse(actual.contains(testSubject, type, CONTAINER));
         assertFalse(actual.contains(testSubject, type, DIRECT_CONTAINER));
 
@@ -150,15 +144,6 @@ public class HierarchyRdfContextTest {
         final Model results = getResults();
 
         logRdf("Created RDF for testForLDPTriples()", results);
-
-        // check for LDP-specified Page information
-        assertTrue("Didn't find page described as LDP Page!", results.contains(
-                testPage, type, PAGE));
-        assertTrue("Didn't find page described as LDP Page of correct node!",
-                results.contains(testPage, PAGE_OF, testSubject));
-        assertTrue("Didn't find page described as having inlined members!",
-                results.contains(testPage, MEMBERS_INLINED,
-                        createPlainLiteral("true")));
 
         // check for LDP-specified node information
         assertTrue(
@@ -294,8 +279,13 @@ public class HierarchyRdfContextTest {
     }
 
     private Model getResults() throws RepositoryException {
+        return getResults(HierarchyRdfContextOptions.DEFAULT);
+    }
+
+
+    private Model getResults(HierarchyRdfContextOptions options) throws RepositoryException {
         return new HierarchyRdfContext(mockNode, mockGraphSubjects,
-                mockLowLevelStorageService).asModel();
+                                          mockLowLevelStorageService, options).asModel();
     }
 
     private static void

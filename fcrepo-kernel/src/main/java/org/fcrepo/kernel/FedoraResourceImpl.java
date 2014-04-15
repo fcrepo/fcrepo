@@ -47,6 +47,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.JcrPropertyStatementListener;
@@ -233,9 +234,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final RdfStream propertiesStream =
             jcrRdfTools.getJcrTriples(getNode());
 
-        propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode()));
+        HierarchyRdfContextOptions serializationOptions = new HierarchyRdfContextOptions(limit, offset);
 
-        final Dataset dataset = DatasetFactory.create(propertiesStream.limit(limit).skip(offset).asModel());
+        propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode(), serializationOptions));
+
+        final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
 
         final Model problemsModel = createDefaultModel();
 
@@ -279,13 +282,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @see org.fcrepo.kernel.FedoraResource#getHierarchyTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
-    public RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects)
+    public RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
+                                         final HierarchyRdfContextOptions serializationOptions)
         throws RepositoryException {
 
         final JcrRdfTools jcrRdfTools =
                 JcrRdfTools.withContext(graphSubjects, getNode().getSession());
 
-        return jcrRdfTools.getTreeTriples(getNode());
+        return jcrRdfTools.getTreeTriples(getNode(), serializationOptions);
     }
 
     /* (non-Javadoc)
