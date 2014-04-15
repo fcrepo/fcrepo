@@ -31,16 +31,30 @@ import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
 import com.hp.hpl.jena.update.GraphStore;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.BasicScheme;
+
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -64,7 +78,9 @@ public abstract class AbstractResourceIT {
 
     protected static final String HOSTNAME = "localhost";
 
-    protected static final String serverAddress = "http://" + HOSTNAME + ":" +
+    protected static final String PROTOCOL = "http";
+
+    protected static final String serverAddress = PROTOCOL + "://" + HOSTNAME + ":" +
             SERVER_PORT + "/";
 
     protected static HttpClient client = createClient();
@@ -114,6 +130,31 @@ public abstract class AbstractResourceIT {
                          method.getURI());
         return client.execute(method);
     }
+
+    // Executes requests with preemptive basic authentication
+    protected HttpResponse executeWithBasicAuth(final HttpUriRequest request,
+                                                final String username,
+                                                final String password)
+        throws IOException {
+        final HttpHost target = new HttpHost(HOSTNAME, SERVER_PORT, PROTOCOL);
+        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(
+                new AuthScope(target.getHostName(), target.getPort()),
+                new UsernamePasswordCredentials(username, password));
+        final CloseableHttpClient httpclient = HttpClients.custom()
+                .setDefaultCredentialsProvider(credsProvider).build();
+
+        final AuthCache authCache = new BasicAuthCache();
+        final BasicScheme basicAuth = new BasicScheme();
+        authCache.put(target, basicAuth);
+
+        final HttpClientContext localContext = HttpClientContext.create();
+        localContext.setAuthCache(authCache);
+
+        final CloseableHttpResponse response = httpclient.execute(request, localContext);
+        return response;
+    }
+
 
     protected int getStatus(final HttpUriRequest method)
         throws ClientProtocolException, IOException {

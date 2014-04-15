@@ -53,6 +53,8 @@ public class TransactionServiceImplTest {
 
     private static final String USER_NAME = "test";
 
+    private static final String ANOTHER_USER_NAME = "another";
+
     TransactionService service;
 
     @Mock
@@ -106,6 +108,24 @@ public class TransactionServiceImplTest {
     public void testGetTx() throws Exception {
         final Transaction tx = service.getTransaction(IS_A_TX);
         assertNotNull(tx);
+    }
+
+    @Test(expected = TransactionMissingException.class)
+    public void testHijackingNotPossible() throws RepositoryException {
+        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
+        service.getTransactionForUser(tx.getId(), ANOTHER_USER_NAME);
+    }
+
+    @Test(expected = TransactionMissingException.class)
+    public void testHijackingNotPossibleWithAnonUser() throws RepositoryException {
+        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
+        service.getTransactionForUser(tx.getId(), null);
+    }
+
+    @Test(expected = TransactionMissingException.class)
+    public void testHijackingNotPossibleWhenStartedAnonUser() throws RepositoryException {
+        final Transaction tx = service.beginTransaction(mockSession, null);
+        service.getTransactionForUser(tx.getId(), USER_NAME);
     }
 
     @Test(expected = TransactionMissingException.class)

@@ -16,30 +16,44 @@
 
 package org.fcrepo.http.commons.session;
 
-import org.fcrepo.kernel.LockReleasingSession;
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.exception.TransactionMissingException;
-import org.fcrepo.kernel.services.TransactionService;
-import org.modeshape.jcr.api.ServletCredentials;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.propagate;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.security.Principal;
 
 import javax.annotation.PostConstruct;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import java.security.Principal;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.LockReleasingSession;
+import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.services.TransactionService;
+import org.modeshape.jcr.api.ServletCredentials;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Factory for generating sessions for HTTP requests, taking
  * into account transactions, workspaces, and authentication.
  */
 public class SessionFactory {
+
+    protected static enum Prefix{
+        WORKSPACE("workspace:"), TX("tx:");
+
+        private final String prefix;
+
+        Prefix(final String prefix) {
+            this.prefix = prefix;
+        }
+
+        public String getPrefix() {
+            return prefix;
+        }
+    }
 
     private static final Logger LOGGER = getLogger(SessionFactory.class);
 
@@ -89,8 +103,8 @@ public class SessionFactory {
     /**
      * Get a new JCR session in the given workspace
      *
-     * @param workspace
-     * @return
+     * @param workspace the String containing the workspace name
+     * @return a Session for the workspace
      * @throws RepositoryException
      */
     public Session getInternalSession(final String workspace)
@@ -103,113 +117,108 @@ public class SessionFactory {
      * SecurityContext attached
      *
      * @param servletRequest
-     * @return
+     * @return the Session
+     * @throws RuntimeException if the transaction could not be found
      */
     public Session getSession(final HttpServletRequest servletRequest) {
-
         try {
-            final ServletCredentials creds =
-                    new ServletCredentials(servletRequest);
-
-            final Transaction transaction =
-                    getEmbeddedTransaction(servletRequest);
-
             final Session session;
-            final Principal userPrincipal = servletRequest.getUserPrincipal();
+            final String txId = getEmbeddedId(servletRequest, Prefix.TX);
 
-            boolean isUserAuthorizedForTransaction = false;
-
-            if (transaction != null) {
-
-                if (userPrincipal != null) {
-                    String userName = userPrincipal.getName();
-                    isUserAuthorizedForTransaction = transactionService.isAssociatedWithUser(
-                            transaction.getId(), userName);
-                } else {
-                    // Anonymous case
-                    isUserAuthorizedForTransaction = true;
-                }
-            }
-
-
-            if (transaction != null && isUserAuthorizedForTransaction) {
-                LOGGER.debug(
-                                "Returning a session in the transaction {}",
-                                transaction);
-                session = transaction.getSession();
+            if (txId == null) {
+                session = createSession(servletRequest);
             } else {
-
-                final String workspace =
-                        getEmbeddedWorkspace(servletRequest);
-
-                if (workspace != null) {
-                    LOGGER.debug(
-                                    "Returning an authenticated session in the workspace {}",
-                                    workspace);
-                    session = repo.login(creds, workspace);
-                } else {
-                    LOGGER.debug("Returning an authenticated session in the default workspace");
-                    session = repo.login(creds);
-                }
+                session = getSessionFromTransaction(servletRequest, txId);
             }
 
             final String lockToken = servletRequest.getHeader("Lock-Token");
             if (lockToken != null) {
-
                 session.getWorkspace().getLockManager().addLockToken(lockToken);
             }
 
             return LockReleasingSession.newInstance(session);
+
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
     }
 
     /**
-     * Extract the workspace id embedded at the beginning of a request
+     * Create a JCR session for the given HTTP servlet request with a
+     * SecurityContext attached. If a workspace id is part of the request,
+     * it will be used for the session.
      *
-     * @param request
-     * @return
+     * @param servletRequest
+     * @return a newly created JCR session
+     * @throws RepositoryException if the session could not be created
      */
-    private String getEmbeddedWorkspace(final HttpServletRequest request) {
-        final String requestPath = request.getPathInfo();
+    protected Session createSession(final HttpServletRequest servletRequest) throws RepositoryException {
 
-        if (requestPath == null) {
-            return null;
+        final ServletCredentials creds =
+                new ServletCredentials(servletRequest);
+
+        final String workspace =
+                getEmbeddedId(servletRequest, Prefix.WORKSPACE);
+
+        final Session session;
+        if (workspace != null) {
+            LOGGER.debug(
+                    "Returning an authenticated session in the workspace {}",
+                    workspace);
+            session = repo.login(creds, workspace);
+        } else {
+            LOGGER.debug("Returning an authenticated session in the default workspace");
+            session = repo.login(creds);
+        }
+        return session;
+    }
+
+    /**
+     * Retrieve a JCR session from an active transaction
+     *
+     * @param servletRequest
+     * @return a JCR session that is associated with the transaction
+     * @throws RepositoryException if the session could not be found for the given tx
+     */
+    protected Session getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId)
+        throws RepositoryException {
+
+        final Principal userPrincipal = servletRequest.getUserPrincipal();
+
+        String userName = null;
+        if (userPrincipal != null) {
+            userName = userPrincipal.getName();
         }
 
-        final String[] part = requestPath.split("/");
-
-        if (part.length > 1 && part[1].startsWith("workspace:")) {
-            return part[1].substring("workspace:".length());
-        }
-        return null;
+        final Transaction transaction =
+                transactionService.getTransactionForUser(txId, userName);
+        LOGGER.debug(
+                "Returning a session in the transaction {} for user {}",
+                transaction, userName);
+        return transaction.getSession();
 
     }
 
     /**
-     * Extract the transaction id embedded at the beginning of a request
+     * Extract the id embedded at the beginning of a request path
      *
      * @param servletRequest
-     * @return
-     * @throws TransactionMissingException
+     * @param prefix, the prefix for the id
+     * @return the found id or null
      */
-    private Transaction getEmbeddedTransaction(
-            final HttpServletRequest servletRequest)
-        throws TransactionMissingException {
+    protected String getEmbeddedId(
+            final HttpServletRequest servletRequest, final Prefix prefix) {
         final String requestPath = servletRequest.getPathInfo();
 
-        if (requestPath == null) {
-            return null;
+        String id = null;
+        if (requestPath != null) {
+            final String pathPrefix = prefix.getPrefix();
+            final String[] part = requestPath.split("/");
+            if (part.length > 1 && part[1].startsWith(pathPrefix)) {
+                id = part[1].substring(pathPrefix.length());
+            }
         }
-
-        final String[] part = requestPath.split("/");
-
-        if (part.length > 1 && part[1].startsWith("tx:")) {
-            final String txid = part[1].substring("tx:".length());
-            return transactionService.getTransaction(txid);
-        }
-        return null;
+        return id;
     }
 
 }

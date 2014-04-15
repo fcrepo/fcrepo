@@ -50,6 +50,17 @@ public interface TransactionService extends Service {
     Transaction getTransaction(String txid) throws TransactionMissingException;
 
     /**
+     * Recieve an open {@link Transaction} for a given user
+     *
+     * @param txId the Id of the {@link Transaction}
+     * @param userName the name  of the {@link java.security.Principal}
+     * @return the {@link Transaction}
+     * @throws TransactionMissingException if the transaction could not be found or is not associated
+     * with this user
+     */
+    Transaction getTransactionForUser(final String txId, final String userName) throws TransactionMissingException;
+
+    /**
      * Get the current Transaction for a session
      *
      * @param session
@@ -82,15 +93,6 @@ public interface TransactionService extends Service {
      * @throws RepositoryException if the {@link Transaction} could not be found
      */
     Transaction rollback(String txid) throws RepositoryException;
-
-    /**
-     * Checks if a user is bound to a {@link Transaction}
-     *
-     * @param txId the id of the {@link Transaction}
-     * @param userName the name  of the {@link java.security.Principal}
-     * @return if the transaction was created by this user
-    */
-    boolean isAssociatedWithUser(final String txId, final String userName);
 
     /**
      * @param versionService the versionService to set
