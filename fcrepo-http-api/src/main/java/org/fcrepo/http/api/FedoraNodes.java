@@ -32,6 +32,7 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang.ArrayUtils.contains;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
@@ -60,6 +61,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -102,12 +104,16 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.COPY;
+import org.fcrepo.http.commons.domain.Prefer;
+import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.openrdf.util.iterators.Iterators;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -124,9 +130,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 @Scope("prototype")
 @Path("/{path: .*}")
 public class FedoraNodes extends AbstractResource {
-
-    public static final int NO_LIMIT = -1;
-    public static final int NO_MEMBER_PROPERTIES = -2;
 
     @InjectedSession
     protected Session session;
@@ -151,8 +154,8 @@ public class FedoraNodes extends AbstractResource {
             TEXT_HTML, APPLICATION_XHTML_XML})
     public RdfStream describe(@PathParam("path") final List<PathSegment> pathList,
             @QueryParam("offset") @DefaultValue("0") final int offset,
-            @QueryParam("limit") @DefaultValue("-1") final int limit,
-            @QueryParam("non-member-properties") final String nonMemberProperties,
+            @QueryParam("limit")  @DefaultValue("-1") final int limit,
+            @HeaderParam("Prefer") final Prefer prefer,
             @Context final Request request,
             @Context final HttpServletResponse servletResponse,
             @Context final UriInfo uriInfo) throws RepositoryException {
@@ -182,35 +185,83 @@ public class FedoraNodes extends AbstractResource {
         final HttpIdentifierTranslator subjects =
             new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
-        final int realLimit;
-        if (nonMemberProperties != null && limit == NO_LIMIT) {
-            realLimit = NO_MEMBER_PROPERTIES;
-        } else {
-            realLimit = limit;
-        }
-
         final RdfStream rdfStream =
-            resource.getTriples(subjects).concat(
-                    resource.getHierarchyTriples(subjects)).session(session)
+            resource.getTriples(subjects).session(session)
                     .topic(subjects.getSubject(resource.getNode().getPath())
                             .asNode());
-        if (realLimit != NO_MEMBER_PROPERTIES) {
-            final Node firstPage =
-                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam(
-                        "offset", 0).replaceQueryParam("limit", limit).build()
-                        .toString().replace("&", "&amp;"));
-            final Node nextPage =
-                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam(
-                        "offset", offset + limit).replaceQueryParam("limit",
-                        limit).build().toString().replace("&", "&amp;"));
-            rdfStream.concat(
-                    create(subjects.getContext().asNode(), NEXT_PAGE.asNode(),
-                            nextPage),
-                    create(subjects.getContext().asNode(), FIRST_PAGE.asNode(),
-                            firstPage)).limit(realLimit).skip(offset);
 
-            servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
+        final PreferTag returnPreference;
+
+        if (prefer != null && prefer.hasReturn()) {
+            returnPreference = prefer.getReturn();
+        } else {
+            returnPreference = new PreferTag("");
         }
+
+        if (!returnPreference.getValue().equals("minimal")) {
+            String include = returnPreference.getParams().get("include");
+            if (include == null) {
+                include = "";
+            }
+
+            String omit = returnPreference.getParams().get("omit");
+            if (omit == null) {
+                omit = "";
+            }
+
+            final String[] includes = include.split(" ");
+            final String[] omits = omit.split(" ");
+
+            if (limit >= 0) {
+                final Node firstPage =
+                    createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
+                                  .replaceQueryParam("limit", limit).build()
+                                  .toString().replace("&", "&amp;"));
+                final Node nextPage =
+                    createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
+                                  .replaceQueryParam("limit", limit).build()
+                                  .toString().replace("&", "&amp;"));
+                rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage),
+                                    create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
+
+                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
+            }
+
+            List<String> appliedIncludes = new ArrayList<>();
+
+            final boolean membership =
+                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
+                     contains(includes, LDP_NAMESPACE + "PreferMembership"))
+                    && !contains(omits, LDP_NAMESPACE + "PreferMembership");
+
+            final boolean containment =
+                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
+                     contains(includes, LDP_NAMESPACE + "PreferContainment"))
+                    && !contains(omits, LDP_NAMESPACE + "PreferContainment");
+
+
+            final HierarchyRdfContextOptions hierarchyRdfContextOptions
+                = new HierarchyRdfContextOptions(limit, offset, membership, containment);
+
+            if (hierarchyRdfContextOptions.membershipEnabled()) {
+                appliedIncludes.add(LDP_NAMESPACE + "PreferMembership");
+            }
+
+            if (hierarchyRdfContextOptions.containmentEnabled()) {
+                appliedIncludes.add(LDP_NAMESPACE + "PreferContainment");
+            }
+
+            rdfStream.concat(resource.getHierarchyTriples(subjects, hierarchyRdfContextOptions));
+
+            final String preferences = "return=representation; include=\""
+                                           + Iterators.toString(appliedIncludes.iterator(), " ") + "\"";
+            servletResponse.addHeader("Preference-Applied", preferences);
+
+        } else {
+            servletResponse.addHeader("Preference-Applied", "return=minimal");
+        }
+        servletResponse.addHeader("Vary", "Prefer");
+
 
 
         if (!etag.getValue().isEmpty()) {
