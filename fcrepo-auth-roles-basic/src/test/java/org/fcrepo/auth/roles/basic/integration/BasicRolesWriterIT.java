@@ -549,4 +549,10 @@ public class BasicRolesWriterIT extends AbstractBasicRolesIT {
                 .getStatusCode(), canAddACL("examplewriter", "/", "everyone",
                         "admin", true));
     }
+
+    @Test
+    public void testWriterReaderCanReadACL() throws ClientProtocolException, IOException {
+        assertEquals("Writer-reader should be allowed to read ACL permissions", OK.getStatusCode(), canGetRoles(
+                "exampleWriterReader", "testparent4", true));
+    }
 }
