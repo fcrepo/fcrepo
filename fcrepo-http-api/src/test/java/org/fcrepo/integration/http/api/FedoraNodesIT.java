@@ -24,6 +24,13 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
@@ -62,7 +69,9 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -72,10 +81,12 @@ import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
 import org.apache.http.Header;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -911,7 +922,54 @@ public class FedoraNodesIT extends AbstractResourceIT {
         request.addHeader("If-Match", "\"doesnt-match\"");
         final HttpResponse moveResponse = client.execute(request);
         assertEquals(412, moveResponse.getStatusLine().getStatusCode());
-   }
+    }
+
+    @Test
+    public void testOptions() throws Exception {
+        final String pid = randomUUID().toString();
+        final HttpPost method = postObjMethod(pid);
+        final HttpResponse response = client.execute(method);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                                                  .getStatusCode());
+
+        final HttpOptions optionsRequest = new HttpOptions(serverAddress + pid);
+        final HttpResponse optionsResponse = client.execute(optionsRequest);
+        assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
+
+        final List<String> methods = headerValues(optionsResponse,"Allow");
+        assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
+        assertTrue("Should allow POST", methods.contains(HttpPost.METHOD_NAME));
+        assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
+        assertTrue("Should allow PATCH", methods.contains(HttpPatch.METHOD_NAME));
+        assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
+        assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
+        assertTrue("Should allow MOVE", methods.contains(HttpMove.METHOD_NAME));
+        assertTrue("Should allow COPY", methods.contains(HttpCopy.METHOD_NAME));
+
+        final List<String> patchTypes = headerValues(optionsResponse,"Accept-Patch");
+        assertTrue("PATCH should support application/sparql-update", patchTypes.contains(contentTypeSPARQLUpdate));
+
+        final List<String> postTypes = headerValues(optionsResponse,"Accept-Post");
+        assertTrue("POST should support application/sparql-update", postTypes.contains(contentTypeSPARQLUpdate));
+        assertTrue("POST should support text/turtle", postTypes.contains(contentTypeTurtle));
+        assertTrue("POST should support text/rdf+n3", postTypes.contains(contentTypeN3));
+        assertTrue("POST should support application/n3", postTypes.contains(contentTypeN3Alt1));
+        assertTrue("POST should support text/n3", postTypes.contains(contentTypeN3Alt2));
+        assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
+        assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
+        assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
+    }
+    private static List<String> headerValues( HttpResponse response,
+            String headerName ) {
+        final List<String> values = new ArrayList<String>();
+        for ( Header header : response.getHeaders(headerName) ) {
+            for ( String elem : header.getValue().split(",") ) {
+                values.add( elem.trim() );
+            }
+        }
+        return values;
+    }
+    
 
     private void validateHTML(final String path) throws Exception {
         final HttpGet getMethod = new HttpGet(serverAddress + path);

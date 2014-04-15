@@ -31,6 +31,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
@@ -72,6 +73,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -722,6 +724,23 @@ public class FedoraNodes extends AbstractResource {
             session.logout();
         }
 
+    }
+
+    /**
+     * Outputs information about the supported HTTP methods, etc.
+     */
+    @OPTIONS
+    @Timed
+    public Response options(@PathParam("path") final List<PathSegment> pathList,
+                            @Context final HttpServletResponse servletResponse)
+        throws RepositoryException {
+        servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");
+        final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT1 + ","
+                + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;
+        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
+                + "," + contentTypeSPARQLUpdate);
+        return status(OK).build();
     }
 
 }
