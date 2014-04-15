@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -57,12 +58,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     @Test
     public void testCreateTransaction() throws Exception {
-        /* create a tx */
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        final HttpResponse response = execute(createTx);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-
-        final String location = response.getFirstHeader("Location").getValue();
+        final String location = createTransaction();
 
         logger.info("Got location {}", location);
         assertTrue(
@@ -89,11 +85,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         System.setProperty(TIMEOUT_SYSTEM_PROPERTY, Long.toString(testTimeout));
 
         /* create a tx */
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        final HttpResponse response = execute(createTx);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-
-        final String location = response.getFirstHeader("Location").getValue();
+        final String location = createTransaction();
 
         final HttpGet getWithinTx = new HttpGet(location);
         HttpResponse resp = execute(getWithinTx);
@@ -171,17 +163,10 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     @Test
     public void testCreateDoStuffAndCommitTransaction() throws Exception {
         /* create a tx */
-        final String objectInTxCommit = randomUUID().toString();
-
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-
-        final HttpResponse response = execute(createTx);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-
-        final String txLocation =
-            response.getFirstHeader("Location").getValue();
+        final String txLocation = createTransaction();
 
         /* create a new object inside the tx */
+        final String objectInTxCommit = randomUUID().toString();
         final HttpPost postNew =
             new HttpPost(txLocation);
         postNew.addHeader("Slug", objectInTxCommit);
@@ -226,17 +211,10 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     @Test
     public void testCreateDoStuffAndCommitTransactionSeparateConnections() throws Exception {
         /* create a tx */
-        final String objectInTxCommit = randomUUID().toString();
-
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-
-        final HttpResponse response = execute(createTx);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-
-        final String txLocation =
-                response.getFirstHeader("Location").getValue();
+        final String txLocation = createTransaction();
 
         /* create a new object inside the tx */
+        final String objectInTxCommit = randomUUID().toString();
         client = createClient();
         final HttpPost postNew =
                 new HttpPost(txLocation);
@@ -293,13 +271,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         final String objectInTxCommit = randomUUID().toString();
 
         /* create new tx */
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        final HttpResponse response = execute(createTx);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-
-        /* create a new object inside the tx */
-        final String txLocation =
-                response.getFirstHeader("Location").getValue();
+        final String txLocation = createTransaction();
 
         client = createClient();
         final HttpPost postNew =
@@ -354,21 +326,79 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     @Test
     public void testGetNonExistingObject() throws Exception {
-    	/* create new tx */
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        final HttpResponse response = execute(createTx);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-
-        /* try to retrieve a non existing object inside the tx */
-        final String txLocation =
-                response.getFirstHeader("Location").getValue();
+        final String txLocation = createTransaction();
         final String newObjectLocation = txLocation + "/idontexist";
         final HttpGet httpGet = new HttpGet(newObjectLocation);
+
         client = createClient();
-        HttpResponse responseFromGet = client.execute(httpGet);
-        int status = responseFromGet.getStatusLine().getStatusCode();
+        final HttpResponse responseFromGet = client.execute(httpGet);
+        final int status = responseFromGet.getStatusLine().getStatusCode();
         assertEquals("Status should be 404", 404, status);
     }
+
+    /**
+     * Tests that transactions cannot be hijacked
+     */
+    @Test
+    public void testTransactionHijackingNotPossible() throws Exception {
+
+        /* "fedoraAdmin" creates a transaction */
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        final HttpResponse response = executeWithBasicAuth(createTx, "fedoraAdmin", "fedoraAdmin");
+        assertEquals("Status should be 201 after creating a transaction with user fedoraAdmin",
+                201, response.getStatusLine().getStatusCode());
+        final String txLocation = response.getFirstHeader("Location").getValue();
+
+        /* "fedoraUser" puts to "fedoraAdmin"'s transaction and fails */
+        final HttpPut putFedoraUser = new HttpPut(txLocation);
+        final HttpResponse responseFedoraUser = executeWithBasicAuth(putFedoraUser, "fedoraUser", "fedoraUser");
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not allowed",
+                410, responseFedoraUser.getStatusLine().getStatusCode());
+
+        /* anonymous user puts to "fedoraAdmin"'s transaction and fails */
+        final HttpPut putTxAnon = new HttpPut(txLocation);
+        final HttpResponse responseTxAnon = execute(putTxAnon);
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not allowed",
+                410, responseTxAnon.getStatusLine().getStatusCode());
+
+        /* transaction is still intact and "fedoraAdmin" - the owner - can successfully put to it */
+        final String objectInTxCommit = randomUUID().toString();
+        final HttpPut putToExistingTx = new HttpPut(txLocation + "/" + objectInTxCommit);
+        final HttpResponse responseFromPutToTx = executeWithBasicAuth(putToExistingTx, "fedoraAdmin", "fedoraAdmin");
+        assertEquals("Status should be 201 after putting", 201, responseFromPutToTx.getStatusLine().getStatusCode());
+
+    }
+
+    /**
+     * Tests that transactions cannot be hijacked,
+     * even if created by an anonymous user
+     */
+    @Test
+    public void testTransactionHijackingNotPossibleAnoymous() throws Exception {
+
+        /* anonymous user creates a transaction */
+        final String txLocation = createTransaction();
+
+        /* fedoraAdmin attempts to puts to anonymous transaction and fails */
+        final HttpPut putFedoraAdmin = new HttpPut(txLocation);
+        final HttpResponse responseFedoraAdmin = executeWithBasicAuth(putFedoraAdmin, "fedoraAdmin", "fedoraAdmin");
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not permitted",
+                410, responseFedoraAdmin.getStatusLine().getStatusCode());
+
+        /* fedoraUser attempts to put to anonymous transaction and fails */
+        final HttpPut putFedoraUser = new HttpPut(txLocation);
+        final HttpResponse responseFedoraUser = executeWithBasicAuth(putFedoraUser, "fedoraUser", "fedoraUser");
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not permitted",
+                410, responseFedoraUser.getStatusLine().getStatusCode());
+
+        /* transaction is still intact and any anonymous user can successfully put to it */
+        final String objectInTxCommit = randomUUID().toString();
+        final HttpPut putToExistingTx = new HttpPut(txLocation + "/" + objectInTxCommit);
+        final HttpResponse responseFromPutToTx = execute(putToExistingTx);
+        assertEquals("Status should be 201 after putting", 201, responseFromPutToTx.getStatusLine().getStatusCode());
+
+    }
+
 
 
     /**

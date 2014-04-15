@@ -31,10 +31,12 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.TxAwareSession;
+import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.security.Principal;
 
@@ -86,7 +88,7 @@ public class FedoraTransactionsTest {
     public void
             shouldUpdateExpiryOnExistingTransaction()
                                                      throws RepositoryException {
-        when(mockTxService.getTransaction("123")).thenReturn(mockTx);
+        when(mockTxService.getTransaction(Mockito.any(TxSession.class))).thenReturn(mockTx);
         testObj.createTransaction(createPathList(), mockRequest);
         verify(mockTx).updateExpiryDate();
     }

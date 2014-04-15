@@ -83,18 +83,17 @@ public class FedoraTransactions extends AbstractResource {
         }
 
         if (session instanceof TxSession) {
-            final Transaction t =
-                    txService.getTransaction(((TxSession) session)
-                            .getTxId());
+            final Transaction t = txService.getTransaction(session);
             t.updateExpiryDate();
             return noContent().expires(t.getExpires()).build();
-
         }
+
         final Principal userPrincipal = req.getUserPrincipal();
         String userName = null;
         if (userPrincipal != null) {
             userName = userPrincipal.getName();
         }
+
         final Transaction t = txService.beginTransaction(session, userName);
 
         return created(

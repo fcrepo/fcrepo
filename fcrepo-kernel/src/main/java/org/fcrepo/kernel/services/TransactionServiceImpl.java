@@ -117,23 +117,21 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
         return tx;
     }
 
-    /**
-     * Retrieve an open {@link Transaction}
-     *
-     * @param txid the Id of the {@link Transaction}
-     * @return the {@link Transaction}
-     */
     @Override
-    public Transaction getTransaction(final String txid)
+    public Transaction getTransaction(final String txId, final String userName)
         throws TransactionMissingException {
 
-        final Transaction tx = transactions.get(txid);
+        final Transaction tx = transactions.get(txId);
 
         if (tx == null) {
             throw new TransactionMissingException(
                     "Transaction is not available");
         }
 
+        if (!tx.isAssociatedWithUser(userName)) {
+            throw new TransactionMissingException("Transaction with id " +
+                        txId + " is not available for user " + userName);
+        }
         return tx;
     }
 
@@ -154,8 +152,14 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
             throw new TransactionMissingException(
                     "Transaction is not available");
         }
+        final Transaction tx = transactions.get(txId);
 
-        return getTransaction(txId);
+        if (tx == null) {
+            throw new TransactionMissingException(
+                    "Transaction is not available");
+        }
+
+        return tx;
     }
 
     /**
@@ -220,25 +224,6 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
         }
         tx.rollback();
         return tx;
-    }
-
-    /**
-     * Checks if a user is bound to a {@link Transaction}
-     *
-     * @param txId the id of the {@link Transaction}
-     * @param userName the name  of the {@link java.security.Principal}
-     * @return if the transaction was created by this user
-    */
-    @Override
-    public boolean isAssociatedWithUser(final String txId, final String userName) {
-        boolean existsForUser = false;
-        if (exists(txId)) {
-            final Transaction transaction = transactions.get(txId);
-            if (transaction.isAssociatedWithUser(userName)) {
-                existsForUser = true;
-            }
-        }
-        return existsForUser;
     }
 
     /**
