@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -75,6 +76,9 @@ public class FedoraContentTest {
 
     @Mock
     private VersionService mockVersions;
+
+    @Mock
+    private HttpServletResponse mockResponse;
 
     @Mock
     private Session mockSession;
@@ -133,7 +137,7 @@ public class FedoraContentTest {
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
             testObj.modifyContent(createPathList(pid, dsId), null, "inline; filename=\"xyz\"", null,
-                    dsContentStream, null);
+                    dsContentStream, null, mockResponse);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), eq("xyz"), any(InputStream.class), eq((URI)null));
@@ -160,7 +164,7 @@ public class FedoraContentTest {
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
             testObj.create(createPathList(pid, dsId), null, null, null, TEXT_PLAIN_TYPE,
-                    dsContentStream);
+                    mockResponse, dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession, dsPath,
                 "text/plain", null, dsContentStream, null);
@@ -187,7 +191,7 @@ public class FedoraContentTest {
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
             testObj.create(createPathList(pid), null, null, null, TEXT_PLAIN_TYPE,
-                    dsContentStream);
+                    mockResponse, dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession,
                 "/" + pid + "/xyz", "text/plain", null, dsContentStream, null);
@@ -215,7 +219,7 @@ public class FedoraContentTest {
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
             testObj.create(createPathList(pid), dsid, null, null, TEXT_PLAIN_TYPE,
-                              dsContentStream);
+                              mockResponse, dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(mockSession,
                                                         "/" + pid + "/slug", "text/plain", null, dsContentStream, null);
@@ -245,7 +249,7 @@ public class FedoraContentTest {
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
         final Response actual =
             testObj.modifyContent(createPathList(pid, dsId), "urn:sha1:some-checksum", null, null,
-                    dsContentStream, mockRequest);
+                    dsContentStream, mockRequest, mockResponse);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockDatastreams).createDatastreamNode(any(Session.class),
                 eq(dsPath), anyString(), eq((String)null), any(InputStream.class), eq(checksum));

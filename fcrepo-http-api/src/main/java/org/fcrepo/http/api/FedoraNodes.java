@@ -376,7 +376,7 @@ public class FedoraNodes extends AbstractResource {
             session.save();
             versionService.nodeUpdated(resource.getNode());
 
-            return status(SC_NO_CONTENT).build();
+            return status(SC_NO_CONTENT).lastModified(resource.getLastModifiedDate()).build();
         } finally {
             session.logout();
         }
@@ -537,7 +537,8 @@ public class FedoraNodes extends AbstractResource {
                 location = new URI(idTranslator.getSubject(result.getNode().getPath()).getURI());
             }
 
-            return created(location).entity(location.toString()).build();
+            return created(location).lastModified(result.getLastModifiedDate())
+                    .entity(location.toString()).build();
 
         } finally {
             session.logout();
