@@ -52,6 +52,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 /**
  * @author Gregory Jansen
@@ -487,7 +489,12 @@ public abstract class AbstractRolesIT {
 
         for (final Map<String, String> entries : principals_and_roles) {
             for (final Map.Entry<String, String> entry : entries.entrySet()) {
-                acls.put(entry.getKey(), singletonList(entry.getValue()));
+                final String key = entry.getKey();
+                if (acls.containsKey(key)) {
+                    acls.get(key).add(entry.getValue());
+                } else {
+                    acls.put(key, new ArrayList<String>(Arrays.asList(new String[] { entry.getValue() })));
+                }
             }
         }
         return makeJson(acls);

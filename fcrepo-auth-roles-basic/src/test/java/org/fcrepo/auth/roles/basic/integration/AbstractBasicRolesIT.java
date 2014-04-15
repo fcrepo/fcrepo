@@ -124,6 +124,12 @@ public abstract class AbstractBasicRolesIT extends AbstractRolesIT {
         objI.setPath("testparent3/testchild3b");
         test_objs.add(objI);
 
+        final RolesFadTestObjectBean objJ = new RolesFadTestObjectBean();
+        objJ.setPath("testparent4");
+        objJ.addACL("exampleWriterReader", "reader");
+        objJ.addACL("exampleWriterReader", "writer");
+        test_objs.add(objJ);
+
         return test_objs;
 
     }

@@ -48,6 +48,10 @@ public class BasicRolesAuthorizationDelegate extends AbstractRolesAuthorizationD
         }
         if (roles.contains("writer")) {
             if (absPath.contains(AUTHZ_DETECTION)) {
+                if (roles.contains("reader") && actions.length == 1 && "read".equals(actions[0])) {
+                    LOGGER.debug("Granting reader role permission to perform a read action.");
+                    return true;
+                }
                 LOGGER.debug("Denying writer role permission to perform an action on an ACL node.");
                 return false;
             }
