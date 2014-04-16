@@ -44,6 +44,7 @@ import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
@@ -525,6 +526,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                 + pid + "> <" + HAS_CHILD + ">",
                         DOTALL).matcher(content).find());
 
+        assertFalse("Didn't expect contained member resources",
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + CONTAINS + ">",
+                                  DOTALL).matcher(content).find());
     }
 
     @Test
@@ -576,16 +583,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                      + pid + "> <" + HAS_CHILD + ">",
                                  DOTALL).matcher(content).find());
 
-        int count = 0;
+        assertFalse("Didn't expect contained member resources",
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + CONTAINS + ">",
+                                  DOTALL).matcher(content).find());
 
-        final Matcher matcher = compile("<http://fedora.info/definitions/v4/repository#uuid>",
-                                           DOTALL).matcher(content);
-
-        while (matcher.find()) {
-            count++;
-        }
-
-        assertEquals("Didn't expect to find inlined resources", 1, count);
     }
 
     @Test
@@ -1240,6 +1244,14 @@ public class FedoraNodesIT extends AbstractResourceIT {
             logger.debug( "Found child: {}", it.next() );
         }
         assertEquals("Should have two children!", 2, firstChildCount);
+
+
+        // count children in response graph
+        int firstContainsCount = 0;
+        for ( Iterator it = firstGraph.find(ANY,parent,CONTAINS.asNode(),ANY); it.hasNext(); firstContainsCount++ ) {
+            logger.debug( "Found child: {}", it.next() );
+        }
+        assertEquals("Should have two children!", 2, firstContainsCount);
 
         // collect link headers
         final Collection<String> firstLinks =
