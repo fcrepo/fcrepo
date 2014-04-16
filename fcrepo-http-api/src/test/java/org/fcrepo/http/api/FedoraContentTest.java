@@ -54,6 +54,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -185,6 +186,10 @@ public class FedoraContentTest {
                         + pid + "/xyz"), anyString(), eq((String)null), any(InputStream.class),
                         eq((URI) null))).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+        final FedoraResource mockResource = mock(FedoraResource.class);
+        when(mockNodeService.getObject(mockSession,dsPath)).thenReturn(mockResource);
+        when(mockResource.hasContent()).thenReturn(false);
+
         final Response actual =
             testObj.create(createPathList(pid), null, null, null, TEXT_PLAIN_TYPE,
                     dsContentStream);
@@ -213,6 +218,9 @@ public class FedoraContentTest {
                                                                                 + pid + "/slug"), anyString(), eq((String)null), any(InputStream.class),
                                                         eq((URI) null))).thenReturn(mockNode);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+        final FedoraResource mockResource = mock(FedoraResource.class);
+        when(mockNodeService.getObject(mockSession,dsPath)).thenReturn(mockResource);
+        when(mockResource.hasContent()).thenReturn(false);
         final Response actual =
             testObj.create(createPathList(pid), dsid, null, null, TEXT_PLAIN_TYPE,
                               dsContentStream);
