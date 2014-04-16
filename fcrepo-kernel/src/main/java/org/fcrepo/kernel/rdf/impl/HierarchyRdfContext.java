@@ -21,6 +21,7 @@ import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
@@ -168,6 +169,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
                         childStream.concat(
                             new PropertiesRdfContext(child, graphSubjects(), lowLevelStorageService())
                         );
+                        childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
                     }
 
                     return childStream;

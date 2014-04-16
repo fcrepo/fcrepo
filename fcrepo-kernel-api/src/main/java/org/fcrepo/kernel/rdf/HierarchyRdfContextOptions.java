@@ -31,7 +31,7 @@ public class HierarchyRdfContextOptions {
         this.limit = -1;
         this.offset = -1;
         membership = true;
-        containment = false;
+        containment = true;
     }
 
     /**

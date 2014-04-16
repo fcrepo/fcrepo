@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
@@ -103,6 +104,9 @@ public class HierarchyRdfContextTest {
         final Model actual = getResults();
         logRdf("Retrieved RDF for shouldIncludeChildNodeInformation() as follows: ",
                 actual);
+
+        assertEquals("Didn't find enough contains!", 5, Iterators.size(actual
+                .listObjectsOfProperty(CONTAINS)));
         assertEquals("Didn't find enough children!", 5, Iterators.size(actual
                 .listObjectsOfProperty(HAS_CHILD)));
         assertEquals("Found too many parents!", 1, Iterators.size(actual

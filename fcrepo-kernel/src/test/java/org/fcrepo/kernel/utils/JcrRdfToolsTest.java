@@ -331,6 +331,8 @@ public class JcrRdfToolsTest {
         when(mockNode.hasNodes()).thenReturn(true);
         HierarchyRdfContextOptions options = new HierarchyRdfContextOptions(2, 0);
 
+        options.containment = false;
+
         final Model actual =
             testObj.getTreeTriples(mockNode, options).asModel();
         assertEquals(2, Iterators.size(actual
