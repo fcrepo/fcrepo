@@ -53,6 +53,7 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -62,7 +63,9 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -72,10 +75,12 @@ import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
 import org.apache.http.Header;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -160,6 +165,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
                         .asNode()));
+
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+        assertNotNull("Should set Last-Modified for new nodes", lastmod);
+        assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
     }
 
     @Test
@@ -186,6 +196,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
                         .asNode()));
 
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+        assertNotNull("Should set Last-Modified for new nodes", lastmod);
+        assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
     }
 
     @Test
@@ -400,6 +414,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 http://www.jcp.org/jcr/nt/1.0folder 
                 http://www.jcp.org/jcr/nt/1.0hierarchyNode 
                 http://www.w3.org/ns/ldp#Container 
+                http://www.w3.org/ns/ldp#DirectContainer 
                 http://www.w3.org/ns/ldp#Page 
         */
 
@@ -407,6 +422,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
         verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
+        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "DirectContainer");
         verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Page");
         verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
@@ -461,7 +477,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     return h.getValue();
                 }
             });
-        assertTrue("Didn't find LDP link header!", links.contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
+        assertTrue("Didn't find LDP resource link header!", links.contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
+        assertTrue("Didn't find LDP container link header!", links.contains(LDP_NAMESPACE + "DirectContainer;rel=\"type\""));
     }
 
     @Test
@@ -897,7 +914,60 @@ public class FedoraNodesIT extends AbstractResourceIT {
         request.addHeader("If-Match", "\"doesnt-match\"");
         final HttpResponse moveResponse = client.execute(request);
         assertEquals(412, moveResponse.getStatusLine().getStatusCode());
-   }
+    }
+
+    @Test
+    public void testOptions() throws Exception {
+        final String pid = randomUUID().toString();
+        final HttpPost method = postObjMethod(pid);
+        final HttpResponse response = client.execute(method);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                                                  .getStatusCode());
+
+        final HttpOptions optionsRequest = new HttpOptions(serverAddress + pid);
+        final HttpResponse optionsResponse = client.execute(optionsRequest);
+        assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
+
+        final List<String> methods = headerValues(optionsResponse,"Allow");
+        assertTrue("Should allow GET", methods.contains("GET"));
+        assertTrue("Should allow POST", methods.contains("POST"));
+        assertTrue("Should allow PUT", methods.contains("PUT"));
+        assertTrue("Should allow PATCH", methods.contains("PATCH"));
+        assertTrue("Should allow DELETE", methods.contains("DELETE"));
+        assertTrue("Should allow OPTIONS", methods.contains("OPTIONS"));
+        assertTrue("Should allow MOVE", methods.contains("MOVE"));
+        assertTrue("Should allow COPY", methods.contains("COPY"));
+
+        final List<String> patchTypes = headerValues(optionsResponse,"Accept-Patch");
+        assertTrue("PATCH should support application/sparql-update", patchTypes.contains("application/sparql-update"));
+        assertTrue("PATCH should support text/turtle", patchTypes.contains("text/turtle"));
+        assertTrue("PATCH should support text/rdf+n3", patchTypes.contains("text/rdf+n3"));
+        assertTrue("PATCH should support application/n3", patchTypes.contains("application/n3"));
+        assertTrue("PATCH should support text/n3", patchTypes.contains("text/n3"));
+        assertTrue("PATCH should support application/rdf+xml", patchTypes.contains("application/rdf+xml"));
+        assertTrue("PATCH should support application/n-triples", patchTypes.contains("application/n-triples"));
+
+        final List<String> postTypes = headerValues(optionsResponse,"Accept-Post");
+        assertTrue("POST should support application/sparql-update", postTypes.contains("application/sparql-update"));
+        assertTrue("POST should support text/turtle", postTypes.contains("text/turtle"));
+        assertTrue("POST should support text/rdf+n3", postTypes.contains("text/rdf+n3"));
+        assertTrue("POST should support application/n3", postTypes.contains("application/n3"));
+        assertTrue("POST should support text/n3", postTypes.contains("text/n3"));
+        assertTrue("POST should support application/rdf+xml", postTypes.contains("application/rdf+xml"));
+        assertTrue("POST should support application/n-triples", postTypes.contains("application/n-triples"));
+        assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
+    }
+    private static List<String> headerValues( HttpResponse response,
+            String headerName ) {
+        final List<String> values = new ArrayList<String>();
+        for ( Header header : response.getHeaders(headerName) ) {
+            for ( String elem : header.getValue().split(",") ) {
+                values.add( elem.trim() );
+            }
+        }
+        return values;
+    }
+    
 
     private void validateHTML(final String path) throws Exception {
         final HttpGet getMethod = new HttpGet(serverAddress + path);
