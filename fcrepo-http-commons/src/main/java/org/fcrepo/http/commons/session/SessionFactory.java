@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.commons.session;
 
+import org.fcrepo.kernel.LockReleasingSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
@@ -28,7 +29,6 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-
 import java.security.Principal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -153,7 +153,13 @@ public class SessionFactory {
                 }
             }
 
-            return session;
+            final String lockToken = servletRequest.getHeader("Lock-Token");
+            if (lockToken != null) {
+
+                session.getWorkspace().getLockManager().addLockToken(lockToken);
+            }
+
+            return LockReleasingSession.newInstance(session);
         } catch (final RepositoryException e) {
             throw propagate(e);
         }

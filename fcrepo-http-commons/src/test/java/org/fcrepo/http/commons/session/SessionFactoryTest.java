@@ -16,23 +16,7 @@
 
 package org.fcrepo.http.commons.session;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import java.security.Principal;
-
-import javax.jcr.Credentials;
-import javax.jcr.LoginException;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
-
+import org.fcrepo.kernel.LockReleasingSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Before;
@@ -40,6 +24,23 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.modeshape.jcr.api.ServletCredentials;
+
+import javax.jcr.Credentials;
+import javax.jcr.LoginException;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Proxy;
+import java.security.Principal;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class SessionFactoryTest {
 
@@ -77,6 +78,7 @@ public class SessionFactoryTest {
     public void testGetSessionWithNullPath() throws LoginException,
                                             RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn(null);
+        when(mockRepo.login(any(Credentials.class))).thenReturn(mockSession);
         testObj.getSession(mockRequest);
         verify(mockRepo).login(any(ServletCredentials.class));
     }
@@ -87,6 +89,7 @@ public class SessionFactoryTest {
         when(mockRequest.getUserPrincipal()).thenReturn(mockUser);
         final HttpServletRequest mockRequest = mock(HttpServletRequest.class);
         when(mockRequest.getPathInfo()).thenReturn("/some/path");
+        when(mockRepo.login(any(Credentials.class))).thenReturn(mockSession);
         testObj.getSession(mockRequest);
         verify(mockRepo).login(any(Credentials.class));
     }
@@ -103,6 +106,7 @@ public class SessionFactoryTest {
                                              RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn(
                 "/workspace:some-workspace/some/path");
+        when(mockRepo.login(any(Credentials.class), any(String.class))).thenReturn(mockSession);
         testObj.getSession(mockRequest);
         verify(mockRepo).login(any(ServletCredentials.class), eq("some-workspace"));
     }
@@ -113,7 +117,8 @@ public class SessionFactoryTest {
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
         final Session session = testObj.getSession(mockRequest);
-        assertEquals(mockTx.getSession(), session);
+        assertEquals(mockTx.getSession(),
+                ((LockReleasingSession) Proxy.getInvocationHandler(session)).getWrappedSession());
     }
 
     @Test
@@ -124,6 +129,7 @@ public class SessionFactoryTest {
         when(mockRequest.getUserPrincipal()).thenReturn(mockUser);
         when(mockRequest.getPathInfo()).thenReturn(
                 "/workspace:some-workspace/some/path");
+        when(mockRepo.login(any(Credentials.class), any(String.class))).thenReturn(mockSession);
         testObj.getSession(mockRequest);
         verify(mockRepo).login(any(Credentials.class), eq("some-workspace"));
     }
@@ -140,7 +146,7 @@ public class SessionFactoryTest {
         when(mockTxService.getTransaction("123")).thenReturn(mockTx);
 
         final Session session = testObj.getSession(mockRequest);
-        assertEquals(txSession, session);
+        assertEquals(txSession, ((LockReleasingSession) Proxy.getInvocationHandler(session)).getWrappedSession());
         verify(mockTx).getSession();
     }
 

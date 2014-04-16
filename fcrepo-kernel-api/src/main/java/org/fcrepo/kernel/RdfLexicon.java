@@ -164,6 +164,14 @@ public final class RdfLexicon {
             SEARCH_HAS_TOTAL_RESULTS, SEARCH_ITEMS_PER_PAGE, SEARCH_OFFSET,
             SEARCH_OFFSET, SEARCH_TERMS, SEARCH_HAS_MORE);
 
+    // Locks
+    public static final Property LOCKS
+        = createProperty(REPOSITORY_NAMESPACE + "locks");
+    public static final Property HAS_LOCK_TOKEN
+        = createProperty(REPOSITORY_NAMESPACE + "hasLockToken");
+    public static final Property IS_DEEP
+        = createProperty(REPOSITORY_NAMESPACE + "isDeep");
+
     // Linked Data Platform
     public static final Property PAGE =
         createProperty(LDP_NAMESPACE + "Page");

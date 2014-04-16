@@ -47,6 +47,8 @@ public interface FedoraJcrTypes {
 
     String FCR_VERSIONS = "fcr:versions";
 
+    String FCR_LOCK = "fcr:lock";
+
     String ROOT = "mode:root";
 
     String FROZEN_NODE = "nt:frozenNode";
