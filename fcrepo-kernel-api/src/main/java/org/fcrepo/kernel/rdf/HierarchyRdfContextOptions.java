@@ -22,20 +22,21 @@ package org.fcrepo.kernel.rdf;
  */
 public class HierarchyRdfContextOptions {
     public static final HierarchyRdfContextOptions DEFAULT = HierarchyRdfContextOptions.defaultOptions();
+    public static final int DEFAULT_LIMIT = -1;
+    public static final int DEFAULT_OFFSET = -1;
+    public static final boolean DEFAULT_MEMBERSHIP = true;
+    public static final boolean DEFAULT_CONTAINMENT = true;
 
-    public int limit;
-    public int offset;
-    public boolean membership;
-    public boolean containment;
+    final private int limit;
+    final private int offset;
+    final private boolean membership;
+    final private boolean containment;
 
     /**
      * Options with the default values
      */
     public HierarchyRdfContextOptions() {
-        this.limit = -1;
-        this.offset = -1;
-        membership = true;
-        containment = true;
+        this(DEFAULT_LIMIT, DEFAULT_OFFSET);
     }
 
     /**
@@ -43,10 +44,25 @@ public class HierarchyRdfContextOptions {
      * @param limit
      * @param offset
      */
-    public HierarchyRdfContextOptions(int limit, int offset) {
-        this();
+    public HierarchyRdfContextOptions(final int limit, final int offset) {
+        this(limit, offset, DEFAULT_MEMBERSHIP, DEFAULT_CONTAINMENT);
+    }
+
+    /**
+     * Set the full range of hierarchy options
+     * @param limit number of hierarchy nodes to display
+     * @param offset pagination offset
+     * @param membership include membership triples
+     * @param containment include containment triples
+     */
+    public HierarchyRdfContextOptions(final int limit,
+                                      final int offset,
+                                      final boolean membership,
+                                      final boolean containment) {
         this.limit = limit;
         this.offset = offset;
+        this.membership = membership;
+        this.containment = containment;
     }
 
 

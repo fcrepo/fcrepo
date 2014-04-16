@@ -232,16 +232,19 @@ public class FedoraNodes extends AbstractResource {
 
             List<String> appliedIncludes = new ArrayList<>();
 
-            final HierarchyRdfContextOptions hierarchyRdfContextOptions = new HierarchyRdfContextOptions(limit, offset);
-            hierarchyRdfContextOptions.containment =
+            final boolean membership =
+                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
+                     contains(includes, LDP_NAMESPACE + "PreferMembership"))
+                    && !contains(omits, LDP_NAMESPACE + "PreferMembership");
+
+            final boolean containment =
                 (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
                      contains(includes, LDP_NAMESPACE + "PreferContainment"))
                     && !contains(omits, LDP_NAMESPACE + "PreferContainment");
 
-            hierarchyRdfContextOptions.membership =
-                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
-                     contains(includes, LDP_NAMESPACE + "PreferMembership"))
-                    && !contains(omits, LDP_NAMESPACE + "PreferMembership");
+
+            final HierarchyRdfContextOptions hierarchyRdfContextOptions
+                = new HierarchyRdfContextOptions(limit, offset, membership, containment);
 
             if (hierarchyRdfContextOptions.membershipEnabled()) {
                 appliedIncludes.add(LDP_NAMESPACE + "PreferMembership");
