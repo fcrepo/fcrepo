@@ -20,6 +20,7 @@ import static com.google.common.base.Throwables.getStackTraceAsString;
 import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.jcr.lock.LockException;
 import javax.jcr.security.AccessControlException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -63,6 +64,11 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
         if (AccessControlException.class.isAssignableFrom(e.getClass())) {
             return new AccessControlExceptionMapper()
                     .toResponse((AccessControlException) e);
+        }
+
+        if (e.getCause() instanceof LockException) {
+            return new LockExceptionMapper()
+                    .toResponse((LockException) e.getCause());
         }
 
         if (e.getCause() instanceof TransactionMissingException) {
