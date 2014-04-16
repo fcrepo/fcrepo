@@ -25,7 +25,6 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import javax.servlet.http.HttpServletResponse;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -91,7 +90,6 @@ public class FedoraContent extends ContentExposingResource {
             @HeaderParam("Content-Disposition") final String contentDisposition,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Type") final MediaType requestContentType,
-            @Context final HttpServletResponse servletResponse,
                     final InputStream requestBodyStream)
         throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
         final MediaType contentType =
@@ -156,13 +154,13 @@ public class FedoraContent extends ContentExposingResource {
             session.save();
             versionService.nodeUpdated(datastreamNode);
 
+            final ResponseBuilder builder = created(new URI(subjects.getSubject(
+                    datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()));
             if ( datastreamNode.hasProperty(JCR_LASTMODIFIED) ) {
-                final long modified = datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis();
-                servletResponse.setDateHeader("Last-Modified", modified);
+                builder.lastModified(datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTime());
             }
 
-            return created(new URI(subjects.getSubject(datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()))
-                    .build();
+            return builder.build();
 
         } finally {
             session.logout();
@@ -186,8 +184,7 @@ public class FedoraContent extends ContentExposingResource {
                                   @HeaderParam("Content-Disposition") final String contentDisposition,
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
                                   final InputStream requestBodyStream,
-                                  @Context final Request request,
-                                  @Context final HttpServletResponse servletResponse)
+                                  @Context final Request request)
         throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
 
         try {
@@ -242,24 +239,24 @@ public class FedoraContent extends ContentExposingResource {
             session.save();
             versionService.nodeUpdated(datastreamNode);
 
-            if (datastreamNode.hasProperty(JCR_LASTMODIFIED)) {
-                final long modified = datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis();
-                servletResponse.setDateHeader("Last-Modified", modified);
-            }
+            ResponseBuilder builder = null;
             if (isNew) {
                 final HttpIdentifierTranslator subjects =
                         new HttpIdentifierTranslator(session, FedoraNodes.class,
                                 uriInfo);
 
-                return created(
-                        new URI(subjects.getSubject(datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()))
-                        .build();
+                builder = created(new URI(subjects.getSubject(
+                        datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()));
+            } else {
+                builder = noContent();
             }
-            return noContent().build();
+            if (datastreamNode.hasProperty(JCR_LASTMODIFIED)) {
+                builder.lastModified(datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTime());
+            }
+            return builder.build();
         } finally {
             session.logout();
         }
-
     }
 
     /**
