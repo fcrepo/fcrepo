@@ -169,8 +169,6 @@ public final class RdfLexicon {
         createProperty(LDP_NAMESPACE + "firstPage");
     public static final Property NEXT_PAGE =
             createProperty(LDP_NAMESPACE + "nextPage");
-    public static final Property MEMBERS_INLINED =
-            createProperty(LDP_NAMESPACE + "membersInlined");
     public static final Resource CONTAINER =
             createResource(LDP_NAMESPACE + "Container");
     public static final Resource DIRECT_CONTAINER =
@@ -179,12 +177,12 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "membershipResource");
     public static final Property HAS_MEMBER_RELATION =
             createProperty(LDP_NAMESPACE + "hasMemberRelation");
-    public static final Property INLINED_RESOURCE =
-        createProperty(LDP_NAMESPACE + "inlinedResource");
+    public static final Property CONTAINS =
+        createProperty(LDP_NAMESPACE + "contains");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
-            FIRST_PAGE, NEXT_PAGE, MEMBERS_INLINED, MEMBERSHIP_RESOURCE,
-            HAS_MEMBER_RELATION, INLINED_RESOURCE);
+            FIRST_PAGE, NEXT_PAGE, MEMBERSHIP_RESOURCE,
+            HAS_MEMBER_RELATION, CONTAINS);
     public static final Set<Resource> ldpResources = of(CONTAINER,
             DIRECT_CONTAINER);
 
