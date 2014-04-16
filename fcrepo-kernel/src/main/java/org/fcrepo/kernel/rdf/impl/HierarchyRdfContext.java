@@ -18,20 +18,15 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static java.lang.Boolean.TRUE;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
-import static org.fcrepo.kernel.RdfLexicon.INLINED_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERS_INLINED;
-import static org.fcrepo.kernel.RdfLexicon.PAGE;
-import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -40,10 +35,12 @@ import java.util.Iterator;
 
 import javax.jcr.RepositoryException;
 
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
@@ -62,47 +59,50 @@ import com.hp.hpl.jena.graph.Triple;
 public class HierarchyRdfContext extends NodeRdfContext {
 
     private static final Logger LOGGER = getLogger(HierarchyRdfContext.class);
+    private final HierarchyRdfContextOptions options;
 
 
     /**
      * Default constructor.
      *
+     *
+     *
      * @param node
      * @param graphSubjects
+     * @param options
      * @throws RepositoryException
      */
     public HierarchyRdfContext(final javax.jcr.Node node,
-            final IdentifierTranslator graphSubjects,
-            final LowLevelStorageService lowLevelStorageService)
+                               final IdentifierTranslator graphSubjects,
+                               final LowLevelStorageService lowLevelStorageService,
+                               final HierarchyRdfContextOptions options)
         throws RepositoryException {
 
         super(node, graphSubjects, lowLevelStorageService);
-        if (node.getDepth() > 0) {
-            LOGGER.trace("Determined that this node has a parent.");
-            concat(parentContext());
-        }
-        final Node pageContext = graphSubjects.getContext().asNode();
-        concat(new Triple[] {
-                create(pageContext, type.asNode(), PAGE.asNode()),
-                create(pageContext, PAGE_OF.asNode(), subject())});
+        this.options = options;
 
         if (JcrRdfTools.isContainer(node)) {
             LOGGER.trace("Determined that this node is a container.");
-            concat(containerContext(pageContext));
+            concat(containerContext());
         } else {
             LOGGER.trace("Determined that this node is not a container.");
         }
 
-        if (node.hasNodes()) {
-            LOGGER.trace("Found children of this node.");
-            concat(childrenContext(pageContext));
+        if (options.membershipEnabled() || options.containmentEnabled()) {
+            if (node.getDepth() > 0) {
+                LOGGER.trace("Determined that this node has a parent.");
+                concat(parentContext());
+            }
+
+            if (node.hasNodes()) {
+                LOGGER.trace("Found children of this node.");
+                concat(childrenContext());
+            }
         }
     }
 
-    private Triple[] containerContext(final Node pageContext) {
+    private Triple[] containerContext() {
         return new Triple[] {
-                create(pageContext, MEMBERS_INLINED.asNode(),
-                        createLiteral(TRUE.toString())),
                 create(subject(), type.asNode(), CONTAINER.asNode()),
                 create(subject(), type.asNode(), DIRECT_CONTAINER.asNode()),
                 create(subject(), MEMBERSHIP_RESOURCE.asNode(), subject()),
@@ -113,31 +113,43 @@ public class HierarchyRdfContext extends NodeRdfContext {
     private Iterator<Triple> parentContext() throws RepositoryException {
         final javax.jcr.Node parentNode = node().getParent();
         final Node parentNodeSubject = graphSubjects().getSubject(parentNode.getPath()).asNode();
-        return new PropertiesRdfContext(parentNode, graphSubjects(), lowLevelStorageService())
-                .concat(new Triple[] {
-                                create(subject(), HAS_PARENT.asNode(),
-                                        parentNodeSubject),
-                                create(parentNodeSubject, HAS_CHILD.asNode(),
-                                        subject()),
-                                create(graphSubjects().getContext().asNode(),
-                                        INLINED_RESOURCE.asNode(),
-                                        parentNodeSubject)
 
-                });
+        final RdfStream parentStream = new RdfStream();
 
+        if (options.membershipEnabled()) {
+            parentStream.concat(create(subject(), HAS_PARENT.asNode(), parentNodeSubject),
+                                create(parentNodeSubject, HAS_CHILD.asNode(), subject()));
+        }
+
+        if (options.containmentEnabled()) {
+            parentStream.concat(new PropertiesRdfContext(parentNode, graphSubjects(), lowLevelStorageService()));
+        }
+
+        return parentStream;
     }
 
-    private Iterator<Triple> childrenContext(final Node pageContext) throws RepositoryException {
+    private Iterator<Triple> childrenContext() throws RepositoryException {
 
         final Iterator<javax.jcr.Node> niceChildren =
             Iterators.filter(new NodeIterator(node().getNodes()), not(nastyChildren));
 
-        return Iterators.concat(
-                Iterators.transform(niceChildren, child2triples(pageContext)));
+        final Iterator<javax.jcr.Node> salientChildren;
+
+        if (options.hasOffset()) {
+            int offset = options.getOffset();
+            Iterators.advance(niceChildren, offset);
+        }
+
+        if (options.hasLimit()) {
+            salientChildren = Iterators.limit(niceChildren, options.getLimit());
+        } else {
+            salientChildren = niceChildren;
+        }
+
+        return Iterators.concat(Iterators.transform(salientChildren, child2triples()));
     }
 
-    private Function<javax.jcr.Node, Iterator<Triple>> child2triples(
-            final Node pageContext) {
+    private Function<javax.jcr.Node, Iterator<Triple>> child2triples() {
         return new Function<javax.jcr.Node, Iterator<Triple>>() {
 
             @Override
@@ -145,14 +157,22 @@ public class HierarchyRdfContext extends NodeRdfContext {
                 try {
                     final Node childSubject = graphSubjects().getSubject(child.getPath()).asNode();
                     LOGGER.trace("Creating triples for child node: {}", child);
-                    return new PropertiesRdfContext(child, graphSubjects(),
-                        lowLevelStorageService()).concat(new Triple[] {
-                            create(pageContext, INLINED_RESOURCE.asNode(),
-                                    childSubject),
-                            create(childSubject, HAS_PARENT.asNode(),
-                                    subject()),
-                            create(subject(), HAS_CHILD.asNode(),
-                                    childSubject)});
+                    final RdfStream childStream = new RdfStream();
+
+
+                    if (options.membershipEnabled()) {
+                        childStream.concat(create(childSubject, HAS_PARENT.asNode(), subject()),
+                                           create(subject(), HAS_CHILD.asNode(), childSubject));
+                    }
+
+                    if (options.containmentEnabled()) {
+                        childStream.concat(
+                            new PropertiesRdfContext(child, graphSubjects(), lowLevelStorageService())
+                        );
+                        childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
+                    }
+
+                    return childStream;
                 } catch (final RepositoryException e) {
                     throw propagate(e);
                 }

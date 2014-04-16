@@ -44,8 +44,12 @@ import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
@@ -75,6 +79,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 import javax.ws.rs.core.Variant;
 
@@ -97,6 +102,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
@@ -107,6 +113,7 @@ import org.xml.sax.SAXParseException;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -389,8 +396,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final Model model = createModelForGraph(results.getDefaultGraph());
 
         final Resource nodeUri = createResource(serverAddress + pid);
-        assertTrue("Didn't find inlined resources!", model.contains(nodeUri,
-                createProperty(LDP_NAMESPACE + "inlinedResource")));
 
         assertTrue("Didn't find an expected triple!", model.contains(nodeUri,
                 createProperty(REPOSITORY_NAMESPACE + "mixinTypes"),
@@ -439,9 +444,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
-        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Container");
         verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "DirectContainer");
-        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "Page");
         verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
@@ -500,10 +503,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetObjectGraphNonMemberProperties() throws Exception {
-        createObject("FedoraDescribeTestGraph");
+    public void testGetObjectGraphMinimal() throws Exception {
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
+        createObject(pid + "/a");
         final HttpGet getObjMethod =
-            new HttpGet(serverAddress + "FedoraDescribeTestGraph?non-member-properties");
+            new HttpGet(serverAddress + pid);
+        getObjMethod.addHeader("Prefer", "return=minimal");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
@@ -513,12 +519,76 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("Retrieved object graph:\n" + content);
 
         assertFalse(
-                "Didn't expect inlined resources",
+                "Didn't expect member resources",
                 compile(
                         "<"
                                 + serverAddress
-                                + "FedoraDescribeTestGraph> <" + LDP_NAMESPACE + "inlinedResource>",
+                                + pid + "> <" + HAS_CHILD + ">",
                         DOTALL).matcher(content).find());
+
+        assertFalse("Didn't expect contained member resources",
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + CONTAINS + ">",
+                                  DOTALL).matcher(content).find());
+    }
+
+    @Test
+    public void testGetObjectOmitMembership() throws Exception {
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
+        createObject(pid + "/a");
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + pid);
+        getObjMethod.addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                                             .getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        logger.debug("Retrieved object graph:\n" + content);
+
+        assertFalse(
+                       "Didn't expect inlined member resources",
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + HAS_CHILD + ">",
+                                  DOTALL).matcher(content).find());
+
+    }
+
+    @Test
+    public void testGetObjectOmitContainment() throws Exception {
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
+        createObject(pid + "/a");
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + pid);
+        getObjMethod.addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment\"");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+        final HttpResponse response = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine()
+                                             .getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        logger.debug("Retrieved object graph:\n" + content);
+
+        assertTrue("Didn't find member resources",
+                      compile(
+                                 "<"
+                                     + serverAddress
+                                     + pid + "> <" + HAS_CHILD + ">",
+                                 DOTALL).matcher(content).find());
+
+        assertFalse("Didn't expect contained member resources",
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + CONTAINS + ">",
+                                  DOTALL).matcher(content).find());
 
     }
 
@@ -700,27 +770,72 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("waiting on MODE-1998")
     public void testRoundTripReplaceGraph() throws Exception {
-        createObject("FedoraRoundTripGraph");
 
-        final String subjectURI =
-            serverAddress + "FedoraRoundTripGraph";
+        final String pid = UUID.randomUUID().toString();
+        final String subjectURI = serverAddress + pid;
+
+        createObject(pid);
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
-        getObjMethod.addHeader("Accept", "application/n3");
+        getObjMethod.addHeader("Accept", "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
 
-        final HttpPut replaceMethod = new HttpPut(subjectURI);
-        replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
-        e.setContent(getResponse.getEntity().getContent());
+
+        final Model model = createDefaultModel();
+        model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
+
+        try (final StringWriter w = new StringWriter()) {
+            model.write(w, "TURTLE");
+            e.setContent(new ByteArrayInputStream(w.toString().getBytes()));
+            logger.trace("Retrieved object graph for testRoundTripReplaceGraph():\n {}",
+                            w);
+        }
+
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "text/turtle");
+
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(204, response.getStatusLine().getStatusCode());
 
     }
 
+    @Test
+    public void testRoundTripReplaceGraphForDatastream() throws Exception {
+
+        final String pid = UUID.randomUUID().toString();
+        final String subjectURI = serverAddress + pid + "/ds1";
+
+        createDatastream(pid, "ds1", "some-content");
+
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
+        getObjMethod.addHeader("Accept", "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=minimal");
+        final HttpResponse getResponse = client.execute(getObjMethod);
+
+        final BasicHttpEntity e = new BasicHttpEntity();
+
+        final Model model = createDefaultModel();
+        model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
+
+        try (final StringWriter w = new StringWriter()) {
+            model.write(w, "TURTLE");
+            e.setContent(new ByteArrayInputStream(w.toString().getBytes()));
+            logger.trace("Retrieved object graph for testRoundTripReplaceGraphForDatastream():\n {}",
+                            w);
+        }
+
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "text/turtle");
+
+        replaceMethod.setEntity(e);
+        final HttpResponse response = client.execute(replaceMethod);
+        assertEquals(204, response.getStatusLine().getStatusCode());
+
+    }
     @Test
     public void testDescribeSize() throws Exception {
 
@@ -1150,6 +1265,87 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpGet originalGet = new HttpGet(serverAddress + "files/" + pid);
         final HttpResponse originalResult = client.execute(originalGet);
         assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testPaging() throws Exception {
+        // create a node with 4 children
+        final String pid = randomUUID().toString();
+        final Node parent = createResource(serverAddress + pid).asNode();
+        final HttpResponse response = createObject(pid);
+        createObject(pid + "/child1");
+        createObject(pid + "/child2");
+        createObject(pid + "/child3");
+        createObject(pid + "/child4");
+
+        // get first page
+        final HttpGet firstGet = new HttpGet(serverAddress + pid + "?limit=2");
+        final HttpResponse firstResponse = execute(firstGet);
+        final GraphStore firstGraph = getGraphStore(firstResponse);
+
+        // count children in response graph
+        int firstChildCount = 0;
+        for ( Iterator it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); firstChildCount++ ) {
+            logger.debug( "Found child: {}", it.next() );
+        }
+        assertEquals("Should have two children!", 2, firstChildCount);
+
+        // collect link headers
+        final Collection<String> firstLinks =
+            map(firstResponse.getHeaders("Link"), new Function<Header, String>() {
+
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+
+        // it should have a first page link
+        assertTrue("Didn't find first page header!", firstLinks.contains(serverAddress + pid
+                + "?limit=2&amp;offset=0;rel=\"first\""));
+        assertTrue("Didn't find first page triple!", firstGraph.contains(ANY, ANY, FIRST_PAGE.asNode(),
+                createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
+
+        // it should have a next page link
+        assertTrue("Didn't find next page header!", firstLinks.contains(serverAddress + pid
+                + "?limit=2&amp;offset=2;rel=\"next\""));
+        assertTrue("Didn't find next page triple!", firstGraph.contains(ANY, ANY, NEXT_PAGE.asNode(),
+                createResource(serverAddress + pid + "?limit=2&amp;offset=2").asNode()));
+
+
+        // get second page
+        final HttpGet nextGet = new HttpGet(serverAddress + pid + "?limit=2&offset=2");
+        final HttpResponse nextResponse = execute(nextGet);
+        final GraphStore nextGraph = getGraphStore(nextResponse);
+
+        // it should have two inlined resources
+        int nextChildCount = 0;
+        for ( Iterator it = nextGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); nextChildCount++ ) {
+            logger.debug( "Found child: {}", it.next() );
+        }
+        assertEquals("Should have two children!", 2, nextChildCount);
+
+        // collect link headers
+        final Collection<String> nextLinks =
+            map(nextResponse.getHeaders("Link"), new Function<Header, String>() {
+
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+
+        // it should have a first page link
+        assertTrue("Didn't find first page header!", nextLinks.contains(serverAddress + pid
+                + "?limit=2&amp;offset=0;rel=\"first\""));
+        assertTrue("Didn't find first page triple!", nextGraph.contains(ANY, ANY, FIRST_PAGE.asNode(),
+                createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
+
+        // it should not have a next page link
+        for ( String link : nextLinks ) {
+            assertFalse("Should not have next page header!", link.contains("rel=\"next\""));
+        }
+        assertFalse("Should not have next page triple!", nextGraph.contains(ANY, ANY, NEXT_PAGE.asNode(), ANY));
     }
 
 }

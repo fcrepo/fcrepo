@@ -24,6 +24,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -133,7 +134,8 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects)
+    RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
+                                  final HierarchyRdfContextOptions serializationOptions)
         throws RepositoryException;
 
     /**
