@@ -171,10 +171,10 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "nextPage");
     public static final Property MEMBERS_INLINED =
             createProperty(LDP_NAMESPACE + "membersInlined");
-    public static final Property CONTAINER =
-            createProperty(LDP_NAMESPACE + "Container");
-    public static final Property DIRECT_CONTAINER =
-            createProperty(LDP_NAMESPACE + "DirectContainer");
+    public static final Resource CONTAINER =
+            createResource(LDP_NAMESPACE + "Container");
+    public static final Resource DIRECT_CONTAINER =
+            createResource(LDP_NAMESPACE + "DirectContainer");
     public static final Property MEMBERSHIP_RESOURCE =
             createProperty(LDP_NAMESPACE + "membershipResource");
     public static final Property HAS_MEMBER_RELATION =
@@ -183,8 +183,10 @@ public final class RdfLexicon {
         createProperty(LDP_NAMESPACE + "inlinedResource");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
-            FIRST_PAGE, NEXT_PAGE, MEMBERS_INLINED, CONTAINER,
-            MEMBERSHIP_RESOURCE, HAS_MEMBER_RELATION, INLINED_RESOURCE);
+            FIRST_PAGE, NEXT_PAGE, MEMBERS_INLINED, MEMBERSHIP_RESOURCE,
+            HAS_MEMBER_RELATION, INLINED_RESOURCE);
+    public static final Set<Resource> ldpResources = of(CONTAINER,
+            DIRECT_CONTAINER);
 
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
