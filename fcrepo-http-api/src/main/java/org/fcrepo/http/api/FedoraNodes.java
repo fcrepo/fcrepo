@@ -728,10 +728,11 @@ public class FedoraNodes extends AbstractResource {
                             @Context final HttpServletResponse servletResponse)
         throws RepositoryException {
         servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");
-        final String patchTypes = contentTypeSPARQLUpdate + "," + TURTLE + "," + N3 + ","
-                + N3_ALT1 + "," + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;
-        servletResponse.addHeader("Accept-Patch", patchTypes);
-        servletResponse.addHeader("Accept-Post", patchTypes + "," + MediaType.MULTIPART_FORM_DATA);
+        final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT1 + ","
+                + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;
+        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
+                + "," + contentTypeSPARQLUpdate);
         return status(OK).build();
     }
 

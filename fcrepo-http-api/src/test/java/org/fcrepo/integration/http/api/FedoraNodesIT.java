@@ -24,6 +24,13 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
@@ -916,32 +923,26 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
 
         final List<String> methods = headerValues(optionsResponse,"Allow");
-        assertTrue("Should allow GET", methods.contains("GET"));
-        assertTrue("Should allow POST", methods.contains("POST"));
-        assertTrue("Should allow PUT", methods.contains("PUT"));
-        assertTrue("Should allow PATCH", methods.contains("PATCH"));
-        assertTrue("Should allow DELETE", methods.contains("DELETE"));
-        assertTrue("Should allow OPTIONS", methods.contains("OPTIONS"));
-        assertTrue("Should allow MOVE", methods.contains("MOVE"));
-        assertTrue("Should allow COPY", methods.contains("COPY"));
+        assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
+        assertTrue("Should allow POST", methods.contains(HttpPost.METHOD_NAME));
+        assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
+        assertTrue("Should allow PATCH", methods.contains(HttpPatch.METHOD_NAME));
+        assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
+        assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
+        assertTrue("Should allow MOVE", methods.contains(HttpMove.METHOD_NAME));
+        assertTrue("Should allow COPY", methods.contains(HttpCopy.METHOD_NAME));
 
         final List<String> patchTypes = headerValues(optionsResponse,"Accept-Patch");
-        assertTrue("PATCH should support application/sparql-update", patchTypes.contains("application/sparql-update"));
-        assertTrue("PATCH should support text/turtle", patchTypes.contains("text/turtle"));
-        assertTrue("PATCH should support text/rdf+n3", patchTypes.contains("text/rdf+n3"));
-        assertTrue("PATCH should support application/n3", patchTypes.contains("application/n3"));
-        assertTrue("PATCH should support text/n3", patchTypes.contains("text/n3"));
-        assertTrue("PATCH should support application/rdf+xml", patchTypes.contains("application/rdf+xml"));
-        assertTrue("PATCH should support application/n-triples", patchTypes.contains("application/n-triples"));
+        assertTrue("PATCH should support application/sparql-update", patchTypes.contains(contentTypeSPARQLUpdate));
 
         final List<String> postTypes = headerValues(optionsResponse,"Accept-Post");
-        assertTrue("POST should support application/sparql-update", postTypes.contains("application/sparql-update"));
-        assertTrue("POST should support text/turtle", postTypes.contains("text/turtle"));
-        assertTrue("POST should support text/rdf+n3", postTypes.contains("text/rdf+n3"));
-        assertTrue("POST should support application/n3", postTypes.contains("application/n3"));
-        assertTrue("POST should support text/n3", postTypes.contains("text/n3"));
-        assertTrue("POST should support application/rdf+xml", postTypes.contains("application/rdf+xml"));
-        assertTrue("POST should support application/n-triples", postTypes.contains("application/n-triples"));
+        assertTrue("POST should support application/sparql-update", postTypes.contains(contentTypeSPARQLUpdate));
+        assertTrue("POST should support text/turtle", postTypes.contains(contentTypeTurtle));
+        assertTrue("POST should support text/rdf+n3", postTypes.contains(contentTypeN3));
+        assertTrue("POST should support application/n3", postTypes.contains(contentTypeN3Alt1));
+        assertTrue("POST should support text/n3", postTypes.contains(contentTypeN3Alt2));
+        assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
+        assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
     }
     private static List<String> headerValues( HttpResponse response,
