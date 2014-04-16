@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.modeshape.common.util.SecureHash.getHash;
 import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
 
@@ -46,6 +47,9 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
@@ -61,12 +65,9 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-
-
-
 /**
  * @author Andrew Woods
- *         Date: 2/3/14
+ * @since 2014-2-3
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -88,10 +89,26 @@ public class FedoraFileSystemConnectorIT {
 
     private final static String PROP_TEST_DIR = "fcrepo.test.dir";
 
+    /**
+     * Sets a system property and ensures artifacts from previous tests are
+     * cleaned up.
+     */
     @BeforeClass
     public static void beforeClass() {
+        final File testDir = new File("target/test-classes");
+        final WildcardFileFilter filter = new WildcardFileFilter("*.modeshape.json");
+        final Collection<File> files = FileUtils.listFiles(testDir, filter, TrueFileFilter.INSTANCE);
+        final Iterator<File> iterator = files.iterator();
+
+        // Clean up files persisted in previous runs
+        while (iterator.hasNext()) {
+            if (!iterator.next().delete()) {
+                fail("Unable to delete work files from a previous test run");
+            }
+        }
+
         // Note: This property is used in the repository.json
-        setProperty(PROP_TEST_DIR, new File("target/test-classes").getAbsolutePath());
+        setProperty(PROP_TEST_DIR, testDir.getAbsolutePath());
     }
 
     @AfterClass
@@ -163,9 +180,9 @@ public class FedoraFileSystemConnectorIT {
                 "fedora:name " +
                 "'some-test-name' }";
 
+
         // Write the properties
-        object.updatePropertiesDataset(new DefaultIdentifierTranslator(),
-                sparql);
+        object.updatePropertiesDataset(new DefaultIdentifierTranslator(), sparql);
 
         // Verify
         final Property property = object.getNode().getProperty("fedora:name");
@@ -214,9 +231,9 @@ public class FedoraFileSystemConnectorIT {
 
         // Verify
         boolean thrown = false;
-        try{
+        try {
             object.getNode().getProperty("fedora:remove");
-        } catch (final PathNotFoundException e){
+        } catch (final PathNotFoundException e) {
             thrown = true;
         }
         assertTrue("Exception expected - property should be missing", thrown);
@@ -231,16 +248,12 @@ public class FedoraFileSystemConnectorIT {
         final Node node = datastreamService.getDatastreamNode(session, testFile + "/jcr:content");
         assertNotNull(node);
 
-        final File file =
-            new File(getProperty(PROP_TEST_DIR), testFile.replace("federated",
-                    ""));
+        final File file = new File(getProperty(PROP_TEST_DIR), testFile.replace("federated", ""));
         final byte[] hash = getHash(SHA_1, file);
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results =
-            datastreamService
-                    .getFixity(node, calculatedChecksum, file.length());
+        final Collection<FixityResult> results = datastreamService.getFixity(node, calculatedChecksum, file.length());
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());
