@@ -270,7 +270,7 @@ public class FedoraContentTest {
         verify(mockSession, never()).save();
         final String actualContent =
             IOUtils.toString((InputStream) actual.getEntity());
-        assertEquals("http://localhost/fcrepo" + path + ";rel=\"meta\"", actual
+        assertEquals("http://localhost/fcrepo" + path + ";rel=\"describedby\"", actual
                 .getMetadata().getFirst("Link"));
         assertEquals("asdf", actualContent);
     }
