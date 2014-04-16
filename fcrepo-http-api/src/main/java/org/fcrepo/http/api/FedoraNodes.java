@@ -473,7 +473,9 @@ public class FedoraNodes extends AbstractResource {
         final HttpIdentifierTranslator idTranslator =
             new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
+        final boolean hasContent;
         if (nodeService.exists(session, path)) {
+            hasContent = nodeService.getObject(session,path).hasContent();
             String pid;
 
             if (slug != null) {
@@ -492,6 +494,7 @@ public class FedoraNodes extends AbstractResource {
             newObjectPath = path + "/" + pid;
         } else {
             newObjectPath = path;
+            hasContent = false;
         }
 
         LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
@@ -520,6 +523,10 @@ public class FedoraNodes extends AbstractResource {
                     if (s.equals(contentTypeSPARQLUpdate) || contentTypeToLang(s) != null) {
                         objectType = FEDORA_OBJECT;
                     } else {
+                        if ( hasContent ) {
+                            return status(SC_CONFLICT).entity(
+                                    path + " is an existing resource!").build();
+                        }
                         objectType = FEDORA_DATASTREAM;
                     }
                 } else {

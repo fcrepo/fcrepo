@@ -101,6 +101,11 @@ public class FedoraContent extends ContentExposingResource {
         final String path = toPath(pathList);
 
         if (nodeService.exists(session, path)) {
+            if ( nodeService.getObject(session, path).hasContent() ) {
+                return status(SC_CONFLICT)
+                           .entity(path + " is an existing resource!").build();
+            }
+
             final String pid;
 
             if (slug != null) {

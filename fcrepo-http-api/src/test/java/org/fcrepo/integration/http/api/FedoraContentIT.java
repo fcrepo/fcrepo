@@ -284,4 +284,32 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals("bytes 50-100/20", response.getFirstHeader("Content-Range").getValue());
 
     }
+ 
+    @Test
+    public void testPostToExistingDS() throws Exception {
+        final String pid = randomUUID().toString();
+        final HttpPost createObjMethod = postObjMethod(pid);
+        assertEquals(201, getStatus(createObjMethod));
+
+        final HttpPost postDSMethod = postDSMethod(pid, "ds1", "foo");
+        assertEquals("Posting should work!", 201, getStatus(postDSMethod));
+
+        final HttpPost repostDSMethod = postDSMethod(pid, "ds1", "bar");
+        assertEquals("Reposting should error!", 409, getStatus(repostDSMethod));
+    }
+
+    @Test
+    public void testPostToExistingDSIndirect() throws Exception {
+        final String pid = randomUUID().toString();
+
+        final HttpPost postDSMethod = new HttpPost(serverAddress + pid);
+        postDSMethod.setEntity(new StringEntity("foo", "UTF-8"));
+        postDSMethod.addHeader("Content-Type", "application/foo");
+        assertEquals(201, getStatus(postDSMethod));
+
+        final HttpPost repostDSMethod = new HttpPost(serverAddress + pid);
+        repostDSMethod.setEntity(new StringEntity("bar", "UTF-8"));
+        repostDSMethod.addHeader("Content-Type", "application/foo");
+        assertEquals(409, getStatus(repostDSMethod));
+    }
 }
