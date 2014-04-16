@@ -217,14 +217,17 @@ public class FedoraNodes extends AbstractResource {
                     createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
                                   .replaceQueryParam("limit", limit).build()
                                   .toString().replace("&", "&amp;"));
-                final Node nextPage =
-                    createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
+                rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
+                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
+
+                if ( resource.getNode().getNodes().getSize() > (offset + limit) ) {
+                    final Node nextPage =
+                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
                                   .replaceQueryParam("limit", limit).build()
                                   .toString().replace("&", "&amp;"));
-                rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage),
-                                    create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
-
-                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
+                    rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
+                    servletResponse.addHeader("Link", nextPage + ";rel=\"next\"");
+                }
             }
 
             List<String> appliedIncludes = new ArrayList<>();

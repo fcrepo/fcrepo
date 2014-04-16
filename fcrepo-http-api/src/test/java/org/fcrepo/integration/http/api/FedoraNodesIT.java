@@ -46,6 +46,8 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
@@ -109,6 +111,7 @@ import org.xml.sax.SAXParseException;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -1203,6 +1206,87 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpGet originalGet = new HttpGet(serverAddress + "files/" + pid);
         final HttpResponse originalResult = client.execute(originalGet);
         assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testPaging() throws Exception {
+        // create a node with 4 children
+        final String pid = randomUUID().toString();
+        final Node parent = createResource(serverAddress + pid).asNode();
+        final HttpResponse response = createObject(pid);
+        createObject(pid + "/child1");
+        createObject(pid + "/child2");
+        createObject(pid + "/child3");
+        createObject(pid + "/child4");
+
+        // get first page
+        final HttpGet firstGet = new HttpGet(serverAddress + pid + "?limit=2");
+        final HttpResponse firstResponse = execute(firstGet);
+        final GraphStore firstGraph = getGraphStore(firstResponse);
+
+        // count children in response graph
+        int firstChildCount = 0;
+        for ( Iterator it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); firstChildCount++ ) {
+            logger.debug( "Found child: {}", it.next() );
+        }
+        assertEquals("Should have two children!", 2, firstChildCount);
+
+        // collect link headers
+        final Collection<String> firstLinks =
+            map(firstResponse.getHeaders("Link"), new Function<Header, String>() {
+
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+
+        // it should have a first page link
+        assertTrue("Didn't find first page header!", firstLinks.contains(serverAddress + pid
+                + "?limit=2&amp;offset=0;rel=\"first\""));
+        assertTrue("Didn't find first page triple!", firstGraph.contains(ANY, ANY, FIRST_PAGE.asNode(),
+                createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
+
+        // it should have a next page link
+        assertTrue("Didn't find next page header!", firstLinks.contains(serverAddress + pid
+                + "?limit=2&amp;offset=2;rel=\"next\""));
+        assertTrue("Didn't find next page triple!", firstGraph.contains(ANY, ANY, NEXT_PAGE.asNode(),
+                createResource(serverAddress + pid + "?limit=2&amp;offset=2").asNode()));
+
+
+        // get second page
+        final HttpGet nextGet = new HttpGet(serverAddress + pid + "?limit=2&offset=2");
+        final HttpResponse nextResponse = execute(nextGet);
+        final GraphStore nextGraph = getGraphStore(nextResponse);
+
+        // it should have two inlined resources
+        int nextChildCount = 0;
+        for ( Iterator it = nextGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); nextChildCount++ ) {
+            logger.debug( "Found child: {}", it.next() );
+        }
+        assertEquals("Should have two children!", 2, nextChildCount);
+
+        // collect link headers
+        final Collection<String> nextLinks =
+            map(nextResponse.getHeaders("Link"), new Function<Header, String>() {
+
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
+
+        // it should have a first page link
+        assertTrue("Didn't find first page header!", nextLinks.contains(serverAddress + pid
+                + "?limit=2&amp;offset=0;rel=\"first\""));
+        assertTrue("Didn't find first page triple!", nextGraph.contains(ANY, ANY, FIRST_PAGE.asNode(),
+                createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
+
+        // it should not have a next page link
+        for ( String link : nextLinks ) {
+            assertFalse("Should not have next page header!", link.contains("rel=\"next\""));
+        }
+        assertFalse("Should not have next page triple!", nextGraph.contains(ANY, ANY, NEXT_PAGE.asNode(), ANY));
     }
 
 }
