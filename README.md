@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/futures/fcrepo4.png?branch=master)](https://travis-ci.org/futures/fcrepo4)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
-[Fedora Futures Wiki](https://wiki.duraspace.org/display/FF/Fedora+Futures+Home) | 
+[Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
 [Use cases](https://wiki.duraspace.org/display/FF/Use+Cases)
 
 Technical goals:
