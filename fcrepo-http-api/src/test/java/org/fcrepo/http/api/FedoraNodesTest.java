@@ -218,6 +218,9 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(path);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
+        when(mockNodes.getObject(mockSession,"/" + pid)).thenReturn(mockResource);
+        when(mockResource.hasContent()).thenReturn(false);
+
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
                                     null, null, getUriInfoImpl(), null);
@@ -240,6 +243,8 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(path);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
+        when(mockNodes.getObject(mockSession,"/" + pid)).thenReturn(mockResource);
+        when(mockResource.hasContent()).thenReturn(false);
 
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
