@@ -703,6 +703,20 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testFilteredLDPTypes() throws Exception {
+        String pid = randomUUID().toString();
+        createObject(pid);
+
+        HttpPut put = new HttpPut(serverAddress + pid);
+        put.addHeader("Content-Type", "text/rdf+n3");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+               "<> a <http://www.w3.org/ns/ldp#IndirectContainer>".getBytes()));
+        put.setEntity(e);
+        assertEquals(204, getStatus(put));
+    }
+
+    @Test
     public void testReplaceGraph() throws Exception {
         client.execute(postObjMethod("FedoraReplaceGraph"));
         final String subjectURI =

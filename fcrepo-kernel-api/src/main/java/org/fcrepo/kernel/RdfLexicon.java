@@ -71,10 +71,15 @@ public final class RdfLexicon {
         "http://www.loc.gov/premis/rdf/v1#";
 
     /**
+     * Linked Data Platform namespace.
+     */
+    public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
+
+    /**
      * The namespaces that the repository manages internally.
      */
     public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
-            REPOSITORY_NAMESPACE, JCR_NAMESPACE);
+            REPOSITORY_NAMESPACE, JCR_NAMESPACE, LDP_NAMESPACE);
 
     /**
      * Is this namespace one that the repository manages?
@@ -160,7 +165,6 @@ public final class RdfLexicon {
             SEARCH_OFFSET, SEARCH_TERMS, SEARCH_HAS_MORE);
 
     // Linked Data Platform
-    public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
     public static final Property PAGE =
         createProperty(LDP_NAMESPACE + "Page");
     public static final Property PAGE_OF =
