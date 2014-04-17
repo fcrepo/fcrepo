@@ -123,6 +123,9 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 
+import org.modeshape.jcr.cache.NodeKey;
+import org.modeshape.jcr.cache.ReferentialIntegrityException;
+
 /**
  * CRUD operations on Fedora Nodes
  */
@@ -676,6 +679,18 @@ public class FedoraNodes extends AbstractResource {
             nodeService.deleteObject(session, path);
             session.save();
             return noContent().build();
+        } catch (javax.jcr.ReferentialIntegrityException riex) {
+            StringBuffer msg = new StringBuffer("Unable to delete node because it is linked to "
+                    + "by other nodes: ");
+
+            // lookup paths of linking nodes
+            Throwable inner = riex.getCause();
+            if ( inner instanceof ReferentialIntegrityException) {
+                for ( NodeKey node : ((ReferentialIntegrityException)inner).getReferrers() ) {
+                    msg.append( " " + session.getNodeByIdentifier(node.getIdentifier()).getPath() );
+                }
+            }
+            return status(SC_PRECONDITION_FAILED).entity(msg.toString()).build();
         } finally {
             session.logout();
         }

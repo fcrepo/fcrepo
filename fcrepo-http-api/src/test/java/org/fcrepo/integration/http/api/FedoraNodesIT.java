@@ -867,9 +867,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
 
         assertEquals(CREATED.getStatusCode(),
-                getStatus(postObjMethod(sizeNode)));
+                     getStatus(postObjMethod(sizeNode)));
         assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(sizeNode,
-                "asdf", "1234")));
+                                                                     "asdf", "1234")));
 
         graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.trace("For testDescribeSize() new size retrieved repository graph:\n"
@@ -918,9 +918,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
                  (String) iterator.next().getObject().getLiteralValue();
 
         logger.debug("Old size was: " + oldSize + " and new size was: " +
-                newSize);
+                             newSize);
         assertTrue("No increment in count occurred when we expected one!",
-                Integer.parseInt(oldSize) < Integer.parseInt(newSize));
+                   Integer.parseInt(oldSize) < Integer.parseInt(newSize));
     }
 
     /**
@@ -1367,7 +1367,29 @@ public class FedoraNodesIT extends AbstractResourceIT {
         for ( String link : nextLinks ) {
             assertFalse("Should not have next page header!", link.contains("rel=\"next\""));
         }
-        assertFalse("Should not have next page triple!", nextGraph.contains(ANY, ANY, NEXT_PAGE.asNode(), ANY));
+        assertFalse("Should not have next pagiple!", nextGraph.contains(ANY, ANY, NEXT_PAGE.asNode(), ANY));
+    }
+    
+    @Test
+    @Ignore("Works in real life")
+    public void testLinkedDeletion() throws Exception {
+        createObject("linked-from");
+        createObject("linked-to");
+
+        String sparql = "insert data { <" + serverAddress + "linked-from> "
+                 + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " 
+                 + "<" + serverAddress + "linked-to> . }";
+        HttpPatch patch = new HttpPatch(serverAddress + "linked-from");
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        assertEquals("Couldn't link resources!", 204, getStatus(patch));
+
+        HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
+        assertEquals("Deleting linked-to should error!", 412, getStatus(delete));
+
+        HttpGet get = new HttpGet(serverAddress + "linked-from");
+        assertEquals("Linked to should still exist!", 200, getStatus(get));
     }
 
 }
