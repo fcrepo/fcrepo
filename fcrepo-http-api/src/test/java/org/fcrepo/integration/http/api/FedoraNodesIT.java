@@ -1152,4 +1152,25 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
     }
 
+    @Test
+    public void testLinkedDeletion() throws Exception {
+        createObject("linked-from?mixin=fedora:object");
+        createObject("linked-to?mixin=fedora:object");
+
+        String sparql = "insert data { <" + serverAddress + "linked-from> "
+                 + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " 
+                 + "<" + serverAddress + "linked-to> . }";
+        HttpPatch patch = new HttpPatch(serverAddress + "linked-from");
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        assertEquals("Couldn't link resources!", 204, getStatus(patch));
+
+        HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
+        assertEquals("Deleting linked-to should error!", 409, getStatus(delete));
+
+        HttpGet get = new HttpGet(serverAddress + "linked-from");
+        assertEquals("Linked to should still exist!", 200, getStatus(get));
+    }
+
 }
