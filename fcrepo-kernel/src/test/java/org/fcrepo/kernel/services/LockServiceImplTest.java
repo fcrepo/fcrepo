@@ -76,6 +76,7 @@ public class LockServiceImplTest {
         when(mockLockManager.getLock(ALREADY_LOCKED_PATH)).thenReturn(otherMockLock);
         when(mockLockManager.lock(LOCKABLE_PATH, false, false, TIMEOUT, USER)).thenReturn(mockLock);
         when(mockLockManager.lock(ALREADY_LOCKED_PATH, false, false, TIMEOUT, USER)).thenThrow(LockException.class);
+        when(mockLockManager.isLocked(ALREADY_LOCKED_PATH)).thenReturn(true);
         when(mockLock.isLockOwningSession()).thenReturn(true);
         when(mockLock.getLockToken()).thenReturn(LOCK_TOKEN);
         when(mockLock.isDeep()).thenReturn(false);
@@ -85,18 +86,19 @@ public class LockServiceImplTest {
 
     @Test
     public void testAcquireLock() throws RepositoryException {
-        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, LOCKABLE_PATH, false);
+        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, LOCKABLE_PATH, TIMEOUT, false);
         Assert.assertEquals(LOCK_TOKEN, lock.getLockToken());
         Assert.assertFalse(lock.isDeep());
     }
 
     @Test (expected = LockException.class)
     public void testAcquireLockFailure() throws RepositoryException {
-        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, ALREADY_LOCKED_PATH, false);
+        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, ALREADY_LOCKED_PATH, TIMEOUT, false);
     }
 
     @Test
     public void testGetOwnedLock() throws RepositoryException {
+        when(mockLockManager.isLocked(LOCKABLE_PATH)).thenReturn(true);
         final org.fcrepo.kernel.Lock lock = testObj.getLock(mockSession, LOCKABLE_PATH);
         Assert.assertEquals(LOCK_TOKEN, lock.getLockToken());
         Assert.assertFalse(lock.isDeep());
@@ -104,6 +106,7 @@ public class LockServiceImplTest {
 
     @Test
     public void testReleaseOwnedLock() throws RepositoryException {
+        when(mockLockManager.isLocked(LOCKABLE_PATH)).thenReturn(true);
         testObj.releaseLock(mockSession, LOCKABLE_PATH);
         verify(mockLockManager).unlock(LOCKABLE_PATH);
     }

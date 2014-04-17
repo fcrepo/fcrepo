@@ -28,6 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.UUID;
 
 import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
@@ -204,5 +205,28 @@ public abstract class AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
     }
+
+    /**
+     * Gets a random (but valid) pid for use in testing.  This pid
+     * is guaranteed to be unique within runs of this application.
+     */
+    protected static String getRandomUniquePid() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * Gets a random (but valid) property name for use in testing.
+     */
+    protected static String getRandomPropertyName() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * Gets a random (but valid) property value for use in testing.
+     */
+    protected static String getRandomPropertyValue() {
+        return UUID.randomUUID().toString();
+    }
+
 
 }

@@ -155,6 +155,7 @@ public class SessionFactory {
 
             final String lockToken = servletRequest.getHeader("Lock-Token");
             if (lockToken != null) {
+
                 session.getWorkspace().getLockManager().addLockToken(lockToken);
             }
 

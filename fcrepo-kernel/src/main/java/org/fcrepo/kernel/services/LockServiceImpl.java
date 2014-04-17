@@ -19,6 +19,7 @@ package org.fcrepo.kernel.services;
 import org.fcrepo.kernel.Lock;
 import org.springframework.stereotype.Component;
 
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.lock.LockException;
@@ -31,20 +32,27 @@ import javax.jcr.lock.LockManager;
 public class LockServiceImpl extends AbstractService implements LockService  {
 
     @Override
-    public Lock acquireLock(Session session, String path, boolean deep) throws RepositoryException {
+    public Lock acquireLock(Session session, String path, long timeout, boolean deep) throws RepositoryException {
         final LockManager lockManager = session.getWorkspace().getLockManager();
-        final Lock lock = new JCRLock(path, lockManager.lock(path, deep, false, 300, session.getUserID()));
+        final Lock lock = new JCRLock(path, lockManager.lock(path, deep, false, timeout, session.getUserID()));
         return lock;
     }
 
     @Override
     public Lock getLock(Session session, String path) throws RepositoryException {
-        return new JCRLock(path, session.getWorkspace().getLockManager().getLock(path));
+        final LockManager lockManager = session.getWorkspace().getLockManager();
+        if (!lockManager.isLocked(path)) {
+            throw new PathNotFoundException("No lock at path " + path + "!");
+        }
+        return new JCRLock(path, lockManager.getLock(path));
     }
 
     @Override
     public void releaseLock(Session session, String path) throws RepositoryException {
         final LockManager lockManager = session.getWorkspace().getLockManager();
+        if (!lockManager.isLocked(path)) {
+            throw new PathNotFoundException("No lock at path " + path + "!");
+        }
         if (!lockManager.getLock(path).isLockOwningSession()) {
             throw new LockException("Lock is not held by this session!");
         }

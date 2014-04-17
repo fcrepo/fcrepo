@@ -35,7 +35,7 @@ public interface LockService extends Service {
      * @return a Lock object that contains a lock token that will allow
      *         other sessions to access resources locked by this call.
      */
-    Lock acquireLock(Session session, String path, boolean deep) throws RepositoryException;
+    Lock acquireLock(Session session, String path, long timeout, boolean deep) throws RepositoryException;
 
     /**
      * Gets the lock at the given path.  The returned lock will only

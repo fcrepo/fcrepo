@@ -23,6 +23,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import java.util.regex.Pattern;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.status;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -38,6 +41,11 @@ public class LockExceptionMapper implements ExceptionMapper<LockException> {
     @Override
     public Response toResponse(LockException exception) {
         LOGGER.debug("LockExceptionMapper intercepted exception: \n", exception);
+        if (exception.getMessage() != null) {
+            if (Pattern.matches("^\\QThe lock token '\\E.*'\\Q is not valid\\E$", exception.getMessage())) {
+                return status(BAD_REQUEST).entity(exception.getMessage()).build();
+            }
+        }
         return status(CONFLICT).entity(exception.getMessage()).build();
     }
 }

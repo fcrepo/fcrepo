@@ -164,6 +164,8 @@ public final class RdfLexicon {
         = createProperty(REPOSITORY_NAMESPACE + "locks");
     public static final Property HAS_LOCK_TOKEN
         = createProperty(REPOSITORY_NAMESPACE + "hasLockToken");
+    public static final Property IS_DEEP
+        = createProperty(REPOSITORY_NAMESPACE + "isDeep");
 
     // Linked Data Platform
     public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
