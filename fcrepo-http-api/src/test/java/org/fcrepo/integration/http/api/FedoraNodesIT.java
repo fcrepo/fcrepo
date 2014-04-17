@@ -327,7 +327,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testGetRepositoryGraph() throws Exception {
         final HttpGet getObjMethod = new HttpGet(serverAddress);
         final GraphStore graphStore = getGraphStore(getObjMethod);
-        logger.debug("Retrieved repository graph:\n" + graphStore.toString());
+        logger.trace("Retrieved repository graph:\n" + graphStore.toString());
 
         assertTrue("expected to find the root node data", graphStore.contains(
                 ANY, ANY, HAS_PRIMARY_TYPE.asNode(), createLiteral(ROOT)));
@@ -344,7 +344,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Retrieved: {}", content);
+        logger.trace("Retrieved: {}", content);
     }
 
     @Test
@@ -476,7 +476,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         model.read(response.getEntity().getContent(), null);
         try (final Writer w = new StringWriter()) {
             model.write(w);
-            logger.debug(
+            logger.trace(
                     "Retrieved object graph for testGetObjectGraphWithChildren():\n {}",
                     w);
         }
@@ -516,7 +516,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                              .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
-        logger.debug("Retrieved object graph:\n" + content);
+        logger.trace("Retrieved object graph:\n" + content);
 
         assertFalse(
                 "Didn't expect member resources",
@@ -548,7 +548,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                              .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
-        logger.debug("Retrieved object graph:\n" + content);
+        logger.trace("Retrieved object graph:\n" + content);
 
         assertFalse(
                        "Didn't expect inlined member resources",
@@ -574,7 +574,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                              .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
-        logger.debug("Retrieved object graph:\n" + content);
+        logger.trace("Retrieved object graph:\n" + content);
 
         assertTrue("Didn't find member resources",
                       compile(
@@ -672,7 +672,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getResponse.getStatusLine()
                 .getStatusCode());
         final String content = EntityUtils.toString(getResponse.getEntity());
-        logger.debug("Retrieved object graph:\n" + content);
+        logger.trace("Retrieved object graph:\n" + content);
 
         assertFalse("Found a triple we thought we deleted.", compile(
                 "<" + subjectURI + "> <info:rubydora#label> \"asdfg\" \\.",
@@ -696,7 +696,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         if (response.getStatusLine().getStatusCode() != 403
                 && response.getEntity() != null) {
             final String content = EntityUtils.toString(response.getEntity());
-            logger.error("Got unexpected update response:\n" + content);
+            logger.trace("Got unexpected update response:\n" + content);
         }
         assertEquals(403, response.getStatusLine().getStatusCode());
 
@@ -727,7 +727,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         model.read(getResponse.getEntity().getContent(), null);
         try (final Writer w = new StringWriter()) {
             model.write(w);
-            logger.debug(
+            logger.trace(
                     "Retrieved object graph for testReplaceGraph():\n {}", w);
         }
         assertTrue("Didn't find a triple we tried to create!", model.contains(
@@ -760,7 +760,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         model.read(getResponse.getEntity().getContent(), null);
         try (final Writer w = new StringWriter()) {
             model.write(w);
-            logger.debug("Retrieved object graph for testCreateGraph():\n {}",
+            logger.trace("Retrieved object graph for testCreateGraph():\n {}",
                     w);
         }
         assertTrue("Didn't find a triple we tried to create!", model.contains(
@@ -797,7 +797,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String sizeNode = randomUUID().toString();
 
         GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + ""));
-        logger.debug("For testDescribeSize() first size retrieved repository graph:\n"
+        logger.trace("For testDescribeSize() first size retrieved repository graph:\n"
                 + graphStore.toString());
 
         Iterator<Triple> iterator =
@@ -813,7 +813,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 "asdf", "1234")));
 
         graphStore = getGraphStore(new HttpGet(serverAddress + ""));
-        logger.debug("For testDescribeSize() new size retrieved repository graph:\n"
+        logger.trace("For testDescribeSize() new size retrieved repository graph:\n"
                 + graphStore.toString());
 
         iterator =
@@ -822,7 +822,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final String newSize = (String) iterator.next().getObject().getLiteralValue();
 
-        logger.debug("Old size was: " + oldSize + " and new size was: "
+        logger.trace("Old size was: " + oldSize + " and new size was: "
                 + newSize);
         assertTrue("No increment in size occurred when we expected one!",
                 Integer.parseInt(oldSize) < Integer.parseInt(newSize));
@@ -832,7 +832,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testDescribeCount() throws Exception {
         logger.trace("Entering testDescribeCount()...");
         GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + ""));
-        logger.debug("For testDescribeCount() first count retrieved repository graph:\n"
+        logger.trace("For testDescribeCount() first count retrieved repository graph:\n"
                 + graphStore.toString());
 
         Iterator<Triple> iterator =
@@ -848,7 +848,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 countNode, "asdf", "1234")));
 
         graphStore = getGraphStore(new HttpGet(serverAddress + ""));
-        logger.debug("For testDescribeCount() first count repository graph:\n"
+        logger.trace("For testDescribeCount() first count repository graph:\n"
                 + graphStore.toString());
 
         iterator =
@@ -877,7 +877,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final Graph result = getGraphStore(method).getDefaultGraph();
 
         final String subjectURI = serverAddress + "files/FileSystem1";
-        logger.debug("For testGetProjectedNode() retrieved graph:\n"
+        logger.trace("For testGetProjectedNode() retrieved graph:\n"
                 + result.toString());
         assertTrue("Didn't find the first datastream! ", result.contains(
                 createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
@@ -1058,7 +1058,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Retrieved HTML view:\n" + content);
+        logger.trace("Retrieved HTML view:\n" + content);
 
         final HtmlParser htmlParser = new HtmlParser(ALLOW);
         htmlParser.setDoctypeExpectation(NO_DOCTYPE_ERRORS);
@@ -1069,7 +1069,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 new ByteArrayInputStream(content.getBytes())) {
             htmlParser.parse(new InputSource(htmlStream));
         }
-        logger.info("HTML found to be valid.");
+        logger.debug("HTML found to be valid.");
     }
     
     private void verifyResource(Model model, Resource nodeUri, Property rdfType, String namespace, String resource) {

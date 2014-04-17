@@ -43,16 +43,16 @@ public class NamespaceConverter extends InternalIdentifierConverter {
      */
     @Override
     protected String doForward(final String inputId) {
-        log.debug("Converting identifier {} from internal to external...", inputId);
+        log.trace("Converting identifier {} from internal to external...", inputId);
         String result = inputId;
         for (final String jcrNamespace : jcrNamespacesToRDFNamespaces.keySet()) {
-            log.debug("Replacing namespace: {} with: {}", jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
+            log.trace("Replacing namespace: {} with: {}", jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
             result = result.replace(jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
         }
         if (result.endsWith(JCR_CONTENT)) {
             result = result.replace(JCR_CONTENT, FCR_CONTENT);
         }
-        log.debug("Converted identifier {} from internal to external {}...", inputId, result);
+        log.trace("Converted identifier {} from internal to external {}...", inputId, result);
         return result;
     }
 
@@ -64,10 +64,10 @@ public class NamespaceConverter extends InternalIdentifierConverter {
      */
     @Override
     protected String doBackward(final String b) {
-        log.debug("Converting identifier from external to internal...");
+        log.trace("Converting identifier from external to internal...");
         String result = b;
         for (final String rdfNamespace : rdfNamespacesToJcrNamespaces.keySet()) {
-            log.debug("Replacing namespace: {} with: {}", rdfNamespace, rdfNamespacesToJcrNamespaces.get(rdfNamespace));
+            log.trace("Replacing namespace: {} with: {}", rdfNamespace, rdfNamespacesToJcrNamespaces.get(rdfNamespace));
             result = result.replace(rdfNamespace, rdfNamespacesToJcrNamespaces.get(rdfNamespace));
         }
         if (result.endsWith(FCR_CONTENT)) {

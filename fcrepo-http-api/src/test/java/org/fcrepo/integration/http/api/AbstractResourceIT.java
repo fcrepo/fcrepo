@@ -134,14 +134,14 @@ public abstract class AbstractResourceIT {
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                                              .getStatusCode());
         final GraphStore result = parseTriples(response.getEntity());
-        logger.debug("Retrieved RDF: {}", result);
+        logger.trace("Retrieved RDF: {}", result);
         return result;
 
     }
     protected GraphStore getGraphStore(final HttpResponse response) throws IOException {
         assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
         final GraphStore result = parseTriples(response.getEntity());
-        logger.debug("Retrieved RDF: {}", result);
+        logger.trace("Retrieved RDF: {}", result);
         return result;
     }
 

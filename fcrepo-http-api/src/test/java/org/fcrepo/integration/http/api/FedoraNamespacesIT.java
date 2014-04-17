@@ -43,7 +43,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         final HttpGet get = new HttpGet(serverAddress + "fcr:namespaces");
         final GraphStore graphStore = getGraphStore(get);
 
-        logger.debug("Got store {}", graphStore);
+        logger.trace("Got store {}", graphStore);
         assertTrue("expected to find nt property in response", graphStore
                 .contains(ANY, createResource("http://www.jcp.org/jcr/nt/1.0")
                         .asNode(), HAS_NAMESPACE_PREFIX.asNode(),
@@ -67,7 +67,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
 
         final GraphStore graphStore = getGraphStore(get);
 
-        logger.debug("Got store {}", graphStore);
+        logger.trace("Got store {}", graphStore);
         assertTrue("expected to find our new property in response", graphStore
                 .contains(ANY, createResource(
                         "http://example.com/namespace/abc").asNode(),
@@ -106,7 +106,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         final GraphStore graphStore =
             parseTriples(response.getEntity());
 
-        logger.debug("Got store {}", graphStore);
+        logger.trace("Got store {}", graphStore);
         assertTrue("expected to find our updated property in response",
                 graphStore.contains(ANY, createResource(
                         "http://example.com/namespace/abc").asNode(),
@@ -139,7 +139,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         final HttpGet get = new HttpGet(serverAddress + "fcr:namespaces");
         final GraphStore graphStore = getGraphStore(get);
 
-        logger.debug("Got store {}", graphStore);
+        logger.trace("Got store {}", graphStore);
         assertTrue("expected to find our updated property in response",
                 graphStore.contains(ANY, createResource(
                         "http://example.com/moved/to/abc").asNode(),
@@ -172,7 +172,7 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
         final HttpGet get = new HttpGet(serverAddress + "fcr:namespaces");
         final GraphStore graphStore = getGraphStore(get);
 
-        logger.debug("Got store {}", graphStore);
+        logger.trace("Got store {}", graphStore);
         assertFalse("should not find deleted property in response", graphStore
                 .contains(ANY, createResource(
                         "http://example.com/namespace/abc").asNode(),
