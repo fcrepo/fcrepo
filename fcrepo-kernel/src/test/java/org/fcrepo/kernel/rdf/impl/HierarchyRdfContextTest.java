@@ -83,8 +83,6 @@ public class HierarchyRdfContextTest {
         logRdf("Retrieved RDF for testParentTriples(): ", actual);
         assertTrue("Node doesn't have a parent!", actual.contains(testSubject,
                 HAS_PARENT, testParentSubject));
-        assertTrue("Node doesn't have a parent!", actual.contains(
-                testParentSubject, HAS_CHILD, testSubject));
     }
 
     @Test

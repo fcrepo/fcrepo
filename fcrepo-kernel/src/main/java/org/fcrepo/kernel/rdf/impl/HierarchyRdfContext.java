@@ -88,16 +88,14 @@ public class HierarchyRdfContext extends NodeRdfContext {
             LOGGER.trace("Determined that this node is not a container.");
         }
 
-        if (options.membershipEnabled() || options.containmentEnabled()) {
-            if (node.getDepth() > 0) {
-                LOGGER.trace("Determined that this node has a parent.");
-                concat(parentContext());
-            }
+        if (node.getDepth() > 0) {
+            LOGGER.trace("Determined that this node has a parent.");
+            concat(parentContext());
+        }
 
-            if (node.hasNodes()) {
-                LOGGER.trace("Found children of this node.");
-                concat(childrenContext());
-            }
+        if ((options.membershipEnabled() || options.containmentEnabled()) && node.hasNodes()) {
+            LOGGER.trace("Found children of this node.");
+            concat(childrenContext());
         }
     }
 
@@ -116,14 +114,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
 
         final RdfStream parentStream = new RdfStream();
 
-        if (options.membershipEnabled()) {
-            parentStream.concat(create(subject(), HAS_PARENT.asNode(), parentNodeSubject),
-                                create(parentNodeSubject, HAS_CHILD.asNode(), subject()));
-        }
-
-        if (options.containmentEnabled()) {
-            parentStream.concat(new PropertiesRdfContext(parentNode, graphSubjects(), lowLevelStorageService()));
-        }
+        parentStream.concat(create(subject(), HAS_PARENT.asNode(), parentNodeSubject));
 
         return parentStream;
     }
@@ -161,15 +152,16 @@ public class HierarchyRdfContext extends NodeRdfContext {
 
 
                     if (options.membershipEnabled()) {
-                        childStream.concat(create(childSubject, HAS_PARENT.asNode(), subject()),
-                                           create(subject(), HAS_CHILD.asNode(), childSubject));
+                        childStream.concat(create(subject(), HAS_CHILD.asNode(), childSubject));
                     }
 
                     if (options.containmentEnabled()) {
+
                         childStream.concat(
                             new PropertiesRdfContext(child, graphSubjects(), lowLevelStorageService())
                         );
-                        childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
+                        childStream.concat(create(childSubject, HAS_PARENT.asNode(), subject()),
+                                           create(subject(), CONTAINS.asNode(), childSubject));
                     }
 
                     return childStream;
