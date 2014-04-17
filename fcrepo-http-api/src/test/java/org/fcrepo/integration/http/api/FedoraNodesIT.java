@@ -1245,6 +1245,14 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
         assertEquals("Should have two children!", 2, firstChildCount);
 
+
+        // count children in response graph
+        int firstContainsCount = 0;
+        for ( Iterator it = firstGraph.find(ANY,parent,CONTAINS.asNode(),ANY); it.hasNext(); firstContainsCount++ ) {
+            logger.debug( "Found child: {}", it.next() );
+        }
+        assertEquals("Should have two children!", 2, firstContainsCount);
+
         // collect link headers
         final Collection<String> firstLinks =
             map(firstResponse.getHeaders("Link"), new Function<Header, String>() {
