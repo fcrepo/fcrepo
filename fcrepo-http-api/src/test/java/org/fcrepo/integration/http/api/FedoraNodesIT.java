@@ -784,27 +784,72 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("waiting on MODE-1998")
     public void testRoundTripReplaceGraph() throws Exception {
-        createObject("FedoraRoundTripGraph");
 
-        final String subjectURI =
-            serverAddress + "FedoraRoundTripGraph";
+        final String pid = UUID.randomUUID().toString();
+        final String subjectURI = serverAddress + pid;
+
+        createObject(pid);
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
-        getObjMethod.addHeader("Accept", "application/n3");
+        getObjMethod.addHeader("Accept", "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
 
-        final HttpPut replaceMethod = new HttpPut(subjectURI);
-        replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
-        e.setContent(getResponse.getEntity().getContent());
+
+        final Model model = createDefaultModel();
+        model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
+
+        try (final StringWriter w = new StringWriter()) {
+            model.write(w, "TURTLE");
+            e.setContent(new ByteArrayInputStream(w.toString().getBytes()));
+            logger.trace("Retrieved object graph for testRoundTripReplaceGraph():\n {}",
+                            w);
+        }
+
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "text/turtle");
+
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(204, response.getStatusLine().getStatusCode());
 
     }
 
+    @Test
+    public void testRoundTripReplaceGraphForDatastream() throws Exception {
+
+        final String pid = UUID.randomUUID().toString();
+        final String subjectURI = serverAddress + pid + "/ds1";
+
+        createDatastream(pid, "ds1", "some-content");
+
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
+        getObjMethod.addHeader("Accept", "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=minimal");
+        final HttpResponse getResponse = client.execute(getObjMethod);
+
+        final BasicHttpEntity e = new BasicHttpEntity();
+
+        final Model model = createDefaultModel();
+        model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
+
+        try (final StringWriter w = new StringWriter()) {
+            model.write(w, "TURTLE");
+            e.setContent(new ByteArrayInputStream(w.toString().getBytes()));
+            logger.trace("Retrieved object graph for testRoundTripReplaceGraphForDatastream():\n {}",
+                            w);
+        }
+
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "text/turtle");
+
+        replaceMethod.setEntity(e);
+        final HttpResponse response = client.execute(replaceMethod);
+        assertEquals(204, response.getStatusLine().getStatusCode());
+
+    }
     @Test
     public void testDescribeSize() throws Exception {
 
