@@ -229,6 +229,7 @@ public abstract class TestHelpers {
                 when(mockDs.getContent()).thenReturn(
                         IOUtils.toInputStream(content));
                 when(mockDs.getContentDigest()).thenReturn(cd);
+                when(mockDs.getEtagValue()).thenReturn(cd.toString());
             }
         } catch (final Throwable t) {
         }

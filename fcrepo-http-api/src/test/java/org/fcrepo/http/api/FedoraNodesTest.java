@@ -177,6 +177,7 @@ public class FedoraNodesTest {
         when(mockDate.getTime()).thenReturn(0L);
         when(mockNode.getPath()).thenReturn("/test/path");
         when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockObject.getEtagValue()).thenReturn("XYZ");
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
 
@@ -201,7 +202,7 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(path);
         final Response actual =
                 testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
-                        null, null, null, getUriInfoImpl(), null);
+                        null, null, null, mockResponse, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith(pid));
@@ -227,7 +228,7 @@ public class FedoraNodesTest {
 
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
-                                    null, null, getUriInfoImpl(), null);
+                                    null, null, mockResponse, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("a"));
@@ -252,7 +253,7 @@ public class FedoraNodesTest {
 
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
-                                    null, "some-slug", getUriInfoImpl(), null);
+                                    null, "some-slug", mockResponse, getUriInfoImpl(), null);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("some-slug"));
@@ -278,9 +279,10 @@ public class FedoraNodesTest {
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
+        when(mockDatastream.getEtagValue()).thenReturn("XYZ");
         final Response actual =
                 testObj.createObject(createPathList(pid, dsId),
-                        FEDORA_DATASTREAM, null, null, APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
+                        FEDORA_DATASTREAM, null, null, APPLICATION_OCTET_STREAM_TYPE, null, mockResponse, getUriInfoImpl(),
                         dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
@@ -307,9 +309,10 @@ public class FedoraNodesTest {
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
+        when(mockDatastream.getEtagValue()).thenReturn("XYZ");
         final Response actual =
             testObj.createObject(createPathList(pid, dsId),
-                                    FEDORA_DATASTREAM, null, "inline; filename=\"xyz.jpg\"", APPLICATION_OCTET_STREAM_TYPE, null, getUriInfoImpl(),
+                                    FEDORA_DATASTREAM, null, "inline; filename=\"xyz.jpg\"", APPLICATION_OCTET_STREAM_TYPE, null, mockResponse, getUriInfoImpl(),
                                     dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
@@ -403,7 +406,7 @@ public class FedoraNodesTest {
         when(mockDataset.getNamedModel(PROBLEMS_MODEL_NAME))
         .thenReturn(mockModel);
         when(mockModel.isEmpty()).thenReturn(true);
-        testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest);
+        testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest, mockResponse);
 
         verify(mockObject).updatePropertiesDataset(any(IdentifierTranslator.class),
                 eq("my-sparql-statement"));
@@ -425,7 +428,7 @@ public class FedoraNodesTest {
             new ByteArrayInputStream("<a> <b> <c>".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
-        testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest);
+        testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest, mockResponse);
         verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class));
     }
 
@@ -446,7 +449,7 @@ public class FedoraNodesTest {
         final Response actual =
                 testObj.createOrReplaceObjectRdf(createPathList(pid),
                         getUriInfoImpl(), MediaType.valueOf("application/n3"),
-                        mockStream, mockRequest);
+                        mockStream, mockRequest, mockResponse);
 
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());

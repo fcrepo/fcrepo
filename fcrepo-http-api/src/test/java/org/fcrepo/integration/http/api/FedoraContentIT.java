@@ -52,6 +52,8 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpPost method =
                 postDSMethod("FedoraDatastreamsTest2", "zxc", "foo");
         final HttpResponse response = client.execute(method);
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
@@ -88,6 +90,8 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpPut method =
                 putDSMethod(pid, "zxc", "foo");
         final HttpResponse response = client.execute(method);
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals(
@@ -143,6 +147,8 @@ public class FedoraContentIT extends AbstractResourceIT {
                 putDSMethod("FedoraDatastreamsTest3", "ds1", "bar");
         mutateDataStreamMethod.setEntity(new StringEntity(faulkner1, "UTF-8"));
         final HttpResponse response = client.execute(mutateDataStreamMethod);
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
         final int status = response.getStatusLine().getStatusCode();
         if (status != 204) {
             logger.error(EntityUtils.toString(response.getEntity()));

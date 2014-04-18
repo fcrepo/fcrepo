@@ -92,6 +92,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
@@ -133,6 +134,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals("Got wrong Location header for ingest!", serverAddress
                 + pid, location);
@@ -321,6 +324,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpGet method_test_get =
             new HttpGet(serverAddress +  pid + "/ds1");
         assertEquals(404, getStatus(method_test_get));
+    }
+
+
+    @Test
+    public void testHeadRepositoryGraph() throws Exception {
+        final HttpHead headObjMethod = new HttpHead(serverAddress);
+        assertEquals(200, getStatus(headObjMethod));
     }
 
     @Test
@@ -665,6 +675,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
 
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
+
         final HttpGet getObjMethod = new HttpGet(subjectURI);
 
         getObjMethod.addHeader("Accept", "application/rdf+xml");
@@ -685,14 +698,15 @@ public class FedoraNodesIT extends AbstractResourceIT {
         client.execute(postObjMethod("FedoraDescribeTestGraphUpdateBad"));
         final String subjectURI =
                 serverAddress + "FedoraDescribeTestGraphUpdateBad";
-        final HttpPatch getObjMethod = new HttpPatch(subjectURI);
-        getObjMethod.addHeader("Content-Type", "application/sparql-update");
+        final HttpPatch patchObjMethod = new HttpPatch(subjectURI);
+        patchObjMethod.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("INSERT { <" + subjectURI + "> <" + REPOSITORY_NAMESPACE + "uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n")
                         .getBytes()));
-        getObjMethod.setEntity(e);
-        final HttpResponse response = client.execute(getObjMethod);
+        patchObjMethod.setEntity(e);
+        final HttpResponse response = client.execute(patchObjMethod);
+
         if (response.getStatusLine().getStatusCode() != 403
                 && response.getEntity() != null) {
             final String content = EntityUtils.toString(response.getEntity());
@@ -730,6 +744,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(204, response.getStatusLine().getStatusCode());
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
 
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
