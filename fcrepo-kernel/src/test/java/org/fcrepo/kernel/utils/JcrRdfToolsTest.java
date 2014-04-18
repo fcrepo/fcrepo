@@ -23,7 +23,6 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.NAME;
@@ -39,7 +38,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
-import static org.fcrepo.kernel.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
@@ -74,10 +72,8 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import javax.jcr.Node;
@@ -111,7 +107,6 @@ import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -334,7 +329,7 @@ public class JcrRdfToolsTest {
         final Model actual =
             testObj.getTreeTriples(mockNode, options).asModel();
         assertEquals(2, Iterators.size(actual
-                .listSubjectsWithProperty(HAS_PARENT)));
+                .listObjectsOfProperty(testSubjects.getSubject(mockNode.getPath()), HAS_CHILD)));
         verify(mockChildNode, never()).getProperties();
     }
 
