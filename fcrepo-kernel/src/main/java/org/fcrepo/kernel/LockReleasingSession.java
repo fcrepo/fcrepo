@@ -37,6 +37,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  * does not release those token upon logout, leaving them unable to be used
  * by other sessions.
  *
+ * TODO: Remove this class When modeshape is updated to handle this. https://www.pivotaltracker.com/story/show/69574878
+ *
  * @author Mike Durbin
  */
 
