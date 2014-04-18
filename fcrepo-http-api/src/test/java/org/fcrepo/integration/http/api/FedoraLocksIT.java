@@ -337,7 +337,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * Unlocks a lock with its token, asserts that it is successful and further
      * asserts that property updates can again be made without the token.
      */
-    public void assertUnlockWithToken(String pid, String lockToken) throws IOException {
+    private void assertUnlockWithToken(String pid, String lockToken) throws IOException {
         Assert.assertEquals(NO_CONTENT.getStatusCode(),
                 unlockObject(pid, lockToken).getStatusLine().getStatusCode());
 
@@ -348,7 +348,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * Assumes (and asserts) that a request to lock a resource was
      * successful and returns the lock token from the response.
      */
-    public String getLockToken(HttpResponse response) {
+    private String getLockToken(HttpResponse response) {
         final StatusLine status = response.getStatusLine();
         Assert.assertEquals(CREATED.getStatusCode(),
                 response.getStatusLine().getStatusCode());
@@ -360,7 +360,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     /**
      * Attempts to lock an object.
      */
-    public HttpResponse lockObject(String pid) throws IOException {
+    private HttpResponse lockObject(String pid) throws IOException {
         return lockObject(pid, TIMEOUT, false);
     }
 
@@ -368,7 +368,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * Attempts to lock an object with the given timeout and
      * deep locking status.
      */
-    public HttpResponse lockObject(String pid, long timeout, boolean deep) throws IOException {
+    private HttpResponse lockObject(String pid, long timeout, boolean deep) throws IOException {
         StringBuffer query = new StringBuffer();
         if (timeout >= 1) {
             query.append("timeout=" + timeout);
@@ -387,23 +387,23 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     /**
      * Attempts to unlock lock an object.
      */
-    public HttpResponse unlockObject(String pid, String lockToken) throws IOException {
+    private HttpResponse unlockObject(String pid, String lockToken) throws IOException {
         final HttpDelete delete = new HttpDelete(serverAddress + pid + "/" + FCR_LOCK);
         addLockToken(delete, lockToken);
         return client.execute(delete);
     }
 
-    public GraphStore getLockProperties(String pid, String lockToken) throws IOException {
+    private GraphStore getLockProperties(String pid, String lockToken) throws IOException {
         final HttpGet get = new HttpGet(serverAddress + pid + "/" + FCR_LOCK);
         addLockToken(get, lockToken);
         return getGraphStore(get);
     }
 
-    protected void assertCanSetProperty(final String pid, final String lockToken) throws IOException {
+    private void assertCanSetProperty(final String pid, final String lockToken) throws IOException {
         assertCanSetProperty(null, pid, lockToken);
     }
 
-    protected void assertCanSetProperty(final String message, final String pid, final String lockToken)
+    private void assertCanSetProperty(final String message, final String pid, final String lockToken)
             throws IOException {
         final String propertyName = getRandomPropertyName();
         final String propertyValue = getRandomPropertyValue();
@@ -413,11 +413,11 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
                 setProperty(pid, null, lockToken, propertyName, propertyValue).getStatusLine().getStatusCode());
     }
 
-    protected void assertCannotSetPropertyWithoutLockToken(final String pid) throws IOException {
+    private void assertCannotSetPropertyWithoutLockToken(final String pid) throws IOException {
         assertCannotSetPropertyWithoutLockToken(null, pid);
     }
 
-    protected void assertCannotSetPropertyWithoutLockToken(final String message, final String pid) throws IOException {
+    private void assertCannotSetPropertyWithoutLockToken(final String message, final String pid) throws IOException {
         final String propertyName = getRandomPropertyName();
         final String propertyValue = getRandomPropertyValue();
         Assert.assertEquals(message == null ? "Lock must prevent property updates!" : message,
@@ -434,7 +434,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * @param value the value to set
      * @return the HttpResponse
      */
-    protected HttpResponse setProperty(final String pid,
+    private HttpResponse setProperty(final String pid,
                                        final String txId,
                                        final String lockToken,
                                        final String propertyUri,
@@ -466,19 +466,19 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * @return
      * @throws IOException
      */
-    public String createTransaction() throws IOException {
+    private String createTransaction() throws IOException {
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
         final HttpResponse response = execute(createTx);
         Assert.assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
         return response.getFirstHeader("Location").getValue();
     }
 
-    public HttpResponse commitTransaction(String txId) throws IOException {
+    private HttpResponse commitTransaction(String txId) throws IOException {
         final HttpPost commitTx = new HttpPost(serverAddress + txId + "/fcr:tx/fcr:commit");
         return execute(commitTx);
     }
 
-    public HttpResponse getObjectProperties(String pid) throws IOException {
+    private HttpResponse getObjectProperties(String pid) throws IOException {
         return execute(new HttpGet(serverAddress + pid));
     }
 }
