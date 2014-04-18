@@ -154,11 +154,11 @@ public class SelfHealingIT {
                     .getInstance("SHA-1").digest(contentB.getBytes())));
         objectService.createObject(session, "/testSelfHealingObject");
 
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testSelfHealingObject/testDatastreamNode4",
                 "application/octet-stream", null, new ByteArrayInputStream(contentA
                         .getBytes()), shaA);
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testSelfHealingObject/testDatastreamNode5",
                 "application/octet-stream", null, new ByteArrayInputStream(contentB
                         .getBytes()), shaB);

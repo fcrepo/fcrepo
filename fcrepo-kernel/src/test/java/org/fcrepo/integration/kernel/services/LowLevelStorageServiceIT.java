@@ -59,7 +59,7 @@ public class LowLevelStorageServiceIT {
     public void testGetBinaryBlobs() throws Exception {
         final Session session = repo.login();
         objectService.createObject(session, "/testLLObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testLLObject/testRepositoryContent", "image/tiff",
                 null, new ByteArrayInputStream(
                         "0123456789987654321012345678900987654321".getBytes()));

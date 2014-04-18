@@ -100,14 +100,14 @@ public class TiffStoragePolicyStorageIT {
         objectService.createObject(session, "/testCompositeObject");
 
         data = new ByteArrayInputStream("9876543219876543210987654321098765432109876543210987654321098765432109876543210987654321009876543210".getBytes());
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                                                "/testCompositeObject/content",
                                                "application/octet-stream",
                                                 null,
                                                data);
         data = new ByteArrayInputStream("87acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a7016".getBytes());
         datastreamService
-            .createDatastreamNode(session,
+            .createDatastream(session,
                                   "/testCompositeObject/tiffContent",
                                   "image/tiff",
                                   null,

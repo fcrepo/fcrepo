@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +54,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -144,8 +142,8 @@ public class FedoraContent extends ContentExposingResource {
             }
 
 
-            final Node datastreamNode =
-                    datastreamService.createDatastreamNode(session, newDatastreamPath,
+            final Datastream datastream =
+                    datastreamService.createDatastream(session, newDatastreamPath,
                             contentType.toString(), originalFileName, requestBodyStream,
                             checksumURI);
 
@@ -154,11 +152,10 @@ public class FedoraContent extends ContentExposingResource {
                             uriInfo);
 
             session.save();
-            versionService.nodeUpdated(datastreamNode);
+            versionService.nodeUpdated(datastream.getNode());
 
             final ResponseBuilder builder = created(new URI(subjects.getSubject(
-                    datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()));
-            final Datastream datastream = datastreamService.asDatastream(datastreamNode);
+                    datastream.getContentNode().getPath()).getURI()));
 
             addCacheControlHeaders(servletResponse, datastream);
 
@@ -222,13 +219,13 @@ public class FedoraContent extends ContentExposingResource {
                 originalFileName = null;
             }
 
-            final Node datastreamNode =
-                datastreamService.createDatastreamNode(session, path,
+            final Datastream datastream =
+                datastreamService.createDatastream(session, path,
                     contentType.toString(), originalFileName, requestBodyStream, checksumURI);
 
-            final boolean isNew = datastreamNode.isNew();
+            final boolean isNew = datastream.isNew();
             session.save();
-            versionService.nodeUpdated(datastreamNode);
+            versionService.nodeUpdated(datastream.getNode());
 
             ResponseBuilder builder;
             if (isNew) {
@@ -237,12 +234,10 @@ public class FedoraContent extends ContentExposingResource {
                                 uriInfo);
 
                 builder = created(new URI(subjects.getSubject(
-                        datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()));
+                        datastream.getContentNode().getPath()).getURI()));
             } else {
                 builder = noContent();
             }
-
-            final Datastream datastream = datastreamService.asDatastream(datastreamNode);
 
             addCacheControlHeaders(servletResponse, datastream);
 

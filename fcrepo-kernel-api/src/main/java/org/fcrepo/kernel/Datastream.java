@@ -19,6 +19,7 @@ package org.fcrepo.kernel;
 import java.io.InputStream;
 import java.net.URI;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -35,6 +36,20 @@ public interface Datastream extends FedoraResource {
      * @throws RepositoryException
      */
     InputStream getContent() throws RepositoryException;
+
+    /**
+     * @return The Node of content associated with this datastream.
+     * @throws RepositoryException
+     */
+    Node getContentNode() throws RepositoryException;
+
+    /**
+     * Check if the datastream has a content node
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    boolean hasContent() throws RepositoryException;
 
     /**
      * Sets the content of this Datastream.
