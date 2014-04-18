@@ -112,6 +112,9 @@ public class FedoraBatchTest {
     @Mock
     private Node mockNode;
 
+    @Mock
+    private Datastream mockDatastream;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -129,6 +132,7 @@ public class FedoraBatchTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
         when(mockDsNodeType.getName()).thenReturn("nt:file");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockDsNodeType);
+        when(mockDatastream.getNode()).thenReturn(mockNode);
     }
 
     @Test
@@ -206,15 +210,23 @@ public class FedoraBatchTest {
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
                 mockNode);
+
+        when(mockDatastreams.createDatastream(any(Session.class),
+                                                    eq("/{}" + pid + "/{}" + dsId1), anyString(), eq("testDs1.txt"),
+                                                    any(InputStream.class), eq((URI)null))).thenReturn(mockDatastream);
+
+        when(mockDatastreams.createDatastream(any(Session.class),
+                                                 eq("/{}" + pid + "/{}" + dsId2), anyString(), eq("testDs2.txt"),
+                                                 any(InputStream.class), eq((URI) null))).thenReturn(mockDatastream); 
         final Response actual =
             testObj.batchModify(createPathList(pid), multipart);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq("/{}" + pid + "/{}" + dsId1), anyString(), eq("testDs1.txt"),
-                any(InputStream.class), eq((URI)null));
-        verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                eq("/{}" + pid + "/{}" + dsId2), anyString(), eq("testDs2.txt"),
-                any(InputStream.class), eq((URI)null));
+        verify(mockDatastreams).createDatastream(any(Session.class),
+                                                    eq("/{}" + pid + "/{}" + dsId1), anyString(), eq("testDs1.txt"),
+                                                    any(InputStream.class), eq((URI) null));
+        verify(mockDatastreams).createDatastream(any(Session.class),
+                                                    eq("/{}" + pid + "/{}" + dsId2), anyString(), eq("testDs2.txt"),
+                                                    any(InputStream.class), eq((URI) null));
         verify(mockSession).save();
     }
 
@@ -236,16 +248,18 @@ public class FedoraBatchTest {
 
         multipart.bodyPart(part);
 
+        when(mockDatastreams.createDatastream(any(Session.class),
+                                                    eq("/{}" + pid + "/{}xyz"), anyString(), eq("filename.txt"),
+                                                    any(InputStream.class), eq((URI) null))).thenReturn(mockDatastream);
 
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
-        when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
-                                                                           mockNode);
+        when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(mockNode);
         final Response actual =
             testObj.batchModify(createPathList(pid), multipart);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastreamNode(any(Session.class),
-                                                        eq("/{}" + pid + "/{}xyz"), anyString(), eq("filename.txt"),
-                                                        any(InputStream.class), eq((URI)null));
+        verify(mockDatastreams).createDatastream(any(Session.class),
+                                                    eq("/{}" + pid + "/{}xyz"), anyString(), eq("filename.txt"),
+                                                    any(InputStream.class), eq((URI) null));
         verify(mockSession).save();
     }
 

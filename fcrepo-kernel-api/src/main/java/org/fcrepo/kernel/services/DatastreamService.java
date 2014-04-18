@@ -56,7 +56,7 @@ public interface DatastreamService extends Service {
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
-    Node createDatastreamNode(Session session, String dsPath, String contentType, String originalFileName,
+    Datastream createDatastream(Session session, String dsPath, String contentType, String originalFileName,
             InputStream requestBodyStream) throws RepositoryException, InvalidChecksumException;
 
     /**
@@ -71,7 +71,7 @@ public interface DatastreamService extends Service {
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
-    Node createDatastreamNode(Session session, String dsPath, String contentType, String originalFileName,
+    Datastream createDatastream(Session session, String dsPath, String contentType, String originalFileName,
             InputStream requestBodyStream, URI checksum) throws RepositoryException, InvalidChecksumException;
 
     /**

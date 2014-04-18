@@ -65,7 +65,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
 
         final double originalSize = repositoryService.getRepositorySize();
 
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "testObjectServiceNode", "application/octet-stream",
                 null, new ByteArrayInputStream("asdf".getBytes()));
         session.save();
@@ -119,7 +119,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testBackupRepository() throws Exception {
         final Session session = repository.login();
 
-        datastreamService.createDatastreamNode(session, "testObjectServiceNode0", "application/octet-stream", null,
+        datastreamService.createDatastream(session, "testObjectServiceNode0", "application/octet-stream", null,
                 new ByteArrayInputStream("asdfx".getBytes()));
         session.save();
 
@@ -135,7 +135,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testRestoreRepository() throws Exception {
         final Session session = repository.login();
 
-        datastreamService.createDatastreamNode(session, "testObjectServiceNode1", "application/octet-stream", null,
+        datastreamService.createDatastream(session, "testObjectServiceNode1", "application/octet-stream", null,
                 new ByteArrayInputStream("asdfy".getBytes()));
         session.save();
 

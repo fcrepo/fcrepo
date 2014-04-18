@@ -157,7 +157,7 @@ public class FedoraBatch extends AbstractResource {
 
         try {
 
-            final Set<Node> nodesChanged = new HashSet<>();
+            final Set<FedoraResource> resourcesChanged = new HashSet<>();
 
             // iterate through the multipart entities
             for (final BodyPart part : multipart.getBodyParts()) {
@@ -254,7 +254,7 @@ public class FedoraBatch extends AbstractResource {
                                 .entity("Invalid Content Type " + contentTypeString).build());
                         }
 
-                        nodesChanged.add(resource.getNode());
+                        resourcesChanged.add(resource);
 
                         break;
 
@@ -270,7 +270,7 @@ public class FedoraBatch extends AbstractResource {
                             checksumURI = null;
                         }
 
-                        nodesChanged.add(datastreamService.createDatastreamNode(session, objPath,
+                        resourcesChanged.add(datastreamService.createDatastream(session, objPath,
                                                                   part.getMediaType().toString(),
                                                                   contentDisposition.getFileName(),
                                                                   src, checksumURI));
@@ -288,8 +288,8 @@ public class FedoraBatch extends AbstractResource {
 
             session.save();
             versionService.nodeUpdated(session, path);
-            for (final Node n : nodesChanged) {
-                versionService.nodeUpdated(n);
+            for (final FedoraResource resource : resourcesChanged) {
+                versionService.nodeUpdated(resource.getNode());
             }
 
             final HttpIdentifierTranslator subjects =

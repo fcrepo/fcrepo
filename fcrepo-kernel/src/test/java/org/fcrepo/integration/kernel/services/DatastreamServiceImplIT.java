@@ -61,7 +61,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
     @Test
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
-        datastreamService.createDatastreamNode(session, "/testDatastreamNode",
+        datastreamService.createDatastream(session, "/testDatastreamNode",
                 "application/octet-stream", null, new ByteArrayInputStream("asdf"
                         .getBytes()));
         session.save();
@@ -77,7 +77,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
     @Test
     public void testCreateDatastreamNodeWithfilename() throws Exception {
         Session session = repository.login();
-        datastreamService.createDatastreamNode(session, "/testDatastreamNode",
+        datastreamService.createDatastream(session, "/testDatastreamNode",
                                                   "application/octet-stream", "xyz.jpg", new ByteArrayInputStream("asdf"
                                                                                                            .getBytes()));
         session.save();
@@ -94,7 +94,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
         Session session = repository.login();
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
         objectService.createObject(session, "/testDatastreamServiceObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testDatastreamServiceObject/" + "testDatastreamNode",
                 "application/octet-stream", null, is);
 
@@ -113,7 +113,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
 
         final Session session = repository.login();
         objectService.createObject(session, "/testLLObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testLLObject/testRepositoryContent",
                 "application/octet-stream", null, new ByteArrayInputStream(
                         "01234567890123456789012345678901234567890123456789".getBytes()));
@@ -141,7 +141,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
 
         final Session session = repository.login();
         objectService.createObject(session, "/testLLObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                                                   "/testLLObject/testMemoryContent",
                                                   "application/octet-stream",
                                                   null,

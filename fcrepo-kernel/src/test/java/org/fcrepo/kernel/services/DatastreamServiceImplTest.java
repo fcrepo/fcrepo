@@ -144,10 +144,10 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
                 mockValueFactory.createBinary(any(InputStream.class),
                         any(String.class))).thenReturn(mockBinary);
 
-        final Node actual =
-                testObj.createDatastreamNode(mockSession, testPath,
+        final Datastream actual =
+                testObj.createDatastream(mockSession, testPath,
                         MOCK_CONTENT_TYPE, "xyz.jpg", mockIS);
-        assertEquals(mockNode, actual);
+        assertEquals(mockNode, actual.getNode());
 
         verify(mockContent).setProperty(JCR_DATA, mockBinary);
         verify(mockContent).setProperty(PREMIS_FILE_NAME, "xyz.jpg");

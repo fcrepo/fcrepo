@@ -105,9 +105,8 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
                         FEDORA_DATASTREAM, JcrConstants.NT_FILE);
                 node.addMixin(FEDORA_DATASTREAM);
 
-                if (node.hasNode(JCR_CONTENT)) {
-                    final Node contentNode = node.getNode(JCR_CONTENT);
-                    decorateContentNode(contentNode);
+                if (hasContent()) {
+                    decorateContentNode(getContentNode());
                 }
             }
         } catch (final RepositoryException ex) {
@@ -122,9 +121,27 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      */
     @Override
     public InputStream getContent() throws RepositoryException {
-        final Node contentNode = node.getNode(JCR_CONTENT);
+        return getContentNode().getProperty(JCR_DATA).getBinary().getStream();
+    }
+
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.Datastream#getContent()
+     */
+    @Override
+    public Node getContentNode() throws RepositoryException {
         LOGGER.trace("Retrieved datastream content node.");
-        return contentNode.getProperty(JCR_DATA).getBinary().getStream();
+        return node.getNode(JCR_CONTENT);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.Datastream#getContent()
+     */
+    @Override
+    public boolean hasContent() throws RepositoryException {
+        return node.hasNode(JCR_CONTENT);
     }
 
     /*
@@ -212,7 +229,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
     @Override
     public long getContentSize() {
         try {
-            return node.getNode(JCR_CONTENT).getProperty(CONTENT_SIZE)
+            return getContentNode().getProperty(CONTENT_SIZE)
                     .getLong();
         } catch (final RepositoryException e) {
             LOGGER.info("Could not get contentSize()", e);
@@ -227,9 +244,8 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      */
     @Override
     public URI getContentDigest() throws RepositoryException {
-        final Node contentNode = node.getNode(JCR_CONTENT);
         try {
-            return new URI(contentNode.getProperty(CONTENT_DIGEST).getString());
+            return new URI(getContentNode().getProperty(CONTENT_DIGEST).getString());
         } catch (final RepositoryException | URISyntaxException e) {
             LOGGER.info("Could not get content digest: ", e);
         }
@@ -261,7 +277,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      */
     @Override
     public String getMimeType() throws RepositoryException {
-        return node.hasNode(JCR_CONTENT) && node.getNode(JCR_CONTENT).hasProperty(JCR_MIME_TYPE) ? node.getNode(
+        return hasContent() && getContentNode().hasProperty(JCR_MIME_TYPE) ? node.getNode(
                 JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString() : "application/octet-stream";
     }
 
@@ -281,8 +297,8 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      */
     @Override
     public String getFilename() throws RepositoryException {
-        if (node.hasNode(JCR_CONTENT) && node.getNode(JCR_CONTENT).hasProperty(PREMIS_FILE_NAME)) {
-            return node.getNode(JCR_CONTENT).getProperty(PREMIS_FILE_NAME).getString();
+        if (hasContent() && getContentNode().hasProperty(PREMIS_FILE_NAME)) {
+            return getContentNode().getProperty(PREMIS_FILE_NAME).getString();
         }
         return getDsId();
     }

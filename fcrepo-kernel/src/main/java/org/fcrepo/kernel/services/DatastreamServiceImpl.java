@@ -113,13 +113,13 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @throws InvalidChecksumException
      */
     @Override
-    public Node createDatastreamNode(final Session session,
+    public Datastream createDatastream(final Session session,
             final String dsPath, final String contentType,
             final String originalFileName,
             final InputStream requestBodyStream) throws RepositoryException,
             InvalidChecksumException {
 
-        return createDatastreamNode(session, dsPath, contentType,
+        return createDatastream(session, dsPath, contentType,
                                        originalFileName, requestBodyStream, null);
     }
 
@@ -137,7 +137,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @throws InvalidChecksumException
      */
     @Override
-    public Node createDatastreamNode(final Session session,
+    public Datastream createDatastream(final Session session,
                                      final String dsPath, final String contentType,
                                      final String originalFileName, final InputStream requestBodyStream,
                                      final URI checksum)
@@ -146,7 +146,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         final Datastream ds = createDatastream(session, dsPath);
         ds.setContent(requestBodyStream, contentType, checksum,
                          originalFileName, getStoragePolicyDecisionPoint());
-        return ds.getNode();
+        return ds;
     }
 
     /**

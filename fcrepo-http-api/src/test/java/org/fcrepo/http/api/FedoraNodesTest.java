@@ -270,12 +270,12 @@ public class FedoraNodesTest {
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockNode.getSession()).thenReturn(mockSession);
 
+        final Datastream mockDatastream = mock(Datastream.class);
 
         when(
-                mockDatastreams.createDatastreamNode(any(Session.class),
+                mockDatastreams.createDatastream(any(Session.class),
                         eq(dsPath), anyString(), eq((String)null), eq(dsContentStream),
-                        any(URI.class))).thenReturn(mockNode);
-        final Datastream mockDatastream = mock(Datastream.class);
+                        any(URI.class))).thenReturn(mockDatastream);
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
@@ -286,7 +286,7 @@ public class FedoraNodesTest {
                         dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
-                .createDatastreamNode(any(Session.class), eq(dsPath),
+                .createDatastream(any(Session.class), eq(dsPath),
                         anyString(), eq((String)null), any(InputStream.class), any(URI.class));
         verify(mockSession).save();
     }
@@ -301,11 +301,11 @@ public class FedoraNodesTest {
         when(mockNode.getSession()).thenReturn(mockSession);
 
 
-        when(
-                mockDatastreams.createDatastreamNode(any(Session.class),
-                                                        eq(dsPath), anyString(), eq("xyz.jpg"), eq(dsContentStream),
-                                                        any(URI.class))).thenReturn(mockNode);
         final Datastream mockDatastream = mock(Datastream.class);
+        when(
+                mockDatastreams.createDatastream(any(Session.class),
+                                                        eq(dsPath), anyString(), eq("xyz.jpg"), eq(dsContentStream),
+                                                        any(URI.class))).thenReturn(mockDatastream);
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
         when(mockNode.getPath()).thenReturn(dsPath);
@@ -316,7 +316,7 @@ public class FedoraNodesTest {
                                     dsContentStream);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockDatastreams)
-            .createDatastreamNode(any(Session.class), eq(dsPath),
+            .createDatastream(any(Session.class), eq(dsPath),
                                      anyString(), eq("xyz.jpg"), any(InputStream.class), any(URI.class));
         verify(mockSession).save();
     }

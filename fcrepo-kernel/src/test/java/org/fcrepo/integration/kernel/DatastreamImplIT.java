@@ -52,7 +52,7 @@ public class DatastreamImplIT extends AbstractIT {
     public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
         Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testDatastreamObject/testDatastreamNode1",
                 "application/octet-stream", null, new ByteArrayInputStream("asdf"
                         .getBytes()));
@@ -72,7 +72,7 @@ public class DatastreamImplIT extends AbstractIT {
                                        InvalidChecksumException {
         final Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testDatastreamObject/testDatastreamNode1",
                 "application/octet-stream", null, new ByteArrayInputStream("asdf"
                         .getBytes()));
@@ -94,7 +94,7 @@ public class DatastreamImplIT extends AbstractIT {
                                                       InvalidChecksumException {
         final Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testDatastreamObject/testDatastreamNode2",
                 "application/octet-stream", null, new ByteArrayInputStream("asdf"
                         .getBytes()));
@@ -120,7 +120,7 @@ public class DatastreamImplIT extends AbstractIT {
                                                         InvalidChecksumException {
         final Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testDatastreamObject/testDatastreamNode3",
                 "application/octet-stream", null, new ByteArrayInputStream("asdf"
                         .getBytes()));
@@ -148,7 +148,7 @@ public class DatastreamImplIT extends AbstractIT {
                                                    InvalidChecksumException {
         final Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                 "/testDatastreamObject/testDatastreamNode4",
                 "application/octet-stream", null, new ByteArrayInputStream("asdf"
                         .getBytes()), ContentDigest.asURI("SHA-1",
@@ -171,7 +171,7 @@ public class DatastreamImplIT extends AbstractIT {
     public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
         objectService.createObject(session, "/testDatastreamObject");
-        datastreamService.createDatastreamNode(session,
+        datastreamService.createDatastream(session,
                                                   "/testDatastreamObject/testDatastreamNode5",
                                                   "application/octet-stream",
                                                   "xyz.jpg",

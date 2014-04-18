@@ -573,7 +573,7 @@ public class FedoraNodes extends AbstractResource {
                         originalFileName = null;
                     }
 
-                    datastreamService.createDatastreamNode(session,
+                    datastreamService.createDatastream(session,
                             newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);
 
                 }
