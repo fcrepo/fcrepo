@@ -45,7 +45,6 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
 import static org.fcrepo.kernel.RdfLexicon.LOCKS;
-import static org.junit.Assert.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -74,11 +73,16 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         assertCanSetProperty("With the lock token, property updates must be allowed!", pid, lockToken);
 
-        Assert.assertEquals("The lock must only be able to be removed with the lock token!",
-                CONFLICT.getStatusCode(),
-                unlockObject(pid, null).getStatusLine().getStatusCode());
-
         assertUnlockWithToken(pid, lockToken);
+    }
+
+    @Test
+    public void testUnlockWithoutToken() throws IOException {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        getLockToken(lockObject(pid));
+        assertUnlockWithoutToken(pid);
     }
 
     /**
@@ -272,65 +276,14 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     }
 
     /**
-     * Test whether a created and abandoned lock will actually timeout
-     * within the ballpark of the specified timeout interval.
-     *
-     * Modeshape's lock cleanup interval is not configurable and is
-     * currently set to around 10 minutes.  It is not practical to verify
-     * this during our integration tests, so this test is ignored.
-     *
-     * Furthermore, this test fails anyway.
+     * Unlocks a lock with no token, asserts that it is successful and further
+     * asserts that property updates can again be made without the token.
      */
-    @Test
-    @Ignore
-    public void testLockTimeout() throws IOException {
-        final long maxWaitTimeMs = 6000000;
-        final long timeoutInSeconds = 5;
-        final long timeoutInMs = timeoutInSeconds * 1000;
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-        LOGGER.info("Starting lock timeout test -- May take up to " + maxWaitTimeMs + "ms");
-        final long start = System.currentTimeMillis();
-        getLockToken(lockObject(pid, timeoutInSeconds, false));
-        final long timeout = start + timeoutInMs;
-        final int statusOfImmediateRequest
-                = setProperty(pid, null, null, "test", "test").getStatusLine().getStatusCode();
-        final long timeOfImmediateRequestCompletion = System.currentTimeMillis();
-        final long msUntilImmediateRequest = timeOfImmediateRequestCompletion - start;
-        if (msUntilImmediateRequest >= (timeoutInMs)) {
-            Assert.fail("Tests are running too slow to gauge timeouts! (2 requests took "
-                    + msUntilImmediateRequest + "ms!");
-        } else {
-            Assert.assertEquals("Request within " + msUntilImmediateRequest
-                    + "ms of lock creation should be affected by a " + timeoutInMs
-                    + "ms lock!", CONFLICT.getStatusCode(), statusOfImmediateRequest);
-        }
-        long sleepTime = 1000;
-        while (System.currentTimeMillis() < (start + maxWaitTimeMs)) {
-            try {
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                // no worries.. we'll sleep again when the loop iterates
-            }
-            sleepTime *=2;
-            final long attemptTime = System.currentTimeMillis();
-            final int status = setProperty(pid, null, null, "test", "test").getStatusLine().getStatusCode();
-            final long duration = attemptTime - start;
-            if (status != NO_CONTENT.getStatusCode()) {
-                if (duration > timeoutInMs) {
-                    LOGGER.warn("After " + duration + "ms, the lock still holds.");
-                } else {
-                    LOGGER.info("After " + duration + "ms, the lock still holds.");
-                }
-            } else {
-                Assert.assertTrue("Lock must be held as long as the specified timeout! (unlocked after "
-                        + duration + "ms).", duration > timeoutInMs);
-                return;
-            }
-        }
-        Assert.assertEquals("The " + timeoutInMs + "ms lock should have timed out after "
-                + (System.currentTimeMillis() - start) + "ms!", NO_CONTENT.getStatusCode(),
-                setProperty(pid, null, null, "test", "test").getStatusLine().getStatusCode());
+    private void assertUnlockWithoutToken(String pid) throws IOException {
+        Assert.assertEquals(NO_CONTENT.getStatusCode(),
+                unlockObject(pid, null).getStatusLine().getStatusCode());
+
+        assertCanSetProperty("Unlocked object must be able to be updated now!", pid, null);
     }
 
     /**

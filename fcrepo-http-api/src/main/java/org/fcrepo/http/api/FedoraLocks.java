@@ -96,23 +96,18 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
      * Creates a lock at the given path that is tied to the current session.
      * Only the current session may make changes to the current path while
      * the lock is held.
-     * @param timeout a number of seconds before which the lock will not be removed
-     *                by the system.  (note, this is just a hint at the expected
-     *                lifespan of the lock, the system makes no guarantees that it
-     *                will actually be removed)
      * @param isDeep if true the created lock will affect all nodes in the subgraph
      *               below
      */
     @POST
     @Timed
     public Response createLock(@PathParam("path") final List<PathSegment> pathList,
-                               @QueryParam("timeout") @DefaultValue("-1") final long timeout,
                                @QueryParam("deep") @DefaultValue("false") final boolean isDeep)
         throws RepositoryException, URISyntaxException {
         try {
             final String path = toPath(pathList);
             final Node node = session.getNode(path);
-            final Lock lock = lockService.acquireLock(session, path, timeout, isDeep);
+            final Lock lock = lockService.acquireLock(session, path, isDeep);
             session.save();
             final String location = getTranslator().getSubject(node.getPath()).getURI();
             LOGGER.debug("Locked {} with lock token {}.", path, lock.getLockToken());

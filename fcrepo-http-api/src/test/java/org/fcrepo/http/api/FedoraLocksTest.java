@@ -49,8 +49,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class FedoraLocksTest {
 
-    private static final long timeout = 300;
-
     FedoraLocks testObj;
 
     @Mock
@@ -97,11 +95,11 @@ public class FedoraLocksTest {
         final String pid = UUID.randomUUID().toString();
         final String path = "/" + pid;
         initializeMockNode(path);
-        when(mockLockService.acquireLock(mockSession, path, timeout, false)).thenReturn(mockLock);
+        when(mockLockService.acquireLock(mockSession, path, false)).thenReturn(mockLock);
 
-        final Response response = testObj.createLock(createPathList(pid), timeout, false);
+        final Response response = testObj.createLock(createPathList(pid), false);
 
-        verify(mockLockService).acquireLock(mockSession, path, timeout, false);
+        verify(mockLockService).acquireLock(mockSession, path, false);
         Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     }
 

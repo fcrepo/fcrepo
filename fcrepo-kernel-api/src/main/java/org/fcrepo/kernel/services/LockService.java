@@ -30,14 +30,12 @@ public interface LockService extends Service {
      * Acquires a lock on the node at the given path.
      * @param session the session wishing to lock the node/subgraph
      * @param path the path to be affected
-     * @param timeout the number of seconds before which the system
-     *                may not remove the lock.
      * @param deep if true, indicates that the entire subgraph starting
      *             at the given path is to be locked
      * @return a Lock object that contains a lock token that will allow
      *         other sessions to access resources locked by this call.
      */
-    Lock acquireLock(Session session, String path, long timeout, boolean deep) throws RepositoryException;
+    Lock acquireLock(Session session, String path, boolean deep) throws RepositoryException;
 
     /**
      * Gets the lock at the given path.  The returned lock will only

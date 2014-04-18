@@ -33,5 +33,4 @@ public interface Lock {
      * entire subgraph under the locked node.
      */
     public boolean isDeep();
-
 }

@@ -41,7 +41,7 @@ public class LockServiceImplTest {
 
     private static final String ALREADY_LOCKED_PATH= "test2";
 
-    private static final long TIMEOUT = 300;
+    private static final long TIMEOUT = -1;
 
     private static final String USER = "user";
 
@@ -77,23 +77,21 @@ public class LockServiceImplTest {
         when(mockLockManager.lock(LOCKABLE_PATH, false, false, TIMEOUT, USER)).thenReturn(mockLock);
         when(mockLockManager.lock(ALREADY_LOCKED_PATH, false, false, TIMEOUT, USER)).thenThrow(LockException.class);
         when(mockLockManager.isLocked(ALREADY_LOCKED_PATH)).thenReturn(true);
-        when(mockLock.isLockOwningSession()).thenReturn(true);
         when(mockLock.getLockToken()).thenReturn(LOCK_TOKEN);
         when(mockLock.isDeep()).thenReturn(false);
-        when(otherMockLock.isLockOwningSession()).thenReturn(false);
         when(otherMockLock.isDeep()).thenReturn(false);
     }
 
     @Test
     public void testAcquireLock() throws RepositoryException {
-        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, LOCKABLE_PATH, TIMEOUT, false);
+        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, LOCKABLE_PATH, false);
         Assert.assertEquals(LOCK_TOKEN, lock.getLockToken());
         Assert.assertFalse(lock.isDeep());
     }
 
     @Test (expected = LockException.class)
     public void testAcquireLockFailure() throws RepositoryException {
-        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, ALREADY_LOCKED_PATH, TIMEOUT, false);
+        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, ALREADY_LOCKED_PATH, false);
     }
 
     @Test
@@ -111,9 +109,10 @@ public class LockServiceImplTest {
         verify(mockLockManager).unlock(LOCKABLE_PATH);
     }
 
-    @Test (expected = LockException.class)
+    @Test
     public void testReleaseOtherLock() throws RepositoryException {
         testObj.releaseLock(mockSession, ALREADY_LOCKED_PATH);
+        verify(mockLockManager).unlock(ALREADY_LOCKED_PATH);
     }
 
 }
