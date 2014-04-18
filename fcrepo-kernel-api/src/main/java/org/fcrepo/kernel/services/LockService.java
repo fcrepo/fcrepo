@@ -30,6 +30,8 @@ public interface LockService extends Service {
      * Acquires a lock on the node at the given path.
      * @param session the session wishing to lock the node/subgraph
      * @param path the path to be affected
+     * @param timeout the number of seconds before which the system
+     *                may not remove the lock.
      * @param deep if true, indicates that the entire subgraph starting
      *             at the given path is to be locked
      * @return a Lock object that contains a lock token that will allow

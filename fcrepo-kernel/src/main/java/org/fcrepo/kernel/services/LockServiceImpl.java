@@ -32,23 +32,24 @@ import javax.jcr.lock.LockManager;
 public class LockServiceImpl extends AbstractService implements LockService  {
 
     @Override
-    public Lock acquireLock(Session session, String path, long timeout, boolean deep) throws RepositoryException {
+    public Lock acquireLock(final Session session, final String path, long timeout, boolean deep)
+        throws RepositoryException {
         final LockManager lockManager = session.getWorkspace().getLockManager();
-        final Lock lock = new JCRLock(path, lockManager.lock(path, deep, false, timeout, session.getUserID()));
+        final Lock lock = new JCRLock(lockManager.lock(path, deep, false, timeout, session.getUserID()));
         return lock;
     }
 
     @Override
-    public Lock getLock(Session session, String path) throws RepositoryException {
+    public Lock getLock(final Session session, final String path) throws RepositoryException {
         final LockManager lockManager = session.getWorkspace().getLockManager();
         if (!lockManager.isLocked(path)) {
             throw new PathNotFoundException("No lock at path " + path + "!");
         }
-        return new JCRLock(path, lockManager.getLock(path));
+        return new JCRLock(lockManager.getLock(path));
     }
 
     @Override
-    public void releaseLock(Session session, String path) throws RepositoryException {
+    public void releaseLock(final Session session, final String path) throws RepositoryException {
         final LockManager lockManager = session.getWorkspace().getLockManager();
         if (!lockManager.isLocked(path)) {
             throw new PathNotFoundException("No lock at path " + path + "!");
@@ -61,14 +62,11 @@ public class LockServiceImpl extends AbstractService implements LockService  {
 
     private static class JCRLock implements Lock {
 
-        private String path;
-
         private boolean isDeep;
 
         private String token;
 
-        public JCRLock(String path, javax.jcr.lock.Lock lock) {
-            this.path = path;
+        public JCRLock(final javax.jcr.lock.Lock lock) {
             isDeep = lock.isDeep();
             token = lock.getLockToken();
         }
