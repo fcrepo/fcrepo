@@ -54,8 +54,6 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
     private static final Logger LOGGER = getLogger(FedoraLocksIT.class);
 
-    private static final long TIMEOUT = 300;
-
     /**
      * Test whether a lock can be created, it prevents updates
      * without the token, allows updates with the token and can
@@ -141,7 +139,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         assertUnlockWithToken(pid, shallowLockToken);
 
         // Test deep lock
-        final String deepLockToken = getLockToken(lockObject(pid, TIMEOUT, true));
+        final String deepLockToken = getLockToken(lockObject(pid, true));
 
         assertCannotSetPropertyWithoutLockToken(pid);
         assertCannotSetPropertyWithoutLockToken("Deep lock must prevent property updates on child nodes!", childPid);
@@ -196,7 +194,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         final String childLockToken = getLockToken(lockObject(childPid));
         Assert.assertEquals("May not take out a deep lock when a child is locked!",
-                CONFLICT.getStatusCode(), lockObject(pid, TIMEOUT, true).getStatusLine().getStatusCode());
+                CONFLICT.getStatusCode(), lockObject(pid, true).getStatusLine().getStatusCode());
     }
 
     /**
@@ -266,7 +264,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
                 txId + "/" + childPid, null);
 
         // take out a lock on an affected resource (out of transaction)
-        final String lockToken = getLockToken(lockObject(rootPid, TIMEOUT, true));
+        final String lockToken = getLockToken(lockObject(rootPid, true));
 
         // commit the transaction (which should fail with CONFLICT)
         Assert.assertEquals(CONFLICT.getStatusCode(), commitTransaction(txId).getStatusLine().getStatusCode());
@@ -314,26 +312,15 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * Attempts to lock an object.
      */
     private HttpResponse lockObject(String pid) throws IOException {
-        return lockObject(pid, TIMEOUT, false);
+        return lockObject(pid, false);
     }
 
     /**
-     * Attempts to lock an object with the given timeout and
-     * deep locking status.
+     * Attempts to lock an object with the given deep locking status.
      */
-    private HttpResponse lockObject(String pid, long timeout, boolean deep) throws IOException {
-        StringBuffer query = new StringBuffer();
-        if (timeout >= 1) {
-            query.append("timeout=" + timeout);
-        }
-        if (deep) {
-            if (query.length() > 0) {
-                query.append("&");
-            }
-            query.append("deep=true");
-        }
+    private HttpResponse lockObject(String pid, boolean deep) throws IOException {
         final HttpPost post = new HttpPost(serverAddress + pid + "/" + FCR_LOCK
-                + (query.length() > 0 ? "?" + query.toString() : ""));
+                + (deep  ? "?deep=true" : "?deep=false"));
         return client.execute(post);
     }
 
