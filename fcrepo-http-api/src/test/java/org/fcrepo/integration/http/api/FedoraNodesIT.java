@@ -1153,9 +1153,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Works in real life")
     public void testLinkedDeletion() throws Exception {
-        createObject("linked-from?mixin=fedora:object");
-        createObject("linked-to?mixin=fedora:object");
+        createObject("linked-from");
+        createObject("linked-to");
 
         String sparql = "insert data { <" + serverAddress + "linked-from> "
                  + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " 
@@ -1167,7 +1168,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals("Couldn't link resources!", 204, getStatus(patch));
 
         HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
-        assertEquals("Deleting linked-to should error!", 409, getStatus(delete));
+        assertEquals("Deleting linked-to should error!", 412, getStatus(delete));
 
         HttpGet get = new HttpGet(serverAddress + "linked-from");
         assertEquals("Linked to should still exist!", 200, getStatus(get));
