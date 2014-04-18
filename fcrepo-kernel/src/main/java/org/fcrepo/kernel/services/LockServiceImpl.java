@@ -31,7 +31,7 @@ import javax.jcr.lock.LockManager;
 public class LockServiceImpl extends AbstractService implements LockService  {
 
     @Override
-    public Lock acquireLock(final Session session, final String path, boolean deep)
+    public Lock acquireLock(final Session session, final String path, final boolean deep)
         throws RepositoryException {
         final LockManager lockManager = session.getWorkspace().getLockManager();
         return  new JCRLock(lockManager.lock(path, deep, false, -1, session.getUserID()));
