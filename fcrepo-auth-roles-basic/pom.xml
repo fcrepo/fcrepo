@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>4.0.0-alpha-5-SNAPSHOT</version>
+    <version>4.0.0-alpha-5</version>
   </parent>
   <artifactId>fcrepo-auth-roles-basic</artifactId>
   <name>Fedora Repository Authorization Basic Role Module</name>
