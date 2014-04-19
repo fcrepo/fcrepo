@@ -18,6 +18,8 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static com.google.common.base.Throwables.getStackTraceAsString;
 import static javax.ws.rs.core.Response.serverError;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
@@ -42,6 +44,10 @@ public class RepositoryExceptionMapper implements
     public Response toResponse(final RepositoryException e) {
 
         LOGGER.warn("Caught repository exception: {}", e);
+
+        if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
+            return status(BAD_REQUEST).entity(e.getMessage()).build();
+        }
 
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).build();
