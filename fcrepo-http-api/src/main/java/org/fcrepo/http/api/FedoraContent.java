@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -36,9 +37,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
@@ -49,7 +48,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -59,7 +57,6 @@ import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 
 /**
  * Content controller for adding, reading, and manipulating
@@ -90,7 +87,7 @@ public class FedoraContent extends ContentExposingResource {
             @HeaderParam("Content-Disposition") final String contentDisposition,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Type") final MediaType requestContentType,
-                    final InputStream requestBodyStream)
+                    final InputStream requestBodyStream, @Context final HttpServletResponse servletResponse)
         throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
         final MediaType contentType =
                 requestContentType != null ? requestContentType
@@ -161,9 +158,9 @@ public class FedoraContent extends ContentExposingResource {
 
             final ResponseBuilder builder = created(new URI(subjects.getSubject(
                     datastreamNode.getNode(JCR_CONTENT).getPath()).getURI()));
-            if ( datastreamNode.hasProperty(JCR_LASTMODIFIED) ) {
-                builder.lastModified(datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTime());
-            }
+            final Datastream datastream = datastreamService.asDatastream(datastreamNode);
+
+            addCacheControlHeaders(servletResponse, datastream);
 
             return builder.build();
 
@@ -189,7 +186,7 @@ public class FedoraContent extends ContentExposingResource {
                                   @HeaderParam("Content-Disposition") final String contentDisposition,
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
                                   final InputStream requestBodyStream,
-                                  @Context final Request request)
+                                  @Context final Request request, @Context final HttpServletResponse servletResponse)
         throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
 
         try {
@@ -203,18 +200,7 @@ public class FedoraContent extends ContentExposingResource {
                 final Datastream ds =
                         datastreamService.getDatastream(session, path);
 
-                final EntityTag etag =
-                        new EntityTag(ds.getContentDigest().toString());
-                final Date date = ds.getLastModifiedDate();
-                final Date roundedDate = new Date();
-                roundedDate
-                        .setTime(date.getTime() - date.getTime() % 1000);
-                final ResponseBuilder builder =
-                        request.evaluatePreconditions(roundedDate, etag);
-
-                if (builder != null) {
-                    throw new WebApplicationException(builder.build());
-                }
+                evaluateRequestPreconditions(request, ds);
             }
 
             LOGGER.debug("create Datastream {}", path);
@@ -244,7 +230,7 @@ public class FedoraContent extends ContentExposingResource {
             session.save();
             versionService.nodeUpdated(datastreamNode);
 
-            ResponseBuilder builder = null;
+            ResponseBuilder builder;
             if (isNew) {
                 final HttpIdentifierTranslator subjects =
                         new HttpIdentifierTranslator(session, FedoraNodes.class,
@@ -255,9 +241,11 @@ public class FedoraContent extends ContentExposingResource {
             } else {
                 builder = noContent();
             }
-            if (datastreamNode.hasProperty(JCR_LASTMODIFIED)) {
-                builder.lastModified(datastreamNode.getProperty(JCR_LASTMODIFIED).getDate().getTime());
-            }
+
+            final Datastream datastream = datastreamService.asDatastream(datastreamNode);
+
+            addCacheControlHeaders(servletResponse, datastream);
+
             return builder.build();
         } finally {
             session.logout();
@@ -273,10 +261,11 @@ public class FedoraContent extends ContentExposingResource {
      */
     @GET
     @Timed
-    public Response getContent(@PathParam("path")
-        final List<PathSegment> pathList, @HeaderParam("Range")
-        final String rangeValue, @Context
-        final Request request) throws RepositoryException, IOException {
+    public Response getContent(@PathParam("path") final List<PathSegment> pathList,
+                               @HeaderParam("Range") final String rangeValue,
+                               @Context final Request request,
+                               @Context final HttpServletResponse servletResponse)
+        throws RepositoryException, IOException {
         try {
             final String path = toPath(pathList);
             LOGGER.info("Attempting get of {}.", path);
@@ -286,8 +275,8 @@ public class FedoraContent extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
-            return getDatastreamContentResponse(ds, rangeValue, request,
-                    subjects);
+            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
+                                                   subjects);
 
         } finally {
             session.logout();

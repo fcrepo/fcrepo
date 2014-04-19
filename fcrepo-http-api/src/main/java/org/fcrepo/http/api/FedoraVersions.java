@@ -36,6 +36,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.VersionException;
 import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -224,7 +225,7 @@ public class FedoraVersions extends ContentExposingResource {
             @PathParam("label")
             final String label,
             @Context
-            final Request request,
+            final Request request, @Context final HttpServletResponse servletResponse,
             @Context
             final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
@@ -235,6 +236,7 @@ public class FedoraVersions extends ContentExposingResource {
             throw new WebApplicationException(status(NOT_FOUND).build());
         }
         final FedoraResource resource = new FedoraResourceImpl(node);
+        checkCacheControlHeaders(request, servletResponse, resource);
         return resource.getTriples(nodeTranslator()).session(session).topic(
                 nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
@@ -252,7 +254,9 @@ public class FedoraVersions extends ContentExposingResource {
     public Response getHistoricContent(@PathParam("path")
                                        final List<PathSegment> pathList, @HeaderParam("Range")
                                        final String rangeValue, @Context
-                                       final Request request) throws RepositoryException, IOException {
+                                       final Request request,
+                                       @Context final HttpServletResponse servletResponse
+    ) throws RepositoryException, IOException {
         try {
             LOGGER.info("Attempting get of {}.", uriInfo.getRequestUri());
             final Node frozenNode = nodeTranslator().getNodeFromGraphSubjectForVersionNode(
@@ -262,7 +266,7 @@ public class FedoraVersions extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
-            return getDatastreamContentResponse(ds, rangeValue, request, subjects);
+            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse, subjects);
 
         } finally {
             session.logout();

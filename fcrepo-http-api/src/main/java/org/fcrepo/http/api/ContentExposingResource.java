@@ -24,6 +24,8 @@ import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.Datastream;
 
 import javax.jcr.RepositoryException;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.Request;
@@ -53,64 +55,53 @@ public abstract class ContentExposingResource extends AbstractResource {
      * for content (or a range of the content) into a Response
      */
     protected Response getDatastreamContentResponse(final Datastream ds, final String rangeValue, final Request request,
+                                                    final HttpServletResponse servletResponse,
                                                     final HttpIdentifierTranslator subjects) throws
             RepositoryException, IOException {
-        final EntityTag etag =
-                new EntityTag(ds.getContentDigest().toString());
-        final Date date = ds.getLastModifiedDate();
-        final Date roundedDate = new Date();
-        roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-        Response.ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate, etag);
+
+        // we include an explicit etag, because the default behavior is to use the JCR node's etag, not
+        // the jcr:content node digest.
+        checkCacheControlHeaders(request, servletResponse, ds);
 
         final CacheControl cc = new CacheControl();
         cc.setMaxAge(0);
         cc.setMustRevalidate(true);
+        Response.ResponseBuilder builder;
 
-        if (builder == null) {
+        final InputStream content = ds.getContent();
 
-            final InputStream content = ds.getContent();
+        if (rangeValue != null && rangeValue.startsWith("bytes")) {
 
-            if (rangeValue != null && rangeValue.startsWith("bytes")) {
+            final Range range = Range.convert(rangeValue);
 
-                final Range range = Range.convert(rangeValue);
+            final long contentSize = ds.getContentSize();
 
-                final long contentSize = ds.getContentSize();
+            final String endAsString;
 
-                final String endAsString;
-
-                if (range.end() == -1) {
-                    endAsString = Long.toString(contentSize - 1);
-                } else {
-                    endAsString = Long.toString(range.end());
-                }
-
-                final String contentRangeValue =
-                        String.format("bytes %s-%s/%s", range.start(),
-                                endAsString, contentSize);
-
-                if (range.end() > contentSize ||
-                        (range.end() == -1 && range.start() > contentSize)) {
-                    builder =
-                            status(
-                                    REQUESTED_RANGE_NOT_SATISFIABLE)
-                                    .header("Content-Range",
-                                            contentRangeValue);
-                } else {
-                    final RangeRequestInputStream rangeInputStream =
-                            new RangeRequestInputStream(content, range
-                                    .start(), range.size());
-
-                    builder =
-                            status(PARTIAL_CONTENT).entity(
-                                    rangeInputStream)
-                                    .header("Content-Range",
-                                            contentRangeValue);
-                }
-
+            if (range.end() == -1) {
+                endAsString = Long.toString(contentSize - 1);
             } else {
-                builder = ok(content);
+                endAsString = Long.toString(range.end());
             }
+
+            final String contentRangeValue =
+                String.format("bytes %s-%s/%s", range.start(),
+                                 endAsString, contentSize);
+
+            if (range.end() > contentSize ||
+                    (range.end() == -1 && range.start() > contentSize)) {
+                builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
+                        .header("Content-Range", contentRangeValue);
+            } else {
+                final RangeRequestInputStream rangeInputStream =
+                    new RangeRequestInputStream(content, range.start(), range.size());
+
+                builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
+                        .header("Content-Range", contentRangeValue);
+            }
+
+        } else {
+            builder = ok(content);
         }
 
         final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
@@ -124,9 +115,67 @@ public abstract class ContentExposingResource extends AbstractResource {
                 "Link",
                 subjects.getSubject(ds.getNode().getPath()) +
                         ";rel=\"describedby\"").header("Accept-Ranges",
-                "bytes").cacheControl(cc).lastModified(date).tag(etag)
+                "bytes").cacheControl(cc)
                 .header("Content-Disposition", contentDisposition)
                 .build();
+    }
+
+    /**
+     * Evaluate the cache control headers for the request to see if it can be served from
+     * the cache.
+     *
+     * @param request
+     * @param servletResponse
+     * @param resource
+     * @throws javax.jcr.RepositoryException
+     */
+    protected static void checkCacheControlHeaders(final Request request,
+                                                   final HttpServletResponse servletResponse,
+                                                   final Datastream resource) throws RepositoryException {
+
+        final EntityTag etag = new EntityTag(resource.getContentDigest().toString());
+        final Date date = resource.getLastModifiedDate();
+
+        final Date roundedDate = new Date();
+        if (date != null) {
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+        }
+        final Response.ResponseBuilder builder =
+            request.evaluatePreconditions(roundedDate, etag);
+
+        if (builder != null) {
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
+            // here we are implicitly emitting a 304
+            // the exception is not an error, it's genuinely
+            // an exceptional condition
+            throw new WebApplicationException(builder.cacheControl(cc)
+                                                  .lastModified(date).tag(etag).build());
+        }
+
+        addCacheControlHeaders(servletResponse, resource);
+    }
+
+    /**
+     * Add ETag and Last-Modified cache control headers to the response
+     * @param servletResponse
+     * @param resource
+     * @throws RepositoryException
+     */
+    protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
+                                                 final Datastream resource) throws RepositoryException {
+
+        final EntityTag etag = new EntityTag(resource.getContentDigest().toString());
+        final Date date = resource.getLastModifiedDate();
+
+        if (!etag.getValue().isEmpty()) {
+            servletResponse.addHeader("ETag", etag.toString());
+        }
+
+        if (date != null) {
+            servletResponse.addDateHeader("Last-Modified", date.getTime());
+        }
     }
 
 }

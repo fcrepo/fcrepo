@@ -62,7 +62,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.jcr.ItemExistsException;
@@ -74,6 +73,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
@@ -83,14 +83,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -140,6 +137,37 @@ public class FedoraNodes extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
 
     /**
+     * Retrieve the node headers
+     * @param pathList
+     * @param request
+     * @param servletResponse
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
+    @HEAD
+    @Timed
+    public Response head(@PathParam("path") final List<PathSegment> pathList,
+                     @Context final Request request,
+                     @Context final HttpServletResponse servletResponse,
+                     @Context final UriInfo uriInfo) throws RepositoryException {
+        final String path = toPath(pathList);
+        LOGGER.trace("Getting head for: {}", path);
+
+        final FedoraResource resource = nodeService.getObject(session, path);
+
+        final HttpIdentifierTranslator subjects =
+            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
+
+        checkCacheControlHeaders(request, servletResponse, resource);
+
+        addResourceHttpHeaders(servletResponse, resource, subjects);
+
+        return status(OK).build();
+    }
+
+
+    /**
      * Retrieve the node profile
      *
      * @param pathList
@@ -167,24 +195,8 @@ public class FedoraNodes extends AbstractResource {
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
-        final Date roundedDate = new Date();
-        if (date != null) {
-            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-        }
-        final ResponseBuilder builder =
-            request.evaluatePreconditions(roundedDate, etag);
-        if (builder != null) {
-            final CacheControl cc = new CacheControl();
-            cc.setMaxAge(0);
-            cc.setMustRevalidate(true);
-            // here we are implicitly emitting a 304
-            // the exception is not an error, it's genuinely
-            // an exceptional condition
-            throw new WebApplicationException(builder.cacheControl(cc)
-                    .lastModified(date).tag(etag).build());
-        }
+        checkCacheControlHeaders(request, servletResponse, resource);
+
         final HttpIdentifierTranslator subjects =
             new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
@@ -268,16 +280,19 @@ public class FedoraNodes extends AbstractResource {
         }
         servletResponse.addHeader("Vary", "Prefer");
 
+        addResourceHttpHeaders(servletResponse, resource, subjects);
+
+        addResponseInformationToStream(resource, rdfStream, uriInfo,
+                subjects);
+
+        return rdfStream;
 
 
-        if (!etag.getValue().isEmpty()) {
-            servletResponse.addHeader("ETag", etag.toString());
-        }
+    }
 
-        if (resource.getLastModifiedDate() != null) {
-            servletResponse.addDateHeader("Last-Modified", resource
-                    .getLastModifiedDate().getTime());
-        }
+    private void addResourceHttpHeaders(final HttpServletResponse servletResponse,
+                                        final FedoraResource resource,
+                                        final HttpIdentifierTranslator subjects) throws RepositoryException {
 
         if (resource.hasContent()) {
             servletResponse.addHeader("Link", subjects.getSubject(
@@ -287,13 +302,6 @@ public class FedoraNodes extends AbstractResource {
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
         servletResponse.addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
         servletResponse.addHeader("Link", LDP_NAMESPACE + "DirectContainer;rel=\"type\"");
-
-        addResponseInformationToStream(resource, rdfStream, uriInfo,
-                subjects);
-
-        return rdfStream;
-
-
     }
 
     /**
@@ -313,7 +321,7 @@ public class FedoraNodes extends AbstractResource {
             @Context
             final UriInfo uriInfo,
             final InputStream requestBodyStream,
-            @Context final Request request)
+            @Context final Request request, @Context final HttpServletResponse servletResponse)
         throws RepositoryException, IOException {
 
         final String path = toPath(pathList);
@@ -326,21 +334,7 @@ public class FedoraNodes extends AbstractResource {
                 final FedoraResource resource =
                         nodeService.getObject(session, path);
 
-
-                final EntityTag etag = new EntityTag(resource.getEtagValue());
-                final Date date = resource.getLastModifiedDate();
-                final Date roundedDate = new Date();
-
-                if (date != null) {
-                    roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-                }
-
-                final ResponseBuilder builder =
-                    request.evaluatePreconditions(roundedDate, etag);
-
-                if (builder != null) {
-                    throw new WebApplicationException(builder.build());
-                }
+                evaluateRequestPreconditions(request, resource);
 
                 final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
                         session, FedoraNodes.class, uriInfo), IOUtils
@@ -359,6 +353,8 @@ public class FedoraNodes extends AbstractResource {
 
                 session.save();
                 versionService.nodeUpdated(resource.getNode());
+
+                addCacheControlHeaders(servletResponse, resource);
 
                 return status(SC_NO_CONTENT).build();
             }
@@ -389,7 +385,8 @@ public class FedoraNodes extends AbstractResource {
             final MediaType requestContentType,
             final InputStream requestBodyStream,
             @Context
-            final Request request) throws RepositoryException, ParseException,
+            final Request request,
+            @Context final HttpServletResponse servletResponse) throws RepositoryException, ParseException,
             IOException, InvalidChecksumException, URISyntaxException {
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to replace path: {}", path);
@@ -397,28 +394,13 @@ public class FedoraNodes extends AbstractResource {
 
             if (!nodeService.exists(session, path)) {
                 return createObject(pathList, null, null, null,
-                        requestContentType, null, uriInfo, requestBodyStream);
+                        requestContentType, null, servletResponse, uriInfo, requestBodyStream);
             }
 
             final FedoraResource resource =
                 nodeService.getObject(session, path);
 
-            final Date date = resource.getLastModifiedDate();
-            final Date roundedDate = new Date();
-
-
-            final EntityTag etag = new EntityTag(resource.getEtagValue());
-
-            if (date != null) {
-                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-            }
-
-            final ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate, etag);
-
-            if (builder != null) {
-                throw new WebApplicationException(builder.build());
-            }
+            evaluateRequestPreconditions(request, resource);
 
             final HttpIdentifierTranslator graphSubjects =
                 new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
@@ -437,9 +419,10 @@ public class FedoraNodes extends AbstractResource {
             }
 
             session.save();
+            addCacheControlHeaders(servletResponse, resource);
             versionService.nodeUpdated(resource.getNode());
 
-            return status(SC_NO_CONTENT).lastModified(resource.getLastModifiedDate()).build();
+            return status(SC_NO_CONTENT).build();
         } finally {
             session.logout();
         }
@@ -465,6 +448,7 @@ public class FedoraNodes extends AbstractResource {
             final MediaType requestContentType,
             @HeaderParam("Slug")
             final String slug,
+            @Context final HttpServletResponse servletResponse,
             @Context
             final UriInfo uriInfo, final InputStream requestBodyStream)
         throws RepositoryException, ParseException, IOException,
@@ -607,8 +591,9 @@ public class FedoraNodes extends AbstractResource {
                 location = new URI(idTranslator.getSubject(result.getNode().getPath()).getURI());
             }
 
-            return created(location).lastModified(result.getLastModifiedDate())
-                    .entity(location.toString()).build();
+            addCacheControlHeaders(servletResponse, result);
+
+            return created(location).entity(location.toString()).build();
 
         } finally {
             session.logout();
@@ -632,11 +617,12 @@ public class FedoraNodes extends AbstractResource {
                                                 @PathParam("path") final List<PathSegment> pathList,
                                                 @FormDataParam("mixin") final String mixin,
                                                 @FormDataParam("slug") final String slug,
+                                                @Context final HttpServletResponse servletResponse,
                                                 @Context final UriInfo uriInfo,
                                                 @FormDataParam("file") final InputStream file
     ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {
 
-        return createObject(pathList, mixin, null, null, null, slug, uriInfo, file);
+        return createObject(pathList, mixin, null, null, null, slug, servletResponse, uriInfo, file);
 
     }
 
@@ -661,20 +647,7 @@ public class FedoraNodes extends AbstractResource {
                 nodeService.getObject(session, path);
 
 
-            final EntityTag etag = new EntityTag(resource.getEtagValue());
-            final Date date = resource.getLastModifiedDate();
-            final Date roundedDate = new Date();
-
-            if (date != null) {
-                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-            }
-
-            final ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate, etag);
-
-            if (builder != null) {
-                throw new WebApplicationException(builder.build());
-            }
+            evaluateRequestPreconditions(request, resource);
 
             nodeService.deleteObject(session, path);
             session.save();
@@ -761,20 +734,7 @@ public class FedoraNodes extends AbstractResource {
                 nodeService.getObject(session, path);
 
 
-            final EntityTag etag = new EntityTag(resource.getEtagValue());
-            final Date date = resource.getLastModifiedDate();
-            final Date roundedDate = new Date();
-
-            if (date != null) {
-                roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-            }
-
-            final ResponseBuilder builder =
-                request.evaluatePreconditions(roundedDate, etag);
-
-            if (builder != null) {
-                throw new WebApplicationException(builder.build());
-            }
+            evaluateRequestPreconditions(request, resource);
 
             final IdentifierTranslator subjects =
                 new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);

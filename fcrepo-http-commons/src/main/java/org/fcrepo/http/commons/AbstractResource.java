@@ -18,11 +18,18 @@ package org.fcrepo.http.commons;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -155,6 +162,88 @@ public abstract class AbstractResource {
             return "/";
         }
         return path;
+    }
+
+    /**
+     * Evaluate the cache control headers for the request to see if it can be served from
+     * the cache.
+     *
+     * @param request
+     * @param servletResponse
+     * @param resource
+     * @throws javax.jcr.RepositoryException
+     */
+    protected static void checkCacheControlHeaders(final Request request,
+                                                   final HttpServletResponse servletResponse,
+                                                   final FedoraResource resource) throws RepositoryException {
+
+        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final Date date = resource.getLastModifiedDate();
+
+        final Date roundedDate = new Date();
+        if (date != null) {
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+        }
+        final Response.ResponseBuilder builder =
+            request.evaluatePreconditions(roundedDate, etag);
+
+        if (builder != null) {
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
+            // here we are implicitly emitting a 304
+            // the exception is not an error, it's genuinely
+            // an exceptional condition
+            throw new WebApplicationException(builder.cacheControl(cc)
+                                                  .lastModified(date).tag(etag).build());
+        }
+
+        addCacheControlHeaders(servletResponse, resource);
+    }
+
+    /**
+     * Add ETag and Last-Modified cache control headers to the response
+     * @param servletResponse
+     * @param resource
+     * @throws RepositoryException
+     */
+    protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
+                                                 final FedoraResource resource) throws RepositoryException {
+
+        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final Date date = resource.getLastModifiedDate();
+
+        if (!etag.getValue().isEmpty()) {
+            servletResponse.addHeader("ETag", etag.toString());
+        }
+
+        if (date != null) {
+            servletResponse.addDateHeader("Last-Modified", date.getTime());
+        }
+    }
+
+    /**
+     * Evaluate request preconditions to ensure the resource is the expected state
+     * @param request
+     * @param resource
+     */
+    protected static void evaluateRequestPreconditions(final Request request,
+                                                       final FedoraResource resource) throws RepositoryException {
+
+        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final Date date = resource.getLastModifiedDate();
+        final Date roundedDate = new Date();
+
+        if (date != null) {
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+        }
+
+        final Response.ResponseBuilder builder =
+            request.evaluatePreconditions(roundedDate, etag);
+
+        if (builder != null) {
+            throw new WebApplicationException(builder.build());
+        }
     }
 
     protected void addResponseInformationToStream(
