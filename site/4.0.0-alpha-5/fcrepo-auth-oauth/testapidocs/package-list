@@ -1,0 +1,7 @@
+org.fcrepo.auth.oauth
+org.fcrepo.auth.oauth.api
+org.fcrepo.auth.oauth.filter
+org.fcrepo.auth.oauth.impl
+org.fcrepo.auth.oauth.test.filter
+org.fcrepo.integration.auth.oauth.api
+org.fcrepo.integration.auth.oauth.api.bind
