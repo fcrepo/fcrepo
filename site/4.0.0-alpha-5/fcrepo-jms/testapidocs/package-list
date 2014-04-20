@@ -1,0 +1,3 @@
+org.fcrepo.integration.jms.observer
+org.fcrepo.jms.headers
+org.fcrepo.jms.observer
