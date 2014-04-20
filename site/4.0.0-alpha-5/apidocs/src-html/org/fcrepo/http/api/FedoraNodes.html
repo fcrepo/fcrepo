@@ -1,0 +1,855 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/**<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright 2013 DuraSpace, Inc.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * You may obtain a copy of the License at<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * See the License for the specific language governing permissions and<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * limitations under the License.<a name="line.14"></a>
+<span class="sourceLineNo">015</span> */<a name="line.15"></a>
+<span class="sourceLineNo">016</span><a name="line.16"></a>
+<span class="sourceLineNo">017</span>package org.fcrepo.http.api;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>import static com.hp.hpl.jena.graph.NodeFactory.createURI;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import static com.hp.hpl.jena.graph.Triple.create;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import static com.sun.jersey.api.Responses.clientError;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import static com.sun.jersey.api.Responses.notAcceptable;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import static javax.ws.rs.core.MediaType.APPLICATION_XML;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import static javax.ws.rs.core.MediaType.TEXT_HTML;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import static javax.ws.rs.core.MediaType.TEXT_PLAIN;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import static javax.ws.rs.core.Response.created;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import static javax.ws.rs.core.Response.noContent;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import static javax.ws.rs.core.Response.status;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import static javax.ws.rs.core.Response.Status.FORBIDDEN;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import static javax.ws.rs.core.Response.Status.OK;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import static org.apache.commons.lang.ArrayUtils.contains;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import static org.apache.http.HttpStatus.SC_BAD_REQUEST;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import static org.apache.http.HttpStatus.SC_CONFLICT;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import static org.apache.http.HttpStatus.SC_NO_CONTENT;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import static org.apache.jena.riot.WebContent.contentTypeToLang;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import static org.fcrepo.http.commons.domain.RDFMediaType.N3;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;<a name="line.54"></a>
+<span class="sourceLineNo">055</span>import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>import static org.slf4j.LoggerFactory.getLogger;<a name="line.57"></a>
+<span class="sourceLineNo">058</span><a name="line.58"></a>
+<span class="sourceLineNo">059</span>import java.io.IOException;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>import java.io.InputStream;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>import java.net.URI;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>import java.net.URISyntaxException;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>import java.text.ParseException;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>import java.util.ArrayList;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>import java.util.List;<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>import javax.jcr.ItemExistsException;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>import javax.jcr.PathNotFoundException;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>import javax.jcr.RepositoryException;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>import javax.jcr.Session;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>import javax.servlet.http.HttpServletResponse;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>import javax.ws.rs.Consumes;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>import javax.ws.rs.DELETE;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>import javax.ws.rs.DefaultValue;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>import javax.ws.rs.GET;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>import javax.ws.rs.HEAD;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>import javax.ws.rs.HeaderParam;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>import javax.ws.rs.OPTIONS;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>import javax.ws.rs.POST;<a name="line.79"></a>
+<span class="sourceLineNo">080</span>import javax.ws.rs.PUT;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>import javax.ws.rs.Path;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>import javax.ws.rs.PathParam;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>import javax.ws.rs.Produces;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>import javax.ws.rs.QueryParam;<a name="line.84"></a>
+<span class="sourceLineNo">085</span>import javax.ws.rs.WebApplicationException;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>import javax.ws.rs.core.Context;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>import javax.ws.rs.core.MediaType;<a name="line.87"></a>
+<span class="sourceLineNo">088</span>import javax.ws.rs.core.PathSegment;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>import javax.ws.rs.core.Request;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>import javax.ws.rs.core.Response;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>import javax.ws.rs.core.UriInfo;<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>import com.hp.hpl.jena.rdf.model.ResourceFactory;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>import com.sun.jersey.core.header.ContentDisposition;<a name="line.94"></a>
+<span class="sourceLineNo">095</span>import com.sun.jersey.multipart.FormDataParam;<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>import org.apache.commons.io.IOUtils;<a name="line.97"></a>
+<span class="sourceLineNo">098</span>import org.apache.jena.riot.Lang;<a name="line.98"></a>
+<span class="sourceLineNo">099</span>import org.fcrepo.http.commons.AbstractResource;<a name="line.99"></a>
+<span class="sourceLineNo">100</span>import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;<a name="line.100"></a>
+<span class="sourceLineNo">101</span>import org.fcrepo.http.commons.domain.MOVE;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>import org.fcrepo.http.commons.domain.PATCH;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>import org.fcrepo.http.commons.domain.COPY;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>import org.fcrepo.http.commons.domain.Prefer;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>import org.fcrepo.http.commons.domain.PreferTag;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>import org.fcrepo.http.commons.session.InjectedSession;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>import org.fcrepo.kernel.Datastream;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>import org.fcrepo.kernel.FedoraResource;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>import org.fcrepo.kernel.exception.InvalidChecksumException;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>import org.fcrepo.kernel.rdf.IdentifierTranslator;<a name="line.110"></a>
+<span class="sourceLineNo">111</span>import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;<a name="line.111"></a>
+<span class="sourceLineNo">112</span>import org.fcrepo.kernel.utils.iterators.RdfStream;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>import org.openrdf.util.iterators.Iterators;<a name="line.113"></a>
+<span class="sourceLineNo">114</span>import org.slf4j.Logger;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>import org.springframework.context.annotation.Scope;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>import org.springframework.stereotype.Component;<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>import com.codahale.metrics.annotation.Timed;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>import com.hp.hpl.jena.graph.Node;<a name="line.119"></a>
+<span class="sourceLineNo">120</span>import com.hp.hpl.jena.query.Dataset;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>import com.hp.hpl.jena.rdf.model.Model;<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>import org.modeshape.jcr.cache.NodeKey;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>import org.modeshape.jcr.cache.ReferentialIntegrityException;<a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>/**<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * CRUD operations on Fedora Nodes<a name="line.127"></a>
+<span class="sourceLineNo">128</span> */<a name="line.128"></a>
+<span class="sourceLineNo">129</span>@Component<a name="line.129"></a>
+<span class="sourceLineNo">130</span>@Scope("prototype")<a name="line.130"></a>
+<span class="sourceLineNo">131</span>@Path("/{path: .*}")<a name="line.131"></a>
+<span class="sourceLineNo">132</span>public class FedoraNodes extends AbstractResource {<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>    @InjectedSession<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    protected Session session;<a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>    private static final Logger LOGGER = getLogger(FedoraNodes.class);<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Retrieve the node headers<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param pathList<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @param request<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @param servletResponse<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @param uriInfo<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @return<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @throws RepositoryException<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     */<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    @HEAD<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    @Timed<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    public Response head(@PathParam("path") final List&lt;PathSegment&gt; pathList,<a name="line.150"></a>
+<span class="sourceLineNo">151</span>                     @Context final Request request,<a name="line.151"></a>
+<span class="sourceLineNo">152</span>                     @Context final HttpServletResponse servletResponse,<a name="line.152"></a>
+<span class="sourceLineNo">153</span>                     @Context final UriInfo uriInfo) throws RepositoryException {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        final String path = toPath(pathList);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        LOGGER.trace("Getting head for: {}", path);<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>        final FedoraResource resource = nodeService.getObject(session, path);<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span>        final HttpIdentifierTranslator subjects =<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>        checkCacheControlHeaders(request, servletResponse, resource);<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>        addResourceHttpHeaders(servletResponse, resource, subjects);<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>        return status(OK).build();<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    /**<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * Retrieve the node profile<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @param pathList<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * @param offset with limit, control the pagination window of details for<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *        child nodes<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @param limit with offset, control the pagination window of details for<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *        child nodes<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @param request<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @param uriInfo<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @return<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * @throws RepositoryException<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     */<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    @GET<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            TEXT_HTML, APPLICATION_XHTML_XML})<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    public RdfStream describe(@PathParam("path") final List&lt;PathSegment&gt; pathList,<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            @QueryParam("offset") @DefaultValue("0") final int offset,<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            @QueryParam("limit")  @DefaultValue("-1") final int limit,<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            @HeaderParam("Prefer") final Prefer prefer,<a name="line.189"></a>
+<span class="sourceLineNo">190</span>            @Context final Request request,<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            @Context final HttpServletResponse servletResponse,<a name="line.191"></a>
+<span class="sourceLineNo">192</span>            @Context final UriInfo uriInfo) throws RepositoryException {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        final String path = toPath(pathList);<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        LOGGER.trace("Getting profile for: {}", path);<a name="line.194"></a>
+<span class="sourceLineNo">195</span><a name="line.195"></a>
+<span class="sourceLineNo">196</span>        final FedoraResource resource = nodeService.getObject(session, path);<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>        checkCacheControlHeaders(request, servletResponse, resource);<a name="line.198"></a>
+<span class="sourceLineNo">199</span><a name="line.199"></a>
+<span class="sourceLineNo">200</span>        final HttpIdentifierTranslator subjects =<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>        final RdfStream rdfStream =<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            resource.getTriples(subjects).session(session)<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                    .topic(subjects.getSubject(resource.getNode().getPath())<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                            .asNode());<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>        final PreferTag returnPreference;<a name="line.208"></a>
+<span class="sourceLineNo">209</span><a name="line.209"></a>
+<span class="sourceLineNo">210</span>        if (prefer != null &amp;&amp; prefer.hasReturn()) {<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            returnPreference = prefer.getReturn();<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        } else {<a name="line.212"></a>
+<span class="sourceLineNo">213</span>            returnPreference = new PreferTag("");<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        }<a name="line.214"></a>
+<span class="sourceLineNo">215</span><a name="line.215"></a>
+<span class="sourceLineNo">216</span>        if (!returnPreference.getValue().equals("minimal")) {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            String include = returnPreference.getParams().get("include");<a name="line.217"></a>
+<span class="sourceLineNo">218</span>            if (include == null) {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                include = "";<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            }<a name="line.220"></a>
+<span class="sourceLineNo">221</span><a name="line.221"></a>
+<span class="sourceLineNo">222</span>            String omit = returnPreference.getParams().get("omit");<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            if (omit == null) {<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                omit = "";<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            }<a name="line.225"></a>
+<span class="sourceLineNo">226</span><a name="line.226"></a>
+<span class="sourceLineNo">227</span>            final String[] includes = include.split(" ");<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            final String[] omits = omit.split(" ");<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>            if (limit &gt;= 0) {<a name="line.230"></a>
+<span class="sourceLineNo">231</span>                final Node firstPage =<a name="line.231"></a>
+<span class="sourceLineNo">232</span>                    createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)<a name="line.232"></a>
+<span class="sourceLineNo">233</span>                                  .replaceQueryParam("limit", limit).build()<a name="line.233"></a>
+<span class="sourceLineNo">234</span>                                  .toString().replace("&amp;", "&amp;amp;"));<a name="line.234"></a>
+<span class="sourceLineNo">235</span>                rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));<a name="line.235"></a>
+<span class="sourceLineNo">236</span>                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span>                if ( resource.getNode().getNodes().getSize() &gt; (offset + limit) ) {<a name="line.238"></a>
+<span class="sourceLineNo">239</span>                    final Node nextPage =<a name="line.239"></a>
+<span class="sourceLineNo">240</span>                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                                  .replaceQueryParam("limit", limit).build()<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                                  .toString().replace("&amp;", "&amp;amp;"));<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                    rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));<a name="line.243"></a>
+<span class="sourceLineNo">244</span>                    servletResponse.addHeader("Link", nextPage + ";rel=\"next\"");<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                }<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            }<a name="line.246"></a>
+<span class="sourceLineNo">247</span><a name="line.247"></a>
+<span class="sourceLineNo">248</span>            List&lt;String&gt; appliedIncludes = new ArrayList&lt;&gt;();<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>            final boolean membership =<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                     contains(includes, LDP_NAMESPACE + "PreferMembership"))<a name="line.252"></a>
+<span class="sourceLineNo">253</span>                    &amp;&amp; !contains(omits, LDP_NAMESPACE + "PreferMembership");<a name="line.253"></a>
+<span class="sourceLineNo">254</span><a name="line.254"></a>
+<span class="sourceLineNo">255</span>            final boolean containment =<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                     contains(includes, LDP_NAMESPACE + "PreferContainment"))<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                    &amp;&amp; !contains(omits, LDP_NAMESPACE + "PreferContainment");<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>            final HierarchyRdfContextOptions hierarchyRdfContextOptions<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                = new HierarchyRdfContextOptions(limit, offset, membership, containment);<a name="line.262"></a>
+<span class="sourceLineNo">263</span><a name="line.263"></a>
+<span class="sourceLineNo">264</span>            if (hierarchyRdfContextOptions.membershipEnabled()) {<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                appliedIncludes.add(LDP_NAMESPACE + "PreferMembership");<a name="line.265"></a>
+<span class="sourceLineNo">266</span>            }<a name="line.266"></a>
+<span class="sourceLineNo">267</span><a name="line.267"></a>
+<span class="sourceLineNo">268</span>            if (hierarchyRdfContextOptions.containmentEnabled()) {<a name="line.268"></a>
+<span class="sourceLineNo">269</span>                appliedIncludes.add(LDP_NAMESPACE + "PreferContainment");<a name="line.269"></a>
+<span class="sourceLineNo">270</span>            }<a name="line.270"></a>
+<span class="sourceLineNo">271</span><a name="line.271"></a>
+<span class="sourceLineNo">272</span>            rdfStream.concat(resource.getHierarchyTriples(subjects, hierarchyRdfContextOptions));<a name="line.272"></a>
+<span class="sourceLineNo">273</span><a name="line.273"></a>
+<span class="sourceLineNo">274</span>            final String preferences = "return=representation; include=\""<a name="line.274"></a>
+<span class="sourceLineNo">275</span>                                           + Iterators.toString(appliedIncludes.iterator(), " ") + "\"";<a name="line.275"></a>
+<span class="sourceLineNo">276</span>            servletResponse.addHeader("Preference-Applied", preferences);<a name="line.276"></a>
+<span class="sourceLineNo">277</span><a name="line.277"></a>
+<span class="sourceLineNo">278</span>        } else {<a name="line.278"></a>
+<span class="sourceLineNo">279</span>            servletResponse.addHeader("Preference-Applied", "return=minimal");<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        }<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        servletResponse.addHeader("Vary", "Prefer");<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>        addResourceHttpHeaders(servletResponse, resource, subjects);<a name="line.283"></a>
+<span class="sourceLineNo">284</span><a name="line.284"></a>
+<span class="sourceLineNo">285</span>        addResponseInformationToStream(resource, rdfStream, uriInfo,<a name="line.285"></a>
+<span class="sourceLineNo">286</span>                subjects);<a name="line.286"></a>
+<span class="sourceLineNo">287</span><a name="line.287"></a>
+<span class="sourceLineNo">288</span>        return rdfStream;<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span><a name="line.290"></a>
+<span class="sourceLineNo">291</span>    }<a name="line.291"></a>
+<span class="sourceLineNo">292</span><a name="line.292"></a>
+<span class="sourceLineNo">293</span>    private void addResourceHttpHeaders(final HttpServletResponse servletResponse,<a name="line.293"></a>
+<span class="sourceLineNo">294</span>                                        final FedoraResource resource,<a name="line.294"></a>
+<span class="sourceLineNo">295</span>                                        final HttpIdentifierTranslator subjects) throws RepositoryException {<a name="line.295"></a>
+<span class="sourceLineNo">296</span><a name="line.296"></a>
+<span class="sourceLineNo">297</span>        if (resource.hasContent()) {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>            servletResponse.addHeader("Link", subjects.getSubject(<a name="line.298"></a>
+<span class="sourceLineNo">299</span>                resource.getNode().getNode(JCR_CONTENT).getPath()) + ";rel=\"describes\"");<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        }<a name="line.300"></a>
+<span class="sourceLineNo">301</span><a name="line.301"></a>
+<span class="sourceLineNo">302</span>        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        servletResponse.addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        servletResponse.addHeader("Link", LDP_NAMESPACE + "DirectContainer;rel=\"type\"");<a name="line.304"></a>
+<span class="sourceLineNo">305</span>    }<a name="line.305"></a>
+<span class="sourceLineNo">306</span><a name="line.306"></a>
+<span class="sourceLineNo">307</span>    /**<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * Update an object using SPARQL-UPDATE<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     *<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * @param pathList<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @return 201<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * @throws RepositoryException<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @throws org.fcrepo.kernel.exception.InvalidChecksumException<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @throws IOException<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     */<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    @PATCH<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    @Consumes({contentTypeSPARQLUpdate})<a name="line.317"></a>
+<span class="sourceLineNo">318</span>    @Timed<a name="line.318"></a>
+<span class="sourceLineNo">319</span>    public Response updateSparql(@PathParam("path")<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            final List&lt;PathSegment&gt; pathList,<a name="line.320"></a>
+<span class="sourceLineNo">321</span>            @Context<a name="line.321"></a>
+<span class="sourceLineNo">322</span>            final UriInfo uriInfo,<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            final InputStream requestBodyStream,<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            @Context final Request request, @Context final HttpServletResponse servletResponse)<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        throws RepositoryException, IOException {<a name="line.325"></a>
+<span class="sourceLineNo">326</span><a name="line.326"></a>
+<span class="sourceLineNo">327</span>        final String path = toPath(pathList);<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        LOGGER.debug("Attempting to update path: {}", path);<a name="line.328"></a>
+<span class="sourceLineNo">329</span><a name="line.329"></a>
+<span class="sourceLineNo">330</span>        try {<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>            if (requestBodyStream != null) {<a name="line.332"></a>
+<span class="sourceLineNo">333</span><a name="line.333"></a>
+<span class="sourceLineNo">334</span>                final FedoraResource resource =<a name="line.334"></a>
+<span class="sourceLineNo">335</span>                        nodeService.getObject(session, path);<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>                evaluateRequestPreconditions(request, resource);<a name="line.337"></a>
+<span class="sourceLineNo">338</span><a name="line.338"></a>
+<span class="sourceLineNo">339</span>                final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(<a name="line.339"></a>
+<span class="sourceLineNo">340</span>                        session, FedoraNodes.class, uriInfo), IOUtils<a name="line.340"></a>
+<span class="sourceLineNo">341</span>                        .toString(requestBodyStream));<a name="line.341"></a>
+<span class="sourceLineNo">342</span><a name="line.342"></a>
+<span class="sourceLineNo">343</span><a name="line.343"></a>
+<span class="sourceLineNo">344</span>                final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);<a name="line.344"></a>
+<span class="sourceLineNo">345</span>                if (!problems.isEmpty()) {<a name="line.345"></a>
+<span class="sourceLineNo">346</span>                    LOGGER.info(<a name="line.346"></a>
+<span class="sourceLineNo">347</span>                                   "Found these problems updating the properties for {}: {}",<a name="line.347"></a>
+<span class="sourceLineNo">348</span>                                   path, problems);<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                    return status(FORBIDDEN).entity(problems.toString())<a name="line.349"></a>
+<span class="sourceLineNo">350</span>                            .build();<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>                }<a name="line.352"></a>
+<span class="sourceLineNo">353</span><a name="line.353"></a>
+<span class="sourceLineNo">354</span>                session.save();<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                versionService.nodeUpdated(resource.getNode());<a name="line.355"></a>
+<span class="sourceLineNo">356</span><a name="line.356"></a>
+<span class="sourceLineNo">357</span>                addCacheControlHeaders(servletResponse, resource);<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>                return status(SC_NO_CONTENT).build();<a name="line.359"></a>
+<span class="sourceLineNo">360</span>            }<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            return status(SC_BAD_REQUEST).entity(<a name="line.361"></a>
+<span class="sourceLineNo">362</span>                    "SPARQL-UPDATE requests must have content!").build();<a name="line.362"></a>
+<span class="sourceLineNo">363</span><a name="line.363"></a>
+<span class="sourceLineNo">364</span>        } finally {<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            session.logout();<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        }<a name="line.366"></a>
+<span class="sourceLineNo">367</span>    }<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>    /**<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * Replace triples with triples from a new model<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * @param pathList<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @param uriInfo<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * @param requestContentType<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * @param requestBodyStream<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * @return<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * @throws Exception<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     */<a name="line.377"></a>
+<span class="sourceLineNo">378</span>    @PUT<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES})<a name="line.379"></a>
+<span class="sourceLineNo">380</span>    @Timed<a name="line.380"></a>
+<span class="sourceLineNo">381</span>    public Response createOrReplaceObjectRdf(<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            @PathParam("path") final List&lt;PathSegment&gt; pathList,<a name="line.382"></a>
+<span class="sourceLineNo">383</span>            @Context final UriInfo uriInfo,<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            @HeaderParam("Content-Type")<a name="line.384"></a>
+<span class="sourceLineNo">385</span>            final MediaType requestContentType,<a name="line.385"></a>
+<span class="sourceLineNo">386</span>            final InputStream requestBodyStream,<a name="line.386"></a>
+<span class="sourceLineNo">387</span>            @Context<a name="line.387"></a>
+<span class="sourceLineNo">388</span>            final Request request,<a name="line.388"></a>
+<span class="sourceLineNo">389</span>            @Context final HttpServletResponse servletResponse) throws RepositoryException, ParseException,<a name="line.389"></a>
+<span class="sourceLineNo">390</span>            IOException, InvalidChecksumException, URISyntaxException {<a name="line.390"></a>
+<span class="sourceLineNo">391</span>        final String path = toPath(pathList);<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        LOGGER.debug("Attempting to replace path: {}", path);<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        try {<a name="line.393"></a>
+<span class="sourceLineNo">394</span><a name="line.394"></a>
+<span class="sourceLineNo">395</span>            if (!nodeService.exists(session, path)) {<a name="line.395"></a>
+<span class="sourceLineNo">396</span>                return createObject(pathList, null, null, null,<a name="line.396"></a>
+<span class="sourceLineNo">397</span>                        requestContentType, null, servletResponse, uriInfo, requestBodyStream);<a name="line.397"></a>
+<span class="sourceLineNo">398</span>            }<a name="line.398"></a>
+<span class="sourceLineNo">399</span><a name="line.399"></a>
+<span class="sourceLineNo">400</span>            final FedoraResource resource =<a name="line.400"></a>
+<span class="sourceLineNo">401</span>                nodeService.getObject(session, path);<a name="line.401"></a>
+<span class="sourceLineNo">402</span><a name="line.402"></a>
+<span class="sourceLineNo">403</span>            evaluateRequestPreconditions(request, resource);<a name="line.403"></a>
+<span class="sourceLineNo">404</span><a name="line.404"></a>
+<span class="sourceLineNo">405</span>            final HttpIdentifierTranslator graphSubjects =<a name="line.405"></a>
+<span class="sourceLineNo">406</span>                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);<a name="line.406"></a>
+<span class="sourceLineNo">407</span><a name="line.407"></a>
+<span class="sourceLineNo">408</span>            if (requestContentType != null &amp;&amp; requestBodyStream != null)  {<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                final String contentType = requestContentType.toString();<a name="line.409"></a>
+<span class="sourceLineNo">410</span><a name="line.410"></a>
+<span class="sourceLineNo">411</span>                final String format = contentTypeToLang(contentType).getName()<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                                          .toUpperCase();<a name="line.412"></a>
+<span class="sourceLineNo">413</span><a name="line.413"></a>
+<span class="sourceLineNo">414</span>                final Model inputModel =<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                    createDefaultModel().read(requestBodyStream,<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                            graphSubjects.getSubject(resource.getNode().getPath()).toString(), format);<a name="line.416"></a>
+<span class="sourceLineNo">417</span><a name="line.417"></a>
+<span class="sourceLineNo">418</span>                resource.replaceProperties(graphSubjects, inputModel);<a name="line.418"></a>
+<span class="sourceLineNo">419</span>            }<a name="line.419"></a>
+<span class="sourceLineNo">420</span><a name="line.420"></a>
+<span class="sourceLineNo">421</span>            session.save();<a name="line.421"></a>
+<span class="sourceLineNo">422</span>            addCacheControlHeaders(servletResponse, resource);<a name="line.422"></a>
+<span class="sourceLineNo">423</span>            versionService.nodeUpdated(resource.getNode());<a name="line.423"></a>
+<span class="sourceLineNo">424</span><a name="line.424"></a>
+<span class="sourceLineNo">425</span>            return status(SC_NO_CONTENT).build();<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        } finally {<a name="line.426"></a>
+<span class="sourceLineNo">427</span>            session.logout();<a name="line.427"></a>
+<span class="sourceLineNo">428</span>        }<a name="line.428"></a>
+<span class="sourceLineNo">429</span>    }<a name="line.429"></a>
+<span class="sourceLineNo">430</span><a name="line.430"></a>
+<span class="sourceLineNo">431</span>    /**<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * Creates a new object.<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     *<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     * @param pathList<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * @return 201<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     * @throws Exception<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     */<a name="line.437"></a>
+<span class="sourceLineNo">438</span>    @POST<a name="line.438"></a>
+<span class="sourceLineNo">439</span>    @Timed<a name="line.439"></a>
+<span class="sourceLineNo">440</span>    public Response createObject(@PathParam("path")<a name="line.440"></a>
+<span class="sourceLineNo">441</span>            final List&lt;PathSegment&gt; pathList,<a name="line.441"></a>
+<span class="sourceLineNo">442</span>            @QueryParam("mixin")<a name="line.442"></a>
+<span class="sourceLineNo">443</span>            final String mixin,<a name="line.443"></a>
+<span class="sourceLineNo">444</span>            @QueryParam("checksum")<a name="line.444"></a>
+<span class="sourceLineNo">445</span>            final String checksum,<a name="line.445"></a>
+<span class="sourceLineNo">446</span>            @HeaderParam("Content-Disposition") final String contentDisposition,<a name="line.446"></a>
+<span class="sourceLineNo">447</span>            @HeaderParam("Content-Type")<a name="line.447"></a>
+<span class="sourceLineNo">448</span>            final MediaType requestContentType,<a name="line.448"></a>
+<span class="sourceLineNo">449</span>            @HeaderParam("Slug")<a name="line.449"></a>
+<span class="sourceLineNo">450</span>            final String slug,<a name="line.450"></a>
+<span class="sourceLineNo">451</span>            @Context final HttpServletResponse servletResponse,<a name="line.451"></a>
+<span class="sourceLineNo">452</span>            @Context<a name="line.452"></a>
+<span class="sourceLineNo">453</span>            final UriInfo uriInfo, final InputStream requestBodyStream)<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        throws RepositoryException, ParseException, IOException,<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                   InvalidChecksumException, URISyntaxException {<a name="line.455"></a>
+<span class="sourceLineNo">456</span><a name="line.456"></a>
+<span class="sourceLineNo">457</span>        final String newObjectPath;<a name="line.457"></a>
+<span class="sourceLineNo">458</span>        final String path = toPath(pathList);<a name="line.458"></a>
+<span class="sourceLineNo">459</span><a name="line.459"></a>
+<span class="sourceLineNo">460</span>        final HttpIdentifierTranslator idTranslator =<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);<a name="line.461"></a>
+<span class="sourceLineNo">462</span><a name="line.462"></a>
+<span class="sourceLineNo">463</span>        final boolean hasContent;<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        if (nodeService.exists(session, path)) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>            hasContent = nodeService.getObject(session,path).hasContent();<a name="line.465"></a>
+<span class="sourceLineNo">466</span>            String pid;<a name="line.466"></a>
+<span class="sourceLineNo">467</span><a name="line.467"></a>
+<span class="sourceLineNo">468</span>            if (slug != null) {<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                pid = slug;<a name="line.469"></a>
+<span class="sourceLineNo">470</span>            } else {<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                pid = pidMinter.mintPid();<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            }<a name="line.472"></a>
+<span class="sourceLineNo">473</span>            // reverse translate the proffered or created identifier<a name="line.473"></a>
+<span class="sourceLineNo">474</span>            LOGGER.trace("Using external identifier {} to create new resource.", pid);<a name="line.474"></a>
+<span class="sourceLineNo">475</span>            LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                    + pid);<a name="line.476"></a>
+<span class="sourceLineNo">477</span>            pid = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));<a name="line.477"></a>
+<span class="sourceLineNo">478</span>            // remove leading slash left over from translation<a name="line.478"></a>
+<span class="sourceLineNo">479</span>            pid = pid.substring(1, pid.length());<a name="line.479"></a>
+<span class="sourceLineNo">480</span>            LOGGER.trace("Using internal identifier {} to create new resource.", pid);<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            newObjectPath = path + "/" + pid;<a name="line.481"></a>
+<span class="sourceLineNo">482</span>        } else {<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            newObjectPath = path;<a name="line.483"></a>
+<span class="sourceLineNo">484</span>            hasContent = false;<a name="line.484"></a>
+<span class="sourceLineNo">485</span>        }<a name="line.485"></a>
+<span class="sourceLineNo">486</span><a name="line.486"></a>
+<span class="sourceLineNo">487</span>        LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);<a name="line.487"></a>
+<span class="sourceLineNo">488</span><a name="line.488"></a>
+<span class="sourceLineNo">489</span>        try {<a name="line.489"></a>
+<span class="sourceLineNo">490</span>            if (nodeService.exists(session, newObjectPath)) {<a name="line.490"></a>
+<span class="sourceLineNo">491</span>                return status(SC_CONFLICT).entity(<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                        path + " is an existing resource!").build();<a name="line.492"></a>
+<span class="sourceLineNo">493</span>            }<a name="line.493"></a>
+<span class="sourceLineNo">494</span><a name="line.494"></a>
+<span class="sourceLineNo">495</span>            final URI checksumURI;<a name="line.495"></a>
+<span class="sourceLineNo">496</span><a name="line.496"></a>
+<span class="sourceLineNo">497</span>            if (checksum != null &amp;&amp; !checksum.equals("")) {<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                checksumURI = new URI(checksum);<a name="line.498"></a>
+<span class="sourceLineNo">499</span>            } else {<a name="line.499"></a>
+<span class="sourceLineNo">500</span>                checksumURI = null;<a name="line.500"></a>
+<span class="sourceLineNo">501</span>            }<a name="line.501"></a>
+<span class="sourceLineNo">502</span><a name="line.502"></a>
+<span class="sourceLineNo">503</span>            final String objectType;<a name="line.503"></a>
+<span class="sourceLineNo">504</span><a name="line.504"></a>
+<span class="sourceLineNo">505</span>            if (mixin != null) {<a name="line.505"></a>
+<span class="sourceLineNo">506</span>                objectType = mixin;<a name="line.506"></a>
+<span class="sourceLineNo">507</span>            } else {<a name="line.507"></a>
+<span class="sourceLineNo">508</span>                if (requestContentType != null) {<a name="line.508"></a>
+<span class="sourceLineNo">509</span>                    final String s = requestContentType.toString();<a name="line.509"></a>
+<span class="sourceLineNo">510</span>                    if (s.equals(contentTypeSPARQLUpdate) || contentTypeToLang(s) != null) {<a name="line.510"></a>
+<span class="sourceLineNo">511</span>                        objectType = FEDORA_OBJECT;<a name="line.511"></a>
+<span class="sourceLineNo">512</span>                    } else {<a name="line.512"></a>
+<span class="sourceLineNo">513</span>                        if ( hasContent ) {<a name="line.513"></a>
+<span class="sourceLineNo">514</span>                            return status(SC_CONFLICT).entity(<a name="line.514"></a>
+<span class="sourceLineNo">515</span>                                    path + " is an existing resource!").build();<a name="line.515"></a>
+<span class="sourceLineNo">516</span>                        }<a name="line.516"></a>
+<span class="sourceLineNo">517</span>                        objectType = FEDORA_DATASTREAM;<a name="line.517"></a>
+<span class="sourceLineNo">518</span>                    }<a name="line.518"></a>
+<span class="sourceLineNo">519</span>                } else {<a name="line.519"></a>
+<span class="sourceLineNo">520</span>                    objectType = FEDORA_OBJECT;<a name="line.520"></a>
+<span class="sourceLineNo">521</span>                }<a name="line.521"></a>
+<span class="sourceLineNo">522</span>            }<a name="line.522"></a>
+<span class="sourceLineNo">523</span><a name="line.523"></a>
+<span class="sourceLineNo">524</span>            final FedoraResource result;<a name="line.524"></a>
+<span class="sourceLineNo">525</span><a name="line.525"></a>
+<span class="sourceLineNo">526</span>            switch (objectType) {<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                case FEDORA_OBJECT:<a name="line.527"></a>
+<span class="sourceLineNo">528</span>                    result = objectService.createObject(session, newObjectPath);<a name="line.528"></a>
+<span class="sourceLineNo">529</span>                    break;<a name="line.529"></a>
+<span class="sourceLineNo">530</span>                case FEDORA_DATASTREAM:<a name="line.530"></a>
+<span class="sourceLineNo">531</span>                    result = datastreamService.createDatastream(session, newObjectPath);<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                    break;<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                default:<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                    throw new WebApplicationException(clientError().entity(<a name="line.534"></a>
+<span class="sourceLineNo">535</span>                            "Unknown object type " + objectType).build());<a name="line.535"></a>
+<span class="sourceLineNo">536</span>            }<a name="line.536"></a>
+<span class="sourceLineNo">537</span><a name="line.537"></a>
+<span class="sourceLineNo">538</span>            if (requestBodyStream != null) {<a name="line.538"></a>
+<span class="sourceLineNo">539</span><a name="line.539"></a>
+<span class="sourceLineNo">540</span>                final MediaType contentType =<a name="line.540"></a>
+<span class="sourceLineNo">541</span>                    requestContentType != null ? requestContentType<a name="line.541"></a>
+<span class="sourceLineNo">542</span>                        : APPLICATION_OCTET_STREAM_TYPE;<a name="line.542"></a>
+<span class="sourceLineNo">543</span><a name="line.543"></a>
+<span class="sourceLineNo">544</span>                final String contentTypeString = contentType.toString();<a name="line.544"></a>
+<span class="sourceLineNo">545</span><a name="line.545"></a>
+<span class="sourceLineNo">546</span>                if (contentTypeString.equals(contentTypeSPARQLUpdate)) {<a name="line.546"></a>
+<span class="sourceLineNo">547</span>                    result.updatePropertiesDataset(idTranslator, IOUtils.toString(requestBodyStream));<a name="line.547"></a>
+<span class="sourceLineNo">548</span>                } else if (contentTypeToLang(contentTypeString) != null) {<a name="line.548"></a>
+<span class="sourceLineNo">549</span><a name="line.549"></a>
+<span class="sourceLineNo">550</span>                    final Lang lang = contentTypeToLang(contentTypeString);<a name="line.550"></a>
+<span class="sourceLineNo">551</span><a name="line.551"></a>
+<span class="sourceLineNo">552</span>                    if (lang == null) {<a name="line.552"></a>
+<span class="sourceLineNo">553</span>                        throw new WebApplicationException(notAcceptable().entity(<a name="line.553"></a>
+<span class="sourceLineNo">554</span>                                "Invalid Content type " + contentType).build());<a name="line.554"></a>
+<span class="sourceLineNo">555</span>                    }<a name="line.555"></a>
+<span class="sourceLineNo">556</span><a name="line.556"></a>
+<span class="sourceLineNo">557</span>                    final String format = lang.getName()<a name="line.557"></a>
+<span class="sourceLineNo">558</span>                                              .toUpperCase();<a name="line.558"></a>
+<span class="sourceLineNo">559</span><a name="line.559"></a>
+<span class="sourceLineNo">560</span>                    final Model inputModel =<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                        createDefaultModel().read(requestBodyStream,<a name="line.561"></a>
+<span class="sourceLineNo">562</span>                                idTranslator.getSubject(result.getNode().getPath()).toString(), format);<a name="line.562"></a>
+<span class="sourceLineNo">563</span><a name="line.563"></a>
+<span class="sourceLineNo">564</span>                    result.replaceProperties(idTranslator, inputModel);<a name="line.564"></a>
+<span class="sourceLineNo">565</span>                } else if (result instanceof Datastream) {<a name="line.565"></a>
+<span class="sourceLineNo">566</span><a name="line.566"></a>
+<span class="sourceLineNo">567</span>                    final String originalFileName;<a name="line.567"></a>
+<span class="sourceLineNo">568</span><a name="line.568"></a>
+<span class="sourceLineNo">569</span>                    if (contentDisposition != null) {<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                        final ContentDisposition disposition = new ContentDisposition(contentDisposition);<a name="line.570"></a>
+<span class="sourceLineNo">571</span>                        originalFileName = disposition.getFileName();<a name="line.571"></a>
+<span class="sourceLineNo">572</span>                    } else {<a name="line.572"></a>
+<span class="sourceLineNo">573</span>                        originalFileName = null;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>                    }<a name="line.574"></a>
+<span class="sourceLineNo">575</span><a name="line.575"></a>
+<span class="sourceLineNo">576</span>                    datastreamService.createDatastream(session,<a name="line.576"></a>
+<span class="sourceLineNo">577</span>                            newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);<a name="line.577"></a>
+<span class="sourceLineNo">578</span><a name="line.578"></a>
+<span class="sourceLineNo">579</span>                }<a name="line.579"></a>
+<span class="sourceLineNo">580</span>            }<a name="line.580"></a>
+<span class="sourceLineNo">581</span><a name="line.581"></a>
+<span class="sourceLineNo">582</span>            session.save();<a name="line.582"></a>
+<span class="sourceLineNo">583</span>            versionService.nodeUpdated(result.getNode());<a name="line.583"></a>
+<span class="sourceLineNo">584</span><a name="line.584"></a>
+<span class="sourceLineNo">585</span>            LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);<a name="line.585"></a>
+<span class="sourceLineNo">586</span><a name="line.586"></a>
+<span class="sourceLineNo">587</span>            final URI location;<a name="line.587"></a>
+<span class="sourceLineNo">588</span>            if (result.hasContent()) {<a name="line.588"></a>
+<span class="sourceLineNo">589</span>                location = new URI(idTranslator.getSubject(result.getNode().getNode(JCR_CONTENT).getPath()).getURI());<a name="line.589"></a>
+<span class="sourceLineNo">590</span>            } else {<a name="line.590"></a>
+<span class="sourceLineNo">591</span>                location = new URI(idTranslator.getSubject(result.getNode().getPath()).getURI());<a name="line.591"></a>
+<span class="sourceLineNo">592</span>            }<a name="line.592"></a>
+<span class="sourceLineNo">593</span><a name="line.593"></a>
+<span class="sourceLineNo">594</span>            addCacheControlHeaders(servletResponse, result);<a name="line.594"></a>
+<span class="sourceLineNo">595</span><a name="line.595"></a>
+<span class="sourceLineNo">596</span>            return created(location).entity(location.toString()).build();<a name="line.596"></a>
+<span class="sourceLineNo">597</span><a name="line.597"></a>
+<span class="sourceLineNo">598</span>        } finally {<a name="line.598"></a>
+<span class="sourceLineNo">599</span>            session.logout();<a name="line.599"></a>
+<span class="sourceLineNo">600</span>        }<a name="line.600"></a>
+<span class="sourceLineNo">601</span>    }<a name="line.601"></a>
+<span class="sourceLineNo">602</span><a name="line.602"></a>
+<span class="sourceLineNo">603</span>    /**<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * Create a new object from a multipart/form-data POST request<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * @param pathList<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * @param mixin<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * @param slug<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     * @param uriInfo<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * @param file<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * @return<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     * @throws Exception<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     */<a name="line.612"></a>
+<span class="sourceLineNo">613</span>    @POST<a name="line.613"></a>
+<span class="sourceLineNo">614</span>    @Consumes(MediaType.MULTIPART_FORM_DATA)<a name="line.614"></a>
+<span class="sourceLineNo">615</span>    @Timed<a name="line.615"></a>
+<span class="sourceLineNo">616</span>    public Response createObjectFromFormPost(<a name="line.616"></a>
+<span class="sourceLineNo">617</span>                                                @PathParam("path") final List&lt;PathSegment&gt; pathList,<a name="line.617"></a>
+<span class="sourceLineNo">618</span>                                                @FormDataParam("mixin") final String mixin,<a name="line.618"></a>
+<span class="sourceLineNo">619</span>                                                @FormDataParam("slug") final String slug,<a name="line.619"></a>
+<span class="sourceLineNo">620</span>                                                @Context final HttpServletResponse servletResponse,<a name="line.620"></a>
+<span class="sourceLineNo">621</span>                                                @Context final UriInfo uriInfo,<a name="line.621"></a>
+<span class="sourceLineNo">622</span>                                                @FormDataParam("file") final InputStream file<a name="line.622"></a>
+<span class="sourceLineNo">623</span>    ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {<a name="line.623"></a>
+<span class="sourceLineNo">624</span><a name="line.624"></a>
+<span class="sourceLineNo">625</span>        return createObject(pathList, mixin, null, null, null, slug, servletResponse, uriInfo, file);<a name="line.625"></a>
+<span class="sourceLineNo">626</span><a name="line.626"></a>
+<span class="sourceLineNo">627</span>    }<a name="line.627"></a>
+<span class="sourceLineNo">628</span><a name="line.628"></a>
+<span class="sourceLineNo">629</span>    /**<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * Deletes an object.<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     *<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * @param pathList<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * @return<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     * @throws RepositoryException<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     */<a name="line.635"></a>
+<span class="sourceLineNo">636</span>    @DELETE<a name="line.636"></a>
+<span class="sourceLineNo">637</span>    @Timed<a name="line.637"></a>
+<span class="sourceLineNo">638</span>    public Response deleteObject(@PathParam("path")<a name="line.638"></a>
+<span class="sourceLineNo">639</span>            final List&lt;PathSegment&gt; pathList,<a name="line.639"></a>
+<span class="sourceLineNo">640</span>            @Context final Request request) throws RepositoryException {<a name="line.640"></a>
+<span class="sourceLineNo">641</span><a name="line.641"></a>
+<span class="sourceLineNo">642</span>        try {<a name="line.642"></a>
+<span class="sourceLineNo">643</span><a name="line.643"></a>
+<span class="sourceLineNo">644</span>            final String path = toPath(pathList);<a name="line.644"></a>
+<span class="sourceLineNo">645</span><a name="line.645"></a>
+<span class="sourceLineNo">646</span>            final FedoraResource resource =<a name="line.646"></a>
+<span class="sourceLineNo">647</span>                nodeService.getObject(session, path);<a name="line.647"></a>
+<span class="sourceLineNo">648</span><a name="line.648"></a>
+<span class="sourceLineNo">649</span><a name="line.649"></a>
+<span class="sourceLineNo">650</span>            evaluateRequestPreconditions(request, resource);<a name="line.650"></a>
+<span class="sourceLineNo">651</span><a name="line.651"></a>
+<span class="sourceLineNo">652</span>            nodeService.deleteObject(session, path);<a name="line.652"></a>
+<span class="sourceLineNo">653</span>            session.save();<a name="line.653"></a>
+<span class="sourceLineNo">654</span>            return noContent().build();<a name="line.654"></a>
+<span class="sourceLineNo">655</span>        } catch (javax.jcr.ReferentialIntegrityException riex) {<a name="line.655"></a>
+<span class="sourceLineNo">656</span>            StringBuffer msg = new StringBuffer("Unable to delete node because it is linked to "<a name="line.656"></a>
+<span class="sourceLineNo">657</span>                    + "by other nodes: ");<a name="line.657"></a>
+<span class="sourceLineNo">658</span><a name="line.658"></a>
+<span class="sourceLineNo">659</span>            // lookup paths of linking nodes<a name="line.659"></a>
+<span class="sourceLineNo">660</span>            Throwable inner = riex.getCause();<a name="line.660"></a>
+<span class="sourceLineNo">661</span>            if ( inner instanceof ReferentialIntegrityException) {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                for ( NodeKey node : ((ReferentialIntegrityException)inner).getReferrers() ) {<a name="line.662"></a>
+<span class="sourceLineNo">663</span>                    msg.append( " " + session.getNodeByIdentifier(node.getIdentifier()).getPath() );<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                }<a name="line.664"></a>
+<span class="sourceLineNo">665</span>            }<a name="line.665"></a>
+<span class="sourceLineNo">666</span>            return status(SC_PRECONDITION_FAILED).entity(msg.toString()).build();<a name="line.666"></a>
+<span class="sourceLineNo">667</span>        } finally {<a name="line.667"></a>
+<span class="sourceLineNo">668</span>            session.logout();<a name="line.668"></a>
+<span class="sourceLineNo">669</span>        }<a name="line.669"></a>
+<span class="sourceLineNo">670</span>    }<a name="line.670"></a>
+<span class="sourceLineNo">671</span><a name="line.671"></a>
+<span class="sourceLineNo">672</span>    /**<a name="line.672"></a>
+<span class="sourceLineNo">673</span>     * Copies an object from one path to another<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     */<a name="line.674"></a>
+<span class="sourceLineNo">675</span>    @COPY<a name="line.675"></a>
+<span class="sourceLineNo">676</span>    @Timed<a name="line.676"></a>
+<span class="sourceLineNo">677</span>    public Response copyObject(@PathParam("path") final List&lt;PathSegment&gt; path,<a name="line.677"></a>
+<span class="sourceLineNo">678</span>                               @HeaderParam("Destination") final String destinationUri)<a name="line.678"></a>
+<span class="sourceLineNo">679</span>        throws RepositoryException, URISyntaxException {<a name="line.679"></a>
+<span class="sourceLineNo">680</span><a name="line.680"></a>
+<span class="sourceLineNo">681</span>        try {<a name="line.681"></a>
+<span class="sourceLineNo">682</span><a name="line.682"></a>
+<span class="sourceLineNo">683</span>            final IdentifierTranslator subjects =<a name="line.683"></a>
+<span class="sourceLineNo">684</span>                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);<a name="line.684"></a>
+<span class="sourceLineNo">685</span><a name="line.685"></a>
+<span class="sourceLineNo">686</span>            if (!nodeService.exists(session, toPath(path))) {<a name="line.686"></a>
+<span class="sourceLineNo">687</span>                return status(SC_CONFLICT).entity("The source path does not exist").build();<a name="line.687"></a>
+<span class="sourceLineNo">688</span>            }<a name="line.688"></a>
+<span class="sourceLineNo">689</span><a name="line.689"></a>
+<span class="sourceLineNo">690</span>            final String destination =<a name="line.690"></a>
+<span class="sourceLineNo">691</span>                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));<a name="line.691"></a>
+<span class="sourceLineNo">692</span><a name="line.692"></a>
+<span class="sourceLineNo">693</span>            if (destination == null) {<a name="line.693"></a>
+<span class="sourceLineNo">694</span>                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();<a name="line.694"></a>
+<span class="sourceLineNo">695</span>            }<a name="line.695"></a>
+<span class="sourceLineNo">696</span><a name="line.696"></a>
+<span class="sourceLineNo">697</span>            nodeService.copyObject(session, toPath(path), destination);<a name="line.697"></a>
+<span class="sourceLineNo">698</span>            session.save();<a name="line.698"></a>
+<span class="sourceLineNo">699</span>            versionService.nodeUpdated(session, destination);<a name="line.699"></a>
+<span class="sourceLineNo">700</span>            return created(new URI(destinationUri)).build();<a name="line.700"></a>
+<span class="sourceLineNo">701</span>        } catch (final ItemExistsException e) {<a name="line.701"></a>
+<span class="sourceLineNo">702</span>            throw new WebApplicationException(e,<a name="line.702"></a>
+<span class="sourceLineNo">703</span>                status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());<a name="line.703"></a>
+<span class="sourceLineNo">704</span>        } catch (final PathNotFoundException e) {<a name="line.704"></a>
+<span class="sourceLineNo">705</span>            throw new WebApplicationException(e, status(SC_CONFLICT).entity(<a name="line.705"></a>
+<span class="sourceLineNo">706</span>                    "There is no node that will serve as the parent of the moved item")<a name="line.706"></a>
+<span class="sourceLineNo">707</span>                    .build());<a name="line.707"></a>
+<span class="sourceLineNo">708</span>        } finally {<a name="line.708"></a>
+<span class="sourceLineNo">709</span>            session.logout();<a name="line.709"></a>
+<span class="sourceLineNo">710</span>        }<a name="line.710"></a>
+<span class="sourceLineNo">711</span><a name="line.711"></a>
+<span class="sourceLineNo">712</span>    }<a name="line.712"></a>
+<span class="sourceLineNo">713</span><a name="line.713"></a>
+<span class="sourceLineNo">714</span>    /**<a name="line.714"></a>
+<span class="sourceLineNo">715</span>     * Copies an object from one path to another<a name="line.715"></a>
+<span class="sourceLineNo">716</span>     */<a name="line.716"></a>
+<span class="sourceLineNo">717</span>    @MOVE<a name="line.717"></a>
+<span class="sourceLineNo">718</span>    @Timed<a name="line.718"></a>
+<span class="sourceLineNo">719</span>    public Response moveObject(@PathParam("path") final List&lt;PathSegment&gt; pathList,<a name="line.719"></a>
+<span class="sourceLineNo">720</span>                               @HeaderParam("Destination") final String destinationUri,<a name="line.720"></a>
+<span class="sourceLineNo">721</span>                               @Context final Request request)<a name="line.721"></a>
+<span class="sourceLineNo">722</span>        throws RepositoryException, URISyntaxException {<a name="line.722"></a>
+<span class="sourceLineNo">723</span><a name="line.723"></a>
+<span class="sourceLineNo">724</span>        try {<a name="line.724"></a>
+<span class="sourceLineNo">725</span><a name="line.725"></a>
+<span class="sourceLineNo">726</span>            final String path = toPath(pathList);<a name="line.726"></a>
+<span class="sourceLineNo">727</span><a name="line.727"></a>
+<span class="sourceLineNo">728</span>            if (!nodeService.exists(session, path)) {<a name="line.728"></a>
+<span class="sourceLineNo">729</span>                return status(SC_CONFLICT).entity("The source path does not exist").build();<a name="line.729"></a>
+<span class="sourceLineNo">730</span>            }<a name="line.730"></a>
+<span class="sourceLineNo">731</span><a name="line.731"></a>
+<span class="sourceLineNo">732</span><a name="line.732"></a>
+<span class="sourceLineNo">733</span>            final FedoraResource resource =<a name="line.733"></a>
+<span class="sourceLineNo">734</span>                nodeService.getObject(session, path);<a name="line.734"></a>
+<span class="sourceLineNo">735</span><a name="line.735"></a>
+<span class="sourceLineNo">736</span><a name="line.736"></a>
+<span class="sourceLineNo">737</span>            evaluateRequestPreconditions(request, resource);<a name="line.737"></a>
+<span class="sourceLineNo">738</span><a name="line.738"></a>
+<span class="sourceLineNo">739</span>            final IdentifierTranslator subjects =<a name="line.739"></a>
+<span class="sourceLineNo">740</span>                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);<a name="line.740"></a>
+<span class="sourceLineNo">741</span><a name="line.741"></a>
+<span class="sourceLineNo">742</span>            final String destination =<a name="line.742"></a>
+<span class="sourceLineNo">743</span>                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));<a name="line.743"></a>
+<span class="sourceLineNo">744</span><a name="line.744"></a>
+<span class="sourceLineNo">745</span>            if (destination == null) {<a name="line.745"></a>
+<span class="sourceLineNo">746</span>                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();<a name="line.746"></a>
+<span class="sourceLineNo">747</span>            }<a name="line.747"></a>
+<span class="sourceLineNo">748</span><a name="line.748"></a>
+<span class="sourceLineNo">749</span>            nodeService.moveObject(session, path, destination);<a name="line.749"></a>
+<span class="sourceLineNo">750</span>            session.save();<a name="line.750"></a>
+<span class="sourceLineNo">751</span>            versionService.nodeUpdated(session, destination);<a name="line.751"></a>
+<span class="sourceLineNo">752</span>            return created(new URI(destinationUri)).build();<a name="line.752"></a>
+<span class="sourceLineNo">753</span>        } catch (final ItemExistsException e) {<a name="line.753"></a>
+<span class="sourceLineNo">754</span>            throw new WebApplicationException(e,<a name="line.754"></a>
+<span class="sourceLineNo">755</span>                status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());<a name="line.755"></a>
+<span class="sourceLineNo">756</span>        } catch (final PathNotFoundException e) {<a name="line.756"></a>
+<span class="sourceLineNo">757</span>            throw new WebApplicationException(e, status(SC_CONFLICT).entity(<a name="line.757"></a>
+<span class="sourceLineNo">758</span>                    "There is no node that will serve as the parent of the moved item")<a name="line.758"></a>
+<span class="sourceLineNo">759</span>                    .build());<a name="line.759"></a>
+<span class="sourceLineNo">760</span>        } finally {<a name="line.760"></a>
+<span class="sourceLineNo">761</span>            session.logout();<a name="line.761"></a>
+<span class="sourceLineNo">762</span>        }<a name="line.762"></a>
+<span class="sourceLineNo">763</span><a name="line.763"></a>
+<span class="sourceLineNo">764</span>    }<a name="line.764"></a>
+<span class="sourceLineNo">765</span><a name="line.765"></a>
+<span class="sourceLineNo">766</span>    /**<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     * Outputs information about the supported HTTP methods, etc.<a name="line.767"></a>
+<span class="sourceLineNo">768</span>     */<a name="line.768"></a>
+<span class="sourceLineNo">769</span>    @OPTIONS<a name="line.769"></a>
+<span class="sourceLineNo">770</span>    @Timed<a name="line.770"></a>
+<span class="sourceLineNo">771</span>    public Response options(@PathParam("path") final List&lt;PathSegment&gt; pathList,<a name="line.771"></a>
+<span class="sourceLineNo">772</span>                            @Context final HttpServletResponse servletResponse)<a name="line.772"></a>
+<span class="sourceLineNo">773</span>        throws RepositoryException {<a name="line.773"></a>
+<span class="sourceLineNo">774</span>        servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");<a name="line.774"></a>
+<span class="sourceLineNo">775</span>        final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT1 + ","<a name="line.775"></a>
+<span class="sourceLineNo">776</span>                + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;<a name="line.776"></a>
+<span class="sourceLineNo">777</span>        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);<a name="line.777"></a>
+<span class="sourceLineNo">778</span>        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA<a name="line.778"></a>
+<span class="sourceLineNo">779</span>                + "," + contentTypeSPARQLUpdate);<a name="line.779"></a>
+<span class="sourceLineNo">780</span>        return status(OK).build();<a name="line.780"></a>
+<span class="sourceLineNo">781</span>    }<a name="line.781"></a>
+<span class="sourceLineNo">782</span><a name="line.782"></a>
+<span class="sourceLineNo">783</span>}<a name="line.783"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
