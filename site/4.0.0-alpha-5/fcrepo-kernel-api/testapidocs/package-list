@@ -1,0 +1,5 @@
+org.fcrepo.kernel
+org.fcrepo.kernel.identifiers
+org.fcrepo.kernel.observer
+org.fcrepo.kernel.utils
+org.fcrepo.kernel.utils.iterators
