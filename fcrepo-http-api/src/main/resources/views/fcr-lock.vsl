@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+    #set( $title = $helpers.getObjectTitle($rdf, $topic) )
+
+    #parse("views/common.vsl")
+<html>
+<head>
+    <title>$title</title>
+    <meta charset="UTF-8">
+    #parse("views/common-head.vsl")
+</head>
+
+
+<body  class="nt_folder">
+<div  id="main" class="container" resource="$topic.getURI()">
+    #parse("views/common-node-header.vsl")
+
+
+    <div class="row">
+
+        <div class="col-md-12">
+            #parse("views/common-breadcrumb.vsl")
+        </div>
+
+        <div id="sidebar" class="col-md-3 col-md-push-9 clearfix">
+            <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
+                <span>Toggle actions</span>
+            </button>
+
+        ## output actions
+            <div class="actions collapse visible-lg visible-md" id="actions">
+                <form id="action_delete" name="action_delete" action="javascript:deleteItem()" method="POST">
+                    <input type="hidden" name="_method" value="DELETE" />
+                    <h3>Unlock</h3>
+                    <p>
+                        Deleting this lock will allow the locked resources to be updated by those other
+                        than the lock owner.  It is not good practice to delete another user's lock unless
+                        it is known to be abandoned.
+                    </p>
+                    <button name="delete-button" type="submit" class="btn btn-danger">Delete Lock</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="metadata" class="col-md-9 col-md-pull-3">
+
+        ## output triples for the topic node
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4>Properties</h4>
+                </div>
+                <div class="panel-body">
+                    #triples($topic)
+                </div>
+            </div>
+
+    </div>
+
+
+</div>
+</body>
+</html>
