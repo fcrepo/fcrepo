@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
+import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -120,6 +121,7 @@ public class HttpApiResourcesTest {
 
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.isNodeType(NodeType.MIX_VERSIONABLE)).thenReturn(true);
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
@@ -131,6 +133,24 @@ public class HttpApiResourcesTest {
         assertTrue(model.contains(graphSubject, HAS_VERSION_HISTORY));
         assertEquals(2, model.listObjectsOfProperty(graphSubject,
                 HAS_SERIALIZATION).toSet().size());
+    }
+
+    @Test
+    public void shouldNotDecorateNodesWithLinksToVersionsUnlessVersionable()
+            throws RepositoryException {
+
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.isNodeType(NodeType.MIX_VERSIONABLE)).thenReturn(false);
+        when(mockNode.getPath()).thenReturn("/some/path/to/object");
+
+        when(mockSerializers.keySet()).thenReturn(of("a", "b"));
+        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
+
+        final Model model =
+                testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
+
+        assertFalse(model.contains(graphSubject, HAS_VERSION_HISTORY));
     }
 
     @Test
