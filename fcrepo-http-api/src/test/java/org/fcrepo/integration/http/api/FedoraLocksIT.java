@@ -16,7 +16,10 @@
 
 package org.fcrepo.integration.http.api;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -34,6 +37,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -43,7 +47,9 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
+import static org.fcrepo.kernel.RdfLexicon.IS_DEEP;
 import static org.fcrepo.kernel.RdfLexicon.LOCKS;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -116,6 +122,34 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
                 lockTriples.contains(ANY, lockURI, createURI(HAS_LOCK_TOKEN.getURI()), createLiteral(lockToken)));
 
         assertUnlockWithToken(pid, lockToken);
+    }
+
+    /**
+     * Whether a lock is deep or shallow is important information to know
+     * and should be presented in the metadata for the lock.
+     * @throws IOException
+     */
+    @Test
+    public void testDeepIsReflectedInLockMetadata() throws IOException {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
+        final Node falseLiteral = createLiteral(String.valueOf(false), "", XSDDatatype.XSDboolean);
+        final Node trueLiteral = createLiteral(String.valueOf(true), "", XSDDatatype.XSDboolean);
+
+        getLockToken(lockObject(pid, true));
+        GraphStore lockTriples = getLockProperties(pid, null);
+        Assert.assertTrue("Lock should be listed as deep!",
+                lockTriples.contains(ANY, lockURI, createURI(IS_DEEP.getURI()), trueLiteral));
+        assertUnlockWithoutToken(pid);
+
+        getLockToken(lockObject(pid, false));
+        lockTriples = getLockProperties(pid, null);
+        Assert.assertTrue("Lock should not be listed as deep!",
+                lockTriples.contains(ANY, lockURI, createURI(IS_DEEP.getURI()), falseLiteral));
+        assertUnlockWithoutToken(pid);
+
     }
 
     /**
@@ -234,6 +268,37 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final String pid = getRandomUniquePid();
         Assert.assertEquals("Must get a NOT_FOUND response when locking a path at which no node exists.",
                 NOT_FOUND.getStatusCode(), lockObject(pid).getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testLockLinkIsPresentLockedNode() throws IOException {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        final String lockToken = getLockToken(lockObject(pid));
+
+        final Node nodeURI = createURI(serverAddress + pid);
+        final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
+
+        final GraphStore store = getGraphStore(getObjectProperties(pid));
+        Assert.assertTrue(store.contains(Node.ANY, nodeURI, HAS_LOCK.asNode(), lockURI));
+        assertUnlockWithToken(pid, lockToken);
+    }
+
+    @Test
+    public void testLockLinkIsPresentOnChildrenOfDeepLockedNode() throws IOException {
+        final String pid = getRandomUniquePid();
+        final String childPid = pid + "/" + getRandomUniquePid();
+        createObject(pid);
+        createObject(childPid);
+
+        final String lockToken = getLockToken(lockObject(pid, true));
+
+        final Node childNodeURI = createURI(serverAddress + childPid);
+        final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
+
+        final GraphStore store = getGraphStore(getObjectProperties(childPid));
+        Assert.assertTrue(store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
+        assertUnlockWithToken(pid, lockToken);
     }
 
     /**

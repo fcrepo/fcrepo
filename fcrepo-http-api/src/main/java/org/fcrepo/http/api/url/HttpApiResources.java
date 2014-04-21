@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SEARCH_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
@@ -35,6 +36,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraFieldSearch;
 import org.fcrepo.http.api.FedoraFixity;
+import org.fcrepo.http.api.FedoraLocks;
 import org.fcrepo.http.api.FedoraSitemap;
 import org.fcrepo.http.api.FedoraVersions;
 import org.fcrepo.http.api.repository.FedoraRepositoryExport;
@@ -48,6 +50,7 @@ import org.fcrepo.serialization.SerializerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
@@ -99,6 +102,19 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         final Map<String, String> pathMap =
                 singletonMap("path", resource.getPath().substring(1));
+
+        // hasLock
+        if (resource.getNode().isLocked()) {
+            final String path = resource.getNode().getPath();
+            final Node lockHoldingNode
+                = resource.getNode().getSession().getWorkspace()
+                    .getLockManager().getLock(path).getNode();
+            final Map<String, String> lockedNodePathMap =
+                    singletonMap("path", lockHoldingNode.getPath().substring(1));
+            model.add(s, HAS_LOCK, createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraLocks.class).buildFromMap(
+                        lockedNodePathMap).toASCIIString()));
+        }
 
         // fcr:versions
         model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
