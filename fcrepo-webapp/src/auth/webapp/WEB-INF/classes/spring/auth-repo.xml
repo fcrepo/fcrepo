@@ -28,6 +28,14 @@
       <ref bean="headerProvider"/>
     </util:set>
 
+    <!-- Optional PrincipalProvider that will use Tomcat's tomcat-users.xml roles for principals -->
+    <bean name="tomcatRolesProvider" class="org.fcrepo.auth.common.TomcatRolesPrincipalProvider">
+    </bean>
+
+    <util:set id="principalProviderSet">
+      <ref bean="tomcatRolesProvider"/>
+    </util:set>
+
     <bean name="fad" class="org.fcrepo.auth.roles.basic.BasicRolesAuthorizationDelegate"/>
 
     <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider">
