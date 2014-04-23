@@ -4,7 +4,8 @@
 
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
-[Use cases](https://wiki.duraspace.org/display/FF/Use+Cases)
+[Use cases](https://wiki.duraspace.org/display/FF/Use+Cases) |
+[REST API](https://wiki.duraspace.org/display/FF/RESTful+HTTP+API) |
 
 Technical goals:
 * Improved scalability and performance
@@ -26,9 +27,8 @@ $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
 ```
 
-### Jacoco Properties
-The Properties passed to the JVM used by the JaCoCo code coverage plugin can be set via 
-`jacoco.agent.it.arg` for integration tests  and `jacoco.agent.ut.arg` for unit tests:
+If you have problems building fcrepo4 with the above settings, you may need to also pass
+options to the JaCoCo code coverage plugin:
 
 ```bash
 $ MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=1024m" mvn -Djacoco.agent.it.arg="-XX:MaxPermSize=1024m -Xmx1024m" -Djacoco.agent.ut.arg="-XX:MaxPermSize=256m -Xmx1024m"  clean install
