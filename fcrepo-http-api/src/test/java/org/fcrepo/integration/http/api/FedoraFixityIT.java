@@ -35,29 +35,23 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
     @Test
     public void testCheckDatastreamFixity() throws Exception {
-        createObject("FedoraDatastreamsTest11");
-        createDatastream("FedoraDatastreamsTest11", "zxc", "foo");
+        final String pid = getRandomUniquePid();
 
-        final HttpGet method =
-            new HttpGet(serverAddress
-                    + "FedoraDatastreamsTest11/zxc/fcr:fixity");
+        createObject(pid);
+        createDatastream(pid, "zxc", "foo");
 
+        final HttpGet method = new HttpGet(serverAddress + pid + "/zxc/fcr:fixity");
         final GraphStore graphStore = getGraphStore(method);
-        logger.info("Got triples {}", graphStore);
 
-        assertTrue(graphStore.contains(ANY,
-                                          createResource(serverAddress + "FedoraDatastreamsTest11/zxc").asNode(),
-                                          HAS_FIXITY_RESULT.asNode(),
-                                          ANY
-                ));
-        assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(),
-                createPlainLiteral("SUCCESS").asNode()));
+        if (logger.isDebugEnabled()) {
+            logger.debug("Got triples {}", graphStore);
+        }
 
-        assertTrue(graphStore.contains(ANY, ANY,
-                HAS_MESSAGE_DIGEST.asNode(), createResource(
-                        "urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33")
-                        .asNode()));
-        assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(),
-                createTypedLiteral(3).asNode()));
+        assertTrue(graphStore.contains(ANY, createResource(serverAddress + pid + "/zxc").asNode(), HAS_FIXITY_RESULT
+                .asNode(), ANY));
+        assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createPlainLiteral("SUCCESS").asNode()));
+        assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), createResource(
+                "urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33").asNode()));
+        assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createTypedLiteral(3).asNode()));
     }
 }

@@ -52,18 +52,18 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     @Test
     public void testGetDatastreamNode() throws Exception {
 
-        final HttpPost postMethod = postObjMethod("FedoraHtmlObject2");
+        final String pid = getRandomUniquePid();
+        final HttpPost postMethod = postObjMethod(pid);
 
         final HttpResponse postResponse = client.execute(postMethod);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-        final HttpPost postDsMethod =
-            postDSMethod("FedoraHtmlObject2", "ds1", "foo");
+        final HttpPost postDsMethod = postDSMethod(pid, "ds1", "foo");
         assertEquals(201, getStatus(postDsMethod));
 
-        final HttpGet method =
-            new HttpGet(serverAddress + "FedoraHtmlObject2/ds1");
+        final HttpGet method = new HttpGet(serverAddress + pid + "/ds1");
         method.addHeader("Accept", "text/html");
+
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
