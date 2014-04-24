@@ -25,6 +25,8 @@ import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.PropertyType.BINARY;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static javax.jcr.PropertyType.REFERENCE;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collection;
@@ -195,6 +197,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                     return Iterators.forArray(p.getValue());
                 } catch (final RepositoryException e) {
                     throw propagate(e);
+                } catch (final Exception e) {
+                    throw propagate(e);
                 }
             }
         };
@@ -230,6 +234,35 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                 } catch (final RepositoryException e) {
                     throw propagate(e);
                 }
+            }
+        };
+
+    /**
+     * Check if a property is a reference property.
+     */
+    public static Predicate<Property> isReferenceProperty =
+        new Predicate<Property>() {
+
+            @Override
+            public boolean apply(final Property p) {
+                try {
+                    return p.getType() == REFERENCE && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX);
+                } catch (final RepositoryException e) {
+                    throw propagate(e);
+                }
+            }
+        };
+
+    /**
+    * Check whether a property is an internal property that should be suppressed
+    * from external output.
+    */
+    public static Predicate<Property> isInternalProperty =
+        new Predicate<Property>() {
+
+            @Override
+            public boolean apply(final Property p) {
+                return isReferenceProperty.apply(p) || isBinaryContentProperty.apply(p);
             }
         };
 
