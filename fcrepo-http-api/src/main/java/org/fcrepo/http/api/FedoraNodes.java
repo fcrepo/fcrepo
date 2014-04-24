@@ -659,12 +659,16 @@ public class FedoraNodes extends AbstractResource {
             Throwable inner = riex.getCause();
             if ( inner instanceof ReferentialIntegrityException) {
                 for ( NodeKey node : ((ReferentialIntegrityException)inner).getReferrers() ) {
-                    msg.append( " " + session.getNodeByIdentifier(node.getIdentifier()).getPath() );
+                    try {
+                        msg.append( " " + session.getNodeByIdentifier(node.getIdentifier()).getPath() );
+                    } catch ( Exception ex ) {
+                        msg.append( " <" + node.getIdentifier() + ">");
+                    }
                 }
             }
             return status(SC_PRECONDITION_FAILED).entity(msg.toString()).build();
         } catch (WebApplicationException ex) {
-            return status(SC_PRECONDITION_FAILED).entity(ex.getMessage()).build();
+            return (Response)ex.getResponse();
         } finally {
             session.logout();
         }
