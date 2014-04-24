@@ -31,7 +31,6 @@ import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
-import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -78,8 +77,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Iterator;
-import java.util.UUID;
-import java.util.regex.Matcher;
 
 import javax.ws.rs.core.Variant;
 
@@ -87,7 +84,6 @@ import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
 import org.apache.http.Header;
-import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.HttpDelete;
@@ -103,7 +99,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
@@ -127,7 +122,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testIngest() throws Exception {
 
-        final HttpResponse response = createObject("");
+        final String pid = getRandomUniquePid();
+
+        final HttpResponse response = createObject(pid);
+
         final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Response wasn't a PID", compile("[a-z]+").matcher(content)
                 .find());
@@ -199,7 +197,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testIngestWithSlug() throws Exception {
         final HttpPost method = postObjMethod("");
-        method.addHeader("Slug", randomUUID().toString());
+        method.addHeader("Slug", getRandomUniquePid());
         final HttpResponse response = client.execute(method);
         final String content = EntityUtils.toString(response.getEntity());
         final int status = response.getStatusLine().getStatusCode();
@@ -247,7 +245,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testDeleteWithBadEtag() throws Exception {
 
-        final HttpResponse response = createObject("");
+        final HttpPost method = postObjMethod("");
+        final HttpResponse response = client.execute(method);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine()
+                                                  .getStatusCode());
+
         final String location = response.getFirstHeader("Location").getValue();
         final HttpDelete request = new HttpDelete(location);
         request.addHeader("If-Match", "\"doesnt-match\"");
@@ -257,7 +259,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastream() throws Exception {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
 
         createObject(pid);
         createDatastream(pid, "ds1", "foo");
@@ -283,7 +285,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDeleteDatastream() throws Exception {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
 
         createObject(pid);
         createDatastream(pid, "ds1", "foo");
@@ -389,11 +391,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         logger.debug("Leaving testGetObjectGraph()...");
     }
-   
+
     @Test
     public void verifyFullSetOfRdfTypes() throws Exception {
         logger.debug("Entering verifyFullSetOfRdfTypes()...");
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
         createObject(pid);
         addMixin( pid, MIX_NAMESPACE + "versionable" );
 
@@ -406,7 +408,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final Model model = createModelForGraph(results.getDefaultGraph());
         final Resource nodeUri = createResource(serverAddress + pid);
         final Property rdfType = createProperty(RDF_NAMESPACE + "type");
-        
+
         //verifyResource based on the expection of these types on an out of the box fedora object:
         /*
                 http://fedora.info/definitions/v4/rest-api#object 
@@ -448,15 +450,14 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraphWithChildren() throws Exception {
-        final String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         final HttpResponse createResponse = createObject(pid);
         final String location = createResponse.getFirstHeader("Location").getValue();
 
         createObject(pid + "/a");
         createObject(pid + "/b");
         createObject(pid + "/c");
-        final HttpGet getObjMethod =
-            new HttpGet(serverAddress + pid);
+        final HttpGet getObjMethod = new HttpGet(serverAddress + pid);
         getObjMethod.addHeader("Accept", "application/rdf+xml");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
@@ -469,6 +470,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     "Retrieved object graph:\n {}",
                     w);
         }
+
         final Resource subjectUri = createResource(location);
         assertTrue(
                 "Didn't find child node!",
@@ -490,7 +492,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraphMinimal() throws Exception {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
         createObject(pid);
         createObject(pid + "/a");
         final HttpGet getObjMethod =
@@ -522,7 +524,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectOmitMembership() throws Exception {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
         createObject(pid);
         createObject(pid + "/a");
         final HttpGet getObjMethod =
@@ -548,7 +550,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectOmitContainment() throws Exception {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
         createObject(pid);
         createObject(pid + "/a");
         final HttpGet getObjMethod =
@@ -624,7 +626,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testUpdateAndReplaceObjectGraph() throws Exception {
         final HttpResponse createResponse = createObject("");
-
         final String subjectURI = createResponse.getFirstHeader("Location").getValue();
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
 
@@ -695,10 +696,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testFilteredLDPTypes() throws Exception {
-        String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         createObject(pid);
 
-        HttpPut put = new HttpPut(serverAddress + pid);
+        final HttpPut put = new HttpPut(serverAddress + pid);
         put.addHeader("Content-Type", "text/rdf+n3");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
@@ -744,7 +745,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testCreateGraph() throws Exception {
-        final String subjectURI = serverAddress + UUID.randomUUID().toString();
+        final String subjectURI = serverAddress + getRandomUniquePid();
         final HttpPut replaceMethod = new HttpPut(subjectURI);
         replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
@@ -778,7 +779,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testRoundTripReplaceGraph() throws Exception {
 
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
         final String subjectURI = serverAddress + pid;
 
         createObject(pid);
@@ -812,7 +813,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testRoundTripReplaceGraphForDatastream() throws Exception {
 
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomUniquePid();
         final String subjectURI = serverAddress + pid + "/ds1";
 
         createDatastream(pid, "ds1", "some-content");
@@ -845,7 +846,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testDescribeSize() throws Exception {
 
-        final String sizeNode = randomUUID().toString();
+        final String sizeNode = getRandomUniquePid();
 
         GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.trace("For testDescribeSize() first size retrieved repository graph:\n"
@@ -856,7 +857,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     ANY);
 
         final String oldSize = (String) iterator.next().getObject().getLiteralValue();
-
 
         createObject(sizeNode);
         createDatastream(sizeNode, "asdf", "1234");
@@ -891,7 +891,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String oldSize = (String) iterator.next().getObject().getLiteralValue();
 
         createObject("");
-        final String countNode = randomUUID().toString();
+        final String countNode = getRandomUniquePid();
         createDatastream(countNode, "asdf", "1234");
 
         graphStore = getGraphStore(new HttpGet(serverAddress + ""));
@@ -941,10 +941,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final CloseableHttpClient cachingClient =
             CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build();
 
-
         final HttpResponse createResponse = createObject("");
         final String location = createResponse.getFirstHeader("Location").getValue();
         final HttpGet getObjMethod = new HttpGet(location);
+
         HttpResponse response = cachingClient.execute(getObjMethod);
         assertEquals("Client didn't return a OK!", OK.getStatusCode(), response
                 .getStatusLine().getStatusCode());
@@ -972,7 +972,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testValidHTMLForObject() throws Exception {
-        final String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         createObject(pid);
 
         validateHTML(pid);
@@ -980,7 +980,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testValidHTMLForDS() throws Exception {
-        final String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         client.execute(new HttpPut(serverAddress
                 + pid + "/ds/fcr:content"));
         validateHTML(pid + "/ds");
@@ -988,12 +988,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testCopy() throws Exception {
-
         final HttpResponse response  = createObject("");
-        final String pid = randomUUID().toString();
-
+        final String pid = getRandomUniquePid();
         final String location = response.getFirstHeader("Location").getValue();
-
         final HttpCopy request = new HttpCopy(location);
         request.addHeader("Destination", serverAddress + pid);
         client.execute(request);
@@ -1010,10 +1007,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testMove() throws Exception {
 
-        final String pid = randomUUID().toString();
-
+        final String pid = getRandomUniquePid();
         final HttpResponse response = createObject("");
-
         final String location = response.getFirstHeader("Location").getValue();
 
         final HttpMove request = new HttpMove(location);
@@ -1032,8 +1027,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testMoveWithBadEtag() throws Exception {
 
-        final String pid = randomUUID().toString();
-
+        final String pid = getRandomUniquePid();
         final HttpResponse response = createObject("");
         final String location = response.getFirstHeader("Location").getValue();
 
@@ -1048,8 +1042,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testOptions() throws Exception {
         final HttpResponse response = createObject("");
         final String location = response.getFirstHeader("Location").getValue();
-
-
         final HttpOptions optionsRequest = new HttpOptions(location);
         final HttpResponse optionsResponse = client.execute(optionsRequest);
         assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
@@ -1087,7 +1079,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
         return values;
     }
-    
+
 
     private void validateHTML(final String path) throws Exception {
         final HttpGet getMethod = new HttpGet(serverAddress + path);
@@ -1109,7 +1101,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
         logger.debug("HTML found to be valid.");
     }
-    
+
     private void verifyResource(Model model, Resource nodeUri, Property rdfType, String namespace, String resource) {
         assertTrue("Didn't find rdfType " + namespace + resource, model.contains(nodeUri,
         rdfType,
@@ -1182,7 +1174,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
-        final String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         final String uploadLocation = serverAddress + "files/" + pid + "/ds1/fcr:content";
         final String uploadContent = "abc123";
         logger.debug("Uploading to federated filesystem via rest api: " + uploadLocation);
@@ -1209,7 +1201,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testCopyToProjection() throws IOException {
         // create object in the repository
-        final String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         final HttpResponse response = createDatastream(pid, "ds1", "abc123");
 
         // copy to federated filesystem
@@ -1235,7 +1227,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testCopyFromProjection() throws IOException {
         // create object in federated filesystem
-        final String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         final HttpPost post = postDSMethod("files/" + pid, "ds1", "abc123");
         final HttpResponse response = client.execute(post);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
@@ -1259,7 +1251,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testPaging() throws Exception {
         // create a node with 4 children
-        final String pid = randomUUID().toString();
+        final String pid = getRandomUniquePid();
         final Node parent = createResource(serverAddress + pid).asNode();
         final HttpResponse response = createObject(pid);
         createObject(pid + "/child1");
@@ -1344,7 +1336,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
         assertFalse("Should not have next pagiple!", nextGraph.contains(ANY, ANY, NEXT_PAGE.asNode(), ANY));
     }
-    
+
     @Test
     @Ignore("Works in real life")
     public void testLinkedDeletion() throws Exception {

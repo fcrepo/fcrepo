@@ -59,7 +59,9 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         final HttpGet method =
             new HttpGet(serverAddress + pid + "/ds1");
+
         method.addHeader("Accept", "text/html");
+
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
