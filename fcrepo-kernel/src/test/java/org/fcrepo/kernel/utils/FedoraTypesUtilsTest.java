@@ -22,6 +22,8 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.convertDateToXSDString;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isBinaryContentProperty;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isReferenceProperty;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraResource;
@@ -29,6 +31,8 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isMultipleValuedProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.propertyContains;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.value2string;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -174,6 +178,24 @@ public class FedoraTypesUtilsTest {
         when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
         assertTrue(isBinaryContentProperty.apply(mockProperty));
+    }
+
+    @Test
+    public void testIsReferenceProperty() throws RepositoryException {
+        when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
+        when(mockProperty.getName()).thenReturn("foo" + REFERENCE_PROPERTY_SUFFIX);
+        assertTrue(isReferenceProperty.apply(mockProperty));
+    }
+
+    @Test
+    public void testIsInternalProperty() throws RepositoryException {
+        when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
+        when(mockProperty.getName()).thenReturn("foo" + REFERENCE_PROPERTY_SUFFIX);
+        assertTrue(isInternalProperty.apply(mockProperty));
+
+        when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
+        when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
+        assertTrue(isInternalProperty.apply(mockProperty));
     }
 
     @Test

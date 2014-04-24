@@ -23,7 +23,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.isBinaryContentProperty;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.property2values;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -135,11 +135,11 @@ public class PropertiesRdfContext extends NodeRdfContext {
         LOGGER.trace("Creating triples for node: {}", n);
         final UnmodifiableIterator<Property> nonBinaryProperties =
             Iterators.filter(new PropertyIterator(n.getProperties()),
-                    not(isBinaryContentProperty));
+                    not(isInternalProperty));
 
         final UnmodifiableIterator<Property> nonBinaryPropertiesCopy =
             Iterators.filter(new PropertyIterator(n.getProperties()),
-                    not(isBinaryContentProperty));
+                    not(isInternalProperty));
 
         return Iterators.concat(new ZippingIterator<>(
                 Iterators.transform(

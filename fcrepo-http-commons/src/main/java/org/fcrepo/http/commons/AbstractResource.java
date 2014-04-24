@@ -242,7 +242,7 @@ public abstract class AbstractResource {
             request.evaluatePreconditions(roundedDate, etag);
 
         if (builder != null) {
-            throw new WebApplicationException(builder.build());
+            throw new WebApplicationException(builder.entity("ETag mismatch").build());
         }
     }
 

@@ -646,7 +646,6 @@ public class FedoraNodes extends AbstractResource {
             final FedoraResource resource =
                 nodeService.getObject(session, path);
 
-
             evaluateRequestPreconditions(request, resource);
 
             nodeService.deleteObject(session, path);
@@ -664,6 +663,8 @@ public class FedoraNodes extends AbstractResource {
                 }
             }
             return status(SC_PRECONDITION_FAILED).entity(msg.toString()).build();
+        } catch (WebApplicationException ex) {
+            return status(SC_PRECONDITION_FAILED).entity(ex.getMessage()).build();
         } finally {
             session.logout();
         }
