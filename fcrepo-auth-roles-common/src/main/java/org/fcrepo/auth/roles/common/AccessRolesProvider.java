@@ -26,6 +26,7 @@ import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -58,6 +59,8 @@ public class AccessRolesProvider {
     private static final Logger LOGGER = getLogger(AccessRolesProvider.class);
 
     public static final Map<String, List<String>> DEFAULT_ACCESS_ROLES = emptyMap();
+
+    public static final String ACCESS_ROLES_FOLDER = "/fedora:system/fedora:accessroles";
 
     /**
      * Get the roles assigned to this Node. Optionally search up the tree for
@@ -225,6 +228,44 @@ public class AccessRolesProvider {
             }
         }
         return this.getRoles(node, true);
+    }
+
+    /**
+     * Finds effective roles assigned to a path, using the authz:assignment property
+     *
+     * @param absPath the real or potential node path
+     * @return the roles assigned to each principal
+     * @throws RepositoryException
+     */
+    public Map<String, List<String>> findRolesInExternalNodeForPath(final Path absPath,
+                                                      final Session session) throws RepositoryException {
+        Node rbaclNode = null;
+        String rbaclID = "";
+        Property prop = null;
+        try {
+            for (Path p = absPath; p != null; p = p.getParent()) {
+                try {
+                    prop = session.getNode(p.getString()).getProperty(assignment.getQualified());
+                } catch (PathNotFoundException e) {
+                    if (p.isRoot()) {
+                        return DEFAULT_ACCESS_ROLES;
+                    }
+                    continue;
+                }
+                rbaclID = prop.getValues()[0].getString();
+                break;//todo test after lunch
+            }
+        } catch (final Exception e) {
+            LOGGER.debug("Could not find an authorization assignment {}", e);
+            return DEFAULT_ACCESS_ROLES;
+        }
+        try {
+            rbaclNode = session.getNode(ACCESS_ROLES_FOLDER + "/" + rbaclID);
+        } catch (final Exception e) {
+            LOGGER.debug("Could not find a rbaclNode {}", rbaclID, e);
+            return DEFAULT_ACCESS_ROLES;
+        }
+        return this.getRoles(rbaclNode, false);
     }
 
 }

@@ -96,6 +96,9 @@ public class AccessRolesTest {
         when(nodeService.getObject(any(Session.class), anyString()))
                 .thenReturn(fedoraResource);
 
+        when(nodeService.findOrCreateObject(any(Session.class), anyString()))
+                .thenReturn(fedoraResource);
+
         paths = new ArrayList<>();
         when(rootPath.getPath()).thenReturn("");
         paths.add(rootPath);

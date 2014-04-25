@@ -35,6 +35,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import static java.util.Collections.emptyMap;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +57,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.value.Path;
+
+import static com.google.common.collect.Iterables.toArray;
 
 /**
  * @author bbpennel
@@ -80,6 +84,8 @@ public class AccessRolesProviderTest {
     private NodeIterator rbaclIterator;
 
     private AccessRolesProvider provider;
+
+    public static final String ACCESS_ROLES_FOLDER = "/fedora:system/fedora:accessroles";
 
     @Before
     public void setUp() throws RepositoryException {
@@ -671,5 +677,121 @@ public class AccessRolesProviderTest {
             verify(session).getRootNode();
             verify(session, times(2)).getNode(anyString());
         }
+    }
+
+    @Test
+    public void testFindRolesInExternalNodeForPathRootNotAssignable()
+            throws RepositoryException {
+
+        final Path path = mock(Path.class);
+        when(path.isRoot()).thenReturn(true);
+
+        when(session.getNode(anyString())).thenReturn(node);
+        when(node.getProperty(anyString())).thenThrow(new PathNotFoundException());
+
+        final Map<String, List<String>> data =
+                provider.findRolesInExternalNodeForPath(path, session);
+
+        assertEquals("Unassignable root should return no role data", data, emptyMap());
+    }
+
+    @Test
+    public void testFindRolesInExternalNodeForPathAssignable()
+            throws RepositoryException {
+
+        final Path path = mock(Path.class);
+        when(path.getString()).thenReturn("apath");
+        final AccessRolesProvider mockProvider = mock(AccessRolesProvider.class);
+
+        final Property property = mock(Property.class);
+        final Value value = mock(Value.class);
+        final String rbaclString = "rbacl";
+        final Map<String,List<String>> mockData = new HashMap<>();
+        final List<String> mockRole = Arrays.asList("arole","anotherRole");
+        mockData.put("aprinciple",mockRole);
+
+        when(session.getNode(eq(path.getString()))).thenReturn(node);
+        when(node.getProperty(anyString())).thenReturn(property);
+        when(property.getValues()).thenReturn(new Value[]{value});
+        when(property.getValues()[0].getString()).thenReturn(rbaclString);
+        when(session.getNode(eq(ACCESS_ROLES_FOLDER + "/" + rbaclString))).thenReturn(rbaclNode);
+        when(mockProvider.getRoles(rbaclNode,false)).thenReturn(mockData);
+        when(rbaclNode.getSession()).thenReturn(session);
+        when(rbaclNode.isNodeType(anyString())).thenReturn(true);
+
+        final Node rbaclNode1 = mock(Node.class);
+        when(rbaclNode.getNode(anyString())).thenReturn(rbaclNode1);
+        when(rbaclNode1.getNodes()).thenReturn(rbaclIterator);
+
+        final Map<String, List<String>> data =
+                provider.findRolesInExternalNodeForPath(path, session);
+
+        assertEquals("There should be 1 principal with a role", 1, data.size());
+    }
+
+    @Test
+    public void testFindRolesInParentExternalNodeForPathAssignable()
+            throws RepositoryException {
+
+        final Path path = mock(Path.class);
+        when(path.getString()).thenReturn("apath");
+        final AccessRolesProvider mockProvider = mock(AccessRolesProvider.class);
+
+        final Property property = mock(Property.class);
+        final Value value = mock(Value.class);
+        final String rbaclString = "rbacl";
+        final Map<String,List<String>> mockData = new HashMap<>();
+        final List<String> mockRole = Arrays.asList("arole","anotherRole");
+        mockData.put("aprinciple",mockRole);
+
+        final Node parentNode = mock(Node.class);
+        when(parentNode.getProperty(anyString())).thenReturn(property);
+        when(property.getValues()).thenReturn(new Value[] {value});
+        when(property.getValues()[0].getString()).thenReturn(rbaclString);
+        when(session.getNode(eq(ACCESS_ROLES_FOLDER + "/" + rbaclString))).thenReturn(rbaclNode);
+        when(mockProvider.getRoles(rbaclNode,false)).thenReturn(mockData);
+        when(rbaclNode.getSession()).thenReturn(session);
+        when(rbaclNode.isNodeType(anyString())).thenReturn(true);
+
+        final Path parentPath = mock(Path.class);
+        when(session.getNode(eq(path.getString()))).thenReturn(node);
+        when(node.getProperty(anyString())).thenThrow(new PathNotFoundException());
+        when(path.isRoot()).thenReturn(false);
+        when(path.getParent()).thenReturn(parentPath);
+        when(parentPath.getString()).thenReturn("parentPath");
+        when(session.getNode(eq(path.getString()))).thenReturn(parentNode);
+
+        final Node rbaclNode1 = mock(Node.class);
+        when(rbaclNode.getNode(anyString())).thenReturn(rbaclNode1);
+        when(rbaclNode1.getNodes()).thenReturn(rbaclIterator);
+
+        final Map<String, List<String>> data =
+                provider.findRolesInExternalNodeForPath(path, session);
+
+        assertEquals("There should be 1 principal with a role", 1, data.size());
+    }
+
+    @Test
+    public void testFindRolesInExternalNodeForMissingNode()
+            throws RepositoryException {
+
+        final Path path = mock(Path.class);
+        when(path.getString()).thenReturn("apath");
+        final AccessRolesProvider mockProvider = mock(AccessRolesProvider.class);
+
+        final Property property = mock(Property.class);
+        final Value value = mock(Value.class);
+        final String rbaclString = "rbacl";
+
+        when(session.getNode(eq(path.getString()))).thenReturn(node);
+        when(node.getProperty(anyString())).thenReturn(property);
+        when(property.getValues()).thenReturn(new Value[]{value});
+        when(property.getValues()[0].getString()).thenReturn(rbaclString);
+        when(session.getNode(eq(ACCESS_ROLES_FOLDER + "/" + rbaclString))).thenThrow(new PathNotFoundException());
+
+        final Map<String, List<String>> data =
+                provider.findRolesInExternalNodeForPath(path, session);
+
+        assertEquals("No rbacl node found should return no role data", data, emptyMap());
     }
 }
