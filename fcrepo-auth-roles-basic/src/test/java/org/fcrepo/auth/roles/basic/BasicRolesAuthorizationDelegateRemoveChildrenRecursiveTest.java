@@ -119,20 +119,28 @@ public class BasicRolesAuthorizationDelegateRemoveChildrenRecursiveTest {
 
         when(accessRolesProvider.findRolesForPath(parentPath, mockSession))
                 .thenReturn(writerAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(parentPath, mockSession))
+                .thenReturn(writerAcl);
         when(accessRolesProvider.getRoles(parentNode, false)).thenReturn(
                 writerAcl);
 
         when(accessRolesProvider.findRolesForPath(writablePath, mockSession))
+                .thenReturn(writerAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(writablePath, mockSession))
                 .thenReturn(writerAcl);
         when(accessRolesProvider.getRoles(writableNode, false)).thenReturn(
                 writerAcl);
 
         when(accessRolesProvider.findRolesForPath(readablePath, mockSession))
                 .thenReturn(readerAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(readablePath, mockSession))
+                .thenReturn(readerAcl);
         when(accessRolesProvider.getRoles(readableNode, false)).thenReturn(
                 readerAcl);
 
         when(accessRolesProvider.findRolesForPath(noAclPath, mockSession))
+                .thenReturn(null);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(noAclPath, mockSession))
                 .thenReturn(null);
         when(accessRolesProvider.getRoles(noAclNode, false)).thenReturn(null);
 

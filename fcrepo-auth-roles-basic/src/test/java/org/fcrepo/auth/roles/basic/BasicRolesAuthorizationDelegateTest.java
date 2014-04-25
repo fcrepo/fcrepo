@@ -121,16 +121,34 @@ public class BasicRolesAuthorizationDelegateTest {
 
         when(accessRolesProvider.findRolesForPath(adminablePath, mockSession))
                 .thenReturn(adminAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(adminablePath, mockSession))
+                .thenReturn(adminAcl);
+
         when(accessRolesProvider.findRolesForPath(writablePath, mockSession))
                 .thenReturn(writerAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(writablePath, mockSession))
+                .thenReturn(writerAcl);
+
         when(accessRolesProvider.findRolesForPath(readablePath, mockSession))
                 .thenReturn(readerAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(readablePath, mockSession))
+                .thenReturn(readerAcl);
+
         when(accessRolesProvider.findRolesForPath(unreadablePath, mockSession))
                 .thenReturn(emptyAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(unreadablePath, mockSession))
+                .thenReturn(emptyAcl);
+
         when(
                 accessRolesProvider.findRolesForPath(unrecognizablePath,
                         mockSession)).thenReturn(unrecognizableAcl);
+        when(
+                accessRolesProvider.findRolesInExternalNodeForPath(unrecognizablePath,
+                        mockSession)).thenReturn(unrecognizableAcl);
+
         when(accessRolesProvider.findRolesForPath(authzPath, mockSession))
+                .thenReturn(writerAcl);
+        when(accessRolesProvider.findRolesInExternalNodeForPath(authzPath, mockSession))
                 .thenReturn(writerAcl);
 
         // Identify authzPath as an ACL node
