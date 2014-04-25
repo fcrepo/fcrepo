@@ -30,6 +30,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
@@ -179,4 +180,14 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
                         createPlainLiteral("abc").asNode()));
     }
 
+    @Test
+    public void testResponseContentTypes() throws Exception {
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + "fcr:namespaces");
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
+    }
 }

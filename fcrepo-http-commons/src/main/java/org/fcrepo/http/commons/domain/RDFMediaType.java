@@ -77,6 +77,8 @@ public abstract class RDFMediaType extends MediaType {
             TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, RDF_XML_TYPE, NTRIPLES_TYPE, APPLICATION_XML_TYPE, TEXT_PLAIN_TYPE,
             TURTLE_X_TYPE).add().build();
 
+    public static final String POSSIBLE_RDF_RESPONSE_VARIANTS_STRING[] = {
+        TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X };
 
     public static final String TSV = contentTypeTextTSV;
 

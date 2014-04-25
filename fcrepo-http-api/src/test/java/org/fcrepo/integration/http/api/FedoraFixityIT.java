@@ -23,9 +23,11 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.http.client.methods.HttpGet;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
@@ -57,5 +59,20 @@ public class FedoraFixityIT extends AbstractResourceIT {
                         .asNode()));
         assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(),
                 createTypedLiteral(3).asNode()));
+    }
+
+    @Test
+    public void testResponseContentTypes() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        createDatastream(pid, "zxc", "foo");
+
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + pid + "/zxc/fcr:fixity");
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
     }
 }
