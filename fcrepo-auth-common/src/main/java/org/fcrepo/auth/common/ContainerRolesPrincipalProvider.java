@@ -20,6 +20,7 @@ import static java.util.Collections.emptySet;
 
 import java.security.Principal;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.jcr.Credentials;
@@ -78,22 +79,16 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
 
     }
 
-    private String roleNames = "";
-
-    private String separator = ",";
+    private Set<String> roleNames;
 
     /**
-     * @param roleNames The names of container configured roles to use
+     * Sets the role names which have been configured in the repo.xml file.
+     *
+     * @param roleNames The names of container roles that should be recognized
+     *        as principals
      */
-    public void setRoleNames(final String roleNames) {
+    public void setRoleNames(final Set<String> roleNames) {
         this.roleNames = roleNames;
-    }
-
-    /**
-     * @param separator The string by which to split header values
-     */
-    public void setSeparator(final String separator) {
-        this.separator = separator;
     }
 
     /*
@@ -122,8 +117,16 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
 
         final Set<Principal> principals = new HashSet<>();
 
-        for (final String roleName : roleNames.split(separator)) {
-            final String role = roleName.trim();
+        if (roleNames == null) {
+            LOGGER.debug("Role names Set was never initialized");
+
+            return emptySet();
+        }
+
+        final Iterator<String> iterator = roleNames.iterator();
+
+        while (iterator.hasNext()) {
+            final String role = iterator.next().trim();
 
             if (request.isUserInRole(role)) {
                 LOGGER.debug("Adding container role as principal: {}", role);

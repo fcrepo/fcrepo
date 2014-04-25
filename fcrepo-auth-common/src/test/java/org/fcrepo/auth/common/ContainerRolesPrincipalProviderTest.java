@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.security.Principal;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -60,14 +62,12 @@ public class ContainerRolesPrincipalProviderTest {
     }
 
     /**
-     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(String)}.
+     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(Set)}.
      */
     @Test
     public void testSetRole() {
         when(request.isUserInRole("a")).thenReturn(true);
-
-        provider.setRoleNames("a");
-        provider.setSeparator(",");
+        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a"})));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 
@@ -76,15 +76,13 @@ public class ContainerRolesPrincipalProviderTest {
     }
 
     /**
-     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(String)}.
+     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(Set)}.
      */
     @Test
     public void testSetRoles() {
         when(request.isUserInRole("a")).thenReturn(true);
         when(request.isUserInRole("b")).thenReturn(true);
-
-        provider.setRoleNames("a,b");
-        provider.setSeparator(",");
+        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a", "b"})));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 
@@ -94,15 +92,13 @@ public class ContainerRolesPrincipalProviderTest {
     }
 
     /**
-     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(String)}.
+     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(Set)}.
      */
     @Test
     public void testTrimSetRoles() {
         when(request.isUserInRole("a")).thenReturn(true);
         when(request.isUserInRole("b")).thenReturn(true);
-
-        provider.setRoleNames("a, b");
-        provider.setSeparator(",");
+        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {" a", "b "})));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 
@@ -112,23 +108,10 @@ public class ContainerRolesPrincipalProviderTest {
     }
 
     /**
-     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(String)}.
+     * Test for {@link ContainerRolesPrincipalProvider#setRoleNames(Set)}.
      */
     @Test
     public void testNoConfigedRoleNames() {
-        provider.setSeparator(",");
-
-        final Set<Principal> principals = provider.getPrincipals(credentials);
-        assertTrue("Empty set expected when no role names configured", principals.isEmpty());
-    }
-
-    /**
-     * Test for {@link ContainerRolesPrincipalProvider#setSeparator()}.
-     */
-    @Test
-    public void testNoConfigedSeparator() {
-        provider.setRoleNames("a");
-
         final Set<Principal> principals = provider.getPrincipals(credentials);
         assertTrue("Empty set expected when no role names configured", principals.isEmpty());
     }
@@ -138,10 +121,8 @@ public class ContainerRolesPrincipalProviderTest {
      */
     @Test
     public void testNoRequest() {
-        provider.setRoleNames("a");
-        provider.setSeparator(",");
-
         when(credentials.getRequest()).thenReturn(null);
+        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a"})));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
         assertTrue("Empty set expected when no request supplied", principals.isEmpty());
@@ -154,9 +135,7 @@ public class ContainerRolesPrincipalProviderTest {
     @Test
     public void testPrincipalEqualsDifferentClass() {
         when(request.isUserInRole("a")).thenReturn(true);
-
-        provider.setRoleNames("a");
-        provider.setSeparator(",");
+        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a"})));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
         final Principal principal = principals.iterator().next();
