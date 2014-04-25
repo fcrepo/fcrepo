@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Adds principals based on roles that are configured within the container and
  * through a PrincipalProvider bean in the project.
- * 
+ *
  * @author Kevin S. Clarke
  * @see PrincipalProvider
  */
@@ -103,14 +103,10 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
      */
     @Override
     public Set<Principal> getPrincipals(final Credentials credentials) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Checking for principals using {}", ContainerRolesPrincipalProvider.class.getSimpleName());
-        }
+        LOGGER.debug("Checking for principals using {}", ContainerRolesPrincipalProvider.class.getSimpleName());
 
         if (!(credentials instanceof ServletCredentials)) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Credentials is not an instanceof ServletCredentials");
-            }
+            LOGGER.debug("Credentials is not an instanceof ServletCredentials");
 
             return emptySet();
         }
@@ -119,9 +115,7 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
         final HttpServletRequest request = servletCredentials.getRequest();
 
         if (request == null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Servlet request from servletCredentials was null");
-            }
+            LOGGER.debug("Servlet request from servletCredentials was null");
 
             return emptySet();
         }
@@ -132,9 +126,7 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
             final String role = roleName.trim();
 
             if (request.isUserInRole(role)) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Adding container role as principal: {}", role);
-                }
+                LOGGER.debug("Adding container role as principal: {}", role);
 
                 principals.add(new ContainerRolesPrincipal(role));
             }
