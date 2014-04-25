@@ -232,13 +232,13 @@ public abstract class AbstractResource {
             roundedDate.setTime(date.getTime() - date.getTime() % 1000);
         }
 
-        Response.ResponseBuilder builder = request.evaluatePreconditions(roundedDate);
+        Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
         if ( builder != null ) {
-            builder = builder.entity("Date mismatch");
+            builder = builder.entity("ETag mismatch");
         } else {
-            builder = request.evaluatePreconditions(etag);
+            builder = request.evaluatePreconditions(roundedDate);
             if ( builder != null ) {
-                builder = builder.entity("ETag mismatch");
+                builder = builder.entity("Date mismatch");
             }
         }
 
