@@ -46,6 +46,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
@@ -424,6 +425,39 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Node is expected to have versionable mixin.",
                 updatedObjectProperties.contains(Node.ANY, createResource(serverAddress + pid).asNode(),
                 NodeFactory.createURI(RDF_TYPE), NodeFactory.createURI(MIX_NAMESPACE + "versionable")));
+    }
+
+    @Test
+    public void testIndexResponseContentTypes() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        addMixin( pid, MIX_NAMESPACE + "versionable" );
+
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + pid + "/fcr:versions");
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
+    }
+
+    @Test
+    public void testGetVersionResponseContentTypes() throws Exception {
+        final String pid = getRandomUniquePid();
+        final String versionName = "v1";
+
+        createObject(pid);
+        addMixin( pid, MIX_NAMESPACE + "versionable" );
+        postObjectVersion(pid, versionName);
+
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + pid + "/fcr:versions/" + versionName);
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
     }
 
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {

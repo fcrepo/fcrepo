@@ -1130,6 +1130,19 @@ public class FedoraNodesIT extends AbstractResourceIT {
         return values;
     }
 
+    @Test
+    public void testResponseContentTypes() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + pid);
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
+     }
 
     private void validateHTML(final String path) throws Exception {
         final HttpGet getMethod = new HttpGet(serverAddress + path);
