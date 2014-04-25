@@ -104,7 +104,6 @@ public class AccessRoles extends AbstractResource {
         Response.ResponseBuilder response;
         String fullPath =  ACCESS_ROLES_FOLDER + path;
         try {
-            //final Node node = nodeService.getObject(session, path).getNode();
             final Node node = nodeService.getObject(session, fullPath).getNode();
             final Map<String, List<String>> data =
                     this.getAccessRolesProvider().getRoles(node,
@@ -142,13 +141,10 @@ public class AccessRoles extends AbstractResource {
         try {
             validatePOST(data);
 
-            //final FedoraResource resource =
-            //        nodeService.getObject(session, path);
             String fullPath =  ACCESS_ROLES_FOLDER + path;
             final FedoraResource accessRoleObject =
                         nodeService.findOrCreateObject(session,fullPath);
-
-            //this.getAccessRolesProvider().postRoles(resource.getNode(), data);
+;
             this.getAccessRolesProvider().postRoles(accessRoleObject.getNode(), data);
             session.save();
             LOGGER.debug("Saved access roles {}", data);
