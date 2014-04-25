@@ -144,7 +144,6 @@ public class AccessRoles extends AbstractResource {
             String fullPath =  ACCESS_ROLES_FOLDER + path;
             final FedoraResource accessRoleObject =
                         nodeService.findOrCreateObject(session,fullPath);
-;
             this.getAccessRolesProvider().postRoles(accessRoleObject.getNode(), data);
             session.save();
             LOGGER.debug("Saved access roles {}", data);
