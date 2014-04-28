@@ -42,16 +42,21 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
         final HttpGet method = new HttpGet(serverAddress + pid + "/zxc/fcr:fixity");
         final GraphStore graphStore = getGraphStore(method);
+        logger.debug("Got triples {}", graphStore);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Got triples {}", graphStore);
-        }
+        assertTrue(graphStore.contains(ANY,
+                                          createResource(serverAddress + pid + "/zxc").asNode(),
+                                          HAS_FIXITY_RESULT.asNode(),
+                                          ANY
+                ));
+        assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(),
+                createPlainLiteral("SUCCESS").asNode()));
 
-        assertTrue(graphStore.contains(ANY, createResource(serverAddress + pid + "/zxc").asNode(), HAS_FIXITY_RESULT
-                .asNode(), ANY));
-        assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createPlainLiteral("SUCCESS").asNode()));
-        assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), createResource(
-                "urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33").asNode()));
-        assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createTypedLiteral(3).asNode()));
+        assertTrue(graphStore.contains(ANY, ANY,
+                HAS_MESSAGE_DIGEST.asNode(), createResource(
+                        "urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33")
+                        .asNode()));
+        assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(),
+                createTypedLiteral(3).asNode()));
     }
 }

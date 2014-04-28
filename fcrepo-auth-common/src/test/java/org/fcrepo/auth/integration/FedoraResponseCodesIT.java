@@ -24,9 +24,16 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
+import org.junit.Before;
 import org.junit.Test;
 
 public class FedoraResponseCodesIT extends AbstractResourceIT {
+
+    @Before
+    public void setup() throws IOException {
+        final HttpPost objMethod = postObjMethod("Permit");
+        assertEquals(201, getStatus(objMethod));
+    }
 
     @Test
     public void testAllowedAddDatastream() throws Exception {
@@ -38,7 +45,8 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
 
         final HttpPost method = postDSMethod(pid, "zxcpermit", "foo");
         final HttpResponse response = client.execute(method);
-        final String location = response.getFirstHeader("Location").getValue();
+        final String location =
+                response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals("Got wrong URI in Location header for datastream creation!", serverAddress + pid +
                 "/zxcpermit/fcr:content", location);
@@ -67,7 +75,8 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
         final HttpPost method =
                 postDSMethod(pid + "/does_permit/not_permit/exist_permit/yet_permit", "zxc_permit", "foo");
         final HttpResponse response = client.execute(method);
-        final String location = response.getFirstHeader("Location").getValue();
+        final String location =
+                response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals("Got wrong URI in Location header for datastream creation!", serverAddress + pid +
                 "/does_permit/not_permit/exist_permit/yet_permit/zxc_permit/fcr:content", location);
@@ -127,18 +136,14 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
 
         final HttpResponse response = client.execute(method_test_get);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Returned from HTTP GET, now checking content...");
-        }
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertTrue("Got the wrong content back!", "marbles for everyone"
+                .equals(EntityUtils.toString(response.getEntity())));
 
-        assertTrue("Got the wrong content back!", "marbles for everyone".equals(EntityUtils.toString(response
-                .getEntity())));
+        assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
+                response.getFirstHeader("ETag").getValue().replace("\"",
+                        ""));
 
-        assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df", response.getFirstHeader("ETag").getValue()
-                .replace("\"", ""));
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Content was correct.");
-        }
+        logger.debug("Content was correct.");
     }
 }

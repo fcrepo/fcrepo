@@ -46,50 +46,64 @@ public abstract class AbstractResourceIT {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    protected static final int SERVER_PORT = Integer.parseInt(System.getProperty("test.port", "8080"));
+    protected static final int SERVER_PORT = Integer.parseInt(System
+            .getProperty("test.port", "8080"));
 
     protected static final String HOSTNAME = "localhost";
 
-    protected static final String serverAddress = "http://" + HOSTNAME + ":" + SERVER_PORT + "/";
+    protected static final String serverAddress = "http://" + HOSTNAME +
+            ":" + SERVER_PORT + "/";
 
     protected static HttpClient client;
 
     public AbstractResourceIT() {
-        client = HttpClientBuilder.create().setMaxConnPerRoute(5).setMaxConnTotal(Integer.MAX_VALUE).build();
+        client =
+            HttpClientBuilder.create().setMaxConnPerRoute(5).setMaxConnTotal(
+                    Integer.MAX_VALUE).build();
     }
 
     protected static HttpPost postObjMethod(final String pid) {
         return new HttpPost(serverAddress + pid);
     }
 
-    protected static HttpPost postObjMethod(final String pid, final String query) {
+    protected static HttpPost postObjMethod(final String pid,
+            final String query) {
         if (query.equals("")) {
             return new HttpPost(serverAddress + pid);
         }
         return new HttpPost(serverAddress + pid + "?" + query);
     }
 
-    protected static HttpPost postDSMethod(final String pid, final String ds, final String content)
+    protected static HttpPost postDSMethod(final String pid,
+            final String ds, final String content)
             throws UnsupportedEncodingException {
-        final HttpPost post = new HttpPost(serverAddress + pid + "/" + ds + "/fcr:content");
+        final HttpPost post =
+                new HttpPost(serverAddress + pid + "/" + ds +
+                        "/fcr:content");
         post.setEntity(new StringEntity(content));
         return post;
     }
 
-    protected static HttpPut putDSMethod(final String pid, final String ds, final String content)
+    protected static HttpPut putDSMethod(final String pid,
+            final String ds, final String content)
             throws UnsupportedEncodingException {
-        final HttpPut put = new HttpPut(serverAddress + pid + "/" + ds + "/fcr:content");
+        final HttpPut put =
+                new HttpPut(serverAddress + pid + "/" + ds +
+                        "/fcr:content");
 
         put.setEntity(new StringEntity(content));
         return put;
     }
 
-    protected HttpResponse execute(final HttpUriRequest method) throws IOException {
-        logger.debug("Executing: " + method.getMethod() + " to " + method.getURI());
+    protected HttpResponse execute(final HttpUriRequest method)
+            throws IOException {
+        logger.debug("Executing: " + method.getMethod() + " to " +
+                method.getURI());
         return client.execute(method);
     }
 
-    protected int getStatus(final HttpUriRequest method) throws IOException {
+    protected int getStatus(final HttpUriRequest method)
+            throws IOException {
         final HttpResponse response = execute(method);
         final int result = response.getStatusLine().getStatusCode();
         if (!(result > 199) || !(result < 400)) {

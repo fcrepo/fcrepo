@@ -24,6 +24,13 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -34,19 +41,13 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
-import static org.apache.jena.riot.WebContent.contentTypeN3;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
-import static org.apache.jena.riot.WebContent.contentTypeNTriples;
-import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
@@ -55,10 +56,9 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
-import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -75,8 +75,8 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Iterator;
 import java.util.UUID;
 
 import javax.ws.rs.core.Variant;
@@ -177,7 +177,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
-                .asNode()));
+                        .asNode()));
 
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
         final String lastmod = response.getFirstHeader("Last-Modified").getValue();
@@ -207,7 +207,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
-                .asNode()));
+                        .asNode()));
 
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
         final String lastmod = response.getFirstHeader("Last-Modified").getValue();
@@ -270,7 +270,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod("");
         final HttpResponse response = client.execute(method);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                                  .getStatusCode());
 
         final String location = response.getFirstHeader("Location").getValue();
 
@@ -288,21 +288,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createDatastream(pid, "ds1", "foo");
 
         final HttpResponse response =
-                execute(new HttpGet(serverAddress + pid + "/ds1"));
+            execute(new HttpGet(serverAddress + pid + "/ds1"));
         assertEquals(EntityUtils.toString(response.getEntity()), 200, response
                 .getStatusLine().getStatusCode());
         assertEquals(TURTLE, response.getFirstHeader("Content-Type").getValue());
 
         final Collection<String> links =
-                map(response.getHeaders("Link"), new Function<Header, String>() {
+            map(response.getHeaders("Link"), new Function<Header, String>() {
 
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
         assertTrue("Didn't find 'describes' link header!",
-                links.contains(serverAddress + pid + "/ds1/fcr:content;rel=\"describes\""));
+                      links.contains(serverAddress + pid + "/ds1/fcr:content;rel=\"describes\""));
 
     }
 
@@ -314,11 +314,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createDatastream(pid, "ds1", "foo");
 
         final HttpDelete dmethod =
-                new HttpDelete(serverAddress + pid + "/ds1");
+            new HttpDelete(serverAddress + pid + "/ds1");
         assertEquals(204, getStatus(dmethod));
 
         final HttpGet method_test_get =
-                new HttpGet(serverAddress +  pid + "/ds1");
+            new HttpGet(serverAddress +  pid + "/ds1");
         assertEquals(404, getStatus(method_test_get));
     }
 
@@ -389,13 +389,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 "Accept-Patch").getValue());
 
         final Collection<String> links =
-                map(response.getHeaders("Link"), new Function<Header, String>() {
+            map(response.getHeaders("Link"), new Function<Header, String>() {
 
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
         assertTrue("Didn't find LDP link header!", links
                 .contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
         final GraphStore results = getGraphStore(getObjMethod);
@@ -429,23 +429,23 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         //verifyResource based on the expection of these types on an out of the box fedora object:
         /*
-                http://fedora.info/definitions/v4/rest-api#object
-                http://fedora.info/definitions/v4/rest-api#relations
-                http://fedora.info/definitions/v4/rest-api#resource
-                http://purl.org/dc/elements/1.1/describable
-                http://www.jcp.org/jcr/mix/1.0created
-                http://www.jcp.org/jcr/mix/1.0lastModified
-                http://www.jcp.org/jcr/mix/1.0lockable
-                http://www.jcp.org/jcr/mix/1.0referenceable
-                http://www.jcp.org/jcr/mix/1.0simpleVersionable
-                http://www.jcp.org/jcr/mix/1.0versionable
-                http://www.jcp.org/jcr/nt/1.0base
-                http://www.jcp.org/jcr/nt/1.0folder
-                http://www.jcp.org/jcr/nt/1.0hierarchyNode
-                http://www.w3.org/ns/ldp#Container
-                http://www.w3.org/ns/ldp#DirectContainer
-                http://www.w3.org/ns/ldp#Page
-         */
+                http://fedora.info/definitions/v4/rest-api#object 
+                http://fedora.info/definitions/v4/rest-api#relations 
+                http://fedora.info/definitions/v4/rest-api#resource 
+                http://purl.org/dc/elements/1.1/describable 
+                http://www.jcp.org/jcr/mix/1.0created 
+                http://www.jcp.org/jcr/mix/1.0lastModified 
+                http://www.jcp.org/jcr/mix/1.0lockable 
+                http://www.jcp.org/jcr/mix/1.0referenceable 
+                http://www.jcp.org/jcr/mix/1.0simpleVersionable 
+                http://www.jcp.org/jcr/mix/1.0versionable 
+                http://www.jcp.org/jcr/nt/1.0base 
+                http://www.jcp.org/jcr/nt/1.0folder 
+                http://www.jcp.org/jcr/nt/1.0hierarchyNode 
+                http://www.w3.org/ns/ldp#Container 
+                http://www.w3.org/ns/ldp#DirectContainer 
+                http://www.w3.org/ns/ldp#Page 
+        */
 
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
@@ -473,11 +473,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createObject("FedoraDescribeWithChildrenTestGraph/b");
         createObject("FedoraDescribeWithChildrenTestGraph/c");
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + "FedoraDescribeWithChildrenTestGraph");
+            new HttpGet(serverAddress + "FedoraDescribeWithChildrenTestGraph");
         getObjMethod.addHeader("Accept", "application/rdf+xml");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                             .getStatusCode());
         final Model model = createDefaultModel();
         model.read(response.getEntity().getContent(), null);
         try (final Writer w = new StringWriter()) {
@@ -487,23 +487,23 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     w);
         }
         final Resource subjectUri =
-                createResource(serverAddress
-                        + "FedoraDescribeWithChildrenTestGraph");
+            createResource(serverAddress
+                    + "FedoraDescribeWithChildrenTestGraph");
         assertTrue(
                 "Didn't find child node!",
                 model.contains(
                         subjectUri,
-                        createProperty(REPOSITORY_NAMESPACE + "hasChild"),
-                        createResource(serverAddress
-                                + "FedoraDescribeWithChildrenTestGraph/c")));
+                createProperty(REPOSITORY_NAMESPACE + "hasChild"),
+                createResource(serverAddress
+                        + "FedoraDescribeWithChildrenTestGraph/c")));
         final Collection<String> links =
-                map(response.getHeaders("Link"), new Function<Header, String>() {
+            map(response.getHeaders("Link"), new Function<Header, String>() {
 
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
         assertTrue("Didn't find LDP resource link header!", links.contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
         assertTrue("Didn't find LDP container link header!", links.contains(LDP_NAMESPACE + "DirectContainer;rel=\"type\""));
     }
@@ -514,12 +514,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createObject(pid);
         createObject(pid + "/a");
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + pid);
+            new HttpGet(serverAddress + pid);
         getObjMethod.addHeader("Prefer", "return=minimal");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                             .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
         logger.trace("Retrieved object graph:\n" + content);
@@ -530,14 +530,14 @@ public class FedoraNodesIT extends AbstractResourceIT {
                         "<"
                                 + serverAddress
                                 + pid + "> <" + HAS_CHILD + ">",
-                                DOTALL).matcher(content).find());
+                        DOTALL).matcher(content).find());
 
         assertFalse("Didn't expect contained member resources",
-                compile(
-                        "<"
-                                + serverAddress
-                                + pid + "> <" + CONTAINS + ">",
-                                DOTALL).matcher(content).find());
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + CONTAINS + ">",
+                                  DOTALL).matcher(content).find());
     }
 
     @Test
@@ -546,23 +546,23 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createObject(pid);
         createObject(pid + "/a");
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + pid);
+            new HttpGet(serverAddress + pid);
         getObjMethod.addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                             .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
         logger.trace("Retrieved object graph:\n" + content);
 
         assertFalse(
-                "Didn't expect inlined member resources",
-                compile(
-                        "<"
-                                + serverAddress
-                                + pid + "> <" + HAS_CHILD + ">",
-                                DOTALL).matcher(content).find());
+                       "Didn't expect inlined member resources",
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + HAS_CHILD + ">",
+                                  DOTALL).matcher(content).find());
 
     }
 
@@ -572,29 +572,29 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createObject(pid);
         createObject(pid + "/a");
         final HttpGet getObjMethod =
-                new HttpGet(serverAddress + pid);
+            new HttpGet(serverAddress + pid);
         getObjMethod.addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment\"");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                             .getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
         logger.trace("Retrieved object graph:\n" + content);
 
         assertTrue("Didn't find member resources",
-                compile(
-                        "<"
-                                + serverAddress
-                                + pid + "> <" + HAS_CHILD + ">",
-                                DOTALL).matcher(content).find());
+                      compile(
+                                 "<"
+                                     + serverAddress
+                                     + pid + "> <" + HAS_CHILD + ">",
+                                 DOTALL).matcher(content).find());
 
         assertFalse("Didn't expect contained member resources",
-                compile(
-                        "<"
-                                + serverAddress
-                                + pid + "> <" + CONTAINS + ">",
-                                DOTALL).matcher(content).find());
+                       compile(
+                                  "<"
+                                      + serverAddress
+                                      + pid + "> <" + CONTAINS + ">",
+                                  DOTALL).matcher(content).find());
 
     }
 
@@ -607,7 +607,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                         "FedoraDescribeTestGraphByUuid");
         final GraphStore graphStore = getGraphStore(getObjMethod);
         final Iterator<Quad> iterator =
-                graphStore.find(ANY, createURI(serverAddress +
+            graphStore.find(ANY, createURI(serverAddress +
                         "FedoraDescribeTestGraphByUuid"),
                         HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
 
@@ -627,13 +627,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testUpdateObjectGraph() throws Exception {
         createObject("FedoraDescribeTestGraphUpdate");
         final HttpPatch updateObjectGraphMethod =
-                new HttpPatch(serverAddress + "FedoraDescribeTestGraphUpdate");
+            new HttpPatch(serverAddress + "FedoraDescribeTestGraphUpdate");
         updateObjectGraphMethod.addHeader("Content-Type",
                 "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("INSERT { <" + serverAddress + "FedoraDescribeTestGraphUpdate> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}")
-                .getBytes()));
+                        .getBytes()));
         updateObjectGraphMethod.setEntity(e);
         final HttpResponse response = client.execute(updateObjectGraphMethod);
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
@@ -645,7 +645,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testUpdateAndReplaceObjectGraph() throws Exception {
         createObject("FedoraDescribeTestGraphReplace");
         final String subjectURI =
-                serverAddress + "FedoraDescribeTestGraphReplace";
+            serverAddress + "FedoraDescribeTestGraphReplace";
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
 
         updateObjectGraphMethod.addHeader("Content-Type",
@@ -654,7 +654,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("INSERT { <" + subjectURI + "> <info:rubydora#label> \"asdfg\" } WHERE {}")
-                .getBytes()));
+                        .getBytes()));
 
         updateObjectGraphMethod.setEntity(e);
         client.execute(updateObjectGraphMethod);
@@ -699,7 +699,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("INSERT { <" + subjectURI + "> <" + REPOSITORY_NAMESPACE + "uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n")
-                .getBytes()));
+                        .getBytes()));
         patchObjMethod.setEntity(e);
         final HttpResponse response = client.execute(patchObjMethod);
 
@@ -721,7 +721,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         put.addHeader("Content-Type", "text/rdf+n3");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                "<> a <http://www.w3.org/ns/ldp#IndirectContainer>".getBytes()));
+               "<> a <http://www.w3.org/ns/ldp#IndirectContainer>".getBytes()));
         put.setEntity(e);
         assertEquals(204, getStatus(put));
     }
@@ -730,13 +730,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testReplaceGraph() throws Exception {
         client.execute(postObjMethod("FedoraReplaceGraph"));
         final String subjectURI =
-                serverAddress + "FedoraReplaceGraph";
+            serverAddress + "FedoraReplaceGraph";
         final HttpPut replaceMethod = new HttpPut(subjectURI);
         replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
-                .getBytes()));
+                        .getBytes()));
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(204, response.getStatusLine().getStatusCode());
@@ -770,7 +770,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
-                .getBytes()));
+                        .getBytes()));
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(201, response.getStatusLine().getStatusCode());
@@ -817,7 +817,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
             model.write(w, "TURTLE");
             e.setContent(new ByteArrayInputStream(w.toString().getBytes()));
             logger.trace("Retrieved object graph for testRoundTripReplaceGraph():\n {}",
-                    w);
+                            w);
         }
 
         final HttpPut replaceMethod = new HttpPut(subjectURI);
@@ -851,7 +851,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
             model.write(w, "TURTLE");
             e.setContent(new ByteArrayInputStream(w.toString().getBytes()));
             logger.trace("Retrieved object graph for testRoundTripReplaceGraphForDatastream():\n {}",
-                    w);
+                            w);
         }
 
         final HttpPut replaceMethod = new HttpPut(subjectURI);
@@ -872,24 +872,24 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 + graphStore.toString());
 
         Iterator<Triple> iterator =
-                graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_SIZE.asNode(),
-                        ANY);
+            graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_SIZE.asNode(),
+                    ANY);
 
         final String oldSize = (String) iterator.next().getObject().getLiteralValue();
 
 
         assertEquals(CREATED.getStatusCode(),
-                getStatus(postObjMethod(sizeNode)));
+                     getStatus(postObjMethod(sizeNode)));
         assertEquals(CREATED.getStatusCode(), getStatus(postDSMethod(sizeNode,
-                "asdf", "1234")));
+                                                                     "asdf", "1234")));
 
         graphStore = getGraphStore(new HttpGet(serverAddress + ""));
         logger.trace("For testDescribeSize() new size retrieved repository graph:\n"
                 + graphStore.toString());
 
         iterator =
-                graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_SIZE.asNode(),
-                        ANY);
+            graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_SIZE.asNode(),
+                    ANY);
 
         final String newSize = (String) iterator.next().getObject().getLiteralValue();
 
@@ -907,8 +907,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 + graphStore.toString());
 
         Iterator<Triple> iterator =
-                graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_COUNT.asNode(),
-                        ANY);
+            graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_COUNT.asNode(),
+                    ANY);
 
         final String oldSize = (String) iterator.next().getObject().getLiteralValue();
 
@@ -923,16 +923,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 + graphStore.toString());
 
         iterator =
-                graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_COUNT.asNode(),
-                        ANY);
+            graphStore.getDefaultGraph().find(ANY, HAS_OBJECT_COUNT.asNode(),
+                    ANY);
 
         final String newSize =
-                (String) iterator.next().getObject().getLiteralValue();
+                 (String) iterator.next().getObject().getLiteralValue();
 
         logger.debug("Old size was: " + oldSize + " and new size was: " +
-                newSize);
+                             newSize);
         assertTrue("No increment in count occurred when we expected one!",
-                Integer.parseInt(oldSize) < Integer.parseInt(newSize));
+                   Integer.parseInt(oldSize) < Integer.parseInt(newSize));
     }
 
     /**
@@ -963,7 +963,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testDescribeRdfCached() throws IOException {
         final CloseableHttpClient cachingClient =
-                CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build();
+            CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build();
         final String pid = "FedoraObjectsRdfTest2";
         final String path = "" + pid;
         cachingClient.execute(new HttpPost(serverAddress + path));
@@ -976,7 +976,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue("Didn't find Last-Modified header!", response
                 .containsHeader("Last-Modified"));
         final String lastModed =
-                response.getFirstHeader("Last-Modified").getValue();
+            response.getFirstHeader("Last-Modified").getValue();
         final String etag = response.getFirstHeader("ETag").getValue();
         final HttpGet getObjMethod2 = new HttpGet(serverAddress + path);
         getObjMethod2.setHeader("If-Modified-Since", lastModed);
@@ -1014,7 +1014,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod("");
         final HttpResponse response = client.execute(method);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                                  .getStatusCode());
 
         final String location = response.getFirstHeader("Location").getValue();
 
@@ -1039,7 +1039,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod("");
         final HttpResponse response = client.execute(method);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                                  .getStatusCode());
 
         final String location = response.getFirstHeader("Location").getValue();
 
@@ -1064,7 +1064,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod("");
         final HttpResponse response = client.execute(method);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                                  .getStatusCode());
 
         final String location = response.getFirstHeader("Location").getValue();
 
@@ -1081,7 +1081,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod(pid);
         final HttpResponse response = client.execute(method);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+                                                  .getStatusCode());
 
         final HttpOptions optionsRequest = new HttpOptions(serverAddress + pid);
         final HttpResponse optionsResponse = client.execute(optionsRequest);
@@ -1110,11 +1110,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
     }
-    private static List<String> headerValues( final HttpResponse response,
-            final String headerName ) {
+    private static List<String> headerValues( HttpResponse response,
+            String headerName ) {
         final List<String> values = new ArrayList<String>();
-        for ( final Header header : response.getHeaders(headerName) ) {
-            for ( final String elem : header.getValue().split(",") ) {
+        for ( Header header : response.getHeaders(headerName) ) {
+            for ( String elem : header.getValue().split(",") ) {
                 values.add( elem.trim() );
             }
         }
@@ -1136,17 +1136,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
         htmlParser.setErrorHandler(new HTMLErrorHandler());
         htmlParser.setContentHandler(new TreeBuilder());
         try (
-                final InputStream htmlStream =
+            final InputStream htmlStream =
                 new ByteArrayInputStream(content.getBytes())) {
             htmlParser.parse(new InputSource(htmlStream));
         }
         logger.debug("HTML found to be valid.");
     }
 
-    private void verifyResource(final Model model, final Resource nodeUri, final Property rdfType, final String namespace, final String resource) {
+    private void verifyResource(Model model, Resource nodeUri, Property rdfType, String namespace, String resource) {
         assertTrue("Didn't find rdfType " + namespace + resource, model.contains(nodeUri,
-                rdfType,
-                createResource(namespace + resource)));
+        rdfType,
+        createResource(namespace + resource)));
     }
 
     public static class HTMLErrorHandler implements ErrorHandler {
@@ -1211,7 +1211,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to upload a file to a read/write federated filesystem.
-     **/
+    **/
     @Test
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
@@ -1240,7 +1240,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to copy objects from the repository to a federated filesystem.
-     **/
+    **/
     @Test
     public void testCopyToProjection() throws IOException {
         // create object in the repository
@@ -1268,7 +1268,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to copy objects from a federated filesystem to the repository.
-     **/
+    **/
     @Test
     public void testCopyFromProjection() throws IOException {
         // create object in federated filesystem
@@ -1311,7 +1311,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         // count children in response graph
         int firstChildCount = 0;
-        for ( final Iterator it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); firstChildCount++ ) {
+        for ( Iterator it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); firstChildCount++ ) {
             logger.debug( "Found child: {}", it.next() );
         }
         assertEquals("Should have two children!", 2, firstChildCount);
@@ -1319,20 +1319,20 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         // count children in response graph
         int firstContainsCount = 0;
-        for ( final Iterator it = firstGraph.find(ANY,parent,CONTAINS.asNode(),ANY); it.hasNext(); firstContainsCount++ ) {
+        for ( Iterator it = firstGraph.find(ANY,parent,CONTAINS.asNode(),ANY); it.hasNext(); firstContainsCount++ ) {
             logger.debug( "Found child: {}", it.next() );
         }
         assertEquals("Should have two children!", 2, firstContainsCount);
 
         // collect link headers
         final Collection<String> firstLinks =
-                map(firstResponse.getHeaders("Link"), new Function<Header, String>() {
+            map(firstResponse.getHeaders("Link"), new Function<Header, String>() {
 
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
 
         // it should have a first page link
         assertTrue("Didn't find first page header!", firstLinks.contains(serverAddress + pid
@@ -1354,20 +1354,20 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         // it should have two inlined resources
         int nextChildCount = 0;
-        for ( final Iterator it = nextGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); nextChildCount++ ) {
+        for ( Iterator it = nextGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); nextChildCount++ ) {
             logger.debug( "Found child: {}", it.next() );
         }
         assertEquals("Should have two children!", 2, nextChildCount);
 
         // collect link headers
         final Collection<String> nextLinks =
-                map(nextResponse.getHeaders("Link"), new Function<Header, String>() {
+            map(nextResponse.getHeaders("Link"), new Function<Header, String>() {
 
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+                @Override
+                public String apply(final Header h) {
+                    return h.getValue();
+                }
+            });
 
         // it should have a first page link
         assertTrue("Didn't find first page header!", nextLinks.contains(serverAddress + pid
@@ -1376,7 +1376,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
 
         // it should not have a next page link
-        for ( final String link : nextLinks ) {
+        for ( String link : nextLinks ) {
             assertFalse("Should not have next page header!", link.contains("rel=\"next\""));
         }
         assertFalse("Should not have next pagiple!", nextGraph.contains(ANY, ANY, NEXT_PAGE.asNode(), ANY));
@@ -1388,19 +1388,19 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createObject("linked-from");
         createObject("linked-to");
 
-        final String sparql = "insert data { <" + serverAddress + "linked-from> "
-                + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> "
-                + "<" + serverAddress + "linked-to> . }";
-        final HttpPatch patch = new HttpPatch(serverAddress + "linked-from");
+        String sparql = "insert data { <" + serverAddress + "linked-from> "
+                 + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " 
+                 + "<" + serverAddress + "linked-to> . }";
+        HttpPatch patch = new HttpPatch(serverAddress + "linked-from");
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
         assertEquals("Couldn't link resources!", 204, getStatus(patch));
 
-        final HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
+        HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
         assertEquals("Deleting linked-to should error!", 412, getStatus(delete));
 
-        final HttpGet get = new HttpGet(serverAddress + "linked-from");
+        HttpGet get = new HttpGet(serverAddress + "linked-from");
         assertEquals("Linked to should still exist!", 200, getStatus(get));
     }
 
