@@ -42,13 +42,12 @@ public class FedoraBackupIT extends AbstractResourceIT {
             text.append("data-" + x);
         }
 
+        HttpResponse response;
         // Create object
-        HttpResponse response = client.execute(postObjMethod(objName));
-        assertEquals(201, response.getStatusLine().getStatusCode());
+        createObject(objName);
 
         // Create datastream
-        response = client.execute(postDSMethod(objName, "testDS", text.toString()));
-        assertEquals(201, response.getStatusLine().getStatusCode());
+        createDatastream(objName, "testDS", text.toString());
 
         // Verify object exists
         response = client.execute(new HttpGet(serverAddress + objName));

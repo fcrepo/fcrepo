@@ -21,12 +21,14 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,10 +59,11 @@ public class TokenEndpointIT extends AbstractOAuthResourceIT {
 
     @Test
     public void testUseToken() throws ClientProtocolException, IOException {
+        final String pid = UUID.randomUUID().toString();
         logger.trace("Entering testUseToken()...");
         logger.debug("Trying to write an object to authenticated area without authentication via token...");
         final HttpResponse failure =
-                client.execute(postObjMethod("authenticated/testUseToken"));
+                client.execute(putObjMethod("authenticated/" + pid));
         Assert.assertEquals(
                 "Was able to write to an authenticated area when I shouldn't be able to",
                 SC_UNAUTHORIZED,
@@ -86,9 +89,9 @@ public class TokenEndpointIT extends AbstractOAuthResourceIT {
                 .find());
         final String token = tokenMatcher.group(1);
         logger.debug("Found token: {}", token);
-        final HttpPost successMethod =
-                postObjMethod("authenticated/testUseToken?access_token=" +
-                        token);
+        final HttpPut successMethod =
+                putObjMethod("authenticated/" + pid + "?access_token=" +
+                                 token);
         final HttpResponse success = client.execute(successMethod);
         Assert.assertEquals("Failed to create object even with authentication!",
                             201,

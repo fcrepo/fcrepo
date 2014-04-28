@@ -127,22 +127,24 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* create a new object inside the tx */
         final HttpPost postNew =
-            new HttpPost(txLocation + "/object-in-tx-rollback");
+            new HttpPost(txLocation);
+        final String pid = getRandomUniquePid();
+        postNew.addHeader("Slug", pid);
         HttpResponse resp = execute(postNew);
         assertEquals(201, resp.getStatusLine().getStatusCode());
 
         /* fetch the created tx from the endpoint */
         final HttpGet getTx =
-            new HttpGet(txLocation + "/object-in-tx-rollback");
+            new HttpGet(txLocation + "/" + pid);
         final GraphStore graphStore = getGraphStore(getTx);
         logger.debug(graphStore.toString());
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(Node.ANY,
-                createURI(txLocation + "/object-in-tx-rollback"), ANY, ANY));
+                createURI(txLocation + "/" + pid), ANY, ANY));
 
         /* fetch the created tx from the endpoint */
         final HttpGet getObj =
-            new HttpGet(serverAddress + "/object-in-tx-rollback");
+            new HttpGet(serverAddress + "/" + pid);
         resp = execute(getObj);
         assertEquals(
                 "Expected to not find our object within the scope of the transaction",
@@ -172,7 +174,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* create a new object inside the tx */
         final HttpPost postNew =
-            new HttpPost(txLocation + "/" + objectInTxCommit);
+            new HttpPost(txLocation);
+        postNew.addHeader("Slug", objectInTxCommit);
         HttpResponse resp = execute(postNew);
         assertEquals(201, resp.getStatusLine().getStatusCode());
 
@@ -227,7 +230,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* create a new object inside the tx */
         client = createClient();
         final HttpPost postNew =
-                new HttpPost(txLocation + "/" + objectInTxCommit);
+                new HttpPost(txLocation);
+        postNew.addHeader("Slug", objectInTxCommit);
         HttpResponse resp = execute(postNew);
         assertEquals(201, resp.getStatusLine().getStatusCode());
 
@@ -289,11 +293,12 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 response.getFirstHeader("Location").getValue();
 
         client = createClient();
-        final String newObjectLocation = txLocation + "/" + objectInTxCommit;
         final HttpPost postNew =
-                new HttpPost(newObjectLocation);
+                new HttpPost(txLocation);
+        postNew.addHeader("Slug", objectInTxCommit);
         HttpResponse resp = execute(postNew);
         assertEquals(201, resp.getStatusLine().getStatusCode());
+        final String newObjectLocation = resp.getFirstHeader("Location").getValue();
 
         /* update sparql */
         final HttpPatch method = new HttpPatch(newObjectLocation);

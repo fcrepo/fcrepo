@@ -18,13 +18,16 @@ package org.fcrepo.integration.generator;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.apache.http.impl.client.HttpClientBuilder.create;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.junit.Assert.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -77,7 +80,7 @@ public abstract class AbstractResourceIT {
             final String content) throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + pid + "/" + ds +
-                        "?mixin=" + FEDORA_DATASTREAM);
+                        "/fcr:content");
         post.setEntity(new StringEntity(content));
         return post;
     }
@@ -93,5 +96,16 @@ public abstract class AbstractResourceIT {
                 method.getURI());
         return client.execute(method).getStatusLine().getStatusCode();
     }
+
+    protected HttpResponse createObject(final String pid) throws IOException {
+        final HttpPost httpPost = postObjMethod("/");
+        if (pid.length() > 0) {
+            httpPost.addHeader("Slug", pid);
+        }
+        final HttpResponse response = client.execute(httpPost);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        return response;
+    }
+
 
 }

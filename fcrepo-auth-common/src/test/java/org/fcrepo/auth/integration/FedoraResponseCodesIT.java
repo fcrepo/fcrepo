@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -31,20 +32,15 @@ import org.junit.Test;
 
 public class FedoraResponseCodesIT extends AbstractResourceIT {
 
-    @Before
-    public void setup() throws IOException {
-        final HttpPost objMethod = postObjMethod("Permit");
-        assertEquals(201, getStatus(objMethod));
-    }
-
     @Test
     public void testAllowedAddDatastream() throws Exception {
-        final HttpPost objMethod =
-                postObjMethod("FedoraDatastreamsTest2Permit");
+        final String pid = UUID.randomUUID().toString() + "Permit";
+        final HttpPut objMethod =
+                putObjMethod(pid);
 
         assertEquals(201, getStatus(objMethod));
         final HttpPost method =
-                postDSMethod("FedoraDatastreamsTest2Permit", "zxcpermit",
+                postDSMethod(pid, "zxcpermit",
                         "foo");
         final HttpResponse response = client.execute(method);
         final String location =
@@ -53,21 +49,21 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
                 serverAddress +
-                        "FedoraDatastreamsTest2Permit/zxcpermit/fcr:content",
+                        pid + "/zxcpermit/fcr:content",
                 location);
     }
 
     @Test
     public void testDeniedAddDatastream() throws Exception {
-        final HttpPost objMethod =
-                postObjMethod("FedoraDatastreamsTest2Permit");
+        final String pid = UUID.randomUUID().toString() + "Permit";
+        final HttpPut objMethod =
+            putObjMethod(pid);
 
         assertEquals(201, getStatus(objMethod));
-        final HttpPost obj2Method = postObjMethod(
-                "FedoraDatastreamsTest2Permit/FedoraDatastreamsTest2Deny");
+        final HttpPut obj2Method = putObjMethod(
+                pid + "/FedoraDatastreamsTest2Deny");
         assertEquals(201, getStatus(obj2Method));
-        final HttpPost method = postDSMethod(
-                "FedoraDatastreamsTest2Permit/FedoraDatastreamsTest2Deny",
+        final HttpPost method = postDSMethod(pid + "/FedoraDatastreamsTest2Deny",
                 "zxc", "foo");
         final HttpResponse response = client.execute(method);
         assertEquals(403, response.getStatusLine().getStatusCode());
@@ -75,9 +71,10 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
 
     @Test
     public void testAllowedAddDeepDatastream() throws Exception {
-        final HttpPost method =
-                postDSMethod(
-                        "FedoraDatastreamsTest2_permit/does_permit/not_permit/exist_permit/yet_permit",
+        final String pid = UUID.randomUUID().toString() + "Permit";
+        final HttpPut method =
+                putDSMethod(
+                        pid + "/does_permit/not_permit/exist_permit/yet_permit",
                         "zxc_permit", "foo");
         final HttpResponse response = client.execute(method);
         final String location =
@@ -86,15 +83,16 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
         assertEquals(
                 "Got wrong URI in Location header for datastream creation!",
                 serverAddress +
-                        "FedoraDatastreamsTest2_permit/does_permit/not_permit/exist_permit/yet_permit/zxc_permit/fcr:content",
+                        pid + "/does_permit/not_permit/exist_permit/yet_permit/zxc_permit/fcr:content",
                 location);
     }
 
     @Test
     public void testDeniedAddDeepDatastream() throws Exception {
-        final HttpPost method =
-                postDSMethod(
-                        "FedoraDatastreamsTest2_permit/does_permit/not_permit/exist_permit/yet_permit/allowed_child",
+        final String pid = UUID.randomUUID().toString() + "Permit";
+        final HttpPut method =
+                putDSMethod(
+                        pid + "/does_permit/not_permit/exist_permit/yet_permit/allowed_child",
                         "zxc", "foo");
         final HttpResponse response = client.execute(method);
         assertEquals(403, response.getStatusLine().getStatusCode());
@@ -102,11 +100,12 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
 
     @Test
     public void testAllowedPutDatastream() throws Exception {
-        final HttpPost objMethod =
-                postObjMethod("FedoraDatastreamsTestPut_permit");
+        final String pid = UUID.randomUUID().toString() + "Permit";
+        final HttpPut objMethod =
+                putObjMethod(pid);
         assertEquals(201, getStatus(objMethod));
         final HttpPut method =
-                putDSMethod("FedoraDatastreamsTestPut_permit",
+                putDSMethod(pid,
                         "zxc_permit", "foo");
         final HttpResponse response = client.execute(method);
         assertEquals(201, response.getStatusLine().getStatusCode());
@@ -114,11 +113,12 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
 
     @Test
     public void testDeniedPutDatastream() throws Exception {
-        final HttpPost objMethod =
-                postObjMethod("FedoraDatastreamsTestPut_permit/allowed_child");
+        final String pid = UUID.randomUUID().toString() + "Permit";
+        final HttpPut objMethod =
+                putObjMethod(pid + "/allowed_child");
         assertEquals(201, getStatus(objMethod));
         final HttpPut method =
-                putDSMethod("FedoraDatastreamsTestPut_permit/allowed_child",
+                putDSMethod(pid + "/allowed_child",
                         "zxc", "foo");
         final HttpResponse response = client.execute(method);
         assertEquals(403, response.getStatusLine().getStatusCode());
@@ -126,20 +126,23 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
 
     // @Test
     public void testGetDatastreamContent() throws Exception {
+        final String pid = UUID.randomUUID().toString() + "Permit";
         // TODO requires Grizzly client authN, see:
         // https://java.net/projects/jersey/sources/svn/content/trunk/jersey/samples/https-clientserver-grizzly/src/main/java/com/sun/jersey/samples/https_grizzly/Server.java?rev=5853
         // https://java.net/projects/jersey/sources/svn/content/trunk/jersey/samples/https-clientserver-grizzly/src/main/java/com/sun/jersey/samples/https_grizzly/auth/SecurityFilter.java?rev=5853
-        final HttpPost createObjMethod =
-                postObjMethod("FedoraDatastreamsTest6");
-        assertEquals(201, getStatus(createObjMethod));
+
+        final HttpPut objMethod =
+            putObjMethod(pid);
+
+        assertEquals(201, getStatus(objMethod));
 
         final HttpPost createDSMethod =
-                postDSMethod("FedoraDatastreamsTest6", "ds1",
+                postDSMethod(pid, "ds1",
                         "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +
-                        "FedoraDatastreamsTest6/ds1/fcr:content");
+                        pid + "/ds1/fcr:content");
         assertEquals(200, getStatus(method_test_get));
         final HttpResponse response = client.execute(method_test_get);
         logger.debug("Returned from HTTP GET, now checking content...");
