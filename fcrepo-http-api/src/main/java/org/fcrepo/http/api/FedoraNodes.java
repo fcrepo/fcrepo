@@ -615,13 +615,13 @@ public class FedoraNodes extends AbstractResource {
         return result;
     }
 
-    private void assertPathMissing(String path) throws RepositoryException {
+    private void assertPathMissing(final String path) throws RepositoryException {
         if (nodeService.exists(session, path)) {
             throw new WebApplicationException(conflict().entity(path + " is an existing resource!").build());
         }
     }
 
-    private void assertPathExists(String path) throws RepositoryException {
+    private void assertPathExists(final String path) throws RepositoryException {
         if (!nodeService.exists(session, path)) {
             throw new WebApplicationException(notFound().build());
         }
