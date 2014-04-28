@@ -21,6 +21,7 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
@@ -183,31 +184,11 @@ public class FedoraNodesTest {
 
     }
 
-    @Test
-    @Ignore
-    public void testIngestAndMint() {
-        // final Response actual =
-        // testObj.ingestAndMint(createPathList("objects"));
-        // assertNotNull(actual);
-        // assertEquals(Status.CREATED.getStatusCode(), actual.getStatus());
-        // verify(mockSession).save();
-    }
-
-    @Test
-    public void testCreateObject() throws Exception {
-        final String pid = "testObject";
-        final String path = "/" + pid;
-        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
-        when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn(path);
-        final Response actual =
-                testObj.createObject(createPathList(pid), FEDORA_OBJECT, null,
-                        null, null, null, mockResponse, getUriInfoImpl(), null);
-        assertNotNull(actual);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        assertTrue(actual.getEntity().toString().endsWith(pid));
-        verify(mockObjects).createObject(mockSession, path);
-        verify(mockSession).save();
+    @Test(expected = WebApplicationException.class)
+    public void testCreateObjectWithBadPath() throws Exception {
+        final String path = "/does/not/exist";
+        when(mockNodes.exists(mockSession, path)).thenReturn(false);
+        testObj.createObject(createPathList(path), null, null, null, null, null, mockResponse, getUriInfoImpl(), null);
     }
 
     @Test
@@ -223,7 +204,7 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(path);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
-        when(mockNodes.getObject(mockSession,"/" + pid)).thenReturn(mockResource);
+        when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
         when(mockResource.hasContent()).thenReturn(false);
 
         final Response actual =
@@ -248,7 +229,7 @@ public class FedoraNodesTest {
         when(mockNode.getPath()).thenReturn(path);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
-        when(mockNodes.getObject(mockSession,"/" + pid)).thenReturn(mockResource);
+        when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
         when(mockResource.hasContent()).thenReturn(false);
 
         final Response actual =
@@ -258,66 +239,6 @@ public class FedoraNodesTest {
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("some-slug"));
         verify(mockObjects).createObject(mockSession, path);
-        verify(mockSession).save();
-    }
-
-    @Test
-    public void testCreateDatastream() throws Exception {
-        final String pid = "FedoraDatastreamsTest1";
-        final String dsId = "testDS";
-        final String dsContent = "asdf";
-        final String dsPath = "/" + pid + "/" + dsId;
-        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockNode.getSession()).thenReturn(mockSession);
-
-        final Datastream mockDatastream = mock(Datastream.class);
-
-        when(
-                mockDatastreams.createDatastream(any(Session.class),
-                        eq(dsPath), anyString(), eq((String)null), eq(dsContentStream),
-                        any(URI.class))).thenReturn(mockDatastream);
-        when(mockDatastream.getNode()).thenReturn(mockNode);
-        when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
-        when(mockNode.getPath()).thenReturn(dsPath);
-        when(mockDatastream.getEtagValue()).thenReturn("XYZ");
-        final Response actual =
-                testObj.createObject(createPathList(pid, dsId),
-                        FEDORA_DATASTREAM, null, null, APPLICATION_OCTET_STREAM_TYPE, null, mockResponse, getUriInfoImpl(),
-                        dsContentStream);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams)
-                .createDatastream(any(Session.class), eq(dsPath),
-                        anyString(), eq((String)null), any(InputStream.class), any(URI.class));
-        verify(mockSession).save();
-    }
-
-    @Test
-    public void testCreateDatastreamWithContentDisposition() throws Exception {
-        final String pid = "FedoraDatastreamsTest1";
-        final String dsId = "testDS";
-        final String dsContent = "asdf";
-        final String dsPath = "/" + pid + "/" + dsId;
-        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockNode.getSession()).thenReturn(mockSession);
-
-
-        final Datastream mockDatastream = mock(Datastream.class);
-        when(
-                mockDatastreams.createDatastream(any(Session.class),
-                                                        eq(dsPath), anyString(), eq("xyz.jpg"), eq(dsContentStream),
-                                                        any(URI.class))).thenReturn(mockDatastream);
-        when(mockDatastream.getNode()).thenReturn(mockNode);
-        when(mockDatastreams.createDatastream(mockSession, dsPath)).thenReturn(mockDatastream);
-        when(mockNode.getPath()).thenReturn(dsPath);
-        when(mockDatastream.getEtagValue()).thenReturn("XYZ");
-        final Response actual =
-            testObj.createObject(createPathList(pid, dsId),
-                                    FEDORA_DATASTREAM, null, "inline; filename=\"xyz.jpg\"", APPLICATION_OCTET_STREAM_TYPE, null, mockResponse, getUriInfoImpl(),
-                                    dsContentStream);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams)
-            .createDatastream(any(Session.class), eq(dsPath),
-                                     anyString(), eq("xyz.jpg"), any(InputStream.class), any(URI.class));
         verify(mockSession).save();
     }
 
@@ -415,7 +336,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testReplaceRdf() throws IllegalArgumentException, Exception {
+    public void testReplaceRdf() throws Exception {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
         when(mockNodes.exists(mockSession, path)).thenReturn(true);
@@ -430,34 +351,6 @@ public class FedoraNodesTest {
 
         testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest, mockResponse);
         verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class));
-    }
-
-    @Test
-    public void testCreateRdf() throws Exception {
-        final String pid = "FedoraObjectsRdfTest2";
-        final String path = "/" + pid;
-
-        when(mockNodes.exists(mockSession, path)).thenReturn(false);
-        when(mockObjects.createObject(mockSession, path))
-                .thenReturn(mockObject);
-        when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn(path);
-
-        final InputStream mockStream =
-                new ByteArrayInputStream("<a> <b> <c>".getBytes());
-
-        final Response actual =
-                testObj.createOrReplaceObjectRdf(createPathList(pid),
-                        getUriInfoImpl(), MediaType.valueOf("application/n3"),
-                        mockStream, mockRequest, mockResponse);
-
-        assertNotNull(actual);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        assertTrue(actual.getEntity().toString().endsWith(pid));
-        verify(mockObject).replaceProperties(any(IdentifierTranslator.class),
-                any(Model.class));
-        verify(mockObjects).createObject(mockSession, path);
-        verify(mockSession).save();
     }
 
     @Test

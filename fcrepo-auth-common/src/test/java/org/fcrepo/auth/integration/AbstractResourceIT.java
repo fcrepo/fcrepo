@@ -65,6 +65,10 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + pid);
     }
 
+    protected static HttpPut putObjMethod(final String pid) {
+        return new HttpPut(serverAddress + pid);
+    }
+
     protected static HttpPost postObjMethod(final String pid,
             final String query) {
         if (query.equals("")) {

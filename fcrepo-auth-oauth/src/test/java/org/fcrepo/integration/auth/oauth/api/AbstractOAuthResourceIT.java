@@ -49,8 +49,6 @@ public abstract class AbstractOAuthResourceIT {
 
     protected Logger logger;
 
-    protected String OBJECT_PATH = "objects";
-
     @Before
     public void setLogger() {
         logger = getLogger(this.getClass());
@@ -73,52 +71,8 @@ public abstract class AbstractOAuthResourceIT {
         client = b.build();
     }
 
-    protected static HttpPost postObjMethod(final String pid) {
-        return new HttpPost(serverAddress + "objects/" + pid);
-    }
-
-    protected static HttpPost
-            postObjMethod(final String pid, final String query) {
-        if (query.equals("")) {
-            return new HttpPost(serverAddress + "objects/" + pid);
-        }
-        return new HttpPost(serverAddress + "objects/" + pid + "?" + query);
-    }
-
-    protected static HttpPost postDSMethod(final String pid, final String ds,
-            final String content) throws UnsupportedEncodingException {
-        final HttpPost post =
-                new HttpPost(serverAddress + "objects/" + pid + "/" + ds +
-                        "/fcr:content");
-        post.setEntity(new StringEntity(content));
-        return post;
-    }
-
-    protected static HttpPut putDSMethod(final String pid, final String ds,
-            final String content) throws UnsupportedEncodingException {
-        final HttpPut put =
-                new HttpPut(serverAddress + "objects/" + pid + "/" + ds +
-                        "/fcr:content");
-
-        put.setEntity(new StringEntity(content));
-        return put;
-    }
-
-    protected HttpResponse execute(final HttpUriRequest method)
-        throws ClientProtocolException, IOException {
-        logger.debug("Executing: " + method.getMethod() + " to " +
-                method.getURI());
-        return client.execute(method);
-    }
-
-    protected int getStatus(final HttpUriRequest method)
-        throws ClientProtocolException, IOException {
-        final HttpResponse response = execute(method);
-        final int result = response.getStatusLine().getStatusCode();
-        if (!(result > 199) || !(result < 400)) {
-            logger.warn(EntityUtils.toString(response.getEntity()));
-        }
-        return result;
+    protected static HttpPut putObjMethod(final String pid) {
+        return new HttpPut(serverAddress + "objects/" + pid);
     }
 
 }
