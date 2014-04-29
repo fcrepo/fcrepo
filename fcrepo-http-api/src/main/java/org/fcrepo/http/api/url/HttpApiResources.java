@@ -37,7 +37,7 @@ import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraFieldSearch;
 import org.fcrepo.http.api.FedoraFixity;
 import org.fcrepo.http.api.FedoraLocks;
-import org.fcrepo.http.api.FedoraSitemap;
+import org.fcrepo.http.api.repository.FedoraRepositorySitemap;
 import org.fcrepo.http.api.FedoraVersions;
 import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
@@ -140,7 +140,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         // sitemap
         model.add(s, HAS_SITEMAP, createResource(uriInfo.getBaseUriBuilder()
-                .path(FedoraSitemap.class).build().toASCIIString()));
+                .path(FedoraRepositorySitemap.class).build().toASCIIString()));
 
         // fcr:tx
         model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo

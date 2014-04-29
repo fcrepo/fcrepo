@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.http.api;
+package org.fcrepo.http.api.repository;
 
 import static java.lang.Integer.parseInt;
 import static javax.jcr.query.Query.JCR_SQL2;
@@ -40,6 +40,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
+import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapIndex;
@@ -61,12 +62,12 @@ import com.codahale.metrics.annotation.Timed;
 @Component
 @Scope("prototype")
 @Path("/sitemap")
-public class FedoraSitemap extends AbstractResource {
+public class FedoraRepositorySitemap extends AbstractResource {
 
     @InjectedSession
     protected Session session;
 
-    private static final Logger LOGGER = getLogger(FedoraSitemap.class);
+    private static final Logger LOGGER = getLogger(FedoraRepositorySitemap.class);
 
     public static final long entriesPerPage = 50000;
 
@@ -91,8 +92,8 @@ public class FedoraSitemap extends AbstractResource {
             for (int i = 0; i <= count; i++) {
                 sitemapIndex
                         .appendSitemapEntry(new SitemapEntry(uriInfo
-                                .getBaseUriBuilder().path(FedoraSitemap.class)
-                                .path(FedoraSitemap.class, "getSitemap").build(
+                                .getBaseUriBuilder().path(FedoraRepositorySitemap.class)
+                                .path(FedoraRepositorySitemap.class, "getSitemap").build(
                                         i + 1)));
             }
             LOGGER.trace("Executed getSitemapIndex().");
