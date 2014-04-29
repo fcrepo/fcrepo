@@ -46,7 +46,9 @@ import static org.fcrepo.auth.roles.common.Constants.JcrName.principal;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.rbacl;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.rbaclAssignable;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.role;
+
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_ACCESS_CONTROL_REFERENCE;
 
 /**
  * Provides the effective access roles for authorization.
@@ -59,8 +61,6 @@ public class AccessRolesProvider {
     private static final Logger LOGGER = getLogger(AccessRolesProvider.class);
 
     public static final Map<String, List<String>> DEFAULT_ACCESS_ROLES = emptyMap();
-
-    public static final String ACCESS_ROLES_FOLDER = "/fedora:system/fedora:accessroles";
 
     /**
      * Get the roles assigned to this Node. Optionally search up the tree for
@@ -244,23 +244,29 @@ public class AccessRolesProvider {
         Property prop = null;
         try {
             for (Path p = absPath; p != null; p = p.getParent()) {
+                boolean pathFound = true;
                 try {
-                    prop = session.getNode(p.getString()).getProperty(assignment.getQualified());
+                    //checks for existence of authz:hasAssignment property on node found for a path
+                    prop = session.getNode(p.getString()).getProperty(FEDORA_ACCESS_CONTROL_REFERENCE);
                 } catch (PathNotFoundException e) {
                     if (p.isRoot()) {
                         return DEFAULT_ACCESS_ROLES;
                     }
-                    continue;
+                    pathFound = false;
                 }
-                rbaclID = prop.getValues()[0].getString();
-                break;//todo test after lunch
+                if (pathFound) {
+                    //rbaclID = prop.getValues()[0].getString();
+                    rbaclID = prop.getValue().getString();
+                    break;
+                }
             }
         } catch (final Exception e) {
             LOGGER.debug("Could not find an authorization assignment {}", e);
             return DEFAULT_ACCESS_ROLES;
         }
         try {
-            rbaclNode = session.getNode(ACCESS_ROLES_FOLDER + "/" + rbaclID);
+            //rbaclNode = session.getNode(ACCESS_ROLES_FOLDER + "/" + rbaclID);
+            rbaclNode = session.getNodeByIdentifier(rbaclID);
         } catch (final Exception e) {
             LOGGER.debug("Could not find a rbaclNode {}", rbaclID, e);
             return DEFAULT_ACCESS_ROLES;

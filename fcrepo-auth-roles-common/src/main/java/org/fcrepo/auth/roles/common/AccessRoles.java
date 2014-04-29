@@ -102,7 +102,7 @@ public class AccessRoles extends AbstractResource {
         LOGGER.debug("Get access roles for: {}", path);
         LOGGER.debug("effective: {}", effective);
         Response.ResponseBuilder response;
-        String fullPath =  ACCESS_ROLES_FOLDER + path;
+        final String fullPath =  ACCESS_ROLES_FOLDER + path;
         try {
             final Node node = nodeService.getObject(session, fullPath).getNode();
             final Map<String, List<String>> data =
@@ -141,10 +141,11 @@ public class AccessRoles extends AbstractResource {
         try {
             validatePOST(data);
 
-            String fullPath =  ACCESS_ROLES_FOLDER + path;
+            final String fullPath =  ACCESS_ROLES_FOLDER + path;
             final FedoraResource accessRoleObject =
                         nodeService.findOrCreateObject(session,fullPath);
             this.getAccessRolesProvider().postRoles(accessRoleObject.getNode(), data);
+            accessRoleObject.getNode().addMixin("mix:referenceable");
             session.save();
             LOGGER.debug("Saved access roles {}", data);
             response =

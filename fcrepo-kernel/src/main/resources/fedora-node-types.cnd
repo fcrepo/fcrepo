@@ -86,9 +86,15 @@
   - dc:type (STRING) multiple
 
 /*
+ * A Fedora access control mixin.
+ */
+[fedora:access] mixin
+  - fedora:acReference (reference)
+
+/*
  * Any Fedora resource.
  */
-[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:referenceable, dc:describable mixin
+[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:referenceable, dc:describable, fedora:access mixin
   - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)

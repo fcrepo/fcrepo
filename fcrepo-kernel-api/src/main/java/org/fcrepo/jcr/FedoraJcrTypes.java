@@ -54,4 +54,6 @@ public interface FedoraJcrTypes {
     String FROZEN_NODE = "nt:frozenNode";
 
     String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
+
+    String FEDORA_ACCESS_CONTROL_REFERENCE = "fedora:acReference";
 }
