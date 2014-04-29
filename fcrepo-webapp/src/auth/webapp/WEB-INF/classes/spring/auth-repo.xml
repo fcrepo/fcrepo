@@ -28,8 +28,7 @@
       <ref bean="headerProvider"/>
     </util:set>
 
-    <!-- Optional PrincipalProvider that will use container configured roles as principals; uncomment to use -->
-    <!--
+    <!-- Optional PrincipalProvider that will use container configured roles as principals -->
     <bean name="containerRolesProvider" class="org.fcrepo.auth.common.ContainerRolesPrincipalProvider">
       <property name="roleNames">
         <util:set set-class="java.util.HashSet">
@@ -42,7 +41,6 @@
     <util:set id="principalProviderSet">
       <ref bean="containerRolesProvider"/>
     </util:set>
-    -->
 
     <bean name="fad" class="org.fcrepo.auth.roles.basic.BasicRolesAuthorizationDelegate"/>
 
