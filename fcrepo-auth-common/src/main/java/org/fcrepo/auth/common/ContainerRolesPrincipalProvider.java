@@ -115,8 +115,6 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
             return emptySet();
         }
 
-        final Set<Principal> principals = new HashSet<>();
-
         if (roleNames == null) {
             LOGGER.debug("Role names Set was never initialized");
 
@@ -124,6 +122,7 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
         }
 
         final Iterator<String> iterator = roleNames.iterator();
+        final Set<Principal> principals = new HashSet<>();
 
         while (iterator.hasNext()) {
             final String role = iterator.next().trim();
