@@ -20,6 +20,7 @@ package org.fcrepo.http.commons.api.rdf;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -161,6 +162,39 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
     @Test
     public void testGetPathFromGraphSubjectForNonJcrUrl() throws RepositoryException {
         assertNull(testObj.getPathFromSubject(ResourceFactory.createResource("who-knows-what-this-is")));
+    }
+
+    @Test
+    public void testIsCanonical() {
+        assertTrue(((HttpIdentifierTranslator) testObj).isCanonical());
+    }
+
+    @Test
+    public void testIsNotCanonicalWithinATx() {
+        final String txId = UUID.randomUUID().toString();
+
+        final HttpIdentifierTranslator testObjTx = getTestObjTx("/");
+        when(mockSessionTx.getTxId()).thenReturn(txId);
+        assertFalse(testObjTx.isCanonical());
+    }
+
+    @Test
+    public void testGetCanonical() {
+        final HttpIdentifierTranslator testObjTx = getTestObjTx("/");
+        when(mockSessionTx.getTxId()).thenReturn("");
+        assertFalse(testObjTx.isCanonical());
+
+        assertTrue(testObjTx.getCanonical(true).isCanonical());
+        assertFalse(testObjTx.getCanonical(true).getCanonical(false).isCanonical());
+    }
+
+    @Test
+    public void testGetCanonicalWithinATx() throws RepositoryException {
+        final HttpIdentifierTranslator testObjTx = getTestObjTx("/");
+        when(mockSessionTx.getTxId()).thenReturn("txid");
+        assertEquals("http://localhost:8080/fcrepo/rest/tx:txid/abc", testObjTx.getSubject("/abc").toString());
+        assertEquals("http://localhost:8080/fcrepo/rest/abc", testObjTx.getCanonical(true).getSubject("/abc").toString());
+
     }
 
     protected static UriInfo getUriInfoImpl(final String path) {

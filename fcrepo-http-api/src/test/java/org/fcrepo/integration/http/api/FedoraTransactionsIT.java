@@ -16,10 +16,13 @@
 
 package org.fcrepo.integration.http.api;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -31,6 +34,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -96,6 +100,12 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         HttpResponse resp = execute(getWithinTx);
         IOUtils.toString(resp.getEntity().getContent());
         assertEquals(200, resp.getStatusLine().getStatusCode());
+        assertTrue(Iterators.any(Iterators.forArray(resp.getHeaders("Link")), new Predicate<Header>() {
+            @Override
+            public boolean apply(Header input) {
+                return input.getValue().contains("<" + serverAddress + ">;rel=\"canonical\"");
+            }
+        }));
 
         int statusCode = 0;
 

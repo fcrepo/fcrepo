@@ -282,7 +282,7 @@ public class FedoraNodesTest {
         assertEquals("Got wrong triples!", mockRdfStream.concat(mockRdfStream2),
                 rdfStream);
         verify(mockResponse).addHeader("Accept-Patch", "application/sparql-update");
-        verify(mockResponse).addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
+        verify(mockResponse).addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
 
     }
 

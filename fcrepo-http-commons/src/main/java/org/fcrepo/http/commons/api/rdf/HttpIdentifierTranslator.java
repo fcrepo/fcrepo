@@ -83,6 +83,9 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
     private final String defaultWorkspace;
 
     private final Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
+    private final Class<?> relativeTo;
+    private final UriInfo uris;
+    private final boolean canonical;
 
     /**
      * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
@@ -90,22 +93,61 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
      * The session may provide additional information (e.g. workspaces) that need to be
      * taken into account.
      *
+     * @params session
      * @param relativeTo
      * @param uris
      */
     public HttpIdentifierTranslator(final Session session, final Class<?> relativeTo, final UriInfo uris) {
+        this(session, relativeTo, uris, false);
+    }
+
+    /**
+     * Build HTTP graph subjects relative to the given JAX-RS resource, using the UriInfo provided.
+     *
+     * The session may provide additional information (e.g. workspaces) that need to be
+     * taken into account.
+     *
+     * @param session
+     * @param relativeTo
+     * @param uris
+     * @param canonical generate canonical URIs for resources
+     */
+    public HttpIdentifierTranslator(final Session session,
+                                    final Class<?> relativeTo,
+                                    final UriInfo uris,
+                                    final boolean canonical) {
+        this.session = session;
+        this.relativeTo = relativeTo;
+        this.uris = uris;
+        this.canonical = canonical;
         this.context = uris.getRequestUri();
-        this.uriBuilder = uris.getBaseUriBuilder().path(relativeTo);
+        this.uriBuilder = uris.getBaseUriBuilder().clone().path(relativeTo);
         String normalizedBasePath = uriBuilder.build("").toString();
         if (!normalizedBasePath.endsWith("/")) {
             normalizedBasePath = normalizedBasePath + "/";
         }
         this.basePath = normalizedBasePath;
         this.pathIx = normalizedBasePath.length() - 1;
-        this.session = session;
         this.defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 normalizedBasePath);
+    }
+
+    /**
+     * Get the canonical IdentifierTranslator (e.g. one that ignores transactions and other transient states)
+     * @param canonical
+     * @return
+     */
+    public HttpIdentifierTranslator getCanonical(final boolean canonical) {
+        return new HttpIdentifierTranslator(session, relativeTo, uris, canonical);
+    }
+
+    /**
+     * Is the current IdentifierTranslator canonical?
+     * @return
+     */
+    public boolean isCanonical() {
+        return canonical || getCurrentTransactionId(session) == null;
     }
 
     @Override
@@ -154,13 +196,14 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
 
         for (final String segment : pathSegments) {
             if (segment.startsWith(TX_PREFIX)) {
-                final String tx = segment.substring(TX_PREFIX.length());
-                final String currentTxId = getCurrentTransactionId(session);
+                if (!canonical) {
+                    final String tx = segment.substring(TX_PREFIX.length());
+                    final String currentTxId = getCurrentTransactionId(session);
 
-                if (currentTxId == null || !tx.equals(currentTxId)) {
-                    throw new RepositoryException("Subject is not in this transaction");
+                    if (currentTxId == null || !tx.equals(currentTxId)) {
+                        throw new RepositoryException("Subject is not in this transaction");
+                    }
                 }
-
             } else if (segment.startsWith(WORKSPACE_PREFIX)) {
                 final String workspace = segment.substring(WORKSPACE_PREFIX.length());
                 if (!session.getWorkspace().getName().equals(workspace)) {
@@ -193,7 +236,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
         try {
             String pathToValidate = absPath;
             final String txId = getCurrentTransactionId(session);
-            if (txId != null) {
+            if (!canonical && txId != null) {
                 final String txIdWithSlash = "/" + TX_PREFIX + txId;
                 /* replace the first occurrence of tx within the path */
                 pathToValidate = replaceOnce(absPath, txIdWithSlash, EMPTY);
@@ -227,7 +270,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
 
             final String txId = getCurrentTransactionId(session);
 
-            if (txId != null) {
+            if (!canonical && txId != null) {
                 path = TX_PREFIX + txId + "/" + path;
             } else if (workspace != null && !workspace.getName().equals(defaultWorkspace)) {
                 path = WORKSPACE_PREFIX + workspace.getName() + "/" + path;
