@@ -52,6 +52,7 @@ import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.Map;
@@ -117,9 +118,11 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         }
 
         // fcr:versions
-        model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
-                        pathMap).toASCIIString()));
+        if (resource.getNode().isNodeType(NodeType.MIX_VERSIONABLE)) {
+            model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
+                    .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
+                            pathMap).toASCIIString()));
+        }
 
         // fcr:exports?format=xyz
         for (final String key : serializers.keySet()) {
