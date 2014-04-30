@@ -103,7 +103,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertTrue(Iterators.any(Iterators.forArray(resp.getHeaders("Link")), new Predicate<Header>() {
             @Override
             public boolean apply(Header input) {
-                return input.getValue().contains(serverAddress + ";rel=\"canonical\"");
+                return input.getValue().contains("<" + serverAddress + ">;rel=\"canonical\"");
             }
         }));
 

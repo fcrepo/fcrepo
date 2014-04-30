@@ -234,7 +234,7 @@ public class FedoraNodes extends AbstractResource {
                                   .replaceQueryParam("limit", limit).build()
                                   .toString().replace("&", "&amp;"));
                 rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
-                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
+                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
 
                 if ( resource.getNode().getNodes().getSize() > (offset + limit) ) {
                     final Node nextPage =
@@ -242,7 +242,7 @@ public class FedoraNodes extends AbstractResource {
                                   .replaceQueryParam("limit", limit).build()
                                   .toString().replace("&", "&amp;"));
                     rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
-                    servletResponse.addHeader("Link", nextPage + ";rel=\"next\"");
+                    servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
                 }
             }
 
@@ -296,19 +296,20 @@ public class FedoraNodes extends AbstractResource {
                                         final HttpIdentifierTranslator subjects) throws RepositoryException {
 
         if (resource.hasContent()) {
-            servletResponse.addHeader("Link", subjects.getSubject(
-                resource.getNode().getNode(JCR_CONTENT).getPath()) + ";rel=\"describes\"");
+            servletResponse.addHeader("Link", "<" + subjects.getSubject(
+                resource.getNode().getNode(JCR_CONTENT).getPath()) + ">;rel=\"describes\"");
         }
 
         if (!subjects.isCanonical()) {
             final IdentifierTranslator subjectsCanonical = subjects.getCanonical(true);
 
-            servletResponse.addHeader("Link", subjectsCanonical.getSubject(resource.getPath()) + ";rel=\"canonical\"");
+            servletResponse.addHeader("Link",
+                "<" + subjectsCanonical.getSubject(resource.getPath()) + ">;rel=\"canonical\"");
         }
 
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
-        servletResponse.addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
-        servletResponse.addHeader("Link", LDP_NAMESPACE + "DirectContainer;rel=\"type\"");
+        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
+        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
     }
 
     /**

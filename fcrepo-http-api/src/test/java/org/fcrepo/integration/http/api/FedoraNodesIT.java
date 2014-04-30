@@ -279,7 +279,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 }
             });
         assertTrue("Didn't find 'describes' link header!",
-                      links.contains(serverAddress + pid + "/ds1/fcr:content;rel=\"describes\""));
+                      links.contains("<" + serverAddress + pid + "/ds1/fcr:content>;rel=\"describes\""));
 
     }
 
@@ -379,7 +379,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 }
             });
         assertTrue("Didn't find LDP link header!", links
-                .contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
+                .contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
         final GraphStore results = getGraphStore(getObjMethod);
         final Model model = createModelForGraph(results.getDefaultGraph());
 
@@ -486,8 +486,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     return h.getValue();
                 }
             });
-        assertTrue("Didn't find LDP resource link header!", links.contains(LDP_NAMESPACE + "Resource;rel=\"type\""));
-        assertTrue("Didn't find LDP container link header!", links.contains(LDP_NAMESPACE + "DirectContainer;rel=\"type\""));
+        assertTrue("Didn't find LDP resource link header!", links.contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
+        assertTrue("Didn't find LDP container link header!", links.contains("<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\""));
     }
 
     @Test
@@ -1290,14 +1290,14 @@ public class FedoraNodesIT extends AbstractResourceIT {
             });
 
         // it should have a first page link
-        assertTrue("Didn't find first page header!", firstLinks.contains(serverAddress + pid
-                + "?limit=2&amp;offset=0;rel=\"first\""));
+        assertTrue("Didn't find first page header!",firstLinks.contains("<" + serverAddress + pid
+                + "?limit=2&amp;offset=0>;rel=\"first\""));
         assertTrue("Didn't find first page triple!", firstGraph.contains(ANY, ANY, FIRST_PAGE.asNode(),
                 createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
 
         // it should have a next page link
-        assertTrue("Didn't find next page header!", firstLinks.contains(serverAddress + pid
-                + "?limit=2&amp;offset=2;rel=\"next\""));
+        assertTrue("Didn't find next page header!", firstLinks.contains("<" + serverAddress + pid
+                + "?limit=2&amp;offset=2>;rel=\"next\""));
         assertTrue("Didn't find next page triple!", firstGraph.contains(ANY, ANY, NEXT_PAGE.asNode(),
                 createResource(serverAddress + pid + "?limit=2&amp;offset=2").asNode()));
 
@@ -1325,8 +1325,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
             });
 
         // it should have a first page link
-        assertTrue("Didn't find first page header!", nextLinks.contains(serverAddress + pid
-                + "?limit=2&amp;offset=0;rel=\"first\""));
+        assertTrue("Didn't find first page header!", nextLinks.contains("<" + serverAddress + pid
+                + "?limit=2&amp;offset=0>;rel=\"first\""));
         assertTrue("Didn't find first page triple!", nextGraph.contains(ANY, ANY, FIRST_PAGE.asNode(),
                 createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
 
