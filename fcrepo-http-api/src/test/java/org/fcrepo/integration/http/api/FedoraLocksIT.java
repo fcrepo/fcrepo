@@ -280,7 +280,8 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
 
         final GraphStore store = getGraphStore(getObjectProperties(pid));
-        Assert.assertTrue(store.contains(Node.ANY, nodeURI, HAS_LOCK.asNode(), lockURI));
+        Assert.assertTrue("HAS_LOCK assertion should be in the object's RDF.",
+                store.contains(Node.ANY, nodeURI, HAS_LOCK.asNode(), lockURI));
         assertUnlockWithToken(pid, lockToken);
     }
 
@@ -297,7 +298,8 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
 
         final GraphStore store = getGraphStore(getObjectProperties(childPid));
-        Assert.assertTrue(store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
+        Assert.assertTrue("HAS_LOCK assertion should be in the child object's RDF.",
+                store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
         assertUnlockWithToken(pid, lockToken);
     }
 
@@ -366,8 +368,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      */
     private String getLockToken(HttpResponse response) {
         final StatusLine status = response.getStatusLine();
-        Assert.assertEquals(CREATED.getStatusCode(),
-                response.getStatusLine().getStatusCode());
+        Assert.assertEquals(CREATED.getStatusCode(), status.getStatusCode());
         final Header lockToken = response.getFirstHeader("Lock-Token");
         Assert.assertNotNull("Lock-Token was not provided in response!", lockToken);
         return lockToken.getValue();
