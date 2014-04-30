@@ -300,6 +300,12 @@ public class FedoraNodes extends AbstractResource {
                 resource.getNode().getNode(JCR_CONTENT).getPath()) + ";rel=\"describes\"");
         }
 
+        if (!subjects.isCanonical()) {
+            final IdentifierTranslator subjectsCanonical = subjects.getCanonical(true);
+
+            servletResponse.addHeader("Link", subjectsCanonical.getSubject(resource.getPath()) + ";rel=\"canonical\"");
+        }
+
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
         servletResponse.addHeader("Link", LDP_NAMESPACE + "Resource;rel=\"type\"");
         servletResponse.addHeader("Link", LDP_NAMESPACE + "DirectContainer;rel=\"type\"");
