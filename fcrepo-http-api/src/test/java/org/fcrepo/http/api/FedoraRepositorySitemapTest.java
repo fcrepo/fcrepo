@@ -25,15 +25,16 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Session;
 
+import org.fcrepo.http.api.repository.FedoraRepositorySitemap;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-public class FedoraSitemapTest {
+public class FedoraRepositorySitemapTest {
 
-    private FedoraSitemap testObj;
+    private FedoraRepositorySitemap testObj;
 
     @Mock
     private RepositoryService mockService;
@@ -43,7 +44,7 @@ public class FedoraSitemapTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        testObj = new FedoraSitemap();
+        testObj = new FedoraRepositorySitemap();
         setField(testObj, "repositoryService", mockService);
         setField(testObj, "uriInfo", getUriInfoImpl());
         mockSession = mockSession(testObj);
