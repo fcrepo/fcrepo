@@ -24,10 +24,6 @@
       <property name="separator" value=","/>
     </bean>
 
-    <util:set id="principalProviderSet">
-      <ref bean="headerProvider"/>
-    </util:set>
-
     <!-- Optional PrincipalProvider that will use container configured roles as principals -->
     <bean name="containerRolesProvider" class="org.fcrepo.auth.common.ContainerRolesPrincipalProvider">
       <property name="roleNames">
@@ -40,6 +36,7 @@
 
     <util:set id="principalProviderSet">
       <ref bean="containerRolesProvider"/>
+      <ref bean="headerProvider"/>
     </util:set>
 
     <bean name="fad" class="org.fcrepo.auth.roles.basic.BasicRolesAuthorizationDelegate"/>
