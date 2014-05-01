@@ -19,7 +19,10 @@ package org.fcrepo.auth.roles.common.integration;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,20 +40,6 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
     @Override
     protected List<RolesFadTestObjectBean> getTestObjs() {
         return test_objs;
-    }
-
-    /**
-     * Test method for
-     * {@link org.fcrepo.auth.roles.common.AccessRoles#get(java.util.List)}.
-     *
-     * @throws IOException
-     * @throws ClientProtocolException
-     */
-    @Test
-    public void testGetEmptyRoles() throws ClientProtocolException, IOException {
-        assertEquals("Cannot get empty role list from object with no roles!",
-                NO_CONTENT.getStatusCode(), canGetRoles(null, "testcommonobj1",
-                        false));
     }
 
     /**
@@ -79,12 +68,6 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
         assertEquals("Cannot delete role list from object with roles!",
                 NO_CONTENT
                 .getStatusCode(), canDeleteRoles(null, "testcommonobj1", false));
-
-        // verify that roles are gone
-        assertEquals("Cannot get empty role list from object with no roles!",
-                NO_CONTENT.getStatusCode(), canGetRoles(null, "testcommonobj1",
-                        false));
-
     }
 
     /**
@@ -98,44 +81,42 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
     @Test
     public void testGetEffectiveRoles() throws ClientProtocolException,
     IOException {
-        // verify that default roles are returned
-        // Get the roles
-        assertEquals("Cannot get effective role list from object!", OK
-                .getStatusCode(), canGetEffectiveRoles(null, "testcommonobj1",
-                        false));
-
-        assertEquals("Result does not equal test data!",
-                AccessRolesProvider.DEFAULT_ACCESS_ROLES,
-                getEffectiveRoles("testcommonobj1"));
-
-        // post some roles on parent
-        assertEquals(CREATED.getStatusCode(), postRoles("testcommonobj1",
-                test_json_roles));
-
-        // see that parent roles are effective for child
-        assertEquals(
-                "Cannot get effective role list from child object with inherited roles!",
-                OK
-                .getStatusCode(), canGetEffectiveRoles(null,
-                        "testcommonobj1/testchildobj1", false));
+        final String path = "testrole";
+        assertEquals("System role object not created", CREATED.getStatusCode(), postRoles(path, test_json_roles));
 
         assertEquals("Result does not equal test data!", t_roles,
-                getEffectiveRoles("testcommonobj1/testchildobj1"));
+                getEffectiveRoles("/testrole"));
+    }
 
+    /**
+     * Test method for testing referenced roles
+     *
+     * @throws IOException
+     * @throws ClientProtocolException
+     */
+    @Test
+    public void testReferencedRoles() throws ClientProtocolException, IOException, Exception {
+        final String path = "testrole1";
 
-        // post different acl with fewer roles on the child
-        assertEquals("Cannot post admin ACL on child object!", CREATED
-                .getStatusCode(), postRoles("testcommonobj1/testchildobj1",
-                        admin_json_role));
+        //post roles
+        assertEquals("System role object not created", CREATED.getStatusCode(), postRoles(path, test_json_roles));
 
-        // see that only child roles are effective for child
-        assertEquals(
-                "Cannot get effective role list from child object with own role!",
-                OK.getStatusCode(), canGetEffectiveRoles(null,
-                        "testcommonobj1/testchildobj1", false));
+        //get roles
+        assertEquals("Result does not equal test data!", t_roles,
+                getRoles(path));
 
-        assertEquals("Result does not equal test data!", admin_role,
-                getEffectiveRoles("testcommonobj1/testchildobj1"));
+        //delete roles -deprecated
 
+        final String uriID = "http://localhost:" + SERVER_PORT + "/rest/fedora:system/fedora:accessroles/testrole1";
+
+        final String objPath = "testObjWithReference";
+        ingestObjectWithReference(objPath,uriID);
+
+        //access OK
+        assertEquals("Can't read when should have access",OK.getStatusCode(),canRead("examplereader",objPath,true));
+
+        //can't delete due to referential integrity
+        final String roleObjectPath = "/fedora:system/fedora:accessroles/testrole1";
+        assertEquals("Object deleted when should be protected by RI",PRECONDITION_FAILED.getStatusCode(),deleteTestObjectByPath(roleObjectPath));
     }
 }
