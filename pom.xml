@@ -63,7 +63,6 @@
     <module>fcrepo-http-commons</module>
     <module>fcrepo-rss</module>
     <module>fcrepo-http-api</module>
-    <module>fcrepo-webhooks</module>
     <module>fcrepo-metrics</module>
     <module>fcrepo-storage-policy</module>
     <module>fcrepo-jcr</module>
