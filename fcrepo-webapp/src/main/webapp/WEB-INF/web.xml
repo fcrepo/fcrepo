@@ -36,32 +36,6 @@
 
 	</servlet-mapping>
 
-	<filter>
-		<filter-name>OpFilter</filter-name>
-		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
-		<init-param>
-			<param-name>targetBeanName</param-name>
-			<param-value>oauthFilter</param-value>
-		</init-param>
-	</filter>
-	<filter>
-		<filter-name>TokenFilter</filter-name>
-		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
-		<init-param>
-			<param-name>targetBeanName</param-name>
-			<param-value>authNFilter</param-value>
-		</init-param>
-	</filter>
-	
-	<filter-mapping>
-		<filter-name>TokenFilter</filter-name>
-		<url-pattern>/token</url-pattern>
-	</filter-mapping>
-	<filter-mapping>
-		<filter-name>OpFilter</filter-name>
-		<url-pattern>/rest/objects/authenticated/*</url-pattern>
-	</filter-mapping>
-
   <!--Uncomment section below to enable Basic-Authentication-->
   <!--
   <security-constraint>

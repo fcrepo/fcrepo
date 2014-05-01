@@ -114,14 +114,6 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <exclusions>
-        <!-- Dependency convergence: httpclient:4.2.5 depends on commons-codec:1.6, 
-          but org.apache.oltu.oauth2.authzserver depends on commons-codec:1.8 -->
-        <exclusion>
-          <groupId>commons-codec</groupId>
-          <artifactId>commons-codec</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency> 
     <dependency>
       <groupId>javax</groupId>
