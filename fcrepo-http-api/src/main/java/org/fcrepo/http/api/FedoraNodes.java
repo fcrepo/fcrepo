@@ -485,7 +485,7 @@ public class FedoraNodes extends AbstractResource {
 
         assertPathExists(path);
 
-        if (slug != null) {
+        if (slug != null && !slug.isEmpty()) {
             pid = slug;
         } else {
             pid = pidMinter.mintPid();
