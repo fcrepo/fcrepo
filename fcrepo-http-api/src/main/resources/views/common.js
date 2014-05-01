@@ -1,3 +1,6 @@
+$(document).ready(function() {
+  $("#new_id").attr("placeholder", "(auto-generated identifier)");
+});
 
 function addChild()
 {
@@ -50,9 +53,11 @@ function addChild()
         };
         reader.readAsBinaryString(update_file);
     } else {
-        $.post(postURI, function(data, textStatus, request) {
-            window.location = request.getResponseHeader('Location');
-        }).fail( ajaxErrorHandler);
+      $.ajax({
+        type: id == "" ? "POST" : "PUT",
+        url: postURI,
+        success: function(data, textStatus, request) { window.location = request.getResponseHeader('Location') || postURI }
+      }).fail( ajaxErrorHandler);
     }
 
     return false;
