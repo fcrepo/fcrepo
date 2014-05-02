@@ -16,6 +16,8 @@
 
 package org.fcrepo.http.commons;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Date;
@@ -27,6 +29,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -209,6 +212,15 @@ public abstract class AbstractResource {
     protected static void evaluateRequestPreconditions(final Request request,
                                                        final FedoraResource resource) throws RepositoryException {
         evaluateRequestPreconditions(request, resource, false);
+    }
+
+    protected static MediaType getSimpleContentType(final MediaType requestContentType) {
+        return requestContentType != null ? new MediaType(requestContentType.getType(), requestContentType.getSubtype())
+            : APPLICATION_OCTET_STREAM_TYPE;
+    }
+
+    protected static boolean isRdfContentType(final String contentTypeString) {
+        return !contentTypeString.equals("text/plain") && contentTypeToLang(contentTypeString) != null;
     }
 
     protected void addResponseInformationToStream(

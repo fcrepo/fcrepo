@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.commons;
 
+import static org.fcrepo.http.commons.AbstractResource.getSimpleContentType;
 import static org.fcrepo.http.commons.AbstractResource.toPath;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
@@ -23,9 +24,11 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 import java.util.List;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.collect.ImmutableMap;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.utils.NamespaceTools;
@@ -166,5 +169,13 @@ public class AbstractResourceTest {
         final String expected = "/";
         final String actual = toPath(pathList);
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGetSimpleContentType() {
+        final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
+        final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
+
+        assertEquals("text/plain", sanitizedMediaType.toString());
     }
 }

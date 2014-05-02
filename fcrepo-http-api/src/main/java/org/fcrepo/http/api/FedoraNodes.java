@@ -24,7 +24,6 @@ import static com.sun.jersey.api.Responses.clientError;
 import static com.sun.jersey.api.Responses.conflict;
 import static com.sun.jersey.api.Responses.notAcceptable;
 import static com.sun.jersey.api.Responses.notFound;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -39,8 +38,8 @@ import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -403,11 +402,16 @@ public class FedoraNodes extends AbstractResource {
             final FedoraResource resource;
             final Response.ResponseBuilder response;
 
+
+            final MediaType contentType = getSimpleContentType(requestContentType);
+
             if (nodeService.exists(session, path)) {
                 resource = nodeService.getObject(session, path);
                 response = noContent();
             } else {
-                resource = createFedoraResource(null, requestContentType, path);
+                final MediaType effectiveContentType
+                    = requestBodyStream == null || requestContentType == null ? null : contentType;
+                resource = createFedoraResource(null, effectiveContentType, path);
                 final HttpIdentifierTranslator idTranslator =
                     new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
@@ -422,8 +426,7 @@ public class FedoraNodes extends AbstractResource {
                 new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
             if (requestContentType != null && requestBodyStream != null)  {
-                final String contentType = requestContentType.toString();
-                final String format = contentTypeToLang(contentType).getName().toUpperCase();
+                final String format = contentTypeToLang(contentType.toString()).getName().toUpperCase();
 
                 final Model inputModel = createDefaultModel()
                                              .read(requestBodyStream,
@@ -477,9 +480,7 @@ public class FedoraNodes extends AbstractResource {
         final HttpIdentifierTranslator idTranslator =
             new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-        final MediaType contentType =
-            requestContentType != null ? requestContentType
-                : APPLICATION_OCTET_STREAM_TYPE;
+        final MediaType contentType = getSimpleContentType(requestContentType);
 
         final String contentTypeString = contentType.toString();
 
@@ -512,16 +513,20 @@ public class FedoraNodes extends AbstractResource {
 
         try {
 
-            final FedoraResource result = createFedoraResource(mixin, requestContentType, newObjectPath);
+            final MediaType effectiveContentType
+                = requestBodyStream == null || requestContentType == null ? null : contentType;
+            final FedoraResource result = createFedoraResource(mixin,
+                                                                  effectiveContentType,
+                                                                  newObjectPath);
 
             final Response.ResponseBuilder response;
             final URI location = new URI(idTranslator.getSubject(result.getNode().getPath()).getURI());
 
-            if (requestBodyStream == null) {
+            if (requestBodyStream == null || requestContentType == null) {
                 LOGGER.trace("No request body detected");
                 response = created(location).entity(location.toString());
             } else {
-                LOGGER.trace("Received createObject with a request body");
+                LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
 
                 if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                     LOGGER.trace("Found SPARQL-Update content, applying..");
@@ -531,15 +536,10 @@ public class FedoraNodes extends AbstractResource {
                     } else {
                         response = noContent();
                     }
-                } else  if (contentTypeToLang(contentTypeString) != null) {
+                } else  if (isRdfContentType(contentTypeString)) {
                     LOGGER.trace("Found a RDF syntax, attempting to replace triples");
 
                     final Lang lang = contentTypeToLang(contentTypeString);
-
-                    if (lang == null) {
-                        throw new WebApplicationException(notAcceptable().entity(
-                                "Invalid Content type " + contentType).build());
-                    }
 
                     final String format = lang.getName().toUpperCase();
 
@@ -642,7 +642,7 @@ public class FedoraNodes extends AbstractResource {
         } else {
             if (requestContentType != null) {
                 final String s = requestContentType.toString();
-                if (!s.equals(contentTypeSPARQLUpdate) && contentTypeToLang(s) == null) {
+                if (!s.equals(contentTypeSPARQLUpdate) && !isRdfContentType(s)) {
                     objectType = FEDORA_DATASTREAM;
                 }
             }
@@ -672,7 +672,8 @@ public class FedoraNodes extends AbstractResource {
                                                 @FormDataParam("file") final InputStream file
     ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {
 
-        return createObject(pathList, mixin, null, null, null, slug, servletResponse, uriInfo, file);
+        final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
+        return createObject(pathList, mixin, null, null, effectiveContentType, slug, servletResponse, uriInfo, file);
 
     }
 
@@ -695,7 +696,6 @@ public class FedoraNodes extends AbstractResource {
 
             final FedoraResource resource =
                 nodeService.getObject(session, path);
-
             evaluateRequestPreconditions(request, resource);
 
             nodeService.deleteObject(session, path);
