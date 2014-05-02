@@ -121,7 +121,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testIngest() throws Exception {
-
         final String pid = getRandomUniquePid();
 
         final HttpResponse response = createObject(pid);

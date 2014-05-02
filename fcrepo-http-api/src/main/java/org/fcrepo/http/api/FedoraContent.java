@@ -49,7 +49,6 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
@@ -87,9 +86,7 @@ public class FedoraContent extends ContentExposingResource {
             @HeaderParam("Content-Type") final MediaType requestContentType,
                     final InputStream requestBodyStream, @Context final HttpServletResponse servletResponse)
         throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
-        final MediaType contentType =
-                requestContentType != null ? requestContentType
-                        : APPLICATION_OCTET_STREAM_TYPE;
+        final MediaType contentType = getSimpleContentType(requestContentType);
 
 
         final String newDatastreamPath;
@@ -188,9 +185,7 @@ public class FedoraContent extends ContentExposingResource {
 
         try {
             final String path = toPath(pathList);
-            final MediaType contentType =
-                    requestContentType != null ? requestContentType
-                            : APPLICATION_OCTET_STREAM_TYPE;
+            final MediaType contentType = getSimpleContentType(requestContentType);
 
             if (nodeService.exists(session, path)) {
 

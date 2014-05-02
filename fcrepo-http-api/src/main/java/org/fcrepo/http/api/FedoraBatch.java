@@ -25,8 +25,8 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.riot.WebContent.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -170,7 +170,7 @@ public class FedoraBatch extends AbstractResource {
 
                 final String partName = contentDisposition.getParameters().get("name");
 
-                final String contentTypeString = part.getMediaType().toString();
+                final String contentTypeString = getSimpleContentType(part.getMediaType()).toString();
 
                 LOGGER.trace("Processing {} part {} with media type {}",
                                 contentDispositionType, partName, contentTypeString);
@@ -184,7 +184,7 @@ public class FedoraBatch extends AbstractResource {
                     if (contentDisposition.getFileName() != null) {
                         realContentDisposition = ATTACHMENT;
                     } else if (contentTypeString.equals(contentTypeSPARQLUpdate)
-                        || contentTypeToLang(contentTypeString) != null) {
+                        || isRdfContentType(contentTypeString)) {
                         realContentDisposition = INLINE;
                     } else if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
                         realContentDisposition = DELETE;
