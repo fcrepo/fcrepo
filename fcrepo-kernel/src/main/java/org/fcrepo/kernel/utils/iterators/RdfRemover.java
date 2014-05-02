@@ -60,7 +60,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     protected void operateOnMixin(final Resource mixinResource,
         final Node subjectNode) throws RepositoryException {
 
-        final String mixinName = jcrMixinNameFromRdfResource(mixinResource);
+        final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
         if (session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
             LOGGER.debug("Removing mixin: {} from node: {}.", mixinName,
                     subjectNode.getPath());

@@ -505,23 +505,10 @@ public class JcrRdfTools {
         final NamespaceRegistry namespaceRegistry =
             getNamespaceRegistry.apply(node);
 
-        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
-    }
-
-    /**
-     * Get the property name for an RDF predicate
-     * @param predicate
-     * @param namespaceMapping
-     * @return
-     * @throws RepositoryException
-     */
-    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate,
-                                               final Map<String, String> namespaceMapping) throws RepositoryException {
-
-        final NamespaceRegistry namespaceRegistry = (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace()
-                .getNamespaceRegistry();
-
-        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
+        return getJcrNameForRdfNode(namespaceRegistry,
+                                       predicate.getNameSpace(),
+                                       predicate.getLocalName(),
+                                       namespaceMapping);
     }
 
     /**
@@ -533,28 +520,54 @@ public class JcrRdfTools {
     public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
         throws RepositoryException {
 
+        final NamespaceRegistry namespaceRegistry =
+            (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
 
-        final Map<String, String> emptyNamespaceMapping = emptyMap();
-        return getPropertyNameFromPredicate(predicate, emptyNamespaceMapping);
+        final Map<String, String> namespaceMapping = emptyMap();
+        return getJcrNameForRdfNode(namespaceRegistry,
+                                       predicate.getNameSpace(),
+                                       predicate.getLocalName(),
+                                       namespaceMapping);
     }
 
+    /**
+     * Get the JCR name for the given RDF resource
+     * @param node
+     * @param resource
+     * @param namespaces
+     * @return
+     * @throws RepositoryException
+     */
+    public String getPropertyNameFromPredicate(final Node node,
+                                               final Resource resource,
+                                               final Map<String,String> namespaces) throws RepositoryException {
+        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry.apply(node);
+        return getJcrNameForRdfNode(namespaceRegistry,
+                                       resource.getNameSpace(),
+                                       resource.getLocalName(),
+                                       namespaces);
+    }
 
     /**
      * Get the JCR property name for an RDF predicate
+     *
      * @param namespaceRegistry
-     * @param predicate
+     * @param namespace
+     * @param localname
      * @param namespaceMapping
      * @return
      * @throws RepositoryException
      */
-    public String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
-                                               final com.hp.hpl.jena.rdf.model.Property predicate,
-                                               final Map<String, String> namespaceMapping) throws RepositoryException {
+    public String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,
+                                       final String rdfNamespace,
+                                       final String rdfLocalname,
+                                       final Map<String, String> namespaceMapping)
+        throws RepositoryException {
 
         final String prefix;
 
         final String namespace =
-            getJcrNamespaceForRDFNamespace(predicate.getNameSpace());
+            getJcrNamespaceForRDFNamespace(rdfNamespace);
 
         assert (namespaceRegistry != null);
 
@@ -575,11 +588,9 @@ public class JcrRdfTools {
             }
         }
 
-        final String localName = predicate.getLocalName();
+        final String propertyName = prefix + ":" + rdfLocalname;
 
-        final String propertyName = prefix + ":" + localName;
-
-        LOGGER.debug("Took RDF predicate {} and translated it to JCR property {}", predicate, propertyName);
+        LOGGER.debug("Took RDF predicate {} and translated it to JCR property {}", namespace, propertyName);
 
         return propertyName;
 
@@ -653,4 +664,5 @@ public class JcrRdfTools {
 
                 }
             };
+
 }
