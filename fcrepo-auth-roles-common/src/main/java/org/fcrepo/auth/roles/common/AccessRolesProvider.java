@@ -246,7 +246,7 @@ public class AccessRolesProvider {
             for (Path p = absPath; p != null; p = p.getParent()) {
                 boolean pathFound = true;
                 try {
-                    //checks for existence of authz:hasAssignment property on node found for a path
+                    //checks for existence of fedora:acReference property on node found for a path
                     prop = session.getNode(p.getString()).getProperty(FEDORA_ACCESS_CONTROL_REFERENCE);
                 } catch (PathNotFoundException e) {
                     if (p.isRoot()) {
@@ -255,8 +255,6 @@ public class AccessRolesProvider {
                     pathFound = false;
                 }
                 if (pathFound) {
-                    //rbaclID = prop.getValues()[0].getString();
-                    rbaclID = prop.getValue().getString();
                     break;
                 }
             }
@@ -265,8 +263,8 @@ public class AccessRolesProvider {
             return DEFAULT_ACCESS_ROLES;
         }
         try {
-            //rbaclNode = session.getNode(ACCESS_ROLES_FOLDER + "/" + rbaclID);
-            rbaclNode = session.getNodeByIdentifier(rbaclID);
+            //get the Assignable node in system space
+            rbaclNode = prop.getNode();
         } catch (final Exception e) {
             LOGGER.debug("Could not find a rbaclNode {}", rbaclID, e);
             return DEFAULT_ACCESS_ROLES;

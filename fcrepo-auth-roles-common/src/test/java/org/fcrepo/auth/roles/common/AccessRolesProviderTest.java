@@ -712,9 +712,7 @@ public class AccessRolesProviderTest {
 
         when(session.getNode(eq(path.getString()))).thenReturn(node);
         when(node.getProperty(anyString())).thenReturn(property);
-        when(property.getValue()).thenReturn(value);
-        when(property.getValue().getString()).thenReturn(rbaclString);
-        when(session.getNodeByIdentifier(eq(rbaclString))).thenReturn(rbaclNode);
+        when(property.getNode()).thenReturn(rbaclNode);
         when(mockProvider.getRoles(rbaclNode,false)).thenReturn(mockData);
         when(rbaclNode.getSession()).thenReturn(session);
         when(rbaclNode.isNodeType(anyString())).thenReturn(true);
@@ -746,9 +744,7 @@ public class AccessRolesProviderTest {
 
         final Node parentNode = mock(Node.class);
         when(parentNode.getProperty(anyString())).thenReturn(property);
-        when(property.getValue()).thenReturn(value);
-        when(property.getValue().getString()).thenReturn(rbaclString);
-        when(session.getNodeByIdentifier(eq(rbaclString))).thenReturn(rbaclNode);
+        when(property.getNode()).thenReturn(rbaclNode);
         when(mockProvider.getRoles(rbaclNode,false)).thenReturn(mockData);
         when(rbaclNode.getSession()).thenReturn(session);
         when(rbaclNode.isNodeType(anyString())).thenReturn(true);
@@ -785,9 +781,7 @@ public class AccessRolesProviderTest {
 
         when(session.getNode(eq(path.getString()))).thenReturn(node);
         when(node.getProperty(anyString())).thenReturn(property);
-        when(property.getValues()).thenReturn(new Value[]{value});
-        when(property.getValues()[0].getString()).thenReturn(rbaclString);
-        when(session.getNode(eq(ACCESS_ROLES_FOLDER + "/" + rbaclString))).thenThrow(new PathNotFoundException());
+        when(property.getNode()).thenThrow(new PathNotFoundException());
 
         final Map<String, List<String>> data =
                 provider.findRolesInExternalNodeForPath(path, session);
