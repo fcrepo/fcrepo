@@ -22,6 +22,8 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.NodeTypeTemplate;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
@@ -61,25 +63,24 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     protected void operateOnMixin(final Resource mixinResource,
         final Node subjectNode) throws RepositoryException {
 
-        final String mixinName = jcrMixinNameFromRdfResource(mixinResource);
-        if (session().getWorkspace().getNodeTypeManager()
-                .hasNodeType(mixinName)) {
-            if (subjectNode.canAddMixin(mixinName)) {
-                LOGGER.debug("Adding mixin: {} to node: {}.", mixinName,
-                        subjectNode.getPath());
-                subjectNode.addMixin(mixinName);
-            } else {
-                throw new MalformedRdfException(
-                        "Could not persist triple containing type assertion:"
-                                + mixinResource.toString()
-                                + " because no such mixin/type can be added to this node: "
-                                + subjectNode.getPath() + "!");
-            }
+        final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
+        if (!session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
+            final NodeTypeManager mgr = session().getWorkspace().getNodeTypeManager();
+            NodeTypeTemplate type = mgr.createNodeTypeTemplate();
+            type.setName(mixinName);
+            type.setMixin(true);
+            type.setQueryable(true);
+            mgr.registerNodeType(type, false);
+        }
+
+        if (subjectNode.canAddMixin(mixinName)) {
+            LOGGER.debug("Adding mixin: {} to node: {}.", mixinName, subjectNode.getPath());
+            subjectNode.addMixin(mixinName);
         } else {
-            throw new MalformedRdfException(
-                    "Could not persist triple containing type assertion:"
-                            + mixinResource.toString()
-                            + " because no such mixin/type can be found in the repository!");
+            throw new MalformedRdfException("Could not persist triple containing type assertion: "
+                                                    + mixinResource.toString()
+                                                    + " because no such mixin/type can be added to this node: "
+                                                    + subjectNode.getPath() + "!");
         }
     }
 

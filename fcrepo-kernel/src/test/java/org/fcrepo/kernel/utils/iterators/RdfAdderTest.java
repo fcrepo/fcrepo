@@ -44,6 +44,7 @@ import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
@@ -121,8 +122,8 @@ public class RdfAdderTest {
         verify(mockNode).addMixin(anyString());
     }
 
-    @Test(expected = MalformedRdfException.class)
-    public void testAddingWithBadNamespace() throws Exception {
+    @Test
+    public void testAddingWithNotYetDefinedNamespace() throws Exception {
         // we drop our stream namespace map
         testStream = new RdfStream(mockTriples);
         when(
@@ -152,11 +153,14 @@ public class RdfAdderTest {
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
     }
 
-    @Test(expected = MalformedRdfException.class)
+    @Test
     public void testAddingWithBadMixinForRepo() throws Exception {
         when(mockNodeTypeManager.hasNodeType(mixinShortName)).thenReturn(false);
         testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
+        verify(mockNodeTypeManager).registerNodeType(mockNodeTypeTemplate, false);
+        verify(mockNodeTypeTemplate).setName(mixinShortName);
+        verify(mockNodeTypeTemplate).setMixin(true);
     }
 
     @Before
@@ -190,6 +194,7 @@ public class RdfAdderTest {
                 .thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.getNodeType(FEDORA_RESOURCE)).thenReturn(
                 mockNodeType);
+        when(mockNodeTypeManager.createNodeTypeTemplate()).thenReturn(mockNodeTypeTemplate);
         when(mockNodeTypeManager.hasNodeType(mixinShortName)).thenReturn(true);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
@@ -224,6 +229,9 @@ public class RdfAdderTest {
 
     @Mock
     private NodeTypeManager mockNodeTypeManager;
+
+    @Mock
+    private NodeTypeTemplate mockNodeTypeTemplate;
 
     @Mock
     private NodeType mockNodeType;
