@@ -307,9 +307,19 @@ public class FedoraNodes extends AbstractResource {
                 "<" + subjectsCanonical.getSubject(resource.getPath()) + ">;rel=\"canonical\"");
         }
 
-        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+        addOptionsHttpHeaders(servletResponse);
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
+    }
+
+    private void addOptionsHttpHeaders(HttpServletResponse servletResponse) {
+        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+
+        servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");
+        final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT1 + ","
+                                    + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;
+        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
+                                                     + "," + contentTypeSPARQLUpdate);
     }
 
     /**
@@ -826,12 +836,7 @@ public class FedoraNodes extends AbstractResource {
     public Response options(@PathParam("path") final List<PathSegment> pathList,
                             @Context final HttpServletResponse servletResponse)
         throws RepositoryException {
-        servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");
-        final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT1 + ","
-                + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;
-        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
-        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
-                + "," + contentTypeSPARQLUpdate);
+        addOptionsHttpHeaders(servletResponse);
         return status(OK).build();
     }
 
