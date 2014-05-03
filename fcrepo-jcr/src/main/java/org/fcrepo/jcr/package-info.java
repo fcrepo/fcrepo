@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package hosts configuration files for the backend technologies that power Fedora.
- */
 
+/**
+ * This package hosts configuration files for the backend technologies that power Fedora.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.jcr;

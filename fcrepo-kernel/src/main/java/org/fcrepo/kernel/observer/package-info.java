@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-<code>FedoraEvent</code> is defined here, as well some filters and listeners.
-*/
 
+/**
+ * <code>FedoraEvent</code> is defined here, as well some filters and listeners.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.kernel.observer;

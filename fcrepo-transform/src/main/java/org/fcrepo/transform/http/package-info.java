@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-RESTful interface
- */
 
+/**
+ * RESTful interface
+ *
+ * @author osmandin
+ */
 package org.fcrepo.transform.http;

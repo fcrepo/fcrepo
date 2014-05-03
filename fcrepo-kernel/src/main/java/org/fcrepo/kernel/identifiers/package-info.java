@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Unique identifier generators.
-*/
 
+/**
+ * Unique identifier generators.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.kernel.identifiers;

@@ -51,6 +51,8 @@ import com.google.common.base.Function;
 
 /**
  * Uncategorized helper methods
+ *
+ * @author awoods
  */
 @Component
 public abstract class ServiceHelpers {

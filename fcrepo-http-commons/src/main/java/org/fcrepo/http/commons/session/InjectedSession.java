@@ -27,6 +27,8 @@ import java.lang.annotation.Target;
 
 /**
  * The runtime-injected JCR Session
+ *
+ * @author awoods
  */
 @Target({FIELD, PARAMETER, METHOD})
 @Retention(RUNTIME)

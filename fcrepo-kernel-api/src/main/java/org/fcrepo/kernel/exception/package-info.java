@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Kernel exception classes.
- */
 
+/**
+ * Kernel exception classes.
+ *
+ * @author ajs6f
+ */
 package org.fcrepo.kernel.exception;

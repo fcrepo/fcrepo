@@ -69,6 +69,8 @@ import com.hp.hpl.jena.update.UpdateRequest;
 /**
  * Common behaviors across FedoraObject and Datastream types; also used
  * when the exact type of an object is irrelevant
+ *
+ * @author ajs6f
  */
 public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, FedoraResource {
 

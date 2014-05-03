@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+/**
+ * @author osmandin
+ */
 @XmlSchema(namespace = "http://www.sitemaps.org/schemas/sitemap/0.9",
         elementFormDefault = QUALIFIED, xmlns = {@XmlNs(prefix = "sitemap",
                 namespaceURI = "http://www.sitemaps.org/schemas/sitemap/0.9")})

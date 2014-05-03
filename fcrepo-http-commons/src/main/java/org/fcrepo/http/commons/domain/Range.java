@@ -25,6 +25,8 @@ import java.util.regex.Pattern;
 
 /**
  * Range header parsing logic
+ *
+ * @author awoods
  */
 public class Range {
 

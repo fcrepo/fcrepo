@@ -27,6 +27,8 @@ import org.fcrepo.kernel.exception.TransactionMissingException;
 /**
  * If a transaction is requested that has been closed (or never existed), just
  * return an HTTP 410 Gone.
+ *
+ * @author awoods
  */
 @Provider
 public class TransactionMissingExceptionMapper implements

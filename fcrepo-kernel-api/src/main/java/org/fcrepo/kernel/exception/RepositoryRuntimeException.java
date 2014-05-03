@@ -18,6 +18,8 @@ package org.fcrepo.kernel.exception;
 
 /**
  * Runtime exception that wraps a RepositoryException
+ *
+ * @author bbpennel
  */
 public class RepositoryRuntimeException extends RuntimeException {
 

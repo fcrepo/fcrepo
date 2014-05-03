@@ -16,11 +16,12 @@
 
 package org.fcrepo.storage.policy;
 
-/*
+/**
  * Note: Mainly for reporting conversion errors & future use
  * (where other exceptions are not adequate).
+ *
+ * @author awoods
  */
-
 public class StoragePolicyTypeException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;

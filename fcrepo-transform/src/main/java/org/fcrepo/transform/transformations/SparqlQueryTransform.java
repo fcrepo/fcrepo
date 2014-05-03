@@ -34,6 +34,8 @@ import static org.fcrepo.kernel.rdf.SerializationUtils.unifyDatasetModel;
 
 /**
  * SPARQL Query-based transforms
+ *
+ * @author cbeer
  */
 public class SparqlQueryTransform implements Transformation<QueryExecution> {
 

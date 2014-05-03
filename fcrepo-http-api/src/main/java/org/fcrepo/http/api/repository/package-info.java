@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package provides functionality for core repository management.
 
-*/
+/**
+ * This package provides functionality for core repository management.
+ *
+ * @author osmandin
+ */
 
 package org.fcrepo.http.api.repository;

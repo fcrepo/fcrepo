@@ -31,6 +31,8 @@ import org.modeshape.jcr.value.binary.BinaryStoreException;
 
 /**
  * A LowLevelCacheEntry that is aware of Infinispan ChainingCacheStores
+ *
+ * @author awoods
  */
 public class ChainingCacheStoreEntry extends LowLevelCacheEntry {
 

@@ -25,6 +25,8 @@ import java.lang.annotation.Target;
 /**
  * An annotation that hints to the HtmlProvider a template that should be used
  * to render a response.
+ *
+ * @author awoods
  */
 @Target({METHOD})
 @Retention(RUNTIME)

@@ -46,6 +46,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Serialization for nodes
+ *
+ * @author awoods
  */
 @Component
 @Scope("prototype")

@@ -37,6 +37,8 @@ import com.hp.hpl.jena.update.GraphStore;
 /**
  * Helper for serializing a GraphStore or Dataset to a RDF
  * serialization format (given by the serialization's mime type)
+ *
+ * @author awoods
  */
 public class GraphStoreStreamingOutput implements StreamingOutput {
 

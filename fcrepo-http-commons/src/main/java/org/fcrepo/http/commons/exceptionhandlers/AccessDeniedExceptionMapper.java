@@ -26,6 +26,9 @@ import javax.ws.rs.ext.ExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author fasseg
+ */
 public class AccessDeniedExceptionMapper implements
         ExceptionMapper<AccessDeniedException> {
 

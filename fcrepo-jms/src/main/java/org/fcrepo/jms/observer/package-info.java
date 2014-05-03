@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package provides capability to emit JMS messages for Fedora events.
- */
 
+/**
+ * This package provides capability to emit JMS messages for Fedora events.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.jms.observer;

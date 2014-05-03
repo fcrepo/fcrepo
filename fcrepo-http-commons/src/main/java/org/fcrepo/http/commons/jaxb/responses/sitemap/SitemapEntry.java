@@ -25,6 +25,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 /**
  * Entry in a sitemap document
  *
+ * @author awoods
+ *
  * @TODO replace with a 3rd party sitemap impl
  */
 @XmlRootElement(name = "url")

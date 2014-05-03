@@ -28,6 +28,8 @@ import com.sun.jersey.spi.inject.Injectable;
 
 /**
  * Scary JAX-RS magic to inject a JCR Session as a field for every request
+ *
+ * @author awoods
  */
 public class InjectableSession implements Injectable<Session> {
 

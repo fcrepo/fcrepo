@@ -42,6 +42,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Dublin Core output controller
+ *
+ * @author cbeer
+ * @author barmintor
  */
 @Component
 @Scope("prototype")

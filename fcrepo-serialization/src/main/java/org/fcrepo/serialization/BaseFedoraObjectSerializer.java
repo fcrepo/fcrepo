@@ -32,6 +32,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Auto-wire some helpful services for the FedoraObjectSerializer
+ *
+ * @author cbeer
  */
 public abstract class BaseFedoraObjectSerializer implements
         FedoraObjectSerializer {

@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Annotations for working with
-{@link org.fcrepo.http.api.FedoraNodes FedoraNodes}.*/
 
+/**
+ * Annotations for working with {@link org.fcrepo.http.api.FedoraNodes FedoraNodes}.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.http.commons.domain;

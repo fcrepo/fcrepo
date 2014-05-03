@@ -19,6 +19,8 @@ import javax.jcr.RepositoryException;
 
 /**
  * A transaction was not found in the transaction registry
+ *
+ * @author awoods
  */
 public class TransactionMissingException extends RepositoryException {
 

@@ -48,6 +48,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Transactions over REST
+ *
+ * @author awoods
+ * @author gregjan
  */
 @Component
 @Scope("prototype")

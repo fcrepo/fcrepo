@@ -33,7 +33,9 @@ import com.google.common.base.Function;
 
 /**
  * Apply a Function on a BinaryKey in a LOCAL CacheStore
- * 
+ *
+ * @author awoods
+ *
  * @param <K> Cache key class
  * @param <V> Cache value class
  * @param <T> Output of the transform

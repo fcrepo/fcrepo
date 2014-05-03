@@ -44,10 +44,7 @@
     <github.global.server>github</github.global.server>
     <powermock.version>1.5.1</powermock.version>
     <!-- plugin versions -->
-    <!-- Until MCHECKSTYLE-169 is resolved, we're using our own, patched version 
-      of checkstyle deployed to fcrepo.maven.org -->
-    <checkstyle.plugin.version>2.10-fcrepo</checkstyle.plugin.version>
-
+    <checkstyle.plugin.version>2.12.1</checkstyle.plugin.version>
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
     <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
@@ -563,6 +560,7 @@
           <extensions>true</extensions>
         </plugin>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${checkstyle.plugin.version}</version>
           <dependencies>
@@ -574,6 +572,10 @@
           </dependencies>
           <configuration>
             <consoleOutput>true</consoleOutput>
+            <logViolationsToConsole>true</logViolationsToConsole>
+            <failsOnError>true</failsOnError>
+            <failOnViolation>true</failOnViolation>
+            <violationSeverity>warning</violationSeverity>
             <configLocation>fcrepo-checkstyle/checkstyle.xml</configLocation>
             <suppressionsLocation>fcrepo-checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
           </configuration>
@@ -873,6 +875,7 @@
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
       </plugin>
       <plugin>

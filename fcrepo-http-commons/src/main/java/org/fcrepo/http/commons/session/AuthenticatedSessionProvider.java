@@ -20,6 +20,8 @@ import javax.jcr.Session;
 
 /**
  * Provide a JCR session for an authenticated HTTP session
+ *
+ * @author awoods
  */
 public interface AuthenticatedSessionProvider {
 

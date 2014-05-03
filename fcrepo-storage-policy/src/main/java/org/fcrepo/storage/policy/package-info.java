@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package provides functionality for registering storage policies for
-different node types. It also provides a service that records Fedora wide
-storage policies and produces storage hints for streams.
- */
 
+/**
+ * This package provides functionality for registering storage policies for
+ * different node types. It also provides a service that records Fedora wide
+ * storage policies and produces storage hints for streams.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.storage.policy;

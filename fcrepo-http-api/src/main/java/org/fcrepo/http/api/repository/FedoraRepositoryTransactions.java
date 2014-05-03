@@ -28,6 +28,8 @@ import org.springframework.stereotype.Component;
  * This stub is a hack to mount the functionality of FedoraTransactions at the
  * root of this webapp. Without it, the globbing from FedoraNodes would own this
  * path instead.
+ *
+ * @author awoods
  */
 @Component
 @Scope("prototype")

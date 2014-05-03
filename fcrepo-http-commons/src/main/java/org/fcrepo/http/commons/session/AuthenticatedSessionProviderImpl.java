@@ -24,6 +24,9 @@ import javax.jcr.Session;
 /**
  * Retrieve a JCR session by just passing along the HTTP
  * credentials.
+ *
+ * @author awoods
+ * @author gregjan
  */
 public class AuthenticatedSessionProviderImpl implements
         AuthenticatedSessionProvider {

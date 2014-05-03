@@ -28,6 +28,9 @@ import javax.ws.rs.Path;
  * This stub is a hack to mount the functionality of FedoraExport at the root of
  * this webapp. Without it, the globbing from FedoraNodes would own this path
  * instead.
+ *
+ * @author awoods
+ * @author daines
  */
 @Component
 @Scope("prototype")

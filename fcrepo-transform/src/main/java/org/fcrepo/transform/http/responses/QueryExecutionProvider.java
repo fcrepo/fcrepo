@@ -41,6 +41,7 @@ import com.hp.hpl.jena.query.ResultSet;
  * Helper for writing QueryExecutions results out in a variety
  * of serialization formats.
  *
+ * @author cbeer
  */
 @Provider
 @Component

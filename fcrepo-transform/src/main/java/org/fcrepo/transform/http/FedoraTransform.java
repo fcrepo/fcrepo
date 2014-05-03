@@ -72,6 +72,8 @@ import com.hp.hpl.jena.query.Dataset;
 /**
  * Endpoint for transforming object properties using stored
  * or POSTed transformations.
+ *
+ * @author cbeer
  */
 @Component
 @Scope("prototype")

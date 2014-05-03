@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Common abstractions for module's sub-packages.
- */
 
+/**
+ * Common abstractions for module's sub-packages.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.http.commons;

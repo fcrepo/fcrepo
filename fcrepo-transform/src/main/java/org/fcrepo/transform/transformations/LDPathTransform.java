@@ -55,6 +55,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Utilities for working with LDPath
+ *
+ * @author cbeer
  */
 public class LDPathTransform implements Transformation<Map<String, Collection<Object>>>  {
 

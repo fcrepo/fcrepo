@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Types and implementation classes that define and provide sessions.
- */
 
+/**
+ * Types and implementation classes that define and provide sessions.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.http.commons.session;

@@ -27,6 +27,8 @@ import org.apache.commons.io.input.ProxyInputStream;
 /**
  * An InputStream wrapper that skips N bytes and only returns
  * the data up to a certain length
+ *
+ * @author awoods
  */
 public class RangeRequestInputStream extends FilterInputStream {
 

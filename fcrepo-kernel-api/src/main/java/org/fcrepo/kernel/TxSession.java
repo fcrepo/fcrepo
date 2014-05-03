@@ -19,6 +19,8 @@ import javax.jcr.Session;
 
 /**
  * Additional methods introduced by our transaction-aware session
+ *
+ * @author bbpennel
  */
 public interface TxSession extends Session {
     /**

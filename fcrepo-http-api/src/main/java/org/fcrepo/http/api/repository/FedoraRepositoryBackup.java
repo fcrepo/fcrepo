@@ -39,6 +39,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Repository-wide backup endpoint
+ *
+ * @author cbeer
  */
 @Component
 @Scope("prototype")

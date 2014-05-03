@@ -41,6 +41,8 @@ import com.hp.hpl.jena.vocabulary.RDF;
 /**
  * Listen to Jena statement events, and when the statement is changed in the
  * graph store, make the change within JCR as well.
+ *
+ * @author awoods
  */
 public class JcrPropertyStatementListener extends StatementListener {
 

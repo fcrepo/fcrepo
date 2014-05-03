@@ -26,6 +26,8 @@ import javax.xml.bind.annotation.XmlType;
 /**
  * A Sitemap index is a sitemap of other sitemaps
  *
+ * @author awoods
+ *
  * @TODO replace with a 3rd party sitemap impl
  */
 @XmlRootElement(name = "sitemapindex")

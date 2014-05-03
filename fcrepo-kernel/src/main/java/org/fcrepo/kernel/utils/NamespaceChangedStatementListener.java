@@ -32,6 +32,8 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * Listener that maps changes to actions in the JCR namespace registry
+ *
+ * @author awoods
  */
 public class NamespaceChangedStatementListener extends StatementListener {
 

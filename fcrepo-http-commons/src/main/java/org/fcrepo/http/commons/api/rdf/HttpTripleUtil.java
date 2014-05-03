@@ -37,6 +37,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * Utility for injecting HTTP-contextual data into a Dataset
+ *
+ * @author awoods
  */
 @Component
 public class HttpTripleUtil implements ApplicationContextAware {
