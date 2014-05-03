@@ -366,8 +366,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
-        assertEquals("application/sparql-update", response.getFirstHeader(
-                "Accept-Patch").getValue());
+        testOptionsHeaders(response);
 
         final Collection<String> links =
             map(response.getHeaders("Link"), new Function<Header, String>() {
@@ -1045,7 +1044,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpResponse optionsResponse = client.execute(optionsRequest);
         assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
 
-        final List<String> methods = headerValues(optionsResponse,"Allow");
+        testOptionsHeaders(optionsResponse);
+    }
+
+    private void testOptionsHeaders(final HttpResponse httpResponse) {
+        final List<String> methods = headerValues(httpResponse,"Allow");
         assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
         assertTrue("Should allow POST", methods.contains(HttpPost.METHOD_NAME));
         assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
@@ -1055,10 +1058,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue("Should allow MOVE", methods.contains(HttpMove.METHOD_NAME));
         assertTrue("Should allow COPY", methods.contains(HttpCopy.METHOD_NAME));
 
-        final List<String> patchTypes = headerValues(optionsResponse,"Accept-Patch");
+        final List<String> patchTypes = headerValues(httpResponse,"Accept-Patch");
         assertTrue("PATCH should support application/sparql-update", patchTypes.contains(contentTypeSPARQLUpdate));
 
-        final List<String> postTypes = headerValues(optionsResponse,"Accept-Post");
+        final List<String> postTypes = headerValues(httpResponse,"Accept-Post");
         assertTrue("POST should support application/sparql-update", postTypes.contains(contentTypeSPARQLUpdate));
         assertTrue("POST should support text/turtle", postTypes.contains(contentTypeTurtle));
         assertTrue("POST should support text/rdf+n3", postTypes.contains(contentTypeN3));
@@ -1068,6 +1071,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
     }
+
     private static List<String> headerValues( HttpResponse response,
             String headerName ) {
         final List<String> values = new ArrayList<String>();
