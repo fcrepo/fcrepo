@@ -58,6 +58,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Content controller for adding, reading, and manipulating
  * binary streams
+ *
+ * @author awoods
+ * @author gregjan
  */
 @Component
 @Scope("prototype")

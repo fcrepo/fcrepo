@@ -30,6 +30,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * A lexicon of the RDF properties that the fcrepo kernel (or close-to-core modules) use
+ *
+ * @author ajs6f
  */
 public final class RdfLexicon {
 

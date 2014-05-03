@@ -24,6 +24,8 @@ import java.util.Set;
 /**
  * Structure for presenting the results of a fixity check
  * (and any repair operations that may have occurred)
+ *
+ * @author bbpennel
  */
 public class FixityResultImpl implements FixityResult {
 

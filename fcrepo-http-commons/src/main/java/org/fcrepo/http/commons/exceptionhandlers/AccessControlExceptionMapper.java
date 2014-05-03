@@ -29,6 +29,9 @@ import org.slf4j.Logger;
 
 /**
  * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
+ *
+ * @author awoods
+ * @author gregjan
  */
 @Provider
 public class AccessControlExceptionMapper implements

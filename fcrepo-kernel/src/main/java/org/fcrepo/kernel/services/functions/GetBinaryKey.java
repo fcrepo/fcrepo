@@ -28,6 +28,8 @@ import com.google.common.base.Function;
 
 /**
  * Get the internal Modeshape BinaryKey for a binary property
+ *
+ * @author awoods
  */
 public class GetBinaryKey implements Function<Property, BinaryKey> {
 

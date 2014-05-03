@@ -26,6 +26,8 @@ import javax.ws.rs.HttpMethod;
 
 /**
  * PATCH HTTP method
+ *
+ * @author awoods
  */
 @Target({METHOD})
 @Retention(RUNTIME)

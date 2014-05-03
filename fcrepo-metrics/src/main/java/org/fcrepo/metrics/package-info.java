@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package provides functionality for capturing Fedora platform performance metrics using
-the <a href="http://metrics.codahale.com/"> Metrics </a> library.
- */
 
+/**
+ * This package provides functionality for capturing Fedora platform performance metrics using
+ * the <a href="http://metrics.codahale.com/"> Metrics </a> library.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.metrics;

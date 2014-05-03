@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 /**
  * Derive a Dublin Core document from the JCR properties within the DC
  * namespace.
+ *
+ * @author cbeer
  */
 public class JcrPropertiesGenerator implements DCGenerator {
 

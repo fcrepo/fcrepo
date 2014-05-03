@@ -51,6 +51,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 /**
  * Utility endpoint for running SPARQL Update queries on any object in the
  * repository
+ *
+ * @author awoods
  */
 @Component
 @Scope("prototype")

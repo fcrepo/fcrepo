@@ -26,6 +26,8 @@ import com.codahale.metrics.Timer;
 
 /**
  * PID minter that creates hierarchical IDs for a UUID
+ *
+ * @author awoods
  */
 public class UUIDPathMinter extends BasePidMinter {
 

@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 
 /**
  * If all other DC generators fail, just publish an empty XML document
+ *
+ * @author cbeer
  */
 public class WorstCaseGenerator implements DCGenerator {
 

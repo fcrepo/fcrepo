@@ -30,6 +30,10 @@ import org.slf4j.Logger;
 /**
  *  Translate InvalidChecksumException errors into reasonable
  *  HTTP error codes
+ *
+ * @author awoods
+ * @author ajs6f
+ * @author cbeer
  */
 @Provider
 public class InvalidChecksumExceptionMapper implements

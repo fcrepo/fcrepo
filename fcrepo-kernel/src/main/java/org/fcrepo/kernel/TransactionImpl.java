@@ -37,6 +37,8 @@ import org.fcrepo.kernel.services.VersionService;
 /**
  * A Fedora Transaction wraps a JCR session with some expiration logic.
  * Whenever the transaction's session is requested, the expiration is extended
+ *
+ * @author bbpennel
  */
 public class TransactionImpl implements Transaction {
 

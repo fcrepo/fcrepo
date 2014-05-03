@@ -30,6 +30,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Serialize a FedoraObject using the modeshape-provided JCR/XML format
+ *
+ * @author cbeer
  */
 @Component
 public class JcrXmlSerializer extends BaseFedoraObjectSerializer {

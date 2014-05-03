@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package provides serialization capability. A {@link org.fcrepo.kernel.FedoraObject FedoraObject} can
-be serialized to an XML stream. A {@link org.fcrepo.serialization.FedoraObjectSerializer
-FedoraObjectSerializer} is responsible for the serialization mechanism.
-*/
 
+/**
+ * This package provides serialization capability. A {@link org.fcrepo.kernel.FedoraObject FedoraObject} can
+ * be serialized to an XML stream. A {@link org.fcrepo.serialization.FedoraObjectSerializer
+ * FedoraObjectSerializer} is responsible for the serialization mechanism.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.serialization;

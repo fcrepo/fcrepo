@@ -62,6 +62,10 @@ import org.springframework.stereotype.Component;
 /**
  * This class exposes the JCR workspace functionality. It may be
  * too JCR-y in the long run, but this lets us exercise the functionality.
+ *
+ * @author awoods
+ * @author cbeer
+ * @author ajs6f
  */
 @Component
 @Scope("prototype")

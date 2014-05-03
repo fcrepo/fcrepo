@@ -30,6 +30,8 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
 
 /**
  * Get a Transformation from a MediaType
+ *
+ * @author cbeer
  */
 public class TransformationFactory {
 

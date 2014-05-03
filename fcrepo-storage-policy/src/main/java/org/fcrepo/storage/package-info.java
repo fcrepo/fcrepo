@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-See {@link org.fcrepo.storage.policy org.fcrepo.storage.policy} for storage policy
-machinery.
-*/
 
+/**
+ * See {@link org.fcrepo.storage.policy org.fcrepo.storage.policy} for storage policy
+ * machinery.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.storage;

@@ -22,6 +22,8 @@ import javax.jcr.Binary;
 
 /**
  * Cache entry for a projected binary
+ *
+ * @author fasseg
  */
 public class ProjectedCacheEntry extends BinaryCacheEntry {
 

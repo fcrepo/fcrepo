@@ -32,6 +32,10 @@ import org.slf4j.Logger;
 
 /**
  * Catch all the exceptions!
+ *
+ * @author awoods
+ * @author cbeer
+ * @author fasseg
  */
 @Provider
 public class WildcardExceptionMapper implements ExceptionMapper<Exception> {

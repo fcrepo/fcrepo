@@ -44,6 +44,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Restore a backup of the repository
+ *
+ * @author cbeer
  */
 @Component
 @Scope("prototype")

@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Transforms for <a href="http://marmotta.incubator.apache.org"> Linked Data
-</a>, <a href="http://www.w3.org/TR/rdf-sparql-query/"> SPARQL </a>
- */
 
+/**
+ * Transforms for <a href="http://marmotta.incubator.apache.org"> Linked Data
+ * </a>, <a href="http://www.w3.org/TR/rdf-sparql-query/"> SPARQL </a>
+ *
+ * @author osmandin
+ */
 package org.fcrepo.transform.transformations;

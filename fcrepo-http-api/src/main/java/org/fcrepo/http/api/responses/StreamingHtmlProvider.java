@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 /**
  * JAX-RS provider for taking an {@link RdfStream} and returning some nice looking
  * HTML
+ *
+ * @author ajs6f
  */
 @Component
 public class StreamingHtmlProvider extends StreamingBaseHtmlProvider{

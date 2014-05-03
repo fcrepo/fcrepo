@@ -26,6 +26,8 @@ import org.fcrepo.kernel.observer.FedoraEvent;
 
 /**
  * Produce a JMS Message from a JCR Event
+ *
+ * @author awoods
  */
 public interface JMSEventMessageFactory {
 

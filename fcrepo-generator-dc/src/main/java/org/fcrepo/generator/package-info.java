@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package provides RESTful interface for Dublin Core generation.
- */
 
+/**
+ * This package provides RESTful interface for Dublin Core generation.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.generator;

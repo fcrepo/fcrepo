@@ -24,6 +24,8 @@ import java.lang.annotation.Target;
 
 /**
  * COPY HTTP method
+ *
+ * @author cbeer
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

@@ -24,6 +24,8 @@ import com.hp.hpl.jena.sparql.core.Quad;
 /**
  * Comparator to sort a list of Quads by subject, predicate, and object
  * to ensure a consistent order for human-readable output
+ *
+ * @author awoods
  */
 public class QuadOrdering implements Comparator<Quad> {
 

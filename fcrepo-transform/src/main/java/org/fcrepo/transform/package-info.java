@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-This package provides abstractions for different types of transforms, e.g for
-<a href="http://www.w3.org/DesignIssues/LinkedData.html"> LinkedData </a> and
-<a href="http://www.w3.org/TR/rdf-sparql-query/">SPARQL</a>.
-*/
 
+/**
+ * This package provides abstractions for different types of transforms, e.g for
+ * <a href="http://www.w3.org/DesignIssues/LinkedData.html"> LinkedData </a> and
+ * <a href="http://www.w3.org/TR/rdf-sparql-query/">SPARQL</a>.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.transform;

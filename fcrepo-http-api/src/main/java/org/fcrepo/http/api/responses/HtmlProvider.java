@@ -22,6 +22,8 @@ import org.springframework.stereotype.Component;
 /**
  * JAX-RS provider for taking a dataset graph and returning some nice looking
  * HTML
+ *
+ * @author awoods
  */
 @Component
 public class HtmlProvider extends BaseHtmlProvider {

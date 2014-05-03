@@ -125,6 +125,8 @@ import org.modeshape.jcr.cache.ReferentialIntegrityException;
 
 /**
  * CRUD operations on Fedora Nodes
+ *
+ * @author cbeer
  */
 @Component
 @Scope("prototype")

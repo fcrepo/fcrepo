@@ -73,6 +73,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Endpoint for managing versions of nodes
+ *
+ * @author awoods
  */
 @Component
 @Scope("prototype")

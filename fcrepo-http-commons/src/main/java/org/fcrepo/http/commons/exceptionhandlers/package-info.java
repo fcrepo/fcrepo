@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-A variety of JAX-RS <code>ExceptionMapper</code>s handlers.*/
 
+/**
+ * A variety of JAX-RS <code>ExceptionMapper</code>s handlers.
+ *
+ * @author osmandin
+ */
 package org.fcrepo.http.commons.exceptionhandlers;

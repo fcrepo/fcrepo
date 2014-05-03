@@ -29,6 +29,9 @@ import org.slf4j.Logger;
 
 /**
  * Translate PathNotFound exceptions into HTTP 404 errors
+ *
+ * @author awoods
+ * @author cbeer
  */
 @Provider
 public class PathNotFoundExceptionMapper implements

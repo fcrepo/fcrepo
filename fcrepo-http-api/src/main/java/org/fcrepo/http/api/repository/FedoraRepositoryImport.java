@@ -28,6 +28,8 @@ import org.springframework.stereotype.Component;
  * This stub is a hack to mount the functionality of FedoraImport at the root of
  * this webapp. Without it, the globbing from FedoraNodes would own this path
  * instead.
+ *
+ * @author cbeer
  */
 @Component
 @Scope("prototype")

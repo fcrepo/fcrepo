@@ -28,6 +28,8 @@ import javax.jcr.Session;
  * A dynamic proxy that wraps JCR sessions. It is aware of fcrepo transactions,
  * and turns mutating methods (e.g. logout, session) into no-ops. Those no-op'ed
  * methods should be called from the Transaction level instead.
+ *
+ * @author awoods
  */
 public class TxAwareSession implements InvocationHandler {
 

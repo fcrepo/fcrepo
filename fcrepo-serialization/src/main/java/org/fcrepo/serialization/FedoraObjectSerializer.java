@@ -30,6 +30,8 @@ import org.springframework.stereotype.Component;
 /**
  * Interface for serializing/deserializing a FedoraObject
  * to some transportable format
+ *
+ * @author cbeer
  */
 @Component
 public interface FedoraObjectSerializer {

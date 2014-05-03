@@ -60,6 +60,8 @@ import org.fcrepo.http.commons.responses.GraphStoreStreamingOutput;
 
 /**
  * Stream the results of a SPARQL Query
+ *
+ * @author cbeer
  */
 public class ResultSetStreamingOutput extends AbstractFuture<Void> implements StreamingOutput {
     private final ResultSet results;

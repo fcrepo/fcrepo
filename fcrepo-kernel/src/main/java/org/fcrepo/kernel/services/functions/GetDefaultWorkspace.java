@@ -22,6 +22,8 @@ import javax.jcr.Repository;
 /**
  * Get the default workspace from the repository configuration
  * (or "default", if no information is available)
+ *
+ * @author cbeer
  */
 public class GetDefaultWorkspace implements Function<Repository, String> {
 

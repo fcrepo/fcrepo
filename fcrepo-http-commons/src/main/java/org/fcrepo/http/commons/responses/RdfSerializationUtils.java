@@ -46,6 +46,8 @@ import com.hp.hpl.jena.sparql.util.Context;
 
 /**
  * Utilities to help with serializing a graph to an HTTP resource
+ *
+ * @author awoods
  */
 public class RdfSerializationUtils {
 

@@ -18,6 +18,8 @@ package org.fcrepo.transform.exception;
 
 /**
  * Run-time exception wrapping JQL parsing problems
+ *
+ * @author cbeer
  */
 public class JQLParsingException extends RuntimeException {
     private static final long serialVersionUID = 1L;

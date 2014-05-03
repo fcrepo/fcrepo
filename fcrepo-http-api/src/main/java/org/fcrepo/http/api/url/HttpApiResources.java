@@ -59,6 +59,8 @@ import java.util.Map;
 
 /**
  * Inject our HTTP API methods into the object graphs
+ *
+ * @author awoods
  */
 @Component
 public class HttpApiResources implements UriAwareResourceModelFactory {

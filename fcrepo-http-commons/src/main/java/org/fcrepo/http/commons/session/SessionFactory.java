@@ -38,6 +38,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Factory for generating sessions for HTTP requests, taking
  * into account transactions, workspaces, and authentication.
+ *
+ * @author awoods
+ * @author gregjan
+ * @author kaisternad
  */
 public class SessionFactory {
 

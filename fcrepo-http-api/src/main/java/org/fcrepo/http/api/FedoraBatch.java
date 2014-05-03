@@ -88,6 +88,8 @@ import com.sun.jersey.multipart.MultiPart;
 /**
  * Controller for manipulating binary streams in larger batches
  * by using multipart requests and responses
+ *
+ * @author cbeer
  */
 @Component
 @Scope("prototype")

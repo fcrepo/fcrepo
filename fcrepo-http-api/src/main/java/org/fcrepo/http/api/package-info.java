@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
-This package provides a RESTful API for several content management and
-core repository services.
-
-<ul>
-      <li>Fixity Service</li>
-      <li>Contract for repository management services (e.g. backup/restore)</li>
-      <li>Sitemap</li>
-      <li>Controllers for manipulating object and data streams</li>
-</ul>
-*/
-
+ * This package provides a RESTful API for several content management and
+ * core repository services.
+ *
+ * <ul>
+ *   <li>Fixity Service</li>
+ *   <li>Contract for repository management services (e.g. backup/restore)</li>
+ *   <li>Sitemap</li>
+ *   <li>Controllers for manipulating object and data streams</li>
+ * </ul>
+ *
+ * @author osmandin
+ */
 package org.fcrepo.http.api;

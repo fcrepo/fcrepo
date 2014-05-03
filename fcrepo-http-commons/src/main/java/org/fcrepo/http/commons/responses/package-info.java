@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
-Helpers and providers for different response formats.
+ * Helpers and providers for different response formats.
+ *
+ * @author osmandin
  */
 
 package org.fcrepo.http.commons.responses;

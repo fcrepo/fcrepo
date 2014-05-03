@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 
 /**
  * A LowLevelCacheEntry within a local binary store
+ *
+ * @author awoods
  */
 public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
 

@@ -33,6 +33,8 @@ import com.sun.jersey.spi.inject.PerRequestTypeInjectableProvider;
 
 /**
  * Provide a JCR session within the current request context
+ *
+ * @author awoods
  */
 @Provider
 public class SessionProvider extends

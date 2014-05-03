@@ -48,6 +48,8 @@ import com.hp.hpl.jena.query.Dataset;
 /**
  * Helper for writing Datasets out in a variety of serialization formats
  * with cache headers.
+ *
+ * @author awoods
  */
 @Provider
 @Component

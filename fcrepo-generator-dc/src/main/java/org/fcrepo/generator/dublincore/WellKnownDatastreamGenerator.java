@@ -31,6 +31,8 @@ import org.slf4j.Logger;
 /**
  * Retrieve a Dublin Core document from a well-known datastream
  * ( e.g. "DC")
+ *
+ * @author cbeer
  */
 public class WellKnownDatastreamGenerator implements DCGenerator {
 

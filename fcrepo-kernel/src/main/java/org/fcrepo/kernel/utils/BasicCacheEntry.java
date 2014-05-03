@@ -36,6 +36,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * Cache entry that wraps a binary stream and provides
  * fixity methods against it
+ *
+ * @author fasseg
  */
 public abstract class BasicCacheEntry implements CacheEntry {
 

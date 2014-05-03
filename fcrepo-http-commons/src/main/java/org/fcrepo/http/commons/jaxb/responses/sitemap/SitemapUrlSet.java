@@ -25,6 +25,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 /**
  * Suspiciously similar to {@link SitemapIndex}, a sitemap of entries.
  *
+ * @author awoods
+ *
  * @TODO replace with a 3rd party sitemap impl
  */
 @XmlRootElement(name = "urlset")

@@ -30,6 +30,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Helper service that aggregates serializers and makes them accessible by key
+ *
+ * @author cbeer
  */
 @Component
 public class SerializerUtil implements ApplicationContextAware {

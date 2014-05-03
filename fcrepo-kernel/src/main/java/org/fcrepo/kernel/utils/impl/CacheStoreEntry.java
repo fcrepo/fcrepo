@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 
 /**
  * An entry in a specific BinaryStore
+ *
+ * @author awoods
  */
 public class CacheStoreEntry extends LowLevelCacheEntry {
 

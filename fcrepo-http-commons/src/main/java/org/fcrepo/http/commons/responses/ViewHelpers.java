@@ -51,6 +51,8 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 
 /**
  * General view helpers for rendering HTML responses
+ *
+ * @author awoods
  */
 public class ViewHelpers {
 

@@ -27,6 +27,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 /**
  * Helper to generate an RDF model for a FedoraResourceImpl that (likely) creates
  * relations from our resource to other HTTP components
+ *
+ * @author awoods
  */
 public interface UriAwareResourceModelFactory {
 

@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
-Fedora runtime initialization functionality. System properties can be
-declared here to allow users to define system wide configuration parameters
-(e.g. to specify the index directory).
-*/
 
+/**
+ * Fedora runtime initialization functionality. System properties can be
+ * declared here to allow users to define system wide configuration parameters
+ * (e.g. to specify the index directory).
+ *
+ * @author osmandin
+ */
 package org.fcrepo.kernel.spring;

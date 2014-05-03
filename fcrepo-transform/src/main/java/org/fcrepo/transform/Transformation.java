@@ -24,6 +24,8 @@ import java.io.InputStream;
 /**
  * Generic interface for transforming a resource's property dataset
  * to an implementation-defined type
+ *
+ * @author cbeer
  */
 public interface Transformation<T> extends Function<Dataset, T> {
 

@@ -22,6 +22,8 @@ import javax.jcr.Node;
 
 /**
  * Interface for retrieving a Dublin Core XML output from a node
+ *
+ * @author cbeer
  */
 public interface DCGenerator {
 

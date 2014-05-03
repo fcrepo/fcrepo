@@ -40,6 +40,9 @@ import com.google.common.eventbus.Subscribe;
 /**
  * Machinery to publish JMS messages when an EventBus
  * message is received.
+ *
+ * @author barmintor
+ * @author awoods
  */
 public class JMSTopicPublisher {
 
