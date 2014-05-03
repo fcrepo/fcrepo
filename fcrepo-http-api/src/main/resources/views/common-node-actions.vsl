@@ -47,7 +47,7 @@
     <label for="new_id"  class="control-label">
         Identifier
     </label>
-    <input type="text" id="new_id" name="slug" placeholder="(auto-generated identifier)"  class="form-control"/>
+    <input type="text" id="new_id" name="slug"  class="form-control"/>
         </div>
 
 

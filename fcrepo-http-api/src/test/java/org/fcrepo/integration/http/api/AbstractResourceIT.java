@@ -94,6 +94,10 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + pid);
     }
 
+    protected static HttpPut putObjMethod(final String pid) {
+        return new HttpPut(serverAddress + pid);
+    }
+
     protected static HttpPost postObjMethod(final String pid, final String query) {
         if (query.equals("")) {
             return new HttpPost(serverAddress + pid);
@@ -192,7 +196,11 @@ public abstract class AbstractResourceIT {
     }
 
     protected HttpResponse createObject(final String pid) throws IOException {
-        final HttpResponse response = client.execute(postObjMethod(pid));
+        final HttpPost httpPost = postObjMethod("/");
+        if (pid.length() > 0) {
+            httpPost.addHeader("Slug", pid);
+        }
+        final HttpResponse response = client.execute(httpPost);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
         return response;
     }

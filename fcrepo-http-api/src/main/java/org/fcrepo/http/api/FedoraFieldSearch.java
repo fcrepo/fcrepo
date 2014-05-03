@@ -232,7 +232,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                     searchModel.createResource(firstPage);
                 searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
 
-                servletResponse.addHeader("Link", firstPage + ";rel=\"first\"");
+                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
 
                 dataset.addNamedModel("search-pagination", searchModel);
             }

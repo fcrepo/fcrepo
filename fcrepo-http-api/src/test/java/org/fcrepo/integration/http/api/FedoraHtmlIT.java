@@ -38,11 +38,10 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     @Test
     public void testGetNode() throws Exception {
 
-        final HttpPost postMethod = postObjMethod("FedoraHtmlObject");
-        final HttpResponse postResponse = client.execute(postMethod);
-        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+        final String pid = getRandomUniquePid();
+        createObject(pid);
 
-        final HttpGet method = new HttpGet(serverAddress + "FedoraHtmlObject");
+        final HttpGet method = new HttpGet(serverAddress + pid);
         method.addHeader("Accept", "text/html");
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -52,18 +51,17 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     @Test
     public void testGetDatastreamNode() throws Exception {
 
-        final HttpPost postMethod = postObjMethod("FedoraHtmlObject2");
-
-        final HttpResponse postResponse = client.execute(postMethod);
-        assertEquals(201, postResponse.getStatusLine().getStatusCode());
-
+        final String pid = getRandomUniquePid();
+        createObject(pid);
         final HttpPost postDsMethod =
-            postDSMethod("FedoraHtmlObject2", "ds1", "foo");
+            postDSMethod(pid, "ds1", "foo");
         assertEquals(201, getStatus(postDsMethod));
 
         final HttpGet method =
-            new HttpGet(serverAddress + "FedoraHtmlObject2/ds1");
+            new HttpGet(serverAddress + pid + "/ds1");
+
         method.addHeader("Accept", "text/html");
+
         final HttpResponse response = client.execute(method);
         assertEquals(200, response.getStatusLine().getStatusCode());
 

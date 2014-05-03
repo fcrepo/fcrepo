@@ -176,28 +176,7 @@ public abstract class AbstractResource {
     protected static void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
                                                    final FedoraResource resource) throws RepositoryException {
-
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
-
-        final Date roundedDate = new Date();
-        if (date != null) {
-            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-        }
-        final Response.ResponseBuilder builder =
-            request.evaluatePreconditions(roundedDate, etag);
-
-        if (builder != null) {
-            final CacheControl cc = new CacheControl();
-            cc.setMaxAge(0);
-            cc.setMustRevalidate(true);
-            // here we are implicitly emitting a 304
-            // the exception is not an error, it's genuinely
-            // an exceptional condition
-            throw new WebApplicationException(builder.cacheControl(cc)
-                                                  .lastModified(date).tag(etag).build());
-        }
-
+        evaluateRequestPreconditions(request, resource, true);
         addCacheControlHeaders(servletResponse, resource);
     }
 
@@ -229,21 +208,7 @@ public abstract class AbstractResource {
      */
     protected static void evaluateRequestPreconditions(final Request request,
                                                        final FedoraResource resource) throws RepositoryException {
-
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
-        final Date roundedDate = new Date();
-
-        if (date != null) {
-            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-        }
-
-        final Response.ResponseBuilder builder =
-            request.evaluatePreconditions(roundedDate, etag);
-
-        if (builder != null) {
-            throw new WebApplicationException(builder.entity("ETag mismatch").build());
-        }
+        evaluateRequestPreconditions(request, resource, false);
     }
 
     protected void addResponseInformationToStream(
@@ -253,6 +218,41 @@ public abstract class AbstractResource {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
                     uriInfo, subjects);
+        }
+    }
+
+    private static void evaluateRequestPreconditions( final Request request, final FedoraResource resource,
+       boolean cacheControl ) throws RepositoryException {
+
+        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final Date date = resource.getLastModifiedDate();
+        final Date roundedDate = new Date();
+
+        if (date != null) {
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+        }
+
+        Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
+        if ( builder != null ) {
+            builder = builder.entity("ETag mismatch");
+        } else {
+            builder = request.evaluatePreconditions(roundedDate);
+            if ( builder != null ) {
+                builder = builder.entity("Date mismatch");
+            }
+        }
+
+        if (builder != null && cacheControl ) {
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
+            // here we are implicitly emitting a 304
+            // the exception is not an error, it's genuinely
+            // an exceptional condition
+            builder = builder.cacheControl(cc).lastModified(date).tag(etag);
+        }
+        if (builder != null) {
+            throw new WebApplicationException(builder.build());
         }
     }
 }

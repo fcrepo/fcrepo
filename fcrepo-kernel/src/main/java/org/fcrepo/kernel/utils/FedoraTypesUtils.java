@@ -26,6 +26,7 @@ import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.PropertyType.BINARY;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -246,7 +247,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             @Override
             public boolean apply(final Property p) {
                 try {
-                    return p.getType() == REFERENCE && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX);
+                    return (p.getType() == REFERENCE || p.getType() == WEAKREFERENCE)
+                        && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX);
                 } catch (final RepositoryException e) {
                     throw propagate(e);
                 }

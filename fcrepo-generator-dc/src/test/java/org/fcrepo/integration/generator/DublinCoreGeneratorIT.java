@@ -42,24 +42,23 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
     @Test
     public void testJcrPropertiesBasedOaiDc() throws Exception {
-        final int status = getStatus(postObjMethod("DublinCoreTest1"));
-        assertEquals(201, status);
-        final HttpPatch post = new HttpPatch(serverAddress + "DublinCoreTest1");
+        final HttpResponse response = createObject("");
+        final String location = response.getFirstHeader("Location").getValue();
+        final HttpPatch post = new HttpPatch(location);
         post.setHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity entity = new BasicHttpEntity();
-        final String subjectURI = serverAddress + "DublinCoreTest1";
         entity.setContent(new ByteArrayInputStream(
-                ("INSERT { <" + subjectURI + "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}")
+                ("INSERT { <> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}")
                         .getBytes()));
         post.setEntity(entity);
         assertEquals(204, getStatus(post));
-        final HttpGet getWorstCaseOaiMethod = new HttpGet(serverOAIAddress + "DublinCoreTest1/oai:dc");
+        final HttpGet getWorstCaseOaiMethod = new HttpGet(location + "/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
-        final HttpResponse response = client.execute(getWorstCaseOaiMethod);
+        final HttpResponse oaiResponse = client.execute(getWorstCaseOaiMethod);
 
-        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(200, oaiResponse.getStatusLine().getStatusCode());
 
-        final String content = EntityUtils.toString(response.getEntity());
+        final String content = EntityUtils.toString(oaiResponse.getEntity());
         logger.debug("Got content: {}", content);
         assertTrue("Didn't find oai_dc!", compile("oai_dc", DOTALL).matcher(content).find());
 
@@ -71,9 +70,9 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
 
         final String pid = randomUUID().toString();
 
-        HttpResponse response = client.execute(postObjMethod(pid));
-        assertEquals(201, response.getStatusLine().getStatusCode());
-        response = client.execute(postDSMethod(pid, "DC", "marbles for everyone"));
+        createObject(pid);
+
+        HttpResponse response = client.execute(postDSMethod(pid, "DC", "marbles for everyone"));
         final int status = response.getStatusLine().getStatusCode();
         if (status != 201) {
             log.error(EntityUtils.toString(response.getEntity()));

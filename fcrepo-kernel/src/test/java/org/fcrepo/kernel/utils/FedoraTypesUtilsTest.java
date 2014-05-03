@@ -186,6 +186,12 @@ public class FedoraTypesUtilsTest {
         when(mockProperty.getName()).thenReturn("foo" + REFERENCE_PROPERTY_SUFFIX);
         assertTrue(isReferenceProperty.apply(mockProperty));
     }
+    @Test
+    public void testIsReferencePropertyWeak() throws RepositoryException {
+        when(mockProperty.getType()).thenReturn(PropertyType.WEAKREFERENCE);
+        when(mockProperty.getName()).thenReturn("foo" + REFERENCE_PROPERTY_SUFFIX);
+        assertTrue(isReferenceProperty.apply(mockProperty));
+    }
 
     @Test
     public void testIsInternalProperty() throws RepositoryException {

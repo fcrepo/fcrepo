@@ -264,6 +264,12 @@ public abstract class AbstractRolesIT {
     }
 
 
+    protected HttpPut putObjMethod(final String param) {
+        final HttpPut put = new HttpPut(serverAddress + param);
+        logger.debug("PUT: {}", put.getURI());
+        return put;
+    }
+
 
     protected HttpPut putDSMethod(final String objectPath, final String ds,
             final String content) throws UnsupportedEncodingException {
@@ -403,7 +409,7 @@ public abstract class AbstractRolesIT {
     protected void
     ingestObject(final RolesFadTestObjectBean obj)
             throws Exception {
-        final HttpPost method = postObjMethod(obj.getPath());
+        final HttpPut method = putObjMethod(obj.getPath());
         setAuth(method, "fedoraAdmin");
         final HttpResponse response = client.execute(method);
         final String content = EntityUtils.toString(response.getEntity());

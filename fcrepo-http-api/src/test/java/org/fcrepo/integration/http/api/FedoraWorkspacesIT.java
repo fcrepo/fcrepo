@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.kernel.RdfLexicon.WORKSPACE_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -58,7 +59,13 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
                 .getStatusCode());
         assertEquals(serverAddress + "workspace:" + workspace + "/", createWorkspaceResponse.getFirstHeader("Location").getValue());
 
-        createObject("workspace:" + workspace + "/" + pid);
+
+        final HttpPost httpPost = postObjMethod("/workspace:" + workspace);
+        if (pid.length() > 0) {
+            httpPost.addHeader("Slug", pid);
+        }
+        final HttpResponse response = client.execute(httpPost);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
         final HttpGet httpGet =
             new HttpGet(serverAddress + "workspace:" + workspace + "/" + pid);

@@ -167,6 +167,8 @@ public final class RdfLexicon {
     // Locks
     public static final Property LOCKS
         = createProperty(REPOSITORY_NAMESPACE + "locks");
+    public static final Property HAS_LOCK
+        = createProperty(REPOSITORY_NAMESPACE + "hasLock");
     public static final Property HAS_LOCK_TOKEN
         = createProperty(REPOSITORY_NAMESPACE + "hasLockToken");
     public static final Property IS_DEEP

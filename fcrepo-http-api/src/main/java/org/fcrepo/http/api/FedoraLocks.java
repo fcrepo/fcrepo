@@ -20,6 +20,7 @@ import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Triple;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Lock;
@@ -82,6 +83,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
      * Gets a description of the lock resource.
      */
     @GET
+    @HtmlTemplate(value = "fcr:lock")
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML})
     public RdfStream getLock(@PathParam("path") final List<PathSegment> pathList) throws RepositoryException {
@@ -149,7 +151,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         final Triple[] lockTriples;
         final Triple locksT = create(lockSubject, LOCKS.asNode(), nodeSubject);
         final Triple isDeepT = create(lockSubject, IS_DEEP.asNode(),
-                createLiteral("false", "", XSDDatatype.XSDboolean));
+                createLiteral(String.valueOf(lock.isDeep()), "", XSDDatatype.XSDboolean));
         if (lock.getLockToken() != null) {
             lockTriples = new Triple[] {
                 locksT,

@@ -18,6 +18,7 @@ package org.fcrepo.auth.integration;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.UUID;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -63,6 +64,10 @@ public abstract class AbstractResourceIT {
 
     protected static HttpPost postObjMethod(final String pid) {
         return new HttpPost(serverAddress + pid);
+    }
+
+    protected static HttpPut putObjMethod(final String pid) {
+        return new HttpPut(serverAddress + pid);
     }
 
     protected static HttpPost postObjMethod(final String pid,
@@ -111,4 +116,11 @@ public abstract class AbstractResourceIT {
         return result;
     }
 
+    /**
+     * Gets a random (but valid) pid for use in testing. This pid is guaranteed
+     * to be unique within runs of this application.
+     */
+    protected static String getRandomUniquePid() {
+        return UUID.randomUUID().toString();
+    }
 }
