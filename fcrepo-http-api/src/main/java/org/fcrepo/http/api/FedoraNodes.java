@@ -312,7 +312,7 @@ public class FedoraNodes extends AbstractResource {
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
     }
 
-    private void addOptionsHttpHeaders(HttpServletResponse servletResponse) {
+    private void addOptionsHttpHeaders(final HttpServletResponse servletResponse) {
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
         servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");
