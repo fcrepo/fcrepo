@@ -152,7 +152,7 @@ public class JcrRdfTools {
     /**
      * Factory method to create a new JcrRdfTools instance
      *
-     * @param graphSubjects
+     * @param idTranslator
      * @param session
      * @return
      */
@@ -506,9 +506,9 @@ public class JcrRdfTools {
             getNamespaceRegistry.apply(node);
 
         return getJcrNameForRdfNode(namespaceRegistry,
-                                       predicate.getNameSpace(),
-                                       predicate.getLocalName(),
-                                       namespaceMapping);
+                                    predicate.getNameSpace(),
+                                    predicate.getLocalName(),
+                                    namespaceMapping);
     }
 
     /**
@@ -525,9 +525,9 @@ public class JcrRdfTools {
 
         final Map<String, String> namespaceMapping = emptyMap();
         return getJcrNameForRdfNode(namespaceRegistry,
-                                       predicate.getNameSpace(),
-                                       predicate.getLocalName(),
-                                       namespaceMapping);
+                                    predicate.getNameSpace(),
+                                    predicate.getLocalName(),
+                                    namespaceMapping);
     }
 
     /**
@@ -543,25 +543,25 @@ public class JcrRdfTools {
                                                final Map<String,String> namespaces) throws RepositoryException {
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry.apply(node);
         return getJcrNameForRdfNode(namespaceRegistry,
-                                       resource.getNameSpace(),
-                                       resource.getLocalName(),
-                                       namespaces);
+                                    resource.getNameSpace(),
+                                    resource.getLocalName(),
+                                    namespaces);
     }
 
     /**
      * Get the JCR property name for an RDF predicate
      *
      * @param namespaceRegistry
-     * @param namespace
-     * @param localname
+     * @param rdfNamespace
+     * @param rdfLocalname
      * @param namespaceMapping
      * @return
      * @throws RepositoryException
      */
-    public String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,
-                                       final String rdfNamespace,
-                                       final String rdfLocalname,
-                                       final Map<String, String> namespaceMapping)
+    private String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,
+                                        final String rdfNamespace,
+                                        final String rdfLocalname,
+                                        final Map<String, String> namespaceMapping)
         throws RepositoryException {
 
         final String prefix;

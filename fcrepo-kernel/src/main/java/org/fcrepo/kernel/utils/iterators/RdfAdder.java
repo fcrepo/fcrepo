@@ -74,15 +74,13 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         }
 
         if (subjectNode.canAddMixin(mixinName)) {
-            LOGGER.debug("Adding mixin: {} to node: {}.", mixinName,
-                            subjectNode.getPath());
+            LOGGER.debug("Adding mixin: {} to node: {}.", mixinName, subjectNode.getPath());
             subjectNode.addMixin(mixinName);
         } else {
-            throw new MalformedRdfException(
-                                               "Could not persist triple containing type assertion:"
-                                                   + mixinResource.toString()
-                                                   + " because no such mixin/type can be added to this node: "
-                                                   + subjectNode.getPath() + "!");
+            throw new MalformedRdfException("Could not persist triple containing type assertion: "
+                                                    + mixinResource.toString()
+                                                    + " because no such mixin/type can be added to this node: "
+                                                    + subjectNode.getPath() + "!");
         }
     }
 
