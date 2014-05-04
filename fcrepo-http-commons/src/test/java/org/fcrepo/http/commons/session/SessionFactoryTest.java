@@ -118,7 +118,7 @@ public class SessionFactoryTest {
     public void testGetSessionFromTransaction() throws RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
-        when(mockTxService.getTransactionForUser("123", null)).thenReturn(mockTx);
+        when(mockTxService.getTransaction("123", null)).thenReturn(mockTx);
         final Session session = testObj.getSessionFromTransaction(mockRequest, "123");
         assertEquals(mockTx.getSession(), session);
     }
@@ -127,7 +127,7 @@ public class SessionFactoryTest {
     public void testGetSessionThrowException() throws RepositoryException {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
-        when(mockTxService.getTransactionForUser("123", null)).thenThrow(
+        when(mockTxService.getTransaction("123", null)).thenThrow(
                 new TransactionMissingException(""));
         try {
             testObj.getSession(mockRequest);
@@ -147,7 +147,7 @@ public class SessionFactoryTest {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(txSession);
         when(mockTx.isAssociatedWithUser(eq(fedoraUser))).thenReturn(true);
-        when(mockTxService.getTransactionForUser("123", fedoraUser))
+        when(mockTxService.getTransaction("123", fedoraUser))
                 .thenReturn(mockTx);
         final Session session = testObj.getSession(mockRequest);
         assertEquals(txSession, ((LockReleasingSession) Proxy.getInvocationHandler(session)).getWrappedSession());

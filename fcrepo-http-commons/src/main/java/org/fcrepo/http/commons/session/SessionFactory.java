@@ -191,7 +191,7 @@ public class SessionFactory {
         }
 
         final Transaction transaction =
-                transactionService.getTransactionForUser(txId, userName);
+                transactionService.getTransaction(txId, userName);
         LOGGER.debug(
                 "Returning a session in the transaction {} for user {}",
                 transaction, userName);

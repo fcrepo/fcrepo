@@ -42,14 +42,6 @@ public interface TransactionService extends Service {
     Transaction beginTransaction(Session sess, String userName) throws RepositoryException;
 
     /**
-     * Retrieve an open {@link Transaction}
-     *
-     * @param txid the Id of the {@link Transaction}
-     * @return the {@link Transaction}
-     */
-    Transaction getTransaction(String txid) throws TransactionMissingException;
-
-    /**
      * Recieve an open {@link Transaction} for a given user
      *
      * @param txId the Id of the {@link Transaction}
@@ -58,7 +50,7 @@ public interface TransactionService extends Service {
      * @throws TransactionMissingException if the transaction could not be found or is not associated
      * with this user
      */
-    Transaction getTransactionForUser(final String txId, final String userName) throws TransactionMissingException;
+    Transaction getTransaction(final String txId, final String userName) throws TransactionMissingException;
 
     /**
      * Get the current Transaction for a session

@@ -353,20 +353,20 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* "fedoraUser" puts to "fedoraAdmin"'s transaction and fails */
         final HttpPut putFedoraUser = new HttpPut(txLocation);
         final HttpResponse responseFedoraUser = executeWithBasicAuth(putFedoraUser, "fedoraUser", "fedoraUser");
-        assertEquals("Status should be 410 because posting on a transaction of a different user is not allowed",
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not allowed",
                 410, responseFedoraUser.getStatusLine().getStatusCode());
 
         /* anonymous user puts to "fedoraAdmin"'s transaction and fails */
         final HttpPut putTxAnon = new HttpPut(txLocation);
         final HttpResponse responseTxAnon = execute(putTxAnon);
-        assertEquals("Status should be 410 because posting on a transaction of a different user is not allowed",
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not allowed",
                 410, responseTxAnon.getStatusLine().getStatusCode());
 
         /* transaction is still intact and "fedoraAdmin" - the owner - can successfully put to it */
         final String objectInTxCommit = randomUUID().toString();
         final HttpPut putToExistingTx = new HttpPut(txLocation + "/" + objectInTxCommit);
         final HttpResponse responseFromPutToTx = executeWithBasicAuth(putToExistingTx, "fedoraAdmin", "fedoraAdmin");
-        assertEquals(201, responseFromPutToTx.getStatusLine().getStatusCode());
+        assertEquals("Status should be 201 after putting", 201, responseFromPutToTx.getStatusLine().getStatusCode());
 
     }
 
@@ -383,20 +383,20 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* fedoraAdmin attempts to puts to anonymous transaction and fails */
         final HttpPut putFedoraAdmin = new HttpPut(txLocation);
         final HttpResponse responseFedoraAdmin = executeWithBasicAuth(putFedoraAdmin, "fedoraAdmin", "fedoraAdmin");
-        assertEquals("Status should be 410 because posting on a transaction of a different user is not permitted",
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not permitted",
                 410, responseFedoraAdmin.getStatusLine().getStatusCode());
 
         /* fedoraUser attempts to put to anonymous transaction and fails */
         final HttpPut putFedoraUser = new HttpPut(txLocation);
         final HttpResponse responseFedoraUser = executeWithBasicAuth(putFedoraUser, "fedoraUser", "fedoraUser");
-        assertEquals("Status should be 410 because posting on a transaction of a different user is not permitted",
+        assertEquals("Status should be 410 because putting on a transaction of a different user is not permitted",
                 410, responseFedoraUser.getStatusLine().getStatusCode());
 
-        /* transaction is still intact and any anonymous user can successfully post to it */
+        /* transaction is still intact and any anonymous user can successfully put to it */
         final String objectInTxCommit = randomUUID().toString();
         final HttpPut putToExistingTx = new HttpPut(txLocation + "/" + objectInTxCommit);
         final HttpResponse responseFromPutToTx = execute(putToExistingTx);
-        assertEquals(201, responseFromPutToTx.getStatusLine().getStatusCode());
+        assertEquals("Status should be 201 after putting", 201, responseFromPutToTx.getStatusLine().getStatusCode());
 
     }
 

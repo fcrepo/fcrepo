@@ -117,31 +117,16 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
         return tx;
     }
 
-    /**
-     * Retrieve an open {@link Transaction}
-     *
-     * @param txid the Id of the {@link Transaction}
-     * @return the {@link Transaction}
-     */
     @Override
-    public Transaction getTransaction(final String txid)
+    public Transaction getTransaction(final String txId, final String userName)
         throws TransactionMissingException {
 
-        final Transaction tx = transactions.get(txid);
+        final Transaction tx = transactions.get(txId);
 
         if (tx == null) {
             throw new TransactionMissingException(
                     "Transaction is not available");
         }
-
-        return tx;
-    }
-
-    @Override
-    public Transaction getTransactionForUser(final String txId, final String userName)
-        throws TransactionMissingException {
-
-        final Transaction tx = getTransaction(txId);
 
         if (!tx.isAssociatedWithUser(userName)) {
             throw new TransactionMissingException("Transaction with id " +
@@ -167,8 +152,14 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
             throw new TransactionMissingException(
                     "Transaction is not available");
         }
+        final Transaction tx = transactions.get(txId);
 
-        return getTransaction(txId);
+        if (tx == null) {
+            throw new TransactionMissingException(
+                    "Transaction is not available");
+        }
+
+        return tx;
     }
 
     /**

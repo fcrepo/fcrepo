@@ -185,7 +185,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         if (txId == null) {
             checkpoint(session.getWorkspace(), absPath);
         } else {
-            queueCheckpoint(txId, absPath);
+            queueCheckpoint(session, absPath);
         }
     }
 
@@ -194,8 +194,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         workspace.getVersionManager().checkpoint(absPath);
     }
 
-    private void queueCheckpoint(final String txId, final String absPath) throws TransactionMissingException {
-        final Transaction tx = txService.getTransaction(txId);
+    private void queueCheckpoint(final Session session, final String absPath) throws TransactionMissingException {
+        final Transaction tx = txService.getTransaction(session);
         LOGGER.trace("Queuing implicit version checkpoint set for {}", absPath);
         tx.addPathToVersion(absPath);
     }
@@ -221,7 +221,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
             final String txId = getCurrentTransactionId(session);
             if (txId != null) {
-                final Transaction tx = txService.getTransaction(txId);
+                final Transaction tx = txService.getTransaction(session);
                 tx.addPathToVersion(absPath);
             } else {
                 session.getWorkspace().getVersionManager().checkpoint(absPath);
