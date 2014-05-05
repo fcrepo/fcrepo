@@ -20,11 +20,17 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.jcr.Binary;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ProjectedCacheEntryTest {
+
+    @Mock
+    private Property mockProperty;
 
     @Mock
     private Binary mockBinary;
@@ -35,12 +41,15 @@ public class ProjectedCacheEntryTest {
     public void setUp() throws Exception {
         initMocks(this);
 
-        testObj = new ProjectedCacheEntry(mockBinary, "some-identifier");
+        when(mockProperty.getBinary()).thenReturn(mockBinary);
+        when(mockProperty.getPath()).thenReturn("/some/path");
+
+        testObj = new ProjectedCacheEntry(mockProperty);
     }
 
     @Test
-    public void testGetExternalIdentifier() {
-        final String expected = "/org.modeshape.connector.filesystem.FileSystemConnector:projections:some-identifier";
+    public void testGetExternalIdentifier() throws RepositoryException {
+        final String expected = "/org.modeshape.connector.filesystem.FileSystemConnector:projections:/some/path";
 
         assertEquals(expected, testObj.getExternalIdentifier());
     }

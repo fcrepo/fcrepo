@@ -31,9 +31,6 @@ import org.modeshape.jcr.value.binary.BinaryStoreException;
  */
 public abstract class LowLevelCacheEntry extends BasicCacheEntry {
 
-    protected static final String DATA_SUFFIX = "-data";
-
-
     protected String externalId;
 
     protected final BinaryKey key;
@@ -41,7 +38,6 @@ public abstract class LowLevelCacheEntry extends BasicCacheEntry {
     protected LowLevelCacheEntry(final BinaryKey key) {
         super();
         this.key = key;
-        this.externalId = "";
     }
 
     /**
@@ -54,23 +50,6 @@ public abstract class LowLevelCacheEntry extends BasicCacheEntry {
      */
     public abstract void storeValue(final InputStream stream)
         throws BinaryStoreException, IOException;
-
-    /**
-     * Set a meaningful identifier from some higher level that we should
-     * dutifully pass through.
-     *
-     * @param externalId some identifier for the cache store
-     */
-    public void setExternalId(String externalId) {
-        this.externalId = externalId;
-    }
-
-    /**
-     * Return the external identifier.
-     */
-    public String getExternalId() {
-        return externalId;
-    }
 
     /**
      * Get the BinaryKey for this cache entry

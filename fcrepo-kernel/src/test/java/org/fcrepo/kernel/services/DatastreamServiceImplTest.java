@@ -35,17 +35,20 @@ import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import com.google.common.collect.ImmutableSet;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.impl.CacheEntryFactory;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,7 +66,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
         "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({JcrRdfTools.class})
+@PrepareForTest({JcrRdfTools.class, CacheEntryFactory.class})
 public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
     private static final String MOCK_CONTENT_TYPE = "application/test-data";
@@ -101,10 +104,17 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     @Mock
     private javax.jcr.Binary mockBinaryValue;
 
+    @Mock
+    private Repository mockRepository;
+
+    @Mock
+    private CacheEntry mockCacheEntry;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
         testObj = new DatastreamServiceImpl();
+        testObj.setRepository(mockRepository);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockNode.getSession()).thenReturn(mockSession);
         final NodeType mockNodeType = mock(NodeType.class);
@@ -174,16 +184,16 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
     @Test
     public void testGetFixityResultsModel() throws Exception {
-        mockStatic(JcrRdfTools.class);
+        mockStatic(CacheEntryFactory.class);
+
+
         final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
-        final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
-        when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
+        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(createResource("abc"));
 
         final FixityResult fixityResult = mock(FixityResult.class);
-        when(fixityResult.matches(any(Long.class), any(URI.class))).thenReturn(
-                true);
+        when(fixityResult.matches(any(Long.class), any(URI.class))).thenReturn(true);
+        final ImmutableSet<FixityResult> fixityResults = ImmutableSet.of(fixityResult);
 
-        final Collection<FixityResult> mockCollection = asList(fixityResult);
         final Datastream mockDatastream = mock(Datastream.class);
 
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
@@ -194,47 +204,13 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         when(mockDatastream.getContentDigest()).thenReturn(
                 new URI("urn:sha1:abc"));
 
-        when(
-                llStore.transformLowLevelCacheEntries(eq(mockContent),
- Matchers
-                        .<Function<LowLevelCacheEntry, FixityResult>> any()))
-                .thenReturn(mockCollection);
-        when(
-                mockJcrRdfTools.getJcrTriples(eq(mockNode), Matchers
-                        .<Iterable<FixityResult>> any())).thenReturn(
-                new RdfStream());
+        when(CacheEntryFactory.forProperty(mockRepository, mockProperty)).thenReturn(mockCacheEntry);
 
-        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(
-                createResource("abc"));
-        final RdfStream fixityResults =
-                testObj.getFixityResultsModel(mockSubjects, mockDatastream);
+        when(mockCacheEntry.checkFixity(any(URI.class), any(Long.class))).thenReturn(fixityResults);
 
-        assertEquals("Got wrong topic of fixity results!",
-                createResource("abc").asNode(), fixityResults.topic());
-    }
+        final RdfStream actual = testObj.getFixityResultsModel(mockSubjects, mockDatastream);
 
-    @Test
-    public void testGetFixity() throws RepositoryException {
-        final URI mockUri = URI.create("sha1:foo:bar"); // can't mock final
-                                                        // classes
-        final long testSize = 4L;
-
-        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
-        when(mockData.getBinary()).thenReturn(mockBinaryValue);
-
-        testObj.getFixity(mockContent, mockUri, testSize);
-
-        getCheckCacheFixityFunction(mockUri, 0L);
-        final ArgumentCaptor<CheckCacheEntryFixity> argument =
-                forClass(CheckCacheEntryFixity.class);
-        verify(llStore).transformLowLevelCacheEntries(eq(mockContent),
-                argument.capture());
-
-        final CheckCacheEntryFixity actualFunction = argument.getValue();
-
-        assertEquals(mockUri, actualFunction.getChecksum());
-        assertEquals(4L, actualFunction.getSize());
+        assertEquals("Got wrong topic of fixity results!", createResource("abc").asNode(), actual.topic());
     }
 
 }
