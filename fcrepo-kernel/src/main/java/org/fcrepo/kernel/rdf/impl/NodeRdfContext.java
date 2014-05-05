@@ -151,22 +151,34 @@ public class NodeRdfContext extends RdfStream {
     }
 
     private void concatRdfTypes() throws RepositoryException {
+        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
+
         final NodeType primaryNodeType = node.getPrimaryNodeType();
-        final NodeType[] mixinNodeTypesArr = node.getMixinNodeTypes();
-        final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
-                .add(primaryNodeType.getSupertypes()).build();
-        final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
-        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder()
-                .add(primaryNodeType)
-                .addAll(primarySupertypes)
-                .addAll(mixinNodeTypes);
-        final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
-        for (final NodeType mixinNodeType : mixinNodeTypes) {
-            mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
+        nodeTypesB.add(primaryNodeType);
+
+        if (primaryNodeType != null && primaryNodeType.getSupertypes() != null) {
+            final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
+                    .add(primaryNodeType.getSupertypes()).build();
+            nodeTypesB.addAll(primarySupertypes);
         }
-        nodeTypesB.addAll(mixinSupertypes.build());
+
+        final NodeType[] mixinNodeTypesArr = node.getMixinNodeTypes();
+
+        if (mixinNodeTypesArr != null) {
+            final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
+            nodeTypesB.addAll(mixinNodeTypes);
+
+            final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
+            for (final NodeType mixinNodeType : mixinNodeTypes) {
+                mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
+            }
+
+            nodeTypesB.addAll(mixinSupertypes.build());
+        }
+
         final ImmutableList<NodeType> nodeTypes = nodeTypesB.build();
         final Iterator<NodeType> nodeTypesIt = nodeTypes.iterator();
+
         concat(Iterators.transform(nodeTypesIt,nodetype2triple()));
     }
 
