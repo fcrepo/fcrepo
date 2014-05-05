@@ -46,10 +46,12 @@ import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
+import static org.fcrepo.kernel.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator.RESOURCE_NAMESPACE;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -109,6 +111,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
+import org.modeshape.jcr.api.Namespaced;
 import org.modeshape.jcr.value.BinaryValue;
 import org.slf4j.Logger;
 
@@ -606,6 +609,19 @@ public class JcrRdfToolsTest {
                 mockNode, p));
     }
 
+    @Test
+    public final void shouldMapInternalReferencePropertiesToPublicUris() throws RepositoryException {
+        when(mockNamespacedProperty.getNamespaceURI()).thenReturn("info:xyz#");
+        when(mockNamespacedProperty.getLocalName()).thenReturn(getReferencePropertyName("some_reference"));
+        when(mockNamespacedProperty.getType()).thenReturn(REFERENCE);
+        when(mockNamespacedProperty.getName()).thenReturn("xyz:" + getReferencePropertyName("some_reference"));
+        final Property property = getPredicateForProperty.apply(mockNamespacedProperty);
+
+        assert(property != null);
+        assertEquals("some_reference", property.getLocalName());
+
+    }
+
     private static void logRDF(final Model rdf) throws IOException {
         try (final Writer writer = new StringWriter()) {
             rdf.write(writer);
@@ -732,4 +748,10 @@ public class JcrRdfToolsTest {
 
     @Mock
     private NodeType mockMixinNodeType, mockPrimaryNodeType;
+
+    @Mock
+    private NamespacedProperty mockNamespacedProperty;
+    private static interface NamespacedProperty extends Namespaced, javax.jcr.Property {
+
+    }
 }

@@ -234,6 +234,21 @@ public class NodePropertiesTools {
         return propertyName + REFERENCE_PROPERTY_SUFFIX;
     }
 
+    /**
+     * Given an internal reference node property, get the original name
+     * @param refPropertyName
+     * @return
+     */
+    public static String getReferencePropertyOriginalName(final String refPropertyName) {
+        final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);
+
+        if (i < 0) {
+            return refPropertyName;
+        } else {
+            return refPropertyName.substring(0, i);
+        }
+    }
+
     private static String getReferencePropertyName(final Property property) throws RepositoryException {
         return getReferencePropertyName(property.getName());
     }

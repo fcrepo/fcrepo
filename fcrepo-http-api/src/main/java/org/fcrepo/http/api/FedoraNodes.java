@@ -49,6 +49,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
@@ -259,6 +260,9 @@ public class FedoraNodes extends AbstractResource {
                     && !contains(omits, LDP_NAMESPACE + "PreferContainment");
 
 
+            final boolean references = contains(includes, INBOUND_REFERENCES.toString())
+                                           && !contains(omits, INBOUND_REFERENCES.toString());
+
             final HierarchyRdfContextOptions hierarchyRdfContextOptions
                 = new HierarchyRdfContextOptions(limit, offset, membership, containment);
 
@@ -268,6 +272,11 @@ public class FedoraNodes extends AbstractResource {
 
             if (hierarchyRdfContextOptions.containmentEnabled()) {
                 appliedIncludes.add(LDP_NAMESPACE + "PreferContainment");
+            }
+
+            if (references) {
+                rdfStream.concat(resource.getReferencesTriples(subjects));
+                appliedIncludes.add(INBOUND_REFERENCES.toString());
             }
 
             rdfStream.concat(resource.getHierarchyTriples(subjects, hierarchyRdfContextOptions));

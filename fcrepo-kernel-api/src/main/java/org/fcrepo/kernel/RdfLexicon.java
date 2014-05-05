@@ -294,6 +294,7 @@ public final class RdfLexicon {
     // RDF EXTRACTION
     public static final Property COULD_NOT_STORE_PROPERTY =
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
+    public static final Property INBOUND_REFERENCES = createProperty(REPOSITORY_NAMESPACE + "InboundReferences");
 
     // IMPORTANT JCR PROPERTIES
     public static final Property HAS_PRIMARY_IDENTIFIER =
