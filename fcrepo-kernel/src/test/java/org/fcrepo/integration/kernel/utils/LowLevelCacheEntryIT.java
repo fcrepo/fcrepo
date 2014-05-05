@@ -17,29 +17,22 @@ package org.fcrepo.integration.kernel.utils;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.ByteArrayInputStream;
-import java.util.LinkedHashMap;
-
 import javax.inject.Inject;
+import javax.jcr.Binary;
+import javax.jcr.Property;
 import javax.jcr.Repository;
+import javax.jcr.Session;
 
-import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
-import org.fcrepo.kernel.utils.impl.CacheStoreEntry;
+import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.impl.LocalBinaryStoreEntry;
-import org.infinispan.configuration.cache.CacheStoreConfiguration;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.decorators.ChainingCacheStore;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.JcrRepository;
-import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.io.ByteArrayInputStream;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -51,144 +44,46 @@ public class LowLevelCacheEntryIT {
 
     @Test
     public void testGetExternalIdentifier() throws Exception {
-        final BinaryStore store =
-                ((JcrRepository) repo).getConfiguration().getBinaryStorage()
-                        .getBinaryStore();
+        final Session session = repo.login();
+            final CacheEntry cs = createCacheEntry(session, "some-property");
+            assertEquals("info:org.modeshape.jcr.value.binary.TransientBinaryStore", cs
+                .getExternalIdentifier().split("@")[0]);
+            session.logout();
 
-        final LowLevelCacheEntry cs =
-                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
-        assertEquals("/org.modeshape.jcr.value.binary.TransientBinaryStore", cs
-                .getExternalIdentifier().split(":")[0]);
     }
 
     @Test
     public void testEquals() throws Exception {
 
-        final BinaryStore store =
-                ((JcrRepository) repo).getConfiguration().getBinaryStorage()
-                        .getBinaryStore();
-
-        final LowLevelCacheEntry cs1 =
-                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
-        final LowLevelCacheEntry cs2 =
-                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
+        final Session session = repo.login();
+        final CacheEntry cs1 = createCacheEntry(session, "some-property");
+        final CacheEntry cs2 = createCacheEntry(session, "some-property");
 
         assertEquals(cs1, cs2);
+        session.logout();
     }
 
     @Test
     public void testHashCode() throws Exception {
 
-        final BinaryStore store =
-                ((JcrRepository) repo).getConfiguration().getBinaryStorage()
-                        .getBinaryStore();
-
-        final LowLevelCacheEntry cs1 =
-                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
-        final LowLevelCacheEntry cs2 =
-                new LocalBinaryStoreEntry(store, new BinaryKey("asd"));
+        final Session session = repo.login();
+        final CacheEntry cs1 = createCacheEntry(session, "some-property");
+        final CacheEntry cs2 = createCacheEntry(session, "some-property");
 
         assertEquals(cs1.hashCode(), cs2.hashCode());
+        session.logout();
     }
 
-    @Test
-    public void testEqualsIspn() throws Exception {
+    private CacheEntry createCacheEntry(final Session session, final String propertyName) throws Exception {
+        final Binary binary = session.getValueFactory().createBinary(new ByteArrayInputStream("xyz".getBytes()));
+        final Property property = session.getRootNode().setProperty(propertyName, binary);
 
-        final EmbeddedCacheManager cm =
-                new DefaultCacheManager("config/testing/infinispan-basic.xml");
-
-        final CacheStore ispn =
-                cm.getCache("FedoraRepository").getAdvancedCache()
-                        .getComponentRegistry().getComponent(
-                                CacheLoaderManager.class).getCacheStore();
-
-        final LowLevelCacheEntry cs1 =
-                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
-        final LowLevelCacheEntry cs2 =
-                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
-
-        assertEquals(cs1, cs2);
-
+        return new LocalBinaryStoreEntry(binaryStore(), property);
     }
 
-    @Test
-    public void testHashCodeIspn() throws Exception {
-
-        final EmbeddedCacheManager cm =
-                new DefaultCacheManager("config/testing/infinispan-basic.xml");
-
-        final CacheStore ispn =
-                cm.getCache("FedoraRepository").getAdvancedCache()
-                        .getComponentRegistry().getComponent(
-                                CacheLoaderManager.class).getCacheStore();
-
-        final LowLevelCacheEntry cs1 =
-                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
-        final LowLevelCacheEntry cs2 =
-                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
-
-        assertEquals(cs1.hashCode(), cs2.hashCode());
-
+    private BinaryStore binaryStore() throws Exception {
+        return ((JcrRepository) repo).getConfiguration().getBinaryStorage()
+                .getBinaryStore();
     }
 
-    @Test
-    public void testGetExternalIdentifierWithInfinispan() throws Exception {
-
-        final EmbeddedCacheManager cm =
-                new DefaultCacheManager("config/testing/infinispan-basic.xml");
-
-        final CacheStore ispn =
-                cm.getCache("FedoraRepository").getAdvancedCache()
-                        .getComponentRegistry().getComponent(
-                                CacheLoaderManager.class).getCacheStore();
-        final LowLevelCacheEntry cs =
-                new CacheStoreEntry(ispn, "FedoraRepository", new BinaryKey("asd"));
-        assertEquals(
-                "/org.infinispan.loaders.file." +
-                "FileCacheStore:FedoraRepository:org.infinispan." +
-                "loaders.file.FileCacheStore:target/FedoraRepository/storage",
-                cs.getExternalIdentifier());
-    }
-
-    @Test
-    public void testModifyingCacheStores() throws Exception {
-
-        final EmbeddedCacheManager cm =
-                new DefaultCacheManager(
-                        "config/testing/infinispan-chained.xml");
-
-        final CacheStore ispn =
-                cm.getCache("FedoraRepository").getAdvancedCache()
-                        .getComponentRegistry().getComponent(
-                                CacheLoaderManager.class).getCacheStore();
-
-        assert ispn instanceof ChainingCacheStore;
-
-        final BinaryKey key = new BinaryKey("123");
-
-        final ChainingCacheStore chained_store = (ChainingCacheStore) ispn;
-
-        final LinkedHashMap<CacheStore, CacheStoreConfiguration> stores =
-                chained_store.getStores();
-
-        final LowLevelCacheEntry cs =
-                new CacheStoreEntry((CacheStore) stores.keySet()
-                        .toArray()[0], "FedoraRepository", key);
-        final LowLevelCacheEntry cs2 =
-                new CacheStoreEntry((CacheStore) stores.keySet()
-                        .toArray()[1], "FedoraRepository", key);
-
-        cs.storeValue(new ByteArrayInputStream("123456".getBytes()));
-
-        cs2.storeValue(new ByteArrayInputStream("asdfg".getBytes()));
-
-        Thread.sleep(1000);
-
-        final String v1 = IOUtils.toString(cs.getInputStream());
-        final String v2 = IOUtils.toString(cs2.getInputStream());
-
-        assertEquals("Found the wrong value in our cache store", "123456", v1);
-        assertEquals("Found the wrong value in our cache store", "asdfg", v2);
-
-    }
 }

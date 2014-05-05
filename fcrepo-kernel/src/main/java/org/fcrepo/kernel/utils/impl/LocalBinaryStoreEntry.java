@@ -18,66 +18,52 @@ package org.fcrepo.kernel.utils.impl;
 import static java.util.Objects.hash;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.services.functions.GetBinaryKey;
+import org.fcrepo.kernel.utils.BasicCacheEntry;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
-import org.modeshape.jcr.value.binary.BinaryStoreException;
-import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
 import org.slf4j.Logger;
+
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 
 /**
  * A LowLevelCacheEntry within a local binary store
  *
  * @author awoods
  */
-public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
+public class LocalBinaryStoreEntry extends BasicCacheEntry {
 
     private static final Logger LOGGER = getLogger(LocalBinaryStoreEntry.class);
 
+    private GetBinaryKey getBinaryKey = new GetBinaryKey();
     private final BinaryStore store;
+    private final Property property;
 
     /**
      * @param store a Modeshape BinaryStore
-     * @param key the binary key we're interested in
+     * @param property the property we're interested in
      */
-    public LocalBinaryStoreEntry(final BinaryStore store, final BinaryKey key) {
-        super(key);
+    public LocalBinaryStoreEntry(final BinaryStore store, final Property property) {
+        this.property = property;
         this.store = store;
     }
 
-    BinaryStore getStore() {
+    BinaryStore store() {
         return store;
     }
 
     /**
      * Get a raw input stream from the underlying store
      * @return the content for this entry
-     * @throws BinaryStoreException
      */
     @Override
-    public InputStream getInputStream() throws BinaryStoreException {
-        return store.getInputStream(key);
-    }
-
-    /**
-     * Send a raw input stream to the underlying store for this entry; used for
-     * fixing e.g. fixity failures.
-     *
-     * @param stream binary content to REPLACE the content in the store
-     * @throws BinaryStoreException
-     * @throws IOException
-     */
-    @Override
-    public void storeValue(final InputStream stream)
-        throws BinaryStoreException, IOException {
-        // TODO this is probably an auditable action.
-        LOGGER.info("Doing a low-level write to store {} for key {}",
-                    getExternalIdentifier(), key);
-
-        store.storeValue(stream);
+    public InputStream getInputStream() throws RepositoryException {
+        return store.getInputStream(binaryKey());
     }
 
     /**
@@ -86,17 +72,12 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
      * @return
      */
     @Override
-    public String getExternalIdentifier() {
-
-        // TODO : I wonder if this could/should be a JSON blob or something
-        //  machine parsable as well?
-
-        if ( store instanceof FileSystemBinaryStore) {
-            final FileSystemBinaryStore fsStore = (FileSystemBinaryStore)store;
-            return getExternalId() + "/" + store.getClass().getName() + ":" +
-                fsStore.getDirectory().toPath();
+    public String getExternalIdentifier() throws RepositoryException {
+        try {
+            return new URI("info", store.toString(), null) + "/" + binaryKey();
+        } catch (URISyntaxException e) {
+            return binaryKey().toString();
         }
-        return getExternalId() + "/" + store;
     }
 
     /**
@@ -111,7 +92,7 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
         if (other instanceof LocalBinaryStoreEntry) {
             final LocalBinaryStoreEntry that = (LocalBinaryStoreEntry) other;
 
-            return key.equals(that.getKey()) &&
+            return property().equals(that.property()) &&
                    ((store == null && that.store == null) ||
                     (store != null && store.equals(that.store)));
         }
@@ -120,7 +101,15 @@ public class LocalBinaryStoreEntry extends LowLevelCacheEntry {
 
     @Override
     public int hashCode() {
-        return hash(store, key);
+        return hash(store, property);
+    }
+
+    protected Property property() {
+        return property;
+    }
+
+    protected BinaryKey binaryKey() throws RepositoryException {
+        return getBinaryKey.apply(property);
     }
 
 }

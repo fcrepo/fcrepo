@@ -20,6 +20,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.jcr.Binary;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 
 import java.io.InputStream;
 
@@ -29,6 +31,10 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class BinaryCacheEntryTest {
+
+    @Mock
+    private Property mockProperty;
+
     @Mock
     private Binary mockBinary;
 
@@ -39,10 +45,13 @@ public class BinaryCacheEntryTest {
 
 
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         initMocks(this);
 
-        testObj = new BinaryCacheEntry(mockBinary, "some-identifier");
+        when(mockProperty.getBinary()).thenReturn(mockBinary);
+        when(mockProperty.getPath()).thenReturn("/some/path");
+
+        testObj = new BinaryCacheEntry(mockProperty);
     }
 
     @Test
@@ -55,6 +64,6 @@ public class BinaryCacheEntryTest {
 
     @Test
     public void testGetExternalIdentifier() throws Exception {
-        assertEquals("some-identifier", testObj.getExternalIdentifier());
+        assertEquals("/some/path", testObj.getExternalIdentifier());
     }
 }
