@@ -332,14 +332,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         p = HAS_SIZE.asNode();
         o = createLiteral("22", createTypedLiteral(22L).getDatatype());
         assertTrue(datasetGraph.contains(ANY, s, p, o));
-
-        // location
-
-        p = HAS_CONTENT_LOCATION.asNode();
-        o = ANY;
-
-        assertTrue(datasetGraph.contains(ANY, s, p, o));
-
     }
 
     @Test
