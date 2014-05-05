@@ -63,9 +63,6 @@ public class PropertiesRdfContextTest {
                 .contains(mockSubject, HAS_CONTENT, mockContentSubject));
         assertTrue("Didn't find triple showing content has node!", results
                 .contains(mockContentSubject, IS_CONTENT_OF, mockSubject));
-        assertTrue("Didn't find triple showing content has location!", results
-                .contains(mockContentSubject, HAS_CONTENT_LOCATION,
-                        createResource(MOCK_EXTERNAL_IDENTIFIER)));
     }
 
     @Before
