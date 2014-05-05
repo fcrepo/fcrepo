@@ -24,8 +24,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 
-import java.net.URI;
-
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.Property;
