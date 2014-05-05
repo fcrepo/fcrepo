@@ -69,7 +69,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
                                     fixityInputStream.getByteCount(),
                                     calculatedChecksum);
 
-            if (checksum.equals(ContentDigest.missingChecksum()) || size == -1L) {
+            if (checksum == null || checksum.equals(ContentDigest.missingChecksum()) || size == -1L) {
                 result.getStatus().add(MISSING_STORED_FIXITY);
             }
 

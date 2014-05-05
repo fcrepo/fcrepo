@@ -43,6 +43,7 @@ public abstract class ContentDigest {
 
     public static final Map<String, String> schemeToAlgorithm =
         singletonMap("urn:sha1", "SHA-1");
+    public static final String DEFAULT_ALGORITHM = "SHA-1";
 
     /**
      * Convert a MessageDigest algorithm and checksum value to a URN
@@ -78,9 +79,13 @@ public abstract class ContentDigest {
      * @return
      */
     public static String getAlgorithm(final URI digestUri) {
-        return schemeToAlgorithm
+        if (digestUri == null) {
+            return DEFAULT_ALGORITHM;
+        } else {
+            return schemeToAlgorithm
             .get(digestUri.getScheme() + ":" +
                  digestUri.getSchemeSpecificPart().split(":", 2)[0]);
+        }
     }
 
     private static String asString(final byte[] data) {
