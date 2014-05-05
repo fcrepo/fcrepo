@@ -81,12 +81,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     static final Timer timer = getMetrics().timer(
             name(Datastream.class, "fixity-check-time"));
 
-    static final Counter fixityRepairedCounter = getMetrics().counter(
-            name(LowLevelStorageService.class, "fixity-repaired-counter"));
-
-    static final Counter fixityErrorCounter = getMetrics().counter(
-            name(LowLevelStorageService.class, "fixity-error-counter"));
-
     private static final Logger LOGGER = getLogger(DatastreamService.class);
 
     /**
@@ -250,32 +244,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         if (goodEntries.isEmpty()) {
             LOGGER.error("ALL COPIES OF " + datastream.getNode().getPath() +
                              " HAVE FAILED FIXITY CHECKS.");
-            return fixityResults;
-        }
-
-        final CacheEntry anyGoodCacheEntry =
-                goodEntries.iterator().next().getEntry();
-
-        final Set<FixityResult> badEntries =
-                difference(fixityResults, goodEntries);
-
-        for (final FixityResult result : badEntries) {
-            try {
-                // we can safely cast to a LowLevelCacheEntry here, since
-                // other entries have to be filtered out before
-                final LowLevelCacheEntry lle = (LowLevelCacheEntry) result.getEntry();
-                lle.storeValue(anyGoodCacheEntry.getInputStream());
-                final FixityResult newResult =
-                        result.getEntry().checkFixity(digestUri, size);
-                if (newResult.isSuccess()) {
-                    result.setRepaired();
-                    fixityRepairedCounter.inc();
-                } else {
-                    fixityErrorCounter.inc();
-                }
-            } catch (final IOException e) {
-                LOGGER.warn("Exception repairing low-level cache entry: {}", e);
-            }
         }
 
         return fixityResults;
