@@ -34,12 +34,9 @@ import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.rdf.impl.mappings.ZippingIterator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Node;
@@ -65,9 +62,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
 
-    public PropertiesRdfContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects,
-        final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
-        super(node, graphSubjects, lowLevelStorageService);
+    public PropertiesRdfContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects)
+        throws RepositoryException {
+        super(node, graphSubjects);
         property2triple = new PropertyToTriple(graphSubjects);
         putPropertiesIntoContext();
     }
@@ -107,7 +104,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
         }
 
         if (node().getPrimaryNodeType().getName().equals(ROOT)) {
-            concat(new RootRdfContext(node(), graphSubjects(), lowLevelStorageService()));
+            concat(new RootRdfContext(node(), graphSubjects()));
         }
 
     }

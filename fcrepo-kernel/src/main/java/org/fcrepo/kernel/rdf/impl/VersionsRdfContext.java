@@ -30,7 +30,6 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.VersionIterator;
 
@@ -54,8 +53,6 @@ public class VersionsRdfContext extends RdfStream {
 
     private final IdentifierTranslator graphSubjects;
 
-    private final LowLevelStorageService lowLevelStorageService;
-
     private final com.hp.hpl.jena.graph.Node subject;
 
     /**
@@ -63,14 +60,11 @@ public class VersionsRdfContext extends RdfStream {
      *
      * @param node
      * @param graphSubjects
-     * @param lowLevelStorageService
      * @throws RepositoryException
      */
-    public VersionsRdfContext(final Node node, final IdentifierTranslator graphSubjects,
-        final LowLevelStorageService lowLevelStorageService)
+    public VersionsRdfContext(final Node node, final IdentifierTranslator graphSubjects)
         throws RepositoryException {
         super();
-        this.lowLevelStorageService = lowLevelStorageService;
         this.graphSubjects = graphSubjects;
         this.subject = graphSubjects.getSubject(node.getPath()).asNode();
         versionManager = node.getSession().getWorkspace().getVersionManager();
@@ -97,7 +91,7 @@ public class VersionsRdfContext extends RdfStream {
 
                     final RdfStream results =
                             new RdfStream(new PropertiesRdfContext(frozenNode,
-                                    graphSubjects, lowLevelStorageService)
+                                    graphSubjects)
                                     .iterator());
 
                     results.concat(create(subject, HAS_VERSION.asNode(),

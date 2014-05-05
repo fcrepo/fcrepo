@@ -37,7 +37,6 @@ import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -73,11 +72,10 @@ public class HierarchyRdfContext extends NodeRdfContext {
      */
     public HierarchyRdfContext(final javax.jcr.Node node,
                                final IdentifierTranslator graphSubjects,
-                               final LowLevelStorageService lowLevelStorageService,
                                final HierarchyRdfContextOptions options)
         throws RepositoryException {
 
-        super(node, graphSubjects, lowLevelStorageService);
+        super(node, graphSubjects);
         this.options = options;
 
         if (JcrRdfTools.isContainer(node)) {
@@ -157,7 +155,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
                     if (options.containmentEnabled()) {
 
                         childStream.concat(
-                            new PropertiesRdfContext(child, graphSubjects(), lowLevelStorageService())
+                            new PropertiesRdfContext(child, graphSubjects())
                         );
                         childStream.concat(create(childSubject, HAS_PARENT.asNode(), subject()),
                                            create(subject(), CONTAINS.asNode(), childSubject));

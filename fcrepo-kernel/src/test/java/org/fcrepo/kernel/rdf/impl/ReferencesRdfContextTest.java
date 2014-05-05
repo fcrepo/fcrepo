@@ -19,7 +19,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -104,9 +103,6 @@ public class ReferencesRdfContextTest {
 
     @Mock
     private IdentifierTranslator mockGraphSubjects;
-
-    @Mock
-    private LowLevelStorageService mockLowLevelStorageService;
 
     @Mock
     private PropertyIterator mockReferences;

@@ -38,7 +38,6 @@ import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.FixityResult;
 
 import com.google.common.base.Function;
@@ -60,14 +59,12 @@ public class FixityRdfContext extends NodeRdfContext {
      *
      * @param node
      * @param graphSubjects
-     * @param lowLevelStorageService
      * @param blobs
      * @throws RepositoryException
      */
     public FixityRdfContext(final Node node, final IdentifierTranslator graphSubjects,
-            final LowLevelStorageService lowLevelStorageService,
             final Iterable<FixityResult> blobs) throws RepositoryException {
-        super(node, graphSubjects, lowLevelStorageService);
+        super(node, graphSubjects);
 
         concat(Iterators.concat(Iterators.transform(blobs.iterator(),
                 new Function<FixityResult, Iterator<Triple>>() {
