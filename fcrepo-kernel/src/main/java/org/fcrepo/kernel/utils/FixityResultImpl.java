@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.utils;
 
+import javax.jcr.RepositoryException;
+
 import static java.util.Objects.hash;
 
 import java.net.URI;
@@ -55,22 +57,7 @@ public class FixityResultImpl implements FixityResult {
      */
     private URI computedChecksum;
 
-    private final CacheEntry entry;
-
-    /**
-     * Initialize an empty fixity result
-     */
-    public FixityResultImpl() {
-        this(null);
-    }
-
-    /**
-     * Prepare a fixity result for a Low-Level cache entry
-     * @param entry
-     */
-    public FixityResultImpl(final CacheEntry entry) {
-        this.entry = entry;
-    }
+    private final String storeIdentifier;
 
     /**
      * Prepare a fixity result given the computed checksum and size
@@ -78,7 +65,7 @@ public class FixityResultImpl implements FixityResult {
      * @param checksum
      */
     public FixityResultImpl(final long size, final URI checksum) {
-        this(null, size, checksum);
+        this("comparison-only-identifier", size, checksum);
     }
 
     /**
@@ -88,8 +75,18 @@ public class FixityResultImpl implements FixityResult {
      * @param checksum
      */
     public FixityResultImpl(final CacheEntry entry, final long size,
-                        final URI checksum) {
-        this.entry = entry;
+                        final URI checksum) throws RepositoryException {
+        this(entry.getExternalIdentifier(), size, checksum);
+    }
+
+    /**
+     *
+     * @param storeIdentifier
+     * @param size
+     * @param checksum
+     */
+    public FixityResultImpl(final String storeIdentifier, final long size, final URI checksum) {
+        this.storeIdentifier = storeIdentifier;
         computedSize = size;
         computedChecksum = checksum;
     }
@@ -99,8 +96,8 @@ public class FixityResultImpl implements FixityResult {
      * @return
      */
     @Override
-    public String getStoreIdentifier() {
-        return entry.getExternalIdentifier();
+    public String getStoreIdentifier() throws RepositoryException {
+        return storeIdentifier;
     }
 
     @Override
@@ -126,15 +123,6 @@ public class FixityResultImpl implements FixityResult {
     public String toString() {
         return "Fixity: checksum: " + computedChecksum + " / " +
             Long.toString(computedSize);
-    }
-
-    /**
-     * Get the underlying Low-Level cache entry
-     * @return
-     */
-    @Override
-    public CacheEntry getEntry() {
-        return entry;
     }
 
     /**
