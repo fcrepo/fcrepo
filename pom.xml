@@ -15,7 +15,7 @@
     <name>DuraSpace, Inc.</name>
     <url>http://www.duraspace.org/</url>
   </organization>
-  <inceptionYear>2013</inceptionYear>
+  <inceptionYear>2014</inceptionYear>
   <packaging>pom</packaging>
   <properties>
     <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
