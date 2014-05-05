@@ -38,15 +38,10 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
 
-import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
-import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.springframework.stereotype.Component;
-
-import com.google.common.base.Function;
 
 /**
  * Uncategorized helper methods
@@ -153,20 +148,6 @@ public abstract class ServiceHelpers {
         // works as long as
         // modeshape continues to be ordered..
         return new DefaultExecutorService(cacheStore.getCaches().get(1));
-    }
-
-    /**
-     * Get the fixity function to map a low-level cache entry to its fixity
-     * result
-     * 
-     * @param dsChecksum
-     * @param dsSize
-     * @return
-     */
-    public static
-    Function<LowLevelCacheEntry, FixityResult>
-    getCheckCacheFixityFunction(final URI dsChecksum, final long dsSize) {
-        return new CheckCacheEntryFixity(dsChecksum, dsSize);
     }
 
     /**

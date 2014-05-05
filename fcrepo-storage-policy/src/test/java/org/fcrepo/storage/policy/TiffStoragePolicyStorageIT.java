@@ -17,14 +17,14 @@ package org.fcrepo.storage.policy;
 
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.net.URL;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -33,11 +33,10 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.DatastreamServiceImpl;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.ObjectServiceImpl;
 import org.fcrepo.kernel.services.functions.GetBinaryKey;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
+import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepositoryFactory;
@@ -56,8 +55,6 @@ public class TiffStoragePolicyStorageIT {
     private DatastreamService datastreamService;
 
     private ObjectService objectService;
-
-    private LowLevelStorageService lowLevelService;
 
     private StoragePolicyDecisionPointImpl pdp;
 
@@ -87,8 +84,6 @@ public class TiffStoragePolicyStorageIT {
         ((DatastreamServiceImpl) datastreamService).setStoragePolicyDecisionPoint(pdp);
         objectService = new ObjectServiceImpl();
         objectService.setRepository(repo);
-        lowLevelService = new LowLevelStorageService();
-        lowLevelService.setRepository(repo);
     }
 
     @Test
@@ -132,29 +127,21 @@ public class TiffStoragePolicyStorageIT {
 
         logger.info("tiff key: {}", tiffKey);
 
-        final Set<LowLevelCacheEntry> lowLevelContentEntries =
-            lowLevelService.getLowLevelCacheEntries(key);
+        Collection<FixityResult> fixity = datastreamService.getFixity(node.getNode(JcrConstants.JCR_CONTENT), null, 0L);
 
-        final Iterator<LowLevelCacheEntry> iterator =
-            lowLevelContentEntries.iterator();
+        assertNotEquals(0, fixity.size());
 
-        assertEquals(1, lowLevelContentEntries.size());
+        FixityResult e = fixity.iterator().next();
 
-        final Set<LowLevelCacheEntry> lowLevelTiffEntries =
-            lowLevelService.getLowLevelCacheEntries(tiffKey);
+        assertThat(e.getStoreIdentifier(), containsString("TransientBinaryStore"));
 
-        final Iterator<LowLevelCacheEntry> tiffIterator =
-            lowLevelTiffEntries.iterator();
 
-        assertEquals(1, lowLevelTiffEntries.size());
+        fixity = datastreamService.getFixity(tiffNode.getNode(JcrConstants.JCR_CONTENT), null, 0L);
 
-        final LowLevelCacheEntry e = iterator.next();
+        assertNotEquals(0, fixity.size());
 
-        assertThat(e.getExternalIdentifier(),
-                   containsString("TransientBinaryStore"));
+        e = fixity.iterator().next();
 
-        final LowLevelCacheEntry tiffEntry = tiffIterator.next();
-        assertThat(tiffEntry.getExternalIdentifier(),
-                   containsString("FileSystemBinaryStore"));
+        assertThat(e.getStoreIdentifier(), containsString("FileSystemBinaryStore"));
     }
 }

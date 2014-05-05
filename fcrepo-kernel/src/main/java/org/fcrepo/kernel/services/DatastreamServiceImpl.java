@@ -18,20 +18,16 @@ package org.fcrepo.kernel.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Sets.difference;
-import static org.fcrepo.kernel.services.ServiceHelpers.getCheckCacheFixityFunction;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -72,11 +68,8 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     @Autowired(required = false)
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
-    @Autowired
-    private LowLevelStorageService llStoreService;
-
-    static final Counter fixityCheckCounter = getMetrics().counter(
-            name(LowLevelStorageService.class, "fixity-check-counter"));
+    static final Counter fixityCheckCounter
+        = getMetrics().counter(name(DatastreamService.class, "fixity-check-counter"));
 
     static final Timer timer = getMetrics().timer(
             name(Datastream.class, "fixity-check-time"));
@@ -280,15 +273,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
                                                                    checkCacheFunc);
         }
 
-    }
-
-    /**
-     * Set the low-level storage service (if Spring didn't wire it in)
-     *
-     * @param llStoreService
-     */
-    public void setLlStoreService(final LowLevelStorageService llStoreService) {
-        this.llStoreService = llStoreService;
     }
 
     /**
