@@ -41,8 +41,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
+import java.util.UUID;
 
 import javax.inject.Inject;
+import javax.jcr.Value;
 import javax.jcr.nodetype.NodeTypeDefinition;
 import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.PropertyType;
@@ -51,6 +53,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeManager;
 
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
@@ -523,5 +527,25 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String actual = object.getEtagValue();
         assertNotNull(actual);
         assertNotEquals("", actual);
+    }
+
+    @Test
+    public void testGetReferences() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        objectService.createObject(session, pid);
+        final FedoraObject subject = objectService.createObject(session, pid + "/a");
+        final FedoraObject object = objectService.createObject(session, pid + "/b");
+        final Value value = session.getValueFactory().createValue(object.getNode());
+        subject.getNode().setProperty("fedorarelsext:isPartOf", new Value[] { value });
+
+        session.save();
+
+        final Model model = object.getReferencesTriples(subjects).asModel();
+
+        assertTrue(
+            model.contains(subjects.getSubject(subject.getPath()),
+                              ResourceFactory.createProperty("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
+                              subjects.getSubject(object.getPath()))
+        );
     }
 }

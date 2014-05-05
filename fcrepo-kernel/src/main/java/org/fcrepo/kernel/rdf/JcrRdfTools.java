@@ -33,7 +33,9 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.getReferencePropertyOriginalName;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
@@ -54,6 +56,7 @@ import org.fcrepo.kernel.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.rdf.impl.WorkspaceRdfContext;
 import org.fcrepo.kernel.services.LowLevelStorageService;
@@ -330,6 +333,17 @@ public class JcrRdfTools {
         return getTreeTriples(node, HierarchyRdfContextOptions.DEFAULT);
     }
 
+
+    /**
+     * Add the properties for inbound references to this node
+     * @param node
+     * @return
+     * @throws RepositoryException
+     */
+    public RdfStream getReferencesTriples(final Node node) throws RepositoryException {
+        return new ReferencesRdfContext(node, graphSubjects);
+    }
+
     /**
      * Decides whether the RDF representation of this {@link Node} will receive LDP Container status.
      *
@@ -506,9 +520,9 @@ public class JcrRdfTools {
             getNamespaceRegistry.apply(node);
 
         return getJcrNameForRdfNode(namespaceRegistry,
-                                    predicate.getNameSpace(),
-                                    predicate.getLocalName(),
-                                    namespaceMapping);
+                                       predicate.getNameSpace(),
+                                       predicate.getLocalName(),
+                                       namespaceMapping);
     }
 
     /**
@@ -653,9 +667,17 @@ public class JcrRdfTools {
                         if (property instanceof Namespaced) {
                             final Namespaced nsProperty = (Namespaced) property;
                             final String uri = nsProperty.getNamespaceURI();
+                            final String localName = nsProperty.getLocalName();
+                            final String rdfLocalName;
+
+                            if (isReferenceProperty.apply(property)) {
+                                rdfLocalName = getReferencePropertyOriginalName(localName);
+                            } else {
+                                rdfLocalName = localName;
+                            }
                             return createProperty(
                                     getRDFNamespaceForJcrNamespace(uri),
-                                    nsProperty.getLocalName());
+                                                     rdfLocalName);
                         }
                         return createProperty(property.getName());
                     } catch (final RepositoryException e) {
@@ -664,5 +686,4 @@ public class JcrRdfTools {
 
                 }
             };
-
 }

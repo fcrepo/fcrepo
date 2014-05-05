@@ -148,6 +148,14 @@ public interface FedoraResource {
         throws RepositoryException;
 
     /**
+     * Serialize inbound References to this object as an {@link RdfStream}
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    RdfStream getReferencesTriples(IdentifierTranslator graphSubjects) throws RepositoryException;
+
+    /**
      * Tag the current version of the Node with a version label that
      * can be retrieved by name later.
      *

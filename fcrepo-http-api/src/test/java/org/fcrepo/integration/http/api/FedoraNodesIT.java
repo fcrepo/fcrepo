@@ -47,6 +47,7 @@ import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
@@ -80,6 +81,7 @@ import java.util.Iterator;
 
 import javax.ws.rs.core.Variant;
 
+import com.hp.hpl.jena.graph.NodeFactory;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
@@ -99,6 +101,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
@@ -575,6 +578,51 @@ public class FedoraNodesIT extends AbstractResourceIT {
                                       + serverAddress
                                       + pid + "> <" + CONTAINS + ">",
                                   DOTALL).matcher(content).find());
+
+    }
+
+    @Test
+    public void testGetObjectReferences() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        createObject(pid + "/a");
+        createObject(pid + "/b");
+
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(serverAddress + pid + "/a");
+
+        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+
+        BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(
+            new ByteArrayInputStream(
+                ("INSERT { " +
+                 "<" + serverAddress + pid + "/a" + "> <http://fedora.info/definitions/v4/rels-ext#isPartOf> <" + serverAddress + pid + "/b" + "> . \n" +
+                 "<" + serverAddress + pid + "/a" + "> <info:xyz#some-other-property> <" + serverAddress + pid + "/b" + "> " +
+                 "} WHERE {}").getBytes()
+            )
+        );
+
+        updateObjectGraphMethod.setEntity(e);
+        client.execute(updateObjectGraphMethod);
+
+        final HttpGet getObjMethod =  new HttpGet(serverAddress + pid + "/b");
+
+        getObjMethod.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES.toString() + "\"");
+        getObjMethod.addHeader("Accept", "application/n-triples");
+
+        final GraphStore graphStore = getGraphStore(getObjMethod);
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          NodeFactory.createURI(serverAddress + pid + "/a"),
+                                          NodeFactory.createURI("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
+                                          NodeFactory.createURI(serverAddress + pid + "/b")
+                                          ));
+
+        assertTrue(graphStore.contains(Node.ANY,
+                                          NodeFactory.createURI(serverAddress + pid + "/a"),
+                                          NodeFactory.createURI("info:xyz#some-other-property"),
+                                          NodeFactory.createURI(serverAddress + pid + "/b")
+        ));
 
     }
 

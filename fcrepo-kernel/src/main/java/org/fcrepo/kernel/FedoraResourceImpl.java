@@ -304,6 +304,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 .getVersionTriples(node);
     }
 
+    @Override
+    public RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) throws RepositoryException {
+        return JcrRdfTools.withContext(graphSubjects, node.getSession()).getReferencesTriples(node);
+    }
+
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#addVersionLabel(java.lang.String)
      */
