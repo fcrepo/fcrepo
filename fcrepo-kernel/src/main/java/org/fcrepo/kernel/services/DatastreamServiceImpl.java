@@ -38,23 +38,16 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.utils.BinaryCacheEntry;
-import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
-import org.fcrepo.kernel.utils.ProjectedCacheEntry;
+import org.fcrepo.kernel.utils.impl.CacheEntryFactory;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.value.binary.ExternalBinaryValue;
-import org.modeshape.jcr.value.binary.InMemoryBinaryValue;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -203,8 +196,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @throws RepositoryException
      */
     @Override
-    public Collection<FixityResult> runFixityAndFixProblems(
-            final Datastream datastream) throws RepositoryException {
+    public Collection<FixityResult> runFixityAndFixProblems(final Datastream datastream) throws RepositoryException {
 
         Set<FixityResult> fixityResults;
         Set<FixityResult> goodEntries;
@@ -254,24 +246,12 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      */
     @Override
     public Collection<FixityResult> getFixity(final Node resource,
-            final URI dsChecksum, final long dsSize) throws RepositoryException {
+                                              final URI dsChecksum,
+                                              final long dsSize) throws RepositoryException {
         LOGGER.debug("Checking resource: " + resource.getPath());
 
-        final Binary bin = resource.getProperty(JCR_DATA).getBinary();
+        return CacheEntryFactory.forProperty(repo, resource.getProperty(JCR_DATA)).checkFixity(dsChecksum, dsSize);
 
-        if (bin instanceof ExternalBinaryValue) {
-            return ImmutableSet.of(new ProjectedCacheEntry(bin, resource.getPath())
-                                    .checkFixity(dsChecksum, dsSize));
-
-        } else if (bin instanceof InMemoryBinaryValue) {
-            return ImmutableSet.of(new BinaryCacheEntry(bin, resource.getPath())
-                                    .checkFixity(dsChecksum, dsSize));
-        } else {
-            final Function<LowLevelCacheEntry, FixityResult> checkCacheFunc =
-                getCheckCacheFixityFunction(dsChecksum, dsSize);
-            return llStoreService.transformLowLevelCacheEntries(resource,
-                                                                   checkCacheFunc);
-        }
 
     }
 
