@@ -43,7 +43,6 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.JcrRepository;
 import org.slf4j.Logger;
@@ -67,13 +66,11 @@ public class RootRdfContext extends NodeRdfContext {
      *
      * @param node
      * @param graphSubjects
-     * @param llsService
      * @throws RepositoryException
      */
-    public RootRdfContext(final Node node, final IdentifierTranslator graphSubjects,
-            final LowLevelStorageService llsService) throws RepositoryException {
+    public RootRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
 
-        super(node, graphSubjects, llsService);
+        super(node, graphSubjects);
 
         LOGGER.trace("Creating RDF triples for repository description");
         final Repository repository = node().getSession().getRepository();

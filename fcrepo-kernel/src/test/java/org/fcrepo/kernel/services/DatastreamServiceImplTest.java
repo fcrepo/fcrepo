@@ -17,7 +17,6 @@ package org.fcrepo.kernel.services;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
-import static org.fcrepo.kernel.services.ServiceHelpers.getCheckCacheFixityFunction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentCaptor.forClass;
@@ -44,7 +43,6 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.services.functions.CheckCacheEntryFixity;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.LowLevelCacheEntry;
@@ -61,8 +59,6 @@ import org.modeshape.jcr.value.binary.StoredBinaryValue;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import com.google.common.base.Function;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
@@ -96,8 +92,6 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
     private DatastreamService testObj;
 
-    private LowLevelStorageService llStore;
-
     @Mock
     private ValueFactory mockValueFactory;
 
@@ -116,8 +110,6 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:file");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        llStore = mock(LowLevelStorageService.class);
-        ((DatastreamServiceImpl) testObj).setLlStoreService(llStore);
     }
 
     @Test
