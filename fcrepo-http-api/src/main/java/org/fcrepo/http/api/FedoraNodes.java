@@ -733,11 +733,15 @@ public class FedoraNodes extends AbstractResource {
                         msg.append( " " + session.getNodeByIdentifier(node.getIdentifier()).getPath() );
                     } catch ( Exception ex ) {
                         msg.append( " <" + node.getIdentifier() + ">");
+                        LOGGER.debug("Cannot get node identifier in session, using node " +
+                                     "identifier '{}':  {}", node.getIdentifier(), ex);
                     }
                 }
             }
+            LOGGER.debug(msg.toString(), riex);
             return status(SC_PRECONDITION_FAILED).entity(msg.toString()).build();
         } catch (WebApplicationException ex) {
+            LOGGER.debug("Unable to delete node: {}", ex);
             return (Response)ex.getResponse();
         } finally {
             session.logout();

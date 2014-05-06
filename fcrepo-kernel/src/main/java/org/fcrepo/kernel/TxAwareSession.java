@@ -16,12 +16,15 @@
 package org.fcrepo.kernel;
 
 import static java.lang.reflect.Proxy.newProxyInstance;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import javax.jcr.Session;
+
+import org.slf4j.Logger;
 
 /**
  * A dynamic proxy that wraps JCR sessions. It is aware of fcrepo transactions,
@@ -35,6 +38,8 @@ public class TxAwareSession implements InvocationHandler {
     private final String txId;
 
     private final Session session;
+
+    private static final Logger LOGGER = getLogger(TxAwareSession.class);
 
     /**
      * @param session a JCR session
@@ -71,6 +76,9 @@ public class TxAwareSession implements InvocationHandler {
             try {
                 invocationResult = method.invoke(session, args);
             } catch (final InvocationTargetException e) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Throwing '{}', caught:  {}", e.getCause().toString(), e);
+                }
                 throw e.getCause();
             }
             if (name.equals("impersonate")) {

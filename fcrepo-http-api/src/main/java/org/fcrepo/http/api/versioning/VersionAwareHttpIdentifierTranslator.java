@@ -232,6 +232,7 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
              * the label wasn't a uuid of a frozen node but
              * instead possibly a version label.
              */
+            LOGGER.debug("Frozen node '{}' not found:  caught exception: {}", label, ex);
         }
 
         final VersionHistory hist =

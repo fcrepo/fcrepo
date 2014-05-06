@@ -72,7 +72,8 @@ public class MimeTypeStoragePolicy implements StoragePolicy {
                 return hint;
             }
         } catch (final RepositoryException e) {
-            LOGGER.info("Got Exception evaluating policy: {}", e.getMessage());
+            LOGGER.info("Cannot evaluate policy: {}", e.getMessage());
+            LOGGER.debug("Caught exception evaluating policy", e);
             return null;
         }
 

@@ -142,6 +142,8 @@ public class AccessRolesProvider {
                 LOGGER.info(
                              "Found rbaclAssignable mixin without a corresponding node at {}",
                              node.getPath());
+                LOGGER.debug("Caught exception getting assignments for node:  " +
+                             "rbaclAssignable mixin without a corresponding node", e);
             }
         }
     }

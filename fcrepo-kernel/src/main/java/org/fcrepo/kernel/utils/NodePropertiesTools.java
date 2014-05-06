@@ -102,6 +102,8 @@ public class NodePropertiesTools {
 
             } catch (final NoSuchPropertyDefinitionException e) {
                 // simply represents a new kind of property on this node
+                LOGGER.debug("Caught '{}':  not to worry, it's a new kind " +
+                             "of property on the node", e);
             }
             if (isMultiple) {
                 LOGGER.debug("Creating new multivalued {} property {} with " +

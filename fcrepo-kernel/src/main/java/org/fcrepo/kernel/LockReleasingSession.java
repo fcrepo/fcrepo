@@ -93,6 +93,7 @@ public class LockReleasingSession implements InvocationHandler {
         try {
             invocationResult = method.invoke(session, args);
         } catch (final InvocationTargetException e) {
+            LOGGER.debug("Throwing '{}', caught: {}", e.getCause().toString(), e);
             throw e.getCause();
         }
         return invocationResult;
