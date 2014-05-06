@@ -16,7 +16,7 @@
   <logger name="org.fcrepo" additivity="false" level="${log.fcrepo:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo.kernel.observer" additivity="false" level="${log.fcrepo:-INFO}">
+  <logger name="org.fcrepo.kernel.observer" additivity="false" level="${log.fcrepo.kernel.observer:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
   <root additivity="false" level="WARN">
