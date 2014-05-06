@@ -17,8 +17,8 @@ package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.Throwables.propagate;
 import static org.fcrepo.kernel.utils.EventType.valueOf;
-import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isFedoraObject;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -27,9 +27,9 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Predicate;
-
 import org.slf4j.Logger;
+
+import com.google.common.base.Predicate;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -88,6 +88,7 @@ public class DefaultFilter implements EventFilter {
                     if (isFedoraObject.apply(n) || isFedoraDatastream.apply(n)) {
                         return true;
                     }
+                    break;
             }
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
