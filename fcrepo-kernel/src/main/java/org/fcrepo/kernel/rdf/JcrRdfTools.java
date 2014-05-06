@@ -520,9 +520,9 @@ public class JcrRdfTools {
             getNamespaceRegistry.apply(node);
 
         return getJcrNameForRdfNode(namespaceRegistry,
-                                       predicate.getNameSpace(),
-                                       predicate.getLocalName(),
-                                       namespaceMapping);
+                                    predicate.getNameSpace(),
+                                    predicate.getLocalName(),
+                                    namespaceMapping);
     }
 
     /**

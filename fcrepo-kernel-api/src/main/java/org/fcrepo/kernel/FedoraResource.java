@@ -153,7 +153,7 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    RdfStream getReferencesTriples(IdentifierTranslator graphSubjects) throws RepositoryException;
+    RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
 
     /**
      * Tag the current version of the Node with a version label that
