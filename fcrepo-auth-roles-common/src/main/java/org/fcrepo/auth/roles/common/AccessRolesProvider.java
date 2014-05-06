@@ -140,10 +140,9 @@ public class AccessRolesProvider {
                     }
                 }
             } catch (final PathNotFoundException e) {
-                LOGGER.error(
+                LOGGER.info(
                              "Found rbaclAssignable mixin without a corresponding node at {}",
-                             node.getPath(),
-                             e);
+                             node.getPath());
             }
         }
     }

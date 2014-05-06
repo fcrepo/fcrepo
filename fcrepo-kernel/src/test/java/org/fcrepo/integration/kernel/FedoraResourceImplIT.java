@@ -123,7 +123,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             nodeService.findOrCreateObject(session, "/testNodeGraph");
 
-        logger.warn(object.getPropertiesDataset(
+        logger.debug(object.getPropertiesDataset(
                 new DefaultIdentifierTranslator()).toString());
         final Node s = createGraphSubjectNode("/testNodeGraph");
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
@@ -137,7 +137,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final FedoraResource object = nodeService.getObject(session, "/");
 
-        logger.warn(object.getPropertiesDataset(subjects).toString());
+        logger.debug(object.getPropertiesDataset(subjects).toString());
         final Node s = createGraphSubjectNode("/");
         Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         Node o = createLiteral("mode:root");
@@ -164,7 +164,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             objectService.createObject(session, "/testObjectGraph");
 
-        logger.warn(object.getPropertiesDataset(subjects).toString());
+        logger.debug(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
         final Node s = createGraphSubjectNode("/testObjectGraph");
@@ -205,7 +205,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         object = objectService.getObject(session, "/testObjectGraph");
 
 
-        logger.warn(object.getPropertiesDataset(subjects).toString());
+        logger.debug(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
         final Node s = createGraphSubjectNode("/testObjectGraph");
@@ -285,7 +285,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertTrue(propertiesDataset.getContext().isDefined(
                 Symbol.create("uri")));
 
-        logger.warn(propertiesDataset.toString());
+        logger.debug(propertiesDataset.toString());
 
         // jcr property
         Node s = createGraphSubjectNode("/testDatastreamGraph");
@@ -353,7 +353,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 1, 1);
 
-        logger.warn(propertiesDataset.toString());
+        logger.debug(propertiesDataset.toString());
 
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
 
@@ -451,7 +451,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Model graphStore = object.getVersionTriples(subjects).asModel();
 
-        logger.info(graphStore.toString());
+        logger.debug(graphStore.toString());
 
         // go querying for the version URI
         Resource s = subjects.getSubject("/testObjectVersionGraph");
@@ -478,7 +478,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 0, -2);
 
-        logger.warn(propertiesDataset.toString());
+        logger.debug(propertiesDataset.toString());
 
         object.updatePropertiesDataset(
                 subjects,
@@ -502,7 +502,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 0, -2);
 
-        logger.warn(propertiesDataset.toString());
+        logger.debug(propertiesDataset.toString());
 
         object.updatePropertiesDataset(subjects, "INSERT { <"
                 + createGraphSubjectNode("/testObjectRdfType").getURI() + "> <" + RDF.type

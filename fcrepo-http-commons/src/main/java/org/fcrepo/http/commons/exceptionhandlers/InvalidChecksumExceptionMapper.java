@@ -45,8 +45,7 @@ public class InvalidChecksumExceptionMapper implements
     @Override
     public Response toResponse(final InvalidChecksumException e) {
 
-        LOGGER.warn("InvalidChecksumExceptionMapper intercepted exception: \n",
-                       e);
+        LOGGER.info(e.toString());
 
         return status(CONFLICT).entity(e.getMessage()).build();
     }

@@ -45,7 +45,7 @@ public class RepositoryExceptionMapper implements
     @Override
     public Response toResponse(final RepositoryException e) {
 
-        LOGGER.warn("Caught repository exception: {}", e);
+        LOGGER.warn("Caught repository exception: {}", e.getMessage() );
 
         if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
             return status(BAD_REQUEST).entity(e.getMessage()).build();

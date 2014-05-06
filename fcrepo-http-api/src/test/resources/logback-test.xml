@@ -7,10 +7,10 @@
         </encoder>
     </appender>
 
-  <logger name="org.fcrepo.http.api" additivity="false" level="DEBUG">
+  <logger name="org.fcrepo.http.api" additivity="false" level="INFO">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo.integration.http" additivity="false" level="DEBUG">
+  <logger name="org.fcrepo.integration.http" additivity="false" level="INFO">
     <appender-ref ref="STDOUT"/>
   </logger>
   <logger name="org.fcrepo" additivity="false" level="INFO">
