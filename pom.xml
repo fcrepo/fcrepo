@@ -15,7 +15,7 @@
     <name>DuraSpace, Inc.</name>
     <url>http://www.duraspace.org/</url>
   </organization>
-  <inceptionYear>2014</inceptionYear>
+  <inceptionYear>2013</inceptionYear>
   <packaging>pom</packaging>
   <properties>
     <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
@@ -23,6 +23,7 @@
     <project_name>fcrepo4</project_name>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <project.copyrightYear>2014</project.copyrightYear>
     <!-- Dependency version properties -->
     <activemq.version>5.9.0</activemq.version>
     <enunciate.version>1.27</enunciate.version>
@@ -532,7 +533,7 @@
             </excludes>
             <properties>
               <name>${project.artifactId}</name>
-              <year>${project.inceptionYear}</year>
+              <year>${project.copyrightYear}</year>
               <holder>${project.organization.name}</holder>
             </properties>
             <encoding>UTF-8</encoding>
@@ -1195,7 +1196,7 @@
     <license>
       <name>Apache License, Version 2.0</name>
       <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-      <comments>Copyright (c) 2013 DuraSpace</comments>
+      <comments>Copyright (c) 2014 DuraSpace</comments>
     </license>
   </licenses>
   <distributionManagement>
