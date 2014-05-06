@@ -26,6 +26,7 @@ import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeIterator;
@@ -35,6 +36,7 @@ import javax.jcr.version.VersionHistory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.impl.NodeTypeRdfContext;
+import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
@@ -154,6 +156,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     @Override
     public void deleteObject(final Session session, final String path) throws RepositoryException {
         final Node obj = session.getNode(path);
+        final PropertyIterator inboundProperties = new PropertyIterator(obj.getReferences());
+
+        for (final Property inboundProperty : inboundProperties) {
+            inboundProperty.remove();
+        }
+
         obj.remove();
     }
 
