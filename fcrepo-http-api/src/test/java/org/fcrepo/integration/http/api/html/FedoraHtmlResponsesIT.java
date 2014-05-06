@@ -18,6 +18,7 @@ package org.fcrepo.integration.http.api.html;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
+import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomAttr;
 import com.gargoylesoftware.htmlunit.html.DomText;
@@ -163,7 +164,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 
-        final HtmlPage page2 = webClient.getPage(serverAddress + pid);
+        final Page page2 = webClient.getPage(serverAddress + pid);
         assertEquals("Didn't get a 404!", 404, page2.getWebResponse()
                 .getStatusCode());
 
