@@ -224,6 +224,7 @@ public class VersionServiceImplTest {
         VersionManager mockVersionManager = mock(VersionManager.class);
         VersionHistory mockHistory = mock(VersionHistory.class);
         Version mockVersion1 = mock(Version.class);
+        when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
@@ -277,6 +278,7 @@ public class VersionServiceImplTest {
         VersionManager mockVersionManager = mock(VersionManager.class);
         VersionHistory mockHistory = mock(VersionHistory.class);
         Version mockVersion1 = mock(Version.class);
+        when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory("/example-auto-versioned")).thenReturn(mockHistory);
