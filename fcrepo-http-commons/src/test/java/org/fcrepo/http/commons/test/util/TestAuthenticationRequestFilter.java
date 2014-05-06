@@ -68,10 +68,10 @@ public class TestAuthenticationRequestFilter implements Filter {
         Set<String> containerRoles = emptySet();
         if (FEDORA_ADMIN_USER.equals(username)) {
             containerRoles = singleton("fedoraAdmin");
-            log.info("ADMIN AUTHENTICATED");
+            log.debug("ADMIN AUTHENTICATED");
         } else {
             containerRoles = singleton("fedoraUser");
-            log.info("USER AUTHENTICATED");
+            log.debug("USER AUTHENTICATED");
         }
         final ServletRequest proxy = proxy(req, username, containerRoles);
         chain.doFilter(proxy, response);

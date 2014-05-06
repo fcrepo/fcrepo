@@ -69,7 +69,7 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         final HttpGet httpGet =
             new HttpGet(serverAddress + "workspace:" + workspace + "/" + pid);
         final GraphStore graphStore = getGraphStore(httpGet);
-        logger.info(graphStore.toString());
+        logger.debug(graphStore.toString());
     }
 
     @Test

@@ -81,7 +81,7 @@ public class DefaultPropertiesLoader {
      *   home directory
      */
     public void loadSystemProperties() {
-        LOGGER.info("Loading properties");
+        LOGGER.debug("Loading properties");
 
         if (getProperty("integration-test") == null) {
             LOGGER.trace("Setting default properties, if necessary.");
@@ -101,7 +101,7 @@ public class DefaultPropertiesLoader {
 
         for (final PROPERTIES prop : PROPERTIES.values()) {
             final String val = prop.getValue();
-            LOGGER.info("{} = {}", val, getProperty(val));
+            LOGGER.debug("{} = {}", val, getProperty(val));
         }
     }
 

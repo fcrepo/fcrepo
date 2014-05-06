@@ -7,7 +7,7 @@
         </encoder>
     </appender>
 
-  <logger name="org.fcrepo.connector" additivity="false" level="DEBUG">
+  <logger name="org.fcrepo.connector" additivity="false" level="INFO">
     <appender-ref ref="STDOUT"/>
   </logger>
   <root additivity="false" level="WARN">

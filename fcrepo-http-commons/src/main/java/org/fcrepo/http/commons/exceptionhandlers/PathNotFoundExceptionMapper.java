@@ -41,7 +41,7 @@ public class PathNotFoundExceptionMapper implements
 
     @Override
     public Response toResponse(final PathNotFoundException e) {
-        LOGGER.error("PathNotFoundExceptionMapper intercepted exception: \n", e);
+        LOGGER.info(e.getMessage());
         return status(NOT_FOUND).build();
     }
 
