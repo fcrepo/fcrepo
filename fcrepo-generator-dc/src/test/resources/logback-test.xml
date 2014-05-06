@@ -8,10 +8,10 @@
     </appender>
 
 
-  <logger name="org.fcrepo.generator.dublincore" additivity="false" level="INFO">
+  <logger name="org.fcrepo.generator.dublincore" additivity="false" level="${log.fcrepo.generator.dublincore:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo" additivity="false" level="INFO">
+  <logger name="org.fcrepo" additivity="false" level="${log.fcrepo:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
   <root additivity="false" level="WARN">

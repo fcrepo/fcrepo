@@ -7,10 +7,10 @@
         </encoder>
     </appender>
 
-  <logger name="org.fcrepo.storage.policy" additivity="false" level="INFO">
+  <logger name="org.fcrepo.storage.policy" additivity="false" level="${log.fcrepo.storage.policy:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo" additivity="false" level="INFO">
+  <logger name="org.fcrepo" additivity="false" level="${log.fcrepo:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
   <root additivity="false" level="WARN">

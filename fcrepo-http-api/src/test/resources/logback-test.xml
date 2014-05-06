@@ -7,13 +7,13 @@
         </encoder>
     </appender>
 
-  <logger name="org.fcrepo.http.api" additivity="false" level="INFO">
+  <logger name="org.fcrepo.http.api" additivity="false" level="${log.fcrepo.http.api:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo.integration.http" additivity="false" level="INFO">
+  <logger name="org.fcrepo.integration.http" additivity="false" level="${log.fcrepo.integration.http:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo" additivity="false" level="INFO">
+  <logger name="org.fcrepo" additivity="false" level="${log.fcrepo:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
   <logger name="com.gargoylesoftware.htmlunit" additivity="false" level="ERROR">
