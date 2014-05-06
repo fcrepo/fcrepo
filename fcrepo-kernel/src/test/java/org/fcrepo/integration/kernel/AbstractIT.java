@@ -22,6 +22,8 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.UUID;
+
 /**
  * @author ajs6f
  * @date 2013
@@ -34,6 +36,10 @@ public abstract class AbstractIT {
     @Before
     public void setLogger() {
         logger = getLogger(this.getClass());
+    }
+
+    public String getRandomPid() {
+        return UUID.randomUUID().toString();
     }
 
 }

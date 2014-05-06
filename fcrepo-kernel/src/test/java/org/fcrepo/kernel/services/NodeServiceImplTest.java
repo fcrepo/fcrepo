@@ -27,6 +27,7 @@ import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -64,6 +65,9 @@ public class NodeServiceImplTest {
     @Mock
     private Workspace mockWorkspace;
 
+    @Mock
+    private PropertyIterator mockEmptyIterator;
+
     private NodeService testObj;
 
     @Before
@@ -75,6 +79,7 @@ public class NodeServiceImplTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.getAllNodeTypes()).thenReturn(mockNTI);
+        when(mockEmptyIterator.hasNext()).thenReturn(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -96,12 +101,13 @@ public class NodeServiceImplTest {
     }
 
     @Test
-    public void testDeleteOBject() throws RepositoryException {
+    public void testDeleteObject() throws RepositoryException {
         final String objPath = "foo";
         final Node mockObjectsNode = mock(Node.class);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockRoot.getNode("objects")).thenReturn(mockObjectsNode);
         when(mockSession.getNode(objPath)).thenReturn(mockObjNode);
+        when(mockObjNode.getReferences()).thenReturn(mockEmptyIterator);
         mockStatic(ServiceHelpers.class);
         testObj.deleteObject(mockSession, "foo");
         verify(mockSession).getNode(objPath);
