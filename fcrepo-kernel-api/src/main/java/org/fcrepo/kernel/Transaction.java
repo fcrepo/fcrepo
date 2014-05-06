@@ -88,7 +88,8 @@ public interface Transaction {
 
     /**
      * Checks if this transaction is associated with a specific user.
-     *
+     * If both user names are null, it is assumed that the transaction is
+     * anonymous and thus not bound to any user.
      * @param userName the user
      * @return true if the userName is associated with this transaction
      */

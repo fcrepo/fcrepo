@@ -52,6 +52,8 @@ public class TransactionServiceImplTest {
 
     private static final String USER_NAME = "test";
 
+    private static final String ANOTHER_USER_NAME = "another";
+
     TransactionService service;
 
     @Mock
@@ -65,6 +67,7 @@ public class TransactionServiceImplTest {
         initMocks(this);
         service = new TransactionServiceImpl();
         when(mockTx.getId()).thenReturn(IS_A_TX);
+        when(mockTx.isAssociatedWithUser(null)).thenReturn(true);
         final Field txsField =
                 TransactionServiceImpl.class.getDeclaredField("transactions");
         txsField.setAccessible(true);
@@ -103,13 +106,31 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testGetTx() throws Exception {
-        final Transaction tx = service.getTransaction(IS_A_TX);
+        final Transaction tx = service.getTransaction(IS_A_TX, null);
         assertNotNull(tx);
     }
 
     @Test(expected = TransactionMissingException.class)
+    public void testHijackingNotPossible() throws RepositoryException {
+        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
+        service.getTransaction(tx.getId(), ANOTHER_USER_NAME);
+    }
+
+    @Test(expected = TransactionMissingException.class)
+    public void testHijackingNotPossibleWithAnonUser() throws RepositoryException {
+        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
+        service.getTransaction(tx.getId(), null);
+    }
+
+    @Test(expected = TransactionMissingException.class)
+    public void testHijackingNotPossibleWhenStartedAnonUser() throws RepositoryException {
+        final Transaction tx = service.beginTransaction(mockSession, null);
+        service.getTransaction(tx.getId(), USER_NAME);
+    }
+
+    @Test(expected = TransactionMissingException.class)
     public void testGetNonTx() throws TransactionMissingException {
-        service.getTransaction(NOT_A_TX);
+        service.getTransaction(NOT_A_TX, null);
     }
 
     @Test
@@ -141,7 +162,7 @@ public class TransactionServiceImplTest {
     @Test(expected = RepositoryException.class)
     public void testCommitRemovedTransaction() throws Exception {
         final Transaction tx = service.commit(IS_A_TX);
-        service.getTransaction(tx.getId());
+        service.getTransaction(tx.getId(), null);
     }
 
     @Test
@@ -154,7 +175,7 @@ public class TransactionServiceImplTest {
     @Test(expected = RepositoryException.class)
     public void testRollbackRemovedTransaction() throws Exception {
         final Transaction tx = service.rollback(IS_A_TX);
-        service.getTransaction(tx.getId());
+        service.getTransaction(tx.getId(), null);
     }
 
     @Test(expected = RepositoryException.class)
