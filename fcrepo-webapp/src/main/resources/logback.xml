@@ -7,7 +7,34 @@
         </encoder>
     </appender>
 
-  <logger name="org.fcrepo" additivity="false" level="INFO">
+  <logger name="org.fcrepo.auth" additivity="false" level="${log.fcrepo.auth:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.connector.file" additivity="false" level="${log.fcrepo.connector.file:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.generator.dublincore" additivity="false" level="${log.fcrepo.generator.dublincore:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.http.api" additivity="false" level="${log.fcrepo.http.api:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.http.commons" additivity="false" level="${log.fcrepo.http.commons:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.jms" additivity="false" level="${log.fcrepo.jms:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.kernel" additivity="false" level="${log.fcrepo.kernel:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.storage.policy" additivity="false" level="${log.fcrepo.storage.policy:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.transform" additivity="false" level="${log.fcrepo.transform:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo" additivity="false" level="${log.fcrepo:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
     <root additivity="false" level="WARN">
