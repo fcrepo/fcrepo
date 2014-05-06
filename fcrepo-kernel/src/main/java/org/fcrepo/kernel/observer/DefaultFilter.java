@@ -88,6 +88,7 @@ public class DefaultFilter implements EventFilter {
                     if (isFedoraObject.apply(n) || isFedoraDatastream.apply(n)) {
                         return true;
                     }
+                    break;
             }
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);

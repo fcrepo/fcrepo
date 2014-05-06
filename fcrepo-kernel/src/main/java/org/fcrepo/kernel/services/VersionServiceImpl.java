@@ -150,12 +150,16 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
                                        final String label) throws RepositoryException {
         // first see if there's a version label
         final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);
-        try {
+
+        if (history.hasVersionLabel(label)) {
             return history.getVersionByLabel(label);
-        } catch (VersionException ex) {
+        } else {
             // there was no version with the given JCR Version Label, check to see if
             // there's a version whose UUID is equal to the label
             VersionIterator versionIt = history.getAllVersions();
+            if (versionIt == null) {
+                return null;
+            }
             while (versionIt.hasNext()) {
                 Version v = versionIt.nextVersion();
                 if (v.getFrozenNode().getIdentifier().equals(label)) {
