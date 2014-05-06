@@ -24,6 +24,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -213,6 +214,90 @@ public class FedoraNodesTest {
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity().toString().endsWith("a"));
         verify(mockObjects).createObject(mockSession, path);
+        verify(mockSession).save();
+    }
+
+    @Test
+    public void testCreateObjectWithSparqlUpdate() throws Exception {
+
+        setField(testObj, "pidMinter", mockPidMinter);
+        final String pid = "testCreateObjectWithSparqlUpdate";
+        final String path = "/" + pid + "/a";
+        when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
+        when(mockPidMinter.mintPid()).thenReturn("a");
+        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
+        when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
+        when(mockResource.hasContent()).thenReturn(false);
+
+        final InputStream mockStream =
+                new ByteArrayInputStream("my-sparql-statement".getBytes());
+        final Response actual = testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
+                MediaType.valueOf("application/sparql-update"), null, mockResponse, getUriInfoImpl(), mockStream);
+        assertNotNull(actual);
+        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
+        verify(mockObjects).createObject(mockSession, path);
+        verify(mockSession).save();
+    }
+
+    @Test
+    public void testCreateObjectWithRDF() throws Exception {
+
+        setField(testObj, "pidMinter", mockPidMinter);
+        final String pid = "testCreateObjectWithSparqlUpdate";
+        final String path = "/" + pid + "/a";
+        when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
+        when(mockPidMinter.mintPid()).thenReturn("a");
+        when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
+        when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
+        when(mockResource.hasContent()).thenReturn(false);
+
+        final InputStream mockStream =
+                new ByteArrayInputStream("<> <http://purl.org/dc/elements/1.1/title> 'foo'".getBytes());
+        final Response actual = testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
+                MediaType.valueOf("text/n3"), null, mockResponse, getUriInfoImpl(), mockStream);
+        assertNotNull(actual);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        verify(mockObjects).createObject(mockSession, path);
+        verify(mockSession).save();
+    }
+
+    @Test
+    public void testCreateObjectWithDatastream() throws Exception {
+
+        setField(testObj, "pidMinter", mockPidMinter);
+        final String pid = "testCreateObjectWithSparqlUpdate";
+        final String path = "/" + pid + "/a";
+        when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
+        when(mockPidMinter.mintPid()).thenReturn("a");
+        final Node contentNode = mock(Node.class);
+        final Datastream mockDatastream = mock(Datastream.class);
+        when(mockDatastreams.createDatastream(mockSession, path)).thenReturn(mockDatastream);
+        when(mockDatastream.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockDatastream.getContentNode()).thenReturn(contentNode);
+        when(contentNode.getPath()).thenReturn(path + "/fcr:content");
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
+        when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
+        when(mockResource.hasContent()).thenReturn(true);
+        when(mockDatastream.getEtagValue()).thenReturn("");
+
+        final InputStream mockStream =
+                new ByteArrayInputStream("random-image-bytes".getBytes());
+        final Response actual = testObj.createObject(createPathList(pid), FEDORA_DATASTREAM,
+                "urn:sha1:ebd0438cfbab7365669a7f8a64379e93c8112490", "inline; filename=foo.tiff",
+                MediaType.valueOf("image/tiff"), null, mockResponse, getUriInfoImpl(), mockStream);
+        assertNotNull(actual);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        verify(mockDatastreams).createDatastream(mockSession, path);
         verify(mockSession).save();
     }
 
@@ -470,5 +555,31 @@ public class FedoraNodesTest {
 
         // BAD GATEWAY
         assertEquals(SC_BAD_GATEWAY, response.getStatus());
+    }
+
+    @Test
+    public void testOptions() throws RepositoryException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockNodes.getObject(isA(Session.class), isA(String.class))).thenReturn(mockObject);
+        when(mockObject.getEtagValue()).thenReturn("");
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+        final String pid = "foo";
+
+        final Response response = testObj.options( createPathList(pid), mockResponse);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testHead() throws RepositoryException {
+        final ValueFactory mockVF = mock(ValueFactory.class);
+        when(mockNodes.getObject(isA(Session.class), isA(String.class))).thenReturn(mockObject);
+        when(mockObject.getEtagValue()).thenReturn("");
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+        final String pid = "foo";
+
+        final Response response = testObj.head( createPathList(pid), mockRequest, mockResponse, mockUriInfo);
+        assertEquals(SC_OK, response.getStatus());
     }
 }
