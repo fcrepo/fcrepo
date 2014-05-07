@@ -16,6 +16,8 @@
 package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
+import com.hp.hpl.jena.graph.Triple;
+
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.api.versioning.VersionAwareHttpIdentifierTranslator;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
@@ -25,6 +27,7 @@ import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.FedoraResourceImpl;
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
@@ -89,7 +93,7 @@ public class FedoraVersions extends ContentExposingResource {
     private static final Logger LOGGER = getLogger(FedoraVersions.class);
 
     /**
-     * Get the list of versions for the object
+     * Get the list of versions for the object in HTML format
      *
      * @param pathList
      * @param request
@@ -99,9 +103,8 @@ public class FedoraVersions extends ContentExposingResource {
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
-    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML})
-    public RdfStream getVersionList(@PathParam("path")
+    @Produces({TEXT_HTML})
+    public RdfStream getVersionListAsHtml(@PathParam("path")
             final List<PathSegment> pathList,
             @Context
             final Request request,
@@ -116,7 +119,52 @@ public class FedoraVersions extends ContentExposingResource {
         return resource.getVersionTriples(nodeTranslator()).session(session).topic(
                 nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
+    /**
+     * Get the list of versions for the object in RDF format
+     *
+     * @param pathList
+     * @param request
+     * @param uriInfo
+     * @return
+     * @throws RepositoryException
+     */
+    @GET
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TURTLE_X,
+                       APPLICATION_XHTML_XML})
+    public RdfStream getVersionList(@PathParam("path")
+            final List<PathSegment> pathList,
+            @QueryParam("recursive")
+            final String recursive,
+            @Context
+            final Request request,
+            @Context
+            final UriInfo uriInfo) throws RepositoryException {
+        final String path = toPath(pathList);
 
+        LOGGER.trace("Getting versions list for: {}", path);
+
+        final FedoraResource resource = nodeService.getObject(session, path);
+        final RdfStream rdf = resource.getVersionTriples(nodeTranslator()).session(session).topic(
+                nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
+        //Filter predicates: hasVersion, hasContent, hasChild
+        if (recursive == null || !Boolean.valueOf(recursive)) {
+            RdfStream refRdf = new RdfStream();
+            refRdf.session(session);
+            Triple triple;
+            com.hp.hpl.jena.graph.Node pre;
+            while (rdf.hasNext()) {
+                triple = rdf.next();
+                pre = triple.getPredicate();
+                if (pre.hasURI(RdfLexicon.HAS_VERSION.getURI())
+                        || pre.hasURI(RdfLexicon.HAS_CONTENT.getURI())
+                        || pre.hasURI(RdfLexicon.HAS_CHILD.getURI())) {
+                    refRdf.concat(triple);
+                }
+            }
+            return refRdf;
+        }
+        return rdf;
+    }
     /**
      * Create a new version checkpoint and tag it with the given label.  If
      * that label already describes another version it will silently be

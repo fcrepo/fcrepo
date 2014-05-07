@@ -21,12 +21,12 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -48,6 +48,7 @@ import javax.ws.rs.core.Variant;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResourceImpl;
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -56,6 +57,7 @@ import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 
 public class FedoraVersionsTest {
@@ -93,6 +95,15 @@ public class FedoraVersionsTest {
     @Mock
     private Dataset mockDataset;
 
+    @Mock
+    private Triple mockTriple;
+
+    @Mock
+    private com.hp.hpl.jena.graph.Node mockSubject;
+
+    @Mock
+    private com.hp.hpl.jena.graph.Node mockObject;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -111,8 +122,26 @@ public class FedoraVersionsTest {
     }
 
     @Test
+    public void testGetVersionListAsHtml() throws RepositoryException {
+        final String pid = "FedoraVersioningTest";
+        when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
+                mockVariant);
+        when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
+                mockResource);
+        when(mockResource.getVersionTriples(any(HttpIdentifierTranslator.class)))
+                .thenReturn(mockRdfStream);
+        when(mockVariant.getMediaType()).thenReturn(
+                new MediaType("text", "html"));
+        final RdfStream response =
+                testObj.getVersionListAsHtml(createPathList(pid), mockRequest,
+                        getUriInfoImpl());
+        assertEquals("Got wrong RdfStream!", mockRdfStream, response);
+    }
+
+    @Test
     public void testGetVersionList() throws RepositoryException {
         final String pid = "FedoraVersioningTest";
+        mockRdfStream.concat(mockTriple);
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
@@ -122,9 +151,34 @@ public class FedoraVersionsTest {
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
         final RdfStream response =
-            testObj.getVersionList(createPathList(pid), mockRequest,
+            testObj.getVersionList(createPathList(pid), "true", mockRequest,
                     getUriInfoImpl());
         assertEquals("Got wrong RdfStream!", mockRdfStream, response);
+    }
+
+    @Test
+    public void testGetVersionListLinksOnly() throws RepositoryException {
+        final String pid = "FedoraVersioningTest";
+        mockTriple = Triple.create(mockSubject,
+                RdfLexicon.CREATED_DATE.asNode(), mockObject);
+        mockRdfStream.concat(mockTriple);
+        mockTriple = Triple.create(mockSubject,
+                RdfLexicon.HAS_VERSION.asNode(), mockObject);
+        mockRdfStream.concat(mockTriple);
+        when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
+                mockVariant);
+        when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
+                mockResource);
+        when(mockResource.getVersionTriples(any(HttpIdentifierTranslator.class)))
+                .thenReturn(mockRdfStream);
+        when(mockVariant.getMediaType()).thenReturn(
+                new MediaType("text", "turtle"));
+        final RdfStream response =
+                testObj.getVersionList(createPathList(pid), "false", mockRequest,
+                        getUriInfoImpl());
+        assertTrue(response.hasNext());
+        assertEquals(response.next(), mockTriple);
+        assertFalse(response.hasNext());
     }
 
     @Test
