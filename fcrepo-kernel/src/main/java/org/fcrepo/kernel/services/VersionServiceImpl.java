@@ -147,7 +147,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
 
     private Version getVersionForLabel(final Workspace workspace, final String absPath,
-                                       final String label) throws RepositoryException {
+                                       final String label) throws RepositoryException,
+                                       VersionException {
         // first see if there's a version label
         final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);
 
