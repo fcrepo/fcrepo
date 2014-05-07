@@ -56,6 +56,8 @@ import com.hp.hpl.jena.update.GraphStore;
 
 public class FedoraVersionsIT extends AbstractResourceIT {
 
+    public static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+
     @Test
     public void testGetObjectVersionProfile() throws Exception {
         final String pid = getRandomUniquePid();
@@ -386,6 +388,42 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         // removing a non-existent version should 404
         final HttpDelete delete = new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(delete));
+    }
+
+    @Test
+    public void testVersionOperationAddsVersionableMixin() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final GraphStore originalObjectProperties = getContent(serverAddress + pid);
+        assertFalse("Node must not have versionable mixin.",
+                originalObjectProperties.contains(Node.ANY, createResource(serverAddress + pid).asNode(),
+                NodeFactory.createURI(RDF_TYPE), NodeFactory.createURI(MIX_NAMESPACE + "versionable")));
+
+        postObjectVersion(pid);
+
+        final GraphStore updatedObjectProperties = getContent(serverAddress + pid);
+        assertTrue("Node is expected to have versionable mixin.",
+                updatedObjectProperties.contains(Node.ANY, createResource(serverAddress + pid).asNode(),
+                NodeFactory.createURI(RDF_TYPE), NodeFactory.createURI(MIX_NAMESPACE + "versionable")));
+    }
+
+    @Test
+    public void testAutoVersionEventAddsVersionableMixin() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final GraphStore originalObjectProperties = getContent(serverAddress + pid);
+        assertFalse("Node must not have versionable mixin.",
+                originalObjectProperties.contains(Node.ANY, createResource(serverAddress + pid).asNode(),
+                NodeFactory.createURI(RDF_TYPE), NodeFactory.createURI(MIX_NAMESPACE + "versionable")));
+
+        setAutoVersioning(serverAddress + pid);
+
+        final GraphStore updatedObjectProperties = getContent(serverAddress + pid);
+        assertTrue("Node is expected to have versionable mixin.",
+                updatedObjectProperties.contains(Node.ANY, createResource(serverAddress + pid).asNode(),
+                NodeFactory.createURI(RDF_TYPE), NodeFactory.createURI(MIX_NAMESPACE + "versionable")));
     }
 
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {
