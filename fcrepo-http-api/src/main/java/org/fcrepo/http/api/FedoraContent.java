@@ -114,7 +114,7 @@ public class FedoraContent extends ContentExposingResource {
         }
 
 
-        LOGGER.debug("Attempting to ingest fcr:content with path: {}", newDatastreamPath);
+        LOGGER.trace("Attempting to ingest fcr:content with path: {}", newDatastreamPath);
 
         try {
 
