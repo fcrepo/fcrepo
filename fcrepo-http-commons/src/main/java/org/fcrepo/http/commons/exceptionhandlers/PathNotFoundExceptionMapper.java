@@ -41,7 +41,7 @@ public class PathNotFoundExceptionMapper implements
 
     @Override
     public Response toResponse(final PathNotFoundException e) {
-        LOGGER.info(e.getMessage());
+        LOGGER.debug(e.getMessage());
         return status(NOT_FOUND).build();
     }
 
