@@ -232,7 +232,6 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
                     .getLong();
         } catch (final RepositoryException e) {
             LOGGER.info("Could not get contentSize(): {}", e.getMessage());
-            LOGGER.debug("Caught exception when attempting to get content size", e);
         }
 
         return -1L;
@@ -248,7 +247,6 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
             return new URI(getContentNode().getProperty(CONTENT_DIGEST).getString());
         } catch (final RepositoryException | URISyntaxException e) {
             LOGGER.info("Could not get content digest: {}", e.getMessage());
-            LOGGER.debug("Caught exception when attempting to get content digest", e);
         }
 
         return ContentDigest.missingChecksum();

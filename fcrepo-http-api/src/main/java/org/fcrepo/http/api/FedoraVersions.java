@@ -176,7 +176,6 @@ public class FedoraVersions extends ContentExposingResource {
             versionService.removeVersion(session.getWorkspace(), path, label);
             return noContent().build();
         } catch ( VersionException ex ) {
-            LOGGER.debug("Failed to remove version '{}': {}", label, ex);
             return status(BAD_REQUEST).entity(ex.getMessage()).build();
         } finally {
             session.logout();
