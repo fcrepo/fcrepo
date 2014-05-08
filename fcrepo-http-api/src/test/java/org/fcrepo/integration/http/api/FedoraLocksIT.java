@@ -29,6 +29,7 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -41,11 +42,20 @@ import java.util.Iterator;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
 import static org.fcrepo.kernel.RdfLexicon.IS_DEEP;
@@ -300,6 +310,45 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         Assert.assertTrue("HAS_LOCK assertion should be in the child object's RDF.",
                 store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
         assertUnlockWithToken(pid, lockToken);
+    }
+
+    @Test
+    public void testResponseContentTypes() throws Exception {
+        String POSSIBLE_RDF_RESPONSE_VARIANTS_STRING[] = {
+                TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TEXT_PLAIN, TURTLE_X };
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        final String lockToken = getLockToken(lockObject(pid));
+
+        for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + pid + "/" + FCR_LOCK);
+
+            method.addHeader("Accept", type);
+            addLockToken(method, lockToken);
+            final HttpResponse response = execute(method);
+            Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+            // If you don't read the whole response, the session
+            // may not be closed (if it's mid-stream) and your
+            // next request will fail because the token is still
+            // attached to that session and cannot be attached
+            // again.
+            EntityUtils.consume(response.getEntity());
+
+            assertContentType(response, type);
+        }
+    }
+
+    private void assertContentType(final HttpResponse response, final String contentType) throws IOException {
+        final Header[] contentTypes = response.getHeaders("Content-Type");
+        for (Header ctHeader : contentTypes) {
+            if (ctHeader.getValue().startsWith(contentType)) {
+                return;
+            }
+        }
+        Assert.fail(contentType + " Content-Type header not found!");
+
     }
 
     /**
