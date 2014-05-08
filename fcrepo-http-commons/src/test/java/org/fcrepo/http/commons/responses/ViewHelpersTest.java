@@ -30,9 +30,10 @@ import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
@@ -63,6 +64,35 @@ public class ViewHelpersTest {
     @Before
     public void setUp() {
         testObj = ViewHelpers.getInstance();
+    }
+
+    @Test
+    public void testGetVersions() {
+        final DatasetGraph mem = createMem();
+        final Node anon = createAnon();
+        final Node version = createURI("http://localhost/fcrepo/abc/fcr:version/adcd");
+        final String date = new Date().toString();
+        mem.add(anon, createURI("http://localhost/fcrepo/abc"), HAS_VERSION.asNode(),
+                version);
+        mem.add(anon, version, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(date));
+        assertEquals("Version should be available.", version, testObj.getVersions(mem, createURI("http://localhost/fcrepo/abc")).next());
+    }
+
+    @Test
+    public void testGetChildVersions() {
+        final DatasetGraph mem = createMem();
+        final Node anon = createAnon();
+        final Node version = createURI("http://localhost/fcrepo/abc/fcr:version/adcd");
+        final Node contentVersion = createURI("http://localhost/fcrepo/abc/fcr:version/adcd/fcr:content");
+        final String date = new Date().toString();
+        mem.add(anon, version, HAS_VERSION.asNode(),
+                version);
+        mem.add(anon, version, HAS_CONTENT.asNode(),
+                contentVersion);
+        mem.add(anon, contentVersion, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(date));
+        assertEquals("Content version should be available.", contentVersion, testObj.getChildVersions(mem, version).next());
     }
 
     @Test
@@ -144,7 +174,7 @@ public class ViewHelpersTest {
     @Test
     public void testGetMissingVersionDate() {
         final DatasetGraph mem = createMem();
-        assertNull("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")));
+        assertEquals("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")), "");
     }
 
     @Test

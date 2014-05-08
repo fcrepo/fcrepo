@@ -57,3 +57,17 @@ dd {
 .namespace {
     font-size: .8em;
 }
+
+.panel-content {
+	text-indent:60px;
+	background-color:#fff;
+	border:none;
+}
+
+.panel .panel-heading {
+	font-size: 20px;
+}
+
+.panel-content .panel-heading {
+	font-size: 16px;
+}
