@@ -17,7 +17,6 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertTrue;
@@ -39,7 +38,6 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -78,8 +76,6 @@ public class PropertiesRdfContextTest {
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockContentNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockContentNode.hasProperties()).thenReturn(false);
-        when(mockLowLevelCacheEntry.getExternalIdentifier()).thenReturn(
-                MOCK_EXTERNAL_IDENTIFIER);
         when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockSubject);
         when(mockGraphSubjects.getSubject(mockContentNode.getPath())).thenReturn(mockContentSubject);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -124,9 +120,6 @@ public class PropertiesRdfContextTest {
 
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;
-
-    @Mock
-    private LowLevelCacheEntry mockLowLevelCacheEntry;
 
     private static void
             logRdf(final String message, final Model model) throws IOException {
