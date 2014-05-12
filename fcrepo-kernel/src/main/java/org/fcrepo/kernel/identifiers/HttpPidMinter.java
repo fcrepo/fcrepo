@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 DuraSpace, Inc.
+ * Copyright 2014 DuraSpace, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ import java.io.IOException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
 
 
 /**
@@ -38,15 +40,59 @@ import org.apache.http.util.EntityUtils;
 public class HttpPidMinter extends BasePidMinter {
 
     private static final Logger log = getLogger(HttpPidMinter.class);
-    private static HttpClient client = HttpClients.createSystem();
-    private final String minterURL;
+    protected static HttpClient client = HttpClients.createSystem();
+    protected String minterURL;
+    protected String minterMethod;
+    private String trimExpression;
 
     /**
-     * Default constructor, which uses the <code>fcrepo.httpPidMinter.url</code>
-     * System property to determine the URL to POST to for minting PIDs.
+     * Set the URL for the minter service.
     **/
-    public HttpPidMinter() {
-        minterURL = System.getProperty("fcrepo.httpPidMinter.url");
+    public void setMinterURL( final String url ) {
+        minterURL = url;
+    }
+
+    /**
+     * Set the HTTP method (POST, PUT or GET) used to generate a new PID.  If no method
+     * is specified, POST will be used by default.
+    **/
+    public void setMinterMethod( final String method ) {
+        minterMethod = method;
+    }
+
+    /**
+     * Set the regular expression used to remove unwanted text from the minter service
+     * response.  For example, if the response text is "/foo/bar:baz" and the desired
+     * identifier is "baz", then the trimExpression would be ".*:".  If no expression is
+     * specified, the minter service response will be used unmodified.
+    **/
+    public void setTrimExpression( final String expr ) {
+        trimExpression = expr;
+    }
+
+    /**
+     * Instantiate a request object based on the minterMethod variable.
+    **/
+    protected HttpUriRequest minterRequest() {
+        if ( minterMethod != null && minterMethod.equalsIgnoreCase("GET") ) {
+            return new HttpGet(minterURL);
+        } else if ( minterMethod != null && minterMethod.equalsIgnoreCase("PUT") ) {
+            return new HttpPut(minterURL);
+        } else {
+            return new HttpPost(minterURL);
+        }
+    }
+
+    /**
+     * Remove unwanted text from the minter service response to produce the desired identifer.
+     * Override this method for processing more complex than a simple regex replacement.
+    **/
+    public String responseToPid( final String responseText ) {
+        if ( trimExpression == null ) {
+            return responseText;
+        } else {
+            return responseText.replaceFirst(trimExpression,"");
+        }
     }
 
     /**
@@ -57,8 +103,8 @@ public class HttpPidMinter extends BasePidMinter {
     @Override
     public String mintPid() {
         try {
-            final HttpResponse resp = client.execute(new HttpPost(minterURL));
-            return EntityUtils.toString(resp.getEntity());
+            final HttpResponse resp = client.execute( minterRequest() );
+            return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( IOException ex ) {
             log.error("Error minting pid from {}: {}", minterURL, ex);
         }
