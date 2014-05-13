@@ -70,7 +70,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
     private static final Logger log = getLogger(HierarchyConverter.class);
 
     /*
-     * Convert an incoming path to auto-hierarchy path for JCR storage.
+     * Convert an incoming path to auto-hierarchy path for JCR backend storage.
      * For example: /parent/child => /xx/xx/parent/xx/xx/child
      * @see com.google.common.base.Converter#doBackward(java.lang.Object)
      */
@@ -84,11 +84,11 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         }
         final List<String> flatSegments = asList(nonContentSuffixed.split(separator));
         List<String> hierarchySegments = null;
-        final List<String> jcrPathSegments = new ArrayList<String>();
+        final List<String> jcrPathSegments = new ArrayList<>();
         int pathSize = flatSegments.size();
         if (isContentFile) {
-            //Append file content segment and the converted namespace jcr:content
             jcrPathSegments.add(JCR_CONTENT);
+            // Subtract the fcr:content namespace element for auto-hierarchy
             pathSize -= 1;
         }
         if (pathSize == 0) {
@@ -101,15 +101,17 @@ public class HierarchyConverter extends InternalIdentifierConverter {
                 if (pathSize == 1) {
                     return flat;
                 }
-                continue;
+            } else {
+                // Create the auto-hierarchy path segments, add them to
+                // the list in front of the transparent path segment
+                hierarchySegments = createHierarchySegments(hashKey(singletonList(seg)));
+                jcrPathSegments.add(0, flatSegments.get(i));
+                jcrPathSegments.addAll(0, hierarchySegments);
             }
-            hierarchySegments = createHierarchySegments(hashKey(singletonList(seg)));
-            jcrPathSegments.add(0, flatSegments.get(i));
-            jcrPathSegments.addAll(0, hierarchySegments);
         }
-        String parthConverted = on(separator).join(jcrPathSegments);
-        log.trace("Converted incoming identifier \"{}\" to \"{}\".", flat, parthConverted);
-        return "/" + parthConverted;
+        String pathConverted = on(separator).join(jcrPathSegments);
+        log.trace("Converted incoming identifier \"{}\" to \"{}\".", flat, pathConverted);
+        return "/" + pathConverted;
     }
 
     /*
@@ -134,26 +136,29 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             // must be a root identifier
             return hierarchical;
         }
-        //Transparent path
-        final List<String> pathSegments = new ArrayList<String>();
+        // Convert the auto-hierarchy path to transparent path
+        final List<String> pathSegments = new ArrayList<>();
         List<String> hierarchySegments = null;
         for (int i = levels ; i < jcrPathSize; i += levels + 1) {
             final String seg = jcrPathSegments.get(i);
-            pathSegments.add(seg);
             if (seg == null || seg.length() == 0) {
-                continue;
-            }
-            hierarchySegments = jcrPathSegments.subList(i - levels, i);
-            final String hierarchyPath = on(separator).join(hierarchySegments);
-            final String hashPath = on(separator).join(createHierarchySegments(seg));
-            if (!hierarchyPath.equals(hashPath)) {
-                log.error("Outgoing sub path {} hierarchy {} (got {}) doesn't match the path segament {}.",
-                        on(separator).join(jcrPathSegments.subList(0, i + 1)), hierarchyPath, hashPath, seg);
+                // If the segment null or empty, must be double slash or something wrong.
+                // Add it as empty that will produce an slash for now?
+                pathSegments.add("");
+            } else {
+                pathSegments.add(seg);
+                hierarchySegments = jcrPathSegments.subList(i - levels, i);
+                final String hierarchyPath = on(separator).join(hierarchySegments);
+                final String hashPath = on(separator).join(createHierarchySegments(seg));
+                if (!hierarchyPath.equals(hashPath)) {
+                    log.error("Outgoing sub path {} hierarchy {} (got {}) doesn't match the path segament {}.",
+                            on(separator).join(jcrPathSegments.subList(0, i + 1)), hierarchyPath, hashPath, seg);
+                }
             }
         }
 
         if (isContentFile) {
-            //Convert the namespace to fcr:content and add it back to the path
+            //Don't forget the fcr:content segment for content files
             pathSegments.add(FCR_CONTENT);
         }
         String parthConverted = on(separator).join(pathSegments);
