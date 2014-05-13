@@ -165,6 +165,13 @@ public abstract class AbstractResourceIT {
         return result;
     }
 
+    protected String getContentType(final HttpUriRequest method)
+        throws ClientProtocolException, IOException {
+        final HttpResponse response = execute(method);
+        final int result = response.getStatusLine().getStatusCode();
+        assertEquals(OK.getStatusCode(), result);
+        return response.getFirstHeader("Content-Type").getValue();
+    }
 
     protected GraphStore getGraphStore(final HttpClient client, final HttpUriRequest method) throws IOException {
 

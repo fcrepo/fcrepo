@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import org.apache.http.client.methods.HttpPost;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -92,4 +93,15 @@ public class FedoraIdentifiersIT extends AbstractResourceIT {
                 HAS_MEMBER_OF_RESULT.asNode(), ANY)));
 
     }
+
+    @Test
+    public void testResponseContentTypes() throws Exception {
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpPost method =
+                    new HttpPost(serverAddress + "fcr:identifier");
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
+     }
 }

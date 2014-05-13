@@ -19,7 +19,6 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.status;
@@ -136,7 +135,7 @@ public class FedoraFieldSearch extends AbstractResource implements
      */
     @GET
     @Timed
-    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X})
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X})
     public Dataset searchSubmitRdf(@QueryParam(QUERY_PARAM) final String terms,
             @QueryParam(OFFSET_PARAM) @DefaultValue("0") final long offset,
             @QueryParam(LIMIT_PARAM) @DefaultValue("25") final int limit,

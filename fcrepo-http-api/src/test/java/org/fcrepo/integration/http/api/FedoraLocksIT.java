@@ -30,6 +30,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -320,7 +321,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         createObject(pid);
         final String lockToken = getLockToken(lockObject(pid));
 
-        for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
             final HttpGet method =
                     new HttpGet(serverAddress + pid + "/" + FCR_LOCK);
 
