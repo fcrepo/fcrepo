@@ -34,7 +34,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
@@ -175,7 +174,7 @@ public class ViewHelpersTest {
     @Test
     public void testGetMissingVersionDate() {
         final DatasetGraph mem = createMem();
-        assertNull("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")));
+        assertEquals("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")), "");
     }
 
     @Test
