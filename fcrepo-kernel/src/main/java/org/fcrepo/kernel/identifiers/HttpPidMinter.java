@@ -96,12 +96,14 @@ public class HttpPidMinter extends BasePidMinter {
      * Set the XPath expression used to extract the desired identifier from an XML minter
      * response.
     **/
-    public void setXpathExpression( final String xpath ) {
-        log.debug("setXpathExpression({})",xpath);
-        try {
-            this.xpathExpression = XPathFactory.newInstance().newXPath().compile(xpath);
-        } catch ( XPathException ex ) {
-            log.warn("Error parsing xpath ({}): {}", xpath, ex );
+    public void setXPathExpression( final String xpath ) {
+        log.debug("setXPathExpression({})",xpath);
+        if ( xpath != null ) {
+            try {
+                this.xpathExpression = XPathFactory.newInstance().newXPath().compile(xpath);
+            } catch ( XPathException ex ) {
+                log.warn("Error parsing xpath ({}): {}", xpath, ex );
+            }
         }
     }
 
@@ -177,7 +179,7 @@ public class HttpPidMinter extends BasePidMinter {
 
     /**
      * Mint a unique identifier using an external HTTP API.
-     * @return
+     * @return The generated identifier.
      */
     @Timed
     @Override
