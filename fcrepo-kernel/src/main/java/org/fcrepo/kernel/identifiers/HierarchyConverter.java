@@ -17,7 +17,6 @@ package org.fcrepo.kernel.identifiers;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Splitter.fixedLength;
-import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.transform;
 import static java.util.Arrays.asList;
@@ -79,17 +78,19 @@ public class HierarchyConverter extends InternalIdentifierConverter {
     protected String doBackward(final String flat) {
         log.debug("Converting incoming identifier: {}", flat);
         String nonContentSuffixed = flat;
-        // strip content-indicating suffix
-        if (flat.endsWith(FCR_CONTENT)) {
-            nonContentSuffixed = flat.substring(0, flat.length() - (FCR_CONTENT.length()));
-        }
+        final boolean isContentFile = flat.endsWith(FCR_CONTENT) || flat.endsWith(JCR_CONTENT);
         if (nonContentSuffixed.startsWith(separator)) {
             nonContentSuffixed = nonContentSuffixed.substring(1, nonContentSuffixed.length());
         }
         final List<String> flatSegments = asList(nonContentSuffixed.split(separator));
-        final int pathSize = flatSegments.size();
         List<String> hierarchySegments = null;
         final List<String> jcrPathSegments = new ArrayList<String>();
+        int pathSize = flatSegments.size();
+        if (isContentFile) {
+            //Append file content segment and the converted namespace jcr:content
+            jcrPathSegments.add(JCR_CONTENT);
+            pathSize -= 1;
+        }
         if (pathSize == 0) {
             // either empty identifier or separator identifier
             return nonContentSuffixed;
@@ -107,9 +108,6 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             jcrPathSegments.addAll(0, hierarchySegments);
         }
         String parthConverted = on(separator).join(jcrPathSegments);
-        if (flat.endsWith(FCR_CONTENT)) {
-            parthConverted = on(separator).join(concat(singletonList(parthConverted), singletonList(JCR_CONTENT)));
-        }
         log.trace("Converted incoming identifier \"{}\" to \"{}\".", flat, parthConverted);
         return "/" + parthConverted;
     }
@@ -123,21 +121,21 @@ public class HierarchyConverter extends InternalIdentifierConverter {
     protected String doForward(final String hierarchical) {
         log.debug("Converting outgoing identifier: {}", hierarchical);
         String nonContentSuffixed = hierarchical;
-        // strip content-indicating suffix
-        if (hierarchical.endsWith(JCR_CONTENT)) {
-            nonContentSuffixed = hierarchical.substring(0, hierarchical.length() - (JCR_CONTENT.length()));
-        }
         if (nonContentSuffixed.startsWith(separator)) {
             nonContentSuffixed = nonContentSuffixed.substring(1, nonContentSuffixed.length());
         }
         final List<String> jcrPathSegments = asList(nonContentSuffixed.split(separator));
-        if (jcrPathSegments.size() <= levels) {
+        int jcrPathSize = jcrPathSegments.size();
+        final boolean isContentFile = hierarchical.endsWith(JCR_CONTENT);
+        if (isContentFile) {
+            jcrPathSize -= 1;
+        }
+        if (jcrPathSize <= levels) {
             // must be a root identifier
             return hierarchical;
         }
         //Transparent path
         final List<String> pathSegments = new ArrayList<String>();
-        final int jcrPathSize = jcrPathSegments.size();
         List<String> hierarchySegments = null;
         for (int i = levels ; i < jcrPathSize; i += levels + 1) {
             final String seg = jcrPathSegments.get(i);
@@ -154,10 +152,11 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             }
         }
 
-        String parthConverted = on(separator).join(pathSegments);
-        if (hierarchical.endsWith(JCR_CONTENT)) {
-            parthConverted = on(separator).join(concat(singletonList(parthConverted), singletonList(FCR_CONTENT)));
+        if (isContentFile) {
+            //Convert the namespace to fcr:content and add it back to the path
+            pathSegments.add(FCR_CONTENT);
         }
+        String parthConverted = on(separator).join(pathSegments);
         log.trace("Converted outgoing identifier \"{}\" to \"{}\".", hierarchical, parthConverted);
         return "/" + parthConverted;
     }
