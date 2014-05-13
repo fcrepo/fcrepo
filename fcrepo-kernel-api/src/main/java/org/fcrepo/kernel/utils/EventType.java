@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableMap;
  * A convenient abstraction over JCR's integer-typed events.
  *
  * @author ajs6f
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  */
 public enum EventType {
     NODE_ADDED(javax.jcr.observation.Event.NODE_ADDED, "node added"),

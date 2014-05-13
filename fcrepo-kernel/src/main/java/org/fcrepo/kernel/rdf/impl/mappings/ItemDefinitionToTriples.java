@@ -45,7 +45,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author cbeer
  * @author ajs6f
  *
- * @date Oct 2013
+ * @since Oct 2013
  *
  * @param <T>
  */

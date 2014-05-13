@@ -31,7 +31,7 @@ import java.util.List;
  * storage hints for a binary stream
  *
  * @author cbeer
- * @date Apr 25, 2013
+ * @since Apr 25, 2013
  */
 public class StoragePolicyDecisionPointImpl implements StoragePolicyDecisionPoint {
 

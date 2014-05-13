@@ -47,7 +47,7 @@ import com.hp.hpl.jena.graph.Triple;
  * Utility for moving from JCR properties to RDF triples.
  *
  * @author ajs6f
- * @date Oct 10, 2013
+ * @since Oct 10, 2013
  */
 public class PropertyToTriple implements
         Function<Property, Function<Iterator<Value>, Iterator<Triple>>> {

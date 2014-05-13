@@ -54,7 +54,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Merges chunks from cache and provides InputStream-feeling.
  *
  * @author Chris Beer
- * @date Mar 11, 2013
+ * @since Mar 11, 2013
  */
 public class StoreChunkInputStream extends InputStream {
 

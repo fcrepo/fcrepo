@@ -29,7 +29,7 @@ import com.google.common.base.Function;
 
 /**
  * @author ajs6f
- * @date Oct 2013
+ * @since Oct 2013
  */
 public class ZippingIteratorTest {
 

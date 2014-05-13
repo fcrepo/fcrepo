@@ -32,7 +32,7 @@ import org.mockito.Mock;
 
 /**
  * @author ajs6f
- * @date 2013
+ * @since 2013
  */
 public class PropertyIteratorTest {
 

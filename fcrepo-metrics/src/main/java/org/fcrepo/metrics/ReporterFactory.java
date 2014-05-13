@@ -35,7 +35,7 @@ import com.codahale.metrics.graphite.GraphiteReporter;
  * Helpers for making the upstream metrics reporters play nice with Springg
  * 
  * @author cbeer
- * @date Mar 22, 2013
+ * @since Mar 22, 2013
  */
 public class ReporterFactory {
 

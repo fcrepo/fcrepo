@@ -27,7 +27,7 @@ import com.google.common.base.Function;
  * Tools for working with the JCR Namespace Registry
  * (wrapping some non-standard Modeshape machinery)
  * @author Benjamin Armintor
- * @date May 13, 2013
+ * @since May 13, 2013
  */
 public abstract class NamespaceTools {
 

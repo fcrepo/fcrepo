@@ -26,7 +26,7 @@ import com.codahale.metrics.Timer;
  *
  * @author eddies
  * @author ajs6f
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  */
 public class UUIDPidMinter extends BasePidMinter {
 

@@ -39,7 +39,7 @@ import com.google.common.collect.Iterables;
  * on information found in the {@link FedoraEvent} that triggers publication.
  *
  * @author ajs6f
- * @date Dec 2, 2013
+ * @since Dec 2, 2013
  */
 public class DefaultMessageFactory implements JMSEventMessageFactory {
 

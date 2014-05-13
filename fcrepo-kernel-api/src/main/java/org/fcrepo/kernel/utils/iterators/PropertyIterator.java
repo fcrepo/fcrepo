@@ -25,7 +25,7 @@ import com.google.common.collect.ForwardingIterator;
  * A type-aware iterator that wraps the generic JCR PropertyIterator
  *
  * @author ajs6f
- * @date Apr 25, 2013
+ * @since Apr 25, 2013
  */
 public class PropertyIterator extends ForwardingIterator<Property> implements
         Iterable<Property> {

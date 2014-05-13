@@ -33,7 +33,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
  * Utilities for serializing RDF.
  *
  * @author ajs6f
- * @date Aug 22, 2013
+ * @since Aug 22, 2013
  */
 public final class SerializationUtils {
 

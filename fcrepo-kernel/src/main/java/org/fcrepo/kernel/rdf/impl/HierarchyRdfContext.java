@@ -52,7 +52,7 @@ import com.hp.hpl.jena.graph.Triple;
  * around a given node.
  *
  * @author ajs6f
- * @date Oct 10, 2013
+ * @since Oct 10, 2013
  */
 public class HierarchyRdfContext extends NodeRdfContext {
 

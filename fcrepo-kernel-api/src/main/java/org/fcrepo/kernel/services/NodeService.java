@@ -28,7 +28,7 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 /**
  * @author bbpennel
- * @date Feb 20, 2014
+ * @since Feb 20, 2014
  */
 public interface NodeService extends Service {
 

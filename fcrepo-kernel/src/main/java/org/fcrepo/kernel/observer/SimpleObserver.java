@@ -51,7 +51,7 @@ import com.google.common.eventbus.EventBus;
  *
  * @author eddies
  * @author ajs6f
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  */
 public class SimpleObserver implements EventListener {
 

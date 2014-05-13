@@ -40,10 +40,10 @@ import com.hp.hpl.jena.graph.Triple;
  * Constructs RDF from the structure of {@link Workspace}s in the repository.
  *
  * @author ajs6f
- * @date Nov 24, 2013
+ * @since Nov 24, 2013
  *
  * @author cbeer
- * @date 12 Dec 2013
+ * @since 12 Dec 2013
  */
 public class WorkspaceRdfContext extends RdfStream {
 

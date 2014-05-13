@@ -43,7 +43,7 @@ public class DefaultPropertiesLoader {
 
     /**
      * @author awoods
-     * @date 2013
+     * @since 2013
      */
     private enum PROPERTIES {
         DEFAULT_OBJECT_STORE(

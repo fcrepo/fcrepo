@@ -26,7 +26,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
 
 /**
  * @author barmintor
- * @date 2013
+ * @since 2013
  */
 public interface GraphProperties {
 

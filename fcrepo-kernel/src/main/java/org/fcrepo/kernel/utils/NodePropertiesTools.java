@@ -42,7 +42,7 @@ import static javax.jcr.PropertyType.URI;
 /**
  * Tools for replacing, appending and deleting JCR node properties
  * @author Chris Beer
- * @date May 10, 2013
+ * @since May 10, 2013
  */
 public class NodePropertiesTools {
 

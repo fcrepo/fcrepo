@@ -58,7 +58,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * JCR.
  *
  * @author ajs6f
- * @date Feb 14, 2013
+ * @since Feb 14, 2013
  */
 public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 

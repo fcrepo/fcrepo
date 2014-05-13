@@ -53,7 +53,7 @@ import com.google.common.base.Predicate;
  * Service for creating and retrieving Datastreams without using the JCR API.
  *
  * @author cbeer
- * @date Feb 11, 2013
+ * @since Feb 11, 2013
  */
 @Component
 public class DatastreamServiceImpl extends AbstractService implements DatastreamService {

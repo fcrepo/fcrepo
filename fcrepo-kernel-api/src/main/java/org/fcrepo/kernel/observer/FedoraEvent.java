@@ -40,7 +40,7 @@ import com.google.common.collect.Iterables;
  * on a JCR interface {@link Event). Can represent either a single JCR event or several.
  *
  * @author ajs6f
- * @date Feb 19, 2013
+ * @since Feb 19, 2013
  */
 public class FedoraEvent {
 

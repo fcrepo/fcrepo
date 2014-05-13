@@ -24,7 +24,7 @@ import com.google.common.base.Predicate;
  * Filter JCR events to remove extraneous events
  * @author eddies
  * @author ajs6f
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  */
 public interface EventFilter extends Predicate<Event> {
 

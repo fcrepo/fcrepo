@@ -61,7 +61,7 @@ import javax.ws.rs.core.UriInfo;
  *
  *
  * @author osmandin
- * @date Aug 14, 2013
+ * @since Aug 14, 2013
  */
 
 @Component

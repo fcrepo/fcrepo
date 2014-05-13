@@ -32,7 +32,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * @author ajs6f
- * @date Jan 10, 2014
+ * @since Jan 10, 2014
  */
 public interface FedoraResource {
 

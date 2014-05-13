@@ -37,7 +37,7 @@ import java.security.Principal;
 
 /**
  * @author bbpennel
- * @date Feb 12, 2014
+ * @since Feb 12, 2014
  */
 public class FedoraUserSecurityContextTest {
 

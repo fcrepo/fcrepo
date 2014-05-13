@@ -30,7 +30,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author bbpennel
- * @date Feb 20, 2014
+ * @since Feb 20, 2014
  */
 public interface RepositoryService extends Service {
 

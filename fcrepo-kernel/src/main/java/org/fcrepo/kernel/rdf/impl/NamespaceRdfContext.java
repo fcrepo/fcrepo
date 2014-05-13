@@ -44,7 +44,7 @@ import com.hp.hpl.jena.graph.Triple;
  * as well as {@link Triple}s describing those namespaces.
  *
  * @author ajs6f
- * @date Oct 9, 2013
+ * @since Oct 9, 2013
  */
 public class NamespaceRdfContext extends RdfStream {
 

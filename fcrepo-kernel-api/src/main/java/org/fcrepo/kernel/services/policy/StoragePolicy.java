@@ -20,7 +20,7 @@ import javax.jcr.Node;
 /**
  * A binary storage policy definition and evaluation machinery
  * @author cbeer
- * @date Apr 25, 2013
+ * @since Apr 25, 2013
  */
 public interface StoragePolicy {
 

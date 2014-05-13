@@ -27,7 +27,7 @@ import com.google.common.base.Function;
  * Function encapsulating the various Infinispan API calls to retrieve
  * a CacheStore from a Cache.
  * @author barmintor
- * @date Apr 2, 2013
+ * @since Apr 2, 2013
  */
 public class GetCacheStore implements Function<Cache<?, ?>, CacheStore> {
 

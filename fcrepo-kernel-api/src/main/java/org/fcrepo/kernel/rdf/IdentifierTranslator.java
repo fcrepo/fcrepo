@@ -24,7 +24,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * (and vice versa)
  * @author barmintor
  * @author ajs6f
- * @date May 15, 2013
+ * @since May 15, 2013
  */
 public interface IdentifierTranslator {
 

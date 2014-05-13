@@ -24,7 +24,7 @@ import org.fcrepo.kernel.services.VersionService;
 
 /**
  * @author bbpennel
- * @date Feb 18, 2014
+ * @since Feb 18, 2014
  */
 public interface Transaction {
 
