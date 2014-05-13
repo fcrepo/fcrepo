@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
@@ -34,6 +35,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResource;
@@ -51,6 +53,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.eventbus.EventBus;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -265,5 +268,20 @@ public abstract class AbstractResource {
         if (builder != null) {
             throw new WebApplicationException(builder.build());
         }
+    }
+    /**
+     * Convert the transparent path to hierarchy path
+     * @param resource
+     * @param session
+     * @param uriInfo
+     * @param clazz
+     * @return
+     * @throws RepositoryException
+     */
+    public static String getJCRPath(Resource resource, Session session, UriInfo uriInfo,
+            Class<?> clazz) throws RepositoryException {
+        final HttpIdentifierTranslator idTranslator =
+                new HttpIdentifierTranslator(session, clazz, uriInfo);
+        return idTranslator.getPathFromSubject(resource);
     }
 }

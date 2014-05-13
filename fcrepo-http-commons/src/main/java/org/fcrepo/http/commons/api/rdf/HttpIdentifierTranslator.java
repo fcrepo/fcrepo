@@ -263,7 +263,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
 
     private Map<String, String> getPathMap(final String absPath) {
         // the path param value doesn't start with a slash
-        String path = absPath.substring(1);
+        String path = absPath.startsWith("/") ? absPath.substring(1) : absPath;
         if (session != null) {
             final Workspace workspace = session.getWorkspace();
 

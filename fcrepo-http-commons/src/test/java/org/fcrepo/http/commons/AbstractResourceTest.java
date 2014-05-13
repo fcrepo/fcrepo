@@ -16,18 +16,31 @@
 package org.fcrepo.http.commons;
 
 import static org.fcrepo.http.commons.AbstractResource.getSimpleContentType;
+import static org.fcrepo.http.commons.AbstractResource.getJCRPath;
 import static org.fcrepo.http.commons.AbstractResource.toPath;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.UriBuilder;
 
 import com.google.common.collect.ImmutableMap;
+import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.utils.NamespaceTools;
@@ -63,6 +76,7 @@ public class AbstractResourceTest {
     public void setUp() {
         initMocks(this);
         testObj = new AbstractResource() {};
+
     }
 
     @Test
@@ -176,5 +190,20 @@ public class AbstractResourceTest {
         final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
 
         assertEquals("text/plain", sanitizedMediaType.toString());
+    }
+
+    @Test
+    public void testGetJCRPath() throws RepositoryException, URISyntaxException {
+        URI  uri = new URI("http://localhost:8080");
+        UriBuilder mockUriBuilder = mock(UriBuilder.class);
+        Resource mockResource = mock(Resource.class);
+        Session mockSession = mockSession(testObj);
+        when(mockUris.getBaseUriBuilder()).thenReturn(mockUriBuilder);
+        when(mockUris.getBaseUriBuilder().clone()).thenReturn(mockUriBuilder);
+        when(mockUris.getBaseUriBuilder().clone().path(AbstractResource.class)).thenReturn(mockUriBuilder);
+        when(mockUris.getBaseUriBuilder().clone().path(AbstractResource.class)).thenReturn(mockUriBuilder);
+        when(mockUriBuilder.build("")).thenReturn(uri);
+        getJCRPath(mockResource, mockSession, mockUris, AbstractResource.class);
+        verify(mockSession).getRepository();
     }
 }
