@@ -48,6 +48,7 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
@@ -88,14 +89,19 @@ public class FedoraContent extends ContentExposingResource {
             @HeaderParam("Content-Type") final MediaType requestContentType,
                     final InputStream requestBodyStream, @Context final HttpServletResponse servletResponse)
         throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
+
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class,
+                                             uriInfo);
+
         final MediaType contentType = getSimpleContentType(requestContentType);
 
 
         final String newDatastreamPath;
         final String path = toPath(pathList);
-
-        if (nodeService.exists(session, path)) {
-            if ( nodeService.getObject(session, path).hasContent() ) {
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        if (nodeService.exists(session, jcrPath)) {
+            if ( nodeService.getObject(session, jcrPath).hasContent() ) {
                 return status(SC_CONFLICT)
                            .entity(path + " is an existing resource!").build();
             }
@@ -107,10 +113,9 @@ public class FedoraContent extends ContentExposingResource {
             }  else {
                 pid = pidMinter.mintPid();
             }
-
-            newDatastreamPath = path + "/" + pid;
+            newDatastreamPath = getJCRPath(createResource(uriInfo.getBaseUri() + path + "/" + pid), subjects);
         } else {
-            newDatastreamPath = path;
+            newDatastreamPath = jcrPath;
         }
 
 
@@ -145,10 +150,6 @@ public class FedoraContent extends ContentExposingResource {
                     datastreamService.createDatastream(session, newDatastreamPath,
                             contentType.toString(), originalFileName, requestBodyStream,
                             checksumURI);
-
-            final HttpIdentifierTranslator subjects =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class,
-                            uriInfo);
 
             session.save();
             versionService.nodeUpdated(datastream.getNode());
@@ -186,18 +187,23 @@ public class FedoraContent extends ContentExposingResource {
         throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
 
         try {
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class,
+                                                 uriInfo);
+
             final String path = toPath(pathList);
+            final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
             final MediaType contentType = getSimpleContentType(requestContentType);
 
-            if (nodeService.exists(session, path)) {
+            if (nodeService.exists(session, jcrPath)) {
 
                 final Datastream ds =
-                        datastreamService.getDatastream(session, path);
+                        datastreamService.getDatastream(session, jcrPath);
 
                 evaluateRequestPreconditions(request, ds);
             }
 
-            LOGGER.debug("create Datastream {}", path);
+            LOGGER.debug("PUT: Create Datastream {}", jcrPath);
 
             final URI checksumURI;
 
@@ -217,7 +223,7 @@ public class FedoraContent extends ContentExposingResource {
             }
 
             final Datastream datastream =
-                datastreamService.createDatastream(session, path,
+                datastreamService.createDatastream(session, jcrPath,
                     contentType.toString(), originalFileName, requestBodyStream, checksumURI);
 
             final boolean isNew = datastream.isNew();
@@ -226,10 +232,6 @@ public class FedoraContent extends ContentExposingResource {
 
             ResponseBuilder builder;
             if (isNew) {
-                final HttpIdentifierTranslator subjects =
-                        new HttpIdentifierTranslator(session, FedoraNodes.class,
-                                uriInfo);
-
                 builder = created(new URI(subjects.getSubject(
                         datastream.getContentNode().getPath()).getURI()));
             } else {
@@ -259,14 +261,17 @@ public class FedoraContent extends ContentExposingResource {
                                @Context final HttpServletResponse servletResponse)
         throws RepositoryException, IOException {
         try {
-            final String path = toPath(pathList);
-            LOGGER.info("Attempting get of {}.", path);
-
-            final Datastream ds =
-                    datastreamService.getDatastream(session, path);
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
-                            uriInfo);
+                                                 uriInfo);
+
+            final String path = toPath(pathList);
+            final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+            LOGGER.info("GET: Attempting get {} from hierarchy path {}.", path, jcrPath);
+
+            final Datastream ds =
+                    datastreamService.getDatastream(session, jcrPath);
+
             return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
                                                    subjects);
 

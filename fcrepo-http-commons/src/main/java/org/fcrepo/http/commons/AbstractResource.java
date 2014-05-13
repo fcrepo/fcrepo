@@ -51,6 +51,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.eventbus.EventBus;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -265,5 +266,13 @@ public abstract class AbstractResource {
         if (builder != null) {
             throw new WebApplicationException(builder.build());
         }
+    }
+
+    /**
+     * Convert the transparent path to hierarchy path
+     */
+    public static String getJCRPath(final Resource resource, final IdentifierTranslator idTranslator)
+        throws RepositoryException {
+        return idTranslator.getPathFromSubject(resource);
     }
 }
