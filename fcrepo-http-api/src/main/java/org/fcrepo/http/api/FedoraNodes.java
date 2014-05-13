@@ -156,7 +156,10 @@ public class FedoraNodes extends AbstractResource {
         final String path = toPath(pathList);
         LOGGER.trace("Getting head for: {}", path);
 
-        final FedoraResource resource = nodeService.getObject(session, path);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path),
+                session, uriInfo, FedoraNodes.class);
+        LOGGER.trace("Head: Using auto hierarchy path {} to retrieve resource.", jcrPath);
+        final FedoraResource resource = nodeService.getObject(session, jcrPath);
 
         final HttpIdentifierTranslator subjects =
             new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
@@ -194,13 +197,14 @@ public class FedoraNodes extends AbstractResource {
             @Context final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
         LOGGER.trace("Getting profile for: {}", path);
-
-        final FedoraResource resource = nodeService.getObject(session, path);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path),
+                session, uriInfo, FedoraNodes.class);
+        LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
+        final FedoraResource resource = nodeService.getObject(session, jcrPath);
 
         checkCacheControlHeaders(request, servletResponse, resource);
-
-        final HttpIdentifierTranslator subjects =
-            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
         final RdfStream rdfStream =
             resource.getTriples(subjects).session(session)
@@ -355,11 +359,14 @@ public class FedoraNodes extends AbstractResource {
         LOGGER.debug("Attempting to update path: {}", path);
 
         try {
-
+            final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path),
+                    session, uriInfo, FedoraNodes.class);
+            LOGGER.trace("PATCH: Using auto hierarchy path {} to retrieve resource.", jcrPath);
+            LOGGER.trace("Converted incoming path {} to path: {}", path, jcrPath);
             if (requestBodyStream != null) {
 
                 final FedoraResource resource =
-                        nodeService.getObject(session, path);
+                        nodeService.getObject(session, jcrPath);
 
                 evaluateRequestPreconditions(request, resource);
 
@@ -424,17 +431,18 @@ public class FedoraNodes extends AbstractResource {
 
 
             final MediaType contentType = getSimpleContentType(requestContentType);
+            final HttpIdentifierTranslator idTranslator =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-            if (nodeService.exists(session, path)) {
-                resource = nodeService.getObject(session, path);
+            final String jcrPath = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + path));
+            LOGGER.trace("PUT: Using auto hierarchy path {} to retrieve resource.", jcrPath);
+            if (nodeService.exists(session, jcrPath)) {
+                resource = nodeService.getObject(session, jcrPath);
                 response = noContent();
             } else {
                 final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
-                resource = createFedoraResource(null, effectiveContentType, path);
-                final HttpIdentifierTranslator idTranslator =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
+                resource = createFedoraResource(null, effectiveContentType, jcrPath);
                 final URI location = new URI(idTranslator.getSubject(resource.getNode().getPath()).getURI());
 
                 response = created(location).entity(location.toString());
@@ -442,18 +450,15 @@ public class FedoraNodes extends AbstractResource {
 
             evaluateRequestPreconditions(request, resource);
 
-            final HttpIdentifierTranslator graphSubjects =
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
             if (requestContentType != null && requestBodyStream != null)  {
                 final String format = contentTypeToLang(contentType.toString()).getName().toUpperCase();
 
                 final Model inputModel = createDefaultModel()
                                              .read(requestBodyStream,
-                                                      graphSubjects.getSubject(resource.getNode().getPath()).toString(),
+                                                     idTranslator.getSubject(resource.getNode().getPath()).toString(),
                                                       format);
 
-                resource.replaceProperties(graphSubjects, inputModel);
+                resource.replaceProperties(idTranslator, inputModel);
 
             }
 
@@ -492,11 +497,10 @@ public class FedoraNodes extends AbstractResource {
             final UriInfo uriInfo, final InputStream requestBodyStream)
         throws RepositoryException, ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
-
         String pid;
         final String newObjectPath;
         final String path = toPath(pathList);
-
+        LOGGER.trace("POST: Attempting to created object in path: {}", path);
         final HttpIdentifierTranslator idTranslator =
             new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
@@ -504,7 +508,8 @@ public class FedoraNodes extends AbstractResource {
 
         final String contentTypeString = contentType.toString();
 
-        assertPathExists(path);
+        final String jcrPath = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + path));
+        assertPathExists(jcrPath);
 
         if (slug != null && !slug.isEmpty()) {
             pid = slug;
@@ -515,15 +520,18 @@ public class FedoraNodes extends AbstractResource {
         LOGGER.trace("Using external identifier {} to create new resource.", pid);
         LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
                                                                                           + pid);
-        pid = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
+        newObjectPath = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() +
+                path + (path.equals("/") ? "" : "/") + pid));
+        LOGGER.trace("Using auto hierarchy path {} to create new resource.", newObjectPath);
         // remove leading slash left over from translation
-        pid = pid.substring(1, pid.length());
-        LOGGER.trace("Using internal identifier {} to create new resource.", pid);
-        newObjectPath = path + "/" + pid;
+        //pid = pid.substring(1, pid.length());
+
+        //newObjectPath = path + "/" + pid;
 
         assertPathMissing(newObjectPath);
 
-        final FedoraResource object = nodeService.getObject(session, path);
+        final FedoraResource object = nodeService.getObject(session,
+                idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + path)));
 
         if (object.getModels().contains(FEDORA_DATASTREAM)) {
             throw new WebApplicationException(conflict().entity("Object cannot have child nodes").build());
@@ -713,12 +721,14 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             final String path = toPath(pathList);
-
+            final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path),
+                    session, uriInfo, FedoraNodes.class);
+            LOGGER.trace("DELETE: Using auto hierarchy path {} to retrieve resource.", jcrPath);
             final FedoraResource resource =
-                nodeService.getObject(session, path);
+                nodeService.getObject(session, jcrPath);
             evaluateRequestPreconditions(request, resource);
 
-            nodeService.deleteObject(session, path);
+            nodeService.deleteObject(session, jcrPath);
             session.save();
             return noContent().build();
         } catch (javax.jcr.ReferentialIntegrityException riex) {
@@ -757,19 +767,20 @@ public class FedoraNodes extends AbstractResource {
 
             final IdentifierTranslator subjects =
                 new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-            if (!nodeService.exists(session, toPath(path))) {
+            String srcPath = subjects.getPathFromSubject(createResource(uriInfo.getBaseUri() + toPath(path)));
+            LOGGER.trace("COPY: Using auto hierarchy path {} to retrieve source.", srcPath);
+            if (!nodeService.exists(session, srcPath)) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
             }
 
             final String destination =
                 subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
-
+            LOGGER.trace("COPY: Using auto hierarchy path {} to retrieve destination resource.", destination);
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
             }
 
-            nodeService.copyObject(session, toPath(path), destination);
+            nodeService.copyObject(session, srcPath, destination);
             session.save();
             versionService.nodeUpdated(session, destination);
             return created(new URI(destinationUri)).build();
@@ -795,28 +806,27 @@ public class FedoraNodes extends AbstractResource {
                                @HeaderParam("Destination") final String destinationUri,
                                @Context final Request request)
         throws RepositoryException, URISyntaxException {
-
+        final IdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
         try {
 
             final String path = toPath(pathList);
-
-            if (!nodeService.exists(session, path)) {
+            String srcPath = subjects.getPathFromSubject(createResource(uriInfo.getBaseUri() + path));
+            LOGGER.trace("MOVE: Using auto hierarchy path {} to retrieve source resource.", srcPath);
+            if (!nodeService.exists(session, srcPath)) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
             }
 
 
             final FedoraResource resource =
-                nodeService.getObject(session, path);
+                nodeService.getObject(session, srcPath);
 
 
             evaluateRequestPreconditions(request, resource);
 
-            final IdentifierTranslator subjects =
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
             final String destination =
                 subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
-
+            LOGGER.trace("MOVE: Using auto hierarchy path {} to retrieve destination resource.", destination);
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
             }
