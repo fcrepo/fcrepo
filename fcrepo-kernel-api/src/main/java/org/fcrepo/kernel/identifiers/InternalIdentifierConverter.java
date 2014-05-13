@@ -20,7 +20,7 @@ package org.fcrepo.kernel.identifiers;
  * identifiers.
  *
  * @author ajs6f
- * @date Apr 1, 2014
+ * @since Apr 1, 2014
  */
 public abstract class InternalIdentifierConverter extends IdentifierConverter<String> {
 

@@ -29,7 +29,7 @@ import com.google.common.collect.AbstractIterator;
  * after exhaustion, sets containing (A - (A ∩ B)) and (A ∩ B) are available.
  *
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  * @param <E> The type of element common to both source and set.
  */
 public class DifferencingIterator<E> extends AbstractIterator<E> {

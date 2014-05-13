@@ -60,7 +60,7 @@ import com.google.common.collect.Iterators;
  * JCR.
  *
  * @author ajs6f
- * @date Feb 14, 2013
+ * @since Feb 14, 2013
  */
 public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 

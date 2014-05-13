@@ -26,7 +26,7 @@ import java.util.UUID;
 
 /**
  * @author ajs6f
- * @date 2013
+ * @since 2013
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 public abstract class AbstractIT {

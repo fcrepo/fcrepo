@@ -75,7 +75,7 @@ import com.hp.hpl.jena.rdf.model.Model;
  * node type of the backing JCR node for that Fedora resource.
  *
  * @author ajs6f
- * @date May 19, 2013
+ * @since May 19, 2013
  */
 @Provider
 @Produces({TEXT_HTML, APPLICATION_XHTML_XML})

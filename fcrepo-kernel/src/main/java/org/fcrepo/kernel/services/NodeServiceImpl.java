@@ -48,7 +48,7 @@ import com.google.common.collect.ImmutableSet;
  * we don't care.)
  *
  * @author Chris Beer
- * @date May 9, 2013
+ * @since May 9, 2013
  */
 @Component
 public class NodeServiceImpl extends AbstractService implements NodeService {

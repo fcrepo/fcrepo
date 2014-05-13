@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
  * Service for creating and retrieving FedoraObjects without using the JCR API.
  *
  * @author cbeer
- * @date Feb 11, 2013
+ * @since Feb 11, 2013
  */
 @Component
 public class ObjectServiceImpl extends AbstractService implements ObjectService {

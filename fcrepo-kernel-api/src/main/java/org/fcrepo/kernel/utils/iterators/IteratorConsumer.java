@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * is managed as part of the state of any implementation.
  *
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  * @param <E>
  * @param <T>
  */

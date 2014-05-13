@@ -55,7 +55,7 @@ import com.hp.hpl.jena.graph.Triple;
  * Assemble {@link Triple}s derived from the root {@link Node} of a repository.
  *
  * @author ajs6f
- * @date Oct 18, 2013
+ * @since Oct 18, 2013
  */
 public class RootRdfContext extends NodeRdfContext {
 

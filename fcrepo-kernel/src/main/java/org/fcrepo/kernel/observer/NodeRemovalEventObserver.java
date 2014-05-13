@@ -42,7 +42,7 @@ import com.google.common.eventbus.EventBus;
  * change to the jcr:lastModified property.
  *
  * @author armintor@gmail.com
- * @date Dec 5, 2013
+ * @since Dec 5, 2013
  */
 public class NodeRemovalEventObserver implements EventListener {
 

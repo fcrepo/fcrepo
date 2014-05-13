@@ -47,7 +47,7 @@ import com.hp.hpl.jena.query.DatasetFactory;
  * Simple HTML provider that delegates to {@link BaseHtmlProvider}
  *
  * @author ajs6f
- * @date Nov 19, 2013
+ * @since Nov 19, 2013
  */
 @Provider
 @Produces({TEXT_HTML, APPLICATION_XHTML_XML})

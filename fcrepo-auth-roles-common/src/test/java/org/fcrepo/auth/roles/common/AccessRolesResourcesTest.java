@@ -43,7 +43,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author bbpennel
- * @date Feb 17, 2014
+ * @since Feb 17, 2014
  */
 public class AccessRolesResourcesTest {
 

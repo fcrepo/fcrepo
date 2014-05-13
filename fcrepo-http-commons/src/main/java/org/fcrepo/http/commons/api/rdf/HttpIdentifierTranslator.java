@@ -61,7 +61,7 @@ import javax.ws.rs.core.UriInfo;
 /**
  * @author barmintor
  * @author ajs6f
- * @date Apr 2, 2014
+ * @since Apr 2, 2014
  */
 public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTranslator {
 

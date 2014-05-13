@@ -24,7 +24,7 @@ import org.junit.Test;
 
 /**
  * @author ajs6f
- * @date Apr 1, 2014
+ * @since Apr 1, 2014
  */
 public class ExternalIdentifierTranslatorTest {
 

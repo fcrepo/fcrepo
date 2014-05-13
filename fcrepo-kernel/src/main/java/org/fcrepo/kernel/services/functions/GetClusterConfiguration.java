@@ -37,7 +37,7 @@ import com.google.common.base.Function;
  * Extract the Infinispan cluster configuration and state
  * from a running Modeshape repository
  * @author Gregory Jansen
- * @date Apr 26, 2013
+ * @since Apr 26, 2013
  */
 public class GetClusterConfiguration implements
         Function<Repository, Map<String, String>> {

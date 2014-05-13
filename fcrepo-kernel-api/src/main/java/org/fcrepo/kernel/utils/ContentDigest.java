@@ -32,7 +32,7 @@ import com.google.common.collect.ImmutableMap;
  * Digest helpers to convert digests (checksums) into URI strings
  * (based loosely on Magnet URIs)
  * @author Chris Beer
- * @date Mar 6, 2013
+ * @since Mar 6, 2013
  */
 public abstract class ContentDigest {
 

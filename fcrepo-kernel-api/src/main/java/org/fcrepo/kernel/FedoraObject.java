@@ -19,7 +19,7 @@ import javax.jcr.RepositoryException;
 
 /**
  * @author bbpennel
- * @date Feb 18, 2014
+ * @since Feb 18, 2014
  */
 public interface FedoraObject extends FedoraResource {
 

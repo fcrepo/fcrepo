@@ -24,10 +24,10 @@ import com.google.common.base.Predicate;
  * Simple {@link EventFilter} that does no filtering.
  *
  * @author eddies
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  * @author ajs6f
  * @author barmintor
- * @date Dec 2013
+ * @since Dec 2013
  */
 public class NOOPFilter implements EventFilter {
 

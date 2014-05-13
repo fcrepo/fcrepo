@@ -26,7 +26,7 @@ import com.google.common.base.Function;
 /**
  * Retrieve the BinaryStore from a running Modeshape Repository
  * @author cbeer
- * @date Apr 30, 2013
+ * @since Apr 30, 2013
  */
 public class GetBinaryStore implements Function<Repository, BinaryStore> {
 

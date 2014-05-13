@@ -25,7 +25,7 @@ import org.fcrepo.kernel.FedoraObject;
  * Service for creating and retrieving FedoraObjects
  *
  * @author bbpennel
- * @date Feb 20, 2014
+ * @since Feb 20, 2014
  */
 public interface ObjectService extends Service {
 

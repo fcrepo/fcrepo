@@ -40,7 +40,7 @@ import com.google.common.base.Function;
  * multi-part identifier to ensure efficient performance of the JCR.
  *
  * @author ajs6f
- * @date Mar 26, 2014
+ * @since Mar 26, 2014
  */
 public class HierarchyConverter extends InternalIdentifierConverter {
 

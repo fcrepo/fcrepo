@@ -21,7 +21,7 @@ import com.hp.hpl.jena.graph.Triple;
  * {@link IteratorConsumer} specific to {@link RdfStream}s.
  *
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  */
 public interface RdfStreamConsumer extends IteratorConsumer<Triple, Boolean> {
 

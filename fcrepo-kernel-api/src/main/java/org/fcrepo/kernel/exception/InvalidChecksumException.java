@@ -18,7 +18,7 @@ package org.fcrepo.kernel.exception;
 /**
  * Exception thrown when the calculated digest does not match the stored digest
  * @author ajs6f
- * @date Mar 10, 2013
+ * @since Mar 10, 2013
  */
 public class InvalidChecksumException extends Exception {
 

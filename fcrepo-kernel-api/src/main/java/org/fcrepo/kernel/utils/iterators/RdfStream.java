@@ -41,7 +41,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * A stream of RDF triples along with some useful context.
  *
  * @author ajs6f
- * @date Oct 9, 2013
+ * @since Oct 9, 2013
  */
 public class RdfStream extends ForwardingIterator<Triple> implements
         Iterable<Triple> {

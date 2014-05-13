@@ -38,7 +38,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  *
  * @see {@link RdfRemover} for contrast
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  */
 public class RdfAdder extends PersistingRdfStreamConsumer {
 

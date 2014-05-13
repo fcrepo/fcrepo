@@ -57,7 +57,7 @@ import org.modeshape.jcr.value.Path;
 
 /**
  * @author bbpennel
- * @date Feb 14, 2014
+ * @since Feb 14, 2014
  */
 public class AccessRolesProviderTest {
 

@@ -32,7 +32,7 @@ import org.slf4j.Logger;
  * a JCR node.
  *
  * @author ajs6f
- * @date Feb 21, 2013
+ * @since Feb 21, 2013
  */
 public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject {
 

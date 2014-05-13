@@ -48,7 +48,7 @@ import com.codahale.metrics.Histogram;
  * Abstraction for a Fedora datastream backed by a JCR node.
  *
  * @author ajs6f
- * @date Feb 21, 2013
+ * @since Feb 21, 2013
  */
 public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
 

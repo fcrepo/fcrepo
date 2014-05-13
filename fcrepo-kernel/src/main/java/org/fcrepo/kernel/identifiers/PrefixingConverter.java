@@ -20,7 +20,7 @@ package org.fcrepo.kernel.identifiers;
  * prefix.
  *
  * @author ajs6f
- * @date Apr 1, 2014
+ * @since Apr 1, 2014
  */
 public class PrefixingConverter extends InternalIdentifierConverter {
 
