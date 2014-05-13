@@ -42,14 +42,34 @@ public class HttpPidMinterTest {
         testMinter = new HttpPidMinter();
         testMinter.setMinterURL("http://localhost/minter");
         testMinter.setMinterMethod("POST");
-        testMinter.setTrimExpression(".*/");
     }
 
     @Test
     public void testMintPid() throws Exception {
+        testMinter.setXPathExpression(null);
+        testMinter.setTrimExpression(".*/");
+
         HttpClient mockClient = mock(HttpClient.class);
         HttpResponse mockResponse = mock(HttpResponse.class);
         ByteArrayEntity entity = new ByteArrayEntity("/foo/bar/baz".getBytes());
+
+        setField( testMinter, "client", mockClient );
+        when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
+        when(mockResponse.getEntity()).thenReturn(entity);
+
+        final String pid = testMinter.mintPid();
+        verify(mockClient).execute(isA(HttpUriRequest.class));
+        assertEquals( pid, "baz" );
+    }
+
+    @Test
+    public void testMintPidXPath() throws Exception {
+        testMinter.setXPathExpression("/test/id");
+        testMinter.setTrimExpression(null);
+
+        HttpClient mockClient = mock(HttpClient.class);
+        HttpResponse mockResponse = mock(HttpResponse.class);
+        ByteArrayEntity entity = new ByteArrayEntity("<test><id>baz</id></test>".getBytes());
 
         setField( testMinter, "client", mockClient );
         when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
