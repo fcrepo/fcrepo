@@ -15,20 +15,20 @@
  */
 package org.fcrepo.auth.common;
 
-import org.modeshape.jcr.ExecutionContext;
-import org.modeshape.jcr.api.ServletCredentials;
-import org.modeshape.jcr.security.AuthenticationProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.jcr.Credentials;
-import javax.servlet.http.HttpServletRequest;
-
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import javax.jcr.Credentials;
+import javax.servlet.http.HttpServletRequest;
+
+import org.modeshape.jcr.ExecutionContext;
+import org.modeshape.jcr.api.ServletCredentials;
+import org.modeshape.jcr.security.AuthenticationProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Authenticates ModeShape logins where JAX-RS credentials are supplied. Capable
@@ -123,16 +123,11 @@ public class ServletContainerAuthenticationProvider implements
      * </p>
      * <ul>
      * <li>FEDORA_SERVLET_REQUEST will be assigned the ServletRequest instance
-     * associated with credentials if the authenticated user has the fedoraUser
-     * role.</li>
-     * <li>FEDORA_USER_PRINCIPAL will be assigned the authenticated user's
-     * principal if the authenticated user has the fedoraUser role, and the
-     * EVERYONE principal otherwise.</li>
+     * associated with credentials.</li>
      * <li>FEDORA_ALL_PRINCIPALS will be assigned the union of all principals
      * obtained from configured PrincipalProvider instances plus the
-     * authenticated user's principal if the authenticated user has the
-     * fedoraUser role; FEDORA_ALL_PRINCIPALS will be assigned the singleton set
-     * containing the EVERYONE principal otherwise.</li>
+     * authenticated user's principal; FEDORA_ALL_PRINCIPALS will be assigned
+     * the singleton set containing the EVERYONE principal otherwise.</li>
      * </ul>
      */
     @Override
@@ -140,7 +135,7 @@ public class ServletContainerAuthenticationProvider implements
             final String repositoryName, final String workspaceName,
             final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
-        LOGGER.debug("in authenticate: {}; FAD: {}", credentials, fad);
+        LOGGER.debug("Trying to authenticate: {}; FAD: {}", credentials, fad);
 
         if (!(credentials instanceof ServletCredentials)) {
             return null;
@@ -156,8 +151,7 @@ public class ServletContainerAuthenticationProvider implements
                     userPrincipal.getName()));
         }
 
-        if (userPrincipal != null &&
-                servletRequest.isUserInRole(FEDORA_USER_ROLE)) {
+        if (userPrincipal != null) {
 
             sessionAttributes.put(
                     FedoraAuthorizationDelegate.FEDORA_SERVLET_REQUEST,
