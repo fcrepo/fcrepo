@@ -15,22 +15,17 @@
  */
 package org.fcrepo.kernel.utils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Iterators.contains;
-import static com.google.common.collect.Iterators.forArray;
-import static com.google.common.collect.Iterators.transform;
-import static javax.jcr.PropertyType.BINARY;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Collection;
-import java.util.Iterator;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+import org.modeshape.jcr.api.Namespaced;
+import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -42,18 +37,23 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 import javax.jcr.version.VersionHistory;
+import java.util.Collection;
+import java.util.Iterator;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.slf4j.Logger;
-
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Iterators.contains;
+import static com.google.common.collect.Iterators.forArray;
+import static com.google.common.collect.Iterators.transform;
+import static javax.jcr.PropertyType.BINARY;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Convenience class with static methods for manipulating Fedora types in the
@@ -264,6 +264,33 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             @Override
             public boolean apply(final Property p) {
                 return isReferenceProperty.apply(p) || isBinaryContentProperty.apply(p);
+            }
+        };
+
+    /**
+     * Check whether a property relates to versioning and should be suppressed from
+     * external output.
+     */
+    public static Predicate<Property> isVersionProperty =
+        new Predicate<Property>() {
+
+            @Override
+            public boolean apply(final Property p) {
+                try {
+                    if (p instanceof Namespaced) {
+                        final Namespaced nsProperty = (Namespaced) p;
+                        final String uri = nsProperty.getNamespaceURI();
+                        final String localName = nsProperty.getLocalName();
+                        return uri.equals(JCR_NAMESPACE)
+                                && (localName.equals("baseVersion")
+                                || localName.equals("isCheckedOut")
+                                || localName.equals("predecessors")
+                                || localName.equals("versionHistory"));
+                    }
+                    return false;
+                } catch (RepositoryException e) {
+                    throw propagate(e);
+                }
             }
         };
 

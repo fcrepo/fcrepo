@@ -27,6 +27,7 @@ import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -458,6 +459,31 @@ public class FedoraVersionsIT extends AbstractResourceIT {
             method.addHeader("Accept", type);
             assertEquals(type, getContentType(method));
         }
+    }
+
+    @Test
+    public void testOmissionOfJCRCVersionRDF() throws IOException {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        addMixin(pid, MIX_NAMESPACE + "versionable");
+        final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid));
+
+        final Resource subject = createResource(serverAddress + pid);
+        final String [] jcrVersioningTriples = new String[] {
+                REPOSITORY_NAMESPACE + "baseVersion",
+                REPOSITORY_NAMESPACE + "isCheckedOut",
+                REPOSITORY_NAMESPACE + "predecessors",
+                REPOSITORY_NAMESPACE + "versionHistory" };
+
+        for (String prohibitedProperty : jcrVersioningTriples) {
+            assertFalse(prohibitedProperty + " must not appear in RDF for version-enabled node!",
+                    rdf.contains(
+                    Node.ANY,
+                    subject.asNode(),
+                    createResource(prohibitedProperty).asNode(),
+                    Node.ANY));
+        }
+
     }
 
     private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName) throws IOException {
