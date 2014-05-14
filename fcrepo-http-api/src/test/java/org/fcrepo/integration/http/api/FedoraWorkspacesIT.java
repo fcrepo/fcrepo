@@ -29,6 +29,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
@@ -104,5 +105,16 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         assertEquals(404, deleteWorkspaceResponse.getStatusLine()
                               .getStatusCode());
 
+    }
+
+    @Test
+    public void testResponseContentTypes() throws Exception {
+        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + "fcr:workspaces");
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
     }
 }

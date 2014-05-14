@@ -30,7 +30,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -54,8 +53,6 @@ public class NodeRdfContext extends RdfStream {
 
     private final com.hp.hpl.jena.graph.Node subject;
 
-    private final LowLevelStorageService lowLevelStorageService;
-
     private static final Logger LOGGER = getLogger(NodeRdfContext.class);
 
     /**
@@ -65,28 +62,11 @@ public class NodeRdfContext extends RdfStream {
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public NodeRdfContext(final Node node, final IdentifierTranslator graphSubjects,
-        final LowLevelStorageService lowLevelStorageService)
-        throws RepositoryException {
+    public NodeRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
         super();
         this.node = node;
         this.graphSubjects = graphSubjects;
         this.subject = graphSubjects.getSubject(node.getPath()).asNode();
-
-        // TODO fix GraphProperties to allow for LowLevelStorageServices to pass
-        // through it
-        // this is horribly ugly. LowLevelStorageServices are supposed to be
-        // managed beans.
-        // but the contract of GraphProperties isn't wide enough to pass one in,
-        // so rather than
-        // alter GraphProperties right now, I'm just spinning one on the fly.
-        if (lowLevelStorageService == null) {
-            this.lowLevelStorageService = new LowLevelStorageService();
-            this.lowLevelStorageService.setRepository(node.getSession()
-                    .getRepository());
-        } else {
-            this.lowLevelStorageService = lowLevelStorageService;
-        }
 
         //include rdf:type for primaryType, mixins, and their supertypes
         concatRdfTypes();
@@ -111,13 +91,6 @@ public class NodeRdfContext extends RdfStream {
      */
     public com.hp.hpl.jena.graph.Node subject() {
         return subject;
-    }
-
-    /**
-     * @return the {@link LowLevelStorageService} in scope
-     */
-    public LowLevelStorageService lowLevelStorageService() {
-        return lowLevelStorageService;
     }
 
     private Function<NodeType, Triple> nodetype2triple() {
@@ -151,22 +124,34 @@ public class NodeRdfContext extends RdfStream {
     }
 
     private void concatRdfTypes() throws RepositoryException {
+        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
+
         final NodeType primaryNodeType = node.getPrimaryNodeType();
-        final NodeType[] mixinNodeTypesArr = node.getMixinNodeTypes();
-        final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
-                .add(primaryNodeType.getSupertypes()).build();
-        final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
-        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder()
-                .add(primaryNodeType)
-                .addAll(primarySupertypes)
-                .addAll(mixinNodeTypes);
-        final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
-        for (final NodeType mixinNodeType : mixinNodeTypes) {
-            mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
+        nodeTypesB.add(primaryNodeType);
+
+        if (primaryNodeType != null && primaryNodeType.getSupertypes() != null) {
+            final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
+                    .add(primaryNodeType.getSupertypes()).build();
+            nodeTypesB.addAll(primarySupertypes);
         }
-        nodeTypesB.addAll(mixinSupertypes.build());
+
+        final NodeType[] mixinNodeTypesArr = node.getMixinNodeTypes();
+
+        if (mixinNodeTypesArr != null) {
+            final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
+            nodeTypesB.addAll(mixinNodeTypes);
+
+            final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
+            for (final NodeType mixinNodeType : mixinNodeTypes) {
+                mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
+            }
+
+            nodeTypesB.addAll(mixinSupertypes.build());
+        }
+
         final ImmutableList<NodeType> nodeTypes = nodeTypesB.build();
         final Iterator<NodeType> nodeTypesIt = nodeTypes.iterator();
+
         concat(Iterators.transform(nodeTypesIt,nodetype2triple()));
     }
 

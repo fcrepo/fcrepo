@@ -86,8 +86,10 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      */
     @Override
     public void nodeUpdated(final Node n) throws RepositoryException {
-        if (isVersioningEnabled(n)
-                && isImplicitVersioningEnabled(n)) {
+        if (isImplicitVersioningEnabled(n)) {
+            if (!isVersioningEnabled(n)) {
+                enableVersioning(n);
+            }
             queueOrCommitCheckpoint(n.getSession(), n.getPath());
         } else {
             LOGGER.trace("No implicit version checkpoint set for {}", n.getPath());
@@ -96,6 +98,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     /**
      * Explicitly creates a version for the nodes at each path provided.
+     * If the node doesn't have the versionable mixing, that mixin is
+     * added.
      * @param workspace the workspace in which the node resides
      * @param paths absolute paths to the nodes within the workspace
      * @throws RepositoryException
@@ -104,6 +108,10 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     public void createVersion(final Workspace workspace,
             final Collection<String> paths) throws RepositoryException {
         for (final String absPath : paths) {
+            final Node node = workspace.getSession().getNode(absPath);
+            if (!isVersioningEnabled(node)) {
+                enableVersioning(node);
+            }
             checkpoint(workspace, absPath);
         }
     }
@@ -172,6 +180,11 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static boolean isVersioningEnabled(final Node n) throws RepositoryException {
         return n.isNodeType(VERSIONABLE);
+    }
+
+    private void enableVersioning(final Node node) throws RepositoryException {
+        node.addMixin(VERSIONABLE);
+        node.getSession().save();
     }
 
     private static boolean isImplicitVersioningEnabled(final Node n) throws RepositoryException {

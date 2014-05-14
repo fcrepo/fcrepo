@@ -105,7 +105,6 @@ import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
@@ -686,9 +685,6 @@ public class JcrRdfToolsTest {
     private PropertyIterator mockParentProperties;
 
     @Mock
-    private LowLevelStorageService mockLowLevelStorageService;
-
-    @Mock
     private Node mockContentNode;
 
     @Mock
@@ -710,7 +706,7 @@ public class JcrRdfToolsTest {
     private BinaryValue mockBinary;
 
     @Mock
-    private LowLevelCacheEntry mockCacheEntry;
+    private CacheEntry mockCacheEntry;
 
     @Mock
     private QueryManager mockQueryManager;

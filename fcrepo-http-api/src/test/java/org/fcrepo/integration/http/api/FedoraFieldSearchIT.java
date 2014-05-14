@@ -19,6 +19,14 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE_OF;
@@ -40,7 +48,6 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
 
-@Ignore("Destined for death.")
 public class FedoraFieldSearchIT extends AbstractResourceIT {
 
     @Test
@@ -119,7 +126,18 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         assertTrue(graphStore.contains(ANY, createResource(
                 serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
                 .asNode(), NEXT_PAGE.asNode(), nil.asNode()));
+    }
 
+    @Test
+    public void testResponseContentTypes() throws Exception {
+        String responseTypes[] = {TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X};
+        for (final String type : responseTypes) {
+            final HttpGet method =
+                    new HttpGet(serverAddress + "fcr:search?q=testtype");
+
+            method.addHeader("Accept", type);
+            assertEquals(type, getContentType(method));
+        }
     }
 
     @Test

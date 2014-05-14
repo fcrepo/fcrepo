@@ -17,7 +17,6 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertTrue;
@@ -39,14 +38,11 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
-import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -56,16 +52,12 @@ public class PropertiesRdfContextTest {
     public void testForLowLevelStorageTriples() throws RepositoryException,
                                                IOException {
         final Model results =
-            new PropertiesRdfContext(mockNode, mockGraphSubjects,
-                    mockLowLevelStorageService).asModel();
+            new PropertiesRdfContext(mockNode, mockGraphSubjects).asModel();
         logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
         assertTrue("Didn't find triple showing node has content!", results
                 .contains(mockSubject, HAS_CONTENT, mockContentSubject));
         assertTrue("Didn't find triple showing content has node!", results
                 .contains(mockContentSubject, IS_CONTENT_OF, mockSubject));
-        assertTrue("Didn't find triple showing content has location!", results
-                .contains(mockContentSubject, HAS_CONTENT_LOCATION,
-                        createResource(MOCK_EXTERNAL_IDENTIFIER)));
     }
 
     @Before
@@ -84,12 +76,6 @@ public class PropertiesRdfContextTest {
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockContentNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockContentNode.hasProperties()).thenReturn(false);
-        when(
-                mockLowLevelStorageService
-                        .getLowLevelCacheEntries(mockContentNode)).thenReturn(
-                ImmutableSet.of(mockLowLevelCacheEntry));
-        when(mockLowLevelCacheEntry.getExternalIdentifier()).thenReturn(
-                MOCK_EXTERNAL_IDENTIFIER);
         when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockSubject);
         when(mockGraphSubjects.getSubject(mockContentNode.getPath())).thenReturn(mockContentSubject);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -124,9 +110,6 @@ public class PropertiesRdfContextTest {
     private IdentifierTranslator mockGraphSubjects;
 
     @Mock
-    private LowLevelStorageService mockLowLevelStorageService;
-
-    @Mock
     private Session mockSession;
 
     @Mock
@@ -137,9 +120,6 @@ public class PropertiesRdfContextTest {
 
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;
-
-    @Mock
-    private LowLevelCacheEntry mockLowLevelCacheEntry;
 
     private static void
             logRdf(final String message, final Model model) throws IOException {

@@ -17,7 +17,8 @@ package org.fcrepo.kernel.utils;
 
 import org.modeshape.connector.filesystem.FileSystemConnector;
 
-import javax.jcr.Binary;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 
 /**
  * Cache entry for a projected binary
@@ -28,10 +29,15 @@ public class ProjectedCacheEntry extends BinaryCacheEntry {
 
     /**
      * Create a new ProjectedCacheEntry
-     * @param binary
+     * @param property
      */
-    public ProjectedCacheEntry(final Binary binary, final String externalUri) {
-        super(binary, "/" + FileSystemConnector.class.getName() + ":projections:" + externalUri);
+    public ProjectedCacheEntry(final Property property) {
+        super(property);
+    }
+
+    @Override
+    public String getExternalIdentifier() throws RepositoryException {
+        return "/" + FileSystemConnector.class.getName() + ":projections:" + property().getPath();
     }
 
 }

@@ -33,6 +33,8 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
+import java.util.Collections;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -48,6 +50,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class VersionServiceImplTest {
 
     private static final String USER_NAME = "test";
+    public static final String EXAMPLE_VERSIONED_PATH = "/example-versioned";
+    public static final String EXAMPLE_AUTO_VERSIONED_PATH = "/example-auto-versioned";
+    public static final String EXAMPLE_UNVERSIONED_PATH = "/example-unversioned";
 
     private VersionService testObj;
 
@@ -82,19 +87,19 @@ public class VersionServiceImplTest {
 
         // add a node that's versioned (but not auto-versioned)
         final Node versionedNode = mock(Node.class);
-        when(versionedNode.getPath()).thenReturn("/example-versioned");
+        when(versionedNode.getPath()).thenReturn(EXAMPLE_VERSIONED_PATH);
         when(versionedNode.getSession()).thenReturn(s);
         when(versionedNode.isNodeType(VersionServiceImpl.VERSIONABLE))
                 .thenReturn(true);
-        when(s.getNode("/example-versioned")).thenReturn(versionedNode);
+        when(s.getNode(EXAMPLE_VERSIONED_PATH)).thenReturn(versionedNode);
 
         // add a node that's autoversioned
         final Node autoversionedNode = mock(Node.class);
-        when(autoversionedNode.getPath()).thenReturn("/example-auto-versioned");
+        when(autoversionedNode.getPath()).thenReturn(EXAMPLE_AUTO_VERSIONED_PATH);
         when(autoversionedNode.getSession()).thenReturn(s);
         when(autoversionedNode.isNodeType(VersionServiceImpl.VERSIONABLE))
                 .thenReturn(true);
-        when(s.getNode("/example-auto-versioned")).thenReturn(autoversionedNode);
+        when(s.getNode(EXAMPLE_AUTO_VERSIONED_PATH)).thenReturn(autoversionedNode);
         final Property autoVersionProperty = mock(Property.class);
         final Value autoVersionValue = mock(Value.class);
         when(autoVersionValue.getString()).thenReturn(
@@ -109,38 +114,38 @@ public class VersionServiceImplTest {
 
         // add a node that's unversioned
         final Node unversionedNode = mock(Node.class);
-        when(unversionedNode.getPath()).thenReturn("/example-unversioned");
+        when(unversionedNode.getPath()).thenReturn(EXAMPLE_UNVERSIONED_PATH);
         when(unversionedNode.getSession()).thenReturn(s);
         when(unversionedNode.isNodeType(VersionServiceImpl.VERSIONABLE))
                 .thenReturn(false);
-        when(s.getNode("/example-unversioned")).thenReturn(unversionedNode);
+        when(s.getNode(EXAMPLE_UNVERSIONED_PATH)).thenReturn(unversionedNode);
     }
 
     @Test
-    public void testCheckpoint() throws Exception {
+    public void testUpdateVersioned() throws Exception {
         // request a version be created
-        testObj.nodeUpdated(s, "/example-versioned");
+        testObj.nodeUpdated(s, EXAMPLE_VERSIONED_PATH);
 
         // ensure that it was
-        verify(mockVM, never()).checkpoint("/example-versioned");
+        verify(mockVM, never()).checkpoint(EXAMPLE_VERSIONED_PATH);
     }
 
     @Test
-    public void testCheckpointUnversioned() throws Exception {
+    public void testUpdateUnversioned() throws Exception {
         // request a version be created
-        testObj.nodeUpdated(s, "/example-unversioned");
+        testObj.nodeUpdated(s, EXAMPLE_UNVERSIONED_PATH);
 
         // ensure that it was
         verify(mockVM, never()).checkpoint("/example-unversioned");
     }
 
     @Test
-    public void testCheckpointAutoVersioned() throws Exception {
+    public void testUpdateAutoVersioned() throws Exception {
         // request a version be created
-        testObj.nodeUpdated(s, "/example-auto-versioned");
+        testObj.nodeUpdated(s, EXAMPLE_AUTO_VERSIONED_PATH);
 
         // ensure that it was
-        verify(mockVM, only()).checkpoint("/example-auto-versioned");
+        verify(mockVM, only()).checkpoint(EXAMPLE_AUTO_VERSIONED_PATH);
     }
 
     @Test
@@ -153,19 +158,19 @@ public class VersionServiceImplTest {
 
         assertNotNull("Transaction must have started!",
                 txService.getTransaction(
-                        s.getNode("/example-auto-versioned").getSession()));
+                        s.getNode(EXAMPLE_AUTO_VERSIONED_PATH).getSession()));
 
         // request a version be created
-        testObj.nodeUpdated(s, "/example-versioned");
+        testObj.nodeUpdated(s, EXAMPLE_VERSIONED_PATH);
 
         // ensure that no version was created (because the transaction is still open)
-        verify(mockVM, never()).checkpoint("/example-versioned");
+        verify(mockVM, never()).checkpoint(EXAMPLE_VERSIONED_PATH);
 
         // close the transaction
         txService.commit(t.getId());
 
         // ensure that no version was made because none was explicitly requested
-        verify(mockVM, never()).checkpoint("/example-versioned");
+        verify(mockVM, never()).checkpoint(EXAMPLE_VERSIONED_PATH);
     }
 
     @Test
@@ -178,19 +183,19 @@ public class VersionServiceImplTest {
 
         assertNotNull("Transaction must have started!",
                 txService.getTransaction(
-                        s.getNode("/example-auto-versioned").getSession()));
+                        s.getNode(EXAMPLE_AUTO_VERSIONED_PATH).getSession()));
 
         // request a version be created
-        testObj.nodeUpdated(s, "/example-unversioned");
+        testObj.nodeUpdated(s, EXAMPLE_UNVERSIONED_PATH);
 
         // ensure that no version was created (because the transaction is still open)
-        verify(mockVM, never()).checkpoint("/example-unversioned");
+        verify(mockVM, never()).checkpoint(EXAMPLE_UNVERSIONED_PATH);
 
         // close the transaction
         txService.commit(t.getId());
 
         // ensure that no version was made (because versioning is off)
-        verify(mockVM, never()).checkpoint("/example-unversioned");
+        verify(mockVM, never()).checkpoint(EXAMPLE_UNVERSIONED_PATH);
     }
 
     @Test
@@ -203,19 +208,19 @@ public class VersionServiceImplTest {
 
         assertNotNull("Transaction must have started!",
                 txService.getTransaction(
-                        s.getNode("/example-auto-versioned").getSession()));
+                        s.getNode(EXAMPLE_AUTO_VERSIONED_PATH).getSession()));
 
         // request a version be created
-        testObj.nodeUpdated(s, "/example-auto-versioned");
+        testObj.nodeUpdated(s, EXAMPLE_AUTO_VERSIONED_PATH);
 
         // ensure that no version was created (because the transaction is still open)
-        verify(mockVM, never()).checkpoint("/example-auto-versioned");
+        verify(mockVM, never()).checkpoint(EXAMPLE_AUTO_VERSIONED_PATH);
 
         // close the transaction
         txService.commit(t.getId());
 
         // ensure that the version was made
-        verify(mockVM, only()).checkpoint("/example-auto-versioned");
+        verify(mockVM, only()).checkpoint(EXAMPLE_AUTO_VERSIONED_PATH);
     }
 
     @Test
@@ -227,12 +232,12 @@ public class VersionServiceImplTest {
         when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-        when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
+        when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
 
-        testObj.revertToVersion(mockWorkspace, "/example-versioned", versionLabel);
+        testObj.revertToVersion(mockWorkspace, EXAMPLE_VERSIONED_PATH, versionLabel);
         verify(mockVersionManager).restore(mockVersion1, true);
 
-        verify(mockVersionManager, never()).checkpoint("/example-versioned");
+        verify(mockVersionManager, never()).checkpoint(EXAMPLE_VERSIONED_PATH);
     }
 
     @Test
@@ -250,9 +255,9 @@ public class VersionServiceImplTest {
         when(mockVersion1.getFrozenNode()).thenReturn(mockFrozenNode);
         when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-        when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
+        when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
 
-        testObj.revertToVersion(mockWorkspace, "/example-versioned", versionUUID);
+        testObj.revertToVersion(mockWorkspace, EXAMPLE_VERSIONED_PATH, versionUUID);
         verify(mockVersionManager).restore(mockVersion1, true);
     }
 
@@ -267,9 +272,9 @@ public class VersionServiceImplTest {
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockVersionIterator.hasNext()).thenReturn(false);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-        when(mockVersionManager.getVersionHistory("/example-versioned")).thenReturn(mockHistory);
+        when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
 
-        testObj.revertToVersion(mockWorkspace, "/example-versioned", versionUUID);
+        testObj.revertToVersion(mockWorkspace, EXAMPLE_VERSIONED_PATH, versionUUID);
     }
 
     @Test
@@ -281,11 +286,11 @@ public class VersionServiceImplTest {
         when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-        when(mockVersionManager.getVersionHistory("/example-auto-versioned")).thenReturn(mockHistory);
+        when(mockVersionManager.getVersionHistory(EXAMPLE_AUTO_VERSIONED_PATH)).thenReturn(mockHistory);
 
-        testObj.revertToVersion(mockWorkspace, "/example-auto-versioned", versionLabel);
+        testObj.revertToVersion(mockWorkspace, EXAMPLE_AUTO_VERSIONED_PATH, versionLabel);
         verify(mockVersionManager).restore(mockVersion1, true);
-        verify(mockVersionManager).checkpoint("/example-auto-versioned");
+        verify(mockVersionManager).checkpoint(EXAMPLE_AUTO_VERSIONED_PATH);
     }
 
     @Test
@@ -360,6 +365,30 @@ public class VersionServiceImplTest {
         when(mockVersionManager.getVersionHistory("/example")).thenReturn(mockHistory);
 
         testObj.removeVersion(mockWorkspace, "/example", versionUUID);
+    }
+
+    @Test
+    public void testMixinCreationWhenExplicitlyVersioning() throws RepositoryException {
+        testObj.createVersion(mockWorkspace, Collections.singleton(EXAMPLE_UNVERSIONED_PATH));
+
+        final Node unversionedNode = s.getNode(EXAMPLE_UNVERSIONED_PATH);
+        verify(unversionedNode).isNodeType(VersionServiceImpl.VERSIONABLE);
+        verify(unversionedNode).addMixin(VersionServiceImpl.VERSIONABLE);
+    }
+
+    @Test
+    public void testMixinCreationWhenAutoVersioningIsTurnedOn() throws RepositoryException {
+        // take our unversioned node, but make it have the auto-version property
+        final Node unversionedNode = s.getNode(EXAMPLE_UNVERSIONED_PATH);
+        Property mockProperty = mock(Property.class);
+        when(unversionedNode.hasProperty(VersionServiceImpl.VERSION_POLICY)).thenReturn(true);
+        when(unversionedNode.getProperty(VersionServiceImpl.VERSION_POLICY)).thenReturn(mockProperty);
+        when(mockProperty.getString()).thenReturn(VersionServiceImpl.AUTO_VERSION);
+
+        testObj.nodeUpdated(s, EXAMPLE_UNVERSIONED_PATH);
+
+        verify(unversionedNode).isNodeType(VersionServiceImpl.VERSIONABLE);
+        verify(unversionedNode).addMixin(VersionServiceImpl.VERSIONABLE);
     }
 
 }

@@ -18,20 +18,16 @@ package org.fcrepo.kernel.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Sets.difference;
-import static org.fcrepo.kernel.services.ServiceHelpers.getCheckCacheFixityFunction;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -42,23 +38,16 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.utils.BinaryCacheEntry;
-import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
-import org.fcrepo.kernel.utils.ProjectedCacheEntry;
+import org.fcrepo.kernel.utils.impl.CacheEntryFactory;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.modeshape.jcr.value.binary.ExternalBinaryValue;
-import org.modeshape.jcr.value.binary.InMemoryBinaryValue;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -72,20 +61,11 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     @Autowired(required = false)
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
-    @Autowired
-    private LowLevelStorageService llStoreService;
-
-    static final Counter fixityCheckCounter = getMetrics().counter(
-            name(LowLevelStorageService.class, "fixity-check-counter"));
+    static final Counter fixityCheckCounter
+        = getMetrics().counter(name(DatastreamService.class, "fixity-check-counter"));
 
     static final Timer timer = getMetrics().timer(
             name(Datastream.class, "fixity-check-time"));
-
-    static final Counter fixityRepairedCounter = getMetrics().counter(
-            name(LowLevelStorageService.class, "fixity-repaired-counter"));
-
-    static final Counter fixityErrorCounter = getMetrics().counter(
-            name(LowLevelStorageService.class, "fixity-error-counter"));
 
     private static final Logger LOGGER = getLogger(DatastreamService.class);
 
@@ -216,8 +196,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @throws RepositoryException
      */
     @Override
-    public Collection<FixityResult> runFixityAndFixProblems(
-            final Datastream datastream) throws RepositoryException {
+    public Collection<FixityResult> runFixityAndFixProblems(final Datastream datastream) throws RepositoryException {
 
         Set<FixityResult> fixityResults;
         Set<FixityResult> goodEntries;
@@ -250,32 +229,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         if (goodEntries.isEmpty()) {
             LOGGER.error("ALL COPIES OF " + datastream.getNode().getPath() +
                              " HAVE FAILED FIXITY CHECKS.");
-            return fixityResults;
-        }
-
-        final CacheEntry anyGoodCacheEntry =
-                goodEntries.iterator().next().getEntry();
-
-        final Set<FixityResult> badEntries =
-                difference(fixityResults, goodEntries);
-
-        for (final FixityResult result : badEntries) {
-            try {
-                // we can safely cast to a LowLevelCacheEntry here, since
-                // other entries have to be filtered out before
-                final LowLevelCacheEntry lle = (LowLevelCacheEntry) result.getEntry();
-                lle.storeValue(anyGoodCacheEntry.getInputStream());
-                final FixityResult newResult =
-                        result.getEntry().checkFixity(digestUri, size);
-                if (newResult.isSuccess()) {
-                    result.setRepaired();
-                    fixityRepairedCounter.inc();
-                } else {
-                    fixityErrorCounter.inc();
-                }
-            } catch (final IOException e) {
-                LOGGER.warn("Exception repairing low-level cache entry: {}", e);
-            }
         }
 
         return fixityResults;
@@ -293,34 +246,13 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      */
     @Override
     public Collection<FixityResult> getFixity(final Node resource,
-            final URI dsChecksum, final long dsSize) throws RepositoryException {
+                                              final URI dsChecksum,
+                                              final long dsSize) throws RepositoryException {
         LOGGER.debug("Checking resource: " + resource.getPath());
 
-        final Binary bin = resource.getProperty(JCR_DATA).getBinary();
+        return CacheEntryFactory.forProperty(repo, resource.getProperty(JCR_DATA)).checkFixity(dsChecksum, dsSize);
 
-        if (bin instanceof ExternalBinaryValue) {
-            return ImmutableSet.of(new ProjectedCacheEntry(bin, resource.getPath())
-                                    .checkFixity(dsChecksum, dsSize));
 
-        } else if (bin instanceof InMemoryBinaryValue) {
-            return ImmutableSet.of(new BinaryCacheEntry(bin, resource.getPath())
-                                    .checkFixity(dsChecksum, dsSize));
-        } else {
-            final Function<LowLevelCacheEntry, FixityResult> checkCacheFunc =
-                getCheckCacheFixityFunction(dsChecksum, dsSize);
-            return llStoreService.transformLowLevelCacheEntries(resource,
-                                                                   checkCacheFunc);
-        }
-
-    }
-
-    /**
-     * Set the low-level storage service (if Spring didn't wire it in)
-     *
-     * @param llStoreService
-     */
-    public void setLlStoreService(final LowLevelStorageService llStoreService) {
-        this.llStoreService = llStoreService;
     }
 
     /**

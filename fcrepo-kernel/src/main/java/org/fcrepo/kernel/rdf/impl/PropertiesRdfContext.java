@@ -17,10 +17,8 @@ package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Predicates.not;
 import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.property2values;
@@ -36,12 +34,9 @@ import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.rdf.impl.mappings.ZippingIterator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Node;
@@ -67,9 +62,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
 
-    public PropertiesRdfContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects,
-        final LowLevelStorageService lowLevelStorageService) throws RepositoryException {
-        super(node, graphSubjects, lowLevelStorageService);
+    public PropertiesRdfContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects)
+        throws RepositoryException {
+        super(node, graphSubjects);
         property2triple = new PropertyToTriple(graphSubjects);
         putPropertiesIntoContext();
     }
@@ -104,27 +99,12 @@ public class PropertiesRdfContext extends NodeRdfContext {
                     create(contentSubject, IS_CONTENT_OF.asNode(), subject)});
             // add properties from content child
             concat(new PropertiesRdfContext(node().getNode(JCR_CONTENT),
-                    graphSubjects(), lowLevelStorageService()));
-
-            // add triples describing storage of content child
-            lowLevelStorageService().setRepository(
-                    node().getSession().getRepository());
-            concat(Iterators.transform(lowLevelStorageService().getLowLevelCacheEntries(
-                    contentNode).iterator(),
-                    new Function<LowLevelCacheEntry, Triple>() {
-
-                        @Override
-                        public Triple apply(final LowLevelCacheEntry llce) {
-                            return create(contentSubject,
-                                    HAS_CONTENT_LOCATION.asNode(),
-                                    createResource(llce.getExternalIdentifier()).asNode());
-                        }
-                    }));
+                    graphSubjects()));
 
         }
 
         if (node().getPrimaryNodeType().getName().equals(ROOT)) {
-            concat(new RootRdfContext(node(), graphSubjects(), lowLevelStorageService()));
+            concat(new RootRdfContext(node(), graphSubjects()));
         }
 
     }

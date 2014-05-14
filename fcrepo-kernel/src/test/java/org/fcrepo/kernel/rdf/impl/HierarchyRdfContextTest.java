@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.rdf.impl;
 
-import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
@@ -54,9 +53,7 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.services.LowLevelStorageService;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
-import org.fcrepo.kernel.utils.LowLevelCacheEntry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -268,12 +265,6 @@ public class HierarchyRdfContextTest {
                 mockBinaryProperty);
         when(mockBinaryProperty.getName()).thenReturn(JCR_DATA);
         when(mockBinaryProperty.getParent()).thenReturn(mockContentNode);
-        when(mockCacheEntry.getExternalIdentifier()).thenReturn(
-                testExternalIdentifier);
-        when(
-                mockLowLevelStorageService
-                        .getLowLevelCacheEntries(mockContentNode)).thenReturn(
-                of(mockCacheEntry));
 
         when(mockContentNode.getProperties()).thenReturn(
                 new TestPropertyIterator(mockBinaryProperty));
@@ -285,8 +276,7 @@ public class HierarchyRdfContextTest {
 
 
     private Model getResults(HierarchyRdfContextOptions options) throws RepositoryException {
-        return new HierarchyRdfContext(mockNode, mockGraphSubjects,
-                                          mockLowLevelStorageService, options).asModel();
+        return new HierarchyRdfContext(mockNode, mockGraphSubjects, options).asModel();
     }
 
     private static void
@@ -353,16 +343,10 @@ public class HierarchyRdfContextTest {
     private IdentifierTranslator mockGraphSubjects;
 
     @Mock
-    private LowLevelStorageService mockLowLevelStorageService;
-
-    @Mock
     private BinaryValue mockBinary;
 
     @Mock
     private Property mockBinaryProperty;
-
-    @Mock
-    private LowLevelCacheEntry mockCacheEntry;
 
     private static final Logger LOGGER =
         getLogger(HierarchyRdfContextTest.class);
