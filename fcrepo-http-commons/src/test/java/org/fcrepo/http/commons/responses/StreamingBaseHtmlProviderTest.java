@@ -49,6 +49,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import com.hp.hpl.jena.graph.Triple;
 
+/**
+ * <p>StreamingBaseHtmlProviderTest class.</p>
+ *
+ * @author cbeer
+ */
 public class StreamingBaseHtmlProviderTest {
 
     private StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();

@@ -32,6 +32,11 @@ import org.mockito.Mock;
 import com.sun.jersey.core.spi.component.ComponentContext;
 import com.sun.jersey.spi.inject.Injectable;
 
+/**
+ * <p>SessionProviderTest class.</p>
+ *
+ * @author awoods
+ */
 public class SessionProviderTest {
 
     SessionProvider testObj;

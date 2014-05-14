@@ -26,6 +26,11 @@ import org.modeshape.jcr.value.binary.TransientBinaryStore;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * <p>GetBinaryStoreIT class.</p>
+ *
+ * @author cbeer
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({ "/spring-test/repo.xml" })
 public class GetBinaryStoreIT {

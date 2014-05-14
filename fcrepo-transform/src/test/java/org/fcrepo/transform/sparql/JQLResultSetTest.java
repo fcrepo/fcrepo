@@ -51,6 +51,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>JQLResultSetTest class.</p>
+ *
+ * @author cbeer
+ */
 public class JQLResultSetTest {
     JQLResultSet testObj;
 

@@ -32,6 +32,11 @@ import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * <p>StoragePolicyDecisionPointTest class.</p>
+ *
+ * @author awoods
+ */
 public class StoragePolicyDecisionPointTest {
 
     static StoragePolicyDecisionPoint pt;

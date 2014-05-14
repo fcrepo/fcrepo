@@ -51,6 +51,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+/**
+ * <p>FedoraHtmlResponsesIT class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private WebClient webClient;

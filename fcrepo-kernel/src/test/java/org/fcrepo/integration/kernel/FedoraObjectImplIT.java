@@ -38,6 +38,11 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * <p>FedoraObjectImplIT class.</p>
+ *
+ * @author ksclarke
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraObjectImplIT extends AbstractIT {
 

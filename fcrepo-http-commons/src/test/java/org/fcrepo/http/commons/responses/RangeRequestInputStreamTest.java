@@ -25,6 +25,11 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.junit.Test;
 
+/**
+ * <p>RangeRequestInputStreamTest class.</p>
+ *
+ * @author awoods
+ */
 public class RangeRequestInputStreamTest {
     @Test
     public void shouldLimitTheInputStream() throws IOException {

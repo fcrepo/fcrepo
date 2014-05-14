@@ -22,6 +22,11 @@ import static org.junit.Assert.assertTrue;
 import org.fcrepo.http.commons.domain.Range;
 import org.junit.Test;
 
+/**
+ * <p>RangeTest class.</p>
+ *
+ * @author awoods
+ */
 public class RangeTest {
     @Test
     public void testUnboundedRange() {

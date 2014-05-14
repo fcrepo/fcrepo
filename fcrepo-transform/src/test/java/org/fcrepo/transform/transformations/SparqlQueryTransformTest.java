@@ -36,6 +36,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>SparqlQueryTransformTest class.</p>
+ *
+ * @author cbeer
+ */
 public class SparqlQueryTransformTest {
 
     @Mock

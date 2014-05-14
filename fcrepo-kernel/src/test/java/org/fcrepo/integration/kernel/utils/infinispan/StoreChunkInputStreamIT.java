@@ -30,6 +30,11 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.junit.Test;
 
 
+/**
+ * <p>StoreChunkInputStreamIT class.</p>
+ *
+ * @author awoods
+ */
 public class StoreChunkInputStreamIT {
 
     @Test

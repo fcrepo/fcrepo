@@ -25,6 +25,11 @@ import java.net.URI;
 
 import org.junit.Test;
 
+/**
+ * <p>FixityResultImplTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class FixityResultImplTest {
 
     @Test

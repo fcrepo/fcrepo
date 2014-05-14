@@ -33,6 +33,11 @@ import org.springframework.test.context.ContextConfiguration;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+/**
+ * <p>SimpleObserverIT class.</p>
+ *
+ * @author awoods
+ */
 @ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
 public class SimpleObserverIT extends AbstractIT {
 

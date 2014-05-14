@@ -42,6 +42,11 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 
+/**
+ * <p>FedoraRepositoryNamespacesTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraRepositoryNamespacesTest {
 
     FedoraRepositoryNamespaces testObj;

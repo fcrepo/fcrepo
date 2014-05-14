@@ -19,6 +19,11 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+/**
+ * <p>PrefixingConverterTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class PrefixingConverterTest {
 
     private static final String testPrefix = "info:";

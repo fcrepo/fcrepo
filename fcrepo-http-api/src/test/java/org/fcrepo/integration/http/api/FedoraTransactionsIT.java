@@ -54,6 +54,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * <p>FedoraTransactionsIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraTransactionsIT extends AbstractResourceIT {
 
     @Test

@@ -70,6 +70,11 @@ import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 
+/**
+ * <p>Abstract TestHelpers class.</p>
+ *
+ * @author awoods
+ */
 public abstract class TestHelpers {
 
     public static String MOCK_PREFIX = "mockPrefix";

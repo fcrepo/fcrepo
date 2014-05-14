@@ -25,6 +25,11 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>InvalidChecksumExceptionMapperTest class.</p>
+ *
+ * @author awoods
+ */
 public class InvalidChecksumExceptionMapperTest {
 
     private InvalidChecksumExceptionMapper testObj;

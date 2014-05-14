@@ -25,6 +25,11 @@ import org.fcrepo.http.commons.exceptionhandlers.AccessControlExceptionMapper;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>AccessControlExceptionMapperTest class.</p>
+ *
+ * @author awoods
+ */
 public class AccessControlExceptionMapperTest {
 
     private AccessControlExceptionMapper testObj;

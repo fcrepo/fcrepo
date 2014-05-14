@@ -40,6 +40,11 @@ import org.junit.Test;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraBatchIT class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraBatchIT extends AbstractResourceIT {
 
     @Test

@@ -52,6 +52,11 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
+/**
+ * <p>BaseHtmlProviderTest class.</p>
+ *
+ * @author awoods
+ */
 public class BaseHtmlProviderTest {
 
     final BaseHtmlProvider baseHtmlProvider = new BaseHtmlProvider();

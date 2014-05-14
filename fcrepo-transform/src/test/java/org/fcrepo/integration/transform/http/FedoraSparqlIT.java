@@ -44,6 +44,11 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * <p>FedoraSparqlIT class.</p>
+ *
+ * @author cbeer
+ */
 @ContextConfiguration({"/spring-test/master.xml", "/spring-test/test-container.xml"})
 public class FedoraSparqlIT  extends AbstractResourceIT {
 

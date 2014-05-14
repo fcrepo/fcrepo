@@ -36,6 +36,11 @@ import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.sparql.modify.GraphStoreBasic;
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>GraphStreamingOutputTest class.</p>
+ *
+ * @author awoods
+ */
 public class GraphStreamingOutputTest {
 
     private static final Logger LOGGER =

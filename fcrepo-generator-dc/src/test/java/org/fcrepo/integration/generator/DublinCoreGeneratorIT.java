@@ -34,6 +34,11 @@ import org.springframework.test.context.ContextConfiguration;
 
 import java.io.ByteArrayInputStream;
 
+/**
+ * <p>DublinCoreGeneratorIT class.</p>
+ *
+ * @author fasseg
+ */
 @ContextConfiguration({"/spring-test/test-container.xml"})
 public class DublinCoreGeneratorIT extends AbstractResourceIT {
 

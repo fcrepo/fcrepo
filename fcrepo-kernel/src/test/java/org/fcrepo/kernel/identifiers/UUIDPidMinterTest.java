@@ -21,6 +21,11 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>UUIDPidMinterTest class.</p>
+ *
+ * @author awoods
+ */
 public class UUIDPidMinterTest {
 
     private static final String PID_PATTERN =

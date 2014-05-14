@@ -40,6 +40,11 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
+/**
+ * <p>HttpTripleUtilTest class.</p>
+ *
+ * @author awoods
+ */
 public class HttpTripleUtilTest {
 
     private HttpTripleUtil testObj;

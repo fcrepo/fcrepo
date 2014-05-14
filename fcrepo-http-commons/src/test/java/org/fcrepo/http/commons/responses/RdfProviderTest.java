@@ -40,6 +40,11 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 
+/**
+ * <p>RdfProviderTest class.</p>
+ *
+ * @author awoods
+ */
 public class RdfProviderTest {
 
     final RdfProvider rdfProvider = new RdfProvider();

@@ -29,6 +29,11 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
 
+/**
+ * <p>DummyURIResource class.</p>
+ *
+ * @author awoods
+ */
 public class DummyURIResource implements Resource {
 
     final String uri;

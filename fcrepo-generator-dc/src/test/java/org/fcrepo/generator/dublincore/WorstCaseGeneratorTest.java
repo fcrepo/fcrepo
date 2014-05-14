@@ -28,6 +28,11 @@ import org.fcrepo.generator.util.OaiDublinCore;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>WorstCaseGeneratorTest class.</p>
+ *
+ * @author barmintor
+ */
 public class WorstCaseGeneratorTest {
 
     private WorstCaseGenerator testObj;

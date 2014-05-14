@@ -36,6 +36,11 @@ import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * <p>FedoraNodeTypesIT class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraNodeTypesIT  extends AbstractResourceIT {
 
     @Test

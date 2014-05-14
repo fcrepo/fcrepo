@@ -58,6 +58,11 @@ import org.mockito.Mock;
 
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * <p>FedoraVersionsTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraVersionsTest {
 
     private FedoraVersions testObj;

@@ -30,6 +30,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
+/**
+ * <p>FedoraBackupIT class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraBackupIT extends AbstractResourceIT {
 
 	@Test

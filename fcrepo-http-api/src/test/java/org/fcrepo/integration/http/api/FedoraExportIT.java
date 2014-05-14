@@ -27,6 +27,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
+/**
+ * <p>FedoraExportIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraExportIT extends AbstractResourceIT {
 
     @Test

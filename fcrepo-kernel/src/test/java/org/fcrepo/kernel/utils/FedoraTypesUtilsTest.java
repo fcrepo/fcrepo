@@ -77,6 +77,11 @@ import org.modeshape.jcr.api.Namespaced;
 
 import com.google.common.base.Predicate;
 
+/**
+ * <p>FedoraTypesUtilsTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraTypesUtilsTest {
 
     @Mock

@@ -30,6 +30,11 @@ import org.mockito.Mock;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.BinaryValue;
 
+/**
+ * <p>GetBinaryKeyTest class.</p>
+ *
+ * @author awoods
+ */
 public class GetBinaryKeyTest {
 
     @Mock

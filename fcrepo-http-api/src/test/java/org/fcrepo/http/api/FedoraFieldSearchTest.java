@@ -43,6 +43,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>FedoraFieldSearchTest class.</p>
+ *
+ * @author awoods
+ */
 @Ignore("Destined for death.")
 public class FedoraFieldSearchTest {
 

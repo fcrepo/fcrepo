@@ -32,6 +32,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>StoreChunkOutputStreamTest class.</p>
+ *
+ * @author awoods
+ */
 public class StoreChunkOutputStreamTest {
 
     private static final int DATA_SIZE = 1024;

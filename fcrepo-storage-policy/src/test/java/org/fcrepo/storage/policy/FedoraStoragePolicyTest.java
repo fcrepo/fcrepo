@@ -45,6 +45,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+/**
+ * <p>FedoraStoragePolicyTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraStoragePolicyTest {
 
     @Mock

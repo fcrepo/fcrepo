@@ -55,6 +55,11 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
+/**
+ * <p>RdfStreamStreamingOutputTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class RdfStreamStreamingOutputTest {
 
     private RdfStreamStreamingOutput testRdfStreamStreamingOutput;

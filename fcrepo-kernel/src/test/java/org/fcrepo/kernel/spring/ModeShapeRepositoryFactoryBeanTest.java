@@ -34,6 +34,11 @@ import org.modeshape.jcr.JcrSession;
 import org.modeshape.jcr.api.Repository;
 import org.springframework.core.io.Resource;
 
+/**
+ * <p>ModeShapeRepositoryFactoryBeanTest class.</p>
+ *
+ * @author awoods
+ */
 public class ModeShapeRepositoryFactoryBeanTest {
 
     private ModeShapeRepositoryFactoryBean testObj;

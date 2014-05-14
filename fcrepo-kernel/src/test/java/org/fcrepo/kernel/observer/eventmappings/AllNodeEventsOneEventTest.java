@@ -30,6 +30,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>AllNodeEventsOneEventTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class AllNodeEventsOneEventTest {
 
     private static final String TEST_IDENTIFIER1 = randomUUID().toString();

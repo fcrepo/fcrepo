@@ -31,6 +31,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>FedoraRepositorySitemapTest class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraRepositorySitemapTest {
 
     private FedoraRepositorySitemap testObj;
