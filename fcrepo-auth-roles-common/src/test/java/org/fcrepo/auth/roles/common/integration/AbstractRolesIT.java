@@ -36,6 +36,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.util.EntityUtils;
+import org.apache.tika.io.IOUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.junit.Before;
@@ -420,7 +421,35 @@ public abstract class AbstractRolesIT {
         addDatastreams(obj);
     }
 
+    protected void
+    ingestObjectWithReference(final String path,final String uriID)
+            throws Exception {
+        final HttpPost method = postObjMethod(path);
+        setAuth(method, "fedoraAdmin");
+        method.addHeader("Content-Type", "application/sparql-update");
+        String reference = "INSERT {" +
+                "<> <http://fedora.info/definitions/v4/rest-api#acReference> <" + uriID + "> ." +
+                "} WHERE { }";
+        final StringEntity entity = new StringEntity(reference, "utf-8");
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                CREATED.getStatusCode(), status);
+    }
 
+    protected int deleteTestObjectByPath(
+            final String path) throws Exception {
+        final HttpDelete method = deleteObjMethod(path);
+        setAuth(method, "fedoraAdmin");
+        final HttpResponse response = client.execute(method);
+        logger.debug("delete response code: \n {}", response.getStatusLine().getStatusCode());
+        assertNotNull("There must be content for a post.", response.getEntity());
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("delete response content by path: \n {}", content);
+        return response.getStatusLine().getStatusCode();
+    }
 
     protected String makeJson(final Map<String, List<String>> roles) {
         final ObjectMapper mapper = new ObjectMapper();

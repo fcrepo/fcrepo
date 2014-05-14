@@ -94,7 +94,7 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
         try {
             final Session internalSession = sessionFactory.getInternalSession();
             final Map<String, List<String>> acl =
-                    accessRolesProvider.findRolesForPath(absPath,
+                    accessRolesProvider.findRolesInExternalNodeForPath(absPath,
                             internalSession);
             roles = resolveUserRoles(acl, allPrincipals);
             LOGGER.debug("roles for this request: {}", roles);

@@ -74,6 +74,8 @@ public class AccessRoles extends AbstractResource {
     @Context
     protected HttpServletRequest request;
 
+    public static final String ACCESS_ROLES_FOLDER = "/fedora:system/fedora:accessroles";
+
 
     /**
      * @return the accessRolesProvider
@@ -99,8 +101,9 @@ public class AccessRoles extends AbstractResource {
         LOGGER.debug("Get access roles for: {}", path);
         LOGGER.debug("effective: {}", effective);
         Response.ResponseBuilder response;
+        final String fullPath =  ACCESS_ROLES_FOLDER + path;
         try {
-            final Node node = nodeService.getObject(session, path).getNode();
+            final Node node = nodeService.getObject(session, fullPath).getNode();
             final Map<String, List<String>> data =
                     this.getAccessRolesProvider().getRoles(node,
                             (effective != null));
@@ -137,9 +140,11 @@ public class AccessRoles extends AbstractResource {
         try {
             validatePOST(data);
 
-            final FedoraResource resource =
-                    nodeService.getObject(session, path);
-            this.getAccessRolesProvider().postRoles(resource.getNode(), data);
+            final String fullPath =  ACCESS_ROLES_FOLDER + path;
+            final FedoraResource accessRoleObject =
+                        nodeService.findOrCreateObject(session,fullPath);
+            this.getAccessRolesProvider().postRoles(accessRoleObject.getNode(), data);
+            accessRoleObject.getNode().addMixin("mix:referenceable");
             session.save();
             LOGGER.debug("Saved access roles {}", data);
             response =

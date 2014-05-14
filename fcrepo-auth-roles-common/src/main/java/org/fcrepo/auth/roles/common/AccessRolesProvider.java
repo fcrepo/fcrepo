@@ -25,6 +25,7 @@ import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -44,7 +45,9 @@ import static org.fcrepo.auth.roles.common.Constants.JcrName.principal;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.rbacl;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.rbaclAssignable;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.role;
+
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_ACCESS_CONTROL_REFERENCE;
 
 /**
  * Provides the effective access roles for authorization.
@@ -223,6 +226,48 @@ public class AccessRolesProvider {
             }
         }
         return this.getRoles(node, true);
+    }
+
+    /**
+     * Finds effective roles assigned to a path, using the authz:assignment property
+     *
+     * @param absPath the real or potential node path
+     * @return the roles assigned to each principal
+     * @throws RepositoryException
+     */
+    public Map<String, List<String>> findRolesInExternalNodeForPath(final Path absPath,
+                                                      final Session session) throws RepositoryException {
+        Node rbaclNode = null;
+        String rbaclID = "";
+        Property prop = null;
+        try {
+            for (Path p = absPath; p != null; p = p.getParent()) {
+                boolean pathFound = true;
+                try {
+                    //checks for existence of fedora:acReference property on node found for a path
+                    prop = session.getNode(p.getString()).getProperty(FEDORA_ACCESS_CONTROL_REFERENCE);
+                } catch (PathNotFoundException e) {
+                    if (p.isRoot()) {
+                        return DEFAULT_ACCESS_ROLES;
+                    }
+                    pathFound = false;
+                }
+                if (pathFound) {
+                    break;
+                }
+            }
+        } catch (final Exception e) {
+            LOGGER.debug("Could not find an authorization assignment {}", e);
+            return DEFAULT_ACCESS_ROLES;
+        }
+        try {
+            //get the Assignable node in system space
+            rbaclNode = prop.getNode();
+        } catch (final Exception e) {
+            LOGGER.debug("Could not find a rbaclNode {}", rbaclID, e);
+            return DEFAULT_ACCESS_ROLES;
+        }
+        return this.getRoles(rbaclNode, false);
     }
 
 }

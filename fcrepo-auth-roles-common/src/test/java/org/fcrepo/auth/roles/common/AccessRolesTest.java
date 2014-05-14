@@ -78,6 +78,9 @@ public class AccessRolesTest {
     @Mock
     private PathSegment rootPath;
 
+    @Mock
+    private Node node;
+
     private Session session;
 
     private AccessRoles accessRoles;
@@ -94,6 +97,11 @@ public class AccessRolesTest {
 
         when(nodeService.getObject(any(Session.class), anyString()))
                 .thenReturn(fedoraResource);
+
+        when(nodeService.findOrCreateObject(any(Session.class), anyString()))
+                .thenReturn(fedoraResource);
+
+        when(fedoraResource.getNode()).thenReturn(node);
 
         paths = new ArrayList<>();
         when(rootPath.getPath()).thenReturn("");
