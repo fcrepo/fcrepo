@@ -151,7 +151,7 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
      * @param parentPath
      * @param allPrincipals
      * @param parentRoles
-     * @return
+     * @return true if the children can be removed
      */
     private boolean canRemoveChildrenRecursive(final String parentPath,
                                                final Set<Principal> allPrincipals,

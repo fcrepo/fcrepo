@@ -101,7 +101,7 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
     /**
      * Check if the node has a fedora:object mixin
      * @param node
-     * @return
+     * @return true if the node has the fedora object mixin
      */
     public static boolean hasMixin(final Node node) {
         return isFedoraObject.apply(node);

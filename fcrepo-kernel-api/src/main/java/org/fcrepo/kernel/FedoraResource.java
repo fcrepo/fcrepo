@@ -38,7 +38,7 @@ public interface FedoraResource {
 
     /**
      * Does the resource have a jcr:content child node?
-     * @return
+     * @return has content
      * @throws RepositoryException
      */
     boolean hasContent() throws RepositoryException;
@@ -50,21 +50,21 @@ public interface FedoraResource {
 
     /**
      * Get the path to the JCR node
-     * @return
+     * @return path
      * @throws RepositoryException
      */
     String getPath() throws RepositoryException;
 
     /**
      * Get the date this datastream was created
-     * @return
+     * @return created date
      * @throws RepositoryException
      */
     Date getCreatedDate() throws RepositoryException;
 
     /**
      * Get the date this datastream was last modified
-     * @return
+     * @return last modified date
      * @throws RepositoryException
      */
     Date getLastModifiedDate() throws RepositoryException;
@@ -104,7 +104,7 @@ public interface FedoraResource {
      * @param graphSubjects
      * @param offset
      * @param limit
-     * @return
+     * @return properties
      * @throws RepositoryException
      */
     Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
@@ -112,8 +112,8 @@ public interface FedoraResource {
 
     /**
      * Return the JCR properties of this object as a Jena {@link Dataset}
-     * @param graphSubjects
-     * @return
+     * @param subjects
+     * @return properties
      * @throws RepositoryException
      */
     Dataset getPropertiesDataset(final IdentifierTranslator subjects)
@@ -122,7 +122,7 @@ public interface FedoraResource {
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
      * @param graphSubjects
-     * @return
+     * @return triples
      * @throws RepositoryException
      */
     RdfStream getTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
@@ -130,7 +130,7 @@ public interface FedoraResource {
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
      * @param graphSubjects
-     * @return
+     * @return triples
      * @throws RepositoryException
      */
     RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
@@ -139,8 +139,8 @@ public interface FedoraResource {
 
     /**
      * Serialize the JCR versions information as an RDF dataset
-     * @param subjects
-     * @return
+     * @param graphSubjects
+     * @return triples
      * @throws RepositoryException
      */
     RdfStream getVersionTriples(final IdentifierTranslator graphSubjects)
@@ -149,7 +149,7 @@ public interface FedoraResource {
     /**
      * Serialize inbound References to this object as an {@link RdfStream}
      * @param graphSubjects
-     * @return
+     * @return triples
      * @throws RepositoryException
      */
     RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
@@ -166,7 +166,7 @@ public interface FedoraResource {
     /**
      * Get the JCR Base version for the node
      * 
-     * @return
+     * @return base version
      * @throws RepositoryException
      */
     public Version getBaseVersion() throws RepositoryException;
@@ -174,14 +174,14 @@ public interface FedoraResource {
     /**
      * Get JCR VersionHistory for the node.
      *
-     * @return
+     * @return version history
      * @throws RepositoryException
      */
     public VersionHistory getVersionHistory() throws RepositoryException;
 
     /**
      * Check if a resource was created in this session
-     * @return
+     * @return if resource created in this session
      */
     Boolean isNew();
 
@@ -191,7 +191,7 @@ public interface FedoraResource {
      *
      * @param graphSubjects
      * @param inputModel
-     * @return
+     * @return RDFStream
      * @throws RepositoryException
      */
     RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
@@ -203,7 +203,7 @@ public interface FedoraResource {
      * actually want whole-object etag data. TODO : construct and store an ETag
      * value on object modify
      *
-     * @return
+     * @return constructed etag value
      * @throws RepositoryException
      */
     String getEtagValue() throws RepositoryException;

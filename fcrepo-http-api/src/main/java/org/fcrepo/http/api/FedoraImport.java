@@ -70,7 +70,7 @@ public class FedoraImport extends AbstractResource {
      * @param pathList
      * @param format
      * @param stream
-     * @return
+     * @return 201 with Location header to the path of the imported resource
      * @throws IOException
      * @throws RepositoryException
      * @throws InvalidChecksumException

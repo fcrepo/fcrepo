@@ -68,7 +68,7 @@ public class FedoraTransactions extends AbstractResource {
      * Create a new transaction resource and add it to the registry
      *
      * @param pathList
-     * @return
+     * @return 201 with the transaction id and expiration date
      * @throws RepositoryException
      */
     @POST
@@ -108,7 +108,7 @@ public class FedoraTransactions extends AbstractResource {
      * Commit a transaction resource
      *
      * @param pathList
-     * @return
+     * @return 204
      * @throws RepositoryException
      */
     @POST
@@ -122,6 +122,7 @@ public class FedoraTransactions extends AbstractResource {
 
     /**
      * Rollback a transaction
+     * @return 204
      */
     @POST
     @Path("fcr:rollback")

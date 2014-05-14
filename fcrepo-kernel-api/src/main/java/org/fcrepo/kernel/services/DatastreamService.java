@@ -39,19 +39,20 @@ public interface DatastreamService extends Service {
      * Create a stub datastream without content
      * @param session
      * @param dsPath
-     * @return
+     * @return created datastream
      * @throws RepositoryException
      */
     Datastream createDatastream(Session session, String dsPath) throws RepositoryException;
 
     /**
      * Create a new Datastream node in the repository
-     *
+     * 
      * @param session
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
+     * @param originalFileName the original file name for the input stream
      * @param requestBodyStream binary payload for the datastream
-     * @return
+     * @return created datastream
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
@@ -77,7 +78,7 @@ public interface DatastreamService extends Service {
      * Retrieve the JCR node for a Datastream by pid and dsid
      *
      * @param path
-     * @return
+     * @return retrieved jcr node
      * @throws RepositoryException
      */
     Node getDatastreamNode(Session session, String path) throws RepositoryException;
@@ -86,7 +87,7 @@ public interface DatastreamService extends Service {
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param path jcr path to the datastream
-     * @return
+     * @return retrieved Datastream
      * @throws RepositoryException
      */
     Datastream getDatastream(Session session, String path) throws RepositoryException;
@@ -95,7 +96,7 @@ public interface DatastreamService extends Service {
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param node datastream node
-     * @return
+     * @return node as a Datastream
      */
     Datastream asDatastream(Node node);
 
@@ -104,7 +105,7 @@ public interface DatastreamService extends Service {
      *
      * @param subjects
      * @param datastream
-     * @return
+     * @return fixity results for datastream
      * @throws RepositoryException
      */
     RdfStream getFixityResultsModel(IdentifierTranslator subjects, Datastream datastream) throws RepositoryException;
@@ -114,7 +115,7 @@ public interface DatastreamService extends Service {
      * correct failures if additional copies of the bitstream are available
      *
      * @param datastream
-     * @return
+     * @return results
      * @throws RepositoryException
      */
     Collection<FixityResult> runFixityAndFixProblems(Datastream datastream) throws RepositoryException;
@@ -126,7 +127,7 @@ public interface DatastreamService extends Service {
      * @param resource
      * @param dsChecksum -the checksum and algorithm represented as a URI
      * @param dsSize
-     * @return
+     * @return fixity results for datastream's bitstream
      * @throws RepositoryException
      */
     Collection<FixityResult> getFixity(Node resource, URI dsChecksum, long dsSize) throws RepositoryException;

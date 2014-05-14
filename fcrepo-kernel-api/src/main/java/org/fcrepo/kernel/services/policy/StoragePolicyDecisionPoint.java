@@ -39,7 +39,7 @@ public interface StoragePolicyDecisionPoint {
      * policy should apply
      *
      * @param n
-     * @return
+     * @return storage policy
      */
     String evaluatePolicies(final Node n);
 

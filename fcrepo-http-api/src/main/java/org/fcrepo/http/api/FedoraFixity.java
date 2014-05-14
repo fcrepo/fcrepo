@@ -71,7 +71,7 @@ public class FedoraFixity extends AbstractResource {
      * @param pathList
      * @param request
      * @param uriInfo
-     * @return
+     * @return datastream fixity in the given format
      * @throws RepositoryException
      */
     @GET

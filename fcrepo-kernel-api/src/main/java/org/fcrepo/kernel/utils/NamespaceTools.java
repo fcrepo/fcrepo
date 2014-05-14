@@ -34,8 +34,6 @@ public abstract class NamespaceTools {
     /**
      * We need the Modeshape NamespaceRegistry, because it allows us to register
      * anonymous namespaces.
-     * @return
-     * @throws RepositoryException
      */
     public static Function<Node, NamespaceRegistry> getNamespaceRegistry = new Function<Node, NamespaceRegistry>() {
         @Override

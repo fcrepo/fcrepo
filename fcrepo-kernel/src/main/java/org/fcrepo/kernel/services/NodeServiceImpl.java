@@ -60,7 +60,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      *
      * @param session a JCR session
      * @param path a JCR path
-     * @return
+     * @return FedoraResource
      * @throws RepositoryException
      */
     @Override
@@ -73,7 +73,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      *
      * @param session a JCR session
      * @param path a JCR path
-     * @return
+     * @return Fedora resource at the given path
      * @throws RepositoryException
      */
     @Override
@@ -88,7 +88,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @param session a JCR session
      * @param path a JCR path
      * @param versionId a JCR version label
-     * @return
+     * @return Fedora resource at the given path with the given version label
      * @throws RepositoryException
      */
     @Override
@@ -123,7 +123,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @param session
      * @param path
      * @param mixin
-     * @return
+     * @return the list of child nodes at the given path filtered by the given mixin
      * @throws RepositoryException
      */
     @Override
@@ -196,7 +196,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * Get the full list of node types in the repository
      *
      * @param session
-     * @return
+     * @return full list of node types in the repository
      * @throws RepositoryException
      */
     @Override
@@ -207,7 +207,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
 
     /**
      * @param session
-     * @return
+     * @return node types
      * @throws RepositoryException
      */
     @Override

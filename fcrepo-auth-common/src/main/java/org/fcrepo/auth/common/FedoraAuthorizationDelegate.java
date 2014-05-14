@@ -30,8 +30,6 @@ import javax.jcr.Session;
  * </p>
  *
  * @author Gregory Jansen
- * @see org.fcrepo.auth.roles.common.AbstractRolesAuthorizationDelegate
- * @see org.fcrepo.auth.roles.basic.BasicRolesAuthorizationDelegate
  */
 public interface FedoraAuthorizationDelegate {
 

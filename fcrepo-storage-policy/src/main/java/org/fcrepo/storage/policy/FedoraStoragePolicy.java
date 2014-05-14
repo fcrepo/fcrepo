@@ -163,14 +163,14 @@ public class FedoraStoragePolicy extends AbstractResource {
     }
 
     /**
-     * For nodeType n or runtime property p get org.fcrepo.binary.StoragePolicy
+     * For nodeType n or runtime property p get {@link StoragePolicy}
      * implementation. Note: Signature might need to change, or a more
      * sophisticated method used, as implementation evolves.
      *
      * @param propertyType
      * @param itemType
      * @param value
-     * @return
+     * @return a new StoragePolicy for the given property type
      * @throws StoragePolicyTypeException
      */
     protected StoragePolicy newPolicyInstance(final String propertyType,
@@ -188,6 +188,7 @@ public class FedoraStoragePolicy extends AbstractResource {
     /**
      * Delete NodeType. TODO for deleting multiple values with in a NodeType,
      * the design of how things are stored will need to change.
+     * @return 204
      */
     @DELETE
     @Timed
@@ -219,7 +220,7 @@ public class FedoraStoragePolicy extends AbstractResource {
     /**
      * TODO (for now) prints org.fcrepo.binary.StoragePolicyDecisionPointImpl
      *
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @GET
@@ -272,7 +273,7 @@ public class FedoraStoragePolicy extends AbstractResource {
      *
      * @param session
      * @param type
-     * @return
+     * @return true if the node type is valid
      * @throws RepositoryException
      */
     private boolean isValidNodeTypeProperty(final Session session,
@@ -290,7 +291,7 @@ public class FedoraStoragePolicy extends AbstractResource {
      * Consult some list of configuration of non JCR properties (e.g. list of
      * applicable runtime configurations)
      *
-     * @return
+     * @return false
      * @throws StoragePolicyTypeException
      */
     private boolean isValidConfigurationProperty(final String property) {

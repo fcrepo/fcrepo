@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlType;
  *
  * @author awoods
  *
- * @TODO replace with a 3rd party sitemap impl
+ * TODO replace with a 3rd party sitemap impl
  */
 @XmlRootElement(name = "sitemapindex")
 @XmlType
@@ -54,7 +54,7 @@ public class SitemapIndex {
     /**
      * Get all the sitemap's entries
      *
-     * @return
+     * @return list of sitemap entries
      */
     @XmlElement(name = "sitemap")
     public List<SitemapEntry> getSitemapEntries() {

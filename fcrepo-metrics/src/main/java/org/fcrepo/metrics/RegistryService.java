@@ -38,8 +38,8 @@ public abstract class RegistryService {
     /**
      * Get the current registry service
      * 
-     * @todo the new upstream SharedMetricRegistries may make this obsolete
-     * @return
+     * TODO the new upstream SharedMetricRegistries may make this obsolete
+     * @return the current registry service
      */
     public static MetricRegistry getMetrics() {
         return METRICS;

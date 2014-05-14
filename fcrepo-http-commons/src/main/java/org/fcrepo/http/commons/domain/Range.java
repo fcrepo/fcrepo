@@ -63,7 +63,7 @@ public class Range {
 
     /**
      * Does this range actually impose limits
-     * @return
+     * @return true if the range imposes limits
      */
     public boolean hasRange() {
         return !(start == 0 && end == -1);
@@ -71,7 +71,7 @@ public class Range {
 
     /**
      * Length contained in the range
-     * @return
+     * @return length of the range
      */
     public long size() {
         if (end == -1) {
@@ -82,7 +82,7 @@ public class Range {
 
     /**
      * Start of the range
-     * @return
+     * @return start of the range
      */
     public long start() {
         return start;
@@ -90,7 +90,7 @@ public class Range {
 
     /**
      * End of the range
-     * @return
+     * @return end of the range
      */
     public long end() {
         return end;
@@ -99,7 +99,7 @@ public class Range {
     /**
      * Convert an HTTP Range header to a Range object
      * @param source
-     * @return
+     * @return range object
      */
     public static Range convert(final String source) {
 

@@ -92,7 +92,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
      * The session may provide additional information (e.g. workspaces) that need to be
      * taken into account.
      *
-     * @params session
+     * @param session
      * @param relativeTo
      * @param uris
      */
@@ -135,7 +135,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
     /**
      * Get the canonical IdentifierTranslator (e.g. one that ignores transactions and other transient states)
      * @param canonical
-     * @return
+     * @return the canonical IdentifierTranslator
      */
     public HttpIdentifierTranslator getCanonical(final boolean canonical) {
         return new HttpIdentifierTranslator(session, relativeTo, uris, canonical);
@@ -143,7 +143,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
 
     /**
      * Is the current IdentifierTranslator canonical?
-     * @return
+     * @return true if the current IdentifierTranslator is canonical
      */
     public boolean isCanonical() {
         return canonical || getCurrentTransactionId(session) == null;

@@ -20,7 +20,7 @@ import com.google.common.base.Function;
 /**
  * Defines the behavior of a component that can accept responsibility
  * for the creation of Fedora PIDs. Do not implement this interface directly.
- * Subclass {@link BasePidMinter} instead.
+ * Subclass BasePidMinter instead.
  *
  * @author eddies
  * @author ajs6f

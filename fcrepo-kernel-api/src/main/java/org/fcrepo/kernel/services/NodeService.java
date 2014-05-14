@@ -37,7 +37,7 @@ public interface NodeService extends Service {
      *
      * @param session
      * @param path
-     * @return
+     * @return FedoraResource for the given path
      * @throws RepositoryException
      */
     FedoraResource findOrCreateObject(Session session, String path) throws RepositoryException;
@@ -47,7 +47,7 @@ public interface NodeService extends Service {
      *
      * @param session
      * @param path
-     * @return
+     * @return FedoraResource at the given path
      * @throws RepositoryException
      */
     FedoraResource getObject(Session session, String path) throws RepositoryException;
@@ -59,7 +59,7 @@ public interface NodeService extends Service {
      * @param session
      * @param path
      * @param versionId a version label
-     * @return
+     * @return FedoraResource with version label
      * @throws RepositoryException
      */
     FedoraResource getObject(Session session, String path, String versionId) throws RepositoryException;
@@ -76,7 +76,7 @@ public interface NodeService extends Service {
      * @param session
      * @param path
      * @param mixin
-     * @return
+     * @return list of matching children
      * @throws RepositoryException
      */
     Set<String> getObjectNames(Session session, String path, String mixin) throws RepositoryException;
@@ -112,14 +112,14 @@ public interface NodeService extends Service {
      * Get the full list of node types in the repository
      *
      * @param session
-     * @return
+     * @return node type iterator
      * @throws RepositoryException
      */
     NodeTypeIterator getAllNodeTypes(final Session session) throws RepositoryException;
 
     /**
      * @param session
-     * @return
+     * @return RDFStream of node types
      * @throws RepositoryException
      */
     RdfStream getNodeTypes(final Session session) throws RepositoryException;

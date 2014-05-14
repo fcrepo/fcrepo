@@ -29,7 +29,7 @@ public interface Auditor {
 
     /**
      * @param e
-     *        The {@Event} to record.
+     *        The {@link Event} to record.
      * @throws RepositoryException
      */
     @Subscribe

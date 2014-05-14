@@ -133,7 +133,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
      * Convert a JCR type to an RDF data type.
      *
      * @param requiredType a JCR PropertyType
-     * @return
+     * @return rdf node of data type
      */
     private static Node getRangeForJcrType(final int requiredType) {
         return JCR_TYPE_TO_XSD_DATATYPE.containsKey(requiredType)

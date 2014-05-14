@@ -33,7 +33,7 @@ public class GetBinaryStore implements Function<Repository, BinaryStore> {
     /**
      * Extract the BinaryStore out of Modeshape
      * (infinspan, jdbc, file, transient, etc)
-     * @return
+     * @return the binary store from Modeshape
      */
     @Override
     public BinaryStore apply(final Repository input) {

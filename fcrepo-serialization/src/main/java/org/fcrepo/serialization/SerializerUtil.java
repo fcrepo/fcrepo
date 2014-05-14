@@ -48,7 +48,7 @@ public class SerializerUtil implements ApplicationContextAware {
 
     /**
      * Get the list of Fedora serializer keys
-     * @return
+     * @return the list of Fedora serializer keys
      */
     public Set<String> keySet() {
         return getFedoraObjectSerializers().keySet();
@@ -57,7 +57,7 @@ public class SerializerUtil implements ApplicationContextAware {
     /**
      * Get a Fedora Object Serializer by its key
      * @param format
-     * @return
+     * @return FedoraObjectSerializer for the given format
      */
     public FedoraObjectSerializer getSerializer(final String format) {
         return getFedoraObjectSerializers().get(format);
@@ -65,7 +65,7 @@ public class SerializerUtil implements ApplicationContextAware {
 
     /**
      * Get the whole list of FedoraObjectSerializers
-     * @return
+     * @return map of all serializers with format as the key
      */
     public Map<String, FedoraObjectSerializer> getFedoraObjectSerializers() {
         return serializerMap;

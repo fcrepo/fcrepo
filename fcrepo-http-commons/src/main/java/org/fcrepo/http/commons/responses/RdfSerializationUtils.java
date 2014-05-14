@@ -81,7 +81,7 @@ public class RdfSerializationUtils {
      * @param rdf
      * @param subject
      * @param predicate
-     * @return
+     * @return first value for the given predicate or null if not found
      */
     static String getFirstValueForPredicate(final Dataset rdf,
             final Node subject, final Node predicate) {
@@ -102,7 +102,7 @@ public class RdfSerializationUtils {
      * Get the subject of the dataset, given by the context's "uri"
      *
      * @param rdf
-     * @return
+     * @return subject of the dataset
      */
     static Node getDatasetSubject(final Dataset rdf) {
         final Context context = rdf.getContext();

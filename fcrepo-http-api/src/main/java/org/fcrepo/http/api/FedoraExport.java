@@ -67,7 +67,7 @@ public class FedoraExport extends AbstractResource {
      *
      * @param pathList
      * @param format
-     * @return
+     * @return object in the given format
      */
     @GET
     public Response exportObject(

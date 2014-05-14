@@ -30,7 +30,7 @@ public interface DCGenerator {
      * Get the Dublin Core content as an InputStream
      * 
      * @param node node to retrieve a Dublin Core serialization for
-     * @return
+     * @return dc content as an input stream
      */
     InputStream getStream(final Node node);
 

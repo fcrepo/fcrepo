@@ -36,7 +36,7 @@ public class MetricsContextListener extends AdminServletContextListener {
 
     /**
      * Get the metrics registry for fcrepo
-     * @return
+     * @return the metrics registry
      */
     @Override
     protected MetricRegistry getMetricRegistry() {
@@ -45,8 +45,8 @@ public class MetricsContextListener extends AdminServletContextListener {
 
     /**
      * Provide a health-check registry
-     * @todo actually populate the health-check registry with checks
-     * @return
+     * TODO actually populate the health-check registry with checks
+     * @return a new health check registry
      */
     @Override
     protected HealthCheckRegistry getHealthCheckRegistry() {
