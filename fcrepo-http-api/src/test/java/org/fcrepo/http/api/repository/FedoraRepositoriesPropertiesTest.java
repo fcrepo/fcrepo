@@ -39,6 +39,11 @@ import org.mockito.Mock;
 
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * <p>FedoraRepositoriesPropertiesTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraRepositoriesPropertiesTest {
 
     private FedoraRepositoriesProperties testObj;

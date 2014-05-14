@@ -18,6 +18,11 @@ package org.fcrepo.http.commons.webxml.bind;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * <p>FilterMapping class.</p>
+ *
+ * @author awoods
+ */
 @XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
         name = "filter-mapping")
 public class FilterMapping extends UrlMappable {

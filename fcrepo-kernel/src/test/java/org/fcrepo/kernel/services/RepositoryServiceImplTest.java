@@ -69,6 +69,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * <p>RepositoryServiceImplTest class.</p>
+ *
+ * @author ksclarke
+ */
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",

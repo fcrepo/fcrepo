@@ -26,6 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.ServletCredentials;
 
+/**
+ * <p>AuthenticatedSessionProviderImplTest class.</p>
+ *
+ * @author awoods
+ */
 public class AuthenticatedSessionProviderImplTest {
 
     private Repository mockRepo;

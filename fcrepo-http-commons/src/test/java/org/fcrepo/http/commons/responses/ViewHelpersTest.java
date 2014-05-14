@@ -56,6 +56,11 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
 
+/**
+ * <p>ViewHelpersTest class.</p>
+ *
+ * @author awoods
+ */
 public class ViewHelpersTest {
 
     private ViewHelpers testObj;

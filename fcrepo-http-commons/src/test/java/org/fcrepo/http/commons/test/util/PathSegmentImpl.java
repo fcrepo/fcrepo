@@ -26,6 +26,11 @@ import javax.ws.rs.core.PathSegment;
 import com.sun.jersey.api.uri.UriComponent;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
+/**
+ * <p>PathSegmentImpl class.</p>
+ *
+ * @author awoods
+ */
 public class PathSegmentImpl implements PathSegment {
 
     // private static final PathSegment EMPTY_PATH_SEGMENT = new

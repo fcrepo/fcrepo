@@ -32,6 +32,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+/**
+ * <p>HierarchyConverterTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class HierarchyConverterTest {
 
     private static final String separator = "/";

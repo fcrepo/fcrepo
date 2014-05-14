@@ -30,6 +30,11 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 
+/**
+ * <p>SerializationUtilsTest class.</p>
+ *
+ * @author awoods
+ */
 public class SerializationUtilsTest {
 
 

@@ -20,6 +20,11 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+/**
+ * <p>UUIDPathMinterTest class.</p>
+ *
+ * @author awoods
+ */
 public class UUIDPathMinterTest {
 
     private static final String PID_PATTERN =

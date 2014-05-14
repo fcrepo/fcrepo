@@ -38,6 +38,11 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.sun.jersey.core.header.ContentDisposition;
 
+/**
+ * <p>FedoraContentIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraContentIT extends AbstractResourceIT {
 
     private static final String faulkner1 =

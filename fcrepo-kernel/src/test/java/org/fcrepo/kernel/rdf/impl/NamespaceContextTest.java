@@ -34,6 +34,11 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import com.google.common.base.Predicate;
 import com.hp.hpl.jena.graph.Triple;
 
+/**
+ * <p>NamespaceContextTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class NamespaceContextTest {
 
     // for mocks and setup gear see after tests

@@ -36,6 +36,11 @@ import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>DublinCoreGeneratorTest class.</p>
+ *
+ * @author cbeer
+ */
 public class DublinCoreGeneratorTest {
 
     DublinCoreGenerator testObj;

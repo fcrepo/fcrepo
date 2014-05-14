@@ -25,6 +25,11 @@ import org.fcrepo.http.commons.exceptionhandlers.PathNotFoundExceptionMapper;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>PathNotFoundExceptionMapperTest class.</p>
+ *
+ * @author awoods
+ */
 public class PathNotFoundExceptionMapperTest {
 
     private PathNotFoundExceptionMapper testObj;

@@ -46,6 +46,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * <p>TiffStoragePolicyStorageIT class.</p>
+ *
+ * @author awoods
+ */
 public class TiffStoragePolicyStorageIT {
 
     protected Logger logger;

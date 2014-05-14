@@ -32,6 +32,11 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.serialization.JcrXmlSerializer;
 import org.junit.Test;
 
+/**
+ * <p>JcrXmlSerializerTest class.</p>
+ *
+ * @author cbeer
+ */
 public class JcrXmlSerializerTest {
 
     @Test

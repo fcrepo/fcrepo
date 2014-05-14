@@ -27,6 +27,11 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.Iterators;
 
+/**
+ * <p>TestNodeIterator class.</p>
+ *
+ * @author ajs6f
+ */
 public class TestNodeIterator implements NodeIterator {
 
     private static final Logger LOGGER = getLogger(TestNodeIterator.class);

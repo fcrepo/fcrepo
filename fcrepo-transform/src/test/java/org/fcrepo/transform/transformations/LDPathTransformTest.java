@@ -45,6 +45,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>LDPathTransformTest class.</p>
+ *
+ * @author cbeer
+ */
 public class LDPathTransformTest {
 
     @Mock

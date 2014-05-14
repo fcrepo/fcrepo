@@ -125,6 +125,11 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+/**
+ * <p>JcrRdfToolsTest class.</p>
+ *
+ * @author awoods
+ */
 public class JcrRdfToolsTest {
 
     private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);

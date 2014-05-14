@@ -42,6 +42,11 @@ import org.mockito.Mock;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
+/**
+ * <p>RdfStreamProviderTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class RdfStreamProviderTest {
 
     private RdfStreamProvider testProvider = new RdfStreamProvider();

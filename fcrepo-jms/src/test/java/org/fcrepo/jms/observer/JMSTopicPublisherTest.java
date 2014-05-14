@@ -40,6 +40,11 @@ import org.mockito.Mock;
 
 import com.google.common.eventbus.EventBus;
 
+/**
+ * <p>JMSTopicPublisherTest class.</p>
+ *
+ * @author awoods
+ */
 public class JMSTopicPublisherTest {
 
     private JMSTopicPublisher testObj;

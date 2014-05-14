@@ -45,6 +45,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+/**
+ * <p>DatastreamServiceImplIT class.</p>
+ *
+ * @author ksclarke
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class DatastreamServiceImplIT extends AbstractIT {
 

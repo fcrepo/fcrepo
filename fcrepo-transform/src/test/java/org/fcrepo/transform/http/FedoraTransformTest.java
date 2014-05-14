@@ -47,6 +47,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>FedoraTransformTest class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraTransformTest {
 
     @Mock

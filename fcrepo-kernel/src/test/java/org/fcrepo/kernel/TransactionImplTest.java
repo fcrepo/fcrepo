@@ -35,6 +35,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>TransactionImplTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class TransactionImplTest {
 
     private Transaction testObj;

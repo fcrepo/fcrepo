@@ -46,6 +46,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.util.Symbol;
 
 
+/**
+ * <p>JcrGraphPropertiesTest class.</p>
+ *
+ * @author awoods
+ */
 @RunWith(PowerMockRunner.class)
 //PowerMock needs to ignore some packages to prevent class-cast errors
 //PowerMock needs to ignore unnecessary packages to keep from running out of heap

@@ -36,6 +36,11 @@ import ch.qos.logback.core.Appender;
 
 import com.google.common.eventbus.EventBus;
 
+/**
+ * <p>LogbackAuditorTest class.</p>
+ *
+ * @author eddies
+ */
 public class LogbackAuditorTest {
 
     private final int jcrEventType = 1;

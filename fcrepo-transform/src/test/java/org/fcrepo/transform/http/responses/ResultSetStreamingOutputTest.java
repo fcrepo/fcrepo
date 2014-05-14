@@ -45,6 +45,11 @@ import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 
+/**
+ * <p>ResultSetStreamingOutputTest class.</p>
+ *
+ * @author cbeer
+ */
 public class ResultSetStreamingOutputTest {
 
     @Mock

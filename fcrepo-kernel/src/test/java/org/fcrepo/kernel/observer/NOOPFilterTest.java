@@ -24,6 +24,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>NOOPFilterTest class.</p>
+ *
+ * @author awoods
+ */
 public class NOOPFilterTest {
 
     @Mock

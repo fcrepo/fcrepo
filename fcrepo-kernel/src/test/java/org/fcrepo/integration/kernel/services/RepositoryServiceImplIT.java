@@ -44,6 +44,11 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * <p>RepositoryServiceImplIT class.</p>
+ *
+ * @author ksclarke
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class RepositoryServiceImplIT extends AbstractIT {
 

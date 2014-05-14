@@ -32,6 +32,11 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraFixityIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraFixityIT extends AbstractResourceIT {
 
     @Test

@@ -39,6 +39,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 // Runs integration test for restful interface for storage policies
+/**
+ * <p>FedoraStoragePolicyIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraStoragePolicyIT extends AbstractResourceIT {
 
     private static final String MIME_KEY = "mix:mimeType";

@@ -35,6 +35,11 @@ import org.mockito.Mock;
 
 import com.hp.hpl.jena.rdf.model.Statement;
 
+/**
+ * <p>NamespaceChangedStatementListenerTest class.</p>
+ *
+ * @author awoods
+ */
 public class NamespaceChangedStatementListenerTest {
 
     private NamespaceChangedStatementListener testObj;

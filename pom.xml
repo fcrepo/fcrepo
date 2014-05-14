@@ -517,9 +517,9 @@
           <version>1.8.1</version>
         </plugin>
         <plugin>
-          <groupId>com.mycila.maven-license-plugin</groupId>
-          <artifactId>maven-license-plugin</artifactId>
-          <version>1.10.b1</version>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>2.6</version>
           <configuration>
             <header>fcrepo-license/LICENSE_HEADER.txt</header>
             <includes>
@@ -573,6 +573,7 @@
             </dependency>
           </dependencies>
           <configuration>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
             <consoleOutput>true</consoleOutput>
             <logViolationsToConsole>true</logViolationsToConsole>
             <failsOnError>true</failsOnError>
@@ -869,8 +870,8 @@
         <artifactId>site-maven-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>com.mycila.maven-license-plugin</groupId>
-        <artifactId>maven-license-plugin</artifactId>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>

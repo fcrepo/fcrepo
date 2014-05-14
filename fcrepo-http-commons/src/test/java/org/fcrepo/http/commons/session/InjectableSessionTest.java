@@ -27,6 +27,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>InjectableSessionTest class.</p>
+ *
+ * @author awoods
+ */
 public class InjectableSessionTest {
 
     InjectableSession testObj;

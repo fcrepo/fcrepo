@@ -59,6 +59,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 
+/**
+ * <p>RdfAdderTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class RdfAdderTest {
 
     private RdfAdder testAdder;

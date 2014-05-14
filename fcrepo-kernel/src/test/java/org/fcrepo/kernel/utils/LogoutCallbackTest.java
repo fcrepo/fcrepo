@@ -26,6 +26,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 
+/**
+ * <p>LogoutCallbackTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class LogoutCallbackTest {
 
     private LogoutCallback testLogoutCallback;

@@ -45,6 +45,11 @@ import org.modeshape.jcr.api.ServletCredentials;
 
 import com.google.common.base.Throwables;
 
+/**
+ * <p>SessionFactoryTest class.</p>
+ *
+ * @author awoods
+ */
 public class SessionFactoryTest {
 
     SessionFactory testObj;

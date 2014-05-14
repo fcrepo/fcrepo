@@ -27,6 +27,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>OneToOneTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class OneToOneTest {
 
     final private OneToOne testMapping = new OneToOne();

@@ -25,6 +25,11 @@ import javax.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>WildcardExceptionMapperTest class.</p>
+ *
+ * @author awoods
+ */
 public class WildcardExceptionMapperTest {
 
     private WildcardExceptionMapper testObj;

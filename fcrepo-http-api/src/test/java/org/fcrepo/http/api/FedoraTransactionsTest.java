@@ -40,6 +40,11 @@ import org.mockito.Mockito;
 
 import java.security.Principal;
 
+/**
+ * <p>FedoraTransactionsTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraTransactionsTest {
 
     private static final String USER_NAME = "test";

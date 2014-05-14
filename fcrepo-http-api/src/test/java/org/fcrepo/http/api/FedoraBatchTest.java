@@ -78,6 +78,11 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
+/**
+ * <p>FedoraBatchTest class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraBatchTest {
 
     FedoraBatch testObj;

@@ -27,6 +27,11 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * <p>DifferencingIteratorTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class DifferencingIteratorTest {
 
     private static final String onlyInCollection = "only in collection";
