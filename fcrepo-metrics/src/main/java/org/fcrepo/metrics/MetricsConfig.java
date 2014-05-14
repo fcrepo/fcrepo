@@ -56,7 +56,7 @@ public class MetricsConfig {
     /**
      * Provide the reporter factory to Spring
      * 
-     * @return
+     * @return the reporter factory
      */
     @Bean
     public ReporterFactory reporterFactory() {

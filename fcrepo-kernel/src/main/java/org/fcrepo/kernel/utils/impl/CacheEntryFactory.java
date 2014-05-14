@@ -48,7 +48,7 @@ public class CacheEntryFactory {
      * Load a store-specific CacheEntry model
      * @param repository
      * @param property
-     * @return
+     * @return CacheEntry model for the property in the given repository
      * @throws RepositoryException
      */
     public static CacheEntry forProperty(final Repository repository, final Property property)
@@ -69,7 +69,7 @@ public class CacheEntryFactory {
      * Get a store-specific Cache Entry
      * @param store
      * @param property
-     * @return
+     * @return store specific cache entry
      * @throws RepositoryException
      */
     public static CacheEntry forProperty(final BinaryStore store, final Property property)

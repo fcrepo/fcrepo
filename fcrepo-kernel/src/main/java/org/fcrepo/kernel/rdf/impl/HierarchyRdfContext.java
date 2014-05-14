@@ -48,7 +48,7 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * An {@link RdfContext} that contains information about the JCR hierarchy
+ * An {@link NodeRdfContext} that contains information about the JCR hierarchy
  * around a given node.
  *
  * @author ajs6f

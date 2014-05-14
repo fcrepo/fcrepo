@@ -66,7 +66,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
 
     /**
      * Retrieve all node types as RDF
-     * @return
+     * @return All node types as RDF
      * @throws RepositoryException
      */
     @GET

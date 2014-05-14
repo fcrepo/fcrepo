@@ -144,7 +144,7 @@ public class FedoraNodes extends AbstractResource {
      * @param request
      * @param servletResponse
      * @param uriInfo
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @HEAD
@@ -179,7 +179,7 @@ public class FedoraNodes extends AbstractResource {
      *        child nodes
      * @param request
      * @param uriInfo
-     * @return
+     * @return triples for the specified node
      * @throws RepositoryException
      */
     @GET
@@ -399,7 +399,7 @@ public class FedoraNodes extends AbstractResource {
      * @param uriInfo
      * @param requestContentType
      * @param requestBodyStream
-     * @return
+     * @return 204
      * @throws Exception
      */
     @PUT
@@ -681,7 +681,7 @@ public class FedoraNodes extends AbstractResource {
      * @param slug
      * @param uriInfo
      * @param file
-     * @return
+     * @return response
      * @throws Exception
      */
     @POST
@@ -705,7 +705,7 @@ public class FedoraNodes extends AbstractResource {
      * Deletes an object.
      *
      * @param pathList
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @DELETE

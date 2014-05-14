@@ -68,7 +68,7 @@ public class PropertyToTriple implements
 
     /**
      * This nightmare of Java signature verbosity is a curried transformation.
-     * We want to go from an iterator of JCR {@link Properties} to an iterator
+     * We want to go from an iterator of JCR {@link Property} to an iterator
      * of RDF {@link Triple}s. An annoyance: some properties may produce several
      * triples (multi-valued properties). So we cannot find a simple Property ->
      * Triple mapping. Instead, we wax clever and offer a function from any
@@ -82,7 +82,7 @@ public class PropertyToTriple implements
      * as functions instead of ordinary methods, which may have side-effects, we
      * can use efficient machinery to manipulate iterators of the objects in
      * which we are interested, and that's exactly what we want to do in this
-     * class. See {@link PropertiesRdfContext#triplesFromProperties} for an
+     * class. See {@link org.fcrepo.kernel.rdf.impl.PropertiesRdfContext#triplesFromProperties} for an
      * example of the use of this class with {@link ZippingIterator}.
      *
      * @see <a href="http://en.wikipedia.org/wiki/Currying">Currying</a>

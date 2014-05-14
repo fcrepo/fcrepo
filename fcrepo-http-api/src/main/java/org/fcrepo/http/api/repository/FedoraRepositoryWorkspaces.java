@@ -79,7 +79,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     /**
      * Get the list of accessible workspaces in this repository.
      *
-     * @return
+     * @return list of accessible workspaces
      * @throws RepositoryException
      */
     @GET
@@ -101,7 +101,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
      *
      * @param path
      * @param uriInfo
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @POST
@@ -140,7 +140,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     /**
      * Delete a workspace from the repository
      * @param path
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @DELETE

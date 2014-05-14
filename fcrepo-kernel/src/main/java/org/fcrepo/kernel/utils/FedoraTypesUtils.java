@@ -328,7 +328,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * Get the JCR Node Type manager
      *
      * @param node
-     * @return
+     * @return the JCR Node Type Manager
      * @throws RepositoryException
      */
     public static NodeTypeManager getNodeTypeManager(final Node node) throws RepositoryException {
@@ -395,7 +395,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * 
      * @param session
      * @param path
-     * @return
+     * @return the version history
      * @throws RepositoryException
      */
     public static VersionHistory getVersionHistory(final Session session,
@@ -409,7 +409,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * 
      * @param p
      * @param value
-     * @return
+     * @return true if the property contains the given string value
      */
     public static boolean propertyContains(final Property p, final String value) throws RepositoryException {
 

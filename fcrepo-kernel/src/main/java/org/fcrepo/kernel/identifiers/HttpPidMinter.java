@@ -53,7 +53,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
  * PID minter that uses an external REST service to mint PIDs.
  *
  * @author escowles
- * @date 04/28/2014
+ * @since 04/28/2014
  */
 public class HttpPidMinter extends BasePidMinter {
 

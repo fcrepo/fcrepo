@@ -55,7 +55,7 @@ public interface TransactionService extends Service {
      * Get the current Transaction for a session
      *
      * @param session
-     * @return
+     * @return transaction
      * @throws TransactionMissingException
      */
     Transaction getTransaction(Session session) throws TransactionMissingException;

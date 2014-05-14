@@ -159,7 +159,7 @@ public class FedoraTransform extends AbstractResource {
      *
      * @param pathList
      * @param requestBodyStream
-     * @return
+     * @return LDPath as a JSON stream
      * @throws RepositoryException
      */
     @POST

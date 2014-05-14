@@ -59,7 +59,7 @@ public class GetClusterConfiguration implements
     /**
      * Extract the BinaryStore out of Modeshape
      * (infinspan, jdbc, file, transient, etc)
-     * @return
+     * @return the binary store configuration as a map
      */
     @Override
     public Map<String, String> apply(final Repository input) {

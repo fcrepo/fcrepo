@@ -69,7 +69,7 @@ public class LocalBinaryStoreEntry extends BasicCacheEntry {
     /**
      * Generate a human-readable identifier for the location of this entry
      *
-     * @return
+     * @return human-readable identifier for the location of this entry
      */
     @Override
     public String getExternalIdentifier() throws RepositoryException {
@@ -85,7 +85,7 @@ public class LocalBinaryStoreEntry extends BasicCacheEntry {
      * come from the same BinaryStore,
      * and have the same underlying store configuration
      * @param other
-     * @return
+     * @return true if the given binary store entries have the same key
      */
     @Override
     public boolean equals(final Object other) {

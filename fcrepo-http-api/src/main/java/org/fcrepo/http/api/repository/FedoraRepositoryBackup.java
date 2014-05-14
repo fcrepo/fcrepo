@@ -55,7 +55,7 @@ public class FedoraRepositoryBackup extends AbstractResource {
     /**
      * This method runs a repository backup.
      *
-     * @return
+     * @return path to the backup
      * @throws RepositoryException
      * @throws IOException
      */

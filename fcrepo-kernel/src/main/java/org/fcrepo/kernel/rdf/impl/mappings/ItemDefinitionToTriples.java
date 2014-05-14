@@ -89,7 +89,7 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      * that fulfill the JCR interfaces that represent definitions.
      *
      * @param namespacedObject
-     * @return
+     * @return a resource for the given Namespaced JCR object
      * @throws javax.jcr.RepositoryException
      */
     public static Resource getResource(final Namespaced namespacedObject)
@@ -111,7 +111,7 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      * that fulfill the JCR interfaces that represent definitions.
      *
      * @param nodeType
-     * @return
+     * @return a Resource for the given NodeType
      * @throws javax.jcr.RepositoryException
      */
     public static Resource getResource(final NodeType nodeType) throws RepositoryException {
@@ -124,7 +124,7 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      * that fulfill the JCR interfaces that represent definitions.
      *
      * @param itemDefinition
-     * @return
+     * @return a resource for the given ItemDefinition
      * @throws javax.jcr.RepositoryException
      */
     public static Resource getResource(final ItemDefinition itemDefinition) throws RepositoryException {

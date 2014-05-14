@@ -121,7 +121,7 @@ public class AccessRoles extends AbstractResource {
      *
      * @param pathList
      * @param data
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @POST

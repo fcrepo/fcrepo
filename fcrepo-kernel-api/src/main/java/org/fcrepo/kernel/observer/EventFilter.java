@@ -32,7 +32,7 @@ public interface EventFilter extends Predicate<Event> {
      * Return a {@link Predicate} with which to filter JCR {@link Event}s.
      *
      * @param session
-     * @return
+     * @return Predicate
      */
     Predicate<Event> getFilter(final Session session);
 }

@@ -39,7 +39,7 @@ public interface UriAwareResourceModelFactory {
      * @param resource
      * @param uriInfo
      * @param graphSubjects
-     * @return
+     * @return model containing triples for the given resource
      * @throws RepositoryException
      */
     Model createModelForResource(final FedoraResource resource,

@@ -122,7 +122,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
     /**
      * Deletes a lock at the given path, freeing up other sessions to make
      * changes to it or its descendants.
-     * @return
+     * @return 204
      */
     @DELETE
     @Timed

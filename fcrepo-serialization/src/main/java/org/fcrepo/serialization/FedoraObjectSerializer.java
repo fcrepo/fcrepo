@@ -38,14 +38,14 @@ public interface FedoraObjectSerializer {
     /**
      * Get the key for the serializer (that will be
      * used at the REST API to identify the format)
-     * @return
+     * @return serializer key
      */
     String getKey();
 
     /**
      * Get the media type for the serialized output
      * (so we can send the right mime type as appropriate)
-     * @return
+     * @return serializer output media type
      */
     String getMediaType();
 

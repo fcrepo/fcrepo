@@ -126,7 +126,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * Returns the proffered {@link Triple}s with the context of this RdfStream.
      *
      * @param stream
-     * @return
+     * @return proffered Triples with the context of this RDFStream
      */
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
         return new RdfStream(stream).namespaces(namespaces()).topic(topic());
@@ -136,7 +136,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * Returns the proffered {@link Triple}s with the context of this RdfStream.
      *
      * @param stream
-     * @return
+     * @return proffered Triples with the context of this RDFStream
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream withThisContext(final T stream) {
         return new RdfStream(stream).namespaces(namespaces()).topic(topic());
@@ -183,7 +183,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * As {@link Iterables#limit(Iterable, int)} while maintaining context.
      *
      * @param limit
-     * @return
+     * @return RDFStream
      */
     public RdfStream limit(final Integer limit) {
         if (limit < 0) {
@@ -196,7 +196,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * As {@link Iterables#skip(Iterable, int)} while maintaining context.
      *
      * @param skipNum
-     * @return
+     * @return RDFStream
      */
     public RdfStream skip(final Integer skipNum) {
         if (skipNum < 0) {
@@ -209,7 +209,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * As {@link Iterables#filter(Iterable, Predicate)} while maintaining context.
      *
      * @param predicate
-     * @return
+     * @return RdfStream
      */
     public RdfStream filter(final Predicate<? super Triple> predicate) {
         return withThisContext(Iterables.filter(this, predicate));
@@ -219,13 +219,13 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      * As {@link Iterators#transform(Iterator, Function)}.
      *
      * @param f
-     * @return
+     * @return Iterator
      */
     public <ToType> Iterator<ToType> transform(final Function<? super Triple, ToType> f) {
         return Iterators.transform(this, f);
     }
 
-    /**
+    /**RdfStream
      * @param prefix
      * @param uri
      * @return This object for continued use.
@@ -298,7 +298,7 @@ public class RdfStream extends ForwardingIterator<Triple> implements
     /**
      * @param model A {@link Model} containing the prefix mappings and triples to be put into
      *         this stream of RDF
-     * @return
+     * @return RDFStream
      */
     public static RdfStream fromModel(final Model model) {
         final Iterator<Triple> triples = Iterators.transform(model.listStatements(), statement2triple);

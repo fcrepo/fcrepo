@@ -103,7 +103,7 @@ public abstract class ServiceHelpers {
      * and the binary properties
      * 
      * @param ds
-     * @return
+     * @return size of the datastream's properties and binary properties
      * @throws RepositoryException
      */
     public static Long getDatastreamSize(final Node ds)
@@ -115,7 +115,7 @@ public abstract class ServiceHelpers {
      * Get the size of the JCR content binary property
      * 
      * @param ds
-     * @return
+     * @return size of the binary content property
      * @throws RepositoryException
      */
     public static Long getContentSize(final Node ds) throws RepositoryException {
@@ -137,8 +137,8 @@ public abstract class ServiceHelpers {
      * A static factory function to insulate services from the details of
      * building a DistributedExecutorService
      * 
-     * @param cache
-     * @return
+     * @param cacheStore
+     * @return new DistributedExecutorService instance
      */
     public static DistributedExecutorService getClusterExecutor(
             final InfinispanBinaryStore cacheStore) {

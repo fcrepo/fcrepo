@@ -49,7 +49,7 @@ public class AccessControlExceptionMapper implements
 
     /**
      * @param e
-     * @return
+     * @return forbidden response
      */
     public Response toResponse(final java.security.AccessControlException e) {
         LOGGER.debug("AccessControlExceptionMapper intercepted exception: \n",

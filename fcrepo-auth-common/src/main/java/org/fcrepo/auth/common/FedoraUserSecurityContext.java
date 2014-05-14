@@ -106,7 +106,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
     /**
      * Get the user principal associated with this context.
      *
-     * @return
+     * @return the user principal associated with this security context
      */
     public Principal getEffectiveUserPrincipal() {
         if (this.loggedIn && this.userPrincipal != null) {

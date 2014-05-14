@@ -92,15 +92,11 @@ public class FedoraFieldSearch extends AbstractResource implements
      * A stub method so we can return a text/html representation using
      * the right template.
      *
-     * {@link #searchSubmitHtml(String, long, int, javax.ws.rs.core.Request,
-     * javax.ws.rs.core.UriInfo)}
-     *
-     *
      * @param terms
      * @param offset
      * @param limit
      * @param uriInfo
-     * @return
+     * @return search results in HTML format
      * @throws RepositoryException
      */
     @GET
@@ -130,7 +126,7 @@ public class FedoraFieldSearch extends AbstractResource implements
      * @param limit
      * @param request
      * @param uriInfo
-     * @return
+     * @return full text search results in the given format
      * @throws RepositoryException
      */
     @GET

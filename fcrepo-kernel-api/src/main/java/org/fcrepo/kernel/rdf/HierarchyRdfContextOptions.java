@@ -67,7 +67,7 @@ public class HierarchyRdfContextOptions {
 
     /**
      * Should the serialization include membership triples
-     * @return
+     * @return serialization should include membership triples
      */
     public boolean membershipEnabled() {
         return membership || containment;
@@ -75,15 +75,15 @@ public class HierarchyRdfContextOptions {
 
     /**
      * Should the serialziation include containment triples
-     * @return
+     * @return should include containment triples
      */
     public boolean containmentEnabled() {
         return containment;
     }
 
     /**
-     * Is there a pagination offset that needs to be applied>?
-     * @return
+     * Is there a pagination offset that needs to be applied?
+     * @return boolean
      */
     public boolean hasOffset() {
         return getOffset() >= 0;
@@ -91,7 +91,7 @@ public class HierarchyRdfContextOptions {
 
     /**
      * Is there a pagination limit that needs to be applied?
-     * @return
+     * @return boolean
      */
     public boolean hasLimit() {
         return getLimit() >= 0;
@@ -99,7 +99,7 @@ public class HierarchyRdfContextOptions {
 
     /**
      * Get the pagination limit value
-     * @return
+     * @return pagination limit
      */
     public int getLimit() {
         return limit;
@@ -107,7 +107,7 @@ public class HierarchyRdfContextOptions {
 
     /**
      * Get the pagination offset value
-     * @return
+     * @return pagination offset
      */
     public int getOffset() {
         return offset;

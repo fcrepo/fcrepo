@@ -46,7 +46,7 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * An {@link RdfStream} containing information about the fixity of a
+ * An {@link org.fcrepo.kernel.utils.iterators.RdfStream} containing information about the fixity of a
  * {@link Node}.
  *
  * @author ajs6f

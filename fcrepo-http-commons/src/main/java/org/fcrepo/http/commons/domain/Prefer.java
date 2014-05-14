@@ -43,7 +43,7 @@ public class Prefer {
 
     /**
      * Does the Prefer: header have a return tag
-     * @return
+     * @return true if the header has a return tag
      */
     public Boolean hasReturn() {
         return Iterators.any(preferTags.iterator(), getPreferTag("return"));
@@ -51,7 +51,7 @@ public class Prefer {
 
     /**
      * Get the return tag, or a blank default, if none exists.
-     * @return
+     * @return return tag, or a blank default, if none exists
      */
     public PreferTag getReturn() {
         final Optional<PreferTag> aReturn = Iterators.tryFind(preferTags.iterator(), getPreferTag("return"));

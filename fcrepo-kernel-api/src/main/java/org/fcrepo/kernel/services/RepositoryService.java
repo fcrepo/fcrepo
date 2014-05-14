@@ -44,7 +44,7 @@ public interface RepositoryService extends Service {
     /**
      * Calculate the number of objects in the repository
      *
-     * @return
+     * @return number of objects in the repository
      */
     Long getRepositoryObjectCount();
 
@@ -52,7 +52,7 @@ public interface RepositoryService extends Service {
      * Get a map of JCR prefixes to their URI namespaces
      *
      * @param session
-     * @return
+     * @return map of JCR prefixes to their URI namespaces
      * @throws RepositoryException
      */
     Map<String, String> getRepositoryNamespaces(final Session session) throws RepositoryException;
@@ -61,7 +61,7 @@ public interface RepositoryService extends Service {
      * Serialize the JCR namespace information as an RDF Dataset
      *
      * @param session
-     * @return
+     * @return JCR namespace information as an RDF Dataset
      * @throws RepositoryException
      */
     Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator)
@@ -71,7 +71,7 @@ public interface RepositoryService extends Service {
      * Serialize the JCR namespace information as an {@link RdfStream}
      *
      * @param session
-     * @return
+     * @return JCR namespace information as an {@link RdfStream}
      * @throws RepositoryException
      */
     RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator)
@@ -87,7 +87,7 @@ public interface RepositoryService extends Service {
      * @param terms
      * @param limit
      * @param offset
-     * @return
+     * @return full text search results as an RDF Dataset
      * @throws RepositoryException
      */
     Dataset searchRepository(IdentifierTranslator subjectFactory, Resource searchSubject, Session session, String terms,
@@ -98,7 +98,7 @@ public interface RepositoryService extends Service {
      *
      * @param session
      * @param backupDirectory
-     * @return
+     * @return problems
      * @throws RepositoryException
      */
     Problems backupRepository(Session session, File backupDirectory) throws RepositoryException;
@@ -108,7 +108,7 @@ public interface RepositoryService extends Service {
      *
      * @param session
      * @param backupDirectory
-     * @return
+     * @return problems
      * @throws RepositoryException
      */
     Problems restoreRepository(Session session, File backupDirectory) throws RepositoryException;

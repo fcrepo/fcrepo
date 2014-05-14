@@ -129,7 +129,7 @@ public abstract class AbstractResource {
      * Convert a JAX-RS list of PathSegments to a JCR path
      *
      * @param paths
-     * @return
+     * @return String jcr path
      */
     public static final String toPath(final List<PathSegment> paths) {
         final StringBuilder result = new StringBuilder();
