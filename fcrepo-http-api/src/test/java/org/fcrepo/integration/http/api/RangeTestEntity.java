@@ -20,6 +20,8 @@ import org.apache.http.entity.InputStreamEntity;
 
 /**
  * Entity for testing range queries.
+ * @author Esme Cowles
+ * @since 2014-05-13
 **/
 public class RangeTestEntity extends InputStreamEntity {
     public RangeTestEntity( long size, byte[] data ) {

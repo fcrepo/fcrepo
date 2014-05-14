@@ -20,6 +20,8 @@ import java.io.InputStream;
 
 /**
  * InputStream implementation for testing range queries.
+ * @author Esme Cowles
+ * @since 2014-05-13
 **/
 public class RangeTestInputStream extends InputStream {
 
