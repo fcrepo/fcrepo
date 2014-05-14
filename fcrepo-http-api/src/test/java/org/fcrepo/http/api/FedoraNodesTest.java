@@ -95,6 +95,11 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Context;
 
 
+/**
+ * <p>FedoraNodesTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraNodesTest {
 
     FedoraNodes testObj;

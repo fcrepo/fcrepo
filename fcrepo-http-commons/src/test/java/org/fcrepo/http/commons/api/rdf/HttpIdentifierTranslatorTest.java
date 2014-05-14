@@ -44,6 +44,11 @@ import org.junit.Test;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 
+/**
+ * <p>HttpIdentifierTranslatorTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
 
     @Override

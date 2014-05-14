@@ -120,6 +120,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraNodesIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test

@@ -22,6 +22,11 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+/**
+ * <p>RdfLexiconTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class RdfLexiconTest {
 
     @Test

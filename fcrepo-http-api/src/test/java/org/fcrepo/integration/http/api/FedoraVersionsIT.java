@@ -56,6 +56,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraVersionsIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraVersionsIT extends AbstractResourceIT {
 
     public static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";

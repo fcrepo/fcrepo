@@ -33,6 +33,11 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Triple;
 
+/**
+ * <p>ManagedRdfTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class ManagedRdfTest {
 
     private final static Triple managedTriple = create(createAnon(), HAS_CHILD

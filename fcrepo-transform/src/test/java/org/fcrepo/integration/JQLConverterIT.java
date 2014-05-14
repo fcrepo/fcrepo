@@ -33,6 +33,11 @@ import javax.jcr.Session;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * <p>JQLConverterIT class.</p>
+ *
+ * @author cbeer
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
 public class JQLConverterIT {

@@ -23,6 +23,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.junit.Test;
 
+/**
+ * <p>FedoraSitemapIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraSitemapIT extends AbstractResourceIT {
 
     @Test

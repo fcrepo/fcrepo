@@ -35,6 +35,11 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraNamespacesIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraNamespacesIT extends AbstractResourceIT {
 
     @Test

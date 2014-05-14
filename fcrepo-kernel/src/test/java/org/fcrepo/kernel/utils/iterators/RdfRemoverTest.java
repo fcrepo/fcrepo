@@ -60,6 +60,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 
+/**
+ * <p>RdfRemoverTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class RdfRemoverTest {
 
     @Test

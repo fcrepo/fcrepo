@@ -44,6 +44,11 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 
+/**
+ * <p>QueryExecutionProviderTest class.</p>
+ *
+ * @author cbeer
+ */
 public class QueryExecutionProviderTest {
 
     final QueryExecutionProvider testObj = new QueryExecutionProvider();

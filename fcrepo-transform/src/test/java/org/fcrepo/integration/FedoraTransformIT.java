@@ -41,6 +41,11 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
 import static org.junit.Assert.assertEquals;
 
 
+/**
+ * <p>FedoraTransformIT class.</p>
+ *
+ * @author cbeer
+ */
 @ContextConfiguration({"/spring-test/master.xml", "/spring-test/test-container.xml"})
 public class FedoraTransformIT extends AbstractResourceIT {
 

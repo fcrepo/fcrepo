@@ -43,6 +43,11 @@ import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.RepositoryConfiguration.BinaryStorage;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
+/**
+ * <p>GetClusterConfigurationTest class.</p>
+ *
+ * @author awoods
+ */
 public class GetClusterConfigurationTest {
 
     private GetClusterConfiguration testObj;

@@ -64,6 +64,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>FedoraContentTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraContentTest {
 
     FedoraContent testObj;

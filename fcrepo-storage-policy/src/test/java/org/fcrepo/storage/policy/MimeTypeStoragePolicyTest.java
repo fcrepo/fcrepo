@@ -32,6 +32,11 @@ import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
+/**
+ * <p>MimeTypeStoragePolicyTest class.</p>
+ *
+ * @author awoods
+ */
 public class MimeTypeStoragePolicyTest {
 
     @Test

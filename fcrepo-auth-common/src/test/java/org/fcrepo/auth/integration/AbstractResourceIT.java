@@ -34,6 +34,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * <p>Abstract AbstractResourceIT class.</p>
+ *
+ * @author gregjan
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {

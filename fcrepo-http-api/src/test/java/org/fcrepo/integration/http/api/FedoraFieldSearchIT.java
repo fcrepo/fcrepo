@@ -48,6 +48,11 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraFieldSearchIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraFieldSearchIT extends AbstractResourceIT {
 
     @Test

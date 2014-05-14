@@ -79,6 +79,11 @@ import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+/**
+ * <p>FedoraResourceImplIT class.</p>
+ *
+ * @author ajs6f
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraResourceImplIT extends AbstractIT {
 

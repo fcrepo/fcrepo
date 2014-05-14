@@ -47,6 +47,11 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * <p>ItemDefinitionToTriplesTest class.</p>
+ *
+ * @author cbeer
+ */
 public class ItemDefinitionToTriplesTest {
 
     @InjectMocks

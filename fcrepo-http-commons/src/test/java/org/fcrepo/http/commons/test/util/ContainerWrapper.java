@@ -46,6 +46,11 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+/**
+ * <p>ContainerWrapper class.</p>
+ *
+ * @author awoods
+ */
 public class ContainerWrapper implements ApplicationContextAware {
 
     private static final Logger logger = getLogger(ContainerWrapper.class);

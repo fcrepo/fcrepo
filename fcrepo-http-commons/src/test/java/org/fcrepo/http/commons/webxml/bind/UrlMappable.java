@@ -17,6 +17,11 @@ package org.fcrepo.http.commons.webxml.bind;
 
 import javax.xml.bind.annotation.XmlElement;
 
+/**
+ * <p>Abstract UrlMappable class.</p>
+ *
+ * @author awoods
+ */
 public abstract class UrlMappable {
 
     @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",

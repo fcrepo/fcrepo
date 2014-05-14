@@ -33,6 +33,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>TxAwareSessionTest class.</p>
+ *
+ * @author awoods
+ */
 public class TxAwareSessionTest {
 
     @Mock

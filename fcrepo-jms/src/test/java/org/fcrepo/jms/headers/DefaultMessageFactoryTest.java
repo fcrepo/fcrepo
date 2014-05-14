@@ -40,6 +40,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>DefaultMessageFactoryTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class DefaultMessageFactoryTest {
 
     @Mock

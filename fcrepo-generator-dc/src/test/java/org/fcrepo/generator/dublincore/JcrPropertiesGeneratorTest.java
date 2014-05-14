@@ -34,6 +34,11 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>JcrPropertiesGeneratorTest class.</p>
+ *
+ * @author cbeer
+ */
 public class JcrPropertiesGeneratorTest {
 
     Session mockSession;

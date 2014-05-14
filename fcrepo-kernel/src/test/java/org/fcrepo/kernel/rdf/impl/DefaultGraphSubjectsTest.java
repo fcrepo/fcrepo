@@ -35,6 +35,11 @@ import org.mockito.Mock;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * <p>DefaultGraphSubjectsTest class.</p>
+ *
+ * @author awoods
+ */
 public class DefaultGraphSubjectsTest {
 
     private DefaultIdentifierTranslator testObj;

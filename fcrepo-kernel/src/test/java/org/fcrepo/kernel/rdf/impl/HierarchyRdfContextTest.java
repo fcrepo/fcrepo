@@ -65,6 +65,11 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * <p>HierarchyRdfContextTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class HierarchyRdfContextTest {
 
     // for mocks and setup gear see after tests

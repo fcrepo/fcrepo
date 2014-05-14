@@ -22,6 +22,11 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+/**
+ * <p>ContentDigestTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class ContentDigestTest {
 
     @Test

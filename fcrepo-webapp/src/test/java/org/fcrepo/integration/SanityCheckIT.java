@@ -29,6 +29,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * <p>SanityCheckIT class.</p>
+ *
+ * @author fasseg
+ */
 public class SanityCheckIT {
 
     /**

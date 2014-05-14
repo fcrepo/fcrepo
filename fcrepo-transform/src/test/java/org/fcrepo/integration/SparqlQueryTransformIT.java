@@ -39,6 +39,11 @@ import java.io.InputStream;
 import static org.junit.Assert.assertTrue;
 
 
+/**
+ * <p>SparqlQueryTransformIT class.</p>
+ *
+ * @author cbeer
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
 public class SparqlQueryTransformIT {

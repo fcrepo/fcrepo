@@ -36,6 +36,11 @@ import org.fcrepo.http.commons.webxml.bind.ServletMapping;
 
 import com.google.common.base.Predicate;
 
+/**
+ * <p>WebAppConfig class.</p>
+ *
+ * @author awoods
+ */
 @XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
         name = "web-app")
 public class WebAppConfig extends Displayable {

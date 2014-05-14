@@ -26,6 +26,11 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 
+/**
+ * <p>FedoraResponseCodesIT class.</p>
+ *
+ * @author gregjan
+ */
 public class FedoraResponseCodesIT extends AbstractResourceIT {
 
     @Test

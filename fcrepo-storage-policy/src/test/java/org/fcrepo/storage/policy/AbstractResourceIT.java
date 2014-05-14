@@ -35,6 +35,11 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * <p>Abstract AbstractResourceIT class.</p>
+ *
+ * @author osmandin
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
