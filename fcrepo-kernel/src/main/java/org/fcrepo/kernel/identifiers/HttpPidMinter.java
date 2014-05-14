@@ -40,6 +40,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 
 import org.apache.http.auth.AuthScope;
@@ -129,7 +130,8 @@ public class HttpPidMinter extends BasePidMinter {
      * Setup authentication in httpclient.
     **/
     private HttpClient buildClient() {
-        HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties();
+        HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties().setConnectionManager(
+            new PoolingHttpClientConnectionManager());
         if (!isBlank(username) && !isBlank(password)) {
             final URI uri = URI.create(minterURL);
             final CredentialsProvider credsProvider = new BasicCredentialsProvider();
