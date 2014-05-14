@@ -15,22 +15,16 @@
  */
 package org.fcrepo.kernel.utils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Iterators.contains;
-import static com.google.common.collect.Iterators.forArray;
-import static com.google.common.collect.Iterators.transform;
-import static javax.jcr.PropertyType.BINARY;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.Collection;
-import java.util.Iterator;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -42,18 +36,22 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 import javax.jcr.version.VersionHistory;
+import java.util.Collection;
+import java.util.Iterator;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.slf4j.Logger;
-
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Iterators.contains;
+import static com.google.common.collect.Iterators.forArray;
+import static com.google.common.collect.Iterators.transform;
+import static javax.jcr.PropertyType.BINARY;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Convenience class with static methods for manipulating Fedora types in the
@@ -263,7 +261,41 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
             @Override
             public boolean apply(final Property p) {
-                return isReferenceProperty.apply(p) || isBinaryContentProperty.apply(p);
+                return isReferenceProperty.apply(p) || isBinaryContentProperty.apply(p)
+                        || isProtectedAndShouldBeHidden.apply(p);
+            }
+        };
+
+    /**
+     * Check whether a property is protected (ie, cannot be modified directly) but
+     * is not one we've explicitly chosen to include.
+     */
+    public static Predicate<Property> isProtectedAndShouldBeHidden =
+        new Predicate<Property>() {
+
+            @Override
+            public boolean apply(final Property p) {
+                try {
+                    if (!p.getDefinition().isProtected()) {
+                        return false;
+                    } else if (p.getParent().isNodeType(FROZEN_NODE)) {
+                        // everything on a frozen node is protected
+                        // but we wish to display it anyway and there's
+                        // another mechanism in place to make clear that
+                        // things cannot be edited.
+                        return false;
+                    } else {
+                        final String name = p.getName();
+                        for (String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
+                            if (name.equals(exposedName)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                } catch (RepositoryException e) {
+                    throw propagate(e);
+                }
             }
         };
 
