@@ -36,10 +36,11 @@ import org.slf4j.Logger;
 import com.google.common.base.Function;
 
 /**
- * Injects and extracts segments of hierarchy before the last segment of a
- * multi-part identifier to ensure efficient performance of the JCR.
+ * Injects and extracts segments of hierarchy in a multi-part identifier
+ * to ensure efficient performance of the JCR.
  *
  * @author ajs6f
+ * @date Mar 26, 2014
  * @author lsitu
  * @date May 9, 2014
  */
@@ -109,7 +110,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
                 jcrPathSegments.addAll(0, hierarchySegments);
             }
         }
-        String pathConverted = on(separator).join(jcrPathSegments);
+        final String pathConverted = on(separator).join(jcrPathSegments);
         log.trace("Converted incoming identifier \"{}\" to \"{}\".", flat, pathConverted);
         return "/" + pathConverted;
     }
@@ -161,9 +162,9 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             //Don't forget the fcr:content segment for content files
             pathSegments.add(FCR_CONTENT);
         }
-        String parthConverted = on(separator).join(pathSegments);
-        log.trace("Converted outgoing identifier \"{}\" to \"{}\".", hierarchical, parthConverted);
-        return "/" + parthConverted;
+        final String pathConverted = on(separator).join(pathSegments);
+        log.trace("Converted outgoing identifier \"{}\" to \"{}\".", hierarchical, pathConverted);
+        return "/" + pathConverted;
     }
 
     private List<String> createHierarchySegments(final String path) {

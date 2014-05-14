@@ -163,6 +163,17 @@ public class HierarchyConverterTest {
     }
 
     @Test
+    public void testOutgoingDoubleSlashPattern() {
+        testTranslator.setLevels(3);
+        testTranslator.setLength(1);
+        String hirarchy = testTranslator.reverse().convert(testId);
+        String outgoingPath = "a/b/c/" + hirarchy;
+        String result = testTranslator.convert(outgoingPath);
+        log.debug("Outgoing path {} converted to transparent path {}.", outgoingPath, result);
+        assertEquals("Should not have altered the outgoing double slash!", "/" + testId, result);
+    }
+
+    @Test
     public void testContentPaths() {
         testTranslator.setLevels(0);
         testTranslator.setLength(1);
