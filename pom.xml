@@ -519,7 +519,7 @@
         <plugin>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
-          <version>2.7-SNAPSHOT</version>
+          <version>2.6</version>
           <configuration>
             <header>fcrepo-license/LICENSE_HEADER.txt</header>
             <includes>
