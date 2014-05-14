@@ -174,6 +174,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final GraphStore versionResults = getContent(serverAddress + objId + "/fcr:versions/label");
 
         logger.debug("Got version profile:");
+        assertTrue("Should find a title.", versionResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), Node.ANY));
         assertTrue("Should find the title from the last version tagged with the label \"label\"",
                 versionResults.contains(Node.ANY, Node.ANY, DC_TITLE.asNode(), NodeFactory.createLiteral("Second title")));
     }

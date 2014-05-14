@@ -24,7 +24,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -50,7 +49,6 @@ import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -263,31 +261,38 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
             @Override
             public boolean apply(final Property p) {
-                return isReferenceProperty.apply(p) || isBinaryContentProperty.apply(p);
+                return isReferenceProperty.apply(p) || isBinaryContentProperty.apply(p)
+                        || isProtectedAndShouldBeHidden.apply(p);
             }
         };
 
     /**
-     * Check whether a property relates to versioning and should be suppressed from
-     * external output.
+     * Check whether a property is protected (ie, cannot be modified directly) but
+     * is not one we've explicitly chosen to include.
      */
-    public static Predicate<Property> isVersionProperty =
+    public static Predicate<Property> isProtectedAndShouldBeHidden =
         new Predicate<Property>() {
 
             @Override
             public boolean apply(final Property p) {
                 try {
-                    if (p instanceof Namespaced) {
-                        final Namespaced nsProperty = (Namespaced) p;
-                        final String uri = nsProperty.getNamespaceURI();
-                        final String localName = nsProperty.getLocalName();
-                        return uri.equals(JCR_NAMESPACE)
-                                && (localName.equals("baseVersion")
-                                || localName.equals("isCheckedOut")
-                                || localName.equals("predecessors")
-                                || localName.equals("versionHistory"));
+                    if (!p.getDefinition().isProtected()) {
+                        return false;
+                    } else if (p.getParent().isNodeType(FROZEN_NODE)) {
+                        // everything on a frozen node is protected
+                        // but we wish to display it anyway and there's
+                        // another mechanism in place to make clear that
+                        // things cannot be edited.
+                        return false;
+                    } else {
+                        final String name = p.getName();
+                        for (String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
+                            if (name.equals(exposedName)) {
+                                return false;
+                            }
+                        }
+                        return true;
                     }
-                    return false;
                 } catch (RepositoryException e) {
                     throw propagate(e);
                 }
