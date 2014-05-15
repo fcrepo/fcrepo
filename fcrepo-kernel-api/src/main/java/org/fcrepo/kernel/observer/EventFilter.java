@@ -24,7 +24,7 @@ import com.google.common.base.Predicate;
  * Filter JCR events to remove extraneous events
  * @author eddies
  * @author ajs6f
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  */
 public interface EventFilter extends Predicate<Event> {
 
@@ -32,7 +32,7 @@ public interface EventFilter extends Predicate<Event> {
      * Return a {@link Predicate} with which to filter JCR {@link Event}s.
      *
      * @param session
-     * @return
+     * @return Predicate
      */
     Predicate<Event> getFilter(final Session session);
 }

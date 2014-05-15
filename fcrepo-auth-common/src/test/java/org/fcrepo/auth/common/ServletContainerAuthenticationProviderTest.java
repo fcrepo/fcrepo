@@ -49,7 +49,7 @@ import java.util.Set;
 
 /**
  * @author bbpennel
- * @date Feb 12, 2014
+ * @since Feb 12, 2014
  */
 public class ServletContainerAuthenticationProviderTest {
 

@@ -64,7 +64,7 @@ public class JQLConverter {
 
     /**
      * Execute the query and get a SPARQL result set
-     * @return
+     * @return SPARQL result set
      * @throws RepositoryException
      */
     public ResultSet execute() throws RepositoryException {
@@ -74,7 +74,7 @@ public class JQLConverter {
 
     /**
      * Get the raw JCR-SQL2 query translation
-     * @return
+     * @return JCR-SQL2 query translation
      * @throws RepositoryException
      */
     public String getStatement() throws RepositoryException {

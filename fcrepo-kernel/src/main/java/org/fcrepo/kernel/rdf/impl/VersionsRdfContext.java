@@ -43,7 +43,7 @@ import com.hp.hpl.jena.graph.Triple;
  * the versions of a selected {@link Node}.
  *
  * @author ajs6f
- * @date Oct 15, 2013
+ * @since Oct 15, 2013
  */
 public class VersionsRdfContext extends RdfStream {
 

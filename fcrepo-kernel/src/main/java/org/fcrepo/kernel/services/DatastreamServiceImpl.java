@@ -53,7 +53,7 @@ import com.google.common.base.Predicate;
  * Service for creating and retrieving Datastreams without using the JCR API.
  *
  * @author cbeer
- * @date Feb 11, 2013
+ * @since Feb 11, 2013
  */
 @Component
 public class DatastreamServiceImpl extends AbstractService implements DatastreamService {
@@ -73,7 +73,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * Create a stub datastream without content
      * @param session
      * @param dsPath
-     * @return
+     * @return created datastream
      * @throws RepositoryException
      */
     @Override
@@ -86,8 +86,9 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @param session the jcr session to use
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
+     * @param originalFileName the original file name for the input stream
      * @param requestBodyStream binary payload for the datastream
-     * @return
+     * @return created datastream
      * @throws RepositoryException
      * @throws InvalidChecksumException
      */
@@ -132,7 +133,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * Retrieve the JCR node for a Datastream by pid and dsid
      *
      * @param path
-     * @return
+     * @return datastream node
      * @throws RepositoryException
      */
     @Override
@@ -148,7 +149,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param path jcr path to the datastream
-     * @return
+     * @return datastream
      * @throws RepositoryException
      */
     @Override
@@ -161,7 +162,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param node datastream node
-     * @return
+     * @return node as datastream
      */
     @Override
     public Datastream asDatastream(final Node node) {
@@ -173,7 +174,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      *
      * @param subjects
      * @param datastream
-     * @return
+     * @return fixity results
      * @throws RepositoryException
      */
     @Override
@@ -192,7 +193,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * correct failures if additional copies of the bitstream are available
      *
      * @param datastream
-     * @return
+     * @return results
      * @throws RepositoryException
      */
     @Override
@@ -241,7 +242,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @param resource
      * @param dsChecksum -the checksum and algorithm represented as a URI
      * @param dsSize
-     * @return
+     * @return fixity results
      * @throws RepositoryException
      */
     @Override

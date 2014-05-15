@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  * @author awoods
  *
- * @TODO replace with a 3rd party sitemap impl
+ * TODO replace with a 3rd party sitemap impl
  */
 @XmlRootElement(name = "urlset")
 public class SitemapUrlSet {
@@ -53,7 +53,7 @@ public class SitemapUrlSet {
     /**
      * Get all the sitemap entries
      *
-     * @return
+     * @return list of sitemap entries
      */
     @XmlElement(name = "url")
     public List<SitemapEntry> getSitemapEntries() {

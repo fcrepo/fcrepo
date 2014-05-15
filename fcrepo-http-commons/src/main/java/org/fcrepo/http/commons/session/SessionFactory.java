@@ -96,7 +96,7 @@ public class SessionFactory {
     /**
      * Get a new JCR Session
      *
-     * @return
+     * @return an internal session
      * @throws RepositoryException
      */
     public Session getInternalSession() throws RepositoryException {
@@ -206,7 +206,7 @@ public class SessionFactory {
      * Extract the id embedded at the beginning of a request path
      *
      * @param servletRequest
-     * @param prefix, the prefix for the id
+     * @param prefix the prefix for the id
      * @return the found id or null
      */
     protected String getEmbeddedId(

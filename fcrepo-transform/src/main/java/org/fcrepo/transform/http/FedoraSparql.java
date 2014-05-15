@@ -98,7 +98,7 @@ public class FedoraSparql extends AbstractResource {
      * A stub method so we can return a text/html representation using
      * the right template.
      *
-     * @return
+     * @return html representation of the query form
      * @throws RepositoryException
      */
     @GET
@@ -141,7 +141,7 @@ public class FedoraSparql extends AbstractResource {
      * Execute a SPARQL query against the JCR index
      * @param requestBodyStream
      * @param uriInfo
-     * @return
+     * @return SPARQL query results
      * @throws IOException
      * @throws RepositoryException
      */

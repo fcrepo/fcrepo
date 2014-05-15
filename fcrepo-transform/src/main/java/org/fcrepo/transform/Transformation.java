@@ -31,14 +31,14 @@ public interface Transformation<T> extends Function<Dataset, T> {
     /**
      * Execute a transform on a dataset
      * @param dataset
-     * @return
+     * @return transformed dataset
      */
     @Override
     T apply(final Dataset dataset);
 
     /**
      * Get the Query the transformation is using
-     * @return
+     * @return query used by the transformation as an input stream
      */
     InputStream getQuery();
 

@@ -43,7 +43,7 @@ import org.mockito.stubbing.Answer;
  * Helpers to make writing unit tests easier (by providing some generic
  * mocks)
  * @author fasseg
- * @date May 2, 2013
+ * @since May 2, 2013
  */
 public abstract class TestHelpers {
 

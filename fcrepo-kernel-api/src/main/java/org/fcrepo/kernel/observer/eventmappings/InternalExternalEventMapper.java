@@ -28,7 +28,7 @@ import com.google.common.base.Function;
  * {@link Iterator}s of {@link FedoraEvent}s according to some algorithm
  *
  * @author ajs6f
- * @date Feb 27, 2014
+ * @since Feb 27, 2014
  */
 public interface InternalExternalEventMapper extends Function<Iterator<Event>, Iterator<FedoraEvent>> {
 

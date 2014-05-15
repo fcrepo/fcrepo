@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 /**
- * Mappings from JCR {@link Event}s to {@link FedoraEvents}
+ * Mappings from JCR {@link javax.jcr.observation.Event}s to {@link FedoraEvents}
  *
  * @author ajs6f
- * @date Mar 5, 2014
+ * @since Mar 5, 2014
  */
 
 package org.fcrepo.kernel.observer.eventmappings;

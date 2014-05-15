@@ -24,14 +24,14 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * (and vice versa)
  * @author barmintor
  * @author ajs6f
- * @date May 15, 2013
+ * @since May 15, 2013
  */
 public interface IdentifierTranslator {
 
     /**
      * Translate an RDF resource into a JCR path
      * @param subject
-     * @return
+     * @return path
      * @throws RepositoryException
      */
     String getPathFromSubject(final Resource subject) throws RepositoryException;
@@ -39,7 +39,7 @@ public interface IdentifierTranslator {
     /**
      * Predicate for determining whether this {@link Resource} is a Fedora object.
      * @param subject
-     * @return
+     * @return boolean
      */
     boolean isFedoraGraphSubject(final Resource subject);
 
@@ -54,7 +54,7 @@ public interface IdentifierTranslator {
 
     /**
      * Get a context resource
-     * @return
+     * @return Resource
      */
     Resource getContext();
 }

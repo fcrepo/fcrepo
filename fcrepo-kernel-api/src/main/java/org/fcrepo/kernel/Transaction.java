@@ -24,7 +24,7 @@ import org.fcrepo.kernel.services.VersionService;
 
 /**
  * @author bbpennel
- * @date Feb 18, 2014
+ * @since Feb 18, 2014
  */
 public interface Transaction {
 
@@ -34,25 +34,25 @@ public interface Transaction {
 
     /**
      * Get the transaction-aware session
-     * @return
+     * @return transaction-aware session
      */
     Session getSession();
 
     /**
      * Get the date this transaction was created
-     * @return
+     * @return creation date
      */
     Date getCreated();
 
     /**
      * Get the transaction identifier
-     * @return
+     * @return transaction id
      */
     String getId();
 
     /**
      * Get the state of this transaction
-     * @return
+     * @return transaction state
      * @throws RepositoryException
      */
     State getState() throws RepositoryException;
@@ -60,7 +60,7 @@ public interface Transaction {
     /**
      * Get the Date when this transaction is expired and can be
      * garbage-collected
-     * @return
+     * @return transaction expiration date
      */
     Date getExpires();
 

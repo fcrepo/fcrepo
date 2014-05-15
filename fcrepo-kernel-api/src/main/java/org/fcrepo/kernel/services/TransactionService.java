@@ -23,7 +23,7 @@ import org.fcrepo.kernel.exception.TransactionMissingException;
 
 /**
  * @author bbpennel
- * @date Feb 20, 2014
+ * @since Feb 20, 2014
  */
 public interface TransactionService extends Service {
 
@@ -55,7 +55,7 @@ public interface TransactionService extends Service {
      * Get the current Transaction for a session
      *
      * @param session
-     * @return
+     * @return transaction
      * @throws TransactionMissingException
      */
     Transaction getTransaction(Session session) throws TransactionMissingException;

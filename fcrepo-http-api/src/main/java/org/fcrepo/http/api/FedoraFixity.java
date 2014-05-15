@@ -53,7 +53,7 @@ import com.codahale.metrics.annotation.Timed;
  * Run a fixity check on a path
  *
  * @author ajs6f
- * @date Jun 12, 2013
+ * @since Jun 12, 2013
  */
 @Component
 @Scope("prototype")
@@ -71,7 +71,7 @@ public class FedoraFixity extends AbstractResource {
      * @param pathList
      * @param request
      * @param uriInfo
-     * @return
+     * @return datastream fixity in the given format
      * @throws RepositoryException
      */
     @GET

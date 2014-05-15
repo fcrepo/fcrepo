@@ -55,7 +55,7 @@ import com.codahale.metrics.annotation.Timed;
  * RESTful interface to create and manage access roles
  *
  * @author Gregory Jansen
- * @date Sep 5, 2013
+ * @since Sep 5, 2013
  */
 @Component
 @Scope("prototype")
@@ -121,7 +121,7 @@ public class AccessRoles extends AbstractResource {
      *
      * @param pathList
      * @param data
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @POST

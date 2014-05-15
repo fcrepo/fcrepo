@@ -58,7 +58,7 @@ import org.springframework.stereotype.Component;
  * Provides serialization for streaming RDF results.
  *
  * @author ajs6f
- * @date Nov 19, 2013
+ * @since Nov 19, 2013
  */
 @Provider
 @Component
@@ -131,7 +131,7 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
      * one as well.
      *
      * @author ajs6f
-     * @date Nov 20, 2013
+     * @since Nov 20, 2013
      */
     public static class NTriplesWithCorrectMimeType extends
         NTriplesWriterFactory {

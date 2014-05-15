@@ -28,7 +28,7 @@ import org.slf4j.Logger;
  * namespaces with external namespaces, and replaces the term for content.
  *
  * @author ajs6f
- * @date Apr 1, 2014
+ * @since Apr 1, 2014
  */
 public class NamespaceConverter extends InternalIdentifierConverter {
 

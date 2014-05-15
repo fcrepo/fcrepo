@@ -44,7 +44,7 @@ import com.google.common.base.Predicate;
 
 /**
  * @author ajs6f
- * @date 2013
+ * @since 2013
  */
 public class DefaultFilterTest {
 

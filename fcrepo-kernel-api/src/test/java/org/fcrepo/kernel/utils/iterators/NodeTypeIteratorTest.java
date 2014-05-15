@@ -32,7 +32,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 /**
  * @author ajs6f
  * @author cbeer
- * @date 2013
+ * @since 2013
  */
 public class NodeTypeIteratorTest {
 

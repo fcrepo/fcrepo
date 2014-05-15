@@ -65,7 +65,7 @@ public class ViewHelpers {
 
     /**
      * ViewHelpers are singletons. Initialize or return the existing object
-     * @return
+     * @return an instance of ViewHelpers
      */
     public static ViewHelpers getInstance() {
         if (instance == null) {
@@ -80,7 +80,7 @@ public class ViewHelpers {
      * @param dataset
      * @param subject
      * @param predicate
-     * @return
+     * @return iterator
      */
     public Iterator<Quad> getObjects(final DatasetGraph dataset,
         final Node subject, final Resource predicate) {
@@ -148,7 +148,7 @@ public class ViewHelpers {
      *
      * @param dataset
      * @param subject
-     * @return
+     * @return canonical title of the subject in the dataset graph
      */
     public String getObjectTitle(final DatasetGraph dataset,
             final Node subject) {
@@ -188,6 +188,7 @@ public class ViewHelpers {
 
     /**
      * Determines whether the subject is of type nt:frozenNode.
+     * true if node has type nt:frozen
      */
     public boolean isFrozenNode(final DatasetGraph dataset,
         final Node subject) {
@@ -205,7 +206,7 @@ public class ViewHelpers {
      * @param dataset
      * @param subject
      * @param predicate
-     * @return
+     * @return string version of the object
      */
     public String getObjectsAsString(final DatasetGraph dataset,
             final Node subject, final Resource predicate, final boolean uriAsLink) {
@@ -235,7 +236,7 @@ public class ViewHelpers {
      *
      * @param uriInfo
      * @param subject
-     * @return
+     * @return breadcrumbs
      */
     public Map<String, String> getNodeBreadcrumbs(final UriInfo uriInfo,
             final Node subject) {
@@ -289,7 +290,7 @@ public class ViewHelpers {
      *
      * @param model
      * @param it
-     * @return
+     * @return iterator of alphabetized triples
      */
     public List<Quad> getSortedTriples(final Model model,
             final Iterator<Quad> it) {
@@ -303,7 +304,7 @@ public class ViewHelpers {
      *
      * @param mapping
      * @param namespace
-     * @return
+     * @return namespace prefix
      */
     public String getNamespacePrefix(final PrefixMapping mapping,
             final String namespace, final boolean compact) {
@@ -336,7 +337,7 @@ public class ViewHelpers {
      * mapping object
      *
      * @param mapping
-     * @return
+     * @return prefix preamble
      */
     public String getPrefixPreamble(final PrefixMapping mapping) {
         final StringBuilder sb = new StringBuilder();
@@ -356,7 +357,7 @@ public class ViewHelpers {
      * Convert an RDF resource to an RDF node
      *
      * @param r
-     * @return
+     * @return RDF node representation of the given RDF resource
      */
     public Node asNode(final Resource r) {
         return r.asNode();
@@ -366,7 +367,7 @@ public class ViewHelpers {
      * Convert a URI string to an RDF node
      *
      * @param r
-     * @return
+     * @return RDF node representation of the given string
      */
     public Node asLiteralStringNode(final String r) {
         return ResourceFactory.createPlainLiteral(r).asNode();
@@ -377,7 +378,7 @@ public class ViewHelpers {
      * a given int. You can't do math in a velocity template.
      *
      * @param i
-     * @return
+     * @return maths
      */
     public int addOne(final int i) {
         return i + 1;
@@ -385,7 +386,7 @@ public class ViewHelpers {
 
     /**
      * Proxying access to the RDF type static property
-     * @return
+     * @return RDF type property
      */
     public Property rdfType() {
         return RDF.type;
@@ -393,7 +394,7 @@ public class ViewHelpers {
 
     /**
      * Proxying access to the RDFS domain static property
-     * @return
+     * @return RDFS domain property
      */
     public Property rdfsDomain() {
         return RDFS.domain;
@@ -401,7 +402,7 @@ public class ViewHelpers {
 
     /**
      * Proxying access to the RDFS class static property
-     * @return
+     * @return RDFS class resource
      */
     public Resource rdfsClass() {
         return RDFS.Class;
@@ -410,7 +411,7 @@ public class ViewHelpers {
     /**
      * Get the content-bearing node for the given subject
      * @param subject
-     * @return
+     * @return content-bearing node for the given subject
      */
     public Node getContentNode(final Node subject) {
         return NodeFactory.createURI(subject + "/" + FCR_CONTENT);
@@ -419,7 +420,7 @@ public class ViewHelpers {
     /**
      * Transform a source string to something appropriate for HTML ids
      * @param source
-     * @return
+     * @return transformed source string
      */
     public String parameterize(final String source) {
         return source.toLowerCase().replaceAll("[^a-z0-9\\-_]+", "_");

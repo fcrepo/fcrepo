@@ -94,7 +94,7 @@ public class FedoraVersions extends ContentExposingResource {
      * @param pathList
      * @param request
      * @param uriInfo
-     * @return
+     * @return List of versions for the object as RDF
      * @throws RepositoryException
      */
     @GET
@@ -124,7 +124,7 @@ public class FedoraVersions extends ContentExposingResource {
      *
      * @param pathList
      * @param label
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @POST
@@ -141,7 +141,7 @@ public class FedoraVersions extends ContentExposingResource {
      * the label.
      * @param pathList
      * @param label
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @PATCH
@@ -184,6 +184,7 @@ public class FedoraVersions extends ContentExposingResource {
 
     /**
      * Create a new version checkpoint with no label.
+     * @return response
      */
     @POST
     public Response addVersion(@PathParam("path")
@@ -214,7 +215,7 @@ public class FedoraVersions extends ContentExposingResource {
      * @param pathList
      * @param label the label for the version of the subgraph
      * @param uriInfo
-     * @return
+     * @return the version of the object as RDF in the requested format
      * @throws RepositoryException
      */
     @Path("/{label:.+}")

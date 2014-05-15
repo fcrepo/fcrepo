@@ -26,7 +26,7 @@ import com.google.common.collect.ForwardingIterator;
  * {@link Iterator}<Event>
  *
  * @author ajs6f
- * @date Apr 20, 2013
+ * @since Apr 20, 2013
  */
 public class EventIterator extends ForwardingIterator<Event> implements Iterable<Event> {
 

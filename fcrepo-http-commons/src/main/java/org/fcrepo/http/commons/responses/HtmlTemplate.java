@@ -32,9 +32,7 @@ import java.lang.annotation.Target;
 public @interface HtmlTemplate {
 
     /**
-     * The name of the HMTL template to render for this method
-     *
-     * @return
+     * The name of the HTML template to render for this method
      */
     String value();
 }

@@ -28,7 +28,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * {@link Predicate}s for determining when RDF is managed by the repository.
  *
  * @author ajs6f
- * @date Oct 23, 2013
+ * @since Oct 23, 2013
  */
 public class ManagedRdf {
 

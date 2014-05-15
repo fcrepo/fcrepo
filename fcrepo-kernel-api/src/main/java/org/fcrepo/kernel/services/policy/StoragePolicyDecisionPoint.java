@@ -22,7 +22,7 @@ import javax.jcr.Node;
 /**
  * Service Interface implementation for managing and using StoragePolicy
  * @author osmandin
- * @date Aug 14, 2013
+ * @since Aug 14, 2013
  *
  */
 public interface StoragePolicyDecisionPoint {
@@ -39,7 +39,7 @@ public interface StoragePolicyDecisionPoint {
      * policy should apply
      *
      * @param n
-     * @return
+     * @return storage policy
      */
     String evaluatePolicies(final Node n);
 

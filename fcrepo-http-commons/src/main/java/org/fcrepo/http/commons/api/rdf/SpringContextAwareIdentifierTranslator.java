@@ -26,7 +26,7 @@ import org.springframework.web.context.ContextLoader;
 
 /**
  * @author ajs6f
- * @date Apr 3, 2014
+ * @since Apr 3, 2014
  */
 public abstract class SpringContextAwareIdentifierTranslator extends ExternalIdentifierConverter implements
         IdentifierTranslator {

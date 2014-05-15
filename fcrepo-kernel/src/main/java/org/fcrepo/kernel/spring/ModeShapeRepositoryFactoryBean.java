@@ -38,7 +38,7 @@ import org.springframework.core.io.Resource;
  * configuration
  * 
  * @author Edwin Shin
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  */
 public class ModeShapeRepositoryFactoryBean implements
         FactoryBean<JcrRepository> {

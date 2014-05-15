@@ -96,7 +96,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     }
 
     /**
-     * @return
+     * @return namespaces as RDF
      * @throws RepositoryException
      */
     @GET

@@ -37,13 +37,13 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * Constructs RDF from the structure of {@link Workspace}s in the repository.
+ * Constructs RDF from the structure of Workspaces in the repository.
  *
  * @author ajs6f
- * @date Nov 24, 2013
+ * @since Nov 24, 2013
  *
  * @author cbeer
- * @date 12 Dec 2013
+ * @since 12 Dec 2013
  */
 public class WorkspaceRdfContext extends RdfStream {
 
@@ -52,7 +52,7 @@ public class WorkspaceRdfContext extends RdfStream {
     private Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
     /**
      * @param session
-     * @param uriInfo
+     * @param subjects
      * @throws RepositoryException
      */
     public WorkspaceRdfContext(final Session session, final IdentifierTranslator subjects)

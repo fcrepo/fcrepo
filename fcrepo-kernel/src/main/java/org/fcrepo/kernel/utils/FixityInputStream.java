@@ -25,7 +25,7 @@ import org.apache.commons.io.input.CountingInputStream;
  * An InputStream wrapper that calculates the size and digest
  * while reading from the stream.
  * @author Chris Beer
- * @date Mar 12, 2013
+ * @since Mar 12, 2013
  */
 public class FixityInputStream extends CountingInputStream {
 
@@ -43,7 +43,7 @@ public class FixityInputStream extends CountingInputStream {
 
     /**
      * Retrieve the calculated digest for the input stream
-     * @return
+     * @return digest for this input stream
      */
     public MessageDigest getMessageDigest() {
         return ((DigestInputStream) in).getMessageDigest();

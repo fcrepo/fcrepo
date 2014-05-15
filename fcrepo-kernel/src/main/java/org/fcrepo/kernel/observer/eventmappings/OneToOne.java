@@ -32,7 +32,7 @@ import com.google.common.base.Function;
  * Maps each JCR {@link Event} to a single {@link FedoraEvent}
  *
  * @author ajs6f
- * @date Feb 27, 2014
+ * @since Feb 27, 2014
  */
 public class OneToOne implements InternalExternalEventMapper {
 

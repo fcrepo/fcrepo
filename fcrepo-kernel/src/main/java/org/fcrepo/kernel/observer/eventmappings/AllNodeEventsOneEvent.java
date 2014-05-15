@@ -36,7 +36,7 @@ import com.google.common.collect.Multimap;
  * the heap and make this a purely iterative algorithm, if possible
  *
  * @author ajs6f
- * @date Feb 27, 2014
+ * @since Feb 27, 2014
  */
 public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 

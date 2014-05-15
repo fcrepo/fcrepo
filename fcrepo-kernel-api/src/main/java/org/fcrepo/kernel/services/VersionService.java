@@ -24,7 +24,7 @@ import javax.jcr.Workspace;
 
 /**
  * @author bbpennel
- * @date Feb 19, 2014
+ * @since Feb 19, 2014
  */
 public interface VersionService extends Service {
 

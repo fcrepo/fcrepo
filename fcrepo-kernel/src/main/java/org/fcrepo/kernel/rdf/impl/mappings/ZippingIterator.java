@@ -28,7 +28,7 @@ import com.google.common.base.Function;
  * values on which the functions must act.
  *
  * @author ajs6f
- * @date Oct 10, 2013
+ * @since Oct 10, 2013
  * @param <FromType>
  * @param <ToType>
  */

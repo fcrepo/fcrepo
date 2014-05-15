@@ -93,7 +93,7 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      * Get the identifier for the entry's store
-     * @return
+     * @return the store identifier
      */
     @Override
     public String getStoreIdentifier() throws RepositoryException {
@@ -128,7 +128,7 @@ public class FixityResultImpl implements FixityResult {
     /**
      * Check if the fixity result matches the given checksum URI
      * @param checksum
-     * @return
+     * @return true if the checksums match
      */
     @Override
     public boolean matches(final URI checksum) {
@@ -138,7 +138,7 @@ public class FixityResultImpl implements FixityResult {
     /**
      * Check if the fixity result matches the given size
      * @param size
-     * @return
+     * @return true if fixity result matches the given size
      */
     @Override
     public boolean matches(final long size) {
@@ -158,7 +158,7 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      * Was the fixity declared a success
-     * @return
+     * @return true if the fixity check was successful
      */
     @Override
     public boolean isSuccess() {

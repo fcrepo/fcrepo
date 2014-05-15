@@ -33,7 +33,7 @@ import com.hp.hpl.jena.sparql.util.Symbol;
  * Utilities for serializing RDF.
  *
  * @author ajs6f
- * @date Aug 22, 2013
+ * @since Aug 22, 2013
  */
 public final class SerializationUtils {
 
@@ -50,7 +50,6 @@ public final class SerializationUtils {
      * Set the subject of the dataset by injecting a context "uri"
      *
      * @param rdf
-     * @return
      */
     public static void setDatasetSubject(final Dataset rdf, final String uri) {
         final Context context = rdf.getContext();
@@ -61,7 +60,7 @@ public final class SerializationUtils {
      * Get the subject of the dataset, given by the context's "uri"
      *
      * @param rdf
-     * @return
+     * @return subject of the dataset
      */
     public static Node getDatasetSubject(final Dataset rdf) {
         final Context context = rdf.getContext();
@@ -78,7 +77,7 @@ public final class SerializationUtils {
      * cohesive serialization.
      *
      * @param dataset
-     * @return
+     * @return model containing the union of the given dataset's named graphs
      */
     public static Model unifyDatasetModel(final Dataset dataset) {
         final Iterator<String> iterator = dataset.listNames();

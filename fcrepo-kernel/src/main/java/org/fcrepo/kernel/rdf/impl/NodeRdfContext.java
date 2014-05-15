@@ -43,7 +43,7 @@ import com.hp.hpl.jena.graph.Triple;
  * {@link RdfStream} that holds contexts related to a specific {@link Node}.
  *
  * @author ajs6f
- * @date Oct 10, 2013
+ * @since Oct 10, 2013
  */
 public class NodeRdfContext extends RdfStream {
 

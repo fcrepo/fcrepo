@@ -35,7 +35,7 @@ import com.codahale.metrics.graphite.GraphiteReporter;
  * Helpers for making the upstream metrics reporters play nice with Springg
  * 
  * @author cbeer
- * @date Mar 22, 2013
+ * @since Mar 22, 2013
  */
 public class ReporterFactory {
 
@@ -46,7 +46,7 @@ public class ReporterFactory {
      * 
      * @param prefix graphite metrics prefix
      * @param g a graphite client instance
-     * @return
+     * @return a new GraphiteReporter
      */
     public GraphiteReporter getGraphiteReporter(final String prefix,
             final Graphite g) {
@@ -63,7 +63,7 @@ public class ReporterFactory {
      * Publish metrics to JMX
      * 
      * @param prefix
-     * @return
+     * @return a JMXReporter
      */
     public JmxReporter getJmxReporter(final String prefix) {
         final MBeanServer mbs = getPlatformMBeanServer();

@@ -35,9 +35,8 @@ public interface JMSEventMessageFactory {
      * given session
      *
      * @param jcrEvent
-     * @param jcrSession
      * @param jmsSession
-     * @return
+     * @return JMS message created from a JCR event
      * @throws RepositoryException
      * @throws IOException
      * @throws JMSException

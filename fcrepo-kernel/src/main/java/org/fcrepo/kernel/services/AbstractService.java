@@ -26,7 +26,7 @@ import org.modeshape.jcr.api.JcrTools;
 
 /**
  * @author bbpennel
- * @date Feb 20, 2014
+ * @since Feb 20, 2014
  */
 public abstract class AbstractService extends JcrTools implements FedoraJcrTypes, Service {
 

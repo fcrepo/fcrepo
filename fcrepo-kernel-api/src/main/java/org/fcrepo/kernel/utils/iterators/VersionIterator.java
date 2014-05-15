@@ -25,7 +25,7 @@ import com.google.common.collect.ForwardingIterator;
  * Type-aware iterator to wrap the JCR NodeIterator.
  *
  * @author ajs6f
- * @date Apr 20, 2013
+ * @since Apr 20, 2013
  */
 public class VersionIterator extends ForwardingIterator<Version> implements
         Iterable<Version> {

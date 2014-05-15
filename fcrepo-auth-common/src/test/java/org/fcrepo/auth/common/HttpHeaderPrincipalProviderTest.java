@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * @author daines
  * @author bbpennel
- * @date Mar 6, 2014
+ * @since Mar 6, 2014
  */
 public class HttpHeaderPrincipalProviderTest {
 
