@@ -15,11 +15,13 @@
  */
 package org.fcrepo.auth.roles.basic;
 
+import java.util.Set;
+
+import javax.jcr.Session;
+
 import org.fcrepo.auth.roles.common.AbstractRolesAuthorizationDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Set;
 
 /**
  * @author Gregory Jansen
@@ -35,7 +37,8 @@ public class BasicRolesAuthorizationDelegate extends AbstractRolesAuthorizationD
      * String absPath, final String[] actions, final Set<String> roles)
      */
     @Override
-    public boolean rolesHavePermission(final String absPath,
+    public boolean rolesHavePermission(final Session userSession,
+            final String absPath,
             final String[] actions, final Set<String> roles) {
         if (roles.isEmpty()) {
             LOGGER.debug("A caller without content roles can do nothing in the repository.");
@@ -47,15 +50,17 @@ public class BasicRolesAuthorizationDelegate extends AbstractRolesAuthorizationD
         }
         if (roles.contains("writer")) {
             if (absPath.contains(AUTHZ_DETECTION)) {
-                if (roles.contains("reader") && actions.length == 1 && "read".equals(actions[0])) {
+                if (actions.length == 1 && "read".equals(actions[0])) {
                     LOGGER.debug("Granting reader role permission to perform a read action.");
                     return true;
+                } else {
+                    LOGGER.debug("Denying writer role permission to perform an action on an ACL node.");
+                    return false;
                 }
-                LOGGER.debug("Denying writer role permission to perform an action on an ACL node.");
-                return false;
+            } else {
+                LOGGER.debug("Granting writer role permission to perform any action on a non-ACL node.");
+                return true;
             }
-            LOGGER.debug("Granting writer role permission to perform any action on a non-ACL node.");
-            return true;
         }
         if (roles.contains("reader")) {
             if (actions.length == 1 && "read".equals(actions[0])) {
