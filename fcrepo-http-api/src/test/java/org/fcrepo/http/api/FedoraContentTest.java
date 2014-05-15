@@ -44,6 +44,7 @@ import java.util.Date;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionManager;
@@ -61,7 +62,7 @@ import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.Test;
 import org.mockito.Mock;
 
 public class FedoraContentTest {
@@ -124,7 +125,7 @@ public class FedoraContentTest {
         when(mockDatastream.getContentNode()).thenReturn(mockContentNode);
     }
 
-    @Ignore
+    @Test
     public void testPutContent() throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
@@ -139,6 +140,8 @@ public class FedoraContentTest {
                         eq(dsPath), anyString(), eq("xyz"), any(InputStream.class), eq((URI)null)))
                 .thenReturn(mockDatastream);
         when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final Response actual =
             testObj.modifyContent(createPathList(pid, dsId), null, "inline; filename=\"xyz\"", null,
                     dsContentStream, null, mockResponse);
@@ -149,13 +152,15 @@ public class FedoraContentTest {
     }
 
     @SuppressWarnings("unused")
-    @Ignore
+    @Test
     public void testCreateContent() throws RepositoryException, IOException,
                                                    InvalidChecksumException, URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "xyz";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockNode.isNew()).thenReturn(true);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
@@ -175,12 +180,14 @@ public class FedoraContentTest {
         verify(mockSession).save();
     }
 
-    @Ignore
+    @Test
     public void testCreateContentAtMintedPath() throws RepositoryException, InvalidChecksumException,
                                                URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid;
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
         when(mockMinter.mintPid()).thenReturn("xyz");
@@ -207,13 +214,15 @@ public class FedoraContentTest {
     }
 
 
-    @Ignore
+    @Test
     public void testCreateContentWithSlug() throws RepositoryException, InvalidChecksumException,
                                            URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsid = "slug";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid;
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
         setField(testObj, "pidMinter", mockMinter);
@@ -237,13 +246,15 @@ public class FedoraContentTest {
         verify(mockSession).save();
     }
 
-    @Ignore
+    @Test
     public void testModifyContent() throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
         final URI checksum = new URI("urn:sha1:some-checksum");
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
         when(mockNode.isNew()).thenReturn(false);
         final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
@@ -268,12 +279,14 @@ public class FedoraContentTest {
         verify(mockSession).save();
     }
 
-    @Ignore
+    @Test
     public void testGetContent() throws RepositoryException, IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(
                 mockDs);
