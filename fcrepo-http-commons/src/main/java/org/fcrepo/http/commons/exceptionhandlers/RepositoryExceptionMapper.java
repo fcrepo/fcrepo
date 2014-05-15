@@ -22,6 +22,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.ValueFormatException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -47,6 +48,8 @@ public class RepositoryExceptionMapper implements
         LOGGER.warn("Caught repository exception: {}", e.getMessage() );
 
         if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
+            return status(BAD_REQUEST).entity(e.getMessage()).build();
+        } else if ( e instanceof ValueFormatException ) {
             return status(BAD_REQUEST).entity(e.getMessage()).build();
         }
 
