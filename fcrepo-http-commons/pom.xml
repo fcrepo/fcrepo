@@ -10,7 +10,22 @@
   <description>The Fedora Commons repository HTTP commons module: Provides HTTP (JAX-RS) resources and helpers for use in assembling HTTP APIs over the Fedora Commons repository framework.</description>
   <packaging>bundle</packaging>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.fcrepo</groupId>
+        <artifactId>fcrepo-jcr-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>org.gagravarr</groupId>
+      <artifactId>vorbis-java-tika</artifactId>
+    </dependency>
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>

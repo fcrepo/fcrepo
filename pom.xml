@@ -54,6 +54,8 @@
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
   </properties>
   <modules>
+    <module>fcrepo-boms/fcrepo-jcr-bom</module>
+    <module>fcrepo-boms/fcrepo4-bom</module>
     <module>fcrepo-kernel</module>
     <module>fcrepo-audit</module>
     <module>fcrepo-webapp</module>
@@ -63,7 +65,6 @@
     <module>fcrepo-http-api</module>
     <module>fcrepo-metrics</module>
     <module>fcrepo-storage-policy</module>
-    <module>fcrepo-jcr</module>
     <module>fcrepo-serialization</module>
     <module>fcrepo-transform</module>
     <module>fcrepo-auth-common</module>
