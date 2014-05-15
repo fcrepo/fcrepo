@@ -9,6 +9,18 @@
   <name>Fedora Repository Authorization Basic Role Module</name>
   <description>A basic implementation of a Fedora authorization delegate that uses the access roles of reader, writer and admin.</description>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.fcrepo</groupId>
+        <artifactId>fcrepo-jcr-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -25,6 +37,11 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cachestore-leveldb</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
