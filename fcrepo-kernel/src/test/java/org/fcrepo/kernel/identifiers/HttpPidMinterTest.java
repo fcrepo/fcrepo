@@ -16,14 +16,13 @@
 package org.fcrepo.kernel.identifiers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
-import static org.fcrepo.kernel.utils.TestHelpers.setField;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -37,23 +36,16 @@ public class HttpPidMinterTest {
 
     private HttpPidMinter testMinter;
 
-    @Before
-    public void setUp() {
-        testMinter = new HttpPidMinter();
-        testMinter.setMinterURL("http://localhost/minter");
-        testMinter.setMinterMethod("POST");
-    }
-
     @Test
     public void testMintPid() throws Exception {
-        testMinter.setXPathExpression(null);
-        testMinter.setTrimExpression(".*/");
+        final HttpPidMinter testMinter = new HttpPidMinter(
+            "http://localhost/minter","POST", "", "", ".*/", "");
 
         HttpClient mockClient = mock(HttpClient.class);
         HttpResponse mockResponse = mock(HttpResponse.class);
         ByteArrayEntity entity = new ByteArrayEntity("/foo/bar/baz".getBytes());
+        testMinter.client = mockClient;
 
-        setField( testMinter, "client", mockClient );
         when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
         when(mockResponse.getEntity()).thenReturn(entity);
 
@@ -64,14 +56,14 @@ public class HttpPidMinterTest {
 
     @Test
     public void testMintPidXPath() throws Exception {
-        testMinter.setXPathExpression("/test/id");
-        testMinter.setTrimExpression(null);
+        final HttpPidMinter testMinter = new HttpPidMinter(
+            "http://localhost/minter","POST", "", "", "", "/test/id");
 
         HttpClient mockClient = mock(HttpClient.class);
         HttpResponse mockResponse = mock(HttpResponse.class);
         ByteArrayEntity entity = new ByteArrayEntity("<test><id>baz</id></test>".getBytes());
+        testMinter.client = mockClient;
 
-        setField( testMinter, "client", mockClient );
         when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
         when(mockResponse.getEntity()).thenReturn(entity);
 
@@ -79,4 +71,13 @@ public class HttpPidMinterTest {
         verify(mockClient).execute(isA(HttpUriRequest.class));
         assertEquals( pid, "baz" );
     }
+
+    @Test
+    public void testHttpClient() throws Exception {
+        final HttpPidMinter testMinter = new HttpPidMinter(
+            "http://localhost/minter","POST", "user", "pass", "", "");
+        HttpClient client = testMinter.buildClient();
+        assertNotNull(client);
+    }
+
 }

@@ -4,9 +4,17 @@
     xmlns:c="http://www.springframework.org/schema/c"
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-    <!-- Mints PIDs-->
+    <!-- Mints PIDs using random UUIDs -->
     <bean class="org.fcrepo.kernel.identifiers.UUIDPathMinter"
         c:length="${fcrepo.uuid.path.length:2}"
         c:count="${fcrepo.uuid.path.count:4}"/>
+
+    <!-- Mints PIDs using external REST service
+    <bean class="org.fcrepo.kernel.identifiers.HttpPidMinter"
+        c:minterURL="http://localhost:8080/my/minter"
+        c:minterMethod="POST" c:xPathExpression="/response/ids/value"
+        c:trimExpression="" c:username="minterUser" c:password="minterPass"/>
+    -->
+
 
 </beans>

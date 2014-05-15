@@ -17,7 +17,7 @@ package org.fcrepo.kernel.identifiers;
 
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import org.slf4j.Logger;
 import com.codahale.metrics.annotation.Timed;
@@ -50,7 +50,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 
 
 /**
- * PidMinter that uses an external HTTP API to mint PIDs.
+ * PID minter that uses an external REST service to mint PIDs.
  *
  * @author escowles
  * @date 04/28/2014
@@ -58,82 +58,57 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 public class HttpPidMinter extends BasePidMinter {
 
     private static final Logger log = getLogger(HttpPidMinter.class);
+    protected final String url;
+    protected final String method;
+    protected final String username;
+    protected final String password;
+    private final String regex;
+    private XPathExpression xpath;
+
     protected HttpClient client;
-    protected String minterURL;
-    protected String minterMethod;
-    protected String username;
-    protected String password;
-    private String trimExpression;
-    private XPathExpression xpathExpression;
 
     /**
-     * Set the URL for the minter service.
+     * Create a new HttpPidMinter.
+     * @param url The URL for the minter service.  This is the only required argument -- all
+     *    other parameters can be blank.
+     * @param method The HTTP method (POST, PUT or GET) used to generate a new PID (POST will
+     *    be used if the method is blank.
+     * @param username If not blank, use this username to connect to the minter service.
+     * @param password If not blank, use this password used to connect to the minter service.
+     * @param regex If not blank, use this regular expression used to remove unwanted text from the
+     *    minter service response.  For example, if the response text is "/foo/bar:baz" and the
+     *    desired identifier is "baz", then the regex would be ".*:".
+     * @param xpath If not blank, use this XPath expression used to extract the desired identifier
+     *    from an XML minter response.
     **/
-    public void setMinterURL( final String url ) {
-        log.debug("setMinterURL({})",url);
-        this.minterURL = url;
-    }
+    public HttpPidMinter( final String url, final String method, final String username,
+        final String password, final String regex, final String xpath ) {
 
-    /**
-     * Set the HTTP method (POST, PUT or GET) used to generate a new PID.  If no method
-     * is specified, POST will be used by default.
-    **/
-    public void setMinterMethod( final String method ) {
-        log.debug("setMinterMethod({})",method);
-        this.minterMethod = method;
-    }
+        checkArgument( !isBlank(url), "Minter URL must be specified!" );
 
-    /**
-     * Set the regular expression used to remove unwanted text from the minter service
-     * response.  For example, if the response text is "/foo/bar:baz" and the desired
-     * identifier is "baz", then the trimExpression would be ".*:".
-    **/
-    public void setTrimExpression( final String expr ) {
-        log.debug("setTrimExpression({})",expr);
-        this.trimExpression = expr;
-    }
-
-    /**
-     * Set the XPath expression used to extract the desired identifier from an XML minter
-     * response.
-    **/
-    public void setXPathExpression( final String xpath ) {
-        log.debug("setXPathExpression({})",xpath);
+        this.url = url;
+        this.method = method;
+        this.username = username;
+        this.password = password;
+        this.regex = regex;
         if ( xpath != null ) {
             try {
-                this.xpathExpression = XPathFactory.newInstance().newXPath().compile(xpath);
+                this.xpath = XPathFactory.newInstance().newXPath().compile(xpath);
             } catch ( XPathException ex ) {
                 log.warn("Error parsing xpath ({}): {}", xpath, ex );
             }
         }
-    }
-
-    /**
-     * Set the username used to connect to the minter service.  Unless both username and password
-     * are set, no authentication will be used.
-    **/
-    public void setUsername( final String username ) {
-        log.debug("setUsername({})",username);
-        this.username = username;
-    }
-
-    /**
-     * Set the password used to connect to the minter service.  Unless both username and password
-     * are set, no authentication will be used.
-    **/
-    public void setPassword( final String password ) {
-        log.debug("setPassword({})",password);
-        this.password = password;
+        this.client = buildClient();
     }
 
     /**
      * Setup authentication in httpclient.
     **/
-    private HttpClient buildClient() {
+    protected HttpClient buildClient() {
         HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties().setConnectionManager(
             new PoolingHttpClientConnectionManager());
         if (!isBlank(username) && !isBlank(password)) {
-            final URI uri = URI.create(minterURL);
+            final URI uri = URI.create(url);
             final CredentialsProvider credsProvider = new BasicCredentialsProvider();
             credsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()),
                 new UsernamePasswordCredentials(username, password));
@@ -143,15 +118,15 @@ public class HttpPidMinter extends BasePidMinter {
     }
 
     /**
-     * Instantiate a request object based on the minterMethod variable.
+     * Instantiate a request object based on the method variable.
     **/
-    protected HttpUriRequest minterRequest() {
-        if ( minterMethod != null && minterMethod.equalsIgnoreCase("GET") ) {
-            return new HttpGet(minterURL);
-        } else if ( minterMethod != null && minterMethod.equalsIgnoreCase("PUT") ) {
-            return new HttpPut(minterURL);
+    private HttpUriRequest minterRequest() {
+        if ( method != null && method.equalsIgnoreCase("GET") ) {
+            return new HttpGet(url);
+        } else if ( method != null && method.equalsIgnoreCase("PUT") ) {
+            return new HttpPut(url);
         } else {
-            return new HttpPost(minterURL);
+            return new HttpPost(url);
         }
     }
 
@@ -159,12 +134,12 @@ public class HttpPidMinter extends BasePidMinter {
      * Remove unwanted text from the minter service response to produce the desired identifer.
      * Override this method for processing more complex than a simple regex replacement.
     **/
-    public String responseToPid( final String responseText ) throws Exception {
+    protected String responseToPid( final String responseText ) throws Exception {
         log.debug("responseToPid({})", responseText);
-        if ( trimExpression != null ) {
-            return responseText.replaceFirst(trimExpression,"");
-        } else if ( xpathExpression != null ) {
-            return xpath( responseText, xpathExpression );
+        if ( !isBlank(regex) ) {
+            return responseText.replaceFirst(regex,"");
+        } else if ( xpath != null ) {
+            return xpath( responseText, xpath );
         } else {
             return responseText;
         }
@@ -186,16 +161,12 @@ public class HttpPidMinter extends BasePidMinter {
     @Timed
     @Override
     public String mintPid() {
-        checkNotNull( minterURL, "Minter URL must be specified!" );
         try {
             log.debug("mintPid()");
-            if ( client == null ) {
-                client = buildClient();
-            }
             final HttpResponse resp = client.execute( minterRequest() );
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( IOException ex ) {
-            log.warn("Error minting pid from {}: {}", minterURL, ex);
+            log.warn("Error minting pid from {}: {}", url, ex);
         } catch ( Exception ex ) {
             log.warn("Error processing minter response", ex);
         }
