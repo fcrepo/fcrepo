@@ -16,11 +16,6 @@
 
     <context:annotation-config/>
 
-    <!-- Mints PIDs-->
-    <bean class="org.fcrepo.kernel.identifiers.UUIDPathMinter"
-        c:length="${fcrepo.uuid.path.length:2}"
-        c:count="${fcrepo.uuid.path.count:4}"/>
-
     <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
     
     <!-- Identifier translation chain -->
