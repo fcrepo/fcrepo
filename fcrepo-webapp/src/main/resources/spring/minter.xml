@@ -11,9 +11,10 @@
 
     <!-- Mints PIDs using external REST service
     <bean class="org.fcrepo.kernel.identifiers.HttpPidMinter"
-        c:minterURL="http://localhost:8080/my/minter"
-        c:minterMethod="POST" c:xPathExpression="/response/ids/value"
-        c:trimExpression="" c:username="minterUser" c:password="minterPass"/>
+        c:url="http://localhost/my/minter" c:method="POST"
+        c:username="${fcrepo.minter.username:minterUser}"
+        c:password="${fcrepo.minter.password:minterPass}"
+        c:regex="" c:xpath="/response/ids/value"/>
     -->
 
 
