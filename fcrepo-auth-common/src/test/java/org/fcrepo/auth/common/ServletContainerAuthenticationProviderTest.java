@@ -29,6 +29,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -269,6 +270,18 @@ public class ServletContainerAuthenticationProviderTest {
         assertEquals(expected, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
                 .contains(ServletContainerAuthenticationProvider.EVERYONE));
-        assertEquals(ServletContainerAuthenticationProvider.EVERYONE_NAME, resultPrincipals.iterator().next().getName());
+
+        final Iterator<Principal> iterator = resultPrincipals.iterator();
+        boolean succeeds = false;
+
+        while (iterator.hasNext()) {
+            final String name = iterator.next().getName();
+
+            if (name != null && name.equals(ServletContainerAuthenticationProvider.EVERYONE.getName())) {
+                succeeds = true;
+            }
+        }
+
+        assertTrue("Expected to find: " + ServletContainerAuthenticationProvider.EVERYONE.getName(), succeeds);
     }
 }
