@@ -167,9 +167,10 @@ public class HttpPidMinter extends BasePidMinter {
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( IOException ex ) {
             log.warn("Error minting pid from {}: {}", url, ex);
+            throw new RuntimeException("Error minting pid", ex);
         } catch ( Exception ex ) {
             log.warn("Error processing minter response", ex);
+            throw new RuntimeException("Error processing minter response", ex);
         }
-        return null;
     }
 }
