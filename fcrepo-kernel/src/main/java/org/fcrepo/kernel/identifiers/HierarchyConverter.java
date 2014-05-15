@@ -17,13 +17,11 @@ package org.fcrepo.kernel.identifiers;
 
 import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Splitter.fixedLength;
-import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.transform;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.MessageDigest;
@@ -70,6 +68,9 @@ public class HierarchyConverter extends InternalIdentifierConverter {
 
     private static final Logger log = getLogger(HierarchyConverter.class);
 
+    private static final String JCR_NAMESPACE_PREFIX = "jcr";
+    private static final String FCR_NAMESPACE_PREFIX = "fcr";
+
     /*
      * Convert an incoming path to auto-hierarchy path for JCR backend storage.
      * For example: /parent/child => /xx/xx/parent/xx/xx/child
@@ -79,7 +80,6 @@ public class HierarchyConverter extends InternalIdentifierConverter {
     protected String doBackward(final String flat) {
         log.debug("Converting incoming identifier: {}", flat);
         String nonContentSuffixed = flat;
-        final boolean isContentFile = flat.endsWith(FCR_CONTENT) || flat.endsWith(JCR_CONTENT);
         if (nonContentSuffixed.startsWith(separator)) {
             nonContentSuffixed = nonContentSuffixed.substring(1, nonContentSuffixed.length());
         }
@@ -87,27 +87,34 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         List<String> hierarchySegments = null;
         final List<String> jcrPathSegments = new ArrayList<>();
         int pathSize = flatSegments.size();
-        if (isContentFile) {
-            jcrPathSegments.add(JCR_CONTENT);
-            // Subtract the fcr:content namespace element for auto-hierarchy
-            pathSize -= 1;
-        }
         if (pathSize == 0) {
             // either empty identifier or separator identifier
             return nonContentSuffixed;
         }
-        for (int i = pathSize - 1; i >= 0; i--) {
-            final String seg = flatSegments.get(i);
-            if (seg == null || seg.length() == 0) {
+        boolean isVersionRelate = false;
+        for (String seg : flatSegments) {
+            if (isBlank(seg)) {
                 if (pathSize == 1) {
                     return flat;
                 }
+            } else if (isVersionRelate) {
+                // Skip translation after version syntax detected for now
+                jcrPathSegments.add(seg);
+            } else if (isFCRNamespace(seg)) {
+                // FCR related namspaces
+                jcrPathSegments.add(convertNamespace(seg));
+                if (seg.indexOf(":versionStorage") >= 0 || seg.indexOf(":versions") > 0)  {
+                    isVersionRelate = true;
+                }
+            } else if (seg.startsWith("[") && seg.endsWith("]")) {
+                // System related syntax?
+                jcrPathSegments.add(seg);
             } else {
                 // Create the auto-hierarchy path segments, add them to
                 // the list in front of the transparent path segment
                 hierarchySegments = createHierarchySegments(hashKey(singletonList(seg)));
-                jcrPathSegments.add(0, flatSegments.get(i));
-                jcrPathSegments.addAll(0, hierarchySegments);
+                jcrPathSegments.addAll(hierarchySegments);
+                jcrPathSegments.add(seg);
             }
         }
         final String pathConverted = on(separator).join(jcrPathSegments);
@@ -129,39 +136,55 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         }
         final List<String> jcrPathSegments = asList(nonContentSuffixed.split(separator));
         int jcrPathSize = jcrPathSegments.size();
-        final boolean isContentFile = hierarchical.endsWith(JCR_CONTENT);
-        if (isContentFile) {
-            jcrPathSize -= 1;
-        }
         if (jcrPathSize <= levels) {
             // must be a root identifier
             return hierarchical;
         }
+        boolean isVersionRelate = false;
         // Convert the auto-hierarchy path to transparent path
         final List<String> pathSegments = new ArrayList<>();
-        List<String> hierarchySegments = null;
-        for (int i = levels ; i < jcrPathSize; i += levels + 1) {
+        final List<String> hierarchySegments = new ArrayList<>();
+        for (int i = 0 ; i < jcrPathSize; i++) {
             final String seg = jcrPathSegments.get(i);
-            if (seg == null || seg.length() == 0) {
+            final int hierarchySize = hierarchySegments.size();
+            if (isBlank(seg)) {
                 // If the segment null or empty, must be double slash or something wrong.
                 // Add it as empty that will produce an slash for now?
                 pathSegments.add("");
-            } else {
+                hierarchySegments.clear();
+            } else if (isVersionRelate) {
+                // Skip translation after version syntax detected for now
                 pathSegments.add(seg);
-                hierarchySegments = jcrPathSegments.subList(i - levels, i);
+            } else if (isJCRNamespace(seg)) {
+                // Convert namespace
+                pathSegments.add(convertNamespace(seg));
+                if (seg.indexOf(":versionStorage") >= 0 || seg.indexOf(":versions") > 0)  {
+                    isVersionRelate = true;
+                }
+                if (hierarchySize > 0) {
+                    // Something wrong
+                    log.error("Outgoing hierarchy {} in path {} has no match.",
+                            on(separator).join(hierarchySegments), jcrPathSegments.subList(0, i));
+                    hierarchySegments.clear();
+                }
+            } else if (hierarchySize == levels) {
+                // Completed a hierarchy sub-part conversion
+                pathSegments.add(seg);
                 final String hierarchyPath = on(separator).join(hierarchySegments);
                 final String hashPath = on(separator).join(createHierarchySegments(seg));
                 if (!hierarchyPath.equals(hashPath)) {
-                    log.error("Outgoing sub path {} hierarchy {} (got {}) doesn't match the path segament {}.",
+                    log.error("Outgoing sub path {} hierarchy {} (got {}) doesn't match the path segment {}.",
                             on(separator).join(jcrPathSegments.subList(0, i + 1)), hierarchyPath, hashPath, seg);
                 }
+                // Clear the hierarchy segments
+                hierarchySegments.clear();
+            } else {
+                // A hierarchy segment
+                hierarchySegments.add(seg);
             }
+
         }
 
-        if (isContentFile) {
-            //Don't forget the fcr:content segment for content files
-            pathSegments.add(FCR_CONTENT);
-        }
         final String pathConverted = on(separator).join(pathSegments);
         log.trace("Converted outgoing identifier \"{}\" to \"{}\".", hierarchical, pathConverted);
         return "/" + pathConverted;
@@ -186,7 +209,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             md = MessageDigest.getInstance("SHA-1");
             md.reset();
             md.update(path.getBytes("utf8"));
-            hierarchyPath = byteToHex(md.digest()).replace("-", "").substring(0, length * levels);
+            hierarchyPath = byteToHex(md.digest()).substring(0, length * levels);
         } catch (final Exception e) {
             log.error("Hierarchy conversion auto-hierarchy", e);
         }
@@ -234,4 +257,36 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         this.prefix = p;
     }
 
+    /**
+     * @param value
+     * @return
+     */
+    public boolean isJCRNamespace(final String value) {
+        return value.split(":")[0].equals(JCR_NAMESPACE_PREFIX);
+    }
+
+    /**
+     * @param value
+     * @return
+     */
+    public boolean isFCRNamespace(final String value) {
+        return value.split(":")[0].equals(FCR_NAMESPACE_PREFIX);
+    }
+
+    /**
+     * Convert namespaces
+     * @param namespace
+     * @return
+     */
+    public String convertNamespace(String namespace) {
+        final String[] tokens = namespace.split(":");
+        final int length = tokens.length;
+        if (tokens[0].equals(JCR_NAMESPACE_PREFIX) && length == 2 ) {
+            return FCR_NAMESPACE_PREFIX + ":" + tokens[1];
+        } else if (tokens[0].equals(FCR_NAMESPACE_PREFIX) && length == 2 ) {
+            return JCR_NAMESPACE_PREFIX + ":" + tokens[1];
+        } else {
+            return namespace;
+        }
+    }
 }
