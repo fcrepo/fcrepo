@@ -21,11 +21,16 @@ import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.ws.rs.core.UriInfo;
 
@@ -88,6 +93,53 @@ public class ViewHelpers {
     }
 
     /**
+     * Return an iterator of Quads for versions.
+     *
+     * @param dataset
+     * @param subject
+     * @return
+     */
+    public Iterator<Node> getVersions(final DatasetGraph dataset,
+        final Node subject) {
+        return getOrderedVersions(dataset, subject, HAS_VERSION);
+    }
+
+    /**
+     * Return an iterator of Quads for child versions.
+     *
+     * @param dataset
+     * @param subject
+     * @return
+     */
+    public Iterator<Node> getChildVersions(final DatasetGraph dataset,
+        final Node subject) {
+        return getOrderedVersions(dataset, subject, HAS_CONTENT);
+    }
+
+    /**
+     * Return an iterator of Quads for versions.
+     *
+     * @param dataset
+     * @param subject
+     * @return
+     */
+    public Iterator<Node> getOrderedVersions(final DatasetGraph dataset,
+        final Node subject, final Resource predicate) {
+        final Iterator<Quad> versions = getObjects(dataset, subject, predicate);
+        final Map<String, Node> map = new TreeMap<String, Node>();
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        Quad quad;
+        String date;
+        while (versions.hasNext()) {
+            quad = versions.next();
+            date = getVersionDate(dataset, quad.getObject());
+            map.put(date == null || date.length() == 0 ?
+                    format.format(new Date()) : date, quad.getObject());
+        }
+        return map.values().iterator();
+    }
+
+    /**
      * Gets the URL of the node whose version is represented by the
      * current node.  The current implementation assumes the URI
      * of that node will be the same as the breadcrumb entry that
@@ -95,9 +147,9 @@ public class ViewHelpers {
      */
     public String getVersionSubjectUrl(final UriInfo uriInfo,
                                        final Node subject) {
-        Map<String, String> breadcrumbs = getNodeBreadcrumbs(uriInfo, subject);
+        final Map<String, String> breadcrumbs = getNodeBreadcrumbs(uriInfo, subject);
         String lastUrl = null;
-        for (Map.Entry<String, String> entry : breadcrumbs.entrySet()) {
+        for (final Map.Entry<String, String> entry : breadcrumbs.entrySet()) {
             if (entry.getValue().equals("fcr:versions")) {
                 return lastUrl;
             }
@@ -140,7 +192,7 @@ public class ViewHelpers {
         if (objects.hasNext()) {
             return objects.next().getObject().getLiteralValue().toString();
         }
-        return null;
+        return "";
     }
 
     /**
