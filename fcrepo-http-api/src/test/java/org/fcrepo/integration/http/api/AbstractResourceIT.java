@@ -39,6 +39,8 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -97,6 +99,18 @@ public abstract class AbstractResourceIT {
         return new HttpPut(serverAddress + pid);
     }
 
+    protected static HttpGet getObjMethod(final String pid) {
+        return new HttpGet(serverAddress + pid);
+    }
+
+    protected static HttpDelete deleteObjMethod(final String pid) {
+        return new HttpDelete(serverAddress + pid);
+    }
+
+    protected static HttpPatch patchObjMethod(final String pid) {
+        return new HttpPatch(serverAddress + pid);
+    }
+
     protected static HttpPost postObjMethod(final String pid, final String query) {
         if (query.equals("")) {
             return new HttpPost(serverAddress + pid);
@@ -122,6 +136,13 @@ public abstract class AbstractResourceIT {
         put.setEntity(new StringEntity(content));
         return put;
     }
+
+    protected static HttpGet getDSMethod(final String pid, final String ds) throws UnsupportedEncodingException {
+            final HttpGet get =
+                    new HttpGet(serverAddress + pid + "/" + ds +
+                            "/fcr:content");
+            return get;
+        }
 
     protected HttpResponse execute(final HttpUriRequest method)
         throws ClientProtocolException, IOException {
@@ -282,6 +303,5 @@ public abstract class AbstractResourceIT {
     protected static String getRandomPropertyValue() {
         return UUID.randomUUID().toString();
     }
-
 
 }
