@@ -46,6 +46,7 @@ import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.ValueFormatException;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
@@ -408,6 +409,8 @@ public class JcrRdfTools {
             final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromSubject(data.asResource()));
             return valueFactory.createValue(nodeFromGraphSubject,
                     type == WEAKREFERENCE);
+        } else if (!data.isURIResource() && (type == REFERENCE || type == WEAKREFERENCE)) {
+            throw new ValueFormatException("Reference properties can only refer to URIs, not literals");
         } else if (data.isURIResource() || type == URI) {
             // some random opaque URI
             return valueFactory.createValue(data.toString(), PropertyType.URI);

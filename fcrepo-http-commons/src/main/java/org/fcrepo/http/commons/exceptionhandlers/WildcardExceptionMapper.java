@@ -19,6 +19,7 @@ import static com.google.common.base.Throwables.getStackTraceAsString;
 import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.jcr.RepositoryException;
 import javax.jcr.lock.LockException;
 import javax.jcr.security.AccessControlException;
 import javax.ws.rs.WebApplicationException;
@@ -77,6 +78,11 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
         if (e.getCause() instanceof TransactionMissingException) {
             return new TransactionMissingExceptionMapper()
                     .toResponse((TransactionMissingException) e.getCause());
+        }
+
+        if ( e.getCause() instanceof RepositoryException) {
+            return new RepositoryExceptionMapper()
+                    .toResponse((RepositoryException)e.getCause());
         }
 
         LOGGER.info("Exception intercepted by WildcardExceptionMapper: \n", e);
