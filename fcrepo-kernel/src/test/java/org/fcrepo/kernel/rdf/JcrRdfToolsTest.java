@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.rdf;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbyte;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
@@ -86,6 +86,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
+import javax.jcr.ValueFormatException;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
@@ -101,11 +102,11 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
+import org.fcrepo.kernel.utils.CacheEntry;
+import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.FixityResultImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -404,6 +405,16 @@ public class JcrRdfToolsTest {
         testObj.createValue(mockNode, n, NAME);
         verify(mockValueFactory).createValue("string", NAME);
 
+    }
+
+    @Test(expected = ValueFormatException.class)
+    public final void shouldMapRdfValuesToJcrPropertyValuesError()
+            throws RepositoryException {
+        when(mockNode.getSession().getValueFactory()).thenReturn(mockValueFactory);
+
+        // non-uri references - error
+        final RDFNode n = createResource();
+        testObj.createValue(mockNode, n, REFERENCE);
     }
 
     @Test
