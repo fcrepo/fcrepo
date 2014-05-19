@@ -41,7 +41,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -137,6 +136,13 @@ public abstract class AbstractResourceIT {
         put.setEntity(new StringEntity(content));
         return put;
     }
+
+    protected static HttpGet getDSMethod(final String pid, final String ds) throws UnsupportedEncodingException {
+            final HttpGet get =
+                    new HttpGet(serverAddress + pid + "/" + ds +
+                            "/fcr:content");
+            return get;
+        }
 
     protected HttpResponse execute(final HttpUriRequest method)
         throws ClientProtocolException, IOException {
@@ -298,86 +304,4 @@ public abstract class AbstractResourceIT {
         return UUID.randomUUID().toString();
     }
 
-    /**
-     * Task to run http request for CRUD concurrent performance test.
-     *
-     * @author lsitu
-     *
-     */
-    class HttpRunner implements Runnable {
-
-        private HttpClient httpClient = null;
-
-        private HttpResponse response = null;
-
-        private HttpRequestBase request = null;
-
-        private String taskName = null;
-
-        private long responseTime = 0;
-
-        private int statusCode = 0;
-
-        private int expectedStatusCode = 0;
-
-        public HttpRunner (HttpRequestBase request, String taskName) {
-            this.taskName = taskName;
-            this.request = request;
-            // Use its own HttpClient instance to make sure each performance test
-            // won't affected by a single HttpClient instance with multiple connections.
-            httpClient = createClient();
-        }
-
-        @Override
-        public void run() {
-            try {
-                final long startTime = System.currentTimeMillis();
-                response = httpClient.execute(request);
-                final long endTime = System.currentTimeMillis();
-                responseTime = endTime - startTime;
-                statusCode = response.getStatusLine().getStatusCode();
-                logger.info("{} {} exited with status {} in {} ms.", taskName, request.getURI().toString(), statusCode, String.valueOf(responseTime));
-                assertEquals(taskName + " existed absnormally.", expectedStatusCode, statusCode);
-            } catch (IOException e) {
-                logger.error("Error {} {} got IOException: {}", taskName, request.getURI().toString(), e.getMessage());
-            } finally {
-                request.releaseConnection();
-            }
-        }
-
-        public HttpResponse getResponse() {
-            return response;
-        }
-
-
-        public HttpRequestBase getRequest() {
-            return request;
-        }
-
-
-        public String getTaskName() {
-            return taskName;
-        }
-
-
-        public void setTaskName(String taskName) {
-            this.taskName = taskName;
-        }
-
-
-        public int getStatusCode() {
-            return statusCode;
-        }
-
-
-        public void setExpectedStatusCode(int expectedStatusCode) {
-            this.expectedStatusCode = expectedStatusCode;
-        }
-
-
-        public long getResponseTime() {
-            return responseTime;
-        }
-
-    }
 }

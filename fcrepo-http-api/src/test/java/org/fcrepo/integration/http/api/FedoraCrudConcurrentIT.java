@@ -16,9 +16,15 @@
 package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.junit.Assert.assertEquals;
+
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -50,7 +56,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         final List<String> pids = new ArrayList<>();
 
         // Create object
-        logger.info("# Start testing with " + numThreads + " concurrent threads to create object:");
+        logger.info("# Starting " + numThreads + " concurrent threads to create object...");
         for (int i = 0; i < numThreads; i++) {
             pid = getRandomUniquePid();
             pids.add(pid);
@@ -63,10 +69,15 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         }
         startThreads(tasks) ;
         Thread.sleep(1000);
+        int totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to CREATE object: {} ms", numThreads, totalResponseTime/numThreads);
 
         tasks.clear();
         // Update objects
-        logger.info("# Start testing with " + numThreads + " concurrent threads to update object:");
+        logger.info("# Starting " + numThreads + " concurrent threads to update object...");
         for (int i = 0; i < numThreads; i++) {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to update object";
@@ -85,10 +96,16 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         }
         startThreads(tasks) ;
         Thread.sleep(1000);
+        totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to UPDATE object: {} ms", numThreads, totalResponseTime/numThreads);
+
 
         tasks.clear();
         // Ingest new content
-        logger.info("# Start testing with " + numThreads + " concurrent threads to inget content:");
+        logger.info("# Starting " + numThreads + " concurrent threads to inget content...");
         for (int i = 0; i < numThreads; i++) {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to ingest content file to object";
@@ -99,10 +116,16 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         }
         startThreads(tasks) ;
         Thread.sleep(1000);
+        totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to INGEST content file: {} ms", numThreads, totalResponseTime/numThreads);
+
 
         tasks.clear();
         // Update content
-        logger.info("# Start testing with " + numThreads + " concurrent threads to update content:");
+        logger.info("# Starting " + numThreads + " concurrent threads to update content...");
         for (int i = 0; i < numThreads; i++) {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to update content file in object";
@@ -113,10 +136,36 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         }
         startThreads(tasks) ;
         Thread.sleep(1000);
+        totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to UPDATE content file: {} ms", numThreads, totalResponseTime/numThreads);
+
+
+        tasks.clear();
+        // Retrieve content
+        logger.info("# Starting " + numThreads + " concurrent threads to retrieve content...");
+        for (int i = 0; i < numThreads; i++) {
+            pid = pids.get(i);
+            final String taskName = "Thread " + (i + 1) + " to retrieve content file in object";
+            final HttpRequestBase request = getDSMethod(pid, "ds");
+            final HttpRunner task = new HttpRunner(request, taskName);
+            task.setExpectedStatusCode(200);
+            tasks.add(task);
+        }
+        startThreads(tasks) ;
+        Thread.sleep(1000);
+        totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to RETRIEVE content file: {} ms", numThreads, totalResponseTime/numThreads);
+
 
         tasks.clear();
         // Delete content file
-        logger.info("# Start testing with " + numThreads + " concurrent threads to delete content file:");
+        logger.info("# Starting " + numThreads + " concurrent threads to delete content file...");
         for (int i = 0; i < numThreads; i++) {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to delete content file in object";
@@ -127,11 +176,17 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         }
         startThreads(tasks) ;
         Thread.sleep(1000);
+        totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to DELETE content file: {} ms", numThreads, totalResponseTime/numThreads);
+
 
 
         tasks.clear();
         // Retrieve objects
-        logger.info("# Start testing with " + numThreads + " concurrent threads to retrieve object:");
+        logger.info("# Starting " + numThreads + " concurrent threads to retrieve object...");
         for (int i = 0; i < numThreads; i++) {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to retrieve object";
@@ -142,10 +197,16 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         }
         startThreads(tasks) ;
         Thread.sleep(1000);
+        totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to RETRIEVE object: {} ms", numThreads, totalResponseTime/numThreads);
+
 
         tasks.clear();
         // Delete objects
-        logger.info("# Start testing with " + numThreads + " concurrent threads to delete object:");
+        logger.info("# Starting " + numThreads + " concurrent threads to delete object...");
         for (int i = 0; i < numThreads; i++) {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to delete object";
@@ -156,6 +217,12 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         }
         startThreads(tasks) ;
         Thread.sleep(1000);
+        totalResponseTime = 0;
+        for (int i = 0; i< numThreads; i++) {
+            totalResponseTime += tasks.get(i).responseTime;
+        }
+        logger.info("** Average response time for {} concurrent threads to DELETE object: {} ms", numThreads, totalResponseTime/numThreads);
+
     }
 
     private void startThreads(List<HttpRunner> tasks) throws InterruptedException{
@@ -166,5 +233,88 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
             thread.run();
             thread.join();
         }
+    }
+
+    /**
+     * Task to run http request for CRUD concurrent performance test.
+     *
+     * @author lsitu
+     *
+     */
+    class HttpRunner implements Runnable {
+
+        private HttpClient httpClient = null;
+
+        private HttpResponse response = null;
+
+        private HttpRequestBase request = null;
+
+        private String taskName = null;
+
+        private long responseTime = 0;
+
+        private int statusCode = 0;
+
+        private int expectedStatusCode = 0;
+
+        public HttpRunner (HttpRequestBase request, String taskName) {
+            this.taskName = taskName;
+            this.request = request;
+            // Use its own HttpClient instance to make sure each performance test
+            // won't affected by a single HttpClient instance with multiple connections.
+            httpClient = createClient();
+        }
+
+        @Override
+        public void run() {
+            try {
+                final long startTime = System.currentTimeMillis();
+                response = httpClient.execute(request);
+                final long endTime = System.currentTimeMillis();
+                responseTime = endTime - startTime;
+                statusCode = response.getStatusLine().getStatusCode();
+                logger.info("{} {} with status {} in {} ms.", taskName, request.getURI().toString(), statusCode, String.valueOf(responseTime));
+                assertEquals(taskName + " existed absnormally.", expectedStatusCode, statusCode);
+            } catch (IOException e) {
+                logger.error("Error {} {} got IOException: {}", taskName, request.getURI().toString(), e.getMessage());
+            } finally {
+                request.releaseConnection();
+            }
+        }
+
+        public HttpResponse getResponse() {
+            return response;
+        }
+
+
+        public HttpRequestBase getRequest() {
+            return request;
+        }
+
+
+        public String getTaskName() {
+            return taskName;
+        }
+
+
+        public void setTaskName(String taskName) {
+            this.taskName = taskName;
+        }
+
+
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+
+        public void setExpectedStatusCode(int expectedStatusCode) {
+            this.expectedStatusCode = expectedStatusCode;
+        }
+
+
+        public long getResponseTime() {
+            return responseTime;
+        }
+
     }
 }
