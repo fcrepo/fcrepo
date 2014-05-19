@@ -767,7 +767,10 @@ public class FedoraNodes extends AbstractResource {
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
+            } else if (nodeService.exists(session, destination)) {
+                return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
             }
+
 
             nodeService.copyObject(session, toPath(path), destination);
             session.save();
@@ -819,9 +822,7 @@ public class FedoraNodes extends AbstractResource {
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
-            }
-
-            if (nodeService.exists(session, destination)) {
+            } else if (nodeService.exists(session, destination)) {
                 return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
             }
 

@@ -1051,6 +1051,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCopyDestExists() throws Exception {
+
+        final HttpResponse response1 = createObject("");
+        final String location1 = response1.getFirstHeader("Location").getValue();
+        final HttpResponse response2 = createObject("");
+        final String location2 = response2.getFirstHeader("Location").getValue();
+
+        final HttpCopy request = new HttpCopy(location1);
+        request.addHeader("Destination", location2);
+        final HttpResponse result = client.execute(request);
+
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), result.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testMove() throws Exception {
 
         final String pid = getRandomUniquePid();
