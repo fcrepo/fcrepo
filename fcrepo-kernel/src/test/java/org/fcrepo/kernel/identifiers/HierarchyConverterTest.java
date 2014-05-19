@@ -22,6 +22,7 @@ import static java.util.Collections.nCopies;
 import static java.util.regex.Pattern.compile;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -102,6 +103,39 @@ public class HierarchyConverterTest {
         assertTrue("Did not find the appropriate modification to the input identifier!", matches.matches());
         final String shouldBeOriginal = testTranslator.convert(result);
         assertEquals("Didn't get original back!", testId, shouldBeOriginal);
+    }
+
+    @Test
+    public void testOutgoingNamespaceConvert() {
+        testTranslator.setLevels(DEFAULT_LEVEL);
+        testTranslator.setLength(DEFAULT_LENGTH);
+        final String outgoingPath = "/jcr:system/jcr:versionStorage" + testId;
+        final String expectedPath = "/fcr:system/fcr:versionStorage" + testId;
+        final String result = testTranslator.convert(outgoingPath);
+        log.debug("Converted out going path {} to {} expected {}!", outgoingPath, result, expectedPath);
+        assertEquals("Shouldn't change the version related path for /jcr:system/jcr:versionStorage "
+                + outgoingPath + "!", expectedPath, result);
+    }
+
+    @Test
+    public void testIncomingNamespaceReverse() {
+        testTranslator.setLevels(DEFAULT_LEVEL);
+        testTranslator.setLength(DEFAULT_LENGTH);
+        final String incomingPath = testId + "/" + "fcr:versions";
+        final String expectedPath = testTranslator.reverse().convert(testId) + "/" + "jcr:versions";
+        final String result = testTranslator.reverse().convert(incomingPath);
+        log.debug("Converted incoming path {} to {} expected {}!", incomingPath, expectedPath, result);
+        assertEquals("Didn't get the expected result for path with namespace " + incomingPath + "!", expectedPath, result);
+    }
+
+    @Test
+    public void testNamespaceRoundTrip() {
+        testTranslator.setLevels(DEFAULT_LEVEL);
+        testTranslator.setLength(DEFAULT_LENGTH);
+        final String incomingPath = testId + "/" + "fcr:versions" + testId;
+        final String result = testTranslator.convert(testTranslator.reverse().convert(incomingPath));
+        log.debug("Converted incoming path {} round trip {}!", incomingPath, result);
+        assertEquals("Didn't get the same result for round trip convert with namespace " + incomingPath + "!", result, incomingPath);
     }
 
     @Test
@@ -187,5 +221,34 @@ public class HierarchyConverterTest {
 
         result = testTranslator.convert(internalTestId);
         assertEquals("Should have swapped content suffix to FCR!", externalTestId, result);
+    }
+
+    @Test
+    public void testIsJcrNamespace() {
+        boolean result = testTranslator.isJCRNamespace("jcr:namespace");
+        assertTrue("Should be JCR namespace", result);
+        result = testTranslator.isJCRNamespace("fcr:namespace");
+        assertFalse("Should not be JCR namespace", result);
+    }
+
+    @Test
+    public void testIsFcrNamespace() {
+        boolean result = testTranslator.isFCRNamespace("fcr:namespace");
+        assertTrue("Should be FCR namespace", result);
+        result = testTranslator.isFCRNamespace("jcr:namespace");
+        assertFalse("Should not be FCR namespace", result);
+    }
+
+    @Test
+    public void testConvertNamespace() {
+        String testNamespace = "jcr:namespace";
+        String result = testTranslator.convertNamespace(testNamespace);
+        assertEquals("Should be converted to FCR namespace!", "fcr:namespace", result);
+        testNamespace = "fcr:namespace";
+        result = testTranslator.convertNamespace(testNamespace);
+        assertEquals("Should be converted to JCR namespace!", "jcr:namespace", result);
+        testNamespace = "a:namespace";
+        result = testTranslator.convertNamespace(testNamespace);
+        assertEquals("Should not change this namespace!", testNamespace, result);
     }
 }

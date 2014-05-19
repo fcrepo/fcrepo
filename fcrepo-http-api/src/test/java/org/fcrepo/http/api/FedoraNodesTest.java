@@ -80,7 +80,6 @@ import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -178,10 +177,12 @@ public class FedoraNodesTest {
 
     }
 
-    @Ignore/*(expected = WebApplicationException.class)*/
+    @Test(expected = WebApplicationException.class)
     public void testCreateObjectWithBadPath() throws Exception {
         final String path = "/does/not/exist";
+        final ValueFactory mockFactory = mock(ValueFactory.class);
         when(mockNodes.exists(mockSession, path)).thenReturn(false);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         testObj.createObject(createPathList(path), null, null, null, null, null, mockResponse, getUriInfoImpl(), null);
     }
 
@@ -321,14 +322,15 @@ public class FedoraNodesTest {
     }
 
 
-    @Ignore
+    @Test
     public void testDeleteObject() throws RepositoryException {
         final String pid = "testObject";
         final String path = "/" + pid;
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
-
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final Response actual = testObj.deleteObject(createPathList(pid), mockRequest);
 
         assertNotNull(actual);
@@ -337,7 +339,7 @@ public class FedoraNodesTest {
         verify(mockSession).save();
     }
 
-    @Ignore
+    @Test
     public void testDescribeObject() throws RepositoryException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
@@ -353,6 +355,8 @@ public class FedoraNodesTest {
                 mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final Request mockRequest = mock(Request.class);
         final RdfStream rdfStream =
             testObj.describe(createPathList(path), 0, -2, null, mockRequest,
@@ -364,7 +368,7 @@ public class FedoraNodesTest {
 
     }
 
-    @Ignore
+    @Test
     public void testDescribeObjectNoInlining() throws RepositoryException, ParseException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
@@ -380,6 +384,8 @@ public class FedoraNodesTest {
                                                any(HierarchyRdfContextOptions.class))).thenReturn(mockRdfStream2);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final Request mockRequest = mock(Request.class);
         final Prefer prefer = new Prefer("return=representation;"
                                             + "include=\"http://www.w3.org/ns/ldp#PreferEmptyContainer\"");
@@ -390,7 +396,7 @@ public class FedoraNodesTest {
 
     }
 
-    @Ignore
+    @Test
     public void testSparqlUpdate() throws RepositoryException, IOException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
@@ -405,6 +411,8 @@ public class FedoraNodesTest {
         when(mockDataset.getNamedModel(PROBLEMS_MODEL_NAME))
         .thenReturn(mockModel);
         when(mockModel.isEmpty()).thenReturn(true);
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         testObj.updateSparql(createPathList(pid), getUriInfoImpl(), mockStream, mockRequest, mockResponse);
 
         verify(mockObject).updatePropertiesDataset(any(IdentifierTranslator.class),
@@ -413,7 +421,7 @@ public class FedoraNodesTest {
         verify(mockSession).logout();
     }
 
-    @Ignore
+    @Test
     public void testReplaceRdf() throws Exception {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
@@ -422,7 +430,8 @@ public class FedoraNodesTest {
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockNode.getPath()).thenReturn(path);
-
+        final ValueFactory mockFactory = mock(ValueFactory.class);
+        when(mockSession.getValueFactory()).thenReturn(mockFactory);
         final InputStream mockStream =
             new ByteArrayInputStream("<a> <b> <c>".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
