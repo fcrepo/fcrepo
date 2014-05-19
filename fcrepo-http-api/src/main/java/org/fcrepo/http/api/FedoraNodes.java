@@ -821,6 +821,10 @@ public class FedoraNodes extends AbstractResource {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
             }
 
+            if (nodeService.exists(session, destination)) {
+                return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
+            }
+
             nodeService.moveObject(session, path, destination);
             session.save();
             versionService.nodeUpdated(session, destination);
