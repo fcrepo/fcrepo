@@ -54,4 +54,14 @@ public interface FedoraJcrTypes {
     String FROZEN_NODE = "nt:frozenNode";
 
     String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
+
+    String JCR_UUID = "jcr:uuid";
+
+    String JCR_PRIMARY_TYPE = "jcr:primaryType";
+
+    String JCR_MIXIN_TYPES = "jcr:mixinTypes";
+
+    String [] EXPOSED_PROTECTED_JCR_TYPES
+        = new String[] { JCR_UUID, JCR_LASTMODIFIED, JCR_CREATED, JCR_CREATEDBY,
+                         JCR_PRIMARY_TYPE, JCR_MIXIN_TYPES };
 }

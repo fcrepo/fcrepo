@@ -93,6 +93,12 @@
       <scope>test</scope>
       <type>test-jar</type>
     </dependency>
+
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cachestore-leveldb</artifactId>
+      <scope>test</scope>
+    </dependency>
     
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -194,6 +200,13 @@
         <groupId>org.apache.marmotta</groupId>
         <artifactId>ldpath-backend-jena</artifactId>
         <version>3.1.0-incubating</version>
+      </dependency>
+      <dependency>
+        <groupId>org.fcrepo</groupId>
+        <artifactId>fcrepo-jcr-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

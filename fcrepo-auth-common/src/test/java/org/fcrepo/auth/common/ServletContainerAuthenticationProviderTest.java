@@ -26,6 +26,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jcr.Credentials;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -36,16 +47,6 @@ import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.AuthenticationProvider;
 import org.modeshape.jcr.value.Path;
-
-import javax.jcr.Credentials;
-import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
-
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author bbpennel
@@ -219,6 +220,9 @@ public class ServletContainerAuthenticationProviderTest {
                 .contains(ServletContainerAuthenticationProvider.EVERYONE));
         assertTrue("User principal must be present", resultPrincipals.contains(principal));
         assertTrue("Group Principal from factory must be present", resultPrincipals.contains(groupPrincipal));
+
+        // getInstance returns a static provider so zero out internal set
+        provider.setPrincipalProviders(new HashSet<PrincipalProvider>());
     }
 
     @Test
@@ -231,7 +235,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         when(request.getUserPrincipal()).thenReturn(null);
 
-        evaluateDefaultAuthenticateCase(provider);
+        evaluateDefaultAuthenticateCase(provider, 1);
     }
 
     @Test
@@ -244,10 +248,11 @@ public class ServletContainerAuthenticationProviderTest {
 
         when(request.isUserInRole("unknownRole")).thenReturn(true);
 
-        evaluateDefaultAuthenticateCase(provider);
+        evaluateDefaultAuthenticateCase(provider, 2);
     }
 
-    private void evaluateDefaultAuthenticateCase(final ServletContainerAuthenticationProvider provider) {
+    private void evaluateDefaultAuthenticateCase(final ServletContainerAuthenticationProvider provider,
+            final int expected) {
         final ExecutionContext result = provider.authenticate(creds, "repo", "workspace", context, sessionAttributes);
 
         assertNotNull(result);
@@ -262,9 +267,21 @@ public class ServletContainerAuthenticationProviderTest {
         @SuppressWarnings("unchecked")
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
-        assertEquals(1, resultPrincipals.size());
+        assertEquals(expected, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
                 .contains(ServletContainerAuthenticationProvider.EVERYONE));
-        assertEquals(ServletContainerAuthenticationProvider.EVERYONE_NAME, resultPrincipals.iterator().next().getName());
+
+        final Iterator<Principal> iterator = resultPrincipals.iterator();
+        boolean succeeds = false;
+
+        while (iterator.hasNext()) {
+            final String name = iterator.next().getName();
+
+            if (name != null && name.equals(ServletContainerAuthenticationProvider.EVERYONE.getName())) {
+                succeeds = true;
+            }
+        }
+
+        assertTrue("Expected to find: " + ServletContainerAuthenticationProvider.EVERYONE.getName(), succeeds);
     }
 }

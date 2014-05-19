@@ -34,7 +34,7 @@
     <jersey.version>1.17.1</jersey.version>
     <jgroups.version>3.4.0.Final</jgroups.version>
     <logback.version>1.0.13</logback.version>
-    <modeshape.version>3.7.1.Final</modeshape.version>
+    <modeshape.version>3.7.4.Final</modeshape.version>
     <metrics.version>3.0.2</metrics.version>
     <sesame.version>2.7.7</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
@@ -54,6 +54,7 @@
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
   </properties>
   <modules>
+    <module>fcrepo-boms</module>
     <module>fcrepo-kernel</module>
     <module>fcrepo-audit</module>
     <module>fcrepo-webapp</module>
@@ -63,7 +64,6 @@
     <module>fcrepo-http-api</module>
     <module>fcrepo-metrics</module>
     <module>fcrepo-storage-policy</module>
-    <module>fcrepo-jcr</module>
     <module>fcrepo-serialization</module>
     <module>fcrepo-transform</module>
     <module>fcrepo-auth-common</module>
@@ -1075,6 +1075,18 @@
       </releases>
       <snapshots>
         <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>jboss-public-repository-group-snapshot</id>
+      <name>JBoss Public Maven Repository Group</name>
+      <url>http://snapshots.jboss.org/maven2/</url>
+      <layout>default</layout>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
       </snapshots>
     </repository>
     <repository>

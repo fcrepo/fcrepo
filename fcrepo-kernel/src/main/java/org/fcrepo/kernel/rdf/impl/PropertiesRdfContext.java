@@ -113,12 +113,10 @@ public class PropertiesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
         final UnmodifiableIterator<Property> nonBinaryProperties =
-            Iterators.filter(new PropertyIterator(n.getProperties()),
-                    not(isInternalProperty));
+            Iterators.filter(new PropertyIterator(n.getProperties()), not(isInternalProperty));
 
         final UnmodifiableIterator<Property> nonBinaryPropertiesCopy =
-            Iterators.filter(new PropertyIterator(n.getProperties()),
-                    not(isInternalProperty));
+            Iterators.filter(new PropertyIterator(n.getProperties()), not(isInternalProperty));
 
         return Iterators.concat(new ZippingIterator<>(
                 Iterators.transform(

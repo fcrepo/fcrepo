@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.utils;
+package org.fcrepo.kernel.rdf;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbyte;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
@@ -86,11 +86,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
+import javax.jcr.ValueFormatException;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.PropertyDefinition;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
@@ -100,12 +102,13 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
+import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.testutilities.TestPropertyIterator;
+import org.fcrepo.kernel.utils.CacheEntry;
+import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.FixityResultImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -125,7 +128,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
 
-public class JcrRdfToolsTest {
+public class JcrRdfToolsTest implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
 
@@ -178,6 +181,10 @@ public class JcrRdfToolsTest {
         when(mockProperty.getName()).thenReturn(mockPredicateName);
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockProperty.getType()).thenReturn(STRING);
+        when(mockProperty.getParent()).thenReturn(mockNode);
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(false);
+        when(mockProperty.getDefinition()).thenReturn(mockPropertyDefinition);
+        when(mockPropertyDefinition.isProtected()).thenReturn(false);
         when(mockValue.getString()).thenReturn("abc");
         when(mockParent.getProperties()).thenReturn(mockParentProperties);
         when(mockParentProperties.hasNext()).thenReturn(false);
@@ -260,6 +267,28 @@ public class JcrRdfToolsTest {
                 "RDF contained a statement based on a binary property when it shouldn't have!",
                 actual.contains(null, createProperty(mockPredicateName)));
     }
+
+    @Test
+    public final void shouldExcludeSomeProtectedProperties() throws RepositoryException,
+            IOException {
+        when(mockNode.hasProperties()).thenReturn(true);
+        when(mockPropertyDefinition.isProtected()).thenReturn(true);
+        final Model actual = testObj.getJcrTriples(mockNode).asModel();
+        assertFalse("Found protected triple!", actual.contains(testSubjects.getSubject(mockNode.getPath()),
+                actual.getProperty(mockPredicateName), actual.createLiteral("abc")));
+    }
+
+    @Test
+    public final void shouldAllowSomeProtectedPropertiesForFrozenNodes() throws RepositoryException,
+            IOException {
+        when(mockNode.hasProperties()).thenReturn(true);
+        when(mockPropertyDefinition.isProtected()).thenReturn(true);
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
+        final Model actual = testObj.getJcrTriples(mockNode).asModel();
+        assertTrue("Could not find protected triple!", actual.contains(testSubjects.getSubject(mockNode.getPath()),
+                actual.getProperty(mockPredicateName), actual.createLiteral("abc")));
+    }
+
 
     @Test
     public final void
@@ -404,6 +433,16 @@ public class JcrRdfToolsTest {
         testObj.createValue(mockNode, n, NAME);
         verify(mockValueFactory).createValue("string", NAME);
 
+    }
+
+    @Test(expected = ValueFormatException.class)
+    public final void shouldMapRdfValuesToJcrPropertyValuesError()
+            throws RepositoryException {
+        when(mockNode.getSession().getValueFactory()).thenReturn(mockValueFactory);
+
+        // non-uri references - error
+        final RDFNode n = createResource();
+        testObj.createValue(mockNode, n, REFERENCE);
     }
 
     @Test
@@ -667,7 +706,10 @@ public class JcrRdfToolsTest {
     private NodeType mockNodeType;
 
     @Mock
-    private javax.jcr.Property mockProperty, mockBinaryProperty;
+    private javax.jcr.Property mockProperty;
+
+    @Mock
+    private PropertyDefinition mockPropertyDefinition;
 
     @Mock
     private Value mockValue;

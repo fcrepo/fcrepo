@@ -15,13 +15,12 @@
  */
 package org.fcrepo.auth.roles.common;
 
-import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
-import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.modeshape.jcr.value.Path;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -29,12 +28,13 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.modeshape.jcr.value.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Policy enforcement point for roles-based authentication
@@ -118,14 +118,15 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
             return true;
         }
 
-        if (!rolesHavePermission(absPath.toString(), actions, roles)) {
+        if (!rolesHavePermission(session, absPath.toString(), actions, roles)) {
             return false;
         }
 
         if (actions.length == 1 && "remove".equals(actions[0])) {
             // you must be able to delete all the children
             // TODO make recursive/ACL-query-based check configurable
-            return canRemoveChildrenRecursive(absPath.toString(), allPrincipals, roles);
+            return canRemoveChildrenRecursive(session, absPath.toString(),
+                    allPrincipals, roles);
         }
         return true;
     }
@@ -148,12 +149,14 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
     }
 
     /**
-     * @param parentPath
-     * @param allPrincipals
-     * @param parentRoles
-     * @return
+     * @param userSession the user session
+     * @param parentPath the parent path
+     * @param allPrincipals all principals
+     * @param parentRoles the roles on the parent
+     * @return true if permitted
      */
-    private boolean canRemoveChildrenRecursive(final String parentPath,
+    private boolean canRemoveChildrenRecursive(final Session userSession,
+                                               final String parentPath,
                                                final Set<Principal> allPrincipals,
                                                final Set<String> parentRoles) {
         try {
@@ -180,10 +183,12 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
                 } else {
                     roles = parentRoles;
                 }
-                if (rolesHavePermission(n.getPath(), REMOVE_ACTIONS,
+                if (rolesHavePermission(userSession, n.getPath(),
+                        REMOVE_ACTIONS,
                         roles)) {
 
-                    if (!canRemoveChildrenRecursive(n.getPath(), allPrincipals, roles)) {
+                    if (!canRemoveChildrenRecursive(userSession, n.getPath(),
+                            allPrincipals, roles)) {
                         return false;
                     }
                 } else {
@@ -202,13 +207,14 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
     /**
      * Subclasses must override this method to determine permissions based on
      * supplied roles.
-     *
+     * 
+     * @param userSession the user session
      * @param absPath path to the object
      * @param actions requested action
      * @param roles effective roles for this request and content
      * @return true if role has permission
      */
-    public abstract boolean rolesHavePermission(final String absPath,
+    public abstract boolean rolesHavePermission(final Session userSession, final String absPath,
             final String[] actions, final Set<String> roles);
 
 }

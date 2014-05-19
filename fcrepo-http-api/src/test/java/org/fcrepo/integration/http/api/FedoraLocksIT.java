@@ -17,8 +17,7 @@ package org.fcrepo.integration.http.api;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -38,11 +37,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -61,6 +60,8 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
 import static org.fcrepo.kernel.RdfLexicon.IS_DEEP;
 import static org.fcrepo.kernel.RdfLexicon.LOCKS;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertFalse;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -339,6 +340,32 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
             assertContentType(response, type);
         }
+    }
+
+    @Test
+    public void testOmissionOfJCRCLocksRDF() throws IOException {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final String lockToken = getLockToken(lockObject(pid));
+
+        final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid));
+
+        final Resource subject = createResource(serverAddress + pid);
+        final String [] jcrLockTriples = new String[] {
+                REPOSITORY_NAMESPACE + "lockIsDeep",
+                REPOSITORY_NAMESPACE + "lockOwner" };
+
+        for (String prohibitedProperty : jcrLockTriples) {
+            assertFalse(prohibitedProperty + " must not appear in RDF for locked node!",
+                    rdf.contains(
+                            Node.ANY,
+                            subject.asNode(),
+                            createResource(prohibitedProperty).asNode(),
+                            Node.ANY));
+        }
+
+        assertUnlockWithToken(pid, lockToken);
     }
 
     private void assertContentType(final HttpResponse response, final String contentType) throws IOException {

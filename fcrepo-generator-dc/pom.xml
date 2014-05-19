@@ -10,6 +10,18 @@
   <description>The Fedora Commons repository Dublin Core module: Provides Dublin Core presentations of repository resources from a variety of sources.</description>
   <packaging>bundle</packaging>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.fcrepo</groupId>
+        <artifactId>fcrepo-jcr-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -32,6 +44,11 @@
       <artifactId>fcrepo-kernel</artifactId>
       <version>${project.version}</version>
       <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cachestore-leveldb</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
