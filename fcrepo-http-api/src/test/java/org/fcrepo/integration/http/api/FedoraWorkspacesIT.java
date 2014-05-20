@@ -96,6 +96,17 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void shouldConflictWhenCreatingExisting() throws IOException {
+        final String workspace = randomUUID().toString();
+
+        final HttpPost httpCreateWorkspace =
+            new HttpPost(serverAddress + "fcr:workspaces/" + workspace);
+        assertEquals(201, getStatus(httpCreateWorkspace));
+
+        assertEquals(409, getStatus(httpCreateWorkspace));
+    }
+
+    @Test
     public void shouldBe404WhenDeletingJunkWorkspace() throws IOException {
         final HttpDelete httpDeleteWorkspace = new HttpDelete(serverAddress + "fcr:workspaces/junk");
 
