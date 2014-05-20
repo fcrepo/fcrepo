@@ -82,7 +82,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         createObject(pid);
 
         final HttpGet getVersion = new HttpGet(serverAddress + pid + "/fcr:versions");
-        assertTrue(404, getStatus(getVersion));
+        assertEquals(404, getStatus(getVersion));
     }
 
     @Test
