@@ -394,7 +394,7 @@ public class FedoraNodes extends AbstractResource {
     }
 
     /**
-     * Replace triples with triples from a new model
+     * Create a resource at a specified path, or replace triples with provided RDF.
      * @param pathList
      * @param uriInfo
      * @param requestContentType
@@ -411,8 +411,7 @@ public class FedoraNodes extends AbstractResource {
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
             final InputStream requestBodyStream,
-            @Context
-            final Request request,
+            @Context final Request request,
             @Context final HttpServletResponse servletResponse) throws RepositoryException, ParseException,
             IOException, InvalidChecksumException, URISyntaxException {
         final String path = toPath(pathList);
@@ -425,9 +424,11 @@ public class FedoraNodes extends AbstractResource {
 
             final MediaType contentType = getSimpleContentType(requestContentType);
 
+            final boolean preexisting;
             if (nodeService.exists(session, path)) {
                 resource = nodeService.getObject(session, path);
                 response = noContent();
+                preexisting = true;
             } else {
                 final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
@@ -438,6 +439,7 @@ public class FedoraNodes extends AbstractResource {
                 final URI location = new URI(idTranslator.getSubject(resource.getNode().getPath()).getURI());
 
                 response = created(location).entity(location.toString());
+                preexisting = false;
             }
 
             evaluateRequestPreconditions(request, resource);
@@ -455,6 +457,8 @@ public class FedoraNodes extends AbstractResource {
 
                 resource.replaceProperties(graphSubjects, inputModel);
 
+            } else if (preexisting) {
+                return status(SC_CONFLICT).entity("No RDF provided and the resource already exists!").build();
             }
 
             session.save();

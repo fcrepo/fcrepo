@@ -215,6 +215,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testIngestWithRepeatedSlug() throws Exception {
+        final String pid = getRandomUniquePid();
+        final HttpPut put = new HttpPut(serverAddress + pid);
+        assertEquals(201, getStatus(put));
+
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Slug", pid);
+        assertEquals(409, getStatus(method));
+    }
+
+    @Test
     public void testIngestWithBinary() throws Exception {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "application/octet-stream");
@@ -738,6 +749,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
         assertEquals(403, response.getStatusLine().getStatusCode());
 
+    }
+
+    @Test
+    public void testRepeatedPut() throws Exception {
+        final String pid = getRandomUniquePid();
+        final HttpPut firstPut = new HttpPut(serverAddress + pid);
+        assertEquals(201, getStatus(firstPut));
+
+        final HttpPut secondPut = new HttpPut(serverAddress + pid);
+        assertEquals(409, getStatus(secondPut));
     }
 
     @Test
