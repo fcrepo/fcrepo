@@ -76,6 +76,16 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetUnversionedObjectVersionProfile() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+
+        final HttpGet getVersion = new HttpGet(serverAddress + pid + "/fcr:versions");
+        assertEquals(404, getStatus(getVersion));
+    }
+
+    @Test
     public void testAddAndRetrieveVersion() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
@@ -388,7 +398,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         addMixin(objId, MIX_NAMESPACE + "versionable");
         postObjectVersion(objId, versionLabel);
 
-        // removing a non-existent version should 404
+        // removing the current version should 400
         final HttpDelete delete = new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(delete));
     }
