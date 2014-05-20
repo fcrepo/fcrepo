@@ -132,6 +132,7 @@ public class FedoraFileSystemConnectorTest {
         setField(connector, "extraPropertiesStore", mockExtraPropertiesStore);
         setField(mockTranslator, "names", mockNameFactory);
         connector.initialize(mockRegistry, mockNodeTypeManager);
+        mockContext.getNamespaceRegistry().register("fedora", "http://fedora.info/definitions/v4/repository#");
     }
 
     @Test

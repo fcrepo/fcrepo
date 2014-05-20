@@ -10,7 +10,7 @@
   <logger name="org.fcrepo.auth" additivity="false" level="${log.fcrepo.auth:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo.connector.file" additivity="false" level="${log.fcrepo.connector.file:-INFO}">
+  <logger name="org.fcrepo.connector.file" additivity="false" level="TRACE">
     <appender-ref ref="STDOUT"/>
   </logger>
   <logger name="org.fcrepo.generator.dublincore" additivity="false" level="${log.fcrepo.generator.dublincore:-INFO}">

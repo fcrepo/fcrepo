@@ -29,10 +29,12 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.File;
+import java.util.Date;
 import java.util.Map;
 
 import org.infinispan.schematic.document.Document;
 import org.modeshape.connector.filesystem.FileSystemConnector;
+import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.federation.spi.DocumentReader;
 import org.modeshape.jcr.federation.spi.DocumentWriter;
 import org.modeshape.jcr.value.BinaryValue;
@@ -52,6 +54,9 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraFileSystemConnector.class);
 
+    private static final String DELIMITER = "/";
+    private static final String JCR_CONTENT = "jcr:content";
+    private static final String JCR_CONTENT_SUFFIX = DELIMITER + JCR_CONTENT;
 
     /**
      * This method returns the object/document for the node with the federated arg 'id'.
@@ -98,13 +103,25 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     @Override
     public String sha1(final File file) {
-        final String id = idFor(file);
-        final Document doc = super.getDocumentById(id);
-        final DocumentReader docReader = readDocument(doc);
-        if (null != docReader.getProperty(CONTENT_DIGEST)) {
-            return docReader.getProperty(CONTENT_DIGEST).toString();
+        final String id = idFor(file) + JCR_CONTENT_SUFFIX;
+        final Map<Name, Property> extraProperties = extraPropertiesStore().getProperties(id);
+        final Name digestName = nameFrom(CONTENT_DIGEST);
+        if (extraProperties.containsKey(digestName)) {
+            LOGGER.trace("Found sha1 ({}) for {} in extra properties store.",
+                    extraProperties.get(digestName).toString(), file);
+            return (extraProperties.get(digestName).toString());
         }
+        LOGGER.trace("Computing sha1 for {}.", file);
         return super.sha1(file);
+    }
+
+    private boolean hasBeenModifiedSincePropertiesWereStored(final File file, final Property lastModified) {
+        if (lastModified == null) {
+            return true;
+        } else {
+            final DateTime datetime = (DateTime) lastModified.getFirstValue();
+            return !datetime.toDate().equals(new Date(file.lastModified()));
+        }
     }
 
     private static void decorateDatastreamNode(final DocumentReader docReader, final DocumentWriter docWriter) {
