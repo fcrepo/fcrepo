@@ -22,6 +22,8 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
@@ -115,6 +117,12 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
                 throw new WebApplicationException(
                     clientError().entity("Unable to create workspace from non-default workspace")
                         .build());
+            }
+
+            final String[] workspaceNames = workspace.getAccessibleWorkspaceNames();
+            if ( workspaceNames != null && ImmutableSet.copyOf(workspaceNames).contains(path)) {
+                throw new WebApplicationException(
+                    status(CONFLICT).entity("Workspace already exists").build());
             }
 
             workspace.createWorkspace(path);
