@@ -78,6 +78,15 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
     }
 
     @Test
+    public void itShouldRejectBogusCND() throws IOException {
+        final HttpPost httpPost = new HttpPost(serverAddress + "/fcr:nodetypes");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream(("this is not CND").getBytes()));
+        httpPost.setEntity(entity);
+        assertEquals(400, getStatus(httpPost) );
+    }
+
+    @Test
     public void testResponseContentTypes() throws Exception {
         for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
             final HttpGet method =
