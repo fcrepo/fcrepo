@@ -17,7 +17,7 @@ package org.fcrepo.kernel;
 
 import java.util.Collection;
 import java.util.Date;
-
+import java.util.Iterator;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
@@ -138,6 +138,25 @@ public interface FedoraResource {
         throws RepositoryException;
 
     /**
+     * Return a list children of this object
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    Iterator<Node> getChildren(final IdentifierTranslator graphSubjects)
+        throws RepositoryException;
+
+    /**
+     * Return the parent node of this object
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    Node getParent(final IdentifierTranslator graphSubjects)
+        throws RepositoryException;
+
+
+    /**
      * Serialize the JCR versions information as an RDF dataset
      * @param graphSubjects
      * @return triples
@@ -165,7 +184,7 @@ public interface FedoraResource {
 
     /**
      * Get the JCR Base version for the node
-     * 
+     *
      * @return base version
      * @throws RepositoryException
      */

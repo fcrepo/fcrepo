@@ -27,5 +27,13 @@ import com.google.common.base.Converter;
  * @param <T> the type to and from which we are translating
  */
 public abstract class IdentifierConverter<T> extends Converter<String, T> {
+    protected int hierarchyLevels = 0;
 
+    /**
+     * Get hierarchy levels for path conversion
+     * @return
+     **/
+    public int getLevels() {
+        return hierarchyLevels;
+    }
 }

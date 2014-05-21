@@ -41,8 +41,10 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -108,6 +110,9 @@ public class FedoraResourceImplTest {
 
     @Mock
     private Property mockProp;
+
+    @Mock
+    NodeType mockNodeType;
 
     private Triple mockTriple =
         create(createAnon(), createAnon(), createAnon());
@@ -423,4 +428,63 @@ public class FedoraResourceImplTest {
                 .getEtagValue());
     }
 
+    @Test
+    public void testStaticFindChildren() throws Exception {
+        final Node mockChildNode = mock(Node.class);
+        final IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        final NodeIterator mockNodeIterator = mock(NodeIterator.class);
+        when(mockNode.getNodes()).thenReturn(mockNodeIterator);
+        when(mockNodeIterator.hasNext()).thenReturn(true, false);
+        when(mockNodeIterator.nextNode()).thenReturn(mockChildNode);
+        when( mockChildNode.getPath() ).thenReturn("/foo/bar");
+        when( mockChildNode.getName() ).thenReturn("bar");
+        when( mockChildNode.getPrimaryNodeType() ).thenReturn(mockNodeType);
+        when( mockNodeType.isNodeType(anyString()) ).thenReturn(false);
+        final Iterator<Node> result = FedoraResourceImpl.getChildren(mockNode, mockConverter);
+        assertEquals( "Child not found", mockChildNode, result.next());
+    }
+
+    @Test
+    public void testFindChildren() throws Exception {
+        final Node mockChildNode = mock(Node.class);
+        final IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        final NodeIterator mockNodeIterator = mock(NodeIterator.class);
+        when(mockNode.getNodes()).thenReturn(mockNodeIterator);
+        when(mockNodeIterator.hasNext()).thenReturn(true, false);
+        when(mockNodeIterator.nextNode()).thenReturn(mockChildNode);
+        when( mockChildNode.getPath() ).thenReturn("/foo/bar");
+        when( mockChildNode.getName() ).thenReturn("bar");
+        when( mockChildNode.getPrimaryNodeType() ).thenReturn(mockNodeType);
+        when( mockNodeType.isNodeType(anyString()) ).thenReturn(false);
+        final Iterator<Node> result = testObj.getChildren(mockConverter);
+        assertEquals( "Child not found", mockChildNode, result.next());
+    }
+
+    @Test
+    public void testStaticFindParent() throws Exception {
+        final Node mockParentNode = mock(Node.class);
+        final Node mockHierarchyNode = mock(Node.class);
+        final Node mockAnotherHierarchyNode = mock(Node.class);
+        final IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        when(mockConverter.getHierarchyLevels()).thenReturn(2);
+        when(mockNode.getParent()).thenReturn(mockHierarchyNode);
+        when(mockHierarchyNode.getParent()).thenReturn(mockAnotherHierarchyNode);
+        when(mockAnotherHierarchyNode.getParent()).thenReturn(mockParentNode);
+        final Node parent = FedoraResourceImpl.findParent(mockNode, mockConverter);
+        assertEquals( "Wrong parent node", mockParentNode, parent);
+    }
+
+    @Test
+    public void testFindParent() throws Exception {
+        final Node mockParentNode = mock(Node.class);
+        final Node mockHierarchyNode = mock(Node.class);
+        final Node mockAnotherHierarchyNode = mock(Node.class);
+        final IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        when(mockConverter.getHierarchyLevels()).thenReturn(2);
+        when(mockNode.getParent()).thenReturn(mockHierarchyNode);
+        when(mockHierarchyNode.getParent()).thenReturn(mockAnotherHierarchyNode);
+        when(mockAnotherHierarchyNode.getParent()).thenReturn(mockParentNode);
+        final Node parent = testObj.getParent(mockConverter);
+        assertEquals( "Wrong parent node", mockParentNode, parent);
+    }
 }

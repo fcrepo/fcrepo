@@ -30,7 +30,6 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
@@ -349,7 +348,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { });
         when(mockNodes.hasNext()).thenReturn(true, true, true, false);
-        when(mockNodes.next()).thenReturn(mockFullChildNode, mockFullChildNode, mockChildNode);
+        when(mockNodes.nextNode()).thenReturn(mockFullChildNode, mockFullChildNode, mockChildNode);
         when(mockChildNode.getName()).thenReturn("some-name");
         when(mockChildNode.getPath()).thenReturn("/test/jcr/1", "/test/jcr/4",
                 "/test/jcr/5");
