@@ -21,6 +21,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.status;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -52,6 +53,7 @@ import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.shared.JenaException;
 
 /**
  * The purpose of this class is to allow clients to manipulate the JCR
@@ -90,6 +92,8 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
             parseExecute(IOUtils.toString(requestBodyStream), dataset);
             session.save();
             return status(SC_NO_CONTENT).build();
+        } catch ( JenaException ex ) {
+            return status(SC_BAD_REQUEST).entity(ex.getMessage()).build();
         } finally {
             session.logout();
         }

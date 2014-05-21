@@ -76,6 +76,16 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCreateInvalid() throws Exception {
+        final HttpPost post = new HttpPost(serverAddress + "fcr:namespaces");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream("invalid namespace declaration".getBytes()));
+        post.setEntity(entity);
+        assertEquals(400, getStatus(post));
+
+    }
+
+    @Test
     public void testUpdatePrefix() throws Exception {
         HttpPost post = new HttpPost(serverAddress + "fcr:namespaces");
         BasicHttpEntity entity = new BasicHttpEntity();
