@@ -148,7 +148,7 @@ public class HttpPidMinter extends BasePidMinter {
     /**
      * Extract the desired identifier value from an XML response using XPath
     **/
-    private static String xpath( String xml, XPathExpression xpath ) throws Exception {
+    private static String xpath( final String xml, final XPathExpression xpath ) throws Exception {
         final DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         final Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes()));
         return xpath.evaluate(doc);

@@ -39,12 +39,12 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
      * Base constructor for function peforming boolean ops on matched node types.
      * @param types
      */
-    public BooleanTypesPredicate(String... types) {
+    public BooleanTypesPredicate(final String... types) {
         nodeTypes = Arrays.asList(types);
     }
 
     @Override
-    public boolean apply(Node input) {
+    public boolean apply(final Node input) {
         if (input == null) {
             throw new IllegalArgumentException(
                     "null node passed to" + getClass().getName()
@@ -63,6 +63,6 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
         return test(matched);
     }
 
-    protected abstract boolean test(int matched);
+    protected abstract boolean test(final int matched);
 
 }

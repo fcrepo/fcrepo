@@ -39,6 +39,12 @@ public class CacheEntryFactory {
     private static GetBinaryStore getBinaryStore = new GetBinaryStore();
 
     /**
+     * No public constructor on utility class
+     */
+    private CacheEntryFactory() {
+    }
+
+    /**
      * Load a store-specific CacheEntry model
      * @param repository
      * @param property

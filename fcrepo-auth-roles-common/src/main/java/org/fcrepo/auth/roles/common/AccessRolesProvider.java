@@ -66,7 +66,7 @@ public class AccessRolesProvider {
      * @param effective if true then search for effective roles
      * @return a set of roles for each principal
      */
-    public Map<String, List<String>> getRoles(Node node, final boolean effective) throws RepositoryException {
+    public Map<String, List<String>> getRoles(final Node node, final boolean effective) throws RepositoryException {
         final Map<String, List<String>> data = new HashMap<>();
         final Session session = node.getSession();
         registerPrefixes(session);
@@ -76,14 +76,12 @@ public class AccessRolesProvider {
         }
         if (effective) { // look up the tree
             try {
-                for (node = node.getParent(); node != null; node =
-                        node.getParent()) {
-                    if (node.isNodeType(rbaclAssignable.getQualified())) {
+                for (Node n = node.getParent(); n != null; n = n.getParent()) {
+                    if (n.isNodeType(rbaclAssignable.getQualified())) {
                         if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("effective roles are assigned at node: {}",
-                                         node.getPath());
+                            LOGGER.debug("effective roles are assigned at node: {}", n.getPath());
                         }
-                        getAssignments(node, data);
+                        getAssignments(n, data);
                         if (LOGGER.isDebugEnabled()) {
                             for (final Map.Entry<String, List<String>> entry : data.entrySet()) {
                                 LOGGER.debug("{} has role(s) {}", entry.getKey(), entry.getValue());

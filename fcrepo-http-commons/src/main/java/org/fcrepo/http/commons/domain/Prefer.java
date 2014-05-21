@@ -66,7 +66,7 @@ public class Prefer {
 
     private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
         new HttpHeaderReader.ListElementCreator<PreferTag>() {
-            public PreferTag create(HttpHeaderReader reader) throws ParseException {
+            public PreferTag create(final HttpHeaderReader reader) throws ParseException {
                 return new PreferTag(reader);
             }
         };
@@ -74,7 +74,7 @@ public class Prefer {
     private static Predicate<PreferTag> getPreferTag(final String tagName) {
         return new Predicate<PreferTag>() {
             @Override
-            public boolean apply(PreferTag tag) {
+            public boolean apply(final PreferTag tag) {
                 return tag.getTag().equals(tagName);
             }
         };

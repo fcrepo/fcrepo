@@ -38,7 +38,7 @@ public class LockExceptionMapper implements ExceptionMapper<LockException> {
     private static final Logger LOGGER = getLogger(LockExceptionMapper.class);
 
     @Override
-    public Response toResponse(LockException exception) {
+    public Response toResponse(final LockException exception) {
         LOGGER.debug("LockExceptionMapper intercepted exception: \n", exception);
         if (exception.getMessage() != null) {
             if (Pattern.matches("^\\QThe lock token '\\E.*'\\Q is not valid\\E$", exception.getMessage())) {

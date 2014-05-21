@@ -247,7 +247,7 @@ public class FedoraNodes extends AbstractResource {
                 }
             }
 
-            List<String> appliedIncludes = new ArrayList<>();
+            final List<String> appliedIncludes = new ArrayList<>();
 
             final boolean membership =
                 (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
@@ -726,11 +726,11 @@ public class FedoraNodes extends AbstractResource {
             session.save();
             return noContent().build();
         } catch (javax.jcr.ReferentialIntegrityException riex) {
-            StringBuffer msg = new StringBuffer("Unable to delete node because it is linked to "
+            final StringBuffer msg = new StringBuffer("Unable to delete node because it is linked to "
                     + "by other nodes: ");
 
             // lookup paths of linking nodes
-            Throwable inner = riex.getCause();
+            final Throwable inner = riex.getCause();
             if ( inner instanceof ReferentialIntegrityException) {
                 for ( NodeKey node : ((ReferentialIntegrityException)inner).getReferrers() ) {
                     try {

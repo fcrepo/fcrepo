@@ -65,7 +65,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
         if (!session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
             final NodeTypeManager mgr = session().getWorkspace().getNodeTypeManager();
-            NodeTypeTemplate type = mgr.createNodeTypeTemplate();
+            final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
             type.setName(mixinName);
             type.setMixin(true);
             type.setQueryable(true);

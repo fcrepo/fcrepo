@@ -36,7 +36,7 @@ public class PreferTag {
      * @param reader
      * @throws ParseException
      */
-    public PreferTag(HttpHeaderReader reader) throws ParseException {
+    public PreferTag(final HttpHeaderReader reader) throws ParseException {
 
         // Skip any white space
         reader.hasNext();

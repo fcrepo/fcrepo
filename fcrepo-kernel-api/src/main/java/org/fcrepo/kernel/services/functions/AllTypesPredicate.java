@@ -28,7 +28,7 @@ public class AllTypesPredicate extends BooleanTypesPredicate {
      * True if all the types specified match.
      * @param types
      */
-    public AllTypesPredicate(String...types) {
+    public AllTypesPredicate(final String...types) {
         super(types);
         this.test = types.length;
     }

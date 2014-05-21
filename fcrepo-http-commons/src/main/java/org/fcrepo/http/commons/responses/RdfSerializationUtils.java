@@ -53,6 +53,12 @@ public class RdfSerializationUtils {
     private static final Logger LOGGER = getLogger(RdfSerializationUtils.class);
 
     /**
+     * No public constructor on utility class
+     */
+    private RdfSerializationUtils() {
+    }
+
+    /**
      * The RDF predicate that will indicate the primary node type.
      */
     public static Node primaryTypePredicate =

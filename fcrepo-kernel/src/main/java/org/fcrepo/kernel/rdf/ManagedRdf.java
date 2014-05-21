@@ -34,6 +34,12 @@ public class ManagedRdf {
 
     private static final Model model = createDefaultModel();
 
+    /**
+     * No public constructor on utility class
+     */
+    private ManagedRdf() {
+    }
+
     public static final Predicate<Triple> isManagedTriple =
         new Predicate<Triple>() {
 

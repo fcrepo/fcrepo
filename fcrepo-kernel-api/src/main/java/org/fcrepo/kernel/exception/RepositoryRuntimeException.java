@@ -40,7 +40,7 @@ public class RepositoryRuntimeException extends RuntimeException {
      * @param msg
      * @param rootCause
      */
-    public RepositoryRuntimeException(final String msg, Throwable rootCause) {
+    public RepositoryRuntimeException(final String msg, final Throwable rootCause) {
         super(msg, rootCause);
     }
 }

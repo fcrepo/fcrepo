@@ -233,7 +233,7 @@ public abstract class AbstractResource {
     }
 
     private static void evaluateRequestPreconditions( final Request request, final FedoraResource resource,
-       boolean cacheControl ) throws RepositoryException {
+       final boolean cacheControl ) throws RepositoryException {
 
         final EntityTag etag = new EntityTag(resource.getEtagValue());
         final Date date = resource.getLastModifiedDate();

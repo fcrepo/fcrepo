@@ -124,7 +124,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
         final Iterator<javax.jcr.Node> salientChildren;
 
         if (options.hasOffset()) {
-            int offset = options.getOffset();
+            final int offset = options.getOffset();
             Iterators.advance(niceChildren, offset);
         }
 

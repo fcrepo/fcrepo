@@ -164,12 +164,12 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         } else {
             // there was no version with the given JCR Version Label, check to see if
             // there's a version whose UUID is equal to the label
-            VersionIterator versionIt = history.getAllVersions();
+            final VersionIterator versionIt = history.getAllVersions();
             if (versionIt == null) {
                 return null;
             }
             while (versionIt.hasNext()) {
-                Version v = versionIt.nextVersion();
+                final Version v = versionIt.nextVersion();
                 if (v.getFrozenNode().getIdentifier().equals(label)) {
                     return v;
                 }
