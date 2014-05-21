@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.integration.http.api.html;
+package org.fcrepo.integration;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
@@ -33,7 +33,6 @@ import com.google.common.base.Function;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.BasicHttpEntity;
-import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
