@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.rdf.impl;
 
-import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -37,7 +36,7 @@ import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
-import org.fcrepo.kernel.utils.iterators.NodeIterator;
+import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -117,9 +116,8 @@ public class HierarchyRdfContext extends NodeRdfContext {
     }
 
     private Iterator<Triple> childrenContext() throws RepositoryException {
-
-        final Iterator<javax.jcr.Node> niceChildren =
-            Iterators.filter(new NodeIterator(node().getNodes()), not(nastyChildren));
+        final Iterator<javax.jcr.Node> niceChildren = FedoraResourceImpl.getChildren(node(), graphSubjects());
+            //Iterators.filter(new NodeIterator(node().getNodes()), not(nastyChildren));
 
         final Iterator<javax.jcr.Node> salientChildren;
 
