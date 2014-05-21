@@ -16,6 +16,8 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.status;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -24,6 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import javax.jcr.ItemExistsException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
@@ -94,6 +97,8 @@ public class FedoraImport extends AbstractResource {
                     .deserialize(session, path, stream);
             session.save();
             return created(new URI(subjects.getSubject(path).getURI())).build();
+        } catch ( ItemExistsException ex ) {
+            return status(CONFLICT).entity("Item already exists").build();
         } finally {
             session.logout();
         }
