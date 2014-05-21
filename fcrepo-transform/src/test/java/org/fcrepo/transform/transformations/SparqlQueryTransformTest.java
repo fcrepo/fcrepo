@@ -60,14 +60,14 @@ public class SparqlQueryTransformTest {
 
     @Test
     public void testApply() {
-        Model model = ModelFactory.createDefaultModel();
+        final Model model = ModelFactory.createDefaultModel();
         model.add(model.createResource("http://example.org/book/book1"),
                      model.createProperty("http://purl.org/dc/elements/1.1/title"),
                      model.createLiteral("some-title"));
-        InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
-                                                          "{\n" +
-                                                          "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
-                                                          "} ").getBytes());
+        final InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
+                "{\n" +
+                "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
+                "} ").getBytes());
         testObj = new SparqlQueryTransform(query);
         final QueryExecution apply = testObj.apply(DatasetFactory.create(model));
 

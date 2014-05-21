@@ -37,6 +37,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * @author Mike Durbin
+ * @since 2014-02-21
+ */
 public abstract class GraphSubjectsTest {
 
     protected String testPath = "/foo/bar";

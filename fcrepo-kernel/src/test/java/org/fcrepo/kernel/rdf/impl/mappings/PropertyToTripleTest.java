@@ -385,7 +385,10 @@ public class PropertyToTripleTest {
     private Property mockProperty;
 
     @Mock
-    private Value mockValue, mockValue2;
+    private Value mockValue;
+
+    @Mock
+    private Value mockValue2;
 
     @Mock
     private javax.jcr.Node mockNode;

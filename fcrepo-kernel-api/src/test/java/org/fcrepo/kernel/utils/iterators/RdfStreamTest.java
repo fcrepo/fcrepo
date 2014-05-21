@@ -57,14 +57,22 @@ public class RdfStreamTest {
     private RdfStream testStream;
 
     @Mock
-    private Iterator<Triple> mockIterator, differentMockIterator;
+    private Iterator<Triple> mockIterator;
+
+    @Mock
+    private Iterator<Triple> differentMockIterator;
 
     @Mock
     private Iterable<Triple> mockIterable;
 
+    @Mock
+    private Triple triple1;
 
     @Mock
-    private Triple triple1, triple2, triple3;
+    private Triple triple2;
+
+    @Mock
+    private Triple triple3;
 
     private static final Triple triple = create(createAnon(), createAnon(),
             createAnon());

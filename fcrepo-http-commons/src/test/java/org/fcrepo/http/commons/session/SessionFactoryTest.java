@@ -136,7 +136,7 @@ public class SessionFactoryTest {
         try {
             testObj.getSession(mockRequest);
         } catch (final RuntimeException e) {
-            Throwable rootCause = Throwables.getRootCause(e);
+            final Throwable rootCause = Throwables.getRootCause(e);
             assertTrue("TransactionMissionException expected",
                     rootCause instanceof TransactionMissingException);
         }
@@ -161,35 +161,35 @@ public class SessionFactoryTest {
     @Test
     public void testGetEmbeddedIdTx() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
-        String txId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.TX);
+        final String txId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.TX);
         assertEquals("txId should be 123", "123", txId);
     }
 
     @Test
     public void testGetEmbeddedIdWorkspace() {
         when(mockRequest.getPathInfo()).thenReturn("/workspace:some-workspace/some/path");
-        String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
+        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertEquals("wsId should be some-workspace", "some-workspace", wsId);
     }
 
     @Test
     public void testGetEmbeddedIdNotExisting() {
         when(mockRequest.getPathInfo()).thenReturn("/some/path");
-        String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
+        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertNull("expected wsId to be null", wsId);
     }
 
     @Test
     public void testGetEmbeddedIdWithEmptyPath() {
         when(mockRequest.getPathInfo()).thenReturn("");
-        String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
+        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertNull("expected wsId to be null", wsId);
     }
 
     @Test
     public void testGetEmbeddedIdWithNullPath() {
         when(mockRequest.getPathInfo()).thenReturn(null);
-        String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
+        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertNull("expected wsId to be null", wsId);
     }
 

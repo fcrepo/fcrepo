@@ -30,7 +30,7 @@ public class ContextParam extends Param {
         super();
     }
 
-    public ContextParam(String name, String value) {
+    public ContextParam(final String name, final String value) {
         super(name, value);
     }
 

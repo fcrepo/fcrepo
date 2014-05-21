@@ -41,7 +41,8 @@ public class NOOPFilterTest {
 
     @Test
     public void testApply() throws Exception {
-        assertTrue("Failed to pass an event through a NO-OP filter!", new NOOPFilter().getFilter(null).apply(mockEvent));
+        assertTrue("Failed to pass an event through a NO-OP filter!",
+                   new NOOPFilter().getFilter(null).apply(mockEvent));
     }
 
 }

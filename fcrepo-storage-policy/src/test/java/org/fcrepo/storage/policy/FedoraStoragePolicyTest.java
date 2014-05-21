@@ -96,10 +96,9 @@ public class FedoraStoragePolicyTest {
         initMocks(this);
         when(mockSessions.getInternalSession()).thenReturn(mockSession);
         when(
-                mockJcrTools.findOrCreateNode(mockSession,
-                "/fedora:system/fedora:storage_policy", null)).thenReturn(
-            mockCodeNode);
-        Property property = mock(Property.class);
+                mockJcrTools.findOrCreateNode(mockSession, "/fedora:system/fedora:storage_policy", null))
+                .thenReturn(mockCodeNode);
+        final Property property = mock(Property.class);
         when(property.getString()).thenReturn("image/tiff");
         when(mockCodeNode.getProperty("image/tiff")).thenReturn(property);
     }
@@ -107,16 +106,14 @@ public class FedoraStoragePolicyTest {
     @Test
     public void nodeCreated() throws Exception {
         mockSession = mockSessions.getInternalSession();
-        mockJcrTools.findOrCreateNode(mockSession,
-            "/fedora:system/fedora:storage_policy", null);
-        assertEquals(mockCodeNode.getProperty("image/tiff").getString(),
-            "image/tiff");
+        mockJcrTools.findOrCreateNode(mockSession, "/fedora:system/fedora:storage_policy", null);
+        assertEquals(mockCodeNode.getProperty("image/tiff").getString(), "image/tiff");
     }
-   
+
     @Test
     public void getPolicyType() throws StoragePolicyTypeException {
-        FedoraStoragePolicy obj = new FedoraStoragePolicy();
-        StoragePolicy type = obj.newPolicyInstance("mix:mimeType", "image/tiff", null);
+        final FedoraStoragePolicy obj = new FedoraStoragePolicy();
+        final StoragePolicy type = obj.newPolicyInstance("mix:mimeType", "image/tiff", null);
         assertEquals(type.getClass(), MimeTypeStoragePolicy.class);
     }
 
@@ -125,10 +122,10 @@ public class FedoraStoragePolicyTest {
         /* List<StoragePolicy> can have MimeType("image/tiff", "tiff-store") and MimeType("image/tiff", "cloud-tiffs").
         List<StoragePolicy> can NOT have two MimeType("image/tiff", "tiff-store"); */
 
-        StoragePolicyDecisionPointImpl obj = new StoragePolicyDecisionPointImpl();
-        StoragePolicy p1 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
-        StoragePolicy p2 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
-        StoragePolicy p3 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        final StoragePolicyDecisionPointImpl obj = new StoragePolicyDecisionPointImpl();
+        final StoragePolicy p1 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        final StoragePolicy p2 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        final StoragePolicy p3 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
         if (!obj.contains(p3)) {
             obj.addPolicy(p1);
         }
@@ -159,14 +156,14 @@ public class FedoraStoragePolicyTest {
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(UriBuilder.fromUri(
                 "http://localhost/rest/policies/jcr:storagepolicy"));
 
-        FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
+        final FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
         storagePolicy.setJcrTools(mockJcrTools);
         storagePolicy.setUriInfo(mockUriInfo);
         storagePolicy.request = mockRequest;
         storagePolicy.session = mockSession;
         storagePolicy.storagePolicyDecisionPoint = mockPolicyDecisionPoint;
 
-        Response response = storagePolicy.post(FedoraStoragePolicy.POLICY_RESOURCE,
+        final Response response = storagePolicy.post(FedoraStoragePolicy.POLICY_RESOURCE,
                                                "mix:mimeType image/tiff cloud");
         assertNotNull(response);
         assertEquals(201, response.getStatus());
@@ -174,15 +171,15 @@ public class FedoraStoragePolicyTest {
 
     @Test
     public void testGetAllPolicies() throws Exception {
-        FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
-        Response response = storagePolicy.get("policies");
+        final FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
+        final Response response = storagePolicy.get("policies");
         assertNotNull(response);
         assertEquals(200, response.getStatus());
     }
 
     @Test
     public void testGetPolicy() throws Exception {
-        Value mockValue = mock(Value.class);
+        final Value mockValue = mock(Value.class);
         when(mockValue.getString()).thenReturn("image/tiff cloud");
         when(mockProperty.getValues()).thenReturn(new Value[]{mockValue});
         when(mockCodeNode.getProperty("mix:mimeType")).thenReturn(mockProperty);
@@ -191,16 +188,15 @@ public class FedoraStoragePolicyTest {
                                            anyString())).thenReturn(
                 mockCodeNode);
 
-        FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
+        final FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
         storagePolicy.setJcrTools(mockJcrTools);
         storagePolicy.session = mockSession;
 
 
-        Response response = storagePolicy.get("mix:mimeType");
+        final Response response = storagePolicy.get("mix:mimeType");
         assertNotNull(response);
         assertEquals(200, response.getStatus());
     }
-    
-    
+
 
 }

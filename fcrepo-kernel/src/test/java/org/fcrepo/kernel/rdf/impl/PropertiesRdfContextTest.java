@@ -106,7 +106,10 @@ public class PropertiesRdfContextTest {
     private static final String mockNodeName = "mockNode";
 
     @Mock
-    private Node mockNode, mockContentNode;
+    private Node mockNode;
+
+    @Mock
+    private Node mockContentNode;
 
     @Mock
     private NodeType mockNodeType;

@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import javax.jcr.PathNotFoundException;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.http.commons.exceptionhandlers.PathNotFoundExceptionMapper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,8 +40,8 @@ public class PathNotFoundExceptionMapperTest {
 
     @Test
     public void testToResponse() {
-        PathNotFoundException input = new PathNotFoundException();
-        Response actual = testObj.toResponse(input);
+        final PathNotFoundException input = new PathNotFoundException();
+        final Response actual = testObj.toResponse(input);
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
     }
 }

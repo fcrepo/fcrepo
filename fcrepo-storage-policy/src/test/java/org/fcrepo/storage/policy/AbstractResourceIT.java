@@ -25,7 +25,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -51,18 +50,17 @@ public abstract class AbstractResourceIT {
         logger = getLogger(this.getClass());
     }
 
-    protected static final int SERVER_PORT = Integer.parseInt(System
-        .getProperty("test.port", "8080"));
+    protected static final int SERVER_PORT = Integer.parseInt(System.getProperty("test.port", "8080"));
 
     protected static final String HOSTNAME = "localhost";
-    
+
     protected static final String SUFFIX = "fcr:storagepolicy";
 
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
-        SERVER_PORT + "/rest/";
+            SERVER_PORT + "/rest/";
 
     protected final PoolingClientConnectionManager connectionManager =
-        new PoolingClientConnectionManager();
+            new PoolingClientConnectionManager();
 
     protected static HttpClient client;
 
@@ -74,38 +72,27 @@ public abstract class AbstractResourceIT {
     }
 
     protected HttpGet HttpGetObjMethod(final String param) {
-        HttpGet get = new HttpGet(serverAddress + param + "/" + SUFFIX);
+        final HttpGet get = new HttpGet(serverAddress + param + "/" + SUFFIX);
         logger.debug("GET: {}", get.getURI());
         return get;
     }
-    
-    protected HttpPost HttpPostObjMethod(String param) {
-        HttpPost post = new HttpPost(serverAddress + param + "/" + SUFFIX);
+
+    protected HttpPost HttpPostObjMethod(final String param) {
+        final HttpPost post = new HttpPost(serverAddress + param + "/" + SUFFIX);
         logger.debug("POST: {}", post.getURI());
         return post;
     }
-    
+
     protected HttpDelete HttpDeleteObjMethod(final String param) {
-        HttpDelete delete = new HttpDelete(serverAddress + param + "/" + SUFFIX);
+        final HttpDelete delete = new HttpDelete(serverAddress + param + "/" + SUFFIX);
         logger.debug("DELETE: {}", delete.getURI());
         return delete;
     }
-    
-    protected HttpResponse execute(final HttpUriRequest method)
-        throws IOException {
-        logger.debug("Executing: " + method.getMethod() + " to " +
-            method.getURI());
-        return client.execute(method);
-    }
 
-    protected int getStatus(final HttpUriRequest method)
-        throws IOException {
-        HttpResponse response = execute(method);
-        int result = response.getStatusLine().getStatusCode();
-        if (!(result > 199) || !(result < 400)) {
-            logger.warn(EntityUtils.toString(response.getEntity()));
-        }
-        return result;
+    protected HttpResponse execute(final HttpUriRequest method)
+            throws IOException {
+        logger.debug("Executing: {} to {}", method.getMethod(), method.getURI());
+        return client.execute(method);
     }
 
 }

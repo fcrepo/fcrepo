@@ -169,7 +169,7 @@ public class AccessRolesTest {
     public void testPostEmptyRoleSet() throws RepositoryException {
 
         final Map<String, Set<String>> data = new HashMap<>();
-        data.put("principalName", Collections.<String> emptySet());
+        data.put("principalName", Collections.<String>emptySet());
 
         invalidPost(data);
     }
@@ -223,7 +223,7 @@ public class AccessRolesTest {
         } finally {
             // Verify that no work with the provider happened
             verify(accessRolesProvider, never()).postRoles(any(Node.class),
-                    Matchers.<Map<String, Set<String>>> any());
+                    Matchers.<Map<String, Set<String>>>any());
             // Verify no changes saved
             verify(session, never()).save();
             verify(session).logout();
@@ -244,7 +244,7 @@ public class AccessRolesTest {
 
         // Check that work was called
         verify(accessRolesProvider).postRoles(any(Node.class),
-                Matchers.<Map<String, Set<String>>> any());
+                Matchers.<Map<String, Set<String>>>any());
         verify(session).save();
         verify(session).logout();
 
@@ -263,13 +263,13 @@ public class AccessRolesTest {
         data.put("principalName", roles);
 
         doThrow(new RepositoryException()).when(accessRolesProvider).postRoles(
-                any(Node.class), Matchers.<Map<String, Set<String>>> any());
+                any(Node.class), Matchers.<Map<String, Set<String>>>any());
 
         try {
             accessRoles.post(paths, data);
         } finally {
             verify(accessRolesProvider).postRoles(any(Node.class),
-                    Matchers.<Map<String, Set<String>>> any());
+                    Matchers.<Map<String, Set<String>>>any());
             verify(session, never()).save();
             verify(session).logout();
         }

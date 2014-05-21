@@ -37,11 +37,11 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 public class DummyURIResource implements Resource {
 
     final String uri;
-    
-    public DummyURIResource(String uri) {
+
+    public DummyURIResource(final String uri) {
         this.uri = uri;
     }
-    
+
     @Override
     public boolean isAnon() {
         return false;
@@ -63,12 +63,12 @@ public class DummyURIResource implements Resource {
     }
 
     @Override
-    public <T extends RDFNode> T as(Class<T> view) {
+    public <T extends RDFNode> T as(final Class<T> view) {
         return null;
     }
 
     @Override
-    public <T extends RDFNode> boolean canAs(Class<T> view) {
+    public <T extends RDFNode> boolean canAs(final Class<T> view) {
         return false;
     }
 
@@ -78,7 +78,7 @@ public class DummyURIResource implements Resource {
     }
 
     @Override
-    public Object visitWith(RDFVisitor rv) {
+    public Object visitWith(final RDFVisitor rv) {
         return null;
     }
 
@@ -103,12 +103,12 @@ public class DummyURIResource implements Resource {
     }
 
     @Override
-    public Resource inModel(Model m) {
+    public Resource inModel(final Model m) {
         return null;
     }
 
     @Override
-    public boolean hasURI(String uri) {
+    public boolean hasURI(final String uri) {
         return true;
     }
 
@@ -128,17 +128,17 @@ public class DummyURIResource implements Resource {
     }
 
     @Override
-    public Statement getRequiredProperty(Property p) {
+    public Statement getRequiredProperty(final Property p) {
         return null;
     }
 
     @Override
-    public Statement getProperty(Property p) {
+    public Statement getProperty(final Property p) {
         return null;
     }
 
     @Override
-    public StmtIterator listProperties(Property p) {
+    public StmtIterator listProperties(final Property p) {
         return null;
     }
 
@@ -148,108 +148,108 @@ public class DummyURIResource implements Resource {
     }
 
     @Override
-    public Resource addLiteral(Property p, boolean o) {
+    public Resource addLiteral(final Property p, final boolean o) {
         return null;
     }
 
     @Override
-    public Resource addLiteral(Property p, long o) {
+    public Resource addLiteral(final Property p, final long o) {
         return null;
     }
 
     @Override
-    public Resource addLiteral(Property p, char o) {
+    public Resource addLiteral(final Property p, final char o) {
         return null;
     }
 
     @Override
-    public Resource addLiteral(Property value, double d) {
+    public Resource addLiteral(final Property value, final double d) {
         return null;
     }
 
     @Override
-    public Resource addLiteral(Property value, float d) {
+    public Resource addLiteral(final Property value, final float d) {
         return null;
     }
 
     @Override
-    public Resource addLiteral(Property p, Object o) {
+    public Resource addLiteral(final Property p, final Object o) {
         return null;
     }
 
     @Override
-    public Resource addLiteral(Property p, Literal o) {
+    public Resource addLiteral(final Property p, final Literal o) {
         return null;
     }
 
     @Override
-    public Resource addProperty(Property p, String o) {
+    public Resource addProperty(final Property p, final String o) {
         return null;
     }
 
     @Override
-    public Resource addProperty(Property p, String o, String l) {
+    public Resource addProperty(final Property p, final String o, final String l) {
         return null;
     }
 
     @Override
-    public Resource addProperty(Property p, String lexicalForm,
-            RDFDatatype datatype) {
+    public Resource addProperty(final Property p, final String lexicalForm,
+                                final RDFDatatype datatype) {
         return null;
     }
 
     @Override
-    public Resource addProperty(Property p, RDFNode o) {
+    public Resource addProperty(final Property p, final RDFNode o) {
         return null;
     }
 
     @Override
-    public boolean hasProperty(Property p) {
+    public boolean hasProperty(final Property p) {
         return false;
     }
 
     @Override
-    public boolean hasLiteral(Property p, boolean o) {
+    public boolean hasLiteral(final Property p, final boolean o) {
         return false;
     }
 
     @Override
-    public boolean hasLiteral(Property p, long o) {
+    public boolean hasLiteral(final Property p, final long o) {
         return false;
     }
 
     @Override
-    public boolean hasLiteral(Property p, char o) {
+    public boolean hasLiteral(final Property p, final char o) {
         return false;
     }
 
     @Override
-    public boolean hasLiteral(Property p, double o) {
+    public boolean hasLiteral(final Property p, final double o) {
         return false;
     }
 
     @Override
-    public boolean hasLiteral(Property p, float o) {
+    public boolean hasLiteral(final Property p, final float o) {
         return false;
     }
 
     @Override
-    public boolean hasLiteral(Property p, Object o) {
+    public boolean hasLiteral(final Property p, final Object o) {
         return false;
     }
 
     @Override
-    public boolean hasProperty(Property p, String o) {
+    public boolean hasProperty(final Property p, final String o) {
         return false;
     }
 
     @Override
-    public boolean hasProperty(Property p, String o, String l) {
+    public boolean hasProperty(final Property p, final String o, final String l) {
         return false;
     }
 
     @Override
-    public boolean hasProperty(Property p, RDFNode o) {
+    public boolean hasProperty(final Property p, final RDFNode o) {
         return false;
     }
 
@@ -259,7 +259,7 @@ public class DummyURIResource implements Resource {
     }
 
     @Override
-    public Resource removeAll(Property p) {
+    public Resource removeAll(final Property p) {
         return null;
     }
 
@@ -279,7 +279,7 @@ public class DummyURIResource implements Resource {
     }
 
     @Override
-    public Resource getPropertyResourceValue(Property p) {
+    public Resource getPropertyResourceValue(final Property p) {
         return null;
     }
 

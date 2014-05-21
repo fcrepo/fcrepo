@@ -96,13 +96,13 @@ public class MimeTypeStoragePolicyTest {
 
         assertNull("Received hint was not null!", receivedHint);
     }
-    
+
     // Test using equals. As impl. of <StoragePolicy> involves, this may change
     @Test
     public void testEquals() {
-        MimeTypeStoragePolicy obj1 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
-        MimeTypeStoragePolicy obj2 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        final MimeTypeStoragePolicy obj1 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
+        final MimeTypeStoragePolicy obj2 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
         assertEquals(obj1,obj2);
-    }   
-    
+    }
+
 }

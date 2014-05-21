@@ -232,9 +232,9 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
         when(mockQueryResult.getNodes()).thenReturn(mockNI);
         when(mockNI.getSize()).thenReturn(500L);
         when(mockNI.next()).thenReturn("");
-        when(
-                mockJcrRdfTools.getJcrPropertiesModel(any(org.fcrepo.kernel.utils.iterators.NodeIterator.class), eq(subject)))
-                .thenReturn(new RdfStream());
+        when(mockJcrRdfTools.getJcrPropertiesModel(
+                any(org.fcrepo.kernel.utils.iterators.NodeIterator.class),
+                eq(subject))).thenReturn(new RdfStream());
     }
 
     @Test

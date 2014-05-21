@@ -237,7 +237,8 @@ public abstract class AbstractResourceIT {
         return response;
     }
 
-    protected HttpResponse createDatastream(final String pid, final String dsid, final String content) throws IOException {
+    protected HttpResponse createDatastream(final String pid, final String dsid, final String content)
+            throws IOException {
         logger.trace(
                 "Attempting to create datastream for object: {} at datastream ID: {}",
                 pid, dsid);

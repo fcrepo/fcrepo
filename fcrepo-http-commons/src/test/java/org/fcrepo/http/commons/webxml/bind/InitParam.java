@@ -30,7 +30,7 @@ public class InitParam extends Param {
         super();
     }
 
-    public InitParam(String name, String value) {
+    public InitParam(final String name, final String value) {
         super(name, value);
     }
 

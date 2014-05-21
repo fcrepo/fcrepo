@@ -38,8 +38,8 @@ public class LockExceptionMapperTest {
 
     @Test
     public void testToResponse() {
-        LockException input = new LockException();
-        Response actual = testObj.toResponse(input);
+        final LockException input = new LockException();
+        final Response actual = testObj.toResponse(input);
         assertEquals(CONFLICT.getStatusCode(), actual.getStatus());
     }
 }

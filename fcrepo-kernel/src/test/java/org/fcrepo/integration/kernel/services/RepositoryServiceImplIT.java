@@ -113,7 +113,8 @@ public class RepositoryServiceImplIT extends AbstractIT {
         final Dataset registryGraph = repositoryService.getNamespaceRegistryDataset(session, idTranslator);
         final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
 
-        parseExecute("INSERT { <info:abc> <" + HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }", registryGraph);
+        parseExecute("INSERT { <info:abc> <" + HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }",
+                     registryGraph);
 
         assertEquals("abc", namespaceRegistry.getPrefix("info:abc"));
         session.logout();

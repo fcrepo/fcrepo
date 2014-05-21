@@ -17,6 +17,7 @@ package org.fcrepo.http.commons.responses;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,7 +38,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 
 import com.google.common.collect.ImmutableMap;
@@ -89,8 +89,9 @@ public class StreamingBaseHtmlProviderTest {
 
     @Test
     public void testIsWriteable() {
-        when(mockBaseHtmlProvider.isWriteable(Dataset.class, null, null, MediaType.valueOf("text/something-like-html"))).thenReturn(true);
-        assertTrue(testProvider.isWriteable(RdfStream.class, null, null, MediaType.valueOf("text/something-like-html")));
+        when(mockBaseHtmlProvider.isWriteable(Dataset.class, null, null, valueOf("text/something-like-html")))
+                .thenReturn(true);
+        assertTrue(testProvider.isWriteable(RdfStream.class, null, null, valueOf("text/something-like-html")));
     }
 
     @Test
@@ -102,7 +103,7 @@ public class StreamingBaseHtmlProviderTest {
         final RdfStream rdfStream = new RdfStream(t).session(mockSession);
         try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream()) {
             testProvider.writeTo(rdfStream, RdfStream.class, null, null,
-                                    MediaType.valueOf("text/html"), null,
+                                    valueOf("text/html"), null,
                                     entityStream);
         }
 
@@ -112,7 +113,7 @@ public class StreamingBaseHtmlProviderTest {
                                                 eq(RdfStream.class),
                                                 eq((Type)null),
                                                 eq((Annotation[])null),
-                                                eq(MediaType.valueOf("text/html")),
+                                                eq(valueOf("text/html")),
                                                 eq((MultivaluedMap<String, Object>)null),
                                                 any(OutputStream.class));
         assertEquals(ImmutableMap.of("pr", "nsuri"), argument.getValue().getDefaultModel().getNsPrefixMap());

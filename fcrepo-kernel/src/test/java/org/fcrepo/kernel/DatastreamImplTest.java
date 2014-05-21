@@ -87,7 +87,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
-            NodeType mockNodeType = mock(NodeType.class);
+            final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:file");
             when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new DatastreamImpl(mockDsNode);

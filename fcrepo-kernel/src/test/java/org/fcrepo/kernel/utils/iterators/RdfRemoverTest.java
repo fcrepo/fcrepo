@@ -180,7 +180,10 @@ public class RdfRemoverTest {
     private ValueFactory mockValueFactory;
 
     @Mock
-    private Value mockValue, mockValue2;
+    private Value mockValue;
+
+    @Mock
+    private Value mockValue2;
 
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;

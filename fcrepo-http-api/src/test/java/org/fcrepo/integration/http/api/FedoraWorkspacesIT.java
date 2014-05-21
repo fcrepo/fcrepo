@@ -62,7 +62,8 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
             execute(httpCreateWorkspace);
         assertEquals(201, createWorkspaceResponse.getStatusLine()
                 .getStatusCode());
-        assertEquals(serverAddress + "workspace:" + workspace + "/", createWorkspaceResponse.getFirstHeader("Location").getValue());
+        assertEquals(serverAddress + "workspace:" + workspace + "/",
+                     createWorkspaceResponse.getFirstHeader("Location").getValue());
 
 
         final HttpPost httpPost = postObjMethod("/workspace:" + workspace);

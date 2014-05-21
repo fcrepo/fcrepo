@@ -24,7 +24,7 @@ import javax.jms.MessageListener;
 class NoopListener implements MessageListener {
 
     @Override
-    public void onMessage(Message arg0) {
+    public void onMessage(final Message arg0) {
 
     }
 

@@ -29,7 +29,10 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.util.UUID;
 
-import javax.jcr.*;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.PropertyType;
+import javax.jcr.RepositoryException;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -122,7 +125,8 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
 
-        assertNull(mockSession.getNode(testObj.getPathFromSubject(createResource("http://localhost:8080/fcrepo/rest/abc/fcr:export?format=jcr/xml"))));
+        assertNull(mockSession.getNode(testObj.getPathFromSubject(
+                createResource("http://localhost:8080/fcrepo/rest/abc/fcr:export?format=jcr/xml"))));
     }
 
     @Test
@@ -160,7 +164,8 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
 
     @Test
     public void testGetPathFromGraphSubject() throws RepositoryException {
-        assertEquals("/abc", testObj.getPathFromSubject(ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc")));
+        assertEquals("/abc", testObj.getPathFromSubject(
+                ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc")));
     }
 
     @Test
@@ -197,7 +202,8 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
         final HttpIdentifierTranslator testObjTx = getTestObjTx("/");
         when(mockSessionTx.getTxId()).thenReturn("txid");
         assertEquals("http://localhost:8080/fcrepo/rest/tx:txid/abc", testObjTx.getSubject("/abc").toString());
-        assertEquals("http://localhost:8080/fcrepo/rest/abc", testObjTx.getCanonical(true).getSubject("/abc").toString());
+        assertEquals("http://localhost:8080/fcrepo/rest/abc",
+                     testObjTx.getCanonical(true).getSubject("/abc").toString());
 
     }
 

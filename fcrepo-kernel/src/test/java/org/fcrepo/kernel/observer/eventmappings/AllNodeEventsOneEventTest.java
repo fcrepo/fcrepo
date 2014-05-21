@@ -52,7 +52,13 @@ public class AllNodeEventsOneEventTest {
     final private AllNodeEventsOneEvent testMapping = new AllNodeEventsOneEvent();
 
     @Mock
-    private Event mockEvent1, mockEvent2, mockEvent3;
+    private Event mockEvent1;
+
+    @Mock
+    private Event mockEvent2;
+
+    @Mock
+    private Event mockEvent3;
 
     @Mock
     private javax.jcr.observation.EventIterator mockIterator;

@@ -121,9 +121,9 @@ public class FedoraLocksTest {
         initializeMockNode(path);
         when(mockLockService.getLock(mockSession, path)).thenReturn(mockLock);
 
-        RdfStream stream = testObj.getLock(createPathList(pid));
+        final RdfStream stream = testObj.getLock(createPathList(pid));
         while (stream.hasNext()) {
-            Triple t = stream.next();
+            final Triple t = stream.next();
             if (t.getPredicate().getURI().equals(HAS_LOCK_TOKEN.getURI())
                     && t.getObject().getLiteralValue().equals(mockLock.getLockToken())) {
                 return;
@@ -132,7 +132,7 @@ public class FedoraLocksTest {
         fail("Unable to find the lock token in the returned RDF!");
     }
 
-    private void initializeMockNode(String path) throws RepositoryException {
+    private void initializeMockNode(final String path) throws RepositoryException {
         when(mockNode.getPath()).thenReturn(path);
         when(mockSession.getNode(path)).thenReturn(mockNode);
     }

@@ -17,10 +17,8 @@ package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static javax.jcr.PropertyType.PATH;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
@@ -37,8 +35,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doThrow;
@@ -50,7 +46,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -72,7 +67,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
@@ -86,7 +80,6 @@ import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -438,7 +431,12 @@ public class FedoraNodesTest {
             new ByteArrayInputStream("<a> <b> <c>".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
-        testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest, mockResponse);
+        testObj.createOrReplaceObjectRdf(createPathList(pid),
+                                         getUriInfoImpl(),
+                                         MediaType.valueOf("application/n3"),
+                                         mockStream,
+                                         mockRequest,
+                                         mockResponse);
         verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class));
     }
 

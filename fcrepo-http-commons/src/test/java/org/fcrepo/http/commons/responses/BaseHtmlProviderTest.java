@@ -77,7 +77,7 @@ public class BaseHtmlProviderTest {
     @Test
     public void testIsWriteable() {
         assertTrue(
-                "Gave false response to HtmlProvider.isWriteable() that contained a legitimate combination of parameters!",
+                "Gave false response to HtmlProvider.isWriteable() that contained legitimate combination of parameters",
                 baseHtmlProvider.isWriteable(Dataset.class, Dataset.class,
                         null, TEXT_HTML_TYPE));
         assertFalse(

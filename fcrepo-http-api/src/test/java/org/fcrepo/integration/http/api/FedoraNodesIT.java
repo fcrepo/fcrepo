@@ -101,7 +101,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
@@ -428,22 +427,22 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         //verifyResource based on the expection of these types on an out of the box fedora object:
         /*
-                http://fedora.info/definitions/v4/rest-api#object 
-                http://fedora.info/definitions/v4/rest-api#relations 
-                http://fedora.info/definitions/v4/rest-api#resource 
-                http://purl.org/dc/elements/1.1/describable 
-                http://www.jcp.org/jcr/mix/1.0created 
-                http://www.jcp.org/jcr/mix/1.0lastModified 
-                http://www.jcp.org/jcr/mix/1.0lockable 
-                http://www.jcp.org/jcr/mix/1.0referenceable 
-                http://www.jcp.org/jcr/mix/1.0simpleVersionable 
-                http://www.jcp.org/jcr/mix/1.0versionable 
-                http://www.jcp.org/jcr/nt/1.0base 
-                http://www.jcp.org/jcr/nt/1.0folder 
-                http://www.jcp.org/jcr/nt/1.0hierarchyNode 
-                http://www.w3.org/ns/ldp#Container 
-                http://www.w3.org/ns/ldp#DirectContainer 
-                http://www.w3.org/ns/ldp#Page 
+                http://fedora.info/definitions/v4/rest-api#object
+                http://fedora.info/definitions/v4/rest-api#relations
+                http://fedora.info/definitions/v4/rest-api#resource
+                http://purl.org/dc/elements/1.1/describable
+                http://www.jcp.org/jcr/mix/1.0created
+                http://www.jcp.org/jcr/mix/1.0lastModified
+                http://www.jcp.org/jcr/mix/1.0lockable
+                http://www.jcp.org/jcr/mix/1.0referenceable
+                http://www.jcp.org/jcr/mix/1.0simpleVersionable
+                http://www.jcp.org/jcr/mix/1.0versionable
+                http://www.jcp.org/jcr/nt/1.0base
+                http://www.jcp.org/jcr/nt/1.0folder
+                http://www.jcp.org/jcr/nt/1.0hierarchyNode
+                http://www.w3.org/ns/ldp#Container
+                http://www.w3.org/ns/ldp#DirectContainer
+                http://www.w3.org/ns/ldp#Page
         */
 
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
@@ -503,8 +502,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     return h.getValue();
                 }
             });
-        assertTrue("Didn't find LDP resource link header!", links.contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
-        assertTrue("Didn't find LDP container link header!", links.contains("<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\""));
+        assertTrue("Didn't find LDP resource link header!",
+                   links.contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
+        assertTrue("Didn't find LDP container link header!",
+                   links.contains("<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\""));
     }
 
     @Test
@@ -546,7 +547,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createObject(pid + "/a");
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + pid);
-        getObjMethod.addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
+        getObjMethod.addHeader("Prefer",
+                               "return=representation; " +
+                                       "omit=\"http://www.w3.org/ns/ldp#PreferContainment " +
+                                       "http://www.w3.org/ns/ldp#PreferMembership\"");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
@@ -608,15 +612,14 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
 
-        BasicHttpEntity e = new BasicHttpEntity();
+        final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(
             new ByteArrayInputStream(
                 ("INSERT { " +
-                 "<" + serverAddress + pid + "/a" + "> <http://fedora.info/definitions/v4/rels-ext#isPartOf> <" + serverAddress + pid + "/b" + "> . \n" +
-                 "<" + serverAddress + pid + "/a" + "> <info:xyz#some-other-property> <" + serverAddress + pid + "/b" + "> " +
-                 "} WHERE {}").getBytes()
-            )
-        );
+                 "<" + serverAddress + pid + "/a" + "> <http://fedora.info/definitions/v4/rels-ext#isPartOf> <"
+                        + serverAddress + pid + "/b" + "> . \n" +
+                 "<" + serverAddress + pid + "/a" + "> <info:xyz#some-other-property> <" + serverAddress + pid + "/b"
+                        + "> " + "} WHERE {}").getBytes()));
 
         updateObjectGraphMethod.setEntity(e);
         client.execute(updateObjectGraphMethod);
@@ -676,7 +679,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                ("INSERT { <" + subjectURI + "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}")
+                ("INSERT { <" + subjectURI +
+                        "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}")
                         .getBytes()));
         updateObjectGraphMethod.setEntity(e);
         final HttpResponse response = client.execute(updateObjectGraphMethod);
@@ -742,7 +746,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         patchObjMethod.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                ("INSERT { <" + subjectURI + "> <" + REPOSITORY_NAMESPACE + "uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n")
+                ("INSERT { <" + subjectURI + "> <" + REPOSITORY_NAMESPACE +
+                        "uuid> \"00e686e2-24d4-40c2-92ce-577c0165b158\" } WHERE {}\n")
                         .getBytes()));
         patchObjMethod.setEntity(e);
         final HttpResponse response = client.execute(patchObjMethod);
@@ -1176,8 +1181,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
     }
 
-    private static List<String> headerValues( HttpResponse response,
-            String headerName ) {
+    private static List<String> headerValues( final HttpResponse response, final String headerName ) {
         final List<String> values = new ArrayList<String>();
         for ( Header header : response.getHeaders(headerName) ) {
             for ( String elem : header.getValue().split(",") ) {
@@ -1222,10 +1226,13 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("HTML found to be valid.");
     }
 
-    private void verifyResource(Model model, Resource nodeUri, Property rdfType, String namespace, String resource) {
-        assertTrue("Didn't find rdfType " + namespace + resource, model.contains(nodeUri,
-        rdfType,
-        createResource(namespace + resource)));
+    private void verifyResource(final Model model,
+                                final Resource nodeUri,
+                                final Property rdfType,
+                                final String namespace,
+                                final String resource) {
+        assertTrue("Didn't find rdfType " + namespace + resource,
+                   model.contains(nodeUri, rdfType, createResource(namespace + resource)));
     }
 
     public static class HTMLErrorHandler implements ErrorHandler {
@@ -1386,7 +1393,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         // count children in response graph
         int firstChildCount = 0;
-        for ( Iterator it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); firstChildCount++ ) {
+        Iterator it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY);
+        for ( ; it.hasNext(); firstChildCount++ ) {
             logger.debug( "Found child: {}", it.next() );
         }
         assertEquals("Should have two children!", 2, firstChildCount);
@@ -1394,7 +1402,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         // count children in response graph
         int firstContainsCount = 0;
-        for ( Iterator it = firstGraph.find(ANY,parent,CONTAINS.asNode(),ANY); it.hasNext(); firstContainsCount++ ) {
+        it = firstGraph.find(ANY,parent,CONTAINS.asNode(),ANY);
+        for ( ; it.hasNext(); firstContainsCount++ ) {
             logger.debug( "Found child: {}", it.next() );
         }
         assertEquals("Should have two children!", 2, firstContainsCount);
@@ -1429,7 +1438,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         // it should have two inlined resources
         int nextChildCount = 0;
-        for ( Iterator it = nextGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); nextChildCount++ ) {
+        for (it = nextGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY); it.hasNext(); nextChildCount++ ) {
             logger.debug( "Found child: {}", it.next() );
         }
         assertEquals("Should have two children!", 2, nextChildCount);
@@ -1463,19 +1472,19 @@ public class FedoraNodesIT extends AbstractResourceIT {
         createObject("linked-from");
         createObject("linked-to");
 
-        String sparql = "insert data { <" + serverAddress + "linked-from> "
-                 + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " 
+        final String sparql = "insert data { <" + serverAddress + "linked-from> "
+                 + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> "
                  + "<" + serverAddress + "linked-to> . }";
-        HttpPatch patch = new HttpPatch(serverAddress + "linked-from");
+        final HttpPatch patch = new HttpPatch(serverAddress + "linked-from");
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
         assertEquals("Couldn't link resources!", 204, getStatus(patch));
 
-        HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
+        final HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
         assertEquals("Deleting linked-to should error!", 412, getStatus(delete));
 
-        HttpGet get = new HttpGet(serverAddress + "linked-from");
+        final HttpGet get = new HttpGet(serverAddress + "linked-from");
         assertEquals("Linked to should still exist!", 200, getStatus(get));
     }
 

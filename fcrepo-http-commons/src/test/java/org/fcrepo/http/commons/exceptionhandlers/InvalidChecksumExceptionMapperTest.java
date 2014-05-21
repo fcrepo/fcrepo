@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.http.commons.exceptionhandlers.InvalidChecksumExceptionMapper;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,8 +40,8 @@ public class InvalidChecksumExceptionMapperTest {
 
     @Test
     public void testToResponse() {
-        InvalidChecksumException input = new InvalidChecksumException("x didn't match y");
-        Response actual = testObj.toResponse(input);
+        final InvalidChecksumException input = new InvalidChecksumException("x didn't match y");
+        final Response actual = testObj.toResponse(input);
         assertEquals(CONFLICT.getStatusCode(), actual.getStatus());
     }
 }

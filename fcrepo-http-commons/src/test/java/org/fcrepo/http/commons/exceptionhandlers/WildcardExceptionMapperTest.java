@@ -41,7 +41,7 @@ public class WildcardExceptionMapperTest {
 
     @Test
     public void testToResponse() {
-        Exception input = new Exception();
+        final Exception input = new Exception();
         Response actual = testObj.toResponse(input);
         assertEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity() != null);

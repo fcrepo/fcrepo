@@ -64,7 +64,7 @@ public class ManagedRdfTest {
     }
 
     @Test
-    public void testMixinFiltering(){
+    public void testMixinFiltering() {
         assertTrue(isManagedMixin.apply(createResource(REPOSITORY_NAMESPACE
                 + "thing")));
         assertFalse(isManagedMixin.apply(createResource("myNS:thing")));

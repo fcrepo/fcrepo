@@ -43,9 +43,9 @@ public class SerializerUtilTest {
         testObj = new SerializerUtil();
         testObj.setApplicationContext(mockContext);
 
-        FedoraObjectSerializer mockA = mock(FedoraObjectSerializer.class);
+        final FedoraObjectSerializer mockA = mock(FedoraObjectSerializer.class);
         when(mockA.getKey()).thenReturn("a");
-        FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
+        final FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
         when(mockB.getKey()).thenReturn("b");
 
         when(mockContext.getBeansOfType(FedoraObjectSerializer.class))
@@ -62,9 +62,9 @@ public class SerializerUtilTest {
 
     @Test
     public void shouldRetrieveSerializerByKey() {
-        FedoraObjectSerializer mockA = mock(FedoraObjectSerializer.class);
+        final FedoraObjectSerializer mockA = mock(FedoraObjectSerializer.class);
         when(mockA.getKey()).thenReturn("a");
-        FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
+        final FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
         when(mockB.getKey()).thenReturn("b");
 
         when(mockContext.getBeansOfType(FedoraObjectSerializer.class))
@@ -77,9 +77,9 @@ public class SerializerUtilTest {
 
     @Test
     public void shouldListAllSerializers() {
-        FedoraObjectSerializer mockA = mock(FedoraObjectSerializer.class);
+        final FedoraObjectSerializer mockA = mock(FedoraObjectSerializer.class);
         when(mockA.getKey()).thenReturn("a");
-        FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
+        final FedoraObjectSerializer mockB = mock(FedoraObjectSerializer.class);
         when(mockB.getKey()).thenReturn("b");
 
         when(mockContext.getBeansOfType(FedoraObjectSerializer.class))

@@ -178,7 +178,8 @@ public class FedoraObjectImplIT extends AbstractIT {
 
         assertNotNull(object.getNode().getProperty(prefix + ":urlProperty"));
 
-        assertEquals(object.getNode(), session.getNodeByIdentifier(object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
+        assertEquals(object.getNode(), session.getNodeByIdentifier(
+                object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
         parseExecute("PREFIX some: <info:some#>\n" +
                          "DELETE { <" + graphSubject + "> some:urlProperty " +
@@ -192,7 +193,8 @@ public class FedoraObjectImplIT extends AbstractIT {
                          "       some:urlProperty <info:somewhere/else> . }", graphStore);
 
         assertEquals(1, object.getNode().getProperty(prefix + ":urlProperty_ref").getValues().length);
-        assertEquals(object.getNode(), session.getNodeByIdentifier(object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
+        assertEquals(object.getNode(), session.getNodeByIdentifier(
+                object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
     }
 }

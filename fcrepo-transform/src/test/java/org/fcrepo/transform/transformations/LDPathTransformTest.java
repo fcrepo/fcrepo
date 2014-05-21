@@ -67,7 +67,7 @@ public class LDPathTransformTest {
         when(mockNode.getSession()).thenReturn(mockSession);
     }
 
-    @Test(expected=WebApplicationException.class)
+    @Test(expected = WebApplicationException.class)
     public void testGetNodeTypeSpecificLdpathProgramForMissingProgram() throws RepositoryException {
         final Node mockConfigNode = mock(Node.class);
         when(mockSession.getNode(CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
@@ -95,7 +95,8 @@ public class LDPathTransformTest {
         when(mockConfigNode.hasNode("custom:type")).thenReturn(true);
         when(mockConfigNode.getNode("custom:type")).thenReturn(mockTypeConfigNode);
         final InputStream mockInputStream = mock(InputStream.class);
-        when(mockTypeConfigNode.getNode("jcr:content").getProperty("jcr:data").getBinary().getStream()).thenReturn(mockInputStream);
+        when(mockTypeConfigNode.getNode("jcr:content").getProperty("jcr:data").getBinary().getStream()).thenReturn(
+                mockInputStream);
         final LDPathTransform nodeTypeSpecificLdpathProgramStream = getNodeTypeTransform(mockNode, "some-program");
 
         assertEquals(new LDPathTransform(mockInputStream), nodeTypeSpecificLdpathProgramStream);
@@ -120,9 +121,11 @@ public class LDPathTransformTest {
         when(mockConfigNode.getNode("nt:base")).thenReturn(mockTypeConfigNode);
 
         final InputStream mockInputStream = mock(InputStream.class);
-        when(mockTypeConfigNode.getNode("jcr:content").getProperty("jcr:data").getBinary().getStream()).thenReturn(mockInputStream);
+        when(mockTypeConfigNode.getNode("jcr:content").getProperty("jcr:data").getBinary().getStream()).thenReturn(
+                mockInputStream);
 
-        final LDPathTransform nodeTypeSpecificLdpathProgramStream = LDPathTransform.getNodeTypeTransform(mockNode, "some-program");
+        final LDPathTransform nodeTypeSpecificLdpathProgramStream =
+                LDPathTransform.getNodeTypeTransform(mockNode, "some-program");
 
         assertEquals(new LDPathTransform(mockInputStream), nodeTypeSpecificLdpathProgramStream);
     }
@@ -131,7 +134,9 @@ public class LDPathTransformTest {
     public void testProgramQuery() {
 
         final Model model = ModelFactory.createDefaultModel();
-        model.add(model.createResource("abc"), model.createProperty("http://purl.org/dc/elements/1.1/title"), model.createLiteral("some-title"));
+        model.add(model.createResource("abc"),
+                  model.createProperty("http://purl.org/dc/elements/1.1/title"),
+                  model.createLiteral("some-title"));
         final Dataset testDataset = DatasetFactory.create(model);
         testDataset.getContext().set(Symbol.create("uri"), "abc");
         final InputStream testReader = new ByteArrayInputStream("title = dc:title :: xsd:string ;".getBytes());

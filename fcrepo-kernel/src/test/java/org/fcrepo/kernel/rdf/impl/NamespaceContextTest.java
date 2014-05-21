@@ -63,7 +63,8 @@ public class NamespaceContextTest {
     public void testJcrUris() throws RepositoryException {
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[] {"jcr"});
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn("http://www.jcp.org/jcr/1.0");
-        assertTrue(new NamespaceRdfContext(mockSession).asModel().contains(createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_URI, REPOSITORY_NAMESPACE));
+        assertTrue(new NamespaceRdfContext(mockSession).asModel().contains(
+                createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_URI, REPOSITORY_NAMESPACE));
     }
 
     @Before

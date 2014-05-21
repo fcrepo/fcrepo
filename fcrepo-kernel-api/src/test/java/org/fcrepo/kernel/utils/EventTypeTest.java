@@ -33,7 +33,7 @@ public class EventTypeTest {
         assertEquals("node added", valueOf(NODE_ADDED).getName());
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testBadEvent() {
         valueOf(9999999);
     }

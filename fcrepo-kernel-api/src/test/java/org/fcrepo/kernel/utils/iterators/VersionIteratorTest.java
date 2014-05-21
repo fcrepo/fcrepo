@@ -39,7 +39,10 @@ public class VersionIteratorTest {
     javax.jcr.version.VersionIterator i;
 
     @Mock
-    Version v1, v2;
+    Version v1;
+
+    @Mock
+    Version v2;
 
     VersionIterator testIterator;
 

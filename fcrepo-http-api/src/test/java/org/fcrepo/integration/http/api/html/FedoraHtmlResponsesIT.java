@@ -200,8 +200,13 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
 
         final HtmlPage objectPage = webClient.getPage(serverAddress + pid);
-        assertEquals("Auto versioning should be set.", "auto-version", objectPage.getFirstByXPath("//span[@property='http://fedora.info/definitions/v4/config#versioningPolicy']/text()").toString());
-        assertEquals("Title should be set.", "Object Title", objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()").toString());
+        assertEquals("Auto versioning should be set.", "auto-version",
+                     objectPage.getFirstByXPath(
+                             "//span[@property='http://fedora.info/definitions/v4/config#versioningPolicy']/text()")
+                             .toString());
+        assertEquals("Title should be set.", "Object Title",
+                     objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()")
+                             .toString());
 
         final String updateSparql2 = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "\n" +
@@ -223,7 +228,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
             castList(versions
                     .getByXPath("//a[@class='version_link']/text()"));
         final boolean chronological = labels.get(0).asText().compareTo(labels.get(1).toString()) < 0;
-        logger.debug("Versions {} in chronological order: {}, {}", chronological ? "are" : "are not", labels.get(0).asText(), labels.get(1).asText());
+        logger.debug("Versions {} in chronological order: {}, {}",
+                     chronological ? "are" : "are not", labels.get(0).asText(), labels.get(1).asText());
 
         final HtmlPage firstRevision =
             webClient.getPage(versionLinks.get(chronological ? 0 : 1)
@@ -305,7 +311,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     private void checkForHeaderBranding(final HtmlPage page) {
-        assertNotNull(page.getFirstByXPath("//nav[@role='navigation']/div[@class='navbar-header']/a[@class='navbar-brand']"));
+        assertNotNull(
+                page.getFirstByXPath("//nav[@role='navigation']/div[@class='navbar-header']/a[@class='navbar-brand']"));
     }
 
     private String createNewObject() throws IOException {

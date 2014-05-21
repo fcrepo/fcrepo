@@ -123,7 +123,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + objName + "/fcr:export");
-        HttpResponse response = client.execute(getObjMethod);
+        final HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 

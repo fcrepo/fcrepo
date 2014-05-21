@@ -16,7 +16,6 @@
 package org.fcrepo.integration;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
@@ -29,7 +28,6 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
-import javax.jcr.LoginException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -57,7 +55,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
     ObjectService objectService;
 
     @Test
-    public void testLdpathWithConfiguredProgram() throws RepositoryException, ClientProtocolException, IOException {
+    public void testLdpathWithConfiguredProgram() throws RepositoryException, IOException {
 
         final Session session = repo.login();
         try {
@@ -66,7 +64,8 @@ public class FedoraTransformIT extends AbstractResourceIT {
         } finally {
             session.logout();
         }
-        final HttpGet postLdpathProgramRequest = new HttpGet(serverAddress + "/ldpathConfigTestObject/fcr:transform/default");
+        final HttpGet postLdpathProgramRequest =
+                new HttpGet(serverAddress + "/ldpathConfigTestObject/fcr:transform/default");
         final HttpResponse response = client.execute(postLdpathProgramRequest);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -80,8 +79,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testLdpathWithProgramBody() throws LoginException, RepositoryException, ClientProtocolException,
-        IOException {
+    public void testLdpathWithProgramBody() throws RepositoryException, IOException {
         final Session session = repo.login();
         try {
             objectService.createObject(session, "/ldpathTestObject");

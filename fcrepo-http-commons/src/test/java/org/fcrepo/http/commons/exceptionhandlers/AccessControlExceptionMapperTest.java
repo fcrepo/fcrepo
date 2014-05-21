@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import javax.jcr.security.AccessControlException;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.http.commons.exceptionhandlers.AccessControlExceptionMapper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,8 +40,8 @@ public class AccessControlExceptionMapperTest {
 
     @Test
     public void testToResponse() {
-        AccessControlException input = new AccessControlException();
-        Response actual = testObj.toResponse(input);
+        final AccessControlException input = new AccessControlException();
+        final Response actual = testObj.toResponse(input);
         assertEquals(FORBIDDEN.getStatusCode(), actual.getStatus());
     }
 }

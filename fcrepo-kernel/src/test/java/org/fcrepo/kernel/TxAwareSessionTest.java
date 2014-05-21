@@ -83,7 +83,7 @@ public class TxAwareSessionTest {
         verify(mockSession, never()).save();
     }
 
-    @Test(expected=PathNotFoundException.class)
+    @Test(expected = PathNotFoundException.class)
     public void shouldThrowUnderlyingException() throws RepositoryException {
         when(mockSession.getNode(PATH)).thenThrow(
                 new PathNotFoundException());

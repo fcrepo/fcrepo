@@ -40,7 +40,10 @@ public class NodeTypeIteratorTest {
     javax.jcr.nodetype.NodeTypeIterator i;
 
     @Mock
-    NodeType node1, node2;
+    NodeType node1;
+
+    @Mock
+    NodeType node2;
 
     @InjectMocks
     NodeTypeIterator testIterator;

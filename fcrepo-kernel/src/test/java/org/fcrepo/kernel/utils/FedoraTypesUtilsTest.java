@@ -139,7 +139,10 @@ public class FedoraTypesUtilsTest {
     private Row mockRow;
 
     @Mock
-    private Value mockValue, mockValue2;
+    private Value mockValue;
+
+    @Mock
+    private Value mockValue2;
 
     @Mock
     private Property mockProperty;
@@ -174,7 +177,8 @@ public class FedoraTypesUtilsTest {
         try {
             test.apply(mockYes);
             fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {
+        } // expected
     }
 
     @Test
@@ -229,7 +233,8 @@ public class FedoraTypesUtilsTest {
         try {
             getPredicateForProperty.apply(mockProp);
             fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {
+        } // expected
     }
 
     @Test
@@ -293,7 +298,8 @@ public class FedoraTypesUtilsTest {
             isInternalNode.apply(mockNode);
             fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
                  " after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {
+        } // expected
     }
 
     @Test
@@ -303,17 +309,20 @@ public class FedoraTypesUtilsTest {
             isFedoraResource.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraResource" +
                     " completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {
+        } // expected
         try {
             isFedoraObject.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraObject" +
                     " completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {
+        } // expected
         try {
             isFedoraDatastream.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraDatastream" +
                  " completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {
+        } // expected
     }
 
     @Test
@@ -326,12 +335,14 @@ public class FedoraTypesUtilsTest {
             value2string.apply(mockValue);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion after RepositoryException!");
-        } catch (final RuntimeException e) {} // expected
+        } catch (final RuntimeException e) {
+        } // expected
         try {
             value2string.apply(null);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion with null argument!");
-        } catch (final NullPointerException e) {} // expected
+        } catch (final NullPointerException e) {
+        } // expected
     }
 
     @Test

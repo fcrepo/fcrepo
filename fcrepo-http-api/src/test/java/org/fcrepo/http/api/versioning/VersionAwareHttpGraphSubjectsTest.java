@@ -39,6 +39,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
+/**
+ * @author Mike Durbin
+ * @since 2014-02-21
+ */
 public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
 
     @Mock
