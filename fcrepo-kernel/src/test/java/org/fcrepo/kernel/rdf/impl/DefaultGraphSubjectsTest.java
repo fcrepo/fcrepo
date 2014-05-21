@@ -144,4 +144,8 @@ public class DefaultGraphSubjectsTest {
                 context.isAnon());
     }
 
+    @Test
+    public void testGetHierarchyLevels() {
+        assertTrue(testObj.getHierarchyLevels() >= 0);
+    }
 }

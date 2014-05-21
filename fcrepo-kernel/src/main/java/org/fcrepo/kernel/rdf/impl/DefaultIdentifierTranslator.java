@@ -85,4 +85,9 @@ public class DefaultIdentifierTranslator implements IdentifierTranslator {
         return subject.isURIResource() && subject.getURI().startsWith(RESOURCE_NAMESPACE);
     }
 
+    @Override
+    public int getHierarchyLevels() {
+        return 0;
+    }
+
 }

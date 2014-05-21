@@ -221,6 +221,11 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
         return ui;
     }
 
+    @Test
+    public void testGetHierarchyLevels() {
+        assertTrue(testObj.getHierarchyLevels() >= 0);
+    }
+
     @Path("/rest/{path}")
     protected class MockNodeController {
 

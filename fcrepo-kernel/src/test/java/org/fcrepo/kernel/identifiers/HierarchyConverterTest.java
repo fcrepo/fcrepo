@@ -263,4 +263,15 @@ public class HierarchyConverterTest {
         result = testTranslator.convertNamespace(testNamespace);
         assertEquals("Should not change this namespace!", testNamespace, result);
     }
+
+    @Test
+    public void testGetHierarchyLevels() {
+        assertTrue(testTranslator.getLevels() >= 0);
+    }
+
+    @Test
+    public void testSetHierarchyLevels() {
+        testTranslator.setLevels(2);
+        assertTrue(testTranslator.getLevels() == 2);
+    }
 }
