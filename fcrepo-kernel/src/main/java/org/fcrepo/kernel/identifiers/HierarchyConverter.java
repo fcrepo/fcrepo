@@ -288,4 +288,12 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             return namespace;
         }
     }
+
+    /**
+     * Get hierarchy levels
+     */
+    @Override
+    public int getLevels() {
+        return levels;
+    }
 }

@@ -18,6 +18,7 @@ package org.fcrepo.kernel.identifiers;
 import static java.util.Collections.singletonList;
 import static org.fcrepo.kernel.identifiers.InternalIdentifierConverter.identityConverter;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +36,11 @@ public class ExternalIdentifierTranslatorTest {
     @Before
     public void setUp() {
         testTranslator = new ExternalIdentifierConverter();
+    }
+
+    @Test
+    public void testGetHierarchyLevels() {
+        assertTrue(testTranslator.getLevels() >= 0);
     }
 
     @Test

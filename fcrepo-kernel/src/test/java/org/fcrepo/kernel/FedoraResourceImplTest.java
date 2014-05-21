@@ -41,8 +41,10 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -108,6 +110,9 @@ public class FedoraResourceImplTest {
 
     @Mock
     private Property mockProp;
+
+    @Mock
+    NodeType mockNodeType;
 
     private Triple mockTriple =
         create(createAnon(), createAnon(), createAnon());
@@ -421,6 +426,38 @@ public class FedoraResourceImplTest {
         assertEquals(shaHex("some-path"
                 + testObj.getLastModifiedDate().toString()), testObj
                 .getEtagValue());
+    }
+
+    @Test
+    public void testStaticFindChildren() throws Exception {
+        Node mockChildNode = mock(Node.class);
+        IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        NodeIterator mockNodeIterator = mock(NodeIterator.class);
+        when(mockNode.getNodes()).thenReturn(mockNodeIterator);
+        when(mockNodeIterator.hasNext()).thenReturn(true, false);
+        when(mockNodeIterator.nextNode()).thenReturn(mockChildNode);
+        when( mockChildNode.getPath() ).thenReturn("/foo/bar");
+        when( mockChildNode.getName() ).thenReturn("bar");
+        when( mockChildNode.getPrimaryNodeType() ).thenReturn(mockNodeType);
+        when( mockNodeType.isNodeType(anyString()) ).thenReturn(false);
+        final Iterator<Node> result = FedoraResourceImpl.getChildren(mockNode, mockConverter);
+        assertEquals( "Child not found", mockChildNode, result.next());
+    }
+
+    @Test
+    public void testFindChildren() throws Exception {
+        Node mockChildNode = mock(Node.class);
+        IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        NodeIterator mockNodeIterator = mock(NodeIterator.class);
+        when(mockNode.getNodes()).thenReturn(mockNodeIterator);
+        when(mockNodeIterator.hasNext()).thenReturn(true, false);
+        when(mockNodeIterator.nextNode()).thenReturn(mockChildNode);
+        when( mockChildNode.getPath() ).thenReturn("/foo/bar");
+        when( mockChildNode.getName() ).thenReturn("bar");
+        when( mockChildNode.getPrimaryNodeType() ).thenReturn(mockNodeType);
+        when( mockNodeType.isNodeType(anyString()) ).thenReturn(false);
+        final Iterator<Node> result = testObj.getChildren(mockConverter);
+        assertEquals( "Child not found", mockChildNode, result.next());
     }
 
 }

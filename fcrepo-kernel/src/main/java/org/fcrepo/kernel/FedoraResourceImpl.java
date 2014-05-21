@@ -31,16 +31,23 @@ import static org.fcrepo.kernel.utils.FedoraTypesUtils.map;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.nodetype2name;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.property2values;
 import static org.fcrepo.kernel.utils.FedoraTypesUtils.value2string;
+import static org.fcrepo.kernel.utils.FedoraTypesUtils.isInternalNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.Version;
@@ -385,5 +392,70 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             return shaHex(node.getPath() + lastModifiedDate);
         }
         return "";
+    }
+
+    @Override
+    public Iterator<Node> getChildren(IdentifierTranslator graphSubjects) throws RepositoryException {
+        return getChildren(node, graphSubjects);
+    }
+
+    /**
+     * Retrieve children of a node
+     * @param node
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    public static Iterator<Node> getChildren(Node node, IdentifierTranslator graphSubjects) throws RepositoryException {
+        int hierarchyLevels = graphSubjects.getHierarchyLevels();
+        return findChildren(node, hierarchyLevels);
+    }
+
+    /**
+     * Find the child resources of a path.
+     * @param recurse If true, find all descenant resources, not just direct children.
+     * @throws RepositoryException
+    **/
+    private static Iterator<Node> findChildren(Node node, int hierarchyLevels) throws RepositoryException {
+        final Map<String, Node> childrenMap = new TreeMap<>();
+        final List<Node> children = new ArrayList<>();
+        findChildren( node, children, false );
+        for (int i = 0; i < hierarchyLevels && children.size() > 0; i++) {
+            final List<Node> childrenCopy = new ArrayList<>();
+            childrenCopy.addAll(children);
+            children.clear();
+            for (Node child : childrenCopy) {
+                findChildren( child, children, false );
+            }
+        }
+
+        for (Node child : children) {
+            childrenMap.put(child.getPath(), child);
+        }
+        return childrenMap.values().iterator();
+    }
+
+    /**
+     * Find children of a node.
+     * @param node Repository node to find children of
+     * @param children Set to add child paths to
+     * @param If true, find all descendant paths, not just direct child paths
+    **/
+    private static void findChildren(final Node node, final List<Node> children, final boolean recurse)
+        throws RepositoryException {
+        if (node.getNodes() == null) {
+            System.out.println("Null nodes");
+        }
+        for (final NodeIterator nodes = node.getNodes(); nodes.hasNext();) {
+            Node child = nodes.nextNode();
+            if (!isInternalNode.apply(child) && !child.getName().equals(JCR_CONTENT)) {
+
+                children.add(child);
+
+                if (recurse) {
+                    findChildren(child, children, recurse);
+                }
+            }
+        }
     }
 }

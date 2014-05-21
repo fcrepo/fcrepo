@@ -57,4 +57,10 @@ public interface IdentifierTranslator {
      * @return Resource
      */
     Resource getContext();
+
+    /**
+     * Get the hierarchy levels for translation
+     * @return
+     */
+    int getHierarchyLevels();
 }

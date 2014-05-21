@@ -17,7 +17,7 @@ package org.fcrepo.kernel;
 
 import java.util.Collection;
 import java.util.Date;
-
+import java.util.Iterator;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
@@ -136,6 +136,16 @@ public interface FedoraResource {
     RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
                                   final HierarchyRdfContextOptions serializationOptions)
         throws RepositoryException;
+
+    /**
+     * Return a list children of this object
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    Iterator<Node> getChildren(final IdentifierTranslator graphSubjects)
+        throws RepositoryException;
+
 
     /**
      * Serialize the JCR versions information as an RDF dataset

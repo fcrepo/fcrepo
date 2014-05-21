@@ -19,6 +19,7 @@ import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.HierarchyConverter;
 import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
 import org.fcrepo.kernel.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
@@ -130,6 +131,13 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
         this.defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 normalizedBasePath);
+        resetTranslationChain();
+        for (InternalIdentifierConverter converter : translationChain) {
+            if (converter instanceof HierarchyConverter) {
+                hierarchyLevels = converter.getLevels();
+                break;
+            }
+        }
     }
 
     /**
@@ -317,4 +325,13 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
 
     private static final List<InternalIdentifierConverter> minimalTranslationChain =
         singletonList((InternalIdentifierConverter) new NamespaceConverter());
+
+    /**
+     * Hierarchy levels. Default 1 for converters other than the HierarchyConverter.
+     * @return
+     */
+    @Override
+    public int getHierarchyLevels() {
+        return hierarchyLevels;
+    }
 }
