@@ -37,6 +37,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
@@ -211,6 +212,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertEquals("Object wasn't created!", OK.getStatusCode(),
                 getStatus(new HttpGet(location)));
+    }
+
+    @Test
+    public void testIngestWithRepeatedSlug() throws Exception {
+        final String pid = getRandomUniquePid();
+        final HttpPut put = new HttpPut(serverAddress + pid);
+        assertEquals(201, getStatus(put));
+
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Slug", pid);
+        assertEquals(409, getStatus(method));
     }
 
     @Test
@@ -740,6 +752,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testRepeatedPut() throws Exception {
+        final String pid = getRandomUniquePid();
+        final HttpPut firstPut = new HttpPut(serverAddress + pid);
+        assertEquals(201, getStatus(firstPut));
+
+        final HttpPut secondPut = new HttpPut(serverAddress + pid);
+        assertEquals(409, getStatus(secondPut));
+    }
+
+    @Test
     public void testFilteredLDPTypes() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
@@ -1050,6 +1072,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCopyDestExists() throws Exception {
+
+        final HttpResponse response1 = createObject("");
+        final String location1 = response1.getFirstHeader("Location").getValue();
+        final HttpResponse response2 = createObject("");
+        final String location2 = response2.getFirstHeader("Location").getValue();
+
+        final HttpCopy request = new HttpCopy(location1);
+        request.addHeader("Destination", location2);
+        final HttpResponse result = client.execute(request);
+
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), result.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testMove() throws Exception {
 
         final String pid = getRandomUniquePid();
@@ -1067,6 +1104,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpResponse originalResult = client.execute(new HttpGet(location));
         assertEquals(NOT_FOUND.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testMoveDestExists() throws Exception {
+
+        final HttpResponse response1 = createObject("");
+        final String location1 = response1.getFirstHeader("Location").getValue();
+        final HttpResponse response2 = createObject("");
+        final String location2 = response2.getFirstHeader("Location").getValue();
+
+        final HttpMove request = new HttpMove(location1);
+        request.addHeader("Destination", location2);
+        final HttpResponse result = client.execute(request);
+
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), result.getStatusLine().getStatusCode());
     }
 
     @Test
