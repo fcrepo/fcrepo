@@ -395,7 +395,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     @Override
-    public Iterator<Node> getChildren(IdentifierTranslator graphSubjects) throws RepositoryException {
+    public Iterator<Node> getChildren(final IdentifierTranslator graphSubjects) throws RepositoryException {
         return getChildren(node, graphSubjects);
     }
 
@@ -406,8 +406,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @return
      * @throws RepositoryException
      */
-    public static Iterator<Node> getChildren(Node node, IdentifierTranslator graphSubjects) throws RepositoryException {
-        int hierarchyLevels = graphSubjects.getHierarchyLevels();
+    public static Iterator<Node> getChildren(final Node node, final IdentifierTranslator graphSubjects)
+            throws RepositoryException {
+        final int hierarchyLevels = graphSubjects.getHierarchyLevels();
         return findChildren(node, hierarchyLevels);
     }
 
@@ -416,7 +417,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @param recurse If true, find all descenant resources, not just direct children.
      * @throws RepositoryException
     **/
-    private static Iterator<Node> findChildren(Node node, int hierarchyLevels) throws RepositoryException {
+    private static Iterator<Node> findChildren(final Node node, final int hierarchyLevels) throws RepositoryException {
         final Map<String, Node> childrenMap = new TreeMap<>();
         final List<Node> children = new ArrayList<>();
         findChildren( node, children, false );
@@ -429,7 +430,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             }
         }
 
-        for (Node child : children) {
+        for (final Node child : children) {
             childrenMap.put(child.getPath(), child);
         }
         return childrenMap.values().iterator();
@@ -447,7 +448,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             System.out.println("Null nodes");
         }
         for (final NodeIterator nodes = node.getNodes(); nodes.hasNext();) {
-            Node child = nodes.nextNode();
+            final Node child = nodes.nextNode();
             if (!isInternalNode.apply(child) && !child.getName().equals(JCR_CONTENT)) {
 
                 children.add(child);

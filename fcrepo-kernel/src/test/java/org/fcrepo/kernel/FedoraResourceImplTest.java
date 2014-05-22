@@ -430,9 +430,9 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testStaticFindChildren() throws Exception {
-        Node mockChildNode = mock(Node.class);
-        IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
-        NodeIterator mockNodeIterator = mock(NodeIterator.class);
+        final Node mockChildNode = mock(Node.class);
+        final IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        final NodeIterator mockNodeIterator = mock(NodeIterator.class);
         when(mockNode.getNodes()).thenReturn(mockNodeIterator);
         when(mockNodeIterator.hasNext()).thenReturn(true, false);
         when(mockNodeIterator.nextNode()).thenReturn(mockChildNode);
@@ -446,9 +446,9 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testFindChildren() throws Exception {
-        Node mockChildNode = mock(Node.class);
-        IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
-        NodeIterator mockNodeIterator = mock(NodeIterator.class);
+        final Node mockChildNode = mock(Node.class);
+        final IdentifierTranslator mockConverter = mock(IdentifierTranslator.class);
+        final NodeIterator mockNodeIterator = mock(NodeIterator.class);
         when(mockNode.getNodes()).thenReturn(mockNodeIterator);
         when(mockNodeIterator.hasNext()).thenReturn(true, false);
         when(mockNodeIterator.nextNode()).thenReturn(mockChildNode);
