@@ -18,6 +18,7 @@ package org.fcrepo.integration.kernel;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -51,7 +52,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeManager;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -59,6 +64,7 @@ import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -543,4 +549,48 @@ public class FedoraResourceImplIT extends AbstractIT {
                               subjects.getSubject(object.getPath()))
         );
     }
+
+    @Test
+    public void testReplaceProperties() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraObject object = objectService.createObject(session, pid);
+
+        final StmtIterator stmtIterator = object.getPropertiesDataset(subjects).getDefaultModel().listStatements();
+        final Model model = createDefaultModel().add(stmtIterator);
+
+        final Resource resource = model.createResource();
+        final Resource subject = subjects.getSubject(object.getPath());
+        final Property predicate = model.createProperty("info:xyz");
+        model.add(subject, predicate, resource);
+        model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
+
+        object.replaceProperties(subjects, model);
+
+        final PropertyIterator properties = new PropertyIterator(object.getNode().getProperties());
+
+        final UnmodifiableIterator<javax.jcr.Property> relation
+            = Iterators.filter(properties, new Predicate<javax.jcr.Property>() {
+                @Override
+                public boolean apply(final javax.jcr.Property property) {
+                    try {
+                        return property.getName().contains("xyz_ref");
+                    } catch (RepositoryException e) {
+                        return false;
+                    }
+                }
+        });
+
+        assertTrue(relation.hasNext());
+
+        final javax.jcr.Property next = relation.next();
+        final Value[] values = next.getValues();
+        assertEquals(1, values.length);
+
+        final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
+
+        assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
+        assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
+
+    }
+
 }

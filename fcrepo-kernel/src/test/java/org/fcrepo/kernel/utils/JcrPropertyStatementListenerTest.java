@@ -239,7 +239,7 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testAddRdfType() throws RepositoryException {
 
-        final Resource resource = createResource();
+        final Resource resource = createResource("xyz");
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
         when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
 
@@ -280,7 +280,7 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testAddRdfTypeForNonMixin() throws RepositoryException {
 
-        final Resource resource = createResource();
+        final Resource resource = createResource("xyz");
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
         when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
 
