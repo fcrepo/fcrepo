@@ -24,6 +24,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -31,6 +32,7 @@ import static org.modeshape.common.util.SecureHash.getHash;
 import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
@@ -244,10 +246,44 @@ public class FedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
+        checkFixity(datastreamService.getDatastreamNode(session, testFile + "/jcr:content"));
+
+        session.save();
+        session.logout();
+    }
+
+    @Test
+    public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
+        final Session session = repo.login();
+
         final Node node = datastreamService.getDatastreamNode(session, testFile + "/jcr:content");
+
+        final String originalFixity = checkFixity(node);
+
+        final File file = fileForNode(node);
+        appendToFile(file, " ");
+
+        final String newFixity = checkFixity(node);
+
+        assertNotEquals("Checksum is expected to have changed!", originalFixity, newFixity);
+
+        session.save();
+        session.logout();
+    }
+
+    private void appendToFile(final File f, final String data) throws IOException {
+        final FileOutputStream fos = new FileOutputStream(f, true);
+        try {
+            fos.write(data.getBytes("UTF-8"));
+        } finally {
+            fos.close();
+        }
+    }
+
+    private String checkFixity(final Node node) throws IOException, NoSuchAlgorithmException, RepositoryException {
         assertNotNull(node);
 
-        final File file = new File(getProperty(PROP_TEST_DIR), testFile.replace("federated", ""));
+        final File file = fileForNode(node);
         final byte[] hash = getHash(SHA_1, file);
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
@@ -262,9 +298,10 @@ public class FedoraFileSystemConnectorIT {
             final FixityResult result = resultIterator.next();
             assertTrue(result.isSuccess());
         }
-
-        session.save();
-        session.logout();
+        return calculatedChecksum.toString();
     }
 
+    private File fileForNode(final Node node) {
+        return new File(getProperty(PROP_TEST_DIR), testFile.replace("federated", ""));
+    }
 }

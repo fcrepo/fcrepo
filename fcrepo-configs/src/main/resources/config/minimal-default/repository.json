@@ -29,17 +29,6 @@
             "minimumBinarySizeInBytes" : 4096
         }
     },
-
-    "externalSources" : {
-        "federated-directory" : {
-            "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
-            "directoryPath" : "/home/md5wz/Documents/projects/fs-federation",
-            "projections" : [ "default:/federated => /" ],
-            "contentBasedSha1" : "true",
-            "readonly" : false,
-            "extraPropertiesStorage" : "json"
-        }
-    },
     "security" : {
         "anonymous" : {
             "roles" : ["readonly","readwrite","admin"],
