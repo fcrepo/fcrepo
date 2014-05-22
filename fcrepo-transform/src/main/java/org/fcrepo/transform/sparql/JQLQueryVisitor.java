@@ -58,6 +58,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
 import org.fcrepo.transform.exception.JQLParsingException;
 import org.modeshape.common.collection.Collections;
@@ -135,6 +136,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private Map<String, Source> joins;
     private Map<String, String> joinTypes;
     private Map<String, JoinCondition> joinConditions;
+    private IdentifierTranslator subjects;
 
     /**
      * Create a new query
@@ -144,7 +146,12 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      */
     public JQLQueryVisitor(final Session session,
                            final JcrRdfTools jcrTools,
-                           final QueryManager queryManager) {
+                           final QueryManager queryManager,
+                           final IdentifierTranslator subjects) {
+        if (null == subjects) {
+            throw new IllegalArgumentException("IdentifierTranslator is null!");
+        }
+
         this.session = session;
         this.jcrTools = jcrTools;
         this.queryFactory = queryManager.getQOMFactory();
@@ -153,6 +160,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         this.joins = new HashMap<>();
         this.joinTypes = new HashMap<>();
         this.joinConditions = new HashMap<>();
+        this.subjects = subjects;
     }
 
     /**
@@ -168,6 +176,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         this.variables = jqlQueryVisitor.variables;
         this.joins = jqlQueryVisitor.joins;
         this.joinConditions = jqlQueryVisitor.joinConditions;
+        this.subjects = jqlQueryVisitor.subjects;
     }
 
     /**
@@ -545,9 +554,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     throw new NotImplementedException("Element path with constant subject and variable predicate");
 
                 } else if (object.isVariable()) {
-                    throw new NotImplementedException(
-                            "Element path with constant subject and predicate, and a variable object");
-
+                    convertConstantSubjectElementBlock(subject, predicate, object, defaultModel);
                 } else {
                     throw new NotImplementedException("Element path with constant subject/predicate/object");
                 }
@@ -555,6 +562,76 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             }
         } catch (final RepositoryException e) {
             throw propagate(e);
+        }
+    }
+
+    private void convertConstantSubjectElementBlock(final Node subject,
+                                                    final Node predicate,
+                                                    final Node object,
+                                                    final Model model)
+            throws RepositoryException {
+
+        final String subjectUri = subject.getURI();
+
+        // Go through the IdentifierConverter for potential transparent hierarchy path conversion.
+        final String path = subjects.getPathFromSubject(model.createResource(subjectUri));
+
+        final String subjectSelector = "fedoraResource_" + path.replace("/", "_");
+
+        joins.put(subjectUri, queryFactory.selector(FEDORA_RESOURCE, subjectSelector));
+
+        // Trick to add constraint for the constant subject through the jcr internal property jcr:path
+        addPathConstraint(subjectSelector, model, path);
+
+        if (predicate.isVariable()) {
+            throw new NotImplementedException("Element path may not contain a variable predicate");
+        }
+
+        final String propertyName = jcrTools.getPropertyNameFromPredicate(model.createProperty(predicate.getURI()));
+        if (propertyName.equals("rdf:type") && object.isURI()) {
+            final String mixinName = jcrTools.getPropertyNameFromPredicate(model.createProperty(object.getURI()));
+
+            if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
+                final String selectorName = "ref_type_" + mixinName.replace(":", "_");
+
+                joins.put(selectorName, queryFactory.selector(mixinName, selectorName));
+
+                joinTypes.put(selectorName, JCR_JOIN_TYPE_INNER);
+                joinConditions.put(selectorName,
+                                   queryFactory.sameNodeJoinCondition(subject.getURI(), selectorName, "."));
+                return;
+            }
+        }
+
+        final Column objectColumn;
+        final int propertyType = jcrTools.getPropertyType(FEDORA_RESOURCE, propertyName);
+        if ((propertyType == REFERENCE || propertyType == WEAKREFERENCE || propertyType == URI)
+                && variables.containsKey(object.getName()))  {
+
+            objectColumn = variables.get(object.getName());
+
+            final String joinPropertyName;
+
+            if (propertyType == URI) {
+                joinPropertyName = getReferencePropertyName(propertyName);
+            } else {
+                joinPropertyName = propertyName;
+            }
+
+            joinConditions.put(object.getName(), queryFactory.equiJoinCondition(
+                    subjectSelector, joinPropertyName, objectColumn.getSelectorName(), "jcr:uuid"));
+        } else {
+            objectColumn = queryFactory.column(subjectSelector, propertyName, object.getName());
+
+            variables.put(object.getName(), objectColumn);
+
+            if (resultsVars.contains(object.getName())) {
+                columns.add(objectColumn);
+            }
+        }
+
+        if (!inOptional) {
+            appendConstraint(queryFactory.propertyExistence(subjectSelector, propertyName));
         }
     }
 
@@ -846,4 +923,17 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             constraint = queryFactory.and(constraint, c);
         }
     }
+
+    /*
+     * jcr:path property constraint for a constant subject
+     */
+    private void addPathConstraint(final String selector, final Model model, final String path)
+            throws RepositoryException {
+        final PropertyValue fieldPath = queryFactory.propertyValue(selector, "jcr:path");
+        final Value jcrValuePath = jcrTools.createValue(model.createLiteral(path),
+                jcrTools.getPropertyType(FEDORA_RESOURCE, "jcr:path"));
+        final Literal literalPath = queryFactory.literal(jcrValuePath);
+        appendConstraint(queryFactory.comparison(fieldPath, JCR_OPERATOR_EQUAL_TO, literalPath));
+    }
+
 }

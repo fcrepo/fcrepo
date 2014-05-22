@@ -284,4 +284,62 @@ public class JQLConverterIT {
 
         assertEquals(expectedQuery.replaceAll("ns001", namespacePrefix), statement);
     }
+
+    @Test
+    public void testConstantSubjectQuery() throws RepositoryException {
+        final String path = "/foo";
+        final String selector = "fedoraResource_" + path.replace("/", "_");
+        final String baseUri = subjects.getBaseUri();
+        final String subjectUri = (baseUri.endsWith("/") ? baseUri.substring(0, baseUri.length() - 1) : baseUri) + path;
+        final String sparql = "PREFIX fcrepo: <http://fedora.info/definitions/v4/repository#> "
+                + "select ?date where { <" + subjectUri + "> fcrepo:created ?date }";
+        final String expectedQuery =
+                "SELECT [" + selector + "].[jcr:created] AS date " +
+                        "FROM [fedora:resource] AS [" + selector + "] " +
+                        "WHERE ([" + selector + "].[jcr:path] = '" + path + "' AND " +
+                        "[" + selector + "].[jcr:created] IS NOT NULL)";
+        final JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
+
+        assertEquals(expectedQuery, testObj.getStatement());
+    }
+
+    @Test
+    public void testConstantSubjectSimpleReferenceQuery() throws RepositoryException {
+        final String path = "/foo";
+        final String selector = "fedoraResource_" + path.replace("/", "_");
+        final String baseUri = subjects.getBaseUri();
+        final String subjectUri = (baseUri.endsWith("/") ? baseUri.substring(0, baseUri.length() - 1) : baseUri) + path;
+        final String sparql =
+                "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#> " +
+                "SELECT ?part WHERE { <" + subjectUri + "> fedorarelsext:hasPart ?part }";
+        final String expectedQuery =
+                "SELECT [" + selector + "].[fedorarelsext:hasPart] AS part " +
+                        "FROM [fedora:resource] AS [" + selector + "] " +
+                        "WHERE ([" + selector + "].[jcr:path] = '" + path + "' AND " +
+                        "[" + selector + "].[fedorarelsext:hasPart] IS NOT NULL)";
+        final JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
+        assertEquals(expectedQuery, testObj.getStatement());
+
+    }
+
+    @Test
+    public void testConstantSubjectReferenceQuery() throws RepositoryException {
+        final String path = "/foo";
+        final String selector = "fedoraResource_" + path.replace("/", "_");
+        final String baseUri = subjects.getBaseUri();
+        final String subjectUri = (baseUri.endsWith("/") ? baseUri.substring(0, baseUri.length() - 1) : baseUri) + path;
+        final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>" +
+                "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>" +
+                "SELECT ?title WHERE { <" + subjectUri + "> fedorarelsext:hasPart ?part . " +
+                "?part dc:title ?title }";
+        final String expectedQuery =
+                "SELECT [fedoraResource_part].[dc:title] AS title FROM [fedora:resource] AS " +
+                        "[" + selector + "] LEFT OUTER JOIN [fedora:resource] AS [fedoraResource_part] ON " +
+                        "[" + selector + "].[fedorarelsext:hasPart] = [fedoraResource_part].[jcr:uuid] " +
+                        "WHERE (([" + selector + "].[jcr:path] = '" + path + "' AND " +
+                        "[" + selector + "].[fedorarelsext:hasPart] IS NOT NULL) AND " +
+                        "[fedoraResource_part].[dc:title] IS NOT NULL)";
+        final JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
+        assertEquals(expectedQuery, testObj.getStatement());
+    }
 }
