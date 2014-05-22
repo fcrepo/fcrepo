@@ -31,6 +31,7 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -638,7 +639,14 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     public void postVersion(final String path, final String label) throws IOException {
         logger.debug("Posting version");
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions" + (label == null ? "" : "/" + label));
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(postVersion));
+        final HttpResponse response = client.execute(postVersion);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode() );
+        final String locationHeader = response.getFirstHeader("Location").getValue();
+        assertNotNull( "No version location header found", locationHeader );
+        if ( label != null ) {
+            assertEquals( "Version location header doesn't match requested version label",
+                    serverAddress + path + "/fcr:versions/" + label, locationHeader );
+        }
     }
 
     private void revertToVersion(final String objId, final String versionLabel) throws IOException {
