@@ -51,9 +51,10 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
+import static java.util.Collections.singleton;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -199,12 +200,14 @@ public class FedoraVersions extends ContentExposingResource {
         try {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
-            versionService.createVersion(session.getWorkspace(),
-                    Collections.singleton(path));
+            final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
+                                                                             singleton(path));
             if (label != null) {
                 resource.addVersionLabel(label);
             }
-            return noContent().build();
+            final String version = (label != null) ? label : versions.iterator().next();
+            return noContent().header("Location", nodeTranslator().getSubject(
+                path) + "/fcr:versions/" + version).build();
         } finally {
             session.logout();
         }

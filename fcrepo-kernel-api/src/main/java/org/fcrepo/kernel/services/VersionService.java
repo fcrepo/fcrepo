@@ -59,8 +59,7 @@ public interface VersionService extends Service {
      * @param paths absolute paths to the nodes within the workspace
      * @throws RepositoryException
      */
-    void createVersion(Workspace workspace, Collection<String> paths)
-        throws RepositoryException;
+    Collection<String> createVersion(Workspace workspace, Collection<String> paths) throws RepositoryException;
 
     /**
      * Reverts the node to the version identified by the label.  This method
