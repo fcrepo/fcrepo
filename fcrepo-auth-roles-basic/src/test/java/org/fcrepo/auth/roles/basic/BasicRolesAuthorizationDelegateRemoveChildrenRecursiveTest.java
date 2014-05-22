@@ -206,10 +206,9 @@ public class BasicRolesAuthorizationDelegateRemoveChildrenRecursiveTest {
         when(writableNode.hasNodes()).thenReturn(true);
         when(writableNode.getNodes()).thenReturn(nodeIterator(readableNode));
 
-        assertFalse(
-                "Should deny remove for a writable node which has an unwritable child with depth greater than one level",
-                authorizationDelegate.hasPermission(mockSession, parentPath,
-                        REMOVE_ACTION));
+        assertFalse("Should deny remove for a writable node which has an unwritable child with depth greater " +
+                            "than one level",
+                authorizationDelegate.hasPermission(mockSession, parentPath, REMOVE_ACTION));
     }
 
 }

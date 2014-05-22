@@ -19,7 +19,7 @@ package org.fcrepo.jcr;
  * Convenience class with constants for commonly used JCR types.
  *
  * @author ajs6f
- * @date Apr 25, 2013
+ * @since Apr 25, 2013
  */
 public interface FedoraJcrTypes {
 

@@ -172,7 +172,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
     /**
      * Get the raw JCR query
-     * @return
+     * @return the JCR query
      * @throws RepositoryException
      */
     public QueryObjectModel getQuery() throws RepositoryException {
@@ -200,7 +200,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
     /**
      * Get the JCR query source information
-     * @return
+     * @return query source information
      */
     private Source getSource() {
         final Sets.SetView<String> difference = difference(joins.keySet(), joinConditions.keySet());
@@ -242,7 +242,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
     /**
      * Get the columns for the JCR query
-     * @return
+     * @return the query columns
      */
     private Column[] getColumns() {
         final ImmutableSet<Column> build = this.columns.build();
@@ -251,7 +251,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
     /**
      * Get the ordering of the JCR query
-     * @return
+     * @return the query ordering
      */
     private Ordering[] getOrderings() {
         final ImmutableList<Ordering> build = this.orderings.build();
@@ -260,7 +260,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
     /**
      * Get the constraints imposed on the JCR query
-     * @return
+     * @return the query constraints
      */
     private Constraint getConstraint() {
         return this.constraint;

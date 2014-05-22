@@ -35,6 +35,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>FedoraImportTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraImportTest {
 
     FedoraImport testObj;

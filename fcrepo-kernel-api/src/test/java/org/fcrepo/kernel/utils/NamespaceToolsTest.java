@@ -28,6 +28,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>NamespaceToolsTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class NamespaceToolsTest {
 
     @Mock

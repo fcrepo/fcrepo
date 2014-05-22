@@ -19,7 +19,7 @@ import org.fcrepo.http.commons.responses.StreamingBaseHtmlProvider;
 import org.springframework.stereotype.Component;
 
 /**
- * JAX-RS provider for taking an {@link RdfStream} and returning some nice looking
+ * JAX-RS provider for taking an RdfStream and returning some nice looking
  * HTML
  *
  * @author ajs6f

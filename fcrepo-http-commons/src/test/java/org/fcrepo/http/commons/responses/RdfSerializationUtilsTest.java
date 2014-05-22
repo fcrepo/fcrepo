@@ -42,6 +42,11 @@ import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
+/**
+ * <p>RdfSerializationUtilsTest class.</p>
+ *
+ * @author awoods
+ */
 public class RdfSerializationUtilsTest {
 
     Dataset testData = new DatasetImpl(createDefaultModel());

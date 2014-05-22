@@ -26,7 +26,7 @@ import com.google.common.util.concurrent.FutureCallback;
  * It simply logs out the {@link Session} involved.
  *
  * @author ajs6f
- * @date Oct 30, 2013
+ * @since Oct 30, 2013
  */
 public class LogoutCallback implements FutureCallback<Void> {
 

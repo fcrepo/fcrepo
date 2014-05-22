@@ -36,9 +36,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class LockServiceImplTest {
 
-    private static final String LOCKABLE_PATH= "test1";
+    private static final String LOCKABLE_PATH = "test1";
 
-    private static final String ALREADY_LOCKED_PATH= "test2";
+    private static final String ALREADY_LOCKED_PATH = "test2";
 
     private static final long TIMEOUT = -1;
 

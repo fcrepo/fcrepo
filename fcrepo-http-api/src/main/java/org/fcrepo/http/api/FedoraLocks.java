@@ -122,7 +122,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
     /**
      * Deletes a lock at the given path, freeing up other sessions to make
      * changes to it or its descendants.
-     * @return
+     * @return 204
      */
     @DELETE
     @Timed
@@ -143,8 +143,8 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         return new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
     }
 
-    private RdfStream getLockRdfStream(Node node, Lock lock) throws RepositoryException {
-        HttpIdentifierTranslator translator = getTranslator();
+    private RdfStream getLockRdfStream(final Node node, final Lock lock) throws RepositoryException {
+        final HttpIdentifierTranslator translator = getTranslator();
         final com.hp.hpl.jena.graph.Node nodeSubject = translator.getSubject(node.getPath()).asNode();
         final com.hp.hpl.jena.graph.Node lockSubject = createURI(nodeSubject.getURI() + "/" + FCR_LOCK);
 

@@ -88,6 +88,11 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Context;
 
 
+/**
+ * <p>FedoraNodesTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraNodesTest {
 
     FedoraNodes testObj;
@@ -436,7 +441,12 @@ public class FedoraNodesTest {
             new ByteArrayInputStream("<a> <b> <c>".getBytes());
         when(mockNodes.getObject(mockSession, path)).thenReturn(mockObject);
 
-        testObj.createOrReplaceObjectRdf(createPathList(pid), getUriInfoImpl(), MediaType.valueOf("application/n3"), mockStream, mockRequest, mockResponse);
+        testObj.createOrReplaceObjectRdf(createPathList(pid),
+                                         getUriInfoImpl(),
+                                         MediaType.valueOf("application/n3"),
+                                         mockStream,
+                                         mockRequest,
+                                         mockResponse);
         verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class));
     }
 

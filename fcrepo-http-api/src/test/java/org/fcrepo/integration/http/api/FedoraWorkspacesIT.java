@@ -34,6 +34,11 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraWorkspacesIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraWorkspacesIT extends AbstractResourceIT {
 
     @Test
@@ -57,7 +62,8 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
             execute(httpCreateWorkspace);
         assertEquals(201, createWorkspaceResponse.getStatusLine()
                 .getStatusCode());
-        assertEquals(serverAddress + "workspace:" + workspace + "/", createWorkspaceResponse.getFirstHeader("Location").getValue());
+        assertEquals(serverAddress + "workspace:" + workspace + "/",
+                     createWorkspaceResponse.getFirstHeader("Location").getValue());
 
 
         final HttpPost httpPost = postObjMethod("/workspace:" + workspace);
@@ -93,6 +99,17 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         assertEquals(204, deleteWorkspaceResponse.getStatusLine()
                               .getStatusCode());
 
+    }
+
+    @Test
+    public void shouldConflictWhenCreatingExisting() throws IOException {
+        final String workspace = randomUUID().toString();
+
+        final HttpPost httpCreateWorkspace =
+            new HttpPost(serverAddress + "fcr:workspaces/" + workspace);
+        assertEquals(201, getStatus(httpCreateWorkspace));
+
+        assertEquals(409, getStatus(httpCreateWorkspace));
     }
 
     @Test

@@ -66,7 +66,7 @@ import com.hp.hpl.jena.sparql.util.Context;
  * Service for repository-wide management and querying
  *
  * @author Chris Beer
- * @date Mar 11, 2013
+ * @since Mar 11, 2013
  */
 @Component
 public class RepositoryServiceImpl extends AbstractService implements RepositoryService {

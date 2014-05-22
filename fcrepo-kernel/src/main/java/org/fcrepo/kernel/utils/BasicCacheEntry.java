@@ -50,7 +50,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
      *
      * @param checksum the checksum previously generated for the entry
      * @param size the size of the entry
-     * @return
+     * @return the fixity of this cache entry
      * @throws RepositoryException
      */
     @Override

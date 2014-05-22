@@ -35,6 +35,11 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraNamespacesIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraNamespacesIT extends AbstractResourceIT {
 
     @Test
@@ -73,6 +78,16 @@ public class FedoraNamespacesIT extends AbstractResourceIT {
                         "http://example.com/namespace/abc").asNode(),
                         HAS_NAMESPACE_PREFIX.asNode(),
                         createPlainLiteral("abc").asNode()));
+    }
+
+    @Test
+    public void testCreateInvalid() throws Exception {
+        final HttpPost post = new HttpPost(serverAddress + "fcr:namespaces");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream("invalid namespace declaration".getBytes()));
+        post.setEntity(entity);
+        assertEquals(400, getStatus(post));
+
     }
 
     @Test

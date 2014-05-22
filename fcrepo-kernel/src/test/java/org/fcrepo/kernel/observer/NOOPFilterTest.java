@@ -24,6 +24,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>NOOPFilterTest class.</p>
+ *
+ * @author awoods
+ */
 public class NOOPFilterTest {
 
     @Mock
@@ -36,7 +41,8 @@ public class NOOPFilterTest {
 
     @Test
     public void testApply() throws Exception {
-        assertTrue("Failed to pass an event through a NO-OP filter!", new NOOPFilter().getFilter(null).apply(mockEvent));
+        assertTrue("Failed to pass an event through a NO-OP filter!",
+                   new NOOPFilter().getFilter(null).apply(mockEvent));
     }
 
 }

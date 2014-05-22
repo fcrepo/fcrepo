@@ -36,7 +36,6 @@ import javax.jcr.version.VersionManager;
 import java.util.Collections;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.only;
@@ -225,10 +224,10 @@ public class VersionServiceImplTest {
 
     @Test
     public void testRevertToVersionByLabel() throws RepositoryException {
-        String versionLabel = "v";
-        VersionManager mockVersionManager = mock(VersionManager.class);
-        VersionHistory mockHistory = mock(VersionHistory.class);
-        Version mockVersion1 = mock(Version.class);
+        final String versionLabel = "v";
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+        final Version mockVersion1 = mock(Version.class);
         when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
@@ -242,16 +241,16 @@ public class VersionServiceImplTest {
 
     @Test
     public void testRevertToVersionByUUID() throws RepositoryException {
-        String versionUUID = "uuid";
-        VersionManager mockVersionManager = mock(VersionManager.class);
-        VersionHistory mockHistory = mock(VersionHistory.class);
-        Version mockVersion1 = mock(Version.class);
+        final String versionUUID = "uuid";
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+        final Version mockVersion1 = mock(Version.class);
         when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
-        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockVersionIterator.hasNext()).thenReturn(true);
         when(mockVersionIterator.nextVersion()).thenReturn(mockVersion1);
-        Node mockFrozenNode = mock(Node.class);
+        final Node mockFrozenNode = mock(Node.class);
         when(mockVersion1.getFrozenNode()).thenReturn(mockFrozenNode);
         when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
@@ -263,12 +262,12 @@ public class VersionServiceImplTest {
 
     @Test(expected = PathNotFoundException.class)
     public void testRevertToUnknownVersion() throws RepositoryException {
-        String versionUUID = "uuid";
-        VersionManager mockVersionManager = mock(VersionManager.class);
-        VersionHistory mockHistory = mock(VersionHistory.class);
-        Version mockVersion1 = mock(Version.class);
+        final String versionUUID = "uuid";
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+
         when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
-        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockVersionIterator.hasNext()).thenReturn(false);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
@@ -279,10 +278,10 @@ public class VersionServiceImplTest {
 
     @Test
     public void testRevertToVersionByLabelWithAutoVersioning() throws RepositoryException {
-        String versionLabel = "v";
-        VersionManager mockVersionManager = mock(VersionManager.class);
-        VersionHistory mockHistory = mock(VersionHistory.class);
-        Version mockVersion1 = mock(Version.class);
+        final String versionLabel = "v";
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+        final Version mockVersion1 = mock(Version.class);
         when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
@@ -295,14 +294,14 @@ public class VersionServiceImplTest {
 
     @Test
     public void testRemoveVersionByLabel() throws RepositoryException {
-        String versionLabel = "versionName";
-        String versionUUID = "uuid";
-        String versionName = "Bob";
-        String[] versionLabels = new String[]{ versionLabel };
-        VersionManager mockVersionManager = mock(VersionManager.class);
-        VersionHistory mockHistory = mock(VersionHistory.class);
-        Version mockVersion1 = mock(Version.class);
-        Version mockVersion2 = mock(Version.class);
+        final String versionLabel = "versionName";
+        final String versionUUID = "uuid";
+        final String versionName = "Bob";
+        final String[] versionLabels = new String[]{ versionLabel };
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+        final Version mockVersion1 = mock(Version.class);
+        final Version mockVersion2 = mock(Version.class);
         when(mockVersion1.getContainingHistory()).thenReturn(mockHistory);
         when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
@@ -310,7 +309,7 @@ public class VersionServiceImplTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory("/example")).thenReturn(mockHistory);
         when(mockVersionManager.getBaseVersion("/example")).thenReturn(mockVersion2);
-        Node mockFrozenNode = mock(Node.class);
+        final Node mockFrozenNode = mock(Node.class);
         when(mockVersion1.getFrozenNode()).thenReturn(mockFrozenNode);
         when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
         when(mockVersion1.getIdentifier()).thenReturn(versionUUID);
@@ -324,21 +323,21 @@ public class VersionServiceImplTest {
 
     @Test
     public void testRemoveVersionByUUID() throws RepositoryException {
-        String versionName = "Bob";
-        String versionUUID = "uuid";
-        String[] versionLabels = new String[]{ };
-        VersionManager mockVersionManager = mock(VersionManager.class);
-        VersionHistory mockHistory = mock(VersionHistory.class);
-        Version mockVersion1 = mock(Version.class);
-        Version mockVersion2 = mock(Version.class);
+        final String versionName = "Bob";
+        final String versionUUID = "uuid";
+        final String[] versionLabels = new String[]{ };
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+        final Version mockVersion1 = mock(Version.class);
+        final Version mockVersion2 = mock(Version.class);
         when(mockVersion1.getContainingHistory()).thenReturn(mockHistory);
         when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
-        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockHistory.getVersionLabels(mockVersion1)).thenReturn(versionLabels);
         when(mockVersionIterator.hasNext()).thenReturn(true);
         when(mockVersionIterator.nextVersion()).thenReturn(mockVersion1);
-        Node mockFrozenNode = mock(Node.class);
+        final Node mockFrozenNode = mock(Node.class);
         when(mockVersion1.getFrozenNode()).thenReturn(mockFrozenNode);
         when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
         when(mockVersion1.getIdentifier()).thenReturn(versionUUID);
@@ -353,12 +352,12 @@ public class VersionServiceImplTest {
 
     @Test(expected = PathNotFoundException.class)
     public void testRemoveUnknownVersion() throws RepositoryException {
-        String versionUUID = "uuid";
-        VersionManager mockVersionManager = mock(VersionManager.class);
-        VersionHistory mockHistory = mock(VersionHistory.class);
-        Version mockVersion = mock(Version.class);
+        final String versionUUID = "uuid";
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+
         when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
-        VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockVersionIterator.hasNext()).thenReturn(false);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
@@ -380,7 +379,7 @@ public class VersionServiceImplTest {
     public void testMixinCreationWhenAutoVersioningIsTurnedOn() throws RepositoryException {
         // take our unversioned node, but make it have the auto-version property
         final Node unversionedNode = s.getNode(EXAMPLE_UNVERSIONED_PATH);
-        Property mockProperty = mock(Property.class);
+        final Property mockProperty = mock(Property.class);
         when(unversionedNode.hasProperty(VersionServiceImpl.VERSION_POLICY)).thenReturn(true);
         when(unversionedNode.getProperty(VersionServiceImpl.VERSION_POLICY)).thenReturn(mockProperty);
         when(mockProperty.getString()).thenReturn(VersionServiceImpl.AUTO_VERSION);

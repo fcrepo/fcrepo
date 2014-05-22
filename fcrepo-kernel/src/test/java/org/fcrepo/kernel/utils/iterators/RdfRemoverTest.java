@@ -60,6 +60,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 
+/**
+ * <p>RdfRemoverTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class RdfRemoverTest {
 
     @Test
@@ -175,7 +180,10 @@ public class RdfRemoverTest {
     private ValueFactory mockValueFactory;
 
     @Mock
-    private Value mockValue, mockValue2;
+    private Value mockValue;
+
+    @Mock
+    private Value mockValue2;
 
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;

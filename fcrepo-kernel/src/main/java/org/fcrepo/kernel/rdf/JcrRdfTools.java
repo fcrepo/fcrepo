@@ -81,7 +81,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * A set of helpful tools for converting JCR properties to RDF
  *
  * @author Chris Beer
- * @date May 10, 2013
+ * @since May 10, 2013
  */
 public class JcrRdfTools {
 
@@ -114,7 +114,7 @@ public class JcrRdfTools {
         this(graphSubjects, null);
     }
     /**
-     * Contructor with even more context.
+     * Constructor with even more context.
      *
      * @param graphSubjects
      * @param session
@@ -128,7 +128,7 @@ public class JcrRdfTools {
      * Factory method to create a new JcrRdfTools instance
      *
      * @param graphSubjects
-     * @return
+     * @return new JcrRdfTools instance
      */
     public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects) {
         return new JcrRdfTools(graphSubjects);
@@ -139,7 +139,7 @@ public class JcrRdfTools {
      *
      * @param idTranslator
      * @param session
-     * @return
+     * @return new JcrRdfTools instance
      */
     public static JcrRdfTools withContext(final IdentifierTranslator idTranslator,
         final Session session) {
@@ -180,7 +180,7 @@ public class JcrRdfTools {
     /**
      * Get a model in which to collect statements of RDF extraction problems
      *
-     * @return
+     * @return an empty model
      */
     public static Model getProblemsModel() {
         return createDefaultModel();
@@ -191,7 +191,7 @@ public class JcrRdfTools {
      * session
      *
      * @param session
-     * @return
+     * @return a new JcrRdfTools instance with the given session
      */
     public JcrRdfTools withSession(final Session session) {
         return new JcrRdfTools(graphSubjects, session);
@@ -202,7 +202,7 @@ public class JcrRdfTools {
      *
      * @param nodeIterator
      * @param iteratorSubject
-     * @return
+     * @return RdfStream for the given JCR NodeIterator
      * @throws RepositoryException
      */
     public RdfStream getJcrPropertiesModel(final Iterator<Node> nodeIterator,
@@ -226,7 +226,7 @@ public class JcrRdfTools {
      * root node, ala addRepositoryMetricsToModel()
      *
      * @param node
-     * @return
+     * @return RdfStream including all its own JCR properties and properties from immediate children
      * @throws RepositoryException
      */
     public RdfStream getJcrTriples(final Node node) throws RepositoryException {
@@ -237,7 +237,7 @@ public class JcrRdfTools {
      * Get an {@link RdfStream} for the JCR version history information for a node
      *
      * @param node
-     * @return
+     * @return RdfStream for the JCR version history information for the given node
      * @throws RepositoryException
      */
     public RdfStream getVersionTriples(final Node node)
@@ -250,7 +250,7 @@ public class JcrRdfTools {
      *
      * @param node
      * @param blobs
-     * @return
+     * @return fixity information triples as an RdfStream
      * @throws RepositoryException
      */
     public RdfStream getJcrTriples(final Node node,
@@ -261,7 +261,7 @@ public class JcrRdfTools {
     /**
      * Get an {@link RdfStream} of the registered JCR namespaces
      *
-     * @return
+     * @return namespace triples as an RdfStream
      * @throws RepositoryException
      */
     public RdfStream getNamespaceTriples() throws RepositoryException {
@@ -271,7 +271,7 @@ public class JcrRdfTools {
     /**
      * Get an {@link RdfStream} of the registered JCR workspaces
      *
-     * @return
+     * @return workspace triples as an RdfStream
      * @throws RepositoryException
      */
     public RdfStream getWorkspaceTriples(final IdentifierTranslator subjects) throws RepositoryException {
@@ -294,7 +294,7 @@ public class JcrRdfTools {
      * Add the properties of a Node's parent and immediate children using the default
      * serialization options
      * @param node
-     * @return
+     * @return RdfStream of properties for the node's parent and immediate children
      * @throws RepositoryException
      */
     public RdfStream getTreeTriples(final Node node) throws RepositoryException {
@@ -305,7 +305,7 @@ public class JcrRdfTools {
     /**
      * Add the properties for inbound references to this node
      * @param node
-     * @return
+     * @return RdfStream containing propeties for inbound references to the given node
      * @throws RepositoryException
      */
     public RdfStream getReferencesTriples(final Node node) throws RepositoryException {
@@ -316,7 +316,7 @@ public class JcrRdfTools {
      * Decides whether the RDF representation of this {@link Node} will receive LDP Container status.
      *
      * @param node
-     * @return
+     * @return true if the node will receive LDP Container status
      * @throws RepositoryException
      */
     public static boolean isContainer(final Node node) throws RepositoryException {
@@ -340,7 +340,7 @@ public class JcrRdfTools {
      *
      * @param subjectNode
      * @param predicate
-     * @return
+     * @return True if a predicate is an internal property of a node
      */
     public boolean isInternalProperty(final Node subjectNode,
             final Resource predicate) {
@@ -373,7 +373,7 @@ public class JcrRdfTools {
     /**
      * Create a JCR value (with an undefined type) from a RDFNode
      * @param data
-     * @return
+     * @return created JCR value
      * @throws RepositoryException
      */
     public Value createValue(final RDFNode data) throws RepositoryException {
@@ -384,7 +384,7 @@ public class JcrRdfTools {
      * Create a JCR value from an RDFNode with the given JCR type
      * @param data
      * @param type
-     * @return
+     * @return created JCR value
      * @throws RepositoryException
      */
     public Value createValue(final RDFNode data, final int type) throws RepositoryException {
@@ -396,7 +396,7 @@ public class JcrRdfTools {
      * @param valueFactory
      * @param data
      * @param type
-     * @return
+     * @return created value
      * @throws RepositoryException
      */
     public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
@@ -461,7 +461,7 @@ public class JcrRdfTools {
      *
      * @param node the JCR node we want a property for
      * @param predicate the predicate to map to a property name
-     * @return
+     * @return JCR property name
      * @throws RepositoryException
      */
     public String getPropertyNameFromPredicate(final Node node,
@@ -498,7 +498,7 @@ public class JcrRdfTools {
     /**
      * Get a property name for an RDF predicate
      * @param predicate
-     * @return
+     * @return property name from the given predicate
      * @throws RepositoryException
      */
     public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
@@ -519,7 +519,7 @@ public class JcrRdfTools {
      * @param node
      * @param resource
      * @param namespaces
-     * @return
+     * @return JCR name for the given RDF resource
      * @throws RepositoryException
      */
     public String getPropertyNameFromPredicate(final Node node,
@@ -539,7 +539,7 @@ public class JcrRdfTools {
      * @param rdfNamespace
      * @param rdfLocalname
      * @param namespaceMapping
-     * @return
+     * @return JCR property name for an RDF predicate
      * @throws RepositoryException
      */
     private String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,
@@ -584,7 +584,7 @@ public class JcrRdfTools {
      * Given a node type and a property name, figure out an appropriate jcr value type
      * @param nodeType
      * @param propertyName
-     * @return
+     * @return jcr value type
      * @throws RepositoryException
      */
     public int getPropertyType(final String nodeType, final String propertyName) throws RepositoryException {
@@ -596,7 +596,7 @@ public class JcrRdfTools {
      * Given a node type and a property name, figure out an appropraite jcr value type
      * @param nodeType
      * @param propertyName
-     * @return
+     * @return jcr value type
      */
     public int getPropertyType(final NodeType nodeType, final String propertyName) {
         final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();

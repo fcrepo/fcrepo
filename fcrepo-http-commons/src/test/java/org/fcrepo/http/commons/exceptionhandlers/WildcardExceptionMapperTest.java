@@ -25,6 +25,11 @@ import javax.ws.rs.core.Response;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>WildcardExceptionMapperTest class.</p>
+ *
+ * @author awoods
+ */
 public class WildcardExceptionMapperTest {
 
     private WildcardExceptionMapper testObj;
@@ -36,7 +41,7 @@ public class WildcardExceptionMapperTest {
 
     @Test
     public void testToResponse() {
-        Exception input = new Exception();
+        final Exception input = new Exception();
         Response actual = testObj.toResponse(input);
         assertEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
         assertTrue(actual.getEntity() != null);

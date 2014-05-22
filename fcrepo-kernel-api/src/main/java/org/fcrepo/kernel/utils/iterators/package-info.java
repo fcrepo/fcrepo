@@ -18,7 +18,7 @@
  */
 /**
  * @author ajs6f
- * @date Jan 16, 2014
+ * @since Jan 16, 2014
  */
 
 package org.fcrepo.kernel.utils.iterators;

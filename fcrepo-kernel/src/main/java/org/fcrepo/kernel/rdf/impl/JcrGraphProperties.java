@@ -32,7 +32,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 /**
  * @author cbeer
  * @author barmintor
- * @date 2013
+ * @since 2013
  */
 public class JcrGraphProperties implements GraphProperties {
 

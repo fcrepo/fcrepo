@@ -33,6 +33,11 @@ import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Triple;
 
+/**
+ * <p>ManagedRdfTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class ManagedRdfTest {
 
     private final static Triple managedTriple = create(createAnon(), HAS_CHILD
@@ -59,7 +64,7 @@ public class ManagedRdfTest {
     }
 
     @Test
-    public void testMixinFiltering(){
+    public void testMixinFiltering() {
         assertTrue(isManagedMixin.apply(createResource(REPOSITORY_NAMESPACE
                 + "thing")));
         assertFalse(isManagedMixin.apply(createResource("myNS:thing")));

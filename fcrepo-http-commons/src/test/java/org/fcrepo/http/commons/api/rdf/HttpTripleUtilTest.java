@@ -27,8 +27,6 @@ import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
-import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
@@ -40,6 +38,11 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
+/**
+ * <p>HttpTripleUtilTest class.</p>
+ *
+ * @author awoods
+ */
 public class HttpTripleUtilTest {
 
     private HttpTripleUtil testObj;

@@ -18,7 +18,7 @@
  */
 /**
  * @author ajs6f
- * @date Jan 10, 2014
+ * @since Jan 10, 2014
  */
 
 package org.fcrepo.kernel.utils;

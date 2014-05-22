@@ -114,7 +114,7 @@ public class BasicRolesAuthorizationDelegateTest {
         final Map<String, List<String>> readerAcl =
                 singletonMap("user", asList("reader"));
         final Map<String, List<String>> emptyAcl =
-                singletonMap("user", Collections.<String> emptyList());
+                singletonMap("user", Collections.<String>emptyList());
         final Map<String, List<String>> unrecognizableAcl =
                 singletonMap("user", asList("something_else"));
 

@@ -54,6 +54,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * <p>HeadersJMSIT class.</p>
+ *
+ * @author ajs6f
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/headers-jms.xml", "/spring-test/repo.xml",
         "/spring-test/eventing.xml"})

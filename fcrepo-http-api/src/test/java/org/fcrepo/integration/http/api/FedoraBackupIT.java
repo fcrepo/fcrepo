@@ -30,13 +30,18 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
+/**
+ * <p>FedoraBackupIT class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraBackupIT extends AbstractResourceIT {
 
-	@Test
-	public void shouldRoundTripBackups() throws Exception {
+    @Test
+    public void shouldRoundTripBackups() throws Exception {
         final String objName = randomUUID().toString();
 
-		// set up the object
+        // set up the object
         final StringBuilder text = new StringBuilder();
         for (int x = 0; x < 1000; ++x) {
             text.append("data-" + x);
@@ -53,11 +58,11 @@ public class FedoraBackupIT extends AbstractResourceIT {
         response = client.execute(new HttpGet(serverAddress + objName));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-		// back it up
+        // back it up
         final File dir = createTempDir();
         logger.debug("Backing up repository to {}", dir.getCanonicalPath());
-		final HttpPost backupMethod =
-				new HttpPost(serverAddress + "fcr:backup");
+        final HttpPost backupMethod =
+                new HttpPost(serverAddress + "fcr:backup");
         backupMethod.setEntity(new StringEntity(dir.getCanonicalPath()));
         response = client.execute(backupMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -71,18 +76,18 @@ public class FedoraBackupIT extends AbstractResourceIT {
         assertEquals(204, response.getStatusLine().getStatusCode());
 
         // Verify object removed
-		response = client.execute(new HttpGet(serverAddress + objName));
-		assertEquals(404, response.getStatusLine().getStatusCode());
+        response = client.execute(new HttpGet(serverAddress + objName));
+        assertEquals(404, response.getStatusLine().getStatusCode());
 
-		// try to restore it
+        // try to restore it
         final HttpPost restoreMethod =
                 new HttpPost(serverAddress + "fcr:restore");
         restoreMethod.setEntity(new StringEntity(content));
-		assertEquals("Couldn't import!", 204, getStatus(restoreMethod));
+        assertEquals("Couldn't import!", 204, getStatus(restoreMethod));
 
-		//check that we made it
-		response = client.execute(new HttpGet(serverAddress + objName));
-		assertEquals(200, response.getStatusLine().getStatusCode());
+        //check that we made it
+        response = client.execute(new HttpGet(serverAddress + objName));
+        assertEquals(200, response.getStatusLine().getStatusCode());
 
     }
 

@@ -26,7 +26,6 @@ import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.LONG;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
@@ -79,6 +78,11 @@ import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+/**
+ * <p>FedoraResourceImplIT class.</p>
+ *
+ * @author ajs6f
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraResourceImplIT extends AbstractIT {
 
@@ -264,8 +268,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Node s = createGraphSubjectNode("/testNTTnheritanceObject");
         final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
         final Node o = createProperty("info:fedora/test/aSupertype").asNode();
-        assertTrue("supertype test:aSupertype not found inherited in test:testInher!",object.getPropertiesDataset(subjects).asDatasetGraph()
-                       .contains(ANY, s, p, o));
+        assertTrue("supertype test:aSupertype not found inherited in test:testInher!",
+                   object.getPropertiesDataset(subjects).asDatasetGraph().contains(ANY, s, p, o));
     }
 
     @Test

@@ -28,13 +28,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>VersionIteratorTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class VersionIteratorTest {
 
     @Mock
     javax.jcr.version.VersionIterator i;
 
     @Mock
-    Version v1, v2;
+    Version v1;
+
+    @Mock
+    Version v2;
 
     VersionIterator testIterator;
 

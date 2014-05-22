@@ -59,7 +59,7 @@ public class FedoraRepositoryRestore extends AbstractResource {
     /**
      * This method runs a repository restore.
      *
-     * @return
+     * @return response
      * @throws RepositoryException
      * @throws IOException
      */

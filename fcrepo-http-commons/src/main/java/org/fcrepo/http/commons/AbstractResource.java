@@ -130,7 +130,7 @@ public abstract class AbstractResource {
      * Convert a JAX-RS list of PathSegments to a JCR path
      *
      * @param paths
-     * @return
+     * @return String jcr path
      */
     public static final String toPath(final List<PathSegment> paths) {
         final StringBuilder result = new StringBuilder();
@@ -234,7 +234,7 @@ public abstract class AbstractResource {
     }
 
     private static void evaluateRequestPreconditions( final Request request, final FedoraResource resource,
-       boolean cacheControl ) throws RepositoryException {
+       final boolean cacheControl ) throws RepositoryException {
 
         final EntityTag etag = new EntityTag(resource.getEtagValue());
         final Date date = resource.getLastModifiedDate();

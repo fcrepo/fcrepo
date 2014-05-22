@@ -78,6 +78,11 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.MultiPart;
 import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
+/**
+ * <p>FedoraBatchTest class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraBatchTest {
 
     FedoraBatch testObj;
@@ -146,7 +151,10 @@ public class FedoraBatchTest {
 
         final MultiPart multipart = new MultiPart();
 
-        final StreamDataBodyPart part = new StreamDataBodyPart(".", IOUtils.toInputStream("xyz"), null, MediaType.valueOf(contentTypeSPARQLUpdate));
+        final StreamDataBodyPart part = new StreamDataBodyPart(".",
+                                                               IOUtils.toInputStream("xyz"),
+                                                               null,
+                                                               MediaType.valueOf(contentTypeSPARQLUpdate));
 
         try {
             final FormDataContentDisposition cd =
@@ -176,7 +184,10 @@ public class FedoraBatchTest {
 
         final MultiPart multipart = new MultiPart();
 
-        final StreamDataBodyPart part = new StreamDataBodyPart(".", IOUtils.toInputStream("<> <info:a> 'xyz'"), null, MediaType.valueOf(contentTypeTurtle));
+        final StreamDataBodyPart part = new StreamDataBodyPart(".",
+                                                               IOUtils.toInputStream("<> <info:a> 'xyz'"),
+                                                               null,
+                                                               MediaType.valueOf(contentTypeTurtle));
 
         try {
             final FormDataContentDisposition cd =
@@ -216,7 +227,7 @@ public class FedoraBatchTest {
 
         when(mockDatastreams.createDatastream(any(Session.class),
                                                  eq("/{}" + pid + "/{}" + dsId2), anyString(), eq("testDs2.txt"),
-                                                 any(InputStream.class), eq((URI) null))).thenReturn(mockDatastream); 
+                                                 any(InputStream.class), eq((URI) null))).thenReturn(mockDatastream);
         final Response actual =
             testObj.batchModify(createPathList(pid), multipart);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -235,7 +246,10 @@ public class FedoraBatchTest {
 
         final MultiPart multipart = new MultiPart();
 
-        final StreamDataBodyPart part = new StreamDataBodyPart("xyz", IOUtils.toInputStream("<> <info:a> 'xyz'"), "filename.txt", MediaType.valueOf(contentTypeTurtle));
+        final StreamDataBodyPart part = new StreamDataBodyPart("xyz",
+                                                               IOUtils.toInputStream("<> <info:a> 'xyz'"),
+                                                               "filename.txt",
+                                                               MediaType.valueOf(contentTypeTurtle));
 
         try {
             final FormDataContentDisposition cd =

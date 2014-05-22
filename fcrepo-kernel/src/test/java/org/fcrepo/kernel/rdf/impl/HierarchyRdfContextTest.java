@@ -65,6 +65,11 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * <p>HierarchyRdfContextTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class HierarchyRdfContextTest {
 
     // for mocks and setup gear see after tests
@@ -275,7 +280,7 @@ public class HierarchyRdfContextTest {
     }
 
 
-    private Model getResults(HierarchyRdfContextOptions options) throws RepositoryException {
+    private Model getResults(final HierarchyRdfContextOptions options) throws RepositoryException {
         return new HierarchyRdfContext(mockNode, mockGraphSubjects, options).asModel();
     }
 
@@ -330,8 +335,28 @@ public class HierarchyRdfContextTest {
     private NamespaceRegistry mockNamespaceRegistry;
 
     @Mock
-    private Node mockNode, mockParentNode, mockChildNode, mockChildNode2,
-            mockChildNode3, mockChildNode4, mockChildNode5, mockContentNode;
+    private Node mockNode;
+
+    @Mock
+    private Node mockParentNode;
+
+    @Mock
+    private Node mockChildNode;
+
+    @Mock
+    private Node mockChildNode2;
+
+    @Mock
+    private Node mockChildNode3;
+
+    @Mock
+    private Node mockChildNode4;
+
+    @Mock
+    private Node mockChildNode5;
+
+    @Mock
+    private Node mockContentNode;
 
     @Mock
     private NodeIterator mockNodes;

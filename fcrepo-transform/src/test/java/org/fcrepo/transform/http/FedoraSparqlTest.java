@@ -44,6 +44,11 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>FedoraSparqlTest class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraSparqlTest {
 
     FedoraSparql testObj;
@@ -114,8 +119,9 @@ public class FedoraSparqlTest {
     @Test
     @Ignore
     public void testRunSparqlQuery() throws Exception {
-      //  final JQLResultSet resultSet = (JQLResultSet)testObj.runSparqlQuery(IOUtils.toInputStream("SELECT ?pid WHERE { ?pid <info:x> \"a\" }"), uriInfo);
+        //  final JQLResultSet resultSet = (JQLResultSet)testObj.runSparqlQuery(IOUtils.toInputStream("SELECT ?pid
+        // WHERE { ?pid <info:x> \"a\" }"), uriInfo);
 
-      //  assertEquals(mockResults, resultSet.getQueryResult());
+        //  assertEquals(mockResults, resultSet.getQueryResult());
     }
 }

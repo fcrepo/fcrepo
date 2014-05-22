@@ -35,6 +35,11 @@ import org.fcrepo.kernel.utils.ContentDigest;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+/**
+ * <p>DatastreamImplIT class.</p>
+ *
+ * @author ksclarke
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class DatastreamImplIT extends AbstractIT {
 

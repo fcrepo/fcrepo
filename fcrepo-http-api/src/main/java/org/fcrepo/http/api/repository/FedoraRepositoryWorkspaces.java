@@ -22,6 +22,8 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
@@ -77,7 +79,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     /**
      * Get the list of accessible workspaces in this repository.
      *
-     * @return
+     * @return list of accessible workspaces
      * @throws RepositoryException
      */
     @GET
@@ -99,7 +101,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
      *
      * @param path
      * @param uriInfo
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @POST
@@ -117,6 +119,12 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
                         .build());
             }
 
+            final String[] workspaceNames = workspace.getAccessibleWorkspaceNames();
+            if ( workspaceNames != null && ImmutableSet.copyOf(workspaceNames).contains(path)) {
+                throw new WebApplicationException(
+                    status(CONFLICT).entity("Workspace already exists").build());
+            }
+
             workspace.createWorkspace(path);
 
             final IdentifierTranslator subjects =
@@ -132,7 +140,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     /**
      * Delete a workspace from the repository
      * @param path
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @DELETE

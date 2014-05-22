@@ -61,7 +61,13 @@ public class NodeTypeRdfContextTest {
 
 
     @Mock
-    private NamespacedNodeType mockNodeType, mockNodeTypeA, mockNodeTypeB;
+    private NamespacedNodeType mockNodeType;
+
+    @Mock
+    private NamespacedNodeType mockNodeTypeA;
+
+    @Mock
+    private NamespacedNodeType mockNodeTypeB;
 
     private static final String mockNodeTypePrefix = "jcr";
 
@@ -73,7 +79,11 @@ public class NodeTypeRdfContextTest {
     private NamespacedPropertyDefinition mockProperty;
 
     @Mock
-    private NamespacedNodeDefinition mockNodeDefinitionA, mockNodeDefinitionB;
+    private NamespacedNodeDefinition mockNodeDefinitionA;
+
+    @Mock
+    private NamespacedNodeDefinition mockNodeDefinitionB;
+
 
     @Before
     public void setUp() throws RepositoryException {
@@ -136,7 +146,8 @@ public class NodeTypeRdfContextTest {
         when(mockNodeTypeManager.getMixinNodeTypes()).thenReturn(mockMixinTypeIterator);
 
         final Model actual = new NodeTypeRdfContext(mockNodeTypeManager).asModel();
-        assertTrue(actual.contains(ResourceFactory.createResource(REPOSITORY_NAMESPACE + mockNodeTypeName), type, Class));
+        assertTrue(actual.contains(
+                ResourceFactory.createResource(REPOSITORY_NAMESPACE + mockNodeTypeName), type, Class));
         assertTrue(actual.contains(ResourceFactory.createResource("b#b"), type, Class));
     }
 
@@ -145,14 +156,17 @@ public class NodeTypeRdfContextTest {
 
         when(mockNodeType.getDeclaredSupertypes()).thenReturn(new NodeType[] { mockNodeTypeA, mockNodeTypeB });
         final Model actual = new NodeTypeRdfContext(mockNodeType).asModel();
-        assertTrue(actual.contains(getResource((NodeType)mockNodeType), subClassOf, getResource((NodeType)mockNodeTypeA)));
-        assertTrue(actual.contains(getResource((NodeType)mockNodeType), subClassOf, getResource((NodeType)mockNodeTypeB)));
+        assertTrue(actual.contains(
+                getResource((NodeType)mockNodeType), subClassOf, getResource((NodeType)mockNodeTypeA)));
+        assertTrue(actual.contains(
+                getResource((NodeType)mockNodeType), subClassOf, getResource((NodeType)mockNodeTypeB)));
     }
 
     @Test
     public void testShouldIncludeChildNodeDefinitions() throws RepositoryException {
 
-        when(mockNodeType.getDeclaredChildNodeDefinitions()).thenReturn(new NodeDefinition[] {mockNodeDefinitionA, mockNodeDefinitionB});
+        when(mockNodeType.getDeclaredChildNodeDefinitions()).thenReturn(
+                new NodeDefinition[] {mockNodeDefinitionA, mockNodeDefinitionB});
 
         final Model actual = new NodeTypeRdfContext(mockNodeType).asModel();
         assertTrue(actual.contains(
@@ -231,7 +245,9 @@ public class NodeTypeRdfContextTest {
         assertFalse(actual.listResourcesWithProperty(domain, getResource((NodeType)mockNodeType)).hasNext());
     }
 
-    private void initNodeTypeMocks(final NodeType mockNodeType, final String mockNamespaceUri, final String mockNodeTypeName) throws RepositoryException {
+    private void initNodeTypeMocks(final NodeType mockNodeType,
+                                   final String mockNamespaceUri,
+                                   final String mockNodeTypeName) throws RepositoryException {
 
         initNamespacedMocks((Namespaced) mockNodeType, mockNamespaceUri, mockNodeTypeName);
         when(mockNodeType.getDeclaredSupertypes()).thenReturn(new NodeType[] {});
@@ -240,7 +256,9 @@ public class NodeTypeRdfContextTest {
 
     }
 
-    private static void initNamespacedMocks(final Namespaced namedspacedObject, final String mockNamespaceUri, final String mockNodeTypeName) throws RepositoryException {
+    private static void initNamespacedMocks(final Namespaced namedspacedObject,
+                                            final String mockNamespaceUri,
+                                            final String mockNodeTypeName) throws RepositoryException {
         when(namedspacedObject.getNamespaceURI()).thenReturn(mockNamespaceUri);
         when(namedspacedObject.getLocalName()).thenReturn(mockNodeTypeName);
     }

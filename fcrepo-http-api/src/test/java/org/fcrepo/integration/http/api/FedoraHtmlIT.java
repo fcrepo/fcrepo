@@ -22,6 +22,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
+/**
+ * <p>FedoraHtmlIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraHtmlIT extends AbstractResourceIT {
 
     @Test

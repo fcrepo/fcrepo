@@ -36,9 +36,9 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * Consumes an {@link RdfStream} by adding its contents to the
  * JCR.
  *
- * @see {@link RdfRemover} for contrast
+ * @see RdfRemover
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  */
 public class RdfAdder extends PersistingRdfStreamConsumer {
 
@@ -65,7 +65,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
         if (!session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
             final NodeTypeManager mgr = session().getWorkspace().getNodeTypeManager();
-            NodeTypeTemplate type = mgr.createNodeTypeTemplate();
+            final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
             type.setName(mixinName);
             type.setMixin(true);
             type.setQueryable(true);

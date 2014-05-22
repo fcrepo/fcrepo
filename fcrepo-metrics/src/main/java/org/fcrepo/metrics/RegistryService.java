@@ -29,7 +29,7 @@ import com.codahale.metrics.MetricRegistry;
  * Provide helpers for working with the Metrics registry
  * 
  * @author cbeer
- * @date Mar 22, 2013
+ * @since Mar 22, 2013
  */
 public abstract class RegistryService {
 
@@ -38,8 +38,8 @@ public abstract class RegistryService {
     /**
      * Get the current registry service
      * 
-     * @todo the new upstream SharedMetricRegistries may make this obsolete
-     * @return
+     * TODO the new upstream SharedMetricRegistries may make this obsolete
+     * @return the current registry service
      */
     public static MetricRegistry getMetrics() {
         return METRICS;

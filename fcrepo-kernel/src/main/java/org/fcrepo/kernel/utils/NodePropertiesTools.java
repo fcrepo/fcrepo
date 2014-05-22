@@ -42,7 +42,7 @@ import static javax.jcr.PropertyType.URI;
 /**
  * Tools for replacing, appending and deleting JCR node properties
  * @author Chris Beer
- * @date May 10, 2013
+ * @since May 10, 2013
  */
 public class NodePropertiesTools {
 
@@ -228,7 +228,7 @@ public class NodePropertiesTools {
     /**
      * When we add certain URI properties, we also want to leave a reference node
      * @param propertyName
-     * @return
+     * @return property name as a reference
      */
     public static String getReferencePropertyName(final String propertyName) {
         return propertyName + REFERENCE_PROPERTY_SUFFIX;
@@ -237,7 +237,7 @@ public class NodePropertiesTools {
     /**
      * Given an internal reference node property, get the original name
      * @param refPropertyName
-     * @return
+     * @return original property name of the reference property
      */
     public static String getReferencePropertyOriginalName(final String refPropertyName) {
         final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);

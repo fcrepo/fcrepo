@@ -27,6 +27,11 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 
+/**
+ * <p>FedoraEventTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class FedoraEventTest {
 
     FedoraEvent e = new FedoraEvent(new TestEvent(1, "Path", "UserId", "Identifier",

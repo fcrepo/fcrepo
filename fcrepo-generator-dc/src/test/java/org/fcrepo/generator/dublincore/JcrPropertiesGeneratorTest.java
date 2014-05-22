@@ -34,6 +34,11 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>JcrPropertiesGeneratorTest class.</p>
+ *
+ * @author cbeer
+ */
 public class JcrPropertiesGeneratorTest {
 
     Session mockSession;
@@ -66,7 +71,8 @@ public class JcrPropertiesGeneratorTest {
 
         final String actual = IOUtils.toString(inputStream);
         final String expected =
-                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n</oai_dc:dc>";
+                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" " +
+                        "xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n</oai_dc:dc>";
 
         assertEquals(expected, actual);
     }
@@ -104,7 +110,8 @@ public class JcrPropertiesGeneratorTest {
 
         final String actual = IOUtils.toString(inputStream);
         final String expected =
-                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n"
+                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" " +
+                        "xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n"
                         + "\t<dc:title>title</dc:title>\n"
                         + "\t<dc:identifier>identifier</dc:identifier>\n"
                         + "</oai_dc:dc>";
@@ -144,7 +151,8 @@ public class JcrPropertiesGeneratorTest {
 
         final String actual = IOUtils.toString(inputStream);
         final String expected =
-                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n"
+                "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" " +
+                        "xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n"
                         + "\t<dc:title>title</dc:title>\n"
                         + "\t<dc:title>title2</dc:title>\n" + "</oai_dc:dc>";
 

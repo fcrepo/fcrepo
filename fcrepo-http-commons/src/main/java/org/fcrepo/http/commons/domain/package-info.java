@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Annotations for working with {@link org.fcrepo.http.api.FedoraNodes FedoraNodes}.
+ * Annotations for working with org.fcrepo.http.api.FedoraNodes.
  *
  * @author osmandin
  */

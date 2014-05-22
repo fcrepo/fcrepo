@@ -39,11 +39,11 @@ import org.slf4j.Logger;
  *
  * @author ajs6f
  * @author barmintor
- * @date Dec 2013
+ * @since Dec 2013
  * @author eddies
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  * @author escowles
- * @date Oct 3, 2013
+ * @since Oct 3, 2013
  */
 public class DefaultFilter implements EventFilter {
 

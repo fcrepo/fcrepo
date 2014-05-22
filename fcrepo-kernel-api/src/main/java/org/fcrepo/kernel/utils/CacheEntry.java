@@ -48,7 +48,7 @@ public interface CacheEntry {
     /**
      * Generate a human-readable identifier for the location of this entry
      *
-     * @return
+     * @return human-readable identifier for the location of this entry
      * @throws RepositoryException
      */
     abstract String getExternalIdentifier() throws RepositoryException;

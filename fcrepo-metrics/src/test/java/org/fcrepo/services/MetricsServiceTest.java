@@ -23,6 +23,11 @@ import org.junit.Test;
 
 import com.codahale.metrics.MetricRegistry;
 
+/**
+ * <p>MetricsServiceTest class.</p>
+ *
+ * @author eddies
+ */
 public class MetricsServiceTest {
 
     MetricRegistry mockMetricRegistry;

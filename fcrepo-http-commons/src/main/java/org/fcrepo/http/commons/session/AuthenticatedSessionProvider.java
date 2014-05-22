@@ -26,7 +26,7 @@ public interface AuthenticatedSessionProvider {
 
     /**
      * Get an authenticated JCR session
-     * @return
+     * @return an authenticated JCR session
      */
     Session getAuthenticatedSession();
 }

@@ -42,6 +42,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 
+/**
+ * <p>LDPathServiceIT class.</p>
+ *
+ * @author cbeer
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
 public class LDPathServiceIT {

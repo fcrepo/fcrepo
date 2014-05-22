@@ -34,6 +34,11 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import com.google.common.base.Predicate;
 import com.hp.hpl.jena.graph.Triple;
 
+/**
+ * <p>NamespaceContextTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class NamespaceContextTest {
 
     // for mocks and setup gear see after tests
@@ -58,7 +63,8 @@ public class NamespaceContextTest {
     public void testJcrUris() throws RepositoryException {
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[] {"jcr"});
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn("http://www.jcp.org/jcr/1.0");
-        assertTrue(new NamespaceRdfContext(mockSession).asModel().contains(createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_URI, REPOSITORY_NAMESPACE));
+        assertTrue(new NamespaceRdfContext(mockSession).asModel().contains(
+                createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_URI, REPOSITORY_NAMESPACE));
     }
 
     @Before

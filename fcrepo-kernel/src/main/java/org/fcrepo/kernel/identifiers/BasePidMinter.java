@@ -21,7 +21,7 @@ import com.google.common.base.Function;
  * Minting FedoraObject unique identifiers
  *
  * @author ajs6f
- * @date Mar 25, 2013
+ * @since Mar 25, 2013
  */
 public abstract class BasePidMinter implements PidMinter {
 

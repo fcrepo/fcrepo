@@ -34,9 +34,9 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * Consumes an {@link RdfStream} by removing its contents from the
  * JCR.
  *
- * @see {@link RdfAdder} for contrast
+ * @see RdfAdder
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  */
 public class RdfRemover extends PersistingRdfStreamConsumer {
 

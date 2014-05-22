@@ -128,6 +128,11 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+/**
+ * <p>JcrRdfToolsTest class.</p>
+ *
+ * @author awoods
+ */
 public class JcrRdfToolsTest implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
@@ -559,7 +564,9 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
 
         assertTrue(actual.contains(testSubjects.getSubject(mockNode.getPath()), HAS_VERSION, testSubjects
                 .getSubject(mockFrozenNode.getPath())));
-        assertTrue(actual.contains(testSubjects.getSubject(mockFrozenNode.getPath()), HAS_VERSION_LABEL, actual.createLiteral("abc")));
+        assertTrue(actual.contains(testSubjects.getSubject(mockFrozenNode.getPath()),
+                                   HAS_VERSION_LABEL,
+                                   actual.createLiteral("abc")));
     }
 
     @Test
@@ -676,13 +683,28 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     private Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> mockPredicateFactoryFunc;
 
     @Mock
-    private NodeIterator mockNodes, mockNodes2, mockNodes3;
+    private NodeIterator mockNodes;
+
+    @Mock
+    private NodeIterator mockNodes2;
+
+    @Mock
+    private NodeIterator mockNodes3;
 
     @Mock
     private Function<Node, ValueFactory> mockValueFactoryFunc;
 
     @Mock
-    private Node mockNode, mockNode1, mockNode2, mockNode3;
+    private Node mockNode;
+
+    @Mock
+    private Node mockNode1;
+
+    @Mock
+    private Node mockNode2;
+
+    @Mock
+    private Node mockNode3;
 
     @Mock
     private Node mockParent;
@@ -721,7 +743,10 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     private Workspace mockWorkspace;
 
     @Mock
-    private PropertyIterator mockProperties, mockProperties2;
+    private PropertyIterator mockProperties;
+
+    @Mock
+    private PropertyIterator mockProperties2;
 
     @Mock
     private PropertyIterator mockParentProperties;
@@ -769,8 +794,19 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     private MetricRegistry mockMetrics;
 
     @Mock
-    private Node mockChildNode, mockChildNode2, mockChildNode3, mockChildNode4,
-            mockChildNode5;
+    private Node mockChildNode;
+
+    @Mock
+    private Node mockChildNode2;
+
+    @Mock
+    private Node mockChildNode3;
+
+    @Mock
+    private Node mockChildNode4;
+
+    @Mock
+    private Node mockChildNode5;
 
     @Mock
     private Node mockFullChildNode;
@@ -785,7 +821,10 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     private NodeTypeIterator mockNodeTypeIterator;
 
     @Mock
-    private NodeType mockMixinNodeType, mockPrimaryNodeType;
+    private NodeType mockMixinNodeType;
+
+    @Mock
+    private NodeType mockPrimaryNodeType;
 
     @Mock
     private NamespacedProperty mockNamespacedProperty;

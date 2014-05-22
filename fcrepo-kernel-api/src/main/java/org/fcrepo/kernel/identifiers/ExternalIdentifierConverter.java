@@ -33,7 +33,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * Subclasses should override doRdfForward() and doRdfReverse().
  *
  * @author ajs6f
- * @date Apr 1, 2014
+ * @since Apr 1, 2014
  */
 public class ExternalIdentifierConverter extends IdentifierConverter<Resource> {
 

@@ -51,6 +51,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>JQLResultSetTest class.</p>
+ *
+ * @author cbeer
+ */
 public class JQLResultSetTest {
     JQLResultSet testObj;
 
@@ -177,7 +182,8 @@ public class JQLResultSetTest {
         when(mockValue.getType()).thenReturn(PropertyType.REFERENCE);
         when(mockValue.getString()).thenReturn("uuid");
         when(mockSession.getNodeByIdentifier("uuid")).thenReturn(mockNode);
-        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(ResourceFactory.createResource("http://localhost:8080/xyz"));
+        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(ResourceFactory.createResource(
+                "http://localhost:8080/xyz"));
         final QuerySolution solution = testObj.next();
 
         assertEquals("http://localhost:8080/xyz", solution.get("a").asResource().getURI());

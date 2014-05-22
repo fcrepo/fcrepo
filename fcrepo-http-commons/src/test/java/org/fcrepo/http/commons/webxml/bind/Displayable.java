@@ -17,6 +17,11 @@ package org.fcrepo.http.commons.webxml.bind;
 
 import javax.xml.bind.annotation.XmlElement;
 
+/**
+ * <p>Abstract Displayable class.</p>
+ *
+ * @author awoods
+ */
 public abstract class Displayable extends Describable {
 
     @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",

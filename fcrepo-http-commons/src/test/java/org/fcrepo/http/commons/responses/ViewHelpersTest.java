@@ -57,6 +57,11 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.core.Quad;
 
+/**
+ * <p>ViewHelpersTest class.</p>
+ *
+ * @author awoods
+ */
 public class ViewHelpersTest {
 
     private ViewHelpers testObj;
@@ -76,7 +81,8 @@ public class ViewHelpersTest {
                 version);
         mem.add(anon, version, LAST_MODIFIED_DATE.asNode(),
                 createLiteral(date));
-        assertEquals("Version should be available.", version, testObj.getVersions(mem, createURI("http://localhost/fcrepo/abc")).next());
+        assertEquals("Version should be available.",
+                     version, testObj.getVersions(mem, createURI("http://localhost/fcrepo/abc")).next());
     }
 
     @Test
@@ -92,7 +98,8 @@ public class ViewHelpersTest {
                 contentVersion);
         mem.add(anon, contentVersion, LAST_MODIFIED_DATE.asNode(),
                 createLiteral(date));
-        assertEquals("Content version should be available.", contentVersion, testObj.getChildVersions(mem, version).next());
+        assertEquals("Content version should be available.",
+                     contentVersion, testObj.getChildVersions(mem, version).next());
     }
 
     @Test
@@ -159,7 +166,8 @@ public class ViewHelpersTest {
     @Test
     public void testGetUnlabeledVersion() {
         final DatasetGraph mem = createMem();
-        assertEquals("Default version label should be used.", testObj.getVersionLabel(mem, createURI("a/b/c"), "default"), "default");
+        assertEquals("Default version label should be used.",
+                     testObj.getVersionLabel(mem, createURI("a/b/c"), "default"), "default");
     }
 
     @Test

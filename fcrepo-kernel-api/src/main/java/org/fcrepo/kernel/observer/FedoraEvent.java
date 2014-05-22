@@ -37,10 +37,10 @@ import com.google.common.collect.Iterables;
 
 /**
  * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
- * on a JCR interface {@link Event). Can represent either a single JCR event or several.
+ * on a JCR interface {@link Event}. Can represent either a single JCR event or several.
  *
  * @author ajs6f
- * @date Feb 19, 2013
+ * @since Feb 19, 2013
  */
 public class FedoraEvent {
 

@@ -50,7 +50,7 @@ import org.modeshape.jcr.value.Path;
 
 /**
  * @author bbpennel
- * @date Feb 12, 2014
+ * @since Feb 12, 2014
  */
 public class ServletContainerAuthenticationProviderTest {
 

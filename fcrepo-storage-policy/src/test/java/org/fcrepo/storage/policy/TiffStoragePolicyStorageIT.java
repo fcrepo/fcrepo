@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import java.io.ByteArrayInputStream;
-import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
@@ -46,6 +45,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * <p>TiffStoragePolicyStorageIT class.</p>
+ *
+ * @author awoods
+ */
 public class TiffStoragePolicyStorageIT {
 
     protected Logger logger;
@@ -94,13 +98,20 @@ public class TiffStoragePolicyStorageIT {
 
         objectService.createObject(session, "/testCompositeObject");
 
-        data = new ByteArrayInputStream("9876543219876543210987654321098765432109876543210987654321098765432109876543210987654321009876543210".getBytes());
+        data = new ByteArrayInputStream(
+                ("987654321987654321098765432109876543210987654321098765432109876543210987654" +
+                        "3210987654321009876543210").getBytes());
         datastreamService.createDatastream(session,
-                                               "/testCompositeObject/content",
-                                               "application/octet-stream",
-                                                null,
-                                               data);
-        data = new ByteArrayInputStream("87acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a7016".getBytes());
+                                           "/testCompositeObject/content",
+                                           "application/octet-stream",
+                                           null,
+                                           data);
+        data = new ByteArrayInputStream(
+                ("87acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a70" +
+                        "1687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf674" +
+                        "17b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a7" +
+                        "16cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a7016")
+                        .getBytes());
         datastreamService
             .createDatastream(session,
                                   "/testCompositeObject/tiffContent",

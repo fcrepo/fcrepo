@@ -33,8 +33,9 @@ import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.version.VersionException;
 import javax.jcr.Session;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.version.VersionException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -94,27 +95,28 @@ public class FedoraVersions extends ContentExposingResource {
      * @param pathList
      * @param request
      * @param uriInfo
-     * @return
+     * @return List of versions for the object as RDF
      * @throws RepositoryException
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML})
-    public RdfStream getVersionList(@PathParam("path")
-            final List<PathSegment> pathList,
-            @Context
-            final Request request,
-            @Context
-            final UriInfo uriInfo) throws RepositoryException {
+    public RdfStream getVersionList(@PathParam("path") final List<PathSegment> pathList,
+            @Context final Request request,
+            @Context final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
 
         LOGGER.trace("Getting versions list for: {}", path);
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        return resource.getVersionTriples(nodeTranslator()).session(session).topic(
-                nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
+        try {
+            return resource.getVersionTriples(nodeTranslator()).session(session).topic(
+                    nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
+        } catch ( UnsupportedRepositoryOperationException ex ) {
+            throw new WebApplicationException( status(NOT_FOUND).entity("This resource is not versioned").build() );
+        }
     }
 
     /**
@@ -124,7 +126,7 @@ public class FedoraVersions extends ContentExposingResource {
      *
      * @param pathList
      * @param label
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @POST
@@ -141,7 +143,7 @@ public class FedoraVersions extends ContentExposingResource {
      * the label.
      * @param pathList
      * @param label
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @PATCH
@@ -184,6 +186,7 @@ public class FedoraVersions extends ContentExposingResource {
 
     /**
      * Create a new version checkpoint with no label.
+     * @return response
      */
     @POST
     public Response addVersion(@PathParam("path")
@@ -214,7 +217,7 @@ public class FedoraVersions extends ContentExposingResource {
      * @param pathList
      * @param label the label for the version of the subgraph
      * @param uriInfo
-     * @return
+     * @return the version of the object as RDF in the requested format
      * @throws RepositoryException
      */
     @Path("/{label:.+}")

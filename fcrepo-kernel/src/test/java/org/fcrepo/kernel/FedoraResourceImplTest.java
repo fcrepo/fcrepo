@@ -29,8 +29,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMap;
-import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -74,6 +72,11 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.util.Symbol;
 
+/**
+ * <p>FedoraResourceImplTest class.</p>
+ *
+ * @author ajs6f
+ */
 @RunWith(PowerMockRunner.class)
 //PowerMock needs to ignore some packages to prevent class-cast errors
 //PowerMock needs to ignore unnecessary packages to keep from running out of heap

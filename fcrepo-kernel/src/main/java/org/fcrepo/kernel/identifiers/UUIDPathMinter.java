@@ -65,7 +65,7 @@ public class UUIDPathMinter extends BasePidMinter {
     /**
      * Mint a unique identifier as a UUID
      * 
-     * @return
+     * @return uuid
      */
     @Override
     public String mintPid() {

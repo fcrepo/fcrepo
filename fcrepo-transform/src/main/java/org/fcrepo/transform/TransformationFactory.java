@@ -50,7 +50,7 @@ public class TransformationFactory {
      * the transform program
      * @param contentType
      * @param inputStream
-     * @return
+     * @return a Transformation
      */
     @SuppressWarnings("unchecked")
     // this suppression is in place representing the condition that the generator

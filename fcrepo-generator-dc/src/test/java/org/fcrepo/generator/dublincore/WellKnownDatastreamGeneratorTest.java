@@ -33,6 +33,11 @@ import javax.jcr.Property;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * <p>WellKnownDatastreamGeneratorTest class.</p>
+ *
+ * @author barmintor
+ */
 public class WellKnownDatastreamGeneratorTest {
 
     private WellKnownDatastreamGenerator testObj;

@@ -63,7 +63,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param subjects
      * @param session
      * @param problemModel
-     * @return
+     * @return JcrPropertyStatementListener for the given subject factory and JcrSession
      */
     public static JcrPropertyStatementListener getListener(
             final IdentifierTranslator subjects, final Session session, final Model problemModel) {
@@ -248,7 +248,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * Get a list of any problems from trying to apply the statement changes to
      * the node's properties
      *
-     * @return
+     * @return model containing any problems from applying the statement changes
      */
     public Model getProblems() {
         return problems;

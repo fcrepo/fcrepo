@@ -32,7 +32,7 @@ import com.google.common.collect.ImmutableMap;
  * Digest helpers to convert digests (checksums) into URI strings
  * (based loosely on Magnet URIs)
  * @author Chris Beer
- * @date Mar 6, 2013
+ * @since Mar 6, 2013
  */
 public abstract class ContentDigest {
 
@@ -49,7 +49,7 @@ public abstract class ContentDigest {
      * Convert a MessageDigest algorithm and checksum value to a URN
      * @param algorithm
      * @param value
-     * @return
+     * @return URI
      */
     public static URI asURI(final String algorithm, final String value) {
         try {
@@ -67,7 +67,7 @@ public abstract class ContentDigest {
      * Convert a MessageDigest algorithm and checksum byte-array data to a URN
      * @param algorithm
      * @param data
-     * @return
+     * @return URI
      */
     public static URI asURI(final String algorithm, final byte[] data) {
         return asURI(algorithm, asString(data));
@@ -76,7 +76,7 @@ public abstract class ContentDigest {
     /**
      * Given a digest URI, get the corresponding MessageDigest algorithm
      * @param digestUri
-     * @return
+     * @return MessageDigest algorithm
      */
     public static String getAlgorithm(final URI digestUri) {
         if (digestUri == null) {
@@ -94,7 +94,7 @@ public abstract class ContentDigest {
 
     /**
      * Placeholder checksum value.
-     * @return
+     * @return URI
      */
     public static URI missingChecksum() {
         return asURI("SHA-1", "missing");

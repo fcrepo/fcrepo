@@ -46,6 +46,11 @@ import org.slf4j.Logger;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * <p>PropertiesRdfContextTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class PropertiesRdfContextTest {
 
     @Test
@@ -101,7 +106,10 @@ public class PropertiesRdfContextTest {
     private static final String mockNodeName = "mockNode";
 
     @Mock
-    private Node mockNode, mockContentNode;
+    private Node mockNode;
+
+    @Mock
+    private Node mockContentNode;
 
     @Mock
     private NodeType mockNodeType;

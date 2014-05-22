@@ -32,7 +32,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 /**
  * @author ajs6f
  * @author cbeer
- * @date 2013
+ * @since 2013
  */
 public class NodeTypeIteratorTest {
 
@@ -40,7 +40,10 @@ public class NodeTypeIteratorTest {
     javax.jcr.nodetype.NodeTypeIterator i;
 
     @Mock
-    NodeType node1, node2;
+    NodeType node1;
+
+    @Mock
+    NodeType node2;
 
     @InjectMocks
     NodeTypeIterator testIterator;

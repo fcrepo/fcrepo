@@ -32,6 +32,11 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>TransformationFactoryTest class.</p>
+ *
+ * @author cbeer
+ */
 public class TransformationFactoryTest {
 
     @Mock

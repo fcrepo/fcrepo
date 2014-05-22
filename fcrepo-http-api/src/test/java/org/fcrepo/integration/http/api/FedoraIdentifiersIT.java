@@ -32,6 +32,11 @@ import org.junit.Test;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraIdentifiersIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraIdentifiersIT extends AbstractResourceIT {
 
     @Test

@@ -54,7 +54,7 @@ import com.codahale.metrics.annotation.Timed;
 /**
  * A Sitemap implementation for Fedora objects
  *
- * @todo should this be fcr:sitemap?
+ * TODO should this be fcr:sitemap?
  * @author ajs6f
  * @author cbeer
  */
@@ -73,7 +73,7 @@ public class FedoraRepositorySitemap extends AbstractResource {
     /**
      * Get the sitemap index for the repository GET /sitemap
      *
-     * @return
+     * @return sitemap index for the repository
      */
     @GET
     @Timed
@@ -106,7 +106,7 @@ public class FedoraRepositorySitemap extends AbstractResource {
      * Get the sitemap at a given page
      *
      * @param page
-     * @return
+     * @return sitemap at the given page
      * @throws RepositoryException
      */
     @GET

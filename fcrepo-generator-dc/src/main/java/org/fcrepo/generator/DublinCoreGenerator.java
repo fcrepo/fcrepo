@@ -59,7 +59,7 @@ public class DublinCoreGenerator extends AbstractResource {
     /**
      * Get Dublin Core XML for a node
      * @param pathList
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @GET

@@ -44,6 +44,11 @@ import org.slf4j.Logger;
 import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Model;
 
+/**
+ * <p>FedoraIdentifiersTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraIdentifiersTest {
 
     private static final Logger LOGGER = getLogger(FedoraIdentifiersTest.class);

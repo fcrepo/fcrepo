@@ -24,7 +24,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Property;
 
-import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -32,7 +31,7 @@ import org.mockito.Mock;
 
 /**
  * @author ajs6f
- * @date 2013
+ * @since 2013
  */
 public class PropertyIteratorTest {
 
@@ -40,7 +39,10 @@ public class PropertyIteratorTest {
     javax.jcr.PropertyIterator i;
 
     @Mock
-    Property property1, property2;
+    Property property1;
+
+    @Mock
+    Property property2;
 
     @InjectMocks
     PropertyIterator testIterator;

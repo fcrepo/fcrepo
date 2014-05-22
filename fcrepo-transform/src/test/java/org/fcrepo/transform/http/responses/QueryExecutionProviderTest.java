@@ -44,6 +44,11 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 
+/**
+ * <p>QueryExecutionProviderTest class.</p>
+ *
+ * @author cbeer
+ */
 public class QueryExecutionProviderTest {
 
     final QueryExecutionProvider testObj = new QueryExecutionProvider();
@@ -93,14 +98,16 @@ public class QueryExecutionProviderTest {
     @Test
     public void testIsWritable() throws Exception {
         assertTrue(
-                "Gave false response to QueryExecutionProvider.isWriteable() that contained a legitimate combination of parameters!",
+                "Gave false response to QueryExecutionProvider.isWriteable() that contained a legitimate combination " +
+                        "of parameters!",
                 testObj.isWriteable(QueryExecution.class, QueryExecution.class,
-                        null, valueOf(contentTypeResultsXML)));
+                                    null, valueOf(contentTypeResultsXML)));
         assertFalse(
-                "RdfProvider.isWriteable() should return false if asked to serialize anything other than QueryExecution!",
+                "RdfProvider.isWriteable() should return false if asked to serialize anything other than " +
+                        "QueryExecution!",
                 testObj.isWriteable(QueryExecutionProvider.class,
-                        QueryExecutionProvider.class, null,
-                        valueOf(contentTypeResultsXML)));
+                                    QueryExecutionProvider.class, null,
+                                    valueOf(contentTypeResultsXML)));
         assertFalse(
                 "RdfProvider.isWriteable() should return false to text/html!",
                 testObj.isWriteable(QueryExecution.class, QueryExecution.class,

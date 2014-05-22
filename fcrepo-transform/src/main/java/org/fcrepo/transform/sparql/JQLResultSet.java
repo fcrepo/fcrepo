@@ -91,7 +91,7 @@ public class JQLResultSet implements ResultSet {
 
     /**
      * Get the raw JCR query result
-     * @return
+     * @return raw JCR query result
      */
     public QueryResult getQueryResult() {
         return this.queryResult;

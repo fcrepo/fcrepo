@@ -17,6 +17,11 @@ package org.fcrepo.http.commons.webxml.bind;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ * <p>ContextParam class.</p>
+ *
+ * @author awoods
+ */
 @XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
         name = "context-param")
 public class ContextParam extends Param {
@@ -25,7 +30,7 @@ public class ContextParam extends Param {
         super();
     }
 
-    public ContextParam(String name, String value) {
+    public ContextParam(final String name, final String value) {
         super(name, value);
     }
 

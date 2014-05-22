@@ -40,6 +40,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>FedoraFixityTest class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraFixityTest {
 
     FedoraFixity testObj;

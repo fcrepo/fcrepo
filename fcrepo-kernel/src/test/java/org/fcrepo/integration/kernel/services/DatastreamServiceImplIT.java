@@ -45,6 +45,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+/**
+ * <p>DatastreamServiceImplIT class.</p>
+ *
+ * @author ksclarke
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class DatastreamServiceImplIT extends AbstractIT {
 
@@ -77,14 +82,16 @@ public class DatastreamServiceImplIT extends AbstractIT {
     public void testCreateDatastreamNodeWithfilename() throws Exception {
         Session session = repository.login();
         datastreamService.createDatastream(session, "/testDatastreamNode",
-                                                  "application/octet-stream", "xyz.jpg", new ByteArrayInputStream("asdf"
-                                                                                                           .getBytes()));
+                                           "application/octet-stream",
+                                           "xyz.jpg",
+                                           new ByteArrayInputStream("asdf".getBytes()));
         session.save();
         session.logout();
         session = repository.login();
 
         assertTrue(session.getRootNode().hasNode("testDatastreamNode"));
-        assertEquals("xyz.jpg", session.getNode("/testDatastreamNode").getNode(JCR_CONTENT).getProperty(PREMIS_FILE_NAME).getString());
+        assertEquals("xyz.jpg", session.getNode("/testDatastreamNode").getNode(JCR_CONTENT)
+                .getProperty(PREMIS_FILE_NAME).getString());
         session.logout();
     }
 
@@ -153,8 +160,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
                                                          + "testMemoryContent");
 
         final Collection<FixityResult> fixityResults =
-            datastreamService.getFixity(ds.getNode().getNode(JCR_CONTENT), ds
-                                                                               .getContentDigest(), ds.getContentSize());
+            datastreamService.getFixity(ds.getNode().getNode(JCR_CONTENT), ds.getContentDigest(), ds.getContentSize());
 
         assertNotEquals(0, fixityResults.size());
 
@@ -173,7 +179,8 @@ public class DatastreamServiceImplIT extends AbstractIT {
 
         final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
         final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
-        testRandomContent.setProperty(JCR_DATA, factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));
+        testRandomContent.setProperty(JCR_DATA,
+                                      factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));
 
         session.save();
 

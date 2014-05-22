@@ -24,7 +24,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.utils.iterators.EventIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -32,7 +31,7 @@ import org.mockito.Mock;
 
 /**
  * @author ajs6f
- * @date 2013
+ * @since 2013
  */
 public class EventIteratorTest {
 
@@ -40,7 +39,10 @@ public class EventIteratorTest {
     javax.jcr.observation.EventIterator i;
 
     @Mock
-    Event event1, event2;
+    Event event1;
+
+    @Mock
+    Event event2;
 
     @InjectMocks
     EventIterator testIterator;

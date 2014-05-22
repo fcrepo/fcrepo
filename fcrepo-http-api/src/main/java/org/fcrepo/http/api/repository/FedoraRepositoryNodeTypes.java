@@ -20,6 +20,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.status;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -65,7 +66,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
 
     /**
      * Retrieve all node types as RDF
-     * @return
+     * @return All node types as RDF
      * @throws RepositoryException
      */
     @GET
@@ -94,6 +95,14 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
             nodeService.registerNodeTypes(session, requestBodyStream);
 
             return status(SC_NO_CONTENT).build();
+        } catch ( RepositoryException ex ) {
+            // this may be brittle, but the returned exception isn't an InvalideNodeTypeDefinitionException...
+            if ( ex.getMessage().indexOf("Reading the node definitions from the"
+                    + " supplied stream resulted in problems(s)") != -1 ) {
+                return status(SC_BAD_REQUEST).entity(ex.getMessage()).build();
+            } else {
+                throw ex;
+            }
         } finally {
             session.logout();
         }

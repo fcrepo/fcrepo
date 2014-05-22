@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableMap;
  * A convenient abstraction over JCR's integer-typed events.
  *
  * @author ajs6f
- * @date Feb 7, 2013
+ * @since Feb 7, 2013
  */
 public enum EventType {
     NODE_ADDED(javax.jcr.observation.Event.NODE_ADDED, "node added"),
@@ -70,7 +70,7 @@ public enum EventType {
      * Get the Fedora event type for a JCR type
      *
      * @param i
-     * @return
+     * @return EventType
      */
     public static EventType valueOf(final Integer i) {
         return forMap(translation).apply(i);

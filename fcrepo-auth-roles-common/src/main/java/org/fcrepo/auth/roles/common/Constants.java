@@ -30,6 +30,12 @@ import com.hp.hpl.jena.rdf.model.Property;
 public class Constants {
 
     /**
+     * No public constructor for utility class
+     */
+    private Constants() {
+    }
+
+    /**
      * Authorization JCR names
      *
      * @author Gregory Jansen

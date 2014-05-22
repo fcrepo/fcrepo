@@ -18,11 +18,14 @@ package org.fcrepo.integration.jms.observer;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 
+/**
+ * @author barmintor
+ */
 class NoopListener implements MessageListener {
 
     @Override
-    public void onMessage(Message arg0) {
-        
+    public void onMessage(final Message arg0) {
+
     }
-    
+
 }

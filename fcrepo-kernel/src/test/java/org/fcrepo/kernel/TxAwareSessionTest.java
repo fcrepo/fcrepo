@@ -33,6 +33,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>TxAwareSessionTest class.</p>
+ *
+ * @author awoods
+ */
 public class TxAwareSessionTest {
 
     @Mock
@@ -78,7 +83,7 @@ public class TxAwareSessionTest {
         verify(mockSession, never()).save();
     }
 
-    @Test(expected=PathNotFoundException.class)
+    @Test(expected = PathNotFoundException.class)
     public void shouldThrowUnderlyingException() throws RepositoryException {
         when(mockSession.getNode(PATH)).thenThrow(
                 new PathNotFoundException());

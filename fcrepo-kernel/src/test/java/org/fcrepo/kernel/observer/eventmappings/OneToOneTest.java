@@ -27,12 +27,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+/**
+ * <p>OneToOneTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class OneToOneTest {
 
     final private OneToOne testMapping = new OneToOne();
 
     @Mock
-    private Event mockEvent1, mockEvent2, mockEvent3;
+    private Event mockEvent1;
+
+    @Mock
+    private Event mockEvent2;
+
+    @Mock
+    private Event mockEvent3;
 
     @Mock
     private javax.jcr.observation.EventIterator mockIterator;

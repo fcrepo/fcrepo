@@ -59,6 +59,11 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
+/**
+ * <p>JcrPropertyStatementListenerTest class.</p>
+ *
+ * @author awoods
+ */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({JcrRdfTools.class})
@@ -267,7 +272,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE)).thenReturn(
                 "fedora");
         final Model model = createDefaultModel();
-        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE+"object"));
+        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
         testObj.removedStatements(model);
         verify(mockSubjectNode).removeMixin("fedora:object");
     }
@@ -291,7 +296,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
                 .thenReturn("fedora");
         final Model model = createDefaultModel();
-        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE+"object"));
+        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
         testObj.addedStatements(model);
         verify(mockSubjectNode, never()).addMixin("fedora:object");
@@ -311,7 +316,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE)).thenReturn("fedora");
         final Model model = createDefaultModel();
-        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE+"object"));
+        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
         testObj.removedStatements(model);
         verify(mockSubjectNode, never()).removeMixin("fedora:object");
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));

@@ -43,7 +43,7 @@ public class Prefer {
 
     /**
      * Does the Prefer: header have a return tag
-     * @return
+     * @return true if the header has a return tag
      */
     public Boolean hasReturn() {
         return Iterators.any(preferTags.iterator(), getPreferTag("return"));
@@ -51,7 +51,7 @@ public class Prefer {
 
     /**
      * Get the return tag, or a blank default, if none exists.
-     * @return
+     * @return return tag, or a blank default, if none exists
      */
     public PreferTag getReturn() {
         final Optional<PreferTag> aReturn = Iterators.tryFind(preferTags.iterator(), getPreferTag("return"));
@@ -66,7 +66,7 @@ public class Prefer {
 
     private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
         new HttpHeaderReader.ListElementCreator<PreferTag>() {
-            public PreferTag create(HttpHeaderReader reader) throws ParseException {
+            public PreferTag create(final HttpHeaderReader reader) throws ParseException {
                 return new PreferTag(reader);
             }
         };
@@ -74,7 +74,7 @@ public class Prefer {
     private static Predicate<PreferTag> getPreferTag(final String tagName) {
         return new Predicate<PreferTag>() {
             @Override
-            public boolean apply(PreferTag tag) {
+            public boolean apply(final PreferTag tag) {
                 return tag.getTag().equals(tagName);
             }
         };

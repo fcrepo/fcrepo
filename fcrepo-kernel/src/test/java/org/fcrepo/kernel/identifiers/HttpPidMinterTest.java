@@ -29,6 +29,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.client.methods.HttpUriRequest;
 
+/**
+ * @author escowles
+ * @since 2014-05-15
+ */
 public class HttpPidMinterTest {
 
     @Test

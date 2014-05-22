@@ -25,6 +25,11 @@ import java.security.NoSuchAlgorithmException;
 
 import org.junit.Test;
 
+/**
+ * <p>FixityInputStreamTest class.</p>
+ *
+ * @author awoods
+ */
 public class FixityInputStreamTest {
 
     @Test

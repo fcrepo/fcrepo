@@ -39,6 +39,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 // Runs integration test for restful interface for storage policies
+
+/**
+ * <p>FedoraStoragePolicyIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraStoragePolicyIT extends AbstractResourceIT {
 
     private static final String MIME_KEY = "mix:mimeType";
@@ -58,22 +64,22 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
             deletePolicy(policyKey);
         }
     }
-   
+
     @Test
     public void testPolicyCreateByPost() throws Exception {
         final HttpPost objMethod = HttpPostObjMethod(POLICY_RESOURCE);
-        StringEntity input = new StringEntity(MIME_KEY + " " + MIME + " " + STORE,
+        final StringEntity input = new StringEntity(MIME_KEY + " " + MIME + " " + STORE,
                                               "UTF-8");
         input.setContentType(APPLICATION_FORM_URLENCODED);
         objMethod.setEntity(input);
         final HttpResponse response = client.execute(objMethod);
 
-        String body = IOUtils.toString(response.getEntity().getContent());
+        final String body = IOUtils.toString(response.getEntity().getContent());
         assertEquals(body, 201, response.getStatusLine().getStatusCode());
 
         policyKeys.add(MIME_KEY);
 
-        Header[] headers = response.getHeaders("Location");
+        final Header[] headers = response.getHeaders("Location");
         assertNotNull(headers);
         assertEquals(1, headers.length);
         assertEquals(objMethod.getURI()
@@ -100,7 +106,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
         final HttpResponse response1 = client.execute(getMethod1);
         assertNotNull(response1);
 
-        String body = IOUtils.toString(response1.getEntity().getContent());
+        final String body = IOUtils.toString(response1.getEntity().getContent());
         assertEquals(body, 200, response1.getStatusLine().getStatusCode());
         assertEquals(MIME + ":" + STORE, body);
     }
@@ -115,24 +121,24 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
         final HttpResponse response1 = client.execute(getMethod1);
         assertNotNull(response1);
 
-        String body = IOUtils.toString(response1.getEntity().getContent());
+        final String body = IOUtils.toString(response1.getEntity().getContent());
         assertEquals(body, 200, response1.getStatusLine().getStatusCode());
 
-        StoragePolicy policy = new MimeTypeStoragePolicy(MIME, STORE);
+        final StoragePolicy policy = new MimeTypeStoragePolicy(MIME, STORE);
         assertEquals("policies=[" + policy.toString() + "]", body);
     }
 
     @Test
     public void testInvalidPoliciesCreateByPost() throws Exception {
         final HttpPost objMethod = HttpPostObjMethod(POLICY_RESOURCE);
-        StringEntity input = new StringEntity("mix:newType " + MIME + " " + STORE,
+        final StringEntity input = new StringEntity("mix:newType " + MIME + " " + STORE,
                                               "UTF-8");
         input.setContentType(APPLICATION_FORM_URLENCODED);
         objMethod.setEntity(input);
         final HttpResponse response = client.execute(objMethod);
-        assertEquals(response.getStatusLine().getStatusCode(), 500);     
+        assertEquals(response.getStatusLine().getStatusCode(), 500);
     }
-    
+
     @Test
     public void testPolicyDelete() throws Exception {
         testPolicyCreateByPost();
@@ -147,7 +153,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
         );
     }
 
-    private HttpResponse deletePolicy(String policyKey) {
+    private HttpResponse deletePolicy(final String policyKey) {
         final HttpDelete objMethod = HttpDeleteObjMethod(policyKey);
         try {
             return client.execute(objMethod);
@@ -157,5 +163,5 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
             return null; // never
         }
     }
-   
+
 }

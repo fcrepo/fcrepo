@@ -27,7 +27,7 @@ import com.google.common.collect.Lists;
  * A simple {@link PropertyIterator} for test purposes.
  *
  * @author ajs6f
- * @date Oct 14, 2013
+ * @since Oct 14, 2013
  */
 public class TestPropertyIterator implements PropertyIterator {
 

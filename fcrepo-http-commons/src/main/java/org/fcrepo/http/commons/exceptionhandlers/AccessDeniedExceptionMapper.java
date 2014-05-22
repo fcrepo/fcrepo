@@ -39,7 +39,7 @@ public class AccessDeniedExceptionMapper implements
      * @see javax.ws.rs.ext.ExceptionMapper#toResponse(java.lang.Throwable)
      */
     @Override
-    public Response toResponse(AccessDeniedException e) {
+    public Response toResponse(final AccessDeniedException e) {
         LOGGER.debug("{} intercepted exception:{} \n", this.getClass()
                 .getSimpleName(), e);
         return status(FORBIDDEN).build();

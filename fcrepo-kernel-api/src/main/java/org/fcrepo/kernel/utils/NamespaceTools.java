@@ -27,15 +27,13 @@ import com.google.common.base.Function;
  * Tools for working with the JCR Namespace Registry
  * (wrapping some non-standard Modeshape machinery)
  * @author Benjamin Armintor
- * @date May 13, 2013
+ * @since May 13, 2013
  */
 public abstract class NamespaceTools {
 
     /**
      * We need the Modeshape NamespaceRegistry, because it allows us to register
      * anonymous namespaces.
-     * @return
-     * @throws RepositoryException
      */
     public static Function<Node, NamespaceRegistry> getNamespaceRegistry = new Function<Node, NamespaceRegistry>() {
         @Override

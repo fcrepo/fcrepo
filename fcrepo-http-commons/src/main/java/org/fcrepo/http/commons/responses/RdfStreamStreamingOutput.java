@@ -48,7 +48,7 @@ import com.hp.hpl.jena.graph.Triple;
  * Serializes an {@link RdfStream}.
  *
  * @author ajs6f
- * @date Oct 30, 2013
+ * @since Oct 30, 2013
  */
 public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         StreamingOutput {

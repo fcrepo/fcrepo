@@ -36,7 +36,7 @@ public class PreferTag {
      * @param reader
      * @throws ParseException
      */
-    public PreferTag(HttpHeaderReader reader) throws ParseException {
+    public PreferTag(final HttpHeaderReader reader) throws ParseException {
 
         // Skip any white space
         reader.hasNext();
@@ -64,7 +64,7 @@ public class PreferTag {
 
     /**
      * Get the tag name
-     * @return
+     * @return tag name
      */
     public String getTag() {
         return tag;
@@ -72,7 +72,7 @@ public class PreferTag {
 
     /**
      * Get the default value for the tag
-     * @return
+     * @return default value for the tag
      */
     public String getValue() {
         return value;
@@ -80,7 +80,7 @@ public class PreferTag {
 
     /**
      * Get any additional parameters for the prefer tag
-     * @return
+     * @return additional parameters for the prefer tag
      */
     public Map<String,String> getParams() {
         return params;

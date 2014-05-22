@@ -38,6 +38,11 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.sun.jersey.core.header.ContentDisposition;
 
+/**
+ * <p>FedoraContentIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraContentIT extends AbstractResourceIT {
 
     private static final String faulkner1 =
@@ -114,12 +119,16 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet getObjMethod = new HttpGet(serverAddress + pid + "/zxc");
         final GraphStore results = getGraphStore(getObjMethod);
         assertTrue("Didn't find original name!",
-                      results.contains(Node.ANY, NodeFactory.createURI(location), NodeFactory.createURI("http://www.loc.gov/premis/rdf/v1#hasOriginalName"), NodeFactory.createLiteral("some-name")));
+                   results.contains(Node.ANY,
+                                    NodeFactory.createURI(location),
+                                    NodeFactory.createURI("http://www.loc.gov/premis/rdf/v1#hasOriginalName"),
+                                    NodeFactory.createLiteral("some-name")));
 
         final HttpGet getContentMethod = new HttpGet(location);
         final HttpResponse contentResponse = client.execute(getContentMethod);
 
-        final ContentDisposition contentDisposition = new ContentDisposition(contentResponse.getFirstHeader("Content-Disposition").getValue());
+        final ContentDisposition contentDisposition =
+                new ContentDisposition(contentResponse.getFirstHeader("Content-Disposition").getValue());
 
         assertEquals("some-name", contentDisposition.getFileName());
     }
@@ -173,7 +182,8 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
                 response.getFirstHeader("ETag").getValue().replace("\"", ""));
 
-        final ContentDisposition contentDisposition = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+        final ContentDisposition contentDisposition =
+                new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
 
         assertEquals("attachment", contentDisposition.getType());
         assertEquals("ds1", contentDisposition.getFileName());

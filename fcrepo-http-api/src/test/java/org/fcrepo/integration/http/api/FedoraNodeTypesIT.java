@@ -36,6 +36,11 @@ import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * <p>FedoraNodeTypesIT class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraNodeTypesIT  extends AbstractResourceIT {
 
     @Test
@@ -75,6 +80,15 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
         assertTrue(graphStore.contains(ANY, createURI("info:local#object"),
                 subClassOf.asNode(), createURI(RESTAPI_NAMESPACE + "object")));
 
+    }
+
+    @Test
+    public void itShouldRejectBogusCND() throws IOException {
+        final HttpPost httpPost = new HttpPost(serverAddress + "/fcr:nodetypes");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream(("this is not CND").getBytes()));
+        httpPost.setEntity(entity);
+        assertEquals(400, getStatus(httpPost) );
     }
 
     @Test

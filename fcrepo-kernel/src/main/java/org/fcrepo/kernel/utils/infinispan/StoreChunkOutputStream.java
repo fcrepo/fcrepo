@@ -35,7 +35,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * and chunks it into 1MB chunks for Infinispan
  *
  * @author Chris Beer
- * @date Mar 14, 2013
+ * @since Mar 14, 2013
  */
 public class StoreChunkOutputStream extends OutputStream {
 

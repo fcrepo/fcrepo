@@ -40,6 +40,11 @@ import org.junit.Test;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.update.GraphStore;
 
+/**
+ * <p>FedoraBatchIT class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraBatchIT extends AbstractResourceIT {
 
     @Test
@@ -74,8 +79,10 @@ public class FedoraBatchIT extends AbstractResourceIT {
             new HttpPost(serverAddress
                     + pid + "/fcr:batch");
         final MultipartEntityBuilder multiPartEntityBuilder = MultipartEntityBuilder.create();
-        multiPartEntityBuilder.addTextBody(".", "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'xyz' } WHERE { }", ContentType.parse(contentTypeSPARQLUpdate));
-        multiPartEntityBuilder.addTextBody("obj1","<>  <http://purl.org/dc/elements/1.1/title> 'obj1-title' ", ContentType.parse(contentTypeTurtle));
+        multiPartEntityBuilder.addTextBody(".", "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'xyz' } WHERE { }",
+                                           ContentType.parse(contentTypeSPARQLUpdate));
+        multiPartEntityBuilder.addTextBody("obj1","<>  <http://purl.org/dc/elements/1.1/title> 'obj1-title' ",
+                                           ContentType.parse(contentTypeTurtle));
         multiPartEntityBuilder.addTextBody("ds1","asdfg", TEXT_PLAIN);
         multiPartEntityBuilder.addTextBody("ds2", "qwerty", TEXT_PLAIN);
         multiPartEntityBuilder.addTextBody("delete[]", "ds_void");
@@ -91,8 +98,14 @@ public class FedoraBatchIT extends AbstractResourceIT {
 
         final String subjectURI = serverAddress + pid;
 
-        assertTrue("Didn't find the title! ", result.contains(ANY, createURI(subjectURI), createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("xyz")));
-        assertTrue("Didn't find the object title! ", result.contains(ANY, createURI(subjectURI + "/obj1"), createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("obj1-title")));
+        assertTrue("Didn't find the title! ", result.contains(ANY,
+                                                              createURI(subjectURI),
+                                                              createURI("http://purl.org/dc/elements/1.1/title"),
+                                                              createLiteral("xyz")));
+        assertTrue("Didn't find the object title! ", result.contains(ANY,
+                                                                     createURI(subjectURI + "/obj1"),
+                                                                     createURI("http://purl.org/dc/elements/1.1/title"),
+                                                                     createLiteral("obj1-title")));
         assertTrue("Didn't find the first datastream! ", result.contains(ANY,
                 createURI(subjectURI), ANY, createURI(subjectURI + "/ds1")));
         assertTrue("Didn't find the second datastream! ", result.contains(ANY,
@@ -111,8 +124,8 @@ public class FedoraBatchIT extends AbstractResourceIT {
             new HttpPost(serverAddress
                     + pid + "/fcr:batch/");
         final MultipartEntityBuilder multiPartEntityBuilder =
-            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN).addTextBody("ds2",
-                                                                                                   "qwerty", TEXT_PLAIN);
+                MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN)
+                        .addTextBody("ds2", "qwerty", TEXT_PLAIN);
 
         post.setEntity(multiPartEntityBuilder.build());
 
@@ -145,8 +158,8 @@ public class FedoraBatchIT extends AbstractResourceIT {
                     + pid + "/fcr:batch");
 
         final MultipartEntityBuilder multiPartEntityBuilder =
-            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN).addTextBody("ds2",
-                                                                                                   "qwerty", TEXT_PLAIN);
+            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN)
+                    .addTextBody("ds2", "qwerty", TEXT_PLAIN);
 
         post.setEntity(multiPartEntityBuilder.build());
 
@@ -179,8 +192,8 @@ public class FedoraBatchIT extends AbstractResourceIT {
                     + pid + "/fcr:batch");
 
         final MultipartEntityBuilder multiPartEntityBuilder =
-            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN).addTextBody("ds2",
-                                                                                                   "qwerty", TEXT_PLAIN);
+            MultipartEntityBuilder.create().addTextBody("ds1", "asdfg", TEXT_PLAIN)
+                    .addTextBody("ds2", "qwerty", TEXT_PLAIN);
 
         post.setEntity(multiPartEntityBuilder.build());
 

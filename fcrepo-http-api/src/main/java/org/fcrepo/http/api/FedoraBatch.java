@@ -139,7 +139,7 @@ public class FedoraBatch extends AbstractResource {
      *
      * @param pathList
      * @param multipart
-     * @return
+     * @return response
      * @throws RepositoryException
      * @throws IOException
      * @throws InvalidChecksumException
@@ -308,7 +308,7 @@ public class FedoraBatch extends AbstractResource {
      *
      * @param pathList
      * @param childList
-     * @return
+     * @return response
      * @throws RepositoryException
      */
     @DELETE
@@ -337,7 +337,7 @@ public class FedoraBatch extends AbstractResource {
      * @param pathList
      * @param requestedChildren
      * @param request
-     * @return
+     * @return response
      * @throws RepositoryException
      * @throws NoSuchAlgorithmException
      */

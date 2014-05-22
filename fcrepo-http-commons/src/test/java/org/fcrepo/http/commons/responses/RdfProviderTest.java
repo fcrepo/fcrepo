@@ -33,13 +33,17 @@ import java.lang.reflect.Type;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.fcrepo.http.commons.responses.RdfProvider;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 
+/**
+ * <p>RdfProviderTest class.</p>
+ *
+ * @author awoods
+ */
 public class RdfProviderTest {
 
     final RdfProvider rdfProvider = new RdfProvider();
@@ -60,7 +64,7 @@ public class RdfProviderTest {
     @Test
     public void testIsWriteable() {
         assertTrue(
-                "Gave false response to RdfProvider.isWriteable() that contained a legitimate combination of parameters!",
+                "Gave false response to RdfProvider.isWriteable() that contained legitimate combination of parameters!",
                 rdfProvider.isWriteable(Dataset.class, Dataset.class, null,
                         valueOf("application/rdf+xml")));
         assertFalse(

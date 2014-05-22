@@ -34,7 +34,6 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -54,6 +53,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * <p>FedoraTransactionsIT class.</p>
+ *
+ * @author awoods
+ */
 public class FedoraTransactionsIT extends AbstractResourceIT {
 
     @Test
@@ -93,7 +97,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertEquals(200, resp.getStatusLine().getStatusCode());
         assertTrue(Iterators.any(Iterators.forArray(resp.getHeaders("Link")), new Predicate<Header>() {
             @Override
-            public boolean apply(Header input) {
+            public boolean apply(final Header input) {
                 return input.getValue().contains("<" + serverAddress + ">;rel=\"canonical\"");
             }
         }));
@@ -230,7 +234,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         logger.debug(graphStore.toString());
 
         assertTrue(graphStore.toDataset().asDatasetGraph().contains(ANY,
-                                                                    createURI(txLocation + "/" + objectInTxCommit), ANY, ANY));
+                                                                    createURI(txLocation + "/" + objectInTxCommit),
+                                                                    ANY,
+                                                                    ANY));
 
         /* fetch the object-in-tx outside of the tx */
         client = createClient();

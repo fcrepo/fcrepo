@@ -38,9 +38,8 @@ import com.google.common.base.Function;
  * to ensure efficient performance of the JCR.
  *
  * @author ajs6f
- * @date Mar 26, 2014
  * @author lsitu
- * @date May 9, 2014
+ * @since Mar 26, 2014
  */
 public class HierarchyConverter extends InternalIdentifierConverter {
 
@@ -86,7 +85,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         final List<String> flatSegments = asList(nonContentSuffixed.split(separator));
         List<String> hierarchySegments = null;
         final List<String> jcrPathSegments = new ArrayList<>();
-        int pathSize = flatSegments.size();
+        final int pathSize = flatSegments.size();
         if (pathSize == 0) {
             // either empty identifier or separator identifier
             return nonContentSuffixed;
@@ -135,7 +134,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             nonContentSuffixed = nonContentSuffixed.substring(1, nonContentSuffixed.length());
         }
         final List<String> jcrPathSegments = asList(nonContentSuffixed.split(separator));
-        int jcrPathSize = jcrPathSegments.size();
+        final int jcrPathSize = jcrPathSegments.size();
         if (jcrPathSize <= levels) {
             // must be a root identifier
             return hierarchical;
@@ -278,7 +277,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
      * @param namespace
      * @return
      */
-    public String convertNamespace(String namespace) {
+    public String convertNamespace(final String namespace) {
         final String[] tokens = namespace.split(":");
         final int length = tokens.length;
         if (tokens[0].equals(JCR_NAMESPACE_PREFIX) && length == 2 ) {

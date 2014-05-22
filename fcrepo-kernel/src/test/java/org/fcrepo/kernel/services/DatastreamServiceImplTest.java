@@ -16,10 +16,8 @@
 package org.fcrepo.kernel.services;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +26,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -50,7 +47,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.ValueFactory;
@@ -59,6 +55,11 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+/**
+ * <p>DatastreamServiceImplTest class.</p>
+ *
+ * @author ksclarke
+ */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
         "org.xml.sax.*", "javax.management.*"})

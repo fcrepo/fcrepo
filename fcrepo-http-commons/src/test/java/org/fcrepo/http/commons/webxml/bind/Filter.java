@@ -22,6 +22,11 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 
+/**
+ * <p>Filter class.</p>
+ *
+ * @author awoods
+ */
 public class Filter extends Displayable {
 
     @XmlElements(value = {@XmlElement(

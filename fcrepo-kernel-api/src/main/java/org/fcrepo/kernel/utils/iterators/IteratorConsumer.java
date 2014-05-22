@@ -18,13 +18,12 @@ package org.fcrepo.kernel.utils.iterators;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Implemented by something that can consume an {@link Iterator}.
- *
- * The assumption is that a reference to the appropriate iterator
- * is managed as part of the state of any implementation.
- *
+ * Implemented by something that can consume an {@link java.util.Iterator}. The
+ * assumption is that a reference to the appropriate iterator is managed as part
+ * of the state of any implementation.
+ * 
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  * @param <E>
  * @param <T>
  */
@@ -32,16 +31,13 @@ public interface IteratorConsumer<E, T> {
 
     /**
      * Synchronous consumption.
-     *
-     * @param i
      */
     void consume() throws Exception;
 
     /**
      * Asynchronous consumption.
      *
-     * @param i
-     * @return
+     * @return ListenableFuture
      */
     ListenableFuture<T> consumeAsync();
 

@@ -56,6 +56,11 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.ValueFactory;
 
+/**
+ * <p>DatastreamImplTest class.</p>
+ *
+ * @author ksclarke
+ */
 public class DatastreamImplTest implements FedoraJcrTypes {
 
     private static final String testDsId = "testDs";
@@ -82,7 +87,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
-            NodeType mockNodeType = mock(NodeType.class);
+            final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:file");
             when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new DatastreamImpl(mockDsNode);

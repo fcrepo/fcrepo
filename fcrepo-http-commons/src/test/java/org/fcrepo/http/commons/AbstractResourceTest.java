@@ -49,6 +49,11 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+/**
+ * <p>AbstractResourceTest class.</p>
+ *
+ * @author awoods
+ */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({NamespaceTools.class})
@@ -189,8 +194,8 @@ public class AbstractResourceTest {
 
     @Test
     public void testGetJCRPath() throws RepositoryException, URISyntaxException {
-        Resource mockResource = mock(Resource.class);
-        IdentifierTranslator idTranslator = mock(IdentifierTranslator.class);
+        final Resource mockResource = mock(Resource.class);
+        final IdentifierTranslator idTranslator = mock(IdentifierTranslator.class);
         when(idTranslator.getPathFromSubject(mockResource)).thenReturn("some-path");
 
         final String result = getJCRPath(mockResource, idTranslator);

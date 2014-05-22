@@ -54,7 +54,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Merges chunks from cache and provides InputStream-feeling.
  *
  * @author Chris Beer
- * @date Mar 11, 2013
+ * @since Mar 11, 2013
  */
 public class StoreChunkInputStream extends InputStream {
 
@@ -94,29 +94,30 @@ public class StoreChunkInputStream extends InputStream {
     }
 
     @Override
-    public int read(final byte[] b, final int off, int len) throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
+        int length = len;
         if (indexInBuffer == -1) {
             return -1;
         }
         if (buffer == null) {
             fillBuffer();
-            return read(b, off, len);
+            return read(b, off, length);
         }
         if (indexInBuffer >= buffer.length) {
             return -1;
         }
-        if (indexInBuffer + len > buffer.length) {
-            len = buffer.length - indexInBuffer;
+        if (indexInBuffer + length > buffer.length) {
+            length = buffer.length - indexInBuffer;
         }
-        System.arraycopy(buffer, indexInBuffer, b, off, len);
-        indexInBuffer += len;
+        System.arraycopy(buffer, indexInBuffer, b, off, length);
+        indexInBuffer += length;
         // if we've just exhausted the buffer, make sure we try a new buffer on
         // next skip/read
         if (indexInBuffer == buffer.length) {
             buffer = null;
             indexInBuffer = 0;
         }
-        return len;
+        return length;
     }
 
     @Override

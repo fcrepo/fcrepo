@@ -23,7 +23,7 @@ import javax.jcr.RepositoryException;
  * that does not restrict its property types.
  *
  * @author ajs6f
- * @date Oct 25, 2013
+ * @since Oct 25, 2013
  */
 public class NoSuchPropertyDefinitionException extends RepositoryException {
 

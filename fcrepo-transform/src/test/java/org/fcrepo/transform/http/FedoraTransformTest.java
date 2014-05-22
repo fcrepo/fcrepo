@@ -47,6 +47,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/**
+ * <p>FedoraTransformTest class.</p>
+ *
+ * @author cbeer
+ */
 public class FedoraTransformTest {
 
     @Mock
@@ -96,11 +101,12 @@ public class FedoraTransformTest {
         when(mockResource.getPropertiesDataset(any(IdentifierTranslator.class))).thenReturn(dataset);
 
         final InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
-                                                          "{\n" +
-                                                          "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
-                                                          "} ").getBytes());
+                "{\n" +
+                "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
+                "} ").getBytes());
 
-        when(mockTransformationFactory.getTransform(MediaType.valueOf(contentTypeSPARQLQuery), query)).thenReturn(mockTransform);
+        when(mockTransformationFactory.getTransform(MediaType.valueOf(contentTypeSPARQLQuery), query)).thenReturn(
+                mockTransform);
 
         testObj.evaluateTransform(createPathList("testObject"), MediaType.valueOf(contentTypeSPARQLQuery), query);
 

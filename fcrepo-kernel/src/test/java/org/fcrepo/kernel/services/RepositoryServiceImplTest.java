@@ -69,6 +69,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+/**
+ * <p>RepositoryServiceImplTest class.</p>
+ *
+ * @author ksclarke
+ */
 @RunWith(PowerMockRunner.class)
 // PowerMock needs to ignore some packages to prevent class-cast errors
 @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
@@ -227,9 +232,9 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
         when(mockQueryResult.getNodes()).thenReturn(mockNI);
         when(mockNI.getSize()).thenReturn(500L);
         when(mockNI.next()).thenReturn("");
-        when(
-                mockJcrRdfTools.getJcrPropertiesModel(any(org.fcrepo.kernel.utils.iterators.NodeIterator.class), eq(subject)))
-                .thenReturn(new RdfStream());
+        when(mockJcrRdfTools.getJcrPropertiesModel(
+                any(org.fcrepo.kernel.utils.iterators.NodeIterator.class),
+                eq(subject))).thenReturn(new RdfStream());
     }
 
     @Test

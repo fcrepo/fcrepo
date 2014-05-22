@@ -41,8 +41,8 @@ public class QuadOrdering implements Comparator<Quad> {
     }
 
     @Override
-    public int compare(com.hp.hpl.jena.sparql.core.Quad left,
-            com.hp.hpl.jena.sparql.core.Quad right) {
+    public int compare(final com.hp.hpl.jena.sparql.core.Quad left,
+            final com.hp.hpl.jena.sparql.core.Quad right) {
 
         final int s =
                 left.getSubject().toString(prefixMapping, false).compareTo(

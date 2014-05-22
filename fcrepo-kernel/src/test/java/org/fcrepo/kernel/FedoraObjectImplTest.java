@@ -47,6 +47,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Predicate;
 
+/**
+ * <p>FedoraObjectImplTest class.</p>
+ *
+ * @author ksclarke
+ */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
 @PrepareForTest({ServiceHelpers.class})

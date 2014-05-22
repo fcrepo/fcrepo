@@ -29,7 +29,7 @@ import javax.jcr.RepositoryException;
  * A binary storage policy based on the mime type of the node
  * 
  * @author cbeer
- * @date Apr 25, 2013
+ * @since Apr 25, 2013
  */
 public class MimeTypeStoragePolicy implements StoragePolicy {
 
@@ -97,7 +97,7 @@ public class MimeTypeStoragePolicy implements StoragePolicy {
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
         }

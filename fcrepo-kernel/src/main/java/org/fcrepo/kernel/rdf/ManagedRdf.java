@@ -28,11 +28,17 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * {@link Predicate}s for determining when RDF is managed by the repository.
  *
  * @author ajs6f
- * @date Oct 23, 2013
+ * @since Oct 23, 2013
  */
 public class ManagedRdf {
 
     private static final Model model = createDefaultModel();
+
+    /**
+     * No public constructor on utility class
+     */
+    private ManagedRdf() {
+    }
 
     public static final Predicate<Triple> isManagedTriple =
         new Predicate<Triple>() {

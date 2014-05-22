@@ -56,6 +56,11 @@ import javax.ws.rs.core.UriInfo;
 
 import java.util.HashSet;
 
+/**
+ * <p>HttpApiResourcesTest class.</p>
+ *
+ * @author awoods
+ */
 public class HttpApiResourcesTest {
 
     private HttpApiResources testObj;

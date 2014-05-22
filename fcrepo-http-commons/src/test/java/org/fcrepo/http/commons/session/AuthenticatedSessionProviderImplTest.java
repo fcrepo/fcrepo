@@ -21,11 +21,15 @@ import static org.mockito.Mockito.verify;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.http.commons.session.AuthenticatedSessionProviderImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.ServletCredentials;
 
+/**
+ * <p>AuthenticatedSessionProviderImplTest class.</p>
+ *
+ * @author awoods
+ */
 public class AuthenticatedSessionProviderImplTest {
 
     private Repository mockRepo;

@@ -102,7 +102,7 @@ public class ResultSetStreamingOutput extends AbstractFuture<Void> implements St
     /**
      * Map the HTTP MediaType to a SPARQL ResultsFormat
      * @param mediaType
-     * @return
+     * @return SPARQL {@link ResultsFormat} for the given {@link MediaType}
      */
     public static ResultsFormat getResultsFormat(final MediaType mediaType) {
         switch (mediaType.toString()) {

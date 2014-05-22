@@ -30,6 +30,11 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
 
+/**
+ * <p>Abstract AbstractResourceIT class.</p>
+ *
+ * @author cbeer
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 public abstract class AbstractResourceIT {
 

@@ -21,6 +21,11 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+/**
+ * <p>EventTypeTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class EventTypeTest {
 
     @Test
@@ -28,7 +33,7 @@ public class EventTypeTest {
         assertEquals("node added", valueOf(NODE_ADDED).getName());
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testBadEvent() {
         valueOf(9999999);
     }

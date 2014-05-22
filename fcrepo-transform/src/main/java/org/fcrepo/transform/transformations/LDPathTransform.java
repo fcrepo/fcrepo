@@ -89,7 +89,7 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
      * Pull a node-type specific transform out of JCR
      * @param node
      * @param key
-     * @return
+     * @return node-type specific transform
      * @throws RepositoryException
      */
     public static LDPathTransform getNodeTypeTransform(final Node node,
@@ -174,7 +174,7 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
     /**
      * Get the LDPath resource for an object
      * @param dataset
-     * @return
+     * @return the LDPath resource for the given object
      */
     private static LDPath<RDFNode> getLdpathResource(final Dataset dataset) {
 
@@ -186,7 +186,7 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
      * In order for the JAX-RS serialization magic to work, we have to turn the map into
      * a non-wildcard type.
      * @param collectionMap
-     * @return
+     * @return map of the LDPath
      */
     private static Map<String, Collection<Object>> transformLdpathOutputToSomethingSerializable(
         final Map<String, Collection<?>> collectionMap) {

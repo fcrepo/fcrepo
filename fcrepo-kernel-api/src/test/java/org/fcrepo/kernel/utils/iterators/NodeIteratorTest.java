@@ -24,7 +24,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
 
-import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -32,7 +31,7 @@ import org.mockito.Mock;
 
 /**
  * @author ajs6f
- * @date 2013
+ * @since 2013
  */
 public class NodeIteratorTest {
 
@@ -40,7 +39,10 @@ public class NodeIteratorTest {
     javax.jcr.NodeIterator i;
 
     @Mock
-    Node node1, node2;
+    Node node1;
+
+    @Mock
+    Node node2;
 
     @InjectMocks
     NodeIterator testIterator;

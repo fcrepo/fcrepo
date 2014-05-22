@@ -139,7 +139,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * Get the current Transaction for a session
      *
      * @param session
-     * @return
+     * @return the given session's current Transaction
      * @throws TransactionMissingException
      */
     @Override
@@ -166,7 +166,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * Get the current Transaction ID for a session
      *
      * @param session
-     * @return
+     * @return the current Transaction ID for the given session
      */
     public static String getCurrentTransactionId(final Session session) {
         try {

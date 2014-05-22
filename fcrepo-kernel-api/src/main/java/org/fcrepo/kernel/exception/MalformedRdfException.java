@@ -23,7 +23,7 @@ import javax.jcr.RepositoryException;
  * but could not be persisted for some reportable reason.
  *
  * @author ajs6f
- * @date Oct 24, 2013
+ * @since Oct 24, 2013
  */
 public class MalformedRdfException extends RepositoryException {
 

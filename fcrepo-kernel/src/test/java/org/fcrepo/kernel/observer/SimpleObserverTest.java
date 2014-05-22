@@ -38,6 +38,11 @@ import org.modeshape.jcr.api.Repository;
 import com.google.common.base.Predicate;
 import com.google.common.eventbus.EventBus;
 
+/**
+ * <p>SimpleObserverTest class.</p>
+ *
+ * @author awoods
+ */
 public class SimpleObserverTest {
 
     private SimpleObserver testObserver;

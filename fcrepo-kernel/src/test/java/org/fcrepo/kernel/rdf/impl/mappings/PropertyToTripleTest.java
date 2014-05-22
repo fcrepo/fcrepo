@@ -57,6 +57,11 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
+/**
+ * <p>PropertyToTripleTest class.</p>
+ *
+ * @author ajs6f
+ */
 public class PropertyToTripleTest {
 
     // for mocks and setup gear see after tests
@@ -380,7 +385,10 @@ public class PropertyToTripleTest {
     private Property mockProperty;
 
     @Mock
-    private Value mockValue, mockValue2;
+    private Value mockValue;
+
+    @Mock
+    private Value mockValue2;
 
     @Mock
     private javax.jcr.Node mockNode;

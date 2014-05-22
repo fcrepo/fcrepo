@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 
 /**
  * @author ajs6f
- * @date Apr 2, 2014
+ * @since Apr 2, 2014
  */
 public class NamespaceConverterTest {
 

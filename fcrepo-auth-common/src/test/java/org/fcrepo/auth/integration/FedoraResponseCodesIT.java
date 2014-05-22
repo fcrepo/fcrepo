@@ -26,6 +26,11 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 
+/**
+ * <p>FedoraResponseCodesIT class.</p>
+ *
+ * @author gregjan
+ */
 public class FedoraResponseCodesIT extends AbstractResourceIT {
 
     @Test
@@ -108,8 +113,10 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
     public void testGetDatastreamContent() throws Exception {
         final String pid = getRandomUniquePid() + "Permit";
         // TODO requires Grizzly client authN, see:
-        // https://java.net/projects/jersey/sources/svn/content/trunk/jersey/samples/https-clientserver-grizzly/src/main/java/com/sun/jersey/samples/https_grizzly/Server.java?rev=5853
-        // https://java.net/projects/jersey/sources/svn/content/trunk/jersey/samples/https-clientserver-grizzly/src/main/java/com/sun/jersey/samples/https_grizzly/auth/SecurityFilter.java?rev=5853
+        // https://java.net/projects/jersey/sources/svn/content/trunk/jersey/samples/https-clientserver-grizzly/src
+        // /main/java/com/sun/jersey/samples/https_grizzly/Server.java?rev=5853
+        // https://java.net/projects/jersey/sources/svn/content/trunk/jersey/samples/https-clientserver-grizzly/src
+        // /main/java/com/sun/jersey/samples/https_grizzly/auth/SecurityFilter.java?rev=5853
 
         final HttpPut objMethod =
             putObjMethod(pid);

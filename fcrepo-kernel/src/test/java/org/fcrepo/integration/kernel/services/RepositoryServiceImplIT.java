@@ -44,6 +44,11 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.query.Dataset;
 
+/**
+ * <p>RepositoryServiceImplIT class.</p>
+ *
+ * @author ksclarke
+ */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class RepositoryServiceImplIT extends AbstractIT {
 
@@ -108,7 +113,8 @@ public class RepositoryServiceImplIT extends AbstractIT {
         final Dataset registryGraph = repositoryService.getNamespaceRegistryDataset(session, idTranslator);
         final NamespaceRegistry namespaceRegistry = session.getWorkspace().getNamespaceRegistry();
 
-        parseExecute("INSERT { <info:abc> <" + HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }", registryGraph);
+        parseExecute("INSERT { <info:abc> <" + HAS_NAMESPACE_PREFIX.toString() + "> \"abc\" } WHERE { }",
+                     registryGraph);
 
         assertEquals("abc", namespaceRegistry.getPrefix("info:abc"));
         session.logout();

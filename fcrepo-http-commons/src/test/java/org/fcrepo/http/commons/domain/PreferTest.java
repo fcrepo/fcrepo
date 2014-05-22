@@ -43,7 +43,8 @@ public class PreferTest  {
 
     @Test
     public void testGetReturnParameters() throws ParseException {
-        final Prefer prefer = new Prefer("return=representation; include=\"http://www.w3.org/ns/ldp#PreferEmptyContainer\"");
+        final Prefer prefer =
+                new Prefer("return=representation; include=\"http://www.w3.org/ns/ldp#PreferEmptyContainer\"");
 
         assertTrue(prefer.hasReturn());
         assertEquals("representation", prefer.getReturn().getValue());
