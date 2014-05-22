@@ -156,20 +156,24 @@ public class PersistingRdfStreamConsumerTest {
 
     private static final Model m = createDefaultModel();
 
-    private static final Triple propertyTriple = create(createAnon(),
-            createAnon(), createAnon());
+    private static final com.hp.hpl.jena.graph.Node subject = m.createResource("x").asNode();
+    private static final com.hp.hpl.jena.graph.Node object = m.createResource("y").asNode();
+    private static final com.hp.hpl.jena.graph.Node foreignSubject = m.createResource("z").asNode();
+
+    private static final Triple propertyTriple = create(subject,
+            createAnon(), object);
 
     private static final Statement propertyStatement = m
             .asStatement(propertyTriple);
 
-    private static final Triple ldpManagedPropertyTriple = create(createAnon(),
-            PAGE.asNode(), createAnon());
+    private static final Triple ldpManagedPropertyTriple = create(subject,
+            PAGE.asNode(), object);
 
     private static final Statement ldpManagedPropertyStatement = m
             .asStatement(ldpManagedPropertyTriple);
 
-    private static final Triple fedoraManagedPropertyTriple = create(createAnon(),
-            createURI(REPOSITORY_NAMESPACE + "thing"), createAnon());
+    private static final Triple fedoraManagedPropertyTriple = create(subject,
+            createURI(REPOSITORY_NAMESPACE + "thing"), object);
 
     private static final Statement fedoraManagedPropertyStatement = m
             .asStatement(fedoraManagedPropertyTriple);
@@ -179,19 +183,19 @@ public class PersistingRdfStreamConsumerTest {
                 ResourceFactory.createProperty(JCR_NAMESPACE, "thing"),
                 ResourceFactory.createResource());
 
-    private static final Triple managedMixinTriple = create(createAnon(), type
+    private static final Triple managedMixinTriple = create(subject, type
             .asNode(), createURI(RESTAPI_NAMESPACE + "mixin"));
 
     private static final Statement managedMixinStatement = m.asStatement(managedMixinTriple);
 
-    private static final Triple mixinTriple = create(createAnon(),
+    private static final Triple mixinTriple = create(subject,
             type.asNode(), createURI("myNS:mymixin"));
 
     private static final Statement mixinStatement = m.asStatement(mixinTriple);
 
 
-    private static final Triple foreignTriple = create(createAnon(),
-            createAnon(), createAnon());
+    private static final Triple foreignTriple = create(foreignSubject,
+            createAnon(), object);
 
     private static final Statement foreignStatement = m.asStatement(foreignTriple);
 

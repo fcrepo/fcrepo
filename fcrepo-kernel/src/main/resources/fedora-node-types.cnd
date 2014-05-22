@@ -112,3 +112,5 @@
   - premis:hasOriginalName (STRING)
   - premis:hasSize (LONG) COPY
   - fedora:digest (URI) COPY
+
+[fedora:blanknode] > mix:referenceable mixin
