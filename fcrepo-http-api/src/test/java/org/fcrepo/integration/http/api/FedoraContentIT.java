@@ -16,6 +16,7 @@
 package org.fcrepo.integration.http.api;
 
 import static java.util.TimeZone.getTimeZone;
+import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -238,18 +239,30 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        final int buflen = 8192;
+        final long skip = Long.parseLong( System.getProperty("fcrepo.rangetest.skip",String.valueOf(buflen)) );
+        final String byteRange = skip + "-" + (skip + buflen - 1);
+        final String byteResp = byteRange + "/" + (skip + buflen);
+
+        final StringBuffer buf = new StringBuffer();
+        while ( buf.length() < buflen ) {
+            buf.append( randomUUID().toString() );
+        }
+        final String randomString = buf.toString().substring(0,buflen);
+
+        final HttpPost createDSMethod = new HttpPost(serverAddress + pid + "/ds1/fcr:content");
+        createDSMethod.setEntity(new RangeTestEntity(skip,randomString.getBytes()));
+
         assertEquals(201, getStatus(createDSMethod));
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
-        method_test_get.setHeader("Range", "bytes=1-3");
+        method_test_get.setHeader("Range", "bytes=" + byteRange);
         assertEquals(206, getStatus(method_test_get));
 
         final HttpResponse response = client.execute(method_test_get);
         logger.debug("Returned from HTTP GET, now checking content...");
-        assertEquals("Got the wrong content back!", "arb",EntityUtils.toString(response.getEntity()));
-        assertEquals("bytes 1-3/20", response.getFirstHeader("Content-Range").getValue());
-
+        assertEquals("Got the wrong content back!", randomString, EntityUtils.toString(response.getEntity()));
+        assertEquals("bytes " + byteResp, response.getFirstHeader("Content-Range").getValue());
     }
 
     @Test
