@@ -317,4 +317,9 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
 
     private static final List<InternalIdentifierConverter> minimalTranslationChain =
         singletonList((InternalIdentifierConverter) new NamespaceConverter());
+
+    @Override
+    public String getBaseUri() {
+        return uris.getBaseUri().toString();
+    }
 }

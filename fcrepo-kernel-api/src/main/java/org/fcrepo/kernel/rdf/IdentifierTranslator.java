@@ -57,4 +57,11 @@ public interface IdentifierTranslator {
      * @return Resource
      */
     Resource getContext();
+
+    /**
+     * Get baseUri that help for testing the constant subject SPARQLto jcr/sql2 conversion
+     * with the DefaultIdentifierTranslator and the HttpIdentifierTranslator
+     * @return
+     */
+    String getBaseUri();
 }
