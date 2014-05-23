@@ -39,6 +39,7 @@ import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -168,7 +169,6 @@ public class FedoraNodes extends AbstractResource {
         return status(OK).build();
     }
 
-
     /**
      * Retrieve the node profile
      *
@@ -184,7 +184,7 @@ public class FedoraNodes extends AbstractResource {
      */
     @GET
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML})
+            TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream describe(@PathParam("path") final List<PathSegment> pathList,
             @QueryParam("offset") @DefaultValue("0") final int offset,
             @QueryParam("limit")  @DefaultValue("-1") final int limit,
@@ -403,7 +403,7 @@ public class FedoraNodes extends AbstractResource {
      * @throws Exception
      */
     @PUT
-    @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES})
+    @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES, JSON_LD})
     @Timed
     public Response createOrReplaceObjectRdf(
             @PathParam("path") final List<PathSegment> pathList,
@@ -560,7 +560,7 @@ public class FedoraNodes extends AbstractResource {
                     } else {
                         response = noContent();
                     }
-                } else  if (isRdfContentType(contentTypeString)) {
+                } else if (isRdfContentType(contentTypeString)) {
                     LOGGER.trace("Found a RDF syntax, attempting to replace triples");
 
                     final Lang lang = contentTypeToLang(contentTypeString);

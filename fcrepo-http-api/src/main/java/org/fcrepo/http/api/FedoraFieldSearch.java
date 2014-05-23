@@ -23,6 +23,7 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
@@ -131,7 +132,7 @@ public class FedoraFieldSearch extends AbstractResource implements
      */
     @GET
     @Timed
-    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X})
+    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X, JSON_LD})
     public Dataset searchSubmitRdf(@QueryParam(QUERY_PARAM) final String terms,
             @QueryParam(OFFSET_PARAM) @DefaultValue("0") final long offset,
             @QueryParam(LIMIT_PARAM) @DefaultValue("25") final int limit,

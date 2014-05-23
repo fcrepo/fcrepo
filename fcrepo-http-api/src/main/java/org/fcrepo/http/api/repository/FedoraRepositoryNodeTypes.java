@@ -22,6 +22,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
@@ -71,7 +72,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
      */
     @GET
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML})
+                      TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     @Timed
     @HtmlTemplate("jcr:nodetypes")
     public RdfStream getNodeTypes(@Context final UriInfo uriInfo) throws RepositoryException {

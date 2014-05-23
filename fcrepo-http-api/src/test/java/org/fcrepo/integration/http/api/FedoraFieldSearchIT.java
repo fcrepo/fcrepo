@@ -19,6 +19,7 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -133,7 +134,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
     @Test
     public void testResponseContentTypes() throws Exception {
-        final String responseTypes[] = {TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X};
+        final String responseTypes[] = {TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X, JSON_LD};
         for (final String type : responseTypes) {
             final HttpGet method =
                     new HttpGet(serverAddress + "fcr:search?q=testtype");
