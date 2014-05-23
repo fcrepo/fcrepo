@@ -425,7 +425,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             final List<Node> childrenCopy = new ArrayList<>();
             childrenCopy.addAll(children);
             children.clear();
-            for (Node child : childrenCopy) {
+            for (final Node child : childrenCopy) {
                 findChildren( child, children, false );
             }
         }
@@ -445,7 +445,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     private static void findChildren(final Node node, final List<Node> children, final boolean recurse)
         throws RepositoryException {
         if (node.getNodes() == null) {
-            System.out.println("Null nodes");
+            LOGGER.debug("Null children nodes returned from {}", node.getPath());
+            return;
         }
         for (final NodeIterator nodes = node.getNodes(); nodes.hasNext();) {
             final Node child = nodes.nextNode();
