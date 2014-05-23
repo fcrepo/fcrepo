@@ -123,6 +123,14 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         return getContentNode().getProperty(JCR_DATA).getBinary().getStream();
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.Datastream#getBinaryContent()
+     */
+    @Override
+    public javax.jcr.Binary getBinaryContent() throws RepositoryException {
+        return getContentNode().getProperty(JCR_DATA).getBinary();
+    }
 
     /*
      * (non-Javadoc)
