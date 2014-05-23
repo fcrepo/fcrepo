@@ -31,6 +31,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.http.api.ContentExposingResource;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
@@ -249,6 +250,26 @@ public class FedoraContentIT extends AbstractResourceIT {
         logger.debug("Returned from HTTP GET, now checking content...");
         assertEquals("Got the wrong content back!", "arb",EntityUtils.toString(response.getEntity()));
         assertEquals("bytes 1-3/20", response.getFirstHeader("Content-Range").getValue());
+
+    }
+
+    @Test
+    public void testRangeRequestWithSkipBytes() throws Exception {
+        ContentExposingResource.setMaxBufferSize(10);
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "large marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+        final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
+        method_test_get.setHeader("Range", "bytes=1-21");
+        assertEquals(206, getStatus(method_test_get));
+
+        final HttpResponse response = client.execute(method_test_get);
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertEquals("Got the wrong content back!", "arge marbles for ever",
+                EntityUtils.toString(response.getEntity()));
+        assertEquals("bytes 1-21/26", response.getFirstHeader("Content-Range").getValue());
 
     }
 

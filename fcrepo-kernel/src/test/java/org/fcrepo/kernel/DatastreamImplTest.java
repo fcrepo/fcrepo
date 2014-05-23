@@ -38,6 +38,7 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
@@ -117,6 +118,17 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(expected, actual);
         verify(mockContent).getProperty(JCR_DATA);
+    }
+
+    @Test
+    public void testGetBinaryContent() throws RepositoryException, IOException {
+        final Binary mockBinary = mock(Binary.class);
+        final Property mockProperty = mock(Property.class);
+        final Node mockContent = getContentNodeMock("abc");
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProperty);
+        when(mockProperty.getBinary()).thenReturn(mockBinary);
+        assertEquals(mockBinary, testObj.getBinaryContent());
     }
 
     @Test

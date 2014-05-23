@@ -18,6 +18,7 @@ package org.fcrepo.kernel;
 import java.io.InputStream;
 import java.net.URI;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -35,6 +36,12 @@ public interface Datastream extends FedoraResource {
      * @throws RepositoryException
      */
     InputStream getContent() throws RepositoryException;
+
+    /**
+     * @return The Binary content associated with this datastream.
+     * @throws RepositoryException
+     */
+    Binary getBinaryContent() throws RepositoryException;
 
     /**
      * @return The Node of content associated with this datastream.

@@ -22,6 +22,7 @@ import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.Datastream;
 
+import javax.jcr.Binary;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -49,6 +51,8 @@ public abstract class ContentExposingResource extends AbstractResource {
 
     protected static final int PARTIAL_CONTENT = 206;
 
+    private static long MAX_BUFFER_SIZE = 10240000;
+
     /**
      * A helper method that does most of the work associated with processing a request
      * for content (or a range of the content) into a Response
@@ -66,8 +70,6 @@ public abstract class ContentExposingResource extends AbstractResource {
         cc.setMaxAge(0);
         cc.setMustRevalidate(true);
         Response.ResponseBuilder builder;
-
-        final InputStream content = ds.getContent();
 
         if (rangeValue != null && rangeValue.startsWith("bytes")) {
 
@@ -92,14 +94,36 @@ public abstract class ContentExposingResource extends AbstractResource {
                 builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                         .header("Content-Range", contentRangeValue);
             } else {
-                final RangeRequestInputStream rangeInputStream =
-                    new RangeRequestInputStream(content, range.start(), range.size());
+                final long maxBufferSize = MAX_BUFFER_SIZE; // 10MB max buffer size?
+                final long rangeSize = range.size();
+                final long rangeStart = range.start();
+                final long remainingBytes = contentSize - rangeStart;
+                final long bufSize = rangeSize < remainingBytes ? rangeSize : remainingBytes;
 
-                builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
-                        .header("Content-Range", contentRangeValue);
+                if (bufSize < maxBufferSize) {
+                    // Small size range content retrieval use javax.jcr.Binary to improve performance
+                    final byte[] buf = new byte[(int) bufSize];
+
+                    final Binary binaryContent = ds.getBinaryContent();
+                    binaryContent.read(buf, rangeStart);
+                    binaryContent.dispose();
+
+                    builder = status(PARTIAL_CONTENT).entity(buf)
+                            .header("Content-Range", contentRangeValue);
+                } else {
+                    // For large range content retrieval, go with the InputStream class to balance
+                    // the memory usage, though this is a rare case in range content retrieval.
+                    final InputStream content = ds.getContent();
+                    final RangeRequestInputStream rangeInputStream =
+                            new RangeRequestInputStream(content, range.start(), range.size());
+
+                        builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
+                                .header("Content-Range", contentRangeValue);
+                }
             }
 
         } else {
+            final InputStream content = ds.getContent();
             builder = ok(content);
         }
 
@@ -177,4 +201,12 @@ public abstract class ContentExposingResource extends AbstractResource {
         }
     }
 
+    /**
+     * Setter that set the max buffer size for range content retrieval,
+     * which could help for unit testing.
+     * @param maxBufferSize
+     */
+    public static void setMaxBufferSize(final long maxBufferSize) {
+        MAX_BUFFER_SIZE = maxBufferSize;
+    }
 }
