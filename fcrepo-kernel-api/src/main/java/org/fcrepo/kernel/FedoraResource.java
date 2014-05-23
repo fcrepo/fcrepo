@@ -146,6 +146,15 @@ public interface FedoraResource {
     Iterator<Node> getChildren(final IdentifierTranslator graphSubjects)
         throws RepositoryException;
 
+    /**
+     * Return the parent node of this object
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    Node getParent(final IdentifierTranslator graphSubjects)
+        throws RepositoryException;
+
 
     /**
      * Serialize the JCR versions information as an RDF dataset
@@ -175,7 +184,7 @@ public interface FedoraResource {
 
     /**
      * Get the JCR Base version for the node
-     * 
+     *
      * @return base version
      * @throws RepositoryException
      */

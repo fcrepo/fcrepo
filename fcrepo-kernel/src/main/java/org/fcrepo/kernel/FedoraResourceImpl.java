@@ -460,4 +460,32 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             }
         }
     }
+
+    /**
+     * Get the parent of the current node
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    @Override
+    public Node getParent(final IdentifierTranslator graphSubjects) throws RepositoryException {
+        return findParent(node, graphSubjects);
+    }
+
+    /**
+     * Find the parent of the node
+     * @param node
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    public static Node findParent(final Node node, final IdentifierTranslator graphSubjects)
+            throws RepositoryException {
+        final int hierarchyLevels = graphSubjects.getHierarchyLevels();
+        Node parent = node.getParent();
+        for (int i = 0; i < hierarchyLevels; i++) {
+            parent = parent.getParent();
+        }
+        return parent;
+    }
 }

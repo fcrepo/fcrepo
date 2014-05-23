@@ -105,7 +105,7 @@ public class HierarchyRdfContext extends NodeRdfContext {
     }
 
     private Iterator<Triple> parentContext() throws RepositoryException {
-        final javax.jcr.Node parentNode = node().getParent();
+        final javax.jcr.Node parentNode = FedoraResourceImpl.findParent(node(), graphSubjects());//node().getParent();
         final Node parentNodeSubject = graphSubjects().getSubject(parentNode.getPath()).asNode();
 
         final RdfStream parentStream = new RdfStream();
