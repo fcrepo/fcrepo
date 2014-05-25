@@ -28,8 +28,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.google.common.base.Predicate;
@@ -41,6 +43,10 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author ajs6f
@@ -62,6 +68,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     private static final Model m = createDefaultModel();
 
     private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumer.class);
+    private static final JcrTools jcrTools = new JcrTools();
+    private final Map<AnonId, Resource> skolemizedBnodeMap;
 
     /**
      * Ordinary constructor.
@@ -81,19 +89,19 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
                 final boolean result =
                     graphSubjects.isFedoraGraphSubject(m.asStatement(t)
-                            .getSubject());
+                            .getSubject()) || t.getSubject().isBlank();
                 if (result) {
                     LOGGER.debug(
                             "Discovered a Fedora-relevant subject in triple: {}.",
                             t);
                 } else {
                     LOGGER.debug("Ignoring triple: {}.", t);
-
                 }
                 return result;
             }
 
         };
+        this.skolemizedBnodeMap = new HashMap<>();
         // we knock out managed RDF and non-Fedora RDF
         this.stream =
             stream.withThisContext(stream.filter(and(not(isManagedTriple),
@@ -104,11 +112,37 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     @Override
     public void consume() throws RepositoryException {
         while (stream.hasNext()) {
-            final Statement t = m.asStatement(stream.next());
-            LOGGER.debug("Operating on triple {}.", t);
+            Statement t = m.asStatement(stream.next());
+            LOGGER.debug("Operating triple {}.", t);
+
+            if (t.getObject().isAnon()) {
+                t = t.changeObject(getSkolemizedResource(t.getObject()));
+            }
+
+            if (t.getSubject().isAnon()) {
+                t = m.createStatement(getSkolemizedResource(t.getSubject()), t.getPredicate(), t.getObject());
+            }
+
+            LOGGER.trace("Operating on skolemized triple {}.", t);
+
             operateOnTriple(t);
         }
 
+    }
+
+    private Resource getSkolemizedResource(final RDFNode resource) throws RepositoryException {
+        final AnonId id = resource.asResource().getId();
+
+        if (!skolemizedBnodeMap.containsKey(id)) {
+            final Node orCreateNode
+                = jcrTools.findOrCreateNode(session, "/.well-known/genid/" + UUID.randomUUID().toString());
+            orCreateNode.addMixin("fedora:blanknode");
+            final Resource skolemizedSubject
+                = idTranslator().getSubject(orCreateNode.getPath());
+            skolemizedBnodeMap.put(id, skolemizedSubject);
+        }
+
+        return skolemizedBnodeMap.get(id);
     }
 
     protected void operateOnTriple(final Statement t)

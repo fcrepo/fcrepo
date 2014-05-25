@@ -26,9 +26,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
@@ -36,6 +38,9 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.vocabulary.RDF;
+
+import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * Listen to Jena statement events, and when the statement is changed in the
@@ -46,6 +51,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 public class JcrPropertyStatementListener extends StatementListener {
 
     private final JcrRdfTools jcrRdfTools;
+    private final HashMap<AnonId, Node> skolemizedBnodeMap;
 
     private NodePropertiesTools propertiesTools = new NodePropertiesTools();
 
@@ -57,6 +63,8 @@ public class JcrPropertyStatementListener extends StatementListener {
     private final IdentifierTranslator subjects;
 
     private final Session session;
+
+    private static final JcrTools jcrTools = new JcrTools();
 
     /**
      * Return a Listener given the subject factory and JcrSession.
@@ -83,6 +91,7 @@ public class JcrPropertyStatementListener extends StatementListener {
         this.subjects = subjects;
         this.problems = problems;
         this.jcrRdfTools = JcrRdfTools.withContext(subjects, session);
+        this.skolemizedBnodeMap = new HashMap<AnonId, Node>();
     }
 
     /**
@@ -98,11 +107,24 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, ignore it.
-            if (!subjects.isFedoraGraphSubject(subject)) {
+            if (!subjects.isFedoraGraphSubject(subject) && !subject.isAnon()) {
                 return;
             }
 
-            final Node subjectNode = session.getNode(subjects.getPathFromSubject(subject));
+            final Node subjectNode;
+
+            if (subject.isAnon()) {
+                if (skolemizedBnodeMap.containsKey(subject.getId())) {
+                    subjectNode = skolemizedBnodeMap.get(subject.getId());
+                } else {
+                    subjectNode
+                        = jcrTools.findOrCreateNode(session, "/.well-known/genid/" + UUID.randomUUID().toString());
+                    subjectNode.addMixin("fedora:blanknode");
+                    skolemizedBnodeMap.put(subject.getId(), subjectNode);
+                }
+            } else {
+                subjectNode = session.getNode(subjects.getPathFromSubject(subject));
+            }
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
