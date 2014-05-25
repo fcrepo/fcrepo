@@ -21,7 +21,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
-import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
@@ -29,15 +28,21 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.File;
+import java.net.URI;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.schematic.document.Document;
 import org.modeshape.connector.filesystem.FileSystemConnector;
+import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.federation.spi.DocumentReader;
 import org.modeshape.jcr.federation.spi.DocumentWriter;
+import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.Name;
 import org.modeshape.jcr.value.Property;
+import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +57,9 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraFileSystemConnector.class);
 
+    private static final String DELIMITER = "/";
+    private static final String JCR_CONTENT = "jcr:content";
+    private static final String JCR_CONTENT_SUFFIX = DELIMITER + JCR_CONTENT;
 
     /**
      * This method returns the object/document for the node with the federated arg 'id'.
@@ -85,10 +93,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
         // Is Fedora Content?
         } else if (primaryType.equals(NT_RESOURCE)) {
-            decorateContentNode(docReader, docWriter);
+            decorateContentNode(docReader, docWriter, fileFor(id));
         }
 
-        // Persist new properties
+        // Persist new properties (if allowed)
         if (!isReadonly()) {
             saveProperties(docReader);
         }
@@ -98,14 +106,52 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     @Override
     public String sha1(final File file) {
-        final String id = idFor(file);
-        final Document doc = super.getDocumentById(id);
-        final DocumentReader docReader = readDocument(doc);
-        if (null != docReader.getProperty(CONTENT_DIGEST)) {
-            return docReader.getProperty(CONTENT_DIGEST).toString();
+        final String cachedSha1 = getCachedSha1(file);
+        if (cachedSha1 == null) {
+            return computeAndCacheSha1(file);
+        } else {
+            return cachedSha1;
         }
-        return super.sha1(file);
     }
+
+
+    private String getCachedSha1(final File file) {
+        final String id = idFor(file) + JCR_CONTENT_SUFFIX;
+        if (extraPropertiesStore() != null) {
+            final Map<Name, Property> extraProperties = extraPropertiesStore().getProperties(id);
+            final Name digestName = nameFrom(CONTENT_DIGEST);
+            if (extraProperties.containsKey(digestName)) {
+                if (!hasBeenModifiedSincePropertiesWereStored(file, extraProperties.get(nameFrom(JCR_CREATED)))) {
+                    LOGGER.trace("Found sha1 for {} in extra properties store.", id);
+                    final String uriStr = ((URI) extraProperties.get(digestName).getFirstValue()).toString();
+                    return uriStr.substring(uriStr.indexOf("sha1:") + 5);
+                }
+            }
+        } else {
+            LOGGER.trace("No cache configured to contain object hashes.");
+        }
+        return null;
+    }
+
+    private String computeAndCacheSha1(final File file) {
+        final String id = idFor(file) + JCR_CONTENT_SUFFIX;
+        LOGGER.trace("Computing sha1 for {}.", id);
+        final String sha1 = super.sha1(file);
+        final ExtraPropertiesStore cachedPropertiesStore = extraPropertiesStore();
+        if (cachedPropertiesStore != null) {
+            final Map<Name, Property> updateMap = new HashMap<Name, Property>();
+            final Property digestProperty = new BasicSingleValueProperty(nameFrom(CONTENT_DIGEST),
+                    asURI("SHA-1", sha1));
+            final Property digestDateProperty = new BasicSingleValueProperty(nameFrom(JCR_CREATED),
+                    factories().getDateFactory().create(file.lastModified()));
+            updateMap.put(digestProperty.getName(), digestProperty);
+            updateMap.put(digestDateProperty.getName(), digestDateProperty);
+            extraPropertiesStore().updateProperties(id, updateMap);
+        }
+        return sha1;
+    }
+
+
 
     private static void decorateDatastreamNode(final DocumentReader docReader, final DocumentWriter docWriter) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_DATASTREAM)) {
@@ -114,13 +160,15 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
     }
 
-    private static void decorateContentNode(final DocumentReader docReader, final DocumentWriter docWriter) {
+    private static void decorateContentNode(final DocumentReader docReader, final DocumentWriter docWriter,
+                                            final File file) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_BINARY)) {
             LOGGER.trace("Adding mixin: {}, to {}", FEDORA_BINARY, docReader.getDocumentId());
             docWriter.addMixinType(FEDORA_BINARY);
         }
 
-        if (null == docReader.getProperty(CONTENT_DIGEST)) {
+        if (null == docReader.getProperty(CONTENT_DIGEST)
+                || hasBeenModifiedSincePropertiesWereStored(file, docReader.getProperty(JCR_CREATED))) {
             final BinaryValue binaryValue = getBinaryValue(docReader);
             final String dsChecksum = binaryValue.getHexHash();
             final String dsURI = asURI("SHA-1", dsChecksum).toString();
@@ -130,14 +178,28 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
 
         if (null == docReader.getProperty(CONTENT_SIZE)) {
-            final BinaryValue binaryValue = getBinaryValue(docReader);
-            final long binarySize = binaryValue.getSize();
-
+            final long binarySize = file.length();
             LOGGER.trace("Adding {} property of {} to {}", CONTENT_SIZE, binarySize, docReader.getDocumentId());
             docWriter.addProperty(CONTENT_SIZE, binarySize);
         }
 
         LOGGER.debug("Decorated data property at path: {}", docReader.getDocumentId());
+    }
+
+    private static boolean hasBeenModifiedSincePropertiesWereStored(final File file, final Property lastModified) {
+        if (lastModified == null) {
+            LOGGER.trace("Hash for {} has not been computed yet.", file.getName());
+            return true;
+        } else {
+            final DateTime datetime = (DateTime) lastModified.getFirstValue();
+            if (datetime.toDate().equals(new Date(file.lastModified()))) {
+                return false;
+            } else {
+                LOGGER.trace("{} has been modified ({}) since hash was last computed ({}).", file.getName(),
+                        new Date(file.lastModified()), datetime.toDate());
+                return true;
+            }
+        }
     }
 
     private static BinaryValue getBinaryValue(final DocumentReader docReader) {
@@ -149,7 +211,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         LOGGER.trace("Persisting properties for {}", docReader.getDocumentId());
         final Map<Name, Property> properties = docReader.getProperties();
         final ExtraProperties extraProperties = extraPropertiesFor(docReader.getDocumentId(), true);
-        extraProperties.addAll(properties).except(JCR_PRIMARY_TYPE, JCR_CREATED, JCR_LASTMODIFIED, JCR_DATA);
+        extraProperties.addAll(properties).except(JCR_PRIMARY_TYPE, JCR_DATA, CONTENT_SIZE);
         extraProperties.save();
     }
 
