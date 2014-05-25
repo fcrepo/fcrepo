@@ -260,8 +260,7 @@ public class FedoraNodes extends AbstractResource {
                     && !contains(omits, LDP_NAMESPACE + "PreferContainment");
 
 
-            final boolean references = contains(includes, INBOUND_REFERENCES.toString())
-                                           && !contains(omits, INBOUND_REFERENCES.toString());
+            final boolean references = !contains(omits, INBOUND_REFERENCES.toString());
 
             final HierarchyRdfContextOptions hierarchyRdfContextOptions
                 = new HierarchyRdfContextOptions(limit, offset, membership, containment);

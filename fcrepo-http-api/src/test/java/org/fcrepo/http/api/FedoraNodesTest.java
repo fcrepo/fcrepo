@@ -132,6 +132,7 @@ public class FedoraNodesTest {
     private RdfStream mockRdfStream = new RdfStream().topic(createAnon());
 
     private RdfStream mockRdfStream2 = new RdfStream().topic(createAnon());
+    private RdfStream mockRdfStream3 = new RdfStream().topic(createAnon());
 
     @Mock
     private Model mockModel;
@@ -355,13 +356,14 @@ public class FedoraNodesTest {
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
                                                any(HierarchyRdfContextOptions.class))).thenReturn(
                 mockRdfStream2);
+        when(mockObject.getReferencesTriples(any(IdentifierTranslator.class))).thenReturn(mockRdfStream3);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final RdfStream rdfStream =
             testObj.describe(createPathList(path), 0, -2, null, mockRequest,
                     mockResponse, mockUriInfo);
-        assertEquals("Got wrong triples!", mockRdfStream.concat(mockRdfStream2),
+        assertEquals("Got wrong triples!", mockRdfStream.concat(mockRdfStream2).concat(mockRdfStream3),
                 rdfStream);
         verify(mockResponse).addHeader("Accept-Patch", "application/sparql-update");
         verify(mockResponse).addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
@@ -382,6 +384,7 @@ public class FedoraNodesTest {
                 mockRdfStream);
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
                                                any(HierarchyRdfContextOptions.class))).thenReturn(mockRdfStream2);
+        when(mockObject.getReferencesTriples(any(IdentifierTranslator.class))).thenReturn(mockRdfStream3);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
@@ -389,7 +392,7 @@ public class FedoraNodesTest {
                                             + "include=\"http://www.w3.org/ns/ldp#PreferEmptyContainer\"");
         final RdfStream rdfStream =
             testObj.describe(createPathList(path), 0, -1, prefer, mockRequest, mockResponse, mockUriInfo);
-        assertEquals("Got wrong RDF!", mockRdfStream.concat(mockRdfStream2),
+        assertEquals("Got wrong RDF!", mockRdfStream.concat(mockRdfStream2).concat(mockRdfStream3),
                 rdfStream);
 
     }
