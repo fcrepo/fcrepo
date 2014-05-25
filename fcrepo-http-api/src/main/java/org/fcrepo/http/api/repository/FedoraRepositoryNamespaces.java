@@ -24,6 +24,7 @@ import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
@@ -106,7 +107,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     @GET
     @Timed
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML})
+                      TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     @HtmlTemplate("jcr:namespaces")
     public RdfStream getNamespaces() throws RepositoryException {
         final HttpIdentifierTranslator idTranslator = new HttpIdentifierTranslator(session,

@@ -73,12 +73,16 @@ public abstract class RDFMediaType extends MediaType {
 
     public static final MediaType NTRIPLES_TYPE = typeFromString(NTRIPLES);
 
+    public final static String JSON_LD = "application/ld+json";
+
+    public final static MediaType JSON_LD_TYPE = typeFromString(JSON_LD);
+
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
             TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, RDF_XML_TYPE, NTRIPLES_TYPE, APPLICATION_XML_TYPE, TEXT_PLAIN_TYPE,
-            TURTLE_X_TYPE).add().build();
+            TURTLE_X_TYPE, JSON_LD_TYPE).add().build();
 
     public static final String POSSIBLE_RDF_RESPONSE_VARIANTS_STRING[] = {
-        TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X };
+        TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD };
 
     public static final String TSV = contentTypeTextTSV;
 

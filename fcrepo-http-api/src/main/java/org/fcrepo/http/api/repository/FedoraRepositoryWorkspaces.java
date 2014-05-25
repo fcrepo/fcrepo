@@ -24,6 +24,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
@@ -84,7 +85,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
      */
     @GET
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML})
+                      TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     @HtmlTemplate("jcr:workspaces")
     public RdfStream getWorkspaces()
         throws RepositoryException {

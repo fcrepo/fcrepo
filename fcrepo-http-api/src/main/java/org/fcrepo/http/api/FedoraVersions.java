@@ -62,6 +62,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
@@ -101,7 +102,7 @@ public class FedoraVersions extends ContentExposingResource {
     @GET
     @HtmlTemplate(value = "fcr:versions")
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML})
+                      TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream getVersionList(@PathParam("path") final List<PathSegment> pathList,
             @Context final Request request,
             @Context final UriInfo uriInfo) throws RepositoryException {
@@ -223,7 +224,7 @@ public class FedoraVersions extends ContentExposingResource {
     @Path("/{label:.+}")
     @GET
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML})
+                      TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream getVersion(@PathParam("path")
             final List<PathSegment> pathList,
             @PathParam("label")
