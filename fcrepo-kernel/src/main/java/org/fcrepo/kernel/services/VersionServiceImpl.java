@@ -33,6 +33,7 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 import java.util.Collection;
+import java.util.HashSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
@@ -105,15 +106,17 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      * @throws RepositoryException
      */
     @Override
-    public void createVersion(final Workspace workspace,
+    public Collection<String> createVersion(final Workspace workspace,
             final Collection<String> paths) throws RepositoryException {
+        final Collection<String> versions = new HashSet<String>();
         for (final String absPath : paths) {
             final Node node = workspace.getSession().getNode(absPath);
             if (!isVersioningEnabled(node)) {
                 enableVersioning(node);
             }
-            checkpoint(workspace, absPath);
+            versions.add( checkpoint(workspace, absPath) );
         }
+        return versions;
     }
 
     @Override
@@ -205,9 +208,10 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
     }
 
-    private static void checkpoint(final Workspace workspace, final String absPath) throws RepositoryException {
+    private String checkpoint(final Workspace workspace, final String absPath) throws RepositoryException {
         LOGGER.trace("Setting implicit version checkpoint set for {}", absPath);
-        workspace.getVersionManager().checkpoint(absPath);
+        Version v = workspace.getVersionManager().checkpoint(absPath);
+        return ( v == null ) ? null : v.getFrozenNode().getIdentifier();
     }
 
     private void queueCheckpoint(final Session session, final String absPath) throws TransactionMissingException {
