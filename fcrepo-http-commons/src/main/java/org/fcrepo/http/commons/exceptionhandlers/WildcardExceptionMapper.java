@@ -27,6 +27,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.codehaus.jackson.JsonParseException;
+
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.slf4j.Logger;
 
@@ -78,6 +80,10 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
         if (e.getCause() instanceof TransactionMissingException) {
             return new TransactionMissingExceptionMapper()
                     .toResponse((TransactionMissingException) e.getCause());
+        }
+
+        if (e instanceof JsonParseException) {
+            return new JsonParseExceptionMapper().toResponse((JsonParseException)e);
         }
 
         if ( e.getCause() instanceof RepositoryException) {

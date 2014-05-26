@@ -15,9 +15,11 @@
  */
 package org.fcrepo.auth.roles.common.integration;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
@@ -30,6 +32,7 @@ import org.junit.Test;
 /**
  * @author Gregory Jansen
  * @author Scott Prater
+ * @author Esme Cowles
  */
 public class AccessRolesIT extends AbstractCommonRolesIT {
 
@@ -136,5 +139,16 @@ public class AccessRolesIT extends AbstractCommonRolesIT {
         assertEquals("Result does not equal test data!", admin_role,
                 getEffectiveRoles("testcommonobj1/testchildobj1"));
 
+    }
+
+    @Test
+    public void testInvalidAccessRoles() throws Exception {
+        assertEquals(BAD_REQUEST.getStatusCode(), postRoles("testcommonobj1", "invalid roles"));
+    }
+
+    @Test
+    public void testInvalidMimeType() throws Exception {
+        assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), postRoles("testcommonobj1", test_json_roles,
+            "text/plain"));
     }
 }

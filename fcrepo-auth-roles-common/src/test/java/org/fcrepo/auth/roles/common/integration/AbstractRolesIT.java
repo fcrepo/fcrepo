@@ -340,11 +340,14 @@ public abstract class AbstractRolesIT {
 
 
 
-    protected int postRoles(final String path, final String json_roles)
-            throws ParseException, IOException {
+    protected int postRoles(final String path, final String json_roles ) throws ParseException, IOException {
+        return postRoles(path, json_roles, "application/json");
+    }
+    protected int postRoles(final String path, final String json_roles, final String contentType )
+        throws ParseException, IOException {
         final HttpPost method = postRolesMethod(path);
         setAuth(method, "fedoraAdmin");
-        method.addHeader("Content-Type", "application/json");
+        method.addHeader("Content-Type", contentType);
         final StringEntity entity = new StringEntity(json_roles, "utf-8");
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
