@@ -4,6 +4,7 @@
     <artifactId>fcrepo</artifactId>
     <groupId>org.fcrepo</groupId>
     <version>4.0.0-alpha-6-SNAPSHOT</version>
+    <relativePath>../..</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
