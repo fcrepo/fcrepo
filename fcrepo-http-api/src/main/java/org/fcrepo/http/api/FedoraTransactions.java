@@ -72,20 +72,18 @@ public class FedoraTransactions extends AbstractResource {
      * @throws RepositoryException
      */
     @POST
-    public Response createTransaction(@PathParam("path")
-        final List<PathSegment> pathList, @Context
-        final HttpServletRequest req) throws RepositoryException {
-
-        LOGGER.debug("creating transaction at path {}", pathList);
-
-        if (!pathList.isEmpty()) {
-            return status(BAD_REQUEST).build();
-        }
+    public Response createTransaction(@PathParam("path") final List<PathSegment> pathList,
+                                      @Context final HttpServletRequest req) throws RepositoryException {
 
         if (session instanceof TxSession) {
             final Transaction t = txService.getTransaction(session);
+            LOGGER.debug("renewing transaction {}", t.getId());
             t.updateExpiryDate();
             return noContent().expires(t.getExpires()).build();
+        }
+
+        if (!pathList.isEmpty()) {
+            return status(BAD_REQUEST).build();
         }
 
         final Principal userPrincipal = req.getUserPrincipal();
@@ -95,6 +93,7 @@ public class FedoraTransactions extends AbstractResource {
         }
 
         final Transaction t = txService.beginTransaction(session, userName);
+        LOGGER.debug("created transaction {}", t.getId());
 
         return created(
                 uriInfo.getBaseUriBuilder().path(FedoraNodes.class)

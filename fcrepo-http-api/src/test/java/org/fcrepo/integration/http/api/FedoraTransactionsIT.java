@@ -165,6 +165,18 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testTransactionKeepAlive() throws Exception {
+        /* create a tx */
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        final HttpResponse response = execute(createTx);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+
+        final String txLocation = response.getFirstHeader("Location").getValue();
+        final HttpPost renewTx = new HttpPost(txLocation + "/fcr:tx");
+        assertEquals(204, getStatus(renewTx));
+    }
+
+    @Test
     public void testCreateDoStuffAndCommitTransaction() throws Exception {
         /* create a tx */
         final String txLocation = createTransaction();
