@@ -49,6 +49,7 @@ import java.util.List;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -89,8 +90,13 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
     public RdfStream getLock(@PathParam("path") final List<PathSegment> pathList) throws RepositoryException {
 
         final String path = toPath(pathList);
-        final Node node = session.getNode(path);
-        final Lock lock = lockService.getLock(session, path);
+        LOGGER.trace("Getting lock profile for: {}", path);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
+        final Node node = session.getNode(jcrPath);
+        final Lock lock = lockService.getLock(session, jcrPath);
         return getLockRdfStream(node, lock);
     }
 
@@ -108,11 +114,16 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         throws RepositoryException, URISyntaxException {
         try {
             final String path = toPath(pathList);
-            final Node node = session.getNode(path);
-            final Lock lock = lockService.acquireLock(session, path, isDeep);
+            LOGGER.trace("Getting lock profile for: {}", path);
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+            final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+            LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
+            final Node node = session.getNode(jcrPath);
+            final Lock lock = lockService.acquireLock(session, jcrPath, isDeep);
             session.save();
             final String location = getTranslator().getSubject(node.getPath()).getURI();
-            LOGGER.debug("Locked {} with lock token {}.", path, lock.getLockToken());
+            LOGGER.debug("Locked {} with lock token {}.", jcrPath, lock.getLockToken());
             return created(new URI(location)).entity(location).header("Lock-Token", lock.getLockToken()).build();
         } finally {
             session.logout();
@@ -130,9 +141,14 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         throws RepositoryException, URISyntaxException {
         try {
             final String path = toPath(pathList);
-            lockService.releaseLock(session, path);
+            LOGGER.trace("Getting lock profile for: {}", path);
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+            final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+            LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
+            lockService.releaseLock(session, jcrPath);
             session.save();
-            LOGGER.debug("Unlocked {}.", path);
+            LOGGER.debug("Unlocked {}.", jcrPath);
             return noContent().build();
         } finally {
             session.logout();

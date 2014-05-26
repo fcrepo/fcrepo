@@ -27,12 +27,15 @@ import org.mockito.Mock;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URISyntaxException;
 import java.util.UUID;
 
+import static javax.jcr.PropertyType.PATH;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -66,6 +69,12 @@ public class FedoraLocksTest {
 
     private UriInfo mockUriInfo;
 
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -75,6 +84,8 @@ public class FedoraLocksTest {
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
         when(mockLock.getLockToken()).thenReturn("token");
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
     }
 
     @Test
