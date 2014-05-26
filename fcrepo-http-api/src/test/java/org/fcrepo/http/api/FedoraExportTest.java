@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.jcr.PropertyType.PATH;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
@@ -28,6 +29,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.http.commons.test.util.TestHelpers;
@@ -62,6 +65,12 @@ public class FedoraExportTest {
     @Mock
     private FedoraObject mockObject;
 
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -73,6 +82,8 @@ public class FedoraExportTest {
         setField(testObj, "serializers", mockSerializers);
         setField(testObj, "uriInfo", TestHelpers.getUriInfoImpl());
         setField(testObj, "session", mockSession);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
     }
 
     @Test

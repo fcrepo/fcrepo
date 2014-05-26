@@ -16,6 +16,7 @@
 package org.fcrepo.http.api;
 
 import static java.util.Arrays.asList;
+import static javax.jcr.PropertyType.PATH;
 import static javax.ws.rs.core.Response.notModified;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
@@ -51,6 +52,8 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.VersionManager;
@@ -119,6 +122,12 @@ public class FedoraBatchTest {
     @Mock
     private Datastream mockDatastream;
 
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -137,6 +146,8 @@ public class FedoraBatchTest {
         when(mockDsNodeType.getName()).thenReturn("nt:file");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockDsNodeType);
         when(mockDatastream.getNode()).thenReturn(mockNode);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
     }
 
     @Test

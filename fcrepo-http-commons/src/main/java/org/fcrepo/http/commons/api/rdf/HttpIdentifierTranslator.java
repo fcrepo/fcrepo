@@ -327,7 +327,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
         singletonList((InternalIdentifierConverter) new NamespaceConverter());
 
     /**
-     * Hierarchy levels. Default 1 for converters other than the HierarchyConverter.
+     * Hierarchy levels. Default 0 for converters other than the HierarchyConverter.
      * @return
      */
     @Override

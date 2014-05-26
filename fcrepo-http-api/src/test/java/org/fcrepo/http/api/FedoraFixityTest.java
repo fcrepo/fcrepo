@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.jcr.PropertyType.PATH;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
@@ -29,6 +30,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
@@ -62,6 +65,12 @@ public class FedoraFixityTest {
     @Mock
     private Node mockNode;
 
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -71,6 +80,8 @@ public class FedoraFixityTest {
         setField(testObj, "uriInfo", uriInfo);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
     }
 
     @Test

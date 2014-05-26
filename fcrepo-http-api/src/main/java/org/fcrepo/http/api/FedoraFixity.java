@@ -25,6 +25,8 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.slf4j.LoggerFactory.getLogger;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 
 import java.util.List;
 
@@ -44,6 +46,7 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -59,6 +62,8 @@ import com.codahale.metrics.annotation.Timed;
 @Scope("prototype")
 @Path("/{path: .*}/fcr:fixity")
 public class FedoraFixity extends AbstractResource {
+
+    private static final Logger LOGGER = getLogger(FedoraFixity.class);
 
     @InjectedSession
     protected Session session;
@@ -86,12 +91,14 @@ public class FedoraFixity extends AbstractResource {
         final UriInfo uriInfo) throws RepositoryException {
 
         final String path = toPath(pathList);
+        LOGGER.trace("Getting datastream fixity profile path {}", path);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
 
-        final Datastream ds = datastreamService.getDatastream(session, path);
-
-        return datastreamService.getFixityResultsModel(
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo), ds)
-                .session(session);
+        final Datastream ds = datastreamService.getDatastream(session, jcrPath);
+        return datastreamService.getFixityResultsModel(subjects, ds).session(session);
 
     }
 }

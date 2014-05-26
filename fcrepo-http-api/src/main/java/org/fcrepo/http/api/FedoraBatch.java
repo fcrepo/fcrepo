@@ -16,6 +16,7 @@
 package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.sun.jersey.api.Responses.notAcceptable;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
@@ -151,10 +152,14 @@ public class FedoraBatch extends AbstractResource {
         throws RepositoryException, InvalidChecksumException, IOException, URISyntaxException {
 
         final String path = toPath(pathList);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
 
         // TODO: this is ugly, but it works.
         final PathFactory pathFactory = new ExecutionContext().getValueFactories().getPathFactory();
-        final org.modeshape.jcr.value.Path jcrPath = pathFactory.create(path);
+        final org.modeshape.jcr.value.Path jcrPathObj = pathFactory.create(jcrPath);
 
         try {
 
@@ -222,13 +227,10 @@ public class FedoraBatch extends AbstractResource {
                     pathName = partName;
                 }
 
-                final String objPath = pathFactory.create(jcrPath, pathName).getCanonicalPath().getString();
+                final String objPath = pathFactory.create(jcrPathObj, pathName).getCanonicalPath().getString();
 
                 switch (realContentDisposition) {
                     case INLINE:
-
-                        final HttpIdentifierTranslator subjects =
-                            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
                         final FedoraResource resource;
 
@@ -293,10 +295,7 @@ public class FedoraBatch extends AbstractResource {
                 versionService.nodeUpdated(resource.getNode());
             }
 
-            final HttpIdentifierTranslator subjects =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-            return created(new URI(subjects.getSubject(path).getURI())).build();
+           return created(new URI(subjects.getSubject(path).getURI())).build();
 
         } finally {
             session.logout();

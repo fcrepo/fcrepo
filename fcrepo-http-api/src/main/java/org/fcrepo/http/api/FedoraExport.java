@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.Response.ok;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -35,6 +36,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
@@ -68,15 +70,20 @@ public class FedoraExport extends AbstractResource {
      * @param pathList
      * @param format
      * @return object in the given format
+     * @throws RepositoryException
      */
     @GET
     public Response exportObject(
         @PathParam("path") final List<PathSegment> pathList,
-        @QueryParam("format") @DefaultValue("jcr/xml") final String format) {
+        @QueryParam("format") @DefaultValue("jcr/xml") final String format) throws RepositoryException {
 
         final String path = toPath(pathList);
 
         LOGGER.debug("Requested object serialization for {} using serialization format {}", path, format);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
 
         final FedoraObjectSerializer serializer =
             serializers.getSerializer(format);
@@ -92,7 +99,7 @@ public class FedoraExport extends AbstractResource {
                             LOGGER.debug("Selecting from serializer map: {}", serializers);
                             LOGGER.debug("Retrieved serializer for format: {}", format);
                             serializer.serialize(objectService.getObject(
-                                    session, path), out);
+                                    session, jcrPath), out);
                             LOGGER.debug("Successfully serialized object: {}", path);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);

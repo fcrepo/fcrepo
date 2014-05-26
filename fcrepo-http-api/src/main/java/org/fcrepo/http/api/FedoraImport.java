@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.status;
@@ -91,13 +92,14 @@ public class FedoraImport extends AbstractResource {
 
         final HttpIdentifierTranslator subjects =
             new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
         try {
             serializers.getSerializer(format)
-                    .deserialize(session, path, stream);
+                    .deserialize(session, jcrPath, stream);
             session.save();
-            return created(new URI(subjects.getSubject(path).getURI())).build();
-        } catch ( ItemExistsException ex ) {
+            return created(new URI(subjects.getSubject(jcrPath).getURI())).build();
+        } catch ( final ItemExistsException ex ) {
             return status(CONFLICT).entity("Item already exists").build();
         } finally {
             session.logout();
