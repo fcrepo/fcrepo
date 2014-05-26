@@ -84,6 +84,7 @@ public class JQLConverter {
     private QueryObjectModel getQuery() throws RepositoryException {
         final QueryManager queryManager = session.getWorkspace().getQueryManager();
         final JQLQueryVisitor jqlVisitor = new JQLQueryVisitor(session, jcrTools, queryManager);
+        jqlVisitor.setIdentifierTranslator(subjects);
         query.visit(jqlVisitor);
         return jqlVisitor.getQuery();
     }
