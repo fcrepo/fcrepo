@@ -31,20 +31,25 @@ import java.io.File;
 import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
+import java.io.IOException;
 import java.util.Map;
 
 import org.infinispan.schematic.document.Document;
+import org.modeshape.connector.filesystem.ExternalJsonSidecarExtraPropertyStore;
 import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.api.value.DateTime;
+import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.federation.spi.DocumentReader;
 import org.modeshape.jcr.federation.spi.DocumentWriter;
-import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.Name;
 import org.modeshape.jcr.value.Property;
 import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
 
 /**
  * This class extends the {@link FileSystemConnector} to enable the autocreation of Fedora-specific datastream and
@@ -60,6 +65,33 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     private static final String DELIMITER = "/";
     private static final String JCR_CONTENT = "jcr:content";
     private static final String JCR_CONTENT_SUFFIX = DELIMITER + JCR_CONTENT;
+
+    /**
+     * The string path for a {@link File} object that represents the top-level directory in which properties are
+     * stored.  This is optional for this connector, but if set allows properties to be cached (greatly
+     * improving performance) for even read-only connectors.  When this property is specified the extraPropertiesStore
+     * should be null (not specified) as it would be overridden by this.
+     */
+    private String propertiesDirectoryPath;
+    private File propertiesDirectory;
+
+    @Override
+    public void initialize(final NamespaceRegistry registry,
+                           final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
+        super.initialize(registry, nodeTypeManager);
+
+        if (propertiesDirectoryPath != null) {
+           propertiesDirectory = new File(propertiesDirectoryPath);
+            if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
+                throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
+                        + ", does not exist or is not a directory.");
+            }
+            if (extraPropertiesStore() != null) {
+                LOGGER.warn("Extra properties store was specified but won't be used!");
+            }
+            setExtraPropertiesStore(new ExternalJsonSidecarExtraPropertyStore(this, translator(), propertiesDirectory));
+        }
+    }
 
     /**
      * This method returns the object/document for the node with the federated arg 'id'.
@@ -97,11 +129,19 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
 
         // Persist new properties (if allowed)
-        if (!isReadonly()) {
+        if (shouldCacheProperties()) {
             saveProperties(docReader);
         }
 
         return docWriter.document();
+    }
+
+    /**
+     * Checks whether internally managed properties can and should be stored to
+     * an ExtraPropertiesStore.
+     */
+    protected boolean shouldCacheProperties() {
+        return extraPropertiesStore() != null && (!isReadonly() || this.propertiesDirectory != null);
     }
 
     @Override
@@ -137,8 +177,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         final String id = idFor(file) + JCR_CONTENT_SUFFIX;
         LOGGER.trace("Computing sha1 for {}.", id);
         final String sha1 = super.sha1(file);
-        final ExtraPropertiesStore cachedPropertiesStore = extraPropertiesStore();
-        if (cachedPropertiesStore != null) {
+        if (shouldCacheProperties()) {
             final Map<Name, Property> updateMap = new HashMap<Name, Property>();
             final Property digestProperty = new BasicSingleValueProperty(nameFrom(CONTENT_DIGEST),
                     asURI("SHA-1", sha1));

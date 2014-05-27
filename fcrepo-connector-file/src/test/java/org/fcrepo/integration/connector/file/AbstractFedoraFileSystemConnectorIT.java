@@ -41,7 +41,6 @@ import java.util.Iterator;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -52,9 +51,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -67,38 +63,99 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
+ * An abstract suite of tests that should work against any configuration
+ * of a FedoraFileSystemFederation.  Tests that only work on certain
+ * configurations (ie, require read/write capabilities) should be implemented
+ * in subclasses.
+ *
  * @author Andrew Woods
  * @since 2014-2-3
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
-public class FedoraFileSystemConnectorIT {
+public abstract class AbstractFedoraFileSystemConnectorIT {
 
     @Inject
-    private Repository repo;
+    protected Repository repo;
 
     @Inject
-    private NodeService nodeService;
+    protected NodeService nodeService;
 
     @Inject
-    private ObjectService objectService;
+    protected ObjectService objectService;
 
     @Inject
-    private DatastreamService datastreamService;
+    protected DatastreamService datastreamService;
 
-    private final String testFile = "/federated/config/testing/repository.json";
+    /**
+     * Gets the path (relative to the filesystem federation) of a file
+     * that's expected to be present.
+     */
+    protected abstract String testFilePath();
 
-    private final static String PROP_TEST_DIR = "fcrepo.test.dir";
+    /**
+     * The name (relative path) of the federation to be tested.  This
+     * must coincide with the "projections" provided in repository.json.
+     */
+    protected abstract String federationName();
+
+    /**
+     * The filesystem path for the root of the filesystem federation being
+     * tested.  This must coincide with the "directoryPath" provided in
+     * repository.json (or the system property that's populating the relevant
+     * configuration".
+     */
+    protected abstract String getFederationRoot();
+
+    private final static String PROP_TEST_DIR1 = "fcrepo.test.dir1";
+    private final static String PROP_TEST_DIR2 = "fcrepo.test.dir2";
+    private final static String PROP_EXT_TEST_DIR = "fcrepo.test.properties.dir";
+
+    protected String getReadWriteFederationRoot() {
+        return getProperty(PROP_TEST_DIR1);
+    }
+
+    protected String getReadOnlyFederationRoot() {
+        return getProperty(PROP_TEST_DIR2);
+    }
 
     /**
      * Sets a system property and ensures artifacts from previous tests are
      * cleaned up.
      */
     @BeforeClass
-    public static void beforeClass() {
-        final File testDir = new File("target/test-classes");
+    public static void setSystemPropertiesAndCleanUp() {
+
+        // Instead of creating dummy files over which to federate,
+        // we configure the FedoraFileSystemFederation instances to
+        // point to paths within the "target" directory.
+        final File testDir1 = new File("target/test-classes/config/testing");
+        cleanUpJsonFilesFiles(testDir1);
+        setProperty(PROP_TEST_DIR1, testDir1.getAbsolutePath());
+
+        final File testDir2 = new File("target/test-classes/spring-test");
+        cleanUpJsonFilesFiles(testDir2);
+        setProperty(PROP_TEST_DIR2, testDir2.getAbsolutePath());
+
+        final File testPropertiesDir = new File("target/test-classes-properties");
+        if (testPropertiesDir.exists()) {
+            cleanUpJsonFilesFiles(testPropertiesDir);
+        } else {
+            testPropertiesDir.mkdir();
+        }
+        setProperty(PROP_EXT_TEST_DIR, testPropertiesDir.getAbsolutePath());
+    }
+
+    @AfterClass
+    public static void unsetSystemPropertiesAndCleanUp() {
+        clearProperty(PROP_TEST_DIR1);
+        clearProperty(PROP_TEST_DIR2);
+        clearProperty(PROP_EXT_TEST_DIR);
+    }
+
+    protected static void cleanUpJsonFilesFiles(final File directory) {
         final WildcardFileFilter filter = new WildcardFileFilter("*.modeshape.json");
-        final Collection<File> files = FileUtils.listFiles(testDir, filter, TrueFileFilter.INSTANCE);
+        final Collection<File> files = FileUtils.listFiles(directory, filter, TrueFileFilter.INSTANCE);
         final Iterator<File> iterator = files.iterator();
 
         // Clean up files persisted in previous runs
@@ -107,21 +164,13 @@ public class FedoraFileSystemConnectorIT {
                 fail("Unable to delete work files from a previous test run");
             }
         }
-
-        // Note: This property is used in the repository.json
-        setProperty(PROP_TEST_DIR, testDir.getAbsolutePath());
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        clearProperty(PROP_TEST_DIR);
     }
 
     @Test
     public void testGetFederatedObject() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.getObject(session, testFile);
+        final FedoraObject object = objectService.getObject(session, testFilePath());
         assertNotNull(object);
 
         final Node node = object.getNode();
@@ -144,7 +193,7 @@ public class FedoraFileSystemConnectorIT {
     public void testGetFederatedContent() throws RepositoryException {
         final Session session = repo.login();
 
-        final Node node = datastreamService.getDatastreamNode(session, testFile + "/jcr:content");
+        final Node node = datastreamService.getDatastreamNode(session, testFilePath() + "/jcr:content");
         assertNotNull(node);
 
         final NodeType[] mixins = node.getMixinNodeTypes();
@@ -160,7 +209,7 @@ public class FedoraFileSystemConnectorIT {
 
         final Property size = node.getProperty(CONTENT_SIZE);
 
-        final File file = new File(testFile.replace("/federated", "target/test-classes"));
+        final File file = fileForNode(node);
         assertTrue(file.getAbsolutePath(), file.exists());
         assertEquals(file.length(), size.getLong());
 
@@ -169,84 +218,10 @@ public class FedoraFileSystemConnectorIT {
     }
 
     @Test
-    public void testWriteProperty() throws RepositoryException {
-        final Session session = repo.login();
-
-        final FedoraResource object = nodeService.getObject(session, testFile);
-        assertNotNull(object);
-
-        final String sparql = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
-                "INSERT DATA { " +
-                "<info:fedora" + testFile + "> " +
-                "fedora:name " +
-                "'some-test-name' }";
-
-
-        // Write the properties
-        object.updatePropertiesDataset(new DefaultIdentifierTranslator(), sparql);
-
-        // Verify
-        final Property property = object.getNode().getProperty("fedora:name");
-        assertNotNull(property);
-        assertEquals("some-test-name", property.getValues()[0].toString());
-
-        session.save();
-        session.logout();
-    }
-
-    @Test
-    public void testRemoveProperty() throws RepositoryException {
-        final Session session = repo.login();
-
-        final FedoraResource object = nodeService.getObject(session, testFile);
-        assertNotNull(object);
-
-        final String sparql = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
-                "INSERT DATA { " +
-                "<info:fedora" + testFile + "> " +
-                "fedora:remove " +
-                "'some-property-to-remove' }";
-
-        // Write the properties
-        final IdentifierTranslator graphSubjects = new DefaultIdentifierTranslator();
-        object.updatePropertiesDataset(graphSubjects, sparql);
-
-        // Verify property exists
-        final Property property = object.getNode().getProperty("fedora:remove");
-        assertNotNull(property);
-        assertEquals("some-property-to-remove", property.getValues()[0].getString());
-
-        final String sparqlRemove = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
-                "DELETE {" +
-                "  <info:fedora" + testFile + "> fedora:remove ?s " +
-                "} WHERE { " +
-                "  <info:fedora" + testFile + "> fedora:remove ?s" +
-                "}";
-
-        // Remove the properties
-        final IdentifierTranslator graphSubjectsRemove = new DefaultIdentifierTranslator();
-        object.updatePropertiesDataset(graphSubjectsRemove, sparqlRemove);
-
-        // Persist the object (although the propery will be removed from memory without this.)
-        session.save();
-
-        // Verify
-        boolean thrown = false;
-        try {
-            object.getNode().getProperty("fedora:remove");
-        } catch (final PathNotFoundException e) {
-            thrown = true;
-        }
-        assertTrue("Exception expected - property should be missing", thrown);
-
-        session.logout();
-    }
-
-    @Test
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(datastreamService.getDatastreamNode(session, testFile + "/jcr:content"));
+        checkFixity(datastreamService.getDatastreamNode(session, testFilePath() + "/jcr:content"));
 
         session.save();
         session.logout();
@@ -256,7 +231,7 @@ public class FedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final Node node = datastreamService.getDatastreamNode(session, testFile + "/jcr:content");
+        final Node node = datastreamService.getDatastreamNode(session, testFilePath() + "/jcr:content");
 
         final String originalFixity = checkFixity(node);
 
@@ -301,7 +276,23 @@ public class FedoraFileSystemConnectorIT {
         return calculatedChecksum.toString();
     }
 
-    private File fileForNode(final Node node) {
-        return new File(getProperty(PROP_TEST_DIR), testFile.replace("federated", ""));
+    protected File fileForNode(final Node node) {
+        return new File(getFederationRoot(), testFilePath().replace(federationName(), ""));
+    }
+
+    /**
+     * The following is painfully tied to some implementation details
+     * but it's critical that we test that the json files are actually written
+     * somewhere, so it's the best I can do without further opening up the
+     * internals of JsonSidecarExtraPropertiesStore.
+     */
+    protected File propertyFileForNode(final Node node) {
+        try {
+            System.out.println("NODE PATH: " + node.getPath());
+        } catch (RepositoryException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        return new File(getProperty(PROP_EXT_TEST_DIR),
+                testFilePath().replace(federationName(), "") + ".modeshape.json");
     }
 }
