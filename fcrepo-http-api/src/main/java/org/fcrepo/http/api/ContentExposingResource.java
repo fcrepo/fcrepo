@@ -51,6 +51,8 @@ public abstract class ContentExposingResource extends AbstractResource {
 
     protected static final int PARTIAL_CONTENT = 206;
 
+    private static long MAX_BUFFER_SIZE = 10240000;
+
     /**
      * A helper method that does most of the work associated with processing a request
      * for content (or a range of the content) into a Response
@@ -92,7 +94,7 @@ public abstract class ContentExposingResource extends AbstractResource {
                 builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                         .header("Content-Range", contentRangeValue);
             } else {
-                final long maxBufferSize = 10240000; // 10MB max buffer size?
+                final long maxBufferSize = MAX_BUFFER_SIZE; // 10MB max buffer size?
                 final long rangeSize = range.size();
                 final long rangeStart = range.start();
                 final long remainingBytes = contentSize - rangeStart;
@@ -199,4 +201,12 @@ public abstract class ContentExposingResource extends AbstractResource {
         }
     }
 
+    /**
+     * Setter that set the max buffer size for range content retrieval,
+     * which could help for unit testing.
+     * @param maxBufferSize
+     */
+    public static void setMaxBufferSize(final long maxBufferSize) {
+        MAX_BUFFER_SIZE = maxBufferSize;
+    }
 }
