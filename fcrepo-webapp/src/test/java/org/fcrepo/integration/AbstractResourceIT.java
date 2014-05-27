@@ -56,11 +56,13 @@ import org.apache.http.impl.client.HttpClients;
 
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * Base class for ITs
+ * @author awoods
+ * @author escowles
+**/
 public abstract class AbstractResourceIT {
 
     protected Logger logger;
@@ -212,7 +214,8 @@ public abstract class AbstractResourceIT {
         return response;
     }
 
-    protected HttpResponse createDatastream(final String pid, final String dsid, final String content) throws IOException {
+    protected HttpResponse createDatastream(final String pid, final String dsid, final String content)
+        throws IOException {
         logger.trace(
                 "Attempting to create datastream for object: {} at datastream ID: {}",
                 pid, dsid);
