@@ -17,6 +17,7 @@ package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static javax.jcr.PropertyType.PATH;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -54,6 +55,7 @@ import java.util.List;
 
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -420,6 +422,51 @@ public class FedoraNodesTest {
                 eq("my-sparql-statement"));
         verify(mockSession).save();
         verify(mockSession).logout();
+    }
+
+    @Test
+    public void testSparqlUpdateNull() throws IOException, RepositoryException {
+        final String pid = "test-pid";
+
+        final Response result = testObj.updateSparql(createPathList(pid),
+                                                     getUriInfoImpl(),
+                                                     null,
+                                                     mockRequest,
+                                                     mockResponse);
+        assertNotNull(result);
+        assertEquals(BAD_REQUEST.getStatusCode(), result.getStatus());
+    }
+
+    @Test
+    public void testSparqlUpdateEmpty() throws IOException, RepositoryException {
+        final String pid = "test-pid";
+        final InputStream mockStream = new ByteArrayInputStream("".getBytes());
+
+        final Response result = testObj.updateSparql(createPathList(pid),
+                                                     getUriInfoImpl(),
+                                                     mockStream,
+                                                     mockRequest,
+                                                     mockResponse);
+        assertNotNull(result);
+        assertEquals(BAD_REQUEST.getStatusCode(), result.getStatus());
+    }
+
+    @Test
+    public void testSparqlUpdateError() throws IOException, RepositoryException {
+        final String pid = "test-pid";
+        final String path = "/" + pid;
+        final InputStream mockStream = new ByteArrayInputStream("my-sparql-statement".getBytes());
+        final Exception ex = new RuntimeException(new PathNotFoundException("expected"));
+        when(mockNodes.getObject(mockSession, path)).thenThrow(ex);
+
+        final Response result = testObj.updateSparql(createPathList(pid),
+                                                     getUriInfoImpl(),
+                                                     mockStream,
+                                                     mockRequest,
+                                                     mockResponse);
+        assertNotNull(result);
+        assertEquals(BAD_REQUEST.getStatusCode(), result.getStatus());
+        assertEquals("expected", result.getEntity().toString());
     }
 
     @Test

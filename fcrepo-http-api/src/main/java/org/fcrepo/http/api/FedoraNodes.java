@@ -33,6 +33,7 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.ArrayUtils.contains;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
@@ -360,40 +361,47 @@ public class FedoraNodes extends AbstractResource {
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to update path: {}", path);
 
+        if (null == requestBodyStream) {
+            return status(SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content!").build();
+        }
+
         try {
-
-            if (requestBodyStream != null) {
-
-                final FedoraResource resource =
-                        nodeService.getObject(session, path);
-
-                evaluateRequestPreconditions(request, resource);
-
-                final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
-                        session, FedoraNodes.class, uriInfo), IOUtils
-                        .toString(requestBodyStream));
-
-
-                final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
-                if (!problems.isEmpty()) {
-                    LOGGER.info(
-                                   "Found these problems updating the properties for {}: {}",
-                                   path, problems);
-                    return status(FORBIDDEN).entity(problems.toString())
-                            .build();
-
-                }
-
-                session.save();
-                versionService.nodeUpdated(resource.getNode());
-
-                addCacheControlHeaders(servletResponse, resource);
-
-                return noContent().build();
+            final String requestBody = IOUtils.toString(requestBodyStream);
+            if (isBlank(requestBody)) {
+                return status(SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content!").build();
             }
-            return status(SC_BAD_REQUEST).entity(
-                    "SPARQL-UPDATE requests must have content!").build();
 
+            final FedoraResource resource =
+                    nodeService.getObject(session, path);
+
+            evaluateRequestPreconditions(request, resource);
+
+            final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
+                    session, FedoraNodes.class, uriInfo), requestBody);
+
+            final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
+            if (!problems.isEmpty()) {
+                LOGGER.info(
+                        "Found these problems updating the properties for {}: {}",
+                        path, problems);
+                return status(FORBIDDEN).entity(problems.toString())
+                        .build();
+            }
+
+            session.save();
+            versionService.nodeUpdated(resource.getNode());
+
+            addCacheControlHeaders(servletResponse, resource);
+
+            return noContent().build();
+
+        } catch ( RuntimeException ex ) {
+            final Throwable cause = ex.getCause();
+            if ( cause != null && cause instanceof PathNotFoundException ) {
+                // the sparql update referred to a repository resource that doesn't exist
+                return status(SC_BAD_REQUEST).entity(cause.getMessage()).build();
+            }
+            throw ex;
         } finally {
             session.logout();
         }
