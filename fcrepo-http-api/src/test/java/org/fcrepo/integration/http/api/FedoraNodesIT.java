@@ -1375,6 +1375,32 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
     }
 
+    /**
+     * I should be able to link to content on a federated filesystem.
+    **/
+    @Test
+    public void testFederatedDatastream() throws IOException {
+        // create object in federated filesystem
+        final String fedObj = getRandomUniquePid();
+        final HttpPost post = postDSMethod("files/" + fedObj, "ds1", "abc123");
+        final HttpResponse response = client.execute(post);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        // create an object in the repository
+        final String repoObj = getRandomUniquePid();
+        final HttpPut put = new HttpPut(serverAddress + repoObj);
+        assertEquals(201, getStatus(put));
+
+        // link from the object to the content of the file on the federated filesystem
+        final String sparql = "insert data { <> <http://fedora.info/definitions/v4/rels-ext#hasExternalContent> "
+                 + "<" + serverAddress + "files/" + fedObj + "/ds1/fcr:content> . }";
+        final HttpPatch patch = new HttpPatch(serverAddress + repoObj);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        assertEquals("Couldn't link to external datastream!", 204, getStatus(patch));
+    }
+
     @Test
     public void testPaging() throws Exception {
         // create a node with 4 children
