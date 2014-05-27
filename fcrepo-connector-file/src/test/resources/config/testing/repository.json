@@ -9,11 +9,20 @@
     "externalSources" : {
         "federated-directory" : {
             "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
-            "directoryPath" : "${fcrepo.test.dir:must-be-provided}",
+            "directoryPath" : "${fcrepo.test.dir1:must-be-provided}",
             "projections" : [ "default:/federated => /" ],
             "contentBasedSha1" : "false",
             "readonly" : false,
             "extraPropertiesStorage" : "json"
+        },
+        "federated-directory-read-only" : {
+            "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
+            "directoryPath" : "${fcrepo.test.dir2:must-be-provided}",
+            "propertiesDirectoryPath" : "${fcrepo.test.properties.dir:must-be-provided}",
+            "projections" : [ "default:/readonly-federated => /" ],
+            "contentBasedSha1" : "true",
+            "cacheTtlSeconds" : 0,
+            "readonly" : true
         }
     },
     "storage" : {
