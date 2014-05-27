@@ -32,6 +32,7 @@ import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
@@ -718,6 +719,29 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpResponse uuidResponse = client.execute(getObjMethod);
         assertEquals(200, uuidResponse.getStatusLine().getStatusCode());
 
+    }
+
+    @Test
+    public void testLinkToNonExistent() throws Exception {
+        final HttpResponse createResponse = createObject("");
+        final String subjectURI = createResponse.getFirstHeader("Location").getValue();
+        final HttpPatch patch = new HttpPatch(subjectURI);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+            ("INSERT { <> <http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " +
+                 "<" + serverAddress + "non-existant> } WHERE {}").getBytes()));
+        patch.setEntity(e);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
+    public void testEmtpyPatch() throws Exception {
+        final HttpResponse createResponse = createObject("");
+        final String subjectURI = createResponse.getFirstHeader("Location").getValue();
+        final HttpPatch patch = new HttpPatch(subjectURI);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
     @Test
