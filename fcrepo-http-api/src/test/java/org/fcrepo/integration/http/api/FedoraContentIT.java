@@ -16,6 +16,7 @@
 package org.fcrepo.integration.http.api;
 
 import static java.util.TimeZone.getTimeZone;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -69,6 +71,35 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
     }
 
+    @Test
+    public void testAddDatastreamByContentLocation() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPost httpPost = postDSMethod(pid, "zxc", "");
+        httpPost.addHeader("Content-Location", serverAddress);
+        final HttpResponse response =
+            client.execute(httpPost);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
+        assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
+
+        final String location = response.getFirstHeader("Location").getValue();
+        assertEquals(
+                        "Got wrong URI in Location header for datastream creation!",
+                        serverAddress + pid + "/zxc/fcr:content", location);
+
+        final HttpGet httpGet = new HttpGet(location);
+
+        final HttpResponse contentResponse = client.execute(httpGet);
+
+        final String body = IOUtils.toString(contentResponse.getEntity().getContent());
+
+        assertTrue(body.contains(pid));
+
+
+    }
     @Test
     public void testAddDeepDatastream() throws Exception {
         final String uuid = getRandomUniquePid();

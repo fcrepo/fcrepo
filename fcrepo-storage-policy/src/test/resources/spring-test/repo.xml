@@ -17,6 +17,8 @@
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
+    <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
+
     <context:component-scan base-package="org.fcrepo.kernel.services"/>
 
 </beans>
