@@ -99,6 +99,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.COPY;
@@ -346,7 +347,7 @@ public class FedoraNodes extends AbstractResource {
             final List<PathSegment> pathList,
             @Context
             final UriInfo uriInfo,
-            final InputStream requestBodyStream,
+            @ContentLocation final InputStream requestBodyStream,
             @Context final Request request, @Context final HttpServletResponse servletResponse)
         throws RepositoryException, IOException {
 
@@ -409,7 +410,7 @@ public class FedoraNodes extends AbstractResource {
             @Context final UriInfo uriInfo,
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
-            final InputStream requestBodyStream,
+            @ContentLocation final InputStream requestBodyStream,
             @Context final Request request,
             @Context final HttpServletResponse servletResponse) throws RepositoryException, ParseException,
             IOException, InvalidChecksumException, URISyntaxException {
@@ -492,7 +493,8 @@ public class FedoraNodes extends AbstractResource {
             final String slug,
             @Context final HttpServletResponse servletResponse,
             @Context
-            final UriInfo uriInfo, final InputStream requestBodyStream)
+            final UriInfo uriInfo,
+            @ContentLocation final InputStream requestBodyStream)
         throws RepositoryException, ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
 

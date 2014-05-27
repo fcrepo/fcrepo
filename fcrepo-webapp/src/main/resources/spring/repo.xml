@@ -19,4 +19,6 @@
 
     <!-- For the time being, load annotation config here too -->
     <bean class="org.fcrepo.metrics.MetricsConfig"/>
+
+    <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
 </beans>
