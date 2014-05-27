@@ -18,6 +18,7 @@ package org.fcrepo.http.api;
 import com.codahale.metrics.annotation.Timed;
 import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -86,7 +87,8 @@ public class FedoraContent extends ContentExposingResource {
             @HeaderParam("Content-Disposition") final String contentDisposition,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Type") final MediaType requestContentType,
-                    final InputStream requestBodyStream, @Context final HttpServletResponse servletResponse)
+            @ContentLocation final InputStream requestBodyStream,
+            @Context final HttpServletResponse servletResponse)
         throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
         final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -181,8 +183,9 @@ public class FedoraContent extends ContentExposingResource {
                                   @QueryParam("checksum") final String checksum,
                                   @HeaderParam("Content-Disposition") final String contentDisposition,
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
-                                  final InputStream requestBodyStream,
-                                  @Context final Request request, @Context final HttpServletResponse servletResponse)
+                                  @ContentLocation final InputStream requestBodyStream,
+                                  @Context final Request request,
+                                  @Context final HttpServletResponse servletResponse)
         throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
 
         try {

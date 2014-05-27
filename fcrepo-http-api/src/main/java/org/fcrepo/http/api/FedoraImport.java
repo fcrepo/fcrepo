@@ -39,6 +39,7 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.serialization.SerializerUtil;
@@ -72,7 +73,7 @@ public class FedoraImport extends AbstractResource {
      *
      * @param pathList
      * @param format
-     * @param stream
+     * @param requestBodyStream
      * @return 201 with Location header to the path of the imported resource
      * @throws IOException
      * @throws RepositoryException
@@ -82,7 +83,7 @@ public class FedoraImport extends AbstractResource {
     @POST
     public Response importObject(@PathParam("path") final List<PathSegment> pathList,
         @QueryParam("format") @DefaultValue("jcr/xml") final String format,
-        final InputStream stream)
+        @ContentLocation final InputStream requestBodyStream)
         throws IOException, RepositoryException, InvalidChecksumException,
         URISyntaxException {
 
@@ -94,7 +95,7 @@ public class FedoraImport extends AbstractResource {
 
         try {
             serializers.getSerializer(format)
-                    .deserialize(session, path, stream);
+                    .deserialize(session, path, requestBodyStream);
             session.save();
             return created(new URI(subjects.getSubject(path).getURI())).build();
         } catch ( ItemExistsException ex ) {
