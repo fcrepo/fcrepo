@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.jcr.PropertyType.PATH;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
@@ -36,6 +37,8 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.MediaType;
@@ -96,6 +99,12 @@ public class FedoraVersionsTest {
     @Mock
     private Dataset mockDataset;
 
+    @Mock
+    private Value mockValue;
+
+    @Mock
+    private ValueFactory mockValueFactory;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -111,6 +120,8 @@ public class FedoraVersionsTest {
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
+        when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
     }
 
     @Test

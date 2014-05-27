@@ -58,6 +58,7 @@ public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
     public void setUpForThisClass() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockWorkspace.getName()).thenReturn("default");
     }
 
     @Override

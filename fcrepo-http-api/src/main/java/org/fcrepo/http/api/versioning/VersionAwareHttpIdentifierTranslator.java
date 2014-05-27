@@ -138,7 +138,7 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
 
         pathWithinVersionable = versionableFrozenNode.getIdentifier()
                 + (pathWithinVersionable.length() > 0 ? pathWithinVersionable : "");
-        final String pathToVersionable = versionableNode.getPath();
+        final String pathToVersionable = getSubjectPath(getSubject(versionableNode.getPath()));
         LOGGER.debug("frozen node found with id {}.", versionableFrozenNode.getIdentifier());
         String path =  pathToVersionable + "/" + FCR_VERSIONS + "/" + pathWithinVersionable;
         if (path.endsWith(JCR_CONTENT)) {
@@ -205,8 +205,8 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
      * uses the JCR UUID for the frozen node as the system-assigned label.
      */
     private Node getFrozenNodeByLabel(final String subjectUri, final String label) throws RepositoryException {
-        final String baseResourcePath
-            = getPathFromGraphSubject(subjectUri.substring(0, subjectUri.indexOf("/" + FCR_VERSIONS)));
+        final String baseVersionUri = subjectUri.substring(0, subjectUri.indexOf("/" + FCR_VERSIONS));
+        final String baseResourcePath = getPathFromSubject(createResource(baseVersionUri));
         try {
             final Node frozenNode = internalSession.getNodeByIdentifier(label);
 

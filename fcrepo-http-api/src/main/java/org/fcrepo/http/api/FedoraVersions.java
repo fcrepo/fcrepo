@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -107,14 +108,18 @@ public class FedoraVersions extends ContentExposingResource {
             @Context final UriInfo uriInfo) throws RepositoryException {
         final String path = toPath(pathList);
 
-        LOGGER.trace("Getting versions list for: {}", path);
+        LOGGER.info("Getting versions list for: {}", path);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.info("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
 
-        final FedoraResource resource = nodeService.getObject(session, path);
+        final FedoraResource resource = nodeService.getObject(session, jcrPath);
 
         try {
             return resource.getVersionTriples(nodeTranslator()).session(session).topic(
                     nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
-        } catch ( UnsupportedRepositoryOperationException ex ) {
+        } catch ( final UnsupportedRepositoryOperationException ex ) {
             throw new WebApplicationException( status(NOT_FOUND).entity("This resource is not versioned").build() );
         }
     }
@@ -153,8 +158,12 @@ public class FedoraVersions extends ContentExposingResource {
         final String path = toPath(pathList);
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.info("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
         try {
-            versionService.revertToVersion(session.getWorkspace(), path, label);
+            versionService.revertToVersion(session.getWorkspace(), jcrPath, label);
             return noContent().build();
         } finally {
             session.logout();
@@ -174,10 +183,14 @@ public class FedoraVersions extends ContentExposingResource {
             @PathParam("label") final String label) throws RepositoryException {
         final String path = toPath(pathList);
         LOGGER.info("Removing {} version {}.", path, label);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.info("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
         try {
-            versionService.removeVersion(session.getWorkspace(), path, label);
+            versionService.removeVersion(session.getWorkspace(), jcrPath, label);
             return noContent().build();
-        } catch ( VersionException ex ) {
+        } catch ( final VersionException ex ) {
             return status(BAD_REQUEST).entity(ex.getMessage()).build();
         } finally {
             session.logout();
@@ -196,10 +209,15 @@ public class FedoraVersions extends ContentExposingResource {
 
     private Response addVersion(final String path, final String label) throws RepositoryException {
         try {
+            LOGGER.info("Adding {} version {}.", path, label);
+            final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+            final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+            LOGGER.info("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
             final FedoraResource resource =
-                    nodeService.getObject(session, path);
+                    nodeService.getObject(session, jcrPath);
             versionService.createVersion(session.getWorkspace(),
-                    Collections.singleton(path));
+                    Collections.singleton(jcrPath));
             if (label != null) {
                 resource.addVersionLabel(label);
             }
@@ -235,6 +253,10 @@ public class FedoraVersions extends ContentExposingResource {
         final String path = toPath(pathList);
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
+        final HttpIdentifierTranslator subjects =
+                new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
+        final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
+        LOGGER.trace("GET: Using auto hierarchy path {} to retrieve resource.", jcrPath);
         final Node node = nodeTranslator().getNodeFromGraphSubjectForVersionNode(uriInfo.getRequestUri().toString());
         if (node == null) {
             throw new WebApplicationException(status(NOT_FOUND).build());
