@@ -65,6 +65,9 @@
 	- fedorarelsext:isAnnotationOf (REFERENCE) multiple COPY
 	- fedorarelsext:HasAnnotation (REFERENCE) multiple COPY
 	- fedorarelsext:hasEquivalent (REFERENCE) multiple COPY
+    - fedorarelsext:hasExternalContent (URI) multiple COPY
+    - fedorarelsext:isExternalContentOf (URI) multiple COPY
+
 
 /*
  *  Dublin Core terms
