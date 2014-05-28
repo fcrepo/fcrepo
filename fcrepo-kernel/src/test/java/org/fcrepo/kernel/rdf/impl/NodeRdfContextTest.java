@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.rdf.impl;
 
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
@@ -22,7 +23,6 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -138,13 +138,13 @@ public class NodeRdfContextTest {
         when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
 
         // read-only node mocks
-        doNothing().when(mockSession).checkPermission(eq(mockNode.getPath()), eq("add_node,set_property,remove"));
-        doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
-            eq(readOnlyNode.getPath()), eq("add_node,set_property,remove"));
         when(readOnlyNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(readOnlyNode.getName()).thenReturn(readOnlyNodeName);
         when(readOnlyNode.getSession()).thenReturn(mockSession);
+        when(readOnlyNode.getPath()).thenReturn("/readOnlyNode");
         when(mockGraphSubjects.getSubject(readOnlyNode.getPath())).thenReturn(readOnlyNodeSubject);
+        doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
+            eq("/readOnlyNode"), eq("add_node,set_property,remove"));
     }
 
     @Test
@@ -160,7 +160,7 @@ public class NodeRdfContextTest {
                 createResource(REPOSITORY_NAMESPACE + mockPrimarySuperNodeTypeName);
         final Resource expectedRdfTypeMixinSuper =
                 createResource(REPOSITORY_NAMESPACE + mockMixinSuperNodeTypeName);
-        final Literal booleanTrue = actual.createLiteral("true");
+        final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
         logRdf("Constructed RDF: ", actual);
         assertTrue("Didn't find RDF type triple for primarytype!", actual.contains(
                 mockNodeSubject, type, expectedRdfTypePrimary));
@@ -182,10 +182,11 @@ public class NodeRdfContextTest {
     }
 
     @Test
-    public void testReadOnlyNode() throws RepositoryException {
-        final Model actual = new NodeRdfContext(mockNode, mockGraphSubjects).asModel();
-        final Literal booleanFalse = actual.createLiteral("false");
-        assertTrue("Didn't find writable triple!", actual.contains(mockNodeSubject, WRITABLE, booleanFalse));
+    public void testReadOnlyNode() throws RepositoryException, IOException {
+        final Model actual = new NodeRdfContext(readOnlyNode, mockGraphSubjects).asModel();
+        logRdf("Constructed RDF: ", actual);
+        final Literal booleanFalse = actual.createTypedLiteral(false, XSDboolean);
+        assertTrue("Didn't find writable triple!", actual.contains(readOnlyNodeSubject, WRITABLE, booleanFalse));
     }
 
     private static void logRdf(final String message, final Model model) throws IOException {
