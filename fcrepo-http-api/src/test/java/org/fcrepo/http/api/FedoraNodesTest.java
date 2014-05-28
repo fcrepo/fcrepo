@@ -50,6 +50,7 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
@@ -63,6 +64,7 @@ import javax.jcr.version.VersionManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -588,4 +590,12 @@ public class FedoraNodesTest {
         final Response response = testObj.head( createPathList(pid), mockRequest, mockResponse, mockUriInfo);
         assertEquals(SC_OK, response.getStatus());
     }
+
+    @Test(expected = WebApplicationException.class)
+    public void testCheckJcrNamespace() {
+        final List<PathSegment> pathList = createPathList("anypath");
+        pathList.add(createPathList("jcr:path").get(0));
+        testObj.throwIfPathIncludesJcr(pathList, "TEST");
+    }
+
 }

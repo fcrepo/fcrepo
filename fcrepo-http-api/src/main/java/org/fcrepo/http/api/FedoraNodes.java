@@ -91,6 +91,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
@@ -155,6 +156,8 @@ public class FedoraNodes extends AbstractResource {
                      @Context final Request request,
                      @Context final HttpServletResponse servletResponse,
                      @Context final UriInfo uriInfo) throws RepositoryException {
+        throwIfPathIncludesJcr(pathList, "HEAD");
+
         final String path = toPath(pathList);
         LOGGER.trace("Getting head for: {}", path);
 
@@ -193,6 +196,8 @@ public class FedoraNodes extends AbstractResource {
             @Context final Request request,
             @Context final HttpServletResponse servletResponse,
             @Context final UriInfo uriInfo) throws RepositoryException {
+        throwIfPathIncludesJcr(pathList, "MOVE");
+
         final String path = toPath(pathList);
         LOGGER.trace("Getting profile for: {}", path);
 
@@ -350,6 +355,7 @@ public class FedoraNodes extends AbstractResource {
             @ContentLocation final InputStream requestBodyStream,
             @Context final Request request, @Context final HttpServletResponse servletResponse)
         throws RepositoryException, IOException {
+        throwIfPathIncludesJcr(pathList, "PATCH");
 
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to update path: {}", path);
@@ -414,6 +420,8 @@ public class FedoraNodes extends AbstractResource {
             @Context final Request request,
             @Context final HttpServletResponse servletResponse) throws RepositoryException, ParseException,
             IOException, InvalidChecksumException, URISyntaxException {
+        throwIfPathIncludesJcr(pathList, "PUT");
+
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to replace path: {}", path);
         try {
@@ -497,6 +505,7 @@ public class FedoraNodes extends AbstractResource {
             @ContentLocation final InputStream requestBodyStream)
         throws RepositoryException, ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
+        throwIfPathIncludesJcr(pathList, "POST");
 
         String pid;
         final String newObjectPath;
@@ -696,6 +705,7 @@ public class FedoraNodes extends AbstractResource {
                                                 @Context final UriInfo uriInfo,
                                                 @FormDataParam("file") final InputStream file
     ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {
+        throwIfPathIncludesJcr(pathList, "POST with multipart attachment");
 
         final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
         return createObject(pathList, mixin, null, null, effectiveContentType, slug, servletResponse, uriInfo, file);
@@ -714,6 +724,7 @@ public class FedoraNodes extends AbstractResource {
     public Response deleteObject(@PathParam("path")
             final List<PathSegment> pathList,
             @Context final Request request) throws RepositoryException {
+        throwIfPathIncludesJcr(pathList, "DELETE");
 
         try {
 
@@ -757,6 +768,7 @@ public class FedoraNodes extends AbstractResource {
     public Response copyObject(@PathParam("path") final List<PathSegment> path,
                                @HeaderParam("Destination") final String destinationUri)
         throws RepositoryException, URISyntaxException {
+        throwIfPathIncludesJcr(path, "COPY");
 
         try {
 
@@ -803,6 +815,7 @@ public class FedoraNodes extends AbstractResource {
                                @HeaderParam("Destination") final String destinationUri,
                                @Context final Request request)
         throws RepositoryException, URISyntaxException {
+        throwIfPathIncludesJcr(pathList, "MOVE");
 
         try {
 
@@ -856,8 +869,27 @@ public class FedoraNodes extends AbstractResource {
     public Response options(@PathParam("path") final List<PathSegment> pathList,
                             @Context final HttpServletResponse servletResponse)
         throws RepositoryException {
+        throwIfPathIncludesJcr(pathList, "OPTIONS");
+
         addOptionsHttpHeaders(servletResponse);
         return status(OK).build();
+    }
+
+    /**
+     * Method to check for any jcr namespace element in the path
+     */
+    @VisibleForTesting
+    protected void throwIfPathIncludesJcr(final List<PathSegment> pathList, final String msg) {
+        if (pathList == null || pathList.size() == 0) {
+            return;
+        }
+        final PathSegment pathSegment = pathList.get(pathList.size() - 1);
+        final String[] tokens = pathSegment.getPath().split(":");
+        if (tokens.length == 2 && tokens[0].equalsIgnoreCase("jcr")) {
+            final String requestPath = uriInfo.getPath();
+            LOGGER.trace("{} request with jcr namespace is not allowed: {} ", msg, requestPath);
+            throw new WebApplicationException(notFound().build());
+        }
     }
 
 }
