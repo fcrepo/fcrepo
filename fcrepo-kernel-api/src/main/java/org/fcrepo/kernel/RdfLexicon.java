@@ -161,6 +161,8 @@ public final class RdfLexicon {
             createProperty("http://sindice.com/vocab/search#searchTerms");
     public static final Property SEARCH_HAS_MORE =
             createProperty(RESTAPI_NAMESPACE + "hasMoreResults");
+    public static final Property WRITABLE =
+            createProperty(RESTAPI_NAMESPACE + "writable");
 
     public static final Set<Property> searchProperties = of(SEARCH_PAGE,
             SEARCH_HAS_TOTAL_RESULTS, SEARCH_ITEMS_PER_PAGE, SEARCH_OFFSET,
