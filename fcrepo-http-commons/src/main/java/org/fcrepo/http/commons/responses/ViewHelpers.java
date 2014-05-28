@@ -239,6 +239,15 @@ public class ViewHelpers {
     }
 
     /**
+     * Determines whether the subject is writable
+     * true if node is writable
+     */
+    public boolean isWritable(final DatasetGraph dataset, final Node subject) {
+        final Iterator<Quad> it = getObjects(dataset, subject, RdfLexicon.WRITABLE);
+        return it.hasNext() && it.next().getObject().getLiteralValue().toString().equals("true");
+    }
+
+    /**
      * Determines whether the subject is of type nt:frozenNode.
      * true if node has type nt:frozen
      */

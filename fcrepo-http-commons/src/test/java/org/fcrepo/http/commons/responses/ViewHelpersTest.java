@@ -32,6 +32,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -126,6 +127,27 @@ public class ViewHelpersTest {
                     "http://somewhere/else/a/b/c").asNode());
 
         assertTrue(nodeBreadcrumbs.isEmpty());
+    }
+
+    @Test
+    public void testIsWritable() {
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.TRUE.toString()));
+        assertTrue("Node is should be writable.", testObj.isWritable(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testIsWritableFalse() {
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.FALSE.toString()));
+        assertFalse("Node should not be writable.", testObj.isWritable(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testIsWritableFalseJunk() {
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b/c"), HAS_CONTENT.asNode(), createLiteral("junk"));
+        assertFalse("Node should not be writable.", testObj.isWritable(mem, createURI("a/b/c")));
     }
 
     @Test
