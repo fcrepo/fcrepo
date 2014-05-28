@@ -17,7 +17,7 @@ package org.fcrepo.http.commons.responses;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static org.fcrepo.kernel.rdf.SerializationUtils.subjectKey;
+import static org.fcrepo.kernel.impl.rdf.SerializationUtils.subjectKey;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.rdf.impl.NamespaceRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;

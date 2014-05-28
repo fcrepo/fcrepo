@@ -17,7 +17,7 @@ package org.fcrepo.integration.connector.file;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Test;
 
 import javax.jcr.PathNotFoundException;

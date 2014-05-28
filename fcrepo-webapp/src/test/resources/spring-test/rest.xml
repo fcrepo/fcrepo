@@ -16,10 +16,11 @@
   <bean class="org.fcrepo.http.commons.session.SessionFactory" />
    
   <!-- Mints PIDs-->
-  <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
+  <bean class="org.fcrepo.kernel.impl.identifiers.UUIDPidMinter"/>
     
   <context:annotation-config />
   
-  <context:component-scan base-package="org.fcrepo.kernel.services, org.fcrepo.exceptionhandlers, org.fcrepo.http.commons.responses, org.fcrepo.responses, org.fcrepo.auth.roles.common"/>
+  <context:component-scan base-package="org.fcrepo.kernel, org.fcrepo.http.commons.exceptionhandlers,
+  org.fcrepo.http.commons.responses, org.fcrepo.auth.roles.common"/>
 
 </beans>

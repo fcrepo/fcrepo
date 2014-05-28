@@ -9,7 +9,7 @@
      <bean class="org.fcrepo.http.commons.session.SessionFactory" />
     
     <!-- Mints PIDs-->
-    <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
+    <bean class="org.fcrepo.kernel.impl.identifiers.UUIDPidMinter"/>
     
     <context:annotation-config />
     

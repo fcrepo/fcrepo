@@ -30,7 +30,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;

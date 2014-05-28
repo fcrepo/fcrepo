@@ -20,7 +20,7 @@ import static org.fcrepo.auth.roles.common.Constants.JcrName.principal;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.rbacl;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.rbaclAssignable;
 import static org.fcrepo.auth.roles.common.Constants.JcrName.role;
-import static org.fcrepo.kernel.testutilities.TestNodeIterator.nodeIterator;
+import static org.fcrepo.kernel.impl.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;

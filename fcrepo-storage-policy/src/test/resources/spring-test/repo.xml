@@ -12,13 +12,13 @@
     <context:annotation-config/>
 
     <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
+        class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
 
     <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
 
-    <context:component-scan base-package="org.fcrepo.kernel.services"/>
+    <context:component-scan base-package="org.fcrepo.kernel"/>
 
 </beans>

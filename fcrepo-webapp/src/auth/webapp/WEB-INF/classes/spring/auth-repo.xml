@@ -14,7 +14,7 @@
     <context:annotation-config/>
 
     <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
+        class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:classpath:/config/servlet-auth/repository.json}"
         depends-on="authenticationProvider"/>
 

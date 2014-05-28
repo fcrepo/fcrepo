@@ -25,7 +25,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.integration.AbstractResourceIT;
-import org.fcrepo.kernel.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

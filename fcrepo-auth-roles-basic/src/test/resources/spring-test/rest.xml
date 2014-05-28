@@ -9,11 +9,11 @@
   <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
   
   <!-- Mints PIDs-->
-  <bean class="org.fcrepo.kernel.identifiers.UUIDPidMinter"/>
+  <bean class="org.fcrepo.kernel.impl.identifiers.UUIDPidMinter"/>
   
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
-    <bean class="org.fcrepo.kernel.identifiers.NamespaceConverter"/>
+    <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
   </util:list>
-  <context:component-scan base-package="org.fcrepo.kernel.services, org.fcrepo.http, org.fcrepo.serialization, org.fcrepo.auth.roles.common"  />  
+  <context:component-scan base-package="org.fcrepo.kernel, org.fcrepo.http, org.fcrepo.serialization, org.fcrepo.auth.roles.common"  />
 </beans>

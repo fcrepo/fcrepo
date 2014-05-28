@@ -19,7 +19,7 @@ import static com.hp.hpl.jena.query.QueryFactory.create;
 
 import com.hp.hpl.jena.query.ResultSet;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.rdf.JcrRdfTools;
+import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;

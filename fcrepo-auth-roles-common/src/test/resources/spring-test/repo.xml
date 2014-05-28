@@ -9,9 +9,9 @@
 
   <context:annotation-config />
   
-  <context:component-scan base-package="org.fcrepo.kernel.services" />
+  <context:component-scan base-package="org.fcrepo.kernel" />
 
-  <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean">
+  <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean">
     <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:config/minimal-default/repository.json}" />
   </bean>
 

@@ -20,8 +20,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
-import org.fcrepo.kernel.identifiers.NamespaceConverter;
-import org.fcrepo.kernel.services.functions.GetDefaultWorkspace;
+import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.impl.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
 
 import static com.google.common.base.Throwables.propagate;
@@ -32,7 +32,7 @@ import static javax.jcr.PropertyType.PATH;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
-import static org.fcrepo.kernel.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 

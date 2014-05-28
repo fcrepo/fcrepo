@@ -15,7 +15,7 @@
   <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
 
   <bean name="modeshapeRepofactory"
-    class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
+    class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
     p:repositoryConfiguration="${fcrepo.modeshape.configuration:/config/testing/repository.json}"/>
 
   <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>

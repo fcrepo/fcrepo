@@ -21,7 +21,7 @@ import static java.util.Collections.singletonMap;
 import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS;
 import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.kernel.testutilities.TestNodeIterator.nodeIterator;
+import static org.fcrepo.kernel.impl.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;

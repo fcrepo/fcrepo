@@ -21,8 +21,7 @@
 		<servlet-class>com.sun.jersey.spi.spring.container.servlet.SpringServlet</servlet-class>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-      <param-value>org.fcrepo.kernel.services, org.fcrepo.http,
-        org.fcrepo.transform.http</param-value>
+      <param-value>org.fcrepo.kernel,org.fcrepo.http,org.fcrepo.transform.http</param-value>
 
     </init-param>
 		<init-param>

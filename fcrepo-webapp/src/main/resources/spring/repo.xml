@@ -12,7 +12,7 @@
     <context:annotation-config/>
 
     <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
+        class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:classpath:/config/minimal-default/repository.json}"/>
 
     <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>

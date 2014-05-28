@@ -25,7 +25,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.http.commons.session.InjectedSession;

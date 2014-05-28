@@ -58,7 +58,7 @@ import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.identifiers.UUIDPidMinter;
+import org.fcrepo.kernel.impl.identifiers.UUIDPidMinter;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.NamespaceRegistry;

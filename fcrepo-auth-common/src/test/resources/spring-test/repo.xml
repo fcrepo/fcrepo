@@ -10,9 +10,9 @@
 
   <context:annotation-config />
   
-  <context:component-scan base-package="org.fcrepo.kernel.services" />
+  <context:component-scan base-package="org.fcrepo.kernel" />
 
-  <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
+  <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
     depends-on="authenticationProvider" p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>
   
   <bean name="fad" class="org.fcrepo.auth.integration.PermitRootAndPathEndsWithPermitSuffixFAD"/>

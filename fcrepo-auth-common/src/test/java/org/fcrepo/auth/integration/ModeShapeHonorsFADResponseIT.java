@@ -25,7 +25,7 @@ import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.services.ObjectServiceImpl;
+import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

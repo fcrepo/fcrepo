@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 /**
- * This package contains abstractions for <code>FedoraResourceImpl</code> types and
- * some types and functionality for Transactions.
- *
- * @author osmandin
+ * 
  */
+/**
+ * @author ajs6f
+ * @since Jan 9, 2014
+ */
+
 package org.fcrepo.kernel;

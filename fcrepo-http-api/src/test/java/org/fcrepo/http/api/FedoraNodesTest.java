@@ -72,7 +72,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;

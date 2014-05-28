@@ -57,6 +57,7 @@
   <modules>
     <module>fcrepo-boms</module>
     <module>fcrepo-kernel</module>
+    <module>fcrepo-kernel-impl</module>
     <module>fcrepo-audit</module>
     <module>fcrepo-webapp</module>
     <module>fcrepo-jms</module>
@@ -70,7 +71,6 @@
     <module>fcrepo-auth-common</module>
     <module>fcrepo-auth-roles-common</module>
     <module>fcrepo-auth-roles-basic</module>
-    <module>fcrepo-kernel-api</module>
     <module>fcrepo-connector-file</module>
     <module>fcrepo-configs</module>
   </modules>

@@ -20,7 +20,7 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 import org.junit.Before;

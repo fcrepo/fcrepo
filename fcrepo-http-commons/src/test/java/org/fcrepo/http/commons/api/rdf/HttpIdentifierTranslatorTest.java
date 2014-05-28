@@ -40,7 +40,7 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
-import org.fcrepo.kernel.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Test;
 

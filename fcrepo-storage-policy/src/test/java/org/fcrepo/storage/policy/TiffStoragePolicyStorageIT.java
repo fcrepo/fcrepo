@@ -31,10 +31,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.services.DatastreamService;
-import org.fcrepo.kernel.services.DatastreamServiceImpl;
+import org.fcrepo.kernel.impl.services.DatastreamServiceImpl;
 import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.services.ObjectServiceImpl;
-import org.fcrepo.kernel.services.functions.GetBinaryKey;
+import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
+import org.fcrepo.kernel.impl.services.functions.GetBinaryKey;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.Before;
 import org.junit.Test;

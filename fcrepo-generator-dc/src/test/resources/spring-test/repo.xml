@@ -17,12 +17,12 @@
   
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
-    <bean class="org.fcrepo.kernel.identifiers.NamespaceConverter"/>
+    <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
   </util:list>
   
 
   <bean name="modeshapeRepofactory"
-    class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean"
+    class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
     p:repositoryConfiguration="${fcrepo.modeshape.configuration:/config/minimal-default/repository.json}"/>
 
   <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>

@@ -16,7 +16,7 @@
 package org.fcrepo.integration;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.junit.Before;
 import org.junit.Test;
