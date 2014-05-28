@@ -20,4 +20,4 @@
  * @since Mar 5, 2014
  */
 
-package org.fcrepo.kernel.observer.eventmappings;
+package org.fcrepo.kernel.impl.observer.eventmappings;
