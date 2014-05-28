@@ -1,7 +1,8 @@
 #set ($content = $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CONTENT, false))
-#set ($readonly = $helpers.isFrozenNode($rdf, $topic))
+#set ($writable = $helpers.isWritable($rdf, $topic))
+#set ($frozen = $helpers.isFrozenNode($rdf, $topic))
 
-#if ($readonly == true)
+#if ( $frozen == true )
 <div class="alert alert-warning">
     <span class="glyphicon glyphicon-warning-sign"></span>
     This is a <strong>historic version</strong> and cannot be modified.
@@ -17,7 +18,7 @@
 #if ($content != "")
     <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a>
 
-    #if ($readonly == false)
+    #if ($writable == true)
     <h3>Update Content</h3>
     <form action="javascript:updateFile()">
       <div class="form-group">
@@ -30,7 +31,7 @@
     <hr />
 #end
 
-#if ($readonly == false)
+#if ($writable == true)
 <form id="action_create" name="action_create" method="POST" enctype="multipart/form-data">
     <h3>Create New Node</h3>
     <div class="form-group">
@@ -107,7 +108,7 @@ WHERE { }
 #end
 
 
-#if ($readonly == false)
+#if ($writable == true)
 #set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
 #if($serializations.hasNext())
@@ -160,7 +161,7 @@ WHERE { }
 #end
 #end
 
-#if ($readonly == false)
+#if ($writable == true)
 #set ($fedoraresc = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_MIXIN_TYPE), $helpers.asLiteralStringNode("fedora:resource")))
 #if($fedoraresc.hasNext())
 <h3>Access Roles</h3>

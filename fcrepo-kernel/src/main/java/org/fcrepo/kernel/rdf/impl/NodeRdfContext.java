@@ -16,11 +16,16 @@
 package org.fcrepo.kernel.rdf.impl;
 
 import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.security.AccessControlException;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -70,6 +75,9 @@ public class NodeRdfContext extends RdfStream {
 
         //include rdf:type for primaryType, mixins, and their supertypes
         concatRdfTypes();
+
+        // include writable status
+        concatWritable();
     }
 
     /**
@@ -153,6 +161,18 @@ public class NodeRdfContext extends RdfStream {
         final Iterator<NodeType> nodeTypesIt = nodeTypes.iterator();
 
         concat(Iterators.transform(nodeTypesIt,nodetype2triple()));
+    }
+
+    private void concatWritable() throws RepositoryException {
+        boolean writable = false;
+        try {
+            node.getSession().checkPermission( node.getPath(), "add_node,set_property,remove" );
+            writable = true;
+        } catch ( AccessControlException ex ) {
+            writable = false;
+        }
+
+        concat(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean)));
     }
 
 }
