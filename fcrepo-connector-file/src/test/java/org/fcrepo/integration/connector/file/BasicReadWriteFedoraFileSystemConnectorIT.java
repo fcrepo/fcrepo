@@ -18,6 +18,7 @@ package org.fcrepo.integration.connector.file;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.jcr.PathNotFoundException;
@@ -31,7 +32,20 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author Mike Durbin
+ *
+ * This class is ignored until non-'readonly' federations are supported.  At that time,
+ * include the following in the repository.json and remove the 'ignore' annotation.
+ *
+ *  "federated-directory" : {
+ *    "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
+ *    "directoryPath" : "${fcrepo.test.dir1:must-be-provided}",
+ *    "projections" : [ "default:/federated => /" ],
+ *    "contentBasedSha1" : "false",
+ *    "readonly" : false,
+ *    "extraPropertiesStorage" : "json"
+ *  },
  */
+@Ignore
 public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFileSystemConnectorIT {
 
     @Override

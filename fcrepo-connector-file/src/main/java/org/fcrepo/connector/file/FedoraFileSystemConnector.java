@@ -80,6 +80,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
                            final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
         super.initialize(registry, nodeTypeManager);
 
+        if (!isReadonly()) {
+            throw new RepositoryException("The " + getClass().getName() + " must have \"readonly\" set to true!");
+        }
+
         if (propertiesDirectoryPath != null) {
            propertiesDirectory = new File(propertiesDirectoryPath);
             if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
