@@ -1372,7 +1372,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to upload a file to a read/write federated filesystem.
+     * TODO: ignored until read-write filesystem support is reintroduced.
     **/
+    @Ignore
     @Test
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
@@ -1399,7 +1401,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to copy objects from the repository to a federated filesystem.
+     * TODO: ignored until read-write filesystem support is reintroduced.
     **/
+    @Ignore
     @Test
     public void testCopyToProjection() throws IOException {
         // create object in the repository
@@ -1428,24 +1432,27 @@ public class FedoraNodesIT extends AbstractResourceIT {
     **/
     @Test
     public void testCopyFromProjection() throws IOException {
-        // create object in federated filesystem
-        final String pid = getRandomUniquePid();
-        final HttpPost post = postDSMethod("files/" + pid, "ds1", "abc123");
-        final HttpResponse response = client.execute(post);
-        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        final String destination = serverAddress + "copy-" + getRandomUniquePid() + "-ds1";
+        final String source = serverAddress + "files/FileSystem1/ds1";
+
+        // ensure the source is present
+        final HttpGet get = new HttpGet(source);
+        final HttpResponse getResponse = client.execute(get);
+        assertEquals(OK.getStatusCode(), getResponse.getStatusLine().getStatusCode());
 
         // copy to repository
-        final HttpCopy request = new HttpCopy(serverAddress + "files/" + pid);
-        request.addHeader("Destination", serverAddress + "copy-" + pid);
-        client.execute(request);
+        final HttpCopy request = new HttpCopy(source);
+        request.addHeader("Destination", destination);
+        final HttpResponse copyRequest = client.execute(request);
+        assertEquals(CREATED.getStatusCode(), copyRequest.getStatusLine().getStatusCode());
 
         // repository copy should now exist
-        final HttpGet copyGet = new HttpGet(serverAddress + "copy-" + pid);
+        final HttpGet copyGet = new HttpGet(destination);
         final HttpResponse copiedResult = client.execute(copyGet);
         assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
 
         // federated filesystem copy should still exist
-        final HttpGet originalGet = new HttpGet(serverAddress + "files/" + pid);
+        final HttpGet originalGet = new HttpGet(source);
         final HttpResponse originalResult = client.execute(originalGet);
         assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
     }
@@ -1455,20 +1462,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
     **/
     @Test
     public void testFederatedDatastream() throws IOException {
-        // create object in federated filesystem
-        final String fedObj = getRandomUniquePid();
-        final HttpPost post = postDSMethod("files/" + fedObj, "ds1", "abc123");
-        final HttpResponse response = client.execute(post);
-        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        final String federationAddress = serverAddress + "files/FileSystem1/ds1/fcr:content";
+        final String repoObj = getRandomUniquePid();
+        final String linkingAddress = serverAddress + repoObj;
 
         // create an object in the repository
-        final String repoObj = getRandomUniquePid();
-        final HttpPut put = new HttpPut(serverAddress + repoObj);
+        final HttpPut put = new HttpPut(linkingAddress);
         assertEquals(201, getStatus(put));
 
         // link from the object to the content of the file on the federated filesystem
         final String sparql = "insert data { <> <http://fedora.info/definitions/v4/rels-ext#hasExternalContent> "
-                 + "<" + serverAddress + "files/" + fedObj + "/ds1/fcr:content> . }";
+                 + "<" + federationAddress + "> . }";
         final HttpPatch patch = new HttpPatch(serverAddress + repoObj);
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
