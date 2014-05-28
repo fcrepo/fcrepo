@@ -301,6 +301,45 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetDatastreamContentWithJCRBadBath() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+        createDatastream(pid, "ds1", "foo");
+
+        final HttpResponse response =
+            execute(new HttpGet(serverAddress + pid + "/ds1/jcr:content"));
+        assertEquals(NOT_FOUND.getStatusCode(), response
+                .getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testRangeRequestWithJCRContentBadPath() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+        final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/jcr:content");
+        method_test_get.setHeader("Range", "bytes=1-3");
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(method_test_get));
+    }
+
+    @Test
+    public void testPutDatastreamContentWithJCRContentBadPath() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+        final HttpPut method_test_put = new HttpPut(serverAddress + pid + "/ds1/jcr:content");
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(method_test_put));
+
+    }
+
+    @Test
     public void testDeleteDatastream() throws Exception {
         final String pid = getRandomUniquePid();
 
@@ -314,6 +353,18 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpGet method_test_get =
             new HttpGet(serverAddress +  pid + "/ds1");
         assertEquals(404, getStatus(method_test_get));
+    }
+
+    @Test
+    public void testDeleteDatastreamContentWithJCRBadPath() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+        createDatastream(pid, "ds1", "foo");
+
+        final HttpDelete dmethod =
+            new HttpDelete(serverAddress + pid + "/ds1/jcr:content");
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(dmethod));
     }
 
 
@@ -921,6 +972,22 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     }
     @Test
+    public void testGetGraphForDatastreamWithJCRBadPath() throws Exception {
+
+        final String pid = getRandomUniquePid();
+        final String subjectURI = serverAddress + pid + "/ds1/jcr:content";
+
+        createDatastream(pid, "ds1", "some-content");
+
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
+        getObjMethod.addHeader("Accept", "text/turtle");
+        getObjMethod.addHeader("Prefer", "return=minimal");
+        final HttpResponse response = client.execute(getObjMethod);
+
+        assertEquals(NOT_FOUND.getStatusCode(), response.getStatusLine().getStatusCode());
+
+    }
+    @Test
     public void testDescribeSize() throws Exception {
 
         final String sizeNode = getRandomUniquePid();
@@ -1064,6 +1131,14 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetHTMLForDSWithJCRBadPath() throws Exception {
+        final String pid = getRandomUniquePid();
+        final HttpResponse response = client.execute(new HttpPut(serverAddress
+                + pid + "/ds/jcr:content"));
+        assertEquals(NOT_FOUND.getStatusCode(), response.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testCopy() throws Exception {
         final HttpResponse response  = createObject("");
         final String pid = getRandomUniquePid();
@@ -1183,8 +1258,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     private static List<String> headerValues( final HttpResponse response, final String headerName ) {
         final List<String> values = new ArrayList<String>();
-        for ( Header header : response.getHeaders(headerName) ) {
-            for ( String elem : header.getValue().split(",") ) {
+        for ( final Header header : response.getHeaders(headerName) ) {
+            for ( final String elem : header.getValue().split(",") ) {
                 values.add( elem.trim() );
             }
         }
@@ -1460,7 +1535,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 createResource(serverAddress + pid + "?limit=2&amp;offset=0").asNode()));
 
         // it should not have a next page link
-        for ( String link : nextLinks ) {
+        for ( final String link : nextLinks ) {
             assertFalse("Should not have next page header!", link.contains("rel=\"next\""));
         }
         assertFalse("Should not have next pagiple!", nextGraph.contains(ANY, ANY, NEXT_PAGE.asNode(), ANY));
