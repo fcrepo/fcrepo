@@ -36,6 +36,7 @@ import static org.fcrepo.kernel.RdfLexicon.SEARCH_OFFSET;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 import java.net.URI;
 
@@ -89,8 +90,9 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
     @Test
     public void testSearchRdf() throws Exception {
-        /* first post an object which can be used for the search */
+        /* first post two objects which can be used for the search */
         createObject("testobj");
+        createObject("testobj2");
 
         /* and add a dc title to the object so the query returns a result */
         setProperty("testobj", "http://purl.org/dc/elements/1.1/title",
@@ -130,6 +132,13 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         assertTrue(graphStore.contains(ANY, createResource(
                 serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
                 .asNode(), NEXT_PAGE.asNode(), nil.asNode()));
+    }
+
+    @Test
+    public void testSearchRdfWithoutTerms() throws Exception {
+        final HttpGet method = new HttpGet(serverAddress + "fcr:search");
+        method.addHeader("Accept", TURTLE);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(method));
     }
 
     @Test
