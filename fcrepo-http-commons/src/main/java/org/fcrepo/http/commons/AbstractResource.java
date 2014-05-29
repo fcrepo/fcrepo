@@ -19,6 +19,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -35,6 +38,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.github.jsonldjava.jena.JenaJSONLD;
+import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResource;
@@ -271,5 +275,25 @@ public abstract class AbstractResource {
         if (builder != null) {
             throw new WebApplicationException(builder.build());
         }
+    }
+
+    /**
+     * Parse Content-Disposition header and extract original filename.
+    **/
+    protected static String originalFileName( final String contentDisposition ) throws ParseException {
+        if ( contentDisposition != null ) {
+            return new ContentDisposition(contentDisposition).getFileName();
+        }
+        return null;
+    }
+
+    /**
+     * Create a checksum URI object.
+    **/
+    protected static URI checksumURI( final String checksum ) throws URISyntaxException {
+        if (checksum != null && !checksum.equals("") ) {
+            return new URI(checksum);
+        }
+        return null;
     }
 }

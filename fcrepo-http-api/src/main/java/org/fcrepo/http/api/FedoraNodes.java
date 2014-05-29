@@ -21,7 +21,6 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.sun.jersey.api.Responses.clientError;
 import static com.sun.jersey.api.Responses.conflict;
-import static com.sun.jersey.api.Responses.notAcceptable;
 import static com.sun.jersey.api.Responses.notFound;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -93,7 +92,6 @@ import javax.ws.rs.core.UriInfo;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 
 import org.apache.commons.io.IOUtils;
@@ -122,9 +120,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
-
-import org.modeshape.jcr.cache.NodeKey;
-import org.modeshape.jcr.cache.ReferentialIntegrityException;
 
 /**
  * CRUD operations on Fedora Nodes
@@ -586,23 +581,8 @@ public class FedoraNodes extends AbstractResource {
                 } else if (result instanceof Datastream) {
                     LOGGER.trace("Created a datastream and have a binary payload.");
 
-                    final URI checksumURI;
-
-                    if (checksum != null && !checksum.equals("")) {
-                        checksumURI = new URI(checksum);
-                    } else {
-                        checksumURI = null;
-                    }
-
-
-                    final String originalFileName;
-
-                    if (contentDisposition != null) {
-                        final ContentDisposition disposition = new ContentDisposition(contentDisposition);
-                        originalFileName = disposition.getFileName();
-                    } else {
-                        originalFileName = null;
-                    }
+                    final URI checksumURI = checksumURI(checksum);
+                    final String originalFileName = originalFileName(contentDisposition);
 
                     datastreamService.createDatastream(session,
                             newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);
@@ -611,13 +591,7 @@ public class FedoraNodes extends AbstractResource {
                     response = created(contentLocation).entity(contentLocation.toString());
 
                 } else {
-                    if (requestBodyStream.read() != -1) {
-                        LOGGER.trace("Unknown content type: {}", contentType);
-                        response = notAcceptable().entity("Invalid Content type " + contentType);
-                        throw new WebApplicationException(response.build());
-                    } else {
-                        response = created(location).entity(location.toString());
-                    }
+                    response = created(location).entity(location.toString());
                 }
             }
 
@@ -737,22 +711,6 @@ public class FedoraNodes extends AbstractResource {
             nodeService.deleteObject(session, path);
             session.save();
             return noContent().build();
-        } catch (javax.jcr.ReferentialIntegrityException riex) {
-            final StringBuffer msg = new StringBuffer("Unable to delete node because it is linked to "
-                    + "by other nodes: ");
-
-            // lookup paths of linking nodes
-            final Throwable inner = riex.getCause();
-            if ( inner instanceof ReferentialIntegrityException) {
-                for ( NodeKey node : ((ReferentialIntegrityException)inner).getReferrers() ) {
-                    try {
-                        msg.append( " " + session.getNodeByIdentifier(node.getIdentifier()).getPath() );
-                    } catch ( Exception ex ) {
-                        msg.append( " <" + node.getIdentifier() + ">");
-                    }
-                }
-            }
-            return status(SC_PRECONDITION_FAILED).entity(msg.toString()).build();
         } catch (WebApplicationException ex) {
             return (Response)ex.getResponse();
         } finally {
@@ -798,7 +756,7 @@ public class FedoraNodes extends AbstractResource {
                 status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
         } catch (final PathNotFoundException e) {
             throw new WebApplicationException(e, status(SC_CONFLICT).entity(
-                    "There is no node that will serve as the parent of the moved item")
+                    "There is no node that will serve as the parent of the copied item")
                     .build());
         } finally {
             session.logout();
