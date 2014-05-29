@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -92,34 +91,6 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             checkNotNull(node, "null cannot be a Frozen node!");
             try {
                 return node.getPrimaryNodeType().getName().equals(FROZEN_NODE);
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
-        }
-    };
-
-    /**
-     * Predicate for determining whether this {@link Node} is a Fedora resource
-     * or is a frozen node that was a fedora resource.
-     */
-    public static Predicate<Node> isOrWasFedoraResource = new Predicate<Node>() {
-        @Override
-        public boolean apply(final Node node) {
-            checkNotNull(node, "null cannot be a Fedora object!");
-            try {
-                if (node.getPrimaryNodeType().getName().equals(FROZEN_NODE)) {
-                    final PropertyIterator it = node.getProperties(FROZEN_MIXIN_TYPES);
-                    while (it.hasNext()) {
-                        for (final Value v : it.nextProperty().getValues()) {
-                            if (v.getString().equals(FEDORA_RESOURCE)) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }
-                return map(node.getMixinNodeTypes(), nodetype2name).contains(
-                        FEDORA_RESOURCE);
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }

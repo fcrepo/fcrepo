@@ -69,6 +69,20 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
         return testObj;
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testGetResourceURINull() {
+        getTestObj().doRdfBackward(null);
+    }
+
+    @Test
+    public void testGetResourcURIBlank() {
+        assertNull( getTestObj().doRdfBackward(ResourceFactory.createResource()) );
+    }
+
+    @Test
+    public void testGetBaseUri() {
+        assertEquals("http://localhost:8080/fcrepo", getTestObj().getBaseUri());
+    }
 
     @Test
     public void testGetGraphSubject() throws RepositoryException {

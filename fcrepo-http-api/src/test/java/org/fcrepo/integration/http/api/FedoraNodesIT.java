@@ -33,6 +33,7 @@ import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
@@ -1196,6 +1197,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCopyInvalidDest() throws Exception {
+
+        final HttpResponse response1 = createObject("");
+        final String location1 = response1.getFirstHeader("Location").getValue();
+
+        final HttpCopy request = new HttpCopy(location1);
+        request.addHeader("Destination", serverAddress + "non/existent/path");
+        assertEquals(CONFLICT.getStatusCode(), getStatus(request));
+    }
+
+    @Test
     public void testMove() throws Exception {
 
         final String pid = getRandomUniquePid();
@@ -1228,6 +1240,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpResponse result = client.execute(request);
 
         assertEquals(PRECONDITION_FAILED.getStatusCode(), result.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testMoveInvalidDest() throws Exception {
+
+        final HttpResponse response1 = createObject("");
+        final String location1 = response1.getFirstHeader("Location").getValue();
+
+        final HttpMove request = new HttpMove(location1);
+        request.addHeader("Destination", serverAddress + "non/existent/destination");
+        assertEquals(CONFLICT.getStatusCode(), getStatus(request));
     }
 
     @Test
