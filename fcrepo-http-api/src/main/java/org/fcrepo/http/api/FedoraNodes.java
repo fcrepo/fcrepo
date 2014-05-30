@@ -33,6 +33,7 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.ArrayUtils.contains;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
@@ -361,17 +362,15 @@ public class FedoraNodes extends AbstractResource {
         LOGGER.debug("Attempting to update path: {}", path);
 
         try {
-
-            if (requestBodyStream != null) {
-
+            final String requestBody = IOUtils.toString(requestBodyStream);
+            if (requestBodyStream != null && !isBlank(requestBody) ) {
                 final FedoraResource resource =
                         nodeService.getObject(session, path);
 
                 evaluateRequestPreconditions(request, resource);
 
                 final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
-                        session, FedoraNodes.class, uriInfo), IOUtils
-                        .toString(requestBodyStream));
+                        session, FedoraNodes.class, uriInfo), requestBody);
 
 
                 final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
@@ -394,6 +393,13 @@ public class FedoraNodes extends AbstractResource {
             return status(SC_BAD_REQUEST).entity(
                     "SPARQL-UPDATE requests must have content!").build();
 
+        } catch ( RuntimeException ex ) {
+            final Throwable cause = ex.getCause();
+            if ( cause != null && cause instanceof PathNotFoundException ) {
+                // the sparql update referred to a repository resource that doesn't exist
+                return status(SC_BAD_REQUEST).entity(cause.getMessage()).build();
+            }
+            throw ex;
         } finally {
             session.logout();
         }

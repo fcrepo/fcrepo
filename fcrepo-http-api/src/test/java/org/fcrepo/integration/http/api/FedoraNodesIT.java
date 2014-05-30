@@ -32,6 +32,7 @@ import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
@@ -718,6 +719,29 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpResponse uuidResponse = client.execute(getObjMethod);
         assertEquals(200, uuidResponse.getStatusLine().getStatusCode());
 
+    }
+
+    @Test
+    public void testLinkToNonExistent() throws Exception {
+        final HttpResponse createResponse = createObject("");
+        final String subjectURI = createResponse.getFirstHeader("Location").getValue();
+        final HttpPatch patch = new HttpPatch(subjectURI);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+            ("INSERT { <> <http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " +
+                 "<" + serverAddress + "non-existant> } WHERE {}").getBytes()));
+        patch.setEntity(e);
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
+    public void testEmtpyPatch() throws Exception {
+        final HttpResponse createResponse = createObject("");
+        final String subjectURI = createResponse.getFirstHeader("Location").getValue();
+        final HttpPatch patch = new HttpPatch(subjectURI);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -1477,6 +1501,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
         assertEquals("Couldn't link to external datastream!", 204, getStatus(patch));
     }
 
@@ -1572,7 +1597,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Works in real life")
     public void testLinkedDeletion() throws Exception {
         createObject("linked-from");
         createObject("linked-to");
@@ -1584,10 +1608,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
         assertEquals("Couldn't link resources!", 204, getStatus(patch));
 
         final HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
-        assertEquals("Deleting linked-to should error!", 412, getStatus(delete));
+        assertEquals("Error deleting linked-to!", 204, getStatus(delete));
 
         final HttpGet get = new HttpGet(serverAddress + "linked-from");
         assertEquals("Linked to should still exist!", 200, getStatus(get));
