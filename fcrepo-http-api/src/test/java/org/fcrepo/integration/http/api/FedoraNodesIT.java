@@ -1501,6 +1501,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
         assertEquals("Couldn't link to external datastream!", 204, getStatus(patch));
     }
 
@@ -1596,7 +1597,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Works in real life")
     public void testLinkedDeletion() throws Exception {
         createObject("linked-from");
         createObject("linked-to");
@@ -1608,10 +1608,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
         assertEquals("Couldn't link resources!", 204, getStatus(patch));
 
         final HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
-        assertEquals("Deleting linked-to should error!", 412, getStatus(delete));
+        assertEquals("Error deleting linked-to!", 204, getStatus(delete));
 
         final HttpGet get = new HttpGet(serverAddress + "linked-from");
         assertEquals("Linked to should still exist!", 200, getStatus(get));
