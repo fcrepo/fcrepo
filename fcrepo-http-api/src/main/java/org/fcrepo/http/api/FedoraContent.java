@@ -16,7 +16,6 @@
 package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
-import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.session.InjectedSession;
@@ -125,23 +124,8 @@ public class FedoraContent extends ContentExposingResource {
                            .entity(path + " is an existing resource!").build();
             }
 
-            final URI checksumURI;
-
-            if (checksum != null && !checksum.equals("")) {
-                checksumURI = new URI(checksum);
-            } else {
-                checksumURI = null;
-            }
-
-            final String originalFileName;
-
-            if (contentDisposition != null) {
-                final ContentDisposition disposition = new ContentDisposition(contentDisposition);
-                originalFileName = disposition.getFileName();
-            } else {
-                originalFileName = null;
-            }
-
+            final URI checksumURI = checksumURI(checksum);
+            final String originalFileName = originalFileName(contentDisposition);
 
             final Datastream datastream =
                     datastreamService.createDatastream(session, newDatastreamPath,
@@ -202,22 +186,8 @@ public class FedoraContent extends ContentExposingResource {
 
             LOGGER.debug("create Datastream {}", path);
 
-            final URI checksumURI;
-
-            if (checksum != null && !checksum.equals("")) {
-                checksumURI = new URI(checksum);
-            } else {
-                checksumURI = null;
-            }
-
-            final String originalFileName;
-
-            if (contentDisposition != null) {
-                final ContentDisposition disposition = new ContentDisposition(contentDisposition);
-                originalFileName = disposition.getFileName();
-            } else {
-                originalFileName = null;
-            }
+            final URI checksumURI = checksumURI(checksum);
+            final String originalFileName = originalFileName(contentDisposition);
 
             final Datastream datastream =
                 datastreamService.createDatastream(session, path,
