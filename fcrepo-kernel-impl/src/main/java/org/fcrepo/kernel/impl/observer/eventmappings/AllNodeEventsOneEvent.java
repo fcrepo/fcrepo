@@ -20,6 +20,7 @@ import static com.google.common.collect.Multimaps.index;
 import static org.slf4j.LoggerFactory.getLogger;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
 import java.util.Iterator;
 
@@ -105,7 +106,8 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
             private void addProperty( final FedoraEvent fedoraEvent, final Event e ) {
                 try {
-                    if ( e.getType() == PROPERTY_ADDED || e.getType() == PROPERTY_CHANGED ) {
+                    if ( e.getType() == PROPERTY_ADDED || e.getType() == PROPERTY_CHANGED
+                            || e.getType() == PROPERTY_REMOVED ) {
                         fedoraEvent.addProperty( e.getPath().substring(e.getPath().lastIndexOf("/") + 1) );
                     }
                 } catch (final RepositoryException ex) {

@@ -20,6 +20,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Sets.union;
 import static java.util.Collections.singleton;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,7 +101,11 @@ public class FedoraEvent {
      * @return the path of the underlying JCR {@link Event}s
      */
     public String getPath() throws RepositoryException {
-        return e.getPath();
+        if ( e.getType() == PROPERTY_ADDED || e.getType() == PROPERTY_CHANGED || e.getType() == PROPERTY_REMOVED ) {
+            return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
+        } else {
+            return e.getPath();
+        }
     }
 
     /**
