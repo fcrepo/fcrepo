@@ -49,6 +49,7 @@ public class FedoraEvent {
     private Event e;
 
     private Set<Integer> eventTypes = new HashSet<>();
+    private Set<String> eventProperties = new HashSet<>();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
@@ -73,6 +74,23 @@ public class FedoraEvent {
      */
     public FedoraEvent addType(final Integer type) {
         eventTypes.add(type);
+        return this;
+    }
+
+    /**
+     * @return the property names of the underlying JCR property {@linkEvent}s
+    **/
+    public Set<String> getProperties() {
+        return eventProperties;
+    }
+
+    /**
+     * Add a property name to this event
+     * @param property property name
+     * @return this object for continued use
+    **/
+    public FedoraEvent addProperty( final String property ) {
+        eventProperties.add(property);
         return this;
     }
 
@@ -129,7 +147,9 @@ public class FedoraEvent {
                         public String apply(final Integer type) {
                             return EventType.valueOf(type).getName();
                         }
-                    }))).add("Path:", getPath()).add("Date: ", getDate()).add("Info:", getInfo()).toString();
+                    }))).add("Event properties:",
+                    Joiner.on(',').join(eventProperties)).add("Path:", getPath()).add("Date: ",
+                    getDate()).add("Info:", getInfo()).toString();
         } catch (final RepositoryException e) {
             throw propagate(e);
         }

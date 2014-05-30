@@ -19,6 +19,7 @@
     p:config="classpath:/config/activemq.xml" p:start="true"/>
 
   <!-- translates events into JMS header-only format-->
-  <bean class="org.fcrepo.jms.headers.DefaultMessageFactory"/>
+  <bean class="org.fcrepo.jms.headers.DefaultMessageFactory"
+    p:baseURL="${jms.baseURL:http://localhost:8080/rest}"/>
 
 </beans>
