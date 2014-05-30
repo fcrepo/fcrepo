@@ -52,6 +52,22 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     public static final String EVENT_TYPE_HEADER_NAME = REPOSITORY_NAMESPACE
             + "eventType";
 
+    public static final String BASE_URL_HEADER_NAME = REPOSITORY_NAMESPACE
+            + "baseURL";
+
+    public static final String PROPERTIES_HEADER_NAME = REPOSITORY_NAMESPACE
+            + "properties";
+
+    private String baseURL;
+
+    /**
+     * @param baseURL indicating the repository server host/port/etc
+     */
+    public DefaultMessageFactory(final String baseURL) {
+        this.baseURL = baseURL;
+        log.debug("MessageFactory baseURL: {}", baseURL);
+    }
+
     @Override
     public Message getMessage(final FedoraEvent jcrEvent,
         final javax.jms.Session jmsSession) throws RepositoryException,
@@ -61,6 +77,10 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(IDENTIFIER_HEADER_NAME, jcrEvent.getPath());
         message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent
                 .getTypes()));
+        message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
+        message.setStringProperty(PROPERTIES_HEADER_NAME, Joiner.on(',').join(jcrEvent.getProperties()));
+
+        log.trace("getMessage() returning: {}", message);
         return message;
     }
 

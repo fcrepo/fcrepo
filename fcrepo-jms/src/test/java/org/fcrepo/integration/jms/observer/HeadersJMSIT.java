@@ -21,10 +21,14 @@ import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -113,6 +117,10 @@ public class HeadersJMSIT implements MessageListener {
                                 success = true;
                             }
                         }
+
+                        final String baseUrl = messages.iterator().next().getStringProperty(BASE_URL_HEADER_NAME);
+                        assertNotNull("BaseUrl should not be null!", baseUrl);
+                        assertEquals("Defined in spring-test/headers-jms.xml", "http://localhost:8080/rest", baseUrl);
                     }
                     LOGGER.debug("Waiting for next message...");
                     wait(1000);
@@ -169,10 +177,9 @@ public class HeadersJMSIT implements MessageListener {
     @Override
     public void onMessage(final Message message) {
         try {
-            LOGGER.debug(
-                    "Received JMS message: {} with identifier: {}, timestamp: {}, and event type: {}",
-                    message.getJMSMessageID(), getIdentifier(message),
-                    getTimestamp(message), getEventTypes(message));
+            LOGGER.debug( "Received JMS message: {} with identifier: {}, timestamp: {}, event type: {}, properties: {},"
+                + " and baseURL: {}", message.getJMSMessageID(), getIdentifier(message), getTimestamp(message),
+                getEventTypes(message), getProperties(message), getBaseURL(message));
         } catch (final JMSException e) {
             propagate(e);
         }
@@ -218,6 +225,14 @@ public class HeadersJMSIT implements MessageListener {
 
     private static Long getTimestamp(final Message msg) throws JMSException {
         return msg.getLongProperty(TIMESTAMP_HEADER_NAME);
+    }
+
+    private static String getBaseURL(final Message msg) throws JMSException {
+        return msg.getStringProperty(BASE_URL_HEADER_NAME);
+    }
+
+    private static String getProperties(final Message msg) throws JMSException {
+        return msg.getStringProperty(PROPERTIES_HEADER_NAME);
     }
 
 }

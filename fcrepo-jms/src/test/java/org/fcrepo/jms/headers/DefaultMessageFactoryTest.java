@@ -17,8 +17,10 @@ package org.fcrepo.jms.headers;
 
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -60,7 +62,7 @@ public class DefaultMessageFactoryTest {
         initMocks(this);
         when(mockSession.createMessage()).thenReturn(
                 new ActiveMQObjectMessage());
-        testDefaultMessageFactory = new DefaultMessageFactory();
+        testDefaultMessageFactory = new DefaultMessageFactory("base-url");
     }
 
     @Test
@@ -74,6 +76,8 @@ public class DefaultMessageFactoryTest {
         final String testReturnType =
             REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
         when(mockEvent.getTypes()).thenReturn(testTypes);
+        final String prop = "test-property";
+        when(mockEvent.getProperties()).thenReturn(singleton(prop));
         final Message testMessage =
             testDefaultMessageFactory.getMessage(mockEvent, mockSession);
         assertEquals("Got wrong date in message!", testDate, (Long) testMessage
@@ -82,6 +86,8 @@ public class DefaultMessageFactoryTest {
                 .getStringProperty(IDENTIFIER_HEADER_NAME));
         assertEquals("Got wrong type in message!", testReturnType, testMessage
                 .getStringProperty(EVENT_TYPE_HEADER_NAME));
+        assertEquals("Got wrong base-url in message", "base-url", testMessage.getStringProperty(BASE_URL_HEADER_NAME));
+        assertEquals("Got wrong property in message", prop, testMessage.getStringProperty(PROPERTIES_HEADER_NAME));
     }
 
 }

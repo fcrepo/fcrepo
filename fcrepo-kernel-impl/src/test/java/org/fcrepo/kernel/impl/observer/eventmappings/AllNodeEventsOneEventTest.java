@@ -16,8 +16,11 @@
 package org.fcrepo.kernel.impl.observer.eventmappings;
 
 import static com.google.common.collect.Iterators.size;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static org.jgroups.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -25,10 +28,14 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
+import com.google.common.collect.Iterators;
+import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.iterators.EventIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import java.util.Iterator;
 
 /**
  * <p>AllNodeEventsOneEventTest class.</p>
@@ -74,6 +81,7 @@ public class AllNodeEventsOneEventTest {
         when(mockEvent2.getPath()).thenReturn(TEST_PATH2);
         when(mockEvent3.getIdentifier()).thenReturn(TEST_IDENTIFIER3);
         when(mockEvent3.getPath()).thenReturn(TEST_PATH3);
+        when(mockEvent3.getType()).thenReturn(PROPERTY_CHANGED);
         when(mockIterator.next()).thenReturn(mockEvent1, mockEvent2, mockEvent3);
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
         testInput = new EventIterator(mockIterator);
@@ -96,4 +104,35 @@ public class AllNodeEventsOneEventTest {
         when(mockEvent1.getIdentifier()).thenThrow(new RepositoryException("Expected."));
         testMapping.apply(testInput);
     }
+
+    @Test
+    public void testPropertyEvents() throws RepositoryException {
+        final Iterator<FedoraEvent> iterator = testMapping.apply(testInput);
+        assertNotNull(iterator);
+        assertTrue("Iterator is empty!", iterator.hasNext());
+
+        boolean found = false;
+        while (iterator.hasNext()) {
+            final FedoraEvent event = iterator.next();
+            if (TEST_IDENTIFIER3.equals(event.getIdentifier())) {
+                assertEquals("Expected one event property", 1, event.getProperties().size());
+                found = true;
+            }
+
+        }
+        assertTrue("Third mock event was not found!", found);
+    }
+
+    @Test
+    public void testError() throws RepositoryException {
+        when(mockEvent3.getPath()).thenThrow(new RepositoryException("expected"));
+
+        final Iterator<FedoraEvent> iterator = testMapping.apply(testInput);
+
+        // It is expected that no exception is propagated, but instead the event is skipped
+        // ...leaving 2 events
+        assertNotNull(iterator);
+        assertEquals("There should be 2 events!", 2, Iterators.size(iterator));
+    }
+
 }
