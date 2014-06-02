@@ -20,6 +20,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Sets.union;
 import static java.util.Collections.singleton;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +52,7 @@ public class FedoraEvent {
     private Event e;
 
     private Set<Integer> eventTypes = new HashSet<>();
+    private Set<String> eventProperties = new HashSet<>();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
@@ -77,10 +81,31 @@ public class FedoraEvent {
     }
 
     /**
+     * @return the property names of the underlying JCR property {@linkEvent}s
+    **/
+    public Set<String> getProperties() {
+        return eventProperties;
+    }
+
+    /**
+     * Add a property name to this event
+     * @param property property name
+     * @return this object for continued use
+    **/
+    public FedoraEvent addProperty( final String property ) {
+        eventProperties.add(property);
+        return this;
+    }
+
+    /**
      * @return the path of the underlying JCR {@link Event}s
      */
     public String getPath() throws RepositoryException {
-        return e.getPath();
+        if ( e.getType() == PROPERTY_ADDED || e.getType() == PROPERTY_CHANGED || e.getType() == PROPERTY_REMOVED ) {
+            return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
+        } else {
+            return e.getPath();
+        }
     }
 
     /**
@@ -129,7 +154,9 @@ public class FedoraEvent {
                         public String apply(final Integer type) {
                             return EventType.valueOf(type).getName();
                         }
-                    }))).add("Path:", getPath()).add("Date: ", getDate()).add("Info:", getInfo()).toString();
+                    }))).add("Event properties:",
+                    Joiner.on(',').join(eventProperties)).add("Path:", getPath()).add("Date: ",
+                    getDate()).add("Info:", getInfo()).toString();
         } catch (final RepositoryException e) {
             throw propagate(e);
         }

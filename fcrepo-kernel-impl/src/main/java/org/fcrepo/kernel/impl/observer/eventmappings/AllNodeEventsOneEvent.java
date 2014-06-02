@@ -18,6 +18,9 @@ package org.fcrepo.kernel.impl.observer.eventmappings;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Multimaps.index;
 import static org.slf4j.LoggerFactory.getLogger;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
 import java.util.Iterator;
 
@@ -80,13 +83,17 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
                 // because if
                 // there was no event at all, there would appear no entry in our
                 // Multimap under this key
-                final FedoraEvent fedoraEvent = new FedoraEvent(nodeSpecificEvents.next());
+                final Event firstEvent = nodeSpecificEvents.next();
+                final FedoraEvent fedoraEvent = new FedoraEvent(firstEvent);
+                addProperty( fedoraEvent, firstEvent );
                 while (nodeSpecificEvents.hasNext()) {
-                    // add the type of the event in hand to the event we are
-                    // building up to emit
-                    // we could aggregate other information here if that seems
-                    // useful
-                    fedoraEvent.addType(nodeSpecificEvents.next().getType());
+                    // add the event type and property name to the event we are building up to emit
+                    //    we could aggregate other information here if that seems useful
+                    final Event otherEvent = nodeSpecificEvents.next();
+                    try {
+                        fedoraEvent.addType(otherEvent.getType());
+                        addProperty( fedoraEvent, otherEvent );
+                    } catch ( Exception ex ) { }
                 }
                 return fedoraEvent;
             }
@@ -95,6 +102,17 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
             public void remove() {
                 // the underlying Multimap is immutable anyway
                 throw new UnsupportedOperationException();
+            }
+
+            private void addProperty( final FedoraEvent fedoraEvent, final Event e ) {
+                try {
+                    if ( e.getType() == PROPERTY_ADDED || e.getType() == PROPERTY_CHANGED
+                            || e.getType() == PROPERTY_REMOVED ) {
+                        fedoraEvent.addProperty( e.getPath().substring(e.getPath().lastIndexOf("/") + 1) );
+                    }
+                } catch (final RepositoryException ex) {
+                    throw propagate(ex);
+                }
             }
         };
     }
