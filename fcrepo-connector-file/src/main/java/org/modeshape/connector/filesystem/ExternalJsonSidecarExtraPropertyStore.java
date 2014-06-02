@@ -19,6 +19,7 @@ package org.modeshape.connector.filesystem;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * An extension of JsonSidecarExtraPropertyStore that stores the properties in a
@@ -50,11 +51,15 @@ public class ExternalJsonSidecarExtraPropertyStore extends JsonSidecarExtraPrope
 
     @Override
     protected File sidecarFile(final String id) {
-        final File propertyFileInFederation = super.sidecarFile(id);
-        final String relativePath
-                = propertyFileInFederation.getPath().substring(connector.fileFor("/").getPath().length());
-        final File file = new File(propertyStoreRoot,
-                connector.isRoot(id) ? "federation-root.modeshape.json" : relativePath);
+        final File file;
+        if (connector.isRoot(id)) {
+            file = new File(propertyStoreRoot, "federation-root.modeshape.json");
+        } else {
+            final Path propertyFileInFederation = super.sidecarFile(id).getAbsoluteFile().toPath();
+            final Path relativePath
+                    = connector.fileFor("/").getAbsoluteFile().toPath().relativize(propertyFileInFederation);
+            file = propertyStoreRoot.toPath().resolve(relativePath).toFile();
+        }
         if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
             throw new RuntimeException("Unable to create directories " + file.getParentFile() + ".");
         }

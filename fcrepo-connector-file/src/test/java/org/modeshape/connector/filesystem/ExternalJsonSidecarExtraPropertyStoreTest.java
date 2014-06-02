@@ -43,6 +43,7 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
             final DocumentTranslator mockTranslator = mock(DocumentTranslator.class);
             when(mockConnector.fileFor("/")).thenReturn(new File(FEDERATION_ROOT));
             when(mockConnector.isContentNode("/")).thenReturn(false);
+            when(mockConnector.isRoot("/")).thenReturn(true);
             when(mockConnector.fileFor("/file")).thenReturn(new File(FILE_PATH));
             when(mockConnector.isContentNode("/file")).thenReturn(false);
             when(mockConnector.fileFor("/file/fcr:content")).thenReturn(new File(FILE_PATH));
@@ -50,7 +51,7 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
 
             final ExternalJsonSidecarExtraPropertyStore store
                     = new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
-            Assert.assertEquals(new File(tmp, ".modeshape.json"), store.sidecarFile("/"));
+            Assert.assertEquals(new File(tmp, "federation-root.modeshape.json"), store.sidecarFile("/"));
             Assert.assertEquals(new File(tmp, "file.modeshape.json"), store.sidecarFile("/file"));
             Assert.assertEquals(new File(tmp, "file.content.modeshape.json"), store.sidecarFile("/file/fcr:content"));
         } finally {
