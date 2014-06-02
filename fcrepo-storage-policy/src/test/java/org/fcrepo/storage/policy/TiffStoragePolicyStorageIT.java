@@ -144,7 +144,7 @@ public class TiffStoragePolicyStorageIT {
 
         FixityResult e = fixity.iterator().next();
 
-        assertThat(e.getStoreIdentifier(), containsString("TransientBinaryStore"));
+        assertThat(e.getStoreIdentifier(), containsString(key.toString()));
 
 
         fixity = datastreamService.getFixity(tiffNode.getNode(JcrConstants.JCR_CONTENT), null, 0L);
@@ -153,6 +153,6 @@ public class TiffStoragePolicyStorageIT {
 
         e = fixity.iterator().next();
 
-        assertThat(e.getStoreIdentifier(), containsString("FileSystemBinaryStore"));
+        assertThat(e.getStoreIdentifier(), containsString(tiffKey.toString()));
     }
 }
