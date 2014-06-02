@@ -15,8 +15,12 @@
  */
 package org.fcrepo.kernel.observer;
 
+import static com.google.common.collect.Iterators.contains;
 import static java.util.Collections.singleton;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Map;
 
@@ -34,7 +38,7 @@ import com.google.common.collect.ImmutableMap;
  */
 public class FedoraEventTest {
 
-    FedoraEvent e = new FedoraEvent(new TestEvent(1, "Path", "UserId", "Identifier",
+    FedoraEvent e = new FedoraEvent(new TestEvent(1, "Path/Child", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
 
 
@@ -50,8 +54,20 @@ public class FedoraEventTest {
 
     @Test
     public void testGetPath() throws Exception {
-        assertEquals("Path", e.getPath());
+        assertEquals("Path/Child", e.getPath());
 
+    }
+
+    @Test
+    public void testGetPathWithProperties() throws Exception {
+        final FedoraEvent e = new FedoraEvent(new TestEvent(PROPERTY_CHANGED,
+                                                            "Path/Child",
+                                                            "UserId",
+                                                            "Identifier",
+                                                            ImmutableMap.of("1", "2"),
+                                                            "data",
+                                                            0L));
+        assertEquals("Path", e.getPath());
     }
 
     @Test
@@ -86,6 +102,36 @@ public class FedoraEventTest {
     public void testGetDate() throws Exception {
         assertEquals(0L, e.getDate());
 
+    }
+
+    @Test
+    public void testAddType() {
+        e.addType(PROPERTY_CHANGED);
+        assertEquals(2, e.getTypes().size());
+
+        assertTrue("Should contain: " + PROPERTY_CHANGED, contains(e.getTypes().iterator(), PROPERTY_CHANGED));
+        assertTrue("Should contain: 1", contains(e.getTypes().iterator(), 1));
+    }
+
+    @Test
+    public void testAddProperty() {
+        e.addProperty("prop");
+        assertEquals(1, e.getProperties().size());
+        assertEquals("prop", e.getProperties().iterator().next());
+    }
+
+    @Test
+    public void testToString() throws RepositoryException {
+        final String text = e.toString();
+        assertTrue("Should contain path: " + text, text.contains(e.getPath()));
+        assertTrue("Should contain info: " + text, text.contains(e.getInfo().toString()));
+
+        assertTrue("Should contain types: " + text, text.contains(Integer.toString(e.getTypes().iterator().next())));
+        assertTrue("Should contain date: " + text, text.contains(Long.toString(e.getDate())));
+
+        assertFalse("Should not contain user-data: " + text, text.contains(e.getUserData()));
+        assertFalse("Should not contain identifier: " + text, text.contains(e.getIdentifier()));
+        assertFalse("Should not contain user-id: " + text, text.contains(e.getUserID()));
     }
 
     class TestEvent implements Event {

@@ -101,7 +101,9 @@ public class FedoraEvent {
      * @return the path of the underlying JCR {@link Event}s
      */
     public String getPath() throws RepositoryException {
-        if ( e.getType() == PROPERTY_ADDED || e.getType() == PROPERTY_CHANGED || e.getType() == PROPERTY_REMOVED ) {
+        if (e.getType() == PROPERTY_ADDED   ||
+            e.getType() == PROPERTY_CHANGED ||
+            e.getType() == PROPERTY_REMOVED) {
             return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
         } else {
             return e.getPath();
