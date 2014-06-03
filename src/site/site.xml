@@ -13,9 +13,9 @@
 
   <body>
     <links>
-      <item name="Fedora Futures" href="http://fcrepo.org/" />
-      <item name="Fedora Futures on GitHub" href="http://github.com/futures/" />
-      <item name="Developer Documentation" href="http://futures.github.com/fcrepo4/" />
+      <item name="Fedora" href="http://fcrepo.org/" />
+      <item name="Fedora 4 on GitHub" href="http://github.com/fcrepo4/" />
+      <item name="Developer Documentation" href="http://fcrepo4.github.com/fcrepo4/" />
     </links>
 
     <breadcrumbs>

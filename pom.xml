@@ -1144,11 +1144,11 @@
   </pluginRepositories>
 
   <scm>
-    <connection>scm:git:git://github.com/futures/${project_name}.git
+    <connection>scm:git:git://github.com/fcrepo4/${project_name}.git
     </connection>
-    <developerConnection>scm:git:git@github.com:futures/${project_name}.git
+    <developerConnection>scm:git:git@github.com:fcrepo4/${project_name}.git
     </developerConnection>
-    <url>https://github.com/futures/fcrepo4</url>
+    <url>https://github.com/fcrepo4/fcrepo4</url>
     <tag>HEAD</tag>
   </scm>
   <prerequisites>
@@ -1435,7 +1435,7 @@
   </developers>
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/futures/fcrepo4/issues</url>
+    <url>https://github.com/fcrepo4/fcrepo4/issues</url>
   </issueManagement>
   <mailingLists>
     <mailingList>

@@ -1,6 +1,6 @@
 # Fedora 4
 
-[![Build Status](https://travis-ci.org/futures/fcrepo4.png?branch=master)](https://travis-ci.org/futures/fcrepo4)
+[![Build Status](https://travis-ci.org/fcrepo4/fcrepo4.png?branch=master)](https://travis-ci.org/fcrepo4/fcrepo4)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
@@ -20,7 +20,7 @@ System Requirements
 * Maven 3
 
 ```bash
-$ git clone https://github.com/futures/fcrepo4.git
+$ git clone https://github.com/fcrepo4/fcrepo4.git
 $ cd fcrepo4
 $ MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=1024m" mvn install
 $ cd fcrepo-webapp
