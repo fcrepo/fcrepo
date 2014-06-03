@@ -41,7 +41,7 @@
     <spring.version>4.0.3.RELEASE</spring.version>
     <grizzly.version>2.3.6</grizzly.version>
     <jena.version>2.11.1</jena.version>
-    <jsonld.version>0.5-SNAPSHOT</jsonld.version>
+    <jsonld.version>0.4.1</jsonld.version>
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <powermock.version>1.5.4</powermock.version>
