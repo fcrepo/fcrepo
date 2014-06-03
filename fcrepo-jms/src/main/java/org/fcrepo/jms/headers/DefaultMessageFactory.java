@@ -61,18 +61,11 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     private String baseURL;
 
     /**
-     * Set the baseURL clients should use to resolve paths to repository URIs
-    **/
-    public void setBaseURL( final String baseURL ) {
+     * @param baseURL indicating the repository server host/port/etc
+     */
+    public DefaultMessageFactory(final String baseURL) {
         this.baseURL = baseURL;
-        System.out.println("baseURL: " + baseURL);
-    }
-
-    /**
-     * Get the baseURL clients should use to resolve paths to repository URIs
-    **/
-    public String getBaseURL() {
-        return baseURL;
+        log.debug("MessageFactory baseURL: {}", baseURL);
     }
 
     @Override
@@ -86,6 +79,8 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
                 .getTypes()));
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(PROPERTIES_HEADER_NAME, Joiner.on(',').join(jcrEvent.getProperties()));
+
+        log.trace("getMessage() returning: {}", message);
         return message;
     }
 

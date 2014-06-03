@@ -85,15 +85,19 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
                 // Multimap under this key
                 final Event firstEvent = nodeSpecificEvents.next();
                 final FedoraEvent fedoraEvent = new FedoraEvent(firstEvent);
-                addProperty( fedoraEvent, firstEvent );
-                while (nodeSpecificEvents.hasNext()) {
-                    // add the event type and property name to the event we are building up to emit
-                    //    we could aggregate other information here if that seems useful
-                    final Event otherEvent = nodeSpecificEvents.next();
-                    try {
+
+                try {
+                    addProperty(fedoraEvent, firstEvent);
+                    while (nodeSpecificEvents.hasNext()) {
+                        // add the event type and property name to the event we are building up to emit
+                        //    we could aggregate other information here if that seems useful
+                        final Event otherEvent = nodeSpecificEvents.next();
                         fedoraEvent.addType(otherEvent.getType());
-                        addProperty( fedoraEvent, otherEvent );
-                    } catch ( Exception ex ) { }
+                        addProperty(fedoraEvent, otherEvent);
+                    }
+
+                } catch (Exception ex) {
+                    log.warn("Danger: swallowing exception", ex);
                 }
                 return fedoraEvent;
             }
@@ -106,9 +110,13 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
             private void addProperty( final FedoraEvent fedoraEvent, final Event e ) {
                 try {
-                    if ( e.getType() == PROPERTY_ADDED || e.getType() == PROPERTY_CHANGED
-                            || e.getType() == PROPERTY_REMOVED ) {
+                    if ( e.getType() == PROPERTY_ADDED   ||
+                         e.getType() == PROPERTY_CHANGED ||
+                         e.getType() == PROPERTY_REMOVED ) {
                         fedoraEvent.addProperty( e.getPath().substring(e.getPath().lastIndexOf("/") + 1) );
+
+                    } else {
+                        log.trace("Not adding non-event property: {}, {}", fedoraEvent, e);
                     }
                 } catch (final RepositoryException ex) {
                     throw propagate(ex);
