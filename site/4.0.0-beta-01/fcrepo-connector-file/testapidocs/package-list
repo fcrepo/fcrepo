@@ -1,0 +1,3 @@
+org.fcrepo.connector.file
+org.fcrepo.integration.connector.file
+org.modeshape.connector.filesystem
