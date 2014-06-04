@@ -280,7 +280,6 @@
                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               </manifest>
             </archive>
-            <packagingExcludes>WEB-INF/classes/spring/auth-repo.xml</packagingExcludes>
         </configuration>
       </plugin>
       <plugin>
@@ -520,6 +519,7 @@
                   <warSourceDirectory>src/main/webapp</warSourceDirectory>
                   <warSourceDirectory>src/auth/webapp</warSourceDirectory>
                   <packagingExcludes>WEB-INF/classes/spring/repo.xml</packagingExcludes>
+                  <packagingExcludes>WEB-INF/classes/spring/master.xml</packagingExcludes>
                 </configuration>
               </execution>
             </executions>
