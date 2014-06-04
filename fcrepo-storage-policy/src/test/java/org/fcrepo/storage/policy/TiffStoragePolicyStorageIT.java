@@ -16,8 +16,9 @@
 package org.fcrepo.storage.policy;
 
 import static java.util.Collections.singletonMap;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.net.URL;
@@ -143,7 +144,8 @@ public class TiffStoragePolicyStorageIT {
 
         FixityResult e = fixity.iterator().next();
 
-        assertEquals(e.getStoreIdentifier(), key.toString());
+        assertThat(e.getStoreIdentifier(), containsString(key.toString()));
+
 
         fixity = datastreamService.getFixity(tiffNode.getNode(JcrConstants.JCR_CONTENT), null, 0L);
 
@@ -151,6 +153,6 @@ public class TiffStoragePolicyStorageIT {
 
         e = fixity.iterator().next();
 
-        assertEquals(e.getStoreIdentifier(), tiffKey.toString());
+        assertThat(e.getStoreIdentifier(), containsString(tiffKey.toString()));
     }
 }
