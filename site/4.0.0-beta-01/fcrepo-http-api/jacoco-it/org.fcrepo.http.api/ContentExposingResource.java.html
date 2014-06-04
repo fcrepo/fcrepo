@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ContentExposingResource.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">ContentExposingResource.java</span></div><h1>ContentExposingResource.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import com.sun.jersey.core.header.ContentDisposition;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.domain.Range;
+import org.fcrepo.http.commons.responses.RangeRequestInputStream;
+import org.fcrepo.kernel.Datastream;
+
+import javax.jcr.Binary;
+import javax.jcr.RepositoryException;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+
+/**
+ * An abstract class that sits between AbstractResource and any resource that
+ * wishes to share the routines for building responses containing binary
+ * content.
+ *
+ * @author Mike Durbin
+ */
+<span class="fc" id="L48">public abstract class ContentExposingResource extends AbstractResource {</span>
+
+    protected static final int REQUESTED_RANGE_NOT_SATISFIABLE = 416;
+
+    protected static final int PARTIAL_CONTENT = 206;
+
+<span class="fc" id="L54">    private static long MAX_BUFFER_SIZE = 10240000;</span>
+
+    /**
+     * A helper method that does most of the work associated with processing a request
+     * for content (or a range of the content) into a Response
+     */
+    protected Response getDatastreamContentResponse(final Datastream ds, final String rangeValue, final Request request,
+                                                    final HttpServletResponse servletResponse,
+                                                    final HttpIdentifierTranslator subjects) throws
+            RepositoryException, IOException {
+
+        // we include an explicit etag, because the default behavior is to use the JCR node's etag, not
+        // the jcr:content node digest.
+<span class="fc" id="L67">        checkCacheControlHeaders(request, servletResponse, ds);</span>
+
+<span class="fc" id="L69">        final CacheControl cc = new CacheControl();</span>
+<span class="fc" id="L70">        cc.setMaxAge(0);</span>
+<span class="fc" id="L71">        cc.setMustRevalidate(true);</span>
+        Response.ResponseBuilder builder;
+
+<span class="pc bpc" id="L74" title="1 of 4 branches missed.">        if (rangeValue != null &amp;&amp; rangeValue.startsWith(&quot;bytes&quot;)) {</span>
+
+<span class="fc" id="L76">            final Range range = Range.convert(rangeValue);</span>
+
+<span class="fc" id="L78">            final long contentSize = ds.getContentSize();</span>
+
+            final String endAsString;
+
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">            if (range.end() == -1) {</span>
+<span class="nc" id="L83">                endAsString = Long.toString(contentSize - 1);</span>
+            } else {
+<span class="fc" id="L85">                endAsString = Long.toString(range.end());</span>
+            }
+
+<span class="fc" id="L88">            final String contentRangeValue =</span>
+                String.format(&quot;bytes %s-%s/%s&quot;, range.start(),
+                                 endAsString, contentSize);
+
+<span class="pc bpc" id="L92" title="3 of 6 branches missed.">            if (range.end() &gt; contentSize ||</span>
+                    (range.end() == -1 &amp;&amp; range.start() &gt; contentSize)) {
+<span class="fc" id="L94">                builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)</span>
+                        .header(&quot;Content-Range&quot;, contentRangeValue);
+            } else {
+<span class="fc" id="L97">                final long maxBufferSize = MAX_BUFFER_SIZE; // 10MB max buffer size?</span>
+<span class="fc" id="L98">                final long rangeSize = range.size();</span>
+<span class="fc" id="L99">                final long rangeStart = range.start();</span>
+<span class="fc" id="L100">                final long remainingBytes = contentSize - rangeStart;</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                final long bufSize = rangeSize &lt; remainingBytes ? rangeSize : remainingBytes;</span>
+
+<span class="fc bfc" id="L103" title="All 2 branches covered.">                if (bufSize &lt; maxBufferSize) {</span>
+                    // Small size range content retrieval use javax.jcr.Binary to improve performance
+<span class="fc" id="L105">                    final byte[] buf = new byte[(int) bufSize];</span>
+
+<span class="fc" id="L107">                    final Binary binaryContent = ds.getBinaryContent();</span>
+<span class="fc" id="L108">                    binaryContent.read(buf, rangeStart);</span>
+<span class="fc" id="L109">                    binaryContent.dispose();</span>
+
+<span class="fc" id="L111">                    builder = status(PARTIAL_CONTENT).entity(buf)</span>
+                            .header(&quot;Content-Range&quot;, contentRangeValue);
+<span class="fc" id="L113">                } else {</span>
+                    // For large range content retrieval, go with the InputStream class to balance
+                    // the memory usage, though this is a rare case in range content retrieval.
+<span class="fc" id="L116">                    final InputStream content = ds.getContent();</span>
+<span class="fc" id="L117">                    final RangeRequestInputStream rangeInputStream =</span>
+                            new RangeRequestInputStream(content, range.start(), range.size());
+
+<span class="fc" id="L120">                        builder = status(PARTIAL_CONTENT).entity(rangeInputStream)</span>
+                                .header(&quot;Content-Range&quot;, contentRangeValue);
+                }
+            }
+
+<span class="fc" id="L125">        } else {</span>
+<span class="fc" id="L126">            final InputStream content = ds.getContent();</span>
+<span class="fc" id="L127">            builder = ok(content);</span>
+        }
+
+<span class="fc" id="L130">        final ContentDisposition contentDisposition = ContentDisposition.type(&quot;attachment&quot;)</span>
+                .fileName(ds.getFilename())
+                .creationDate(ds.getCreatedDate())
+                .modificationDate(ds.getLastModifiedDate())
+                .size(ds.getContentSize())
+                .build();
+
+<span class="fc" id="L137">        return builder.type(ds.getMimeType()).header(</span>
+                &quot;Link&quot;,
+                &quot;&lt;&quot; + subjects.getSubject(ds.getNode().getPath()) +
+                        &quot;&gt;;rel=\&quot;describedby\&quot;&quot;).header(&quot;Accept-Ranges&quot;,
+                &quot;bytes&quot;).cacheControl(cc)
+                .header(&quot;Content-Disposition&quot;, contentDisposition)
+                .build();
+    }
+
+    /**
+     * Evaluate the cache control headers for the request to see if it can be served from
+     * the cache.
+     *
+     * @param request
+     * @param servletResponse
+     * @param resource
+     * @throws javax.jcr.RepositoryException
+     */
+    protected static void checkCacheControlHeaders(final Request request,
+                                                   final HttpServletResponse servletResponse,
+                                                   final Datastream resource) throws RepositoryException {
+
+<span class="fc" id="L159">        final EntityTag etag = new EntityTag(resource.getContentDigest().toString());</span>
+<span class="fc" id="L160">        final Date date = resource.getLastModifiedDate();</span>
+
+<span class="fc" id="L162">        final Date roundedDate = new Date();</span>
+<span class="pc bpc" id="L163" title="1 of 2 branches missed.">        if (date != null) {</span>
+<span class="fc" id="L164">            roundedDate.setTime(date.getTime() - date.getTime() % 1000);</span>
+        }
+<span class="fc" id="L166">        final Response.ResponseBuilder builder =</span>
+            request.evaluatePreconditions(roundedDate, etag);
+
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        if (builder != null) {</span>
+<span class="fc" id="L170">            final CacheControl cc = new CacheControl();</span>
+<span class="fc" id="L171">            cc.setMaxAge(0);</span>
+<span class="fc" id="L172">            cc.setMustRevalidate(true);</span>
+            // here we are implicitly emitting a 304
+            // the exception is not an error, it's genuinely
+            // an exceptional condition
+<span class="fc" id="L176">            throw new WebApplicationException(builder.cacheControl(cc)</span>
+                                                  .lastModified(date).tag(etag).build());
+        }
+
+<span class="fc" id="L180">        addCacheControlHeaders(servletResponse, resource);</span>
+<span class="fc" id="L181">    }</span>
+
+    /**
+     * Add ETag and Last-Modified cache control headers to the response
+     * @param servletResponse
+     * @param resource
+     * @throws RepositoryException
+     */
+    protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
+                                                 final Datastream resource) throws RepositoryException {
+
+<span class="fc" id="L192">        final EntityTag etag = new EntityTag(resource.getContentDigest().toString());</span>
+<span class="fc" id="L193">        final Date date = resource.getLastModifiedDate();</span>
+
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        if (!etag.getValue().isEmpty()) {</span>
+<span class="fc" id="L196">            servletResponse.addHeader(&quot;ETag&quot;, etag.toString());</span>
+        }
+
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">        if (date != null) {</span>
+<span class="fc" id="L200">            servletResponse.addDateHeader(&quot;Last-Modified&quot;, date.getTime());</span>
+        }
+<span class="fc" id="L202">    }</span>
+
+    /**
+     * Setter that set the max buffer size for range content retrieval,
+     * which could help for unit testing.
+     * @param maxBufferSize
+     */
+    public static void setMaxBufferSize(final long maxBufferSize) {
+<span class="fc" id="L210">        MAX_BUFFER_SIZE = maxBufferSize;</span>
+<span class="fc" id="L211">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

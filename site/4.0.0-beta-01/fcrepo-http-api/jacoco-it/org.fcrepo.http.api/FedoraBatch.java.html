@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraBatch.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraBatch.java</span></div><h1>FedoraBatch.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.sun.jersey.api.Responses.notAcceptable;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+
+import com.hp.hpl.jena.rdf.model.Model;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.riot.Lang;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.utils.ContentDigest;
+import org.modeshape.jcr.ExecutionContext;
+import org.modeshape.jcr.value.PathFactory;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+import com.sun.jersey.core.header.ContentDisposition;
+import com.sun.jersey.multipart.BodyPart;
+import com.sun.jersey.multipart.BodyPartEntity;
+import com.sun.jersey.multipart.MultiPart;
+
+/**
+ * Controller for manipulating binary streams in larger batches
+ * by using multipart requests and responses
+ *
+ * @author cbeer
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:batch&quot;)
+<span class="fc" id="L96">public class FedoraBatch extends AbstractResource {</span>
+
+    public static final String ATTACHMENT = &quot;attachment&quot;;
+    public static final String INLINE = &quot;inline&quot;;
+    public static final String DELETE = &quot;delete&quot;;
+    public static final String FORM_DATA_DELETE_PART_NAME = &quot;delete[]&quot;;
+    @InjectedSession
+    protected Session session;
+
+<span class="fc" id="L105">    private static final Logger LOGGER = getLogger(FedoraBatch.class);</span>
+
+    /**
+     * Apply batch modifications relative to the node.
+     *
+     * This endpoint supports two types of multipart requests:
+     *  - mixed (preferred)
+     *  - form-data (fallback for &quot;dumb&quot; clients)
+     *
+     *  The name-part of the multipart request is relative to the node
+     *  this operation was called on.
+     *
+     *  multipart/mixed:
+     *
+     *  mixed mode supports three content-disposition types:
+     *  - inline
+     *      Add or update an objects triples
+     *  - attachment
+     *      Add or update binary content
+     *  - delete
+     *      Delete an object
+     *
+     *  multipart/form-data:
+     *
+     *  form-data is a fallback for dumb clients (e.g. HttpClient, curl, etc).
+     *  Instead of using the Content-Disposition to determine what operation
+     *  to perform, form-data uses heuristics to figure out what to do.
+     *
+     *  - if the entity has a filename, always treat it as binary content
+     *  - if the content is RDF or SPARQL-Update, add or update triples
+     *  - if the entity has the name &quot;delete[]&quot;, the body is a single path
+     *  to delete.
+     *  - otherwise, treat the entity as binary content.
+     *
+     *
+     * @param pathList
+     * @param multipart
+     * @return response
+     * @throws RepositoryException
+     * @throws IOException
+     * @throws InvalidChecksumException
+     */
+    @POST
+    @Timed
+    public Response batchModify(@PathParam(&quot;path&quot;) final List&lt;PathSegment&gt; pathList,
+                                final MultiPart multipart)
+        throws RepositoryException, InvalidChecksumException, IOException, URISyntaxException {
+
+<span class="fc" id="L153">        final String path = toPath(pathList);</span>
+
+        // TODO: this is ugly, but it works.
+<span class="fc" id="L156">        final PathFactory pathFactory = new ExecutionContext().getValueFactories().getPathFactory();</span>
+<span class="fc" id="L157">        final org.modeshape.jcr.value.Path jcrPath = pathFactory.create(path);</span>
+
+        try {
+
+<span class="fc" id="L161">            final Set&lt;FedoraResource&gt; resourcesChanged = new HashSet&lt;&gt;();</span>
+
+            // iterate through the multipart entities
+<span class="fc bfc" id="L164" title="All 2 branches covered.">            for (final BodyPart part : multipart.getBodyParts()) {</span>
+<span class="fc" id="L165">                final ContentDisposition contentDisposition = part.getContentDisposition();</span>
+
+
+                // a relative path (probably.)
+
+<span class="fc" id="L170">                final String contentDispositionType = contentDisposition.getType();</span>
+
+<span class="fc" id="L172">                final String partName = contentDisposition.getParameters().get(&quot;name&quot;);</span>
+
+<span class="fc" id="L174">                final String contentTypeString = getSimpleContentType(part.getMediaType()).toString();</span>
+
+<span class="fc" id="L176">                LOGGER.trace(&quot;Processing {} part {} with media type {}&quot;,</span>
+                                contentDispositionType, partName, contentTypeString);
+
+                final String realContentDisposition;
+
+                // we need to apply some heuristics for &quot;dumb&quot; clients that
+                // can only send form-data content
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">                if (contentDispositionType.equals(&quot;form-data&quot;)) {</span>
+
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">                    if (contentDisposition.getFileName() != null) {</span>
+<span class="nc" id="L186">                        realContentDisposition = ATTACHMENT;</span>
+<span class="fc bfc" id="L187" title="All 4 branches covered.">                    } else if (contentTypeString.equals(contentTypeSPARQLUpdate)</span>
+                        || isRdfContentType(contentTypeString)) {
+<span class="fc" id="L189">                        realContentDisposition = INLINE;</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">                    } else if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {</span>
+<span class="fc" id="L191">                        realContentDisposition = DELETE;</span>
+                    } else {
+<span class="fc" id="L193">                        realContentDisposition = ATTACHMENT;</span>
+                    }
+
+<span class="fc" id="L196">                    LOGGER.trace(&quot;Converted form-data to content disposition {}&quot;, realContentDisposition);</span>
+                } else {
+<span class="nc" id="L198">                    realContentDisposition = contentDispositionType;</span>
+                }
+
+                // convert the entity to an InputStream
+<span class="fc" id="L202">                final Object entityBody = part.getEntity();</span>
+
+                final InputStream src;
+<span class="pc bpc" id="L205" title="1 of 2 branches missed.">                if (entityBody instanceof BodyPartEntity) {</span>
+<span class="fc" id="L206">                    final BodyPartEntity entity =</span>
+                        (BodyPartEntity) part.getEntity();
+<span class="fc" id="L208">                    src = entity.getInputStream();</span>
+<span class="pc bnc" id="L209" title="All 2 branches missed.">                } else if (entityBody instanceof InputStream) {</span>
+<span class="nc" id="L210">                    src = (InputStream) entityBody;</span>
+                } else {
+<span class="nc" id="L212">                    LOGGER.debug(&quot;Got unknown multipart entity for {}; ignoring it&quot;, partName);</span>
+<span class="nc" id="L213">                    src = IOUtils.toInputStream(&quot;&quot;);</span>
+                }
+
+                // convert the entity name to a node path
+                final String pathName;
+
+<span class="fc bfc" id="L219" title="All 2 branches covered.">                if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {</span>
+<span class="fc" id="L220">                    pathName = IOUtils.toString(src);</span>
+                } else {
+<span class="fc" id="L222">                    pathName = partName;</span>
+                }
+
+<span class="fc" id="L225">                final String objPath = pathFactory.create(jcrPath, pathName).getCanonicalPath().getString();</span>
+
+<span class="pc bpc" id="L227" title="5 of 14 branches missed.">                switch (realContentDisposition) {</span>
+                    case INLINE:
+
+<span class="fc" id="L230">                        final HttpIdentifierTranslator subjects =</span>
+                            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+
+                        final FedoraResource resource;
+
+<span class="fc bfc" id="L235" title="All 2 branches covered.">                        if (nodeService.exists(session, objPath)) {</span>
+<span class="fc" id="L236">                            resource = nodeService.findOrCreateObject(session, objPath);</span>
+                        } else {
+<span class="fc" id="L238">                            resource = objectService.createObject(session, objPath);</span>
+                        }
+
+<span class="fc bfc" id="L241" title="All 2 branches covered.">                        if (contentTypeString.equals(contentTypeSPARQLUpdate)) {</span>
+<span class="fc" id="L242">                            resource.updatePropertiesDataset(subjects, IOUtils.toString(src));</span>
+<span class="pc bpc" id="L243" title="1 of 2 branches missed.">                        } else if (contentTypeToLang(contentTypeString) != null) {</span>
+<span class="fc" id="L244">                            final Lang lang = contentTypeToLang(contentTypeString);</span>
+
+<span class="fc" id="L246">                            final String format = lang.getName().toUpperCase();</span>
+
+<span class="fc" id="L248">                            final Model inputModel =</span>
+                                createDefaultModel().read(src,
+                                        subjects.getSubject(resource.getNode().getPath()).toString(), format);
+
+<span class="fc" id="L252">                            resource.replaceProperties(subjects, inputModel);</span>
+<span class="fc" id="L253">                        } else {</span>
+<span class="nc" id="L254">                            throw new WebApplicationException(notAcceptable()</span>
+                                .entity(&quot;Invalid Content Type &quot; + contentTypeString).build());
+                        }
+
+<span class="fc" id="L258">                        resourcesChanged.add(resource);</span>
+
+<span class="fc" id="L260">                        break;</span>
+
+                    case ATTACHMENT:
+
+                        final URI checksumURI;
+
+<span class="fc" id="L266">                        final String checksum = contentDisposition.getParameters().get(&quot;checksum&quot;);</span>
+
+<span class="pc bpc" id="L268" title="3 of 4 branches missed.">                        if (checksum != null &amp;&amp; !checksum.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L269">                            checksumURI = new URI(checksum);</span>
+                        } else {
+<span class="fc" id="L271">                            checksumURI = null;</span>
+                        }
+
+<span class="fc" id="L274">                        resourcesChanged.add(datastreamService.createDatastream(session, objPath,</span>
+                                                                  part.getMediaType().toString(),
+                                                                  contentDisposition.getFileName(),
+                                                                  src, checksumURI));
+<span class="fc" id="L278">                        break;</span>
+
+                    case DELETE:
+<span class="fc" id="L281">                        nodeService.deleteObject(session, objPath);</span>
+<span class="fc" id="L282">                        break;</span>
+
+                    default:
+<span class="nc" id="L285">                        return status(Status.BAD_REQUEST)</span>
+                                   .entity(&quot;Unknown Content-Disposition: &quot; + realContentDisposition).build();
+                }
+<span class="fc" id="L288">            }</span>
+
+<span class="fc" id="L290">            session.save();</span>
+<span class="fc" id="L291">            versionService.nodeUpdated(session, path);</span>
+<span class="fc bfc" id="L292" title="All 2 branches covered.">            for (final FedoraResource resource : resourcesChanged) {</span>
+<span class="fc" id="L293">                versionService.nodeUpdated(resource.getNode());</span>
+<span class="fc" id="L294">            }</span>
+
+<span class="fc" id="L296">            final HttpIdentifierTranslator subjects =</span>
+                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+
+<span class="fc" id="L299">            return created(new URI(subjects.getSubject(path).getURI())).build();</span>
+
+        } finally {
+<span class="pc" id="L302">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Delete multiple child objects given by the child query parameter
+     *
+     * @param pathList
+     * @param childList
+     * @return response
+     * @throws RepositoryException
+     */
+    @DELETE
+    @Timed
+    public Response batchDelete(@PathParam(&quot;path&quot;) final List&lt;PathSegment&gt; pathList,
+                                @QueryParam(&quot;child&quot;) final List&lt;String&gt; childList) throws RepositoryException {
+        try {
+<span class="fc" id="L319">            final String path = toPath(pathList);</span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">            for (final String dsid : childList) {</span>
+<span class="fc" id="L321">                final String dsPath = path + &quot;/&quot; + dsid;</span>
+<span class="fc" id="L322">                LOGGER.debug(&quot;purging node {}&quot;, dsPath);</span>
+<span class="fc" id="L323">                nodeService.deleteObject(session, dsPath);</span>
+<span class="fc" id="L324">            }</span>
+<span class="fc" id="L325">            session.save();</span>
+<span class="fc" id="L326">            versionService.nodeUpdated(session, path);</span>
+<span class="fc" id="L327">            return noContent().build();</span>
+        } finally {
+<span class="pc" id="L329">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Retrieve multiple datastream bitstreams in a single request as a
+     * multipart/mixed response.
+     *
+     * @param pathList
+     * @param requestedChildren
+     * @param request
+     * @return response
+     * @throws RepositoryException
+     * @throws NoSuchAlgorithmException
+     */
+    @GET
+    @Produces(&quot;multipart/mixed&quot;)
+    @Timed
+    public Response getBinaryContents(
+        @PathParam(&quot;path&quot;) final List&lt;PathSegment&gt; pathList,
+        @QueryParam(&quot;child&quot;) final List&lt;String&gt; requestedChildren,
+        @Context final Request request) throws RepositoryException, NoSuchAlgorithmException {
+
+<span class="fc" id="L352">        final List&lt;Datastream&gt; datastreams = new ArrayList&lt;&gt;();</span>
+
+        try {
+<span class="fc" id="L355">            final String path = toPath(pathList);</span>
+            // TODO: wrap some of this JCR logic in an fcrepo abstraction;
+
+<span class="fc" id="L358">            final Node node = nodeService.getObject(session, path).getNode();</span>
+
+<span class="fc" id="L360">            Date date = new Date();</span>
+
+<span class="fc" id="L362">            final MessageDigest digest = MessageDigest.getInstance(&quot;SHA-1&quot;);</span>
+
+            final NodeIterator ni;
+
+<span class="fc bfc" id="L366" title="All 2 branches covered.">            if (requestedChildren.isEmpty()) {</span>
+<span class="fc" id="L367">                ni = node.getNodes();</span>
+            } else {
+<span class="fc" id="L369">                ni =</span>
+                        node.getNodes(requestedChildren
+                                .toArray(new String[requestedChildren.size()]));
+            }
+
+            // complain if no children found
+<span class="fc bfc" id="L375" title="All 2 branches covered.">            if ( ni.getSize() == 0 ) {</span>
+<span class="fc" id="L376">                return status(Status.BAD_REQUEST).build();</span>
+            }
+
+            // transform the nodes into datastreams, and calculate cache header
+            // data
+<span class="fc bfc" id="L381" title="All 2 branches covered.">            while (ni.hasNext()) {</span>
+
+<span class="fc" id="L383">                final Node dsNode = ni.nextNode();</span>
+<span class="fc" id="L384">                final Datastream ds = datastreamService.asDatastream(dsNode);</span>
+
+<span class="pc bpc" id="L386" title="1 of 2 branches missed.">                if (!ds.hasContent()) {</span>
+<span class="nc" id="L387">                    continue;</span>
+                }
+
+<span class="fc" id="L390">                digest.update(ds.getContentDigest().toString().getBytes(</span>
+                        UTF_8));
+
+<span class="pc bpc" id="L393" title="1 of 2 branches missed.">                if (ds.getLastModifiedDate().after(date)) {</span>
+<span class="nc" id="L394">                    date = ds.getLastModifiedDate();</span>
+                }
+
+<span class="fc" id="L397">                datastreams.add(ds);</span>
+<span class="fc" id="L398">            }</span>
+
+<span class="fc" id="L400">            final URI digestURI =</span>
+                    ContentDigest.asURI(digest.getAlgorithm(), digest.digest());
+<span class="fc" id="L402">            final EntityTag etag = new EntityTag(digestURI.toString());</span>
+
+<span class="fc" id="L404">            final Date roundedDate = new Date();</span>
+<span class="fc" id="L405">            roundedDate.setTime(date.getTime() - date.getTime() % 1000);</span>
+
+<span class="fc" id="L407">            ResponseBuilder builder =</span>
+                    request.evaluatePreconditions(roundedDate, etag);
+
+<span class="fc" id="L410">            final CacheControl cc = new CacheControl();</span>
+<span class="fc" id="L411">            cc.setMaxAge(0);</span>
+<span class="fc" id="L412">            cc.setMustRevalidate(true);</span>
+
+<span class="pc bpc" id="L414" title="1 of 2 branches missed.">            if (builder == null) {</span>
+<span class="fc" id="L415">                final MultiPart multipart = new MultiPart();</span>
+
+<span class="fc bfc" id="L417" title="All 2 branches covered.">                for (final Datastream ds : datastreams) {</span>
+<span class="fc" id="L418">                    final BodyPart bodyPart =</span>
+                            new BodyPart(ds.getContent(), MediaType.valueOf(ds
+                                    .getMimeType()));
+<span class="fc" id="L421">                    bodyPart.setContentDisposition(ContentDisposition.type(</span>
+                            ATTACHMENT).fileName(ds.getPath()).creationDate(
+                            ds.getCreatedDate()).modificationDate(
+                            ds.getLastModifiedDate()).size(ds.getContentSize())
+                            .build());
+<span class="fc" id="L426">                    multipart.bodyPart(bodyPart);</span>
+<span class="fc" id="L427">                }</span>
+
+<span class="fc" id="L429">                builder = ok(multipart, MULTIPART_FORM_DATA);</span>
+            }
+
+<span class="fc" id="L432">            return builder.cacheControl(cc).lastModified(date).tag(etag)</span>
+                    .build();
+
+        } finally {
+<span class="pc" id="L436">            session.logout();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
