@@ -1,0 +1,4 @@
+org.fcrepo.generator
+org.fcrepo.generator.dublincore
+org.fcrepo.generator.util
+org.fcrepo.integration.generator
