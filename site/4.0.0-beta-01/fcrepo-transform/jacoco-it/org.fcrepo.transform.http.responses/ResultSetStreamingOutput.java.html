@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ResultSetStreamingOutput.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository RDF Transformations Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.transform.http.responses</a> &gt; <span class="el_source">ResultSetStreamingOutput.java</span></div><h1>ResultSetStreamingOutput.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.transform.http.responses;
+
+import static com.hp.hpl.jena.query.DatasetFactory.create;
+import static com.hp.hpl.jena.query.ResultSetFormatter.output;
+import static com.hp.hpl.jena.query.ResultSetFormatter.toModel;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_N3;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_NT;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_TTL;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_XML;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_BIO;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_CSV;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_JSON;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_SSE;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_TSV;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_XML;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_TEXT;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
+import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
+import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
+import static org.apache.jena.riot.WebContent.contentTypeSSE;
+import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
+import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
+import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
+import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.StreamingOutput;
+
+import com.google.common.util.concurrent.AbstractFuture;
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
+import org.fcrepo.http.commons.responses.GraphStoreStreamingOutput;
+
+/**
+ * Stream the results of a SPARQL Query
+ *
+ * @author cbeer
+ */
+public class ResultSetStreamingOutput extends AbstractFuture&lt;Void&gt; implements StreamingOutput {
+    private final ResultSet results;
+    private final MediaType mediaType;
+
+<span class="fc" id="L69">    private static final Void finishedMarker = null;</span>
+
+    /**
+     * Stream the results of a SPARQL Query with the given MediaType
+     * @param results
+     * @param mediaType
+     */
+<span class="fc" id="L76">    public ResultSetStreamingOutput(final ResultSet results, final MediaType mediaType) {</span>
+<span class="fc" id="L77">        this.mediaType = mediaType;</span>
+<span class="fc" id="L78">        this.results = results;</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     *
+     * @param entityStream
+     * @throws IOException
+     */
+    @Override
+    public void write(final OutputStream entityStream) throws IOException {
+<span class="fc" id="L88">        final ResultsFormat resultsFormat = getResultsFormat(mediaType);</span>
+
+        try {
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">            if (resultsFormat == FMT_UNKNOWN) {</span>
+<span class="nc" id="L92">                new GraphStoreStreamingOutput(create(toModel(results)),</span>
+                        mediaType).write(entityStream);
+            } else {
+<span class="fc" id="L95">                output(entityStream, results, resultsFormat);</span>
+            }
+        } finally {
+<span class="pc" id="L98">            set(finishedMarker);</span>
+<span class="fc" id="L99">        }</span>
+<span class="fc" id="L100">    }</span>
+
+    /**
+     * Map the HTTP MediaType to a SPARQL ResultsFormat
+     * @param mediaType
+     * @return SPARQL {@link ResultsFormat} for the given {@link MediaType}
+     */
+    public static ResultsFormat getResultsFormat(final MediaType mediaType) {
+<span class="pc bpc" id="L108" title="53 of 58 branches missed.">        switch (mediaType.toString()) {</span>
+            case contentTypeTextTSV:
+<span class="fc" id="L110">                return FMT_RS_TSV;</span>
+
+            case contentTypeTextCSV:
+<span class="nc" id="L113">                return FMT_RS_CSV;</span>
+
+            case contentTypeSSE:
+<span class="nc" id="L116">                return FMT_RS_SSE;</span>
+
+            case contentTypeTextPlain:
+<span class="nc" id="L119">                return FMT_TEXT;</span>
+
+            case contentTypeResultsJSON:
+<span class="nc" id="L122">                return FMT_RS_JSON;</span>
+
+            case contentTypeResultsXML:
+<span class="nc" id="L125">                return FMT_RS_XML;</span>
+
+            case contentTypeResultsBIO:
+<span class="nc" id="L128">                return FMT_RS_BIO;</span>
+
+            case contentTypeTurtle:
+            case contentTypeTurtleAlt1:
+            case contentTypeTurtleAlt2:
+<span class="nc" id="L133">                return FMT_RDF_TTL;</span>
+
+            case contentTypeN3:
+            case contentTypeN3Alt1:
+            case contentTypeN3Alt2:
+<span class="nc" id="L138">                return FMT_RDF_N3;</span>
+
+            case contentTypeNTriples:
+<span class="nc" id="L141">                return FMT_RDF_NT;</span>
+
+            case contentTypeRDFXML:
+<span class="nc" id="L144">                return FMT_RDF_XML;</span>
+            default:
+<span class="fc" id="L146">                return FMT_UNKNOWN;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
