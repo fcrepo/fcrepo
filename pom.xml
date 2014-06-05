@@ -500,6 +500,13 @@
               subfolder -->
             <path>${project.distributionManagement.site.url}</path>
             <merge>true</merge>
+            <excludes>
+            <!-- Excluding test-related javadocs in order to keep the site 
+              deployment smaller than 30M.
+              see: https://github.com/github/maven-plugins/issues/54 -->
+              <exclude>xref-test/**</exclude>
+              <exclude>testapidocs/**</exclude>
+            </excludes>
           </configuration>
           <executions>
             <execution>
