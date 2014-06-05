@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Constants.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Roles Commons Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.roles.common</a> &gt; <span class="el_source">Constants.java</span></div><h1>Constants.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.roles.common;
+
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import com.hp.hpl.jena.rdf.model.Property;
+
+/**
+ * Reference values for access roles node types and paths.
+ *
+ * @author Gregory Jansen
+ */
+public class Constants {
+
+    /**
+     * No public constructor for utility class
+     */
+<span class="nc" id="L35">    private Constants() {</span>
+<span class="nc" id="L36">    }</span>
+
+    /**
+     * Authorization JCR names
+     *
+     * @author Gregory Jansen
+     */
+<span class="pc" id="L43">    public static enum JcrName {</span>
+<span class="fc" id="L44">        rbaclAssignable(), Rbacl(), Assignment(), rbacl(), assignment(),</span>
+<span class="fc" id="L45">        principal(), role();</span>
+
+        private String expandedName;
+
+        private String qualifiedName;
+
+        private Property property;
+
+        public static final String NS_URI =
+                &quot;http://fedora.info/definitions/v4/authorization#&quot;;
+
+        public static final String NS_PREFIX = &quot;authz&quot;;
+
+<span class="fc" id="L58">        JcrName() {</span>
+<span class="fc" id="L59">            this.expandedName = '{' + NS_URI + '}' + this.name();</span>
+<span class="fc" id="L60">            this.qualifiedName = NS_PREFIX + ':' + this.name();</span>
+<span class="fc" id="L61">            this.property = createProperty(NS_URI + this.name());</span>
+<span class="fc" id="L62">        }</span>
+
+        /**
+         * Get the fully qualified name of this JCR type.
+         *
+         * @return expanded name
+         */
+        public String getExpanded() {
+<span class="nc" id="L70">            return this.expandedName;</span>
+        }
+
+        /**
+         * Get the qualified name of this JCR type.
+         *
+         * @return qualified name
+         */
+        public String getQualified() {
+<span class="fc" id="L79">            return this.qualifiedName;</span>
+        }
+
+        /**
+         * Get the property for this URI.
+         *
+         * @return a Jena property
+         */
+        public Property getProperty() {
+<span class="nc" id="L88">            return this.property;</span>
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see java.lang.Enum#toString()
+         */
+        @Override
+        public String toString() {
+<span class="nc" id="L97">            return getQualified();</span>
+        }
+
+    }
+
+    /**
+     * Adds access roles prefix &quot;authz&quot; to the given session.
+     * @param session
+     * @throws RepositoryException
+     */
+    public static void registerPrefixes(final Session session)
+        throws RepositoryException {
+<span class="fc" id="L109">        session.setNamespacePrefix(JcrName.NS_PREFIX, JcrName.NS_URI);</span>
+<span class="fc" id="L110">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
