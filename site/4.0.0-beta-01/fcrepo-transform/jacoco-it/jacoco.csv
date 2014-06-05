@@ -2,8 +2,8 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 Fedora Repository RDF Transformations Module,org.fcrepo.transform.http.responses,QueryExecutionProvider,35,30,2,6,8,4,4,5,2,3
 Fedora Repository RDF Transformations Module,org.fcrepo.transform.http.responses,ResultSetStreamingOutput,136,51,54,6,11,14,40,6,0,4
 Fedora Repository RDF Transformations Module,org.fcrepo.transform.sparql,JQLResultSet.JQLQuerySolution.new Function() {...},9,0,0,0,2,0,2,0,2,0
-Fedora Repository RDF Transformations Module,org.fcrepo.transform.sparql,JQLQueryVisitor,454,1266,65,107,103,263,81,73,23,35
 Fedora Repository RDF Transformations Module,org.fcrepo.transform.sparql,JQLResultSet.JQLQuerySolution,93,52,8,3,24,11,15,6,8,4
+Fedora Repository RDF Transformations Module,org.fcrepo.transform.sparql,JQLQueryVisitor,454,1266,65,107,103,263,81,73,23,35
 Fedora Repository RDF Transformations Module,org.fcrepo.transform.sparql,JQLConverter,0,66,0,0,0,15,0,5,0,5
 Fedora Repository RDF Transformations Module,org.fcrepo.transform.sparql,JQLResultSet,19,63,0,0,7,15,5,6,5,6
 Fedora Repository RDF Transformations Module,org.fcrepo.transform.exception,JQLParsingException,4,0,0,0,2,0,1,0,1,0
