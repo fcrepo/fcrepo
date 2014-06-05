@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RepositoryServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">RepositoryServiceImpl.java</span></div><h1>RepositoryServiceImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterators.limit;
+import static com.google.common.collect.Maps.asMap;
+import static com.google.common.collect.Sets.newHashSet;
+import static com.hp.hpl.jena.query.DatasetFactory.create;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
+import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
+import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
+import static org.fcrepo.metrics.RegistryService.getMetrics;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.qom.Constraint;
+import javax.jcr.query.qom.QueryObjectModelFactory;
+import javax.jcr.query.qom.Source;
+
+import org.fcrepo.kernel.rdf.GraphProperties;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.fcrepo.kernel.impl.utils.NamespaceChangedStatementListener;
+import org.fcrepo.kernel.services.RepositoryService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.modeshape.jcr.api.Problems;
+import org.modeshape.jcr.api.RepositoryManager;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.Timer;
+import com.google.common.base.Function;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.sparql.util.Context;
+
+/**
+ * Service for repository-wide management and querying
+ *
+ * @author Chris Beer
+ * @since Mar 11, 2013
+ */
+@Component
+<span class="fc" id="L73">public class RepositoryServiceImpl extends AbstractService implements RepositoryService {</span>
+
+<span class="fc" id="L75">    private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);</span>
+
+<span class="fc" id="L77">    private final Timer objectSizeCalculationTimer = getMetrics().timer(</span>
+            name(RepositoryService.class, &quot;objectSizeCalculation&quot;));
+
+    /**
+     * Calculate the total size of all the binary properties in the repository
+     *
+     * @return size in bytes
+     */
+    @Override
+    public Long getRepositorySize() {
+        try {
+
+<span class="fc" id="L89">            final Timer.Context context = objectSizeCalculationTimer.time();</span>
+<span class="fc" id="L90">            LOGGER.debug(&quot;Calculating repository size from index&quot;);</span>
+
+            try {
+                // Differentiating between the local getRepositorySize and
+                // ServiceHelpers
+<span class="fc" id="L95">                return ServiceHelpers.getRepositorySize(repo);</span>
+
+            } finally {
+<span class="pc" id="L98">                context.stop();</span>
+            }
+<span class="nc" id="L100">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L101">            throw propagate(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getRepositoryObjectCount()
+     */
+    @Override
+    public Long getRepositoryObjectCount() {
+        try {
+<span class="nc" id="L113">            return getRepositoryCount(repo);</span>
+<span class="nc" id="L114">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L115">            throw propagate(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getRepositoryNamespaces(
+     * javax.jcr.Session)
+     */
+    @Override
+    public Map&lt;String, String&gt; getRepositoryNamespaces(final Session session) throws RepositoryException {
+
+<span class="nc" id="L128">        final NamespaceRegistry reg = session.getWorkspace().getNamespaceRegistry();</span>
+<span class="nc" id="L129">        return asMap(newHashSet(reg.getPrefixes()), new Function&lt;String, String&gt;() {</span>
+
+            @Override
+            public String apply(final String p) {
+                try {
+<span class="nc" id="L134">                    return reg.getURI(p);</span>
+<span class="nc" id="L135">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L136">                    throw propagate(e);</span>
+                }
+            }
+        });
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryDataset
+     * (javax.jcr.Session)
+     */
+    @Override
+    public Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator)
+        throws RepositoryException {
+
+<span class="fc" id="L152">        final Model model =</span>
+            JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples().asModel();
+
+<span class="fc" id="L155">        model.register(new NamespaceChangedStatementListener(session));</span>
+
+<span class="fc" id="L157">        final Dataset dataset = create(model);</span>
+
+<span class="fc" id="L159">        return dataset;</span>
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryStream
+     * (javax.jcr.Session)
+     */
+    @Override
+    public RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator)
+        throws RepositoryException {
+
+<span class="nc" id="L173">        return JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples();</span>
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#searchRepository(org.fcrepo
+     * .kernel.rdf.GraphSubjects, com.hp.hpl.jena.rdf.model.Resource,
+     * javax.jcr.Session, java.lang.String, int, long)
+     */
+    @Override
+    public Dataset searchRepository(final IdentifierTranslator subjectFactory,
+            final Resource searchSubject, final Session session,
+            final String terms, final int limit, final long offset)
+        throws RepositoryException {
+
+        final Model model;
+
+<span class="nc bnc" id="L192" title="All 4 branches missed.">        if (terms != null &amp;&amp; terms.trim().length() != 0) {</span>
+<span class="nc" id="L193">            final QueryManager queryManager =</span>
+                    session.getWorkspace().getQueryManager();
+
+<span class="nc" id="L196">            final QueryObjectModelFactory factory =</span>
+                    queryManager.getQOMFactory();
+
+<span class="nc" id="L199">            final Source selector =</span>
+                    factory.selector(FEDORA_RESOURCE, &quot;resourcesSelector&quot;);
+<span class="nc" id="L201">            final Constraint constraints =</span>
+                    factory.fullTextSearch(&quot;resourcesSelector&quot;, null, factory
+                            .literal(session.getValueFactory().createValue(
+                                    terms)));
+
+<span class="nc" id="L206">            final Query query =</span>
+                    factory.createQuery(selector, constraints, null, null);
+
+            // include an extra document to determine if additional pagination
+            // is
+            // necessary
+<span class="nc" id="L212">            query.setLimit(limit + 1);</span>
+<span class="nc" id="L213">            query.setOffset(offset);</span>
+
+<span class="nc" id="L215">            final QueryResult queryResult = query.execute();</span>
+
+<span class="nc" id="L217">            final NodeIterator nodeIterator = queryResult.getNodes();</span>
+<span class="nc" id="L218">            final long size = nodeIterator.getSize();</span>
+
+            // remove that extra document from the nodes we'll iterate over
+<span class="nc" id="L221">            final Iterator&lt;Node&gt; limitedIterator =</span>
+                    limit(new org.fcrepo.kernel.utils.iterators.NodeIterator(nodeIterator),
+                            limit);
+
+<span class="nc" id="L225">            model =</span>
+                JcrRdfTools.withContext(subjectFactory, session)
+                        .getJcrPropertiesModel(limitedIterator, searchSubject)
+                        .asModel();
+
+            /* add the result description to the RDF model */
+
+<span class="nc" id="L232">            model.add(searchSubject, SEARCH_HAS_TOTAL_RESULTS, model</span>
+                    .createTypedLiteral(size));
+<span class="nc" id="L234">            model.add(searchSubject, SEARCH_HAS_MORE, model</span>
+                    .createTypedLiteral(nodeIterator.hasNext()));
+<span class="nc" id="L236">        } else {</span>
+<span class="nc" id="L237">            model = createDefaultModel();</span>
+        }
+
+<span class="nc" id="L240">        final Dataset dataset = DatasetFactory.create(model);</span>
+
+<span class="nc" id="L242">        final String uri = searchSubject.getURI();</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">        final Context context =</span>
+                dataset.getContext() != null ? dataset.getContext()
+                        : new Context();
+<span class="nc" id="L246">        context.set(GraphProperties.URI_SYMBOL, uri);</span>
+
+<span class="nc" id="L248">        return dataset;</span>
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#backupRepository(javax.jcr
+     * .Session, java.io.File)
+     */
+    @Override
+    public Problems backupRepository(final Session session,
+                                     final File backupDirectory) throws RepositoryException {
+<span class="fc" id="L261">        final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)</span>
+                .getWorkspace()
+                .getRepositoryManager();
+
+<span class="fc" id="L265">        final Problems problems = repoMgr.backupRepository(backupDirectory);</span>
+
+<span class="fc" id="L267">        return problems;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.services.RepositoryService#restoreRepository(javax.
+     * jcr.Session, java.io.File)
+     */
+    @Override
+    public Problems restoreRepository(final Session session,
+                                      final File backupDirectory) throws RepositoryException {
+<span class="fc" id="L279">        final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)</span>
+                .getWorkspace()
+                .getRepositoryManager();
+
+<span class="fc" id="L283">        final Problems problems = repoMgr.restoreRepository(backupDirectory);</span>
+
+<span class="fc" id="L285">        return problems;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

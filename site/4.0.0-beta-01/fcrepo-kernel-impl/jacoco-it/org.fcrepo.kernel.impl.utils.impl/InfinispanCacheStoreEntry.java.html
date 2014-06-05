@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>InfinispanCacheStoreEntry.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.utils.impl</a> &gt; <span class="el_source">InfinispanCacheStoreEntry.java</span></div><h1>InfinispanCacheStoreEntry.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.utils.impl;
+
+import static com.google.common.base.Throwables.propagate;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
+import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
+import static org.fcrepo.kernel.utils.FixityResult.FixityState.MISSING_STORED_FIXITY;
+import static org.fcrepo.kernel.utils.FixityResult.FixityState.SUCCESS;
+
+import com.google.common.collect.ImmutableSet;
+import org.fcrepo.kernel.impl.services.ServiceHelpers;
+import org.fcrepo.kernel.utils.ContentDigest;
+import org.fcrepo.kernel.utils.FixityResult;
+import org.infinispan.distexec.DistributedExecutorService;
+import org.modeshape.jcr.value.BinaryKey;
+import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
+import org.slf4j.Logger;
+
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ */
+public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
+<span class="nc" id="L50">    private static final Logger LOGGER = getLogger(InfinispanCacheStoreEntry.class);</span>
+    private static final String DATA_SUFFIX = &quot;-data&quot;;
+
+    /**
+     *
+     * @param store
+     * @param property
+     */
+    public InfinispanCacheStoreEntry(final InfinispanBinaryStore store, final Property property) {
+<span class="nc" id="L59">        super(store, property);</span>
+<span class="nc" id="L60">    }</span>
+
+    @Override
+    public Collection&lt;FixityResult&gt; checkFixity(final URI checksum, final long size) throws RepositoryException {
+<span class="nc" id="L64">        final BinaryKey key = binaryKey();</span>
+<span class="nc" id="L65">        final ImmutableSet.Builder&lt;FixityResult&gt; fixityResults = new ImmutableSet.Builder&lt;&gt;();</span>
+
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (store().hasBinary(key)) {</span>
+<span class="nc" id="L68">            final String dataKey = dataKeyFor(key);</span>
+
+<span class="nc" id="L70">            final DistributedFixityCheck task = new DistributedFixityCheck(dataKey);</span>
+<span class="nc" id="L71">            final List&lt;Future&lt;Collection&lt;FixityResult&gt;&gt;&gt; futures</span>
+                = clusterExecutor().submitEverywhere(task, dataKey + &quot;-0&quot;);
+
+<span class="nc bnc" id="L74" title="All 2 branches missed.">            while (!futures.isEmpty()) {</span>
+<span class="nc" id="L75">                final Iterator&lt;Future&lt;Collection&lt;FixityResult&gt;&gt;&gt; iterator = futures.iterator();</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">                while (iterator.hasNext()) {</span>
+<span class="nc" id="L77">                    final Future&lt;Collection&lt;FixityResult&gt;&gt; future = iterator.next();</span>
+                    try {
+<span class="nc" id="L79">                        final Collection&lt;FixityResult&gt; result = future.get(100, MILLISECONDS);</span>
+<span class="nc" id="L80">                        iterator.remove();</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">                        for (final FixityResult fixityResult : result) {</span>
+<span class="nc" id="L82">                            setFixityStatus(fixityResult, size, checksum);</span>
+<span class="nc" id="L83">                        }</span>
+
+<span class="nc" id="L85">                        fixityResults.addAll(result);</span>
+<span class="nc" id="L86">                    } catch (final TimeoutException e) {</span>
+<span class="nc" id="L87">                        LOGGER.trace(&quot;Going to retry cluster transform after timeout&quot;, e);</span>
+<span class="nc" id="L88">                    } catch (InterruptedException | ExecutionException e) {</span>
+<span class="nc" id="L89">                        throw propagate(e);</span>
+<span class="nc" id="L90">                    }</span>
+<span class="nc" id="L91">                }</span>
+<span class="nc" id="L92">            }</span>
+        }
+<span class="nc" id="L94">        return fixityResults.build();</span>
+    }
+
+    private String dataKeyFor(final BinaryKey key) {
+<span class="nc" id="L98">        return key + DATA_SUFFIX;</span>
+    }
+
+    private DistributedExecutorService clusterExecutor() {
+<span class="nc" id="L102">        return ServiceHelpers.getClusterExecutor((InfinispanBinaryStore)store());</span>
+    }
+    private void setFixityStatus(final FixityResult result, final long dsSize, final URI dsChecksum) {
+<span class="nc bnc" id="L105" title="All 4 branches missed.">        if (dsChecksum.equals(ContentDigest.missingChecksum()) || dsSize == -1L) {</span>
+<span class="nc" id="L106">            result.getStatus().add(MISSING_STORED_FIXITY);</span>
+        }
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (!result.matches(dsChecksum)) {</span>
+<span class="nc" id="L110">            result.getStatus().add(BAD_CHECKSUM);</span>
+        }
+
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (!result.matches(dsSize)) {</span>
+<span class="nc" id="L114">            result.getStatus().add(BAD_SIZE);</span>
+        }
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (result.matches(dsSize, dsChecksum)) {</span>
+<span class="nc" id="L118">            result.getStatus().add(SUCCESS);</span>
+        }
+<span class="nc" id="L120">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

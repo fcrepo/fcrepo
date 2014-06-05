@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>LockServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">LockServiceImpl.java</span></div><h1>LockServiceImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import org.fcrepo.kernel.Lock;
+import org.fcrepo.kernel.services.LockService;
+import org.springframework.stereotype.Component;
+
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.lock.LockManager;
+
+/**
+ * @author Mike Durbin
+ */
+@Component
+<span class="fc" id="L31">public class LockServiceImpl extends AbstractService implements LockService {</span>
+
+    @Override
+    public Lock acquireLock(final Session session, final String path, final boolean deep)
+        throws RepositoryException {
+<span class="nc" id="L36">        final LockManager lockManager = session.getWorkspace().getLockManager();</span>
+<span class="nc" id="L37">        return  new JCRLock(lockManager.lock(path, deep, false, -1, session.getUserID()));</span>
+    }
+
+    @Override
+    public Lock getLock(final Session session, final String path) throws RepositoryException {
+<span class="nc" id="L42">        final LockManager lockManager = session.getWorkspace().getLockManager();</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (!lockManager.isLocked(path)) {</span>
+<span class="nc" id="L44">            throw new PathNotFoundException(&quot;No lock at path &quot; + path + &quot;!&quot;);</span>
+        }
+<span class="nc" id="L46">        return new JCRLock(lockManager.getLock(path));</span>
+    }
+
+    @Override
+    public void releaseLock(final Session session, final String path) throws RepositoryException {
+<span class="nc" id="L51">        final LockManager lockManager = session.getWorkspace().getLockManager();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (!lockManager.isLocked(path)) {</span>
+<span class="nc" id="L53">            throw new PathNotFoundException(&quot;No lock at path &quot; + path + &quot;!&quot;);</span>
+        }
+<span class="nc" id="L55">        session.getWorkspace().getLockManager().unlock(path);</span>
+<span class="nc" id="L56">    }</span>
+
+<span class="fc" id="L58">    private static class JCRLock implements Lock {</span>
+
+        private boolean isDeep;
+
+        private String token;
+
+<span class="nc" id="L64">        public JCRLock(final javax.jcr.lock.Lock lock) throws RepositoryException {</span>
+<span class="nc" id="L65">            isDeep = lock.isDeep();</span>
+<span class="nc" id="L66">            token = lock.getLockToken();</span>
+<span class="nc" id="L67">        }</span>
+
+        @Override
+        public String getLockToken() {
+<span class="nc" id="L71">            return token;</span>
+        }
+
+        @Override
+        public boolean isDeep() {
+<span class="nc" id="L76">            return isDeep;</span>
+        }
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

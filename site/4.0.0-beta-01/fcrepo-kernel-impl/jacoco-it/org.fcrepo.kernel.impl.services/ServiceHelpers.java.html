@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ServiceHelpers.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ServiceHelpers.java</span></div><h1>ServiceHelpers.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static javax.jcr.query.Query.JCR_SQL2;
+import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.RowIterator;
+
+import org.infinispan.distexec.DefaultExecutorService;
+import org.infinispan.distexec.DistributedExecutorService;
+import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
+import org.springframework.stereotype.Component;
+
+/**
+ * Uncategorized helper methods
+ *
+ * @author awoods
+ */
+@Component
+<span class="nc" id="L50">public abstract class ServiceHelpers {</span>
+
+    /**
+     * Get the total size of a Node's properties
+     * 
+     * @param node
+     * @return size in bytes
+     * @throws RepositoryException
+     */
+    public static Long getNodePropertySize(final Node node)
+        throws RepositoryException {
+<span class="fc" id="L61">        Long size = 0L;</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (final PropertyIterator i = node.getProperties(); i.hasNext();) {</span>
+<span class="fc" id="L63">            final Property p = i.nextProperty();</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">            if (p.isMultiple()) {</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">                for (final Value v : p.getValues()) {</span>
+<span class="fc" id="L66">                    size += v.getBinary().getSize();</span>
+                }
+            } else {
+<span class="fc" id="L69">                size += p.getBinary().getSize();</span>
+            }
+<span class="fc" id="L71">        }</span>
+<span class="fc" id="L72">        return size;</span>
+    }
+
+    /**
+     * @param obj
+     * @return object size in bytes
+     * @throws RepositoryException
+     */
+    public static Long getObjectSize(final Node obj) throws RepositoryException {
+<span class="fc" id="L81">        return getNodePropertySize(obj) + getObjectDSSize(obj);</span>
+    }
+
+    /**
+     * @param obj
+     * @return object's datastreams' total size in bytes
+     * @throws RepositoryException
+     */
+    private static Long getObjectDSSize(final Node obj)
+        throws RepositoryException {
+<span class="fc" id="L91">        Long size = 0L;</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        for (final NodeIterator i = obj.getNodes(); i.hasNext();) {</span>
+<span class="fc" id="L93">            final Node node = i.nextNode();</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">            if (node.isNodeType(NT_FILE)) {</span>
+<span class="nc" id="L95">                size += getDatastreamSize(node);</span>
+            }
+<span class="fc" id="L97">        }</span>
+<span class="fc" id="L98">        return size;</span>
+    }
+
+    /**
+     * Get the size of a datastream by calculating the size of the properties
+     * and the binary properties
+     * 
+     * @param ds
+     * @return size of the datastream's properties and binary properties
+     * @throws RepositoryException
+     */
+    public static Long getDatastreamSize(final Node ds)
+        throws RepositoryException {
+<span class="nc" id="L111">        return getNodePropertySize(ds) + getContentSize(ds);</span>
+    }
+
+    /**
+     * Get the size of the JCR content binary property
+     * 
+     * @param ds
+     * @return size of the binary content property
+     * @throws RepositoryException
+     */
+    public static Long getContentSize(final Node ds) throws RepositoryException {
+<span class="nc" id="L122">        long size = 0L;</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (ds.hasNode(JCR_CONTENT)) {</span>
+<span class="nc" id="L124">            final Node contentNode = ds.getNode(JCR_CONTENT);</span>
+
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            if (contentNode.hasProperty(JCR_DATA)) {</span>
+<span class="nc" id="L127">                size =</span>
+                        ds.getNode(JCR_CONTENT).getProperty(JCR_DATA)
+                                .getBinary().getSize();
+            }
+        }
+
+<span class="nc" id="L133">        return size;</span>
+    }
+
+    /**
+     * A static factory function to insulate services from the details of
+     * building a DistributedExecutorService
+     * 
+     * @param cacheStore
+     * @return new DistributedExecutorService instance
+     */
+    public static DistributedExecutorService getClusterExecutor(
+            final InfinispanBinaryStore cacheStore) {
+        // Watch out! This is trying to pluck out the blob cache store. This
+        // works as long as
+        // modeshape continues to be ordered..
+<span class="nc" id="L148">        return new DefaultExecutorService(cacheStore.getCaches().get(1));</span>
+    }
+
+    /**
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException
+     */
+    public static long getRepositoryCount(final Repository repository)
+        throws RepositoryException {
+<span class="fc" id="L157">        final Session session = repository.login();</span>
+        try {
+<span class="fc" id="L159">            final QueryManager queryManager =</span>
+                session.getWorkspace().getQueryManager();
+
+<span class="fc" id="L162">            final String querystring =</span>
+                &quot;SELECT [&quot; + JCR_PATH + &quot;] FROM [&quot;
+                        + FEDORA_OBJECT + &quot;]&quot;;
+
+<span class="fc" id="L166">            final QueryResult queryResults =</span>
+                queryManager.createQuery(querystring, JCR_SQL2).execute();
+
+<span class="fc" id="L169">            return queryResults.getRows().getSize();</span>
+        } finally {
+
+<span class="pc" id="L172">            session.logout();</span>
+        }
+    }
+
+    /**
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException
+     */
+    public static long getRepositorySize(final Repository repository)
+        throws RepositoryException {
+<span class="fc" id="L182">        final Session session = repository.login();</span>
+<span class="fc" id="L183">        long sum = 0;</span>
+<span class="fc" id="L184">        final QueryManager queryManager =</span>
+            session.getWorkspace().getQueryManager();
+
+<span class="fc" id="L187">        final String querystring =</span>
+                &quot;SELECT [&quot; + CONTENT_SIZE + &quot;] FROM [&quot; +
+                        FEDORA_BINARY + &quot;]&quot;;
+
+<span class="fc" id="L191">        final QueryResult queryResults =</span>
+            queryManager.createQuery(querystring, JCR_SQL2).execute();
+
+<span class="fc bfc" id="L194" title="All 2 branches covered.">        for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {</span>
+<span class="fc" id="L195">            final Value value =</span>
+                    rows.nextRow().getValue(CONTENT_SIZE);
+<span class="fc" id="L197">            sum += value.getLong();</span>
+<span class="fc" id="L198">        }</span>
+
+<span class="fc" id="L200">        session.logout();</span>
+
+<span class="fc" id="L202">        return sum;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
