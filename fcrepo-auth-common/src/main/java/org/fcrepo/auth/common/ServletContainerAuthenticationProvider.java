@@ -59,6 +59,11 @@ public class ServletContainerAuthenticationProvider implements
             return ServletContainerAuthenticationProvider.EVERYONE_NAME;
         }
 
+        @Override
+        public String toString() {
+            return getName();
+        }
+
     };
 
     /**
