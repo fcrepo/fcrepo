@@ -19,6 +19,4 @@
 
     <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
 
-    <context:component-scan base-package="org.fcrepo.kernel"/>
-
 </beans>

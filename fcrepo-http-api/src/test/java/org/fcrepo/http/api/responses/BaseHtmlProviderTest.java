@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.http.commons.responses;
+package org.fcrepo.http.api.responses;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -43,6 +43,7 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.context.Context;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;

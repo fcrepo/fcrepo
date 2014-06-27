@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api.responses;
 
-import org.fcrepo.http.commons.responses.BaseHtmlProvider;
 import org.springframework.stereotype.Component;
 
 /**

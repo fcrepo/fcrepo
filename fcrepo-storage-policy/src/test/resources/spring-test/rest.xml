@@ -12,5 +12,5 @@
   
   <bean class="org.fcrepo.storage.policy.StoragePolicyDecisionPointImpl"/>
   
-  <context:component-scan base-package="org.fcrepo.http.api.responses, org.fcrepo.http.commons.responses, org.fcrepo.storage.policy"  />  
+  <context:component-scan base-package="org.fcrepo"  />
 </beans>

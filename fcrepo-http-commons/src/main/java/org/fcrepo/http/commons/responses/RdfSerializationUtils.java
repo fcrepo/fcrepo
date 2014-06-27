@@ -89,7 +89,7 @@ public class RdfSerializationUtils {
      * @param predicate
      * @return first value for the given predicate or null if not found
      */
-    static String getFirstValueForPredicate(final Dataset rdf,
+    public static String getFirstValueForPredicate(final Dataset rdf,
             final Node subject, final Node predicate) {
         final Iterator<Quad> statements =
                 rdf.asDatasetGraph().find(ANY, subject, predicate, ANY);
@@ -127,7 +127,7 @@ public class RdfSerializationUtils {
      * @param httpHeaders
      * @param rdf
      */
-    static void setCachingHeaders(final MultivaluedMap<String,
+    public static void setCachingHeaders(final MultivaluedMap<String,
             Object> httpHeaders, final Dataset rdf) {
         httpHeaders.put(CACHE_CONTROL, singletonList((Object) "max-age=0"));
         httpHeaders.put(CACHE_CONTROL, singletonList((Object) "must-revalidate"));

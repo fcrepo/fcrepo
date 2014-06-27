@@ -44,7 +44,7 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals("Got wrong URI in Location header for datastream creation!", serverAddress + pid +
-                "/zxcpermit/fcr:content", location);
+                "/zxcpermit/jcr:content", location);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
                 response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals("Got wrong URI in Location header for datastream creation!", serverAddress + pid +
-                "/does_permit/not_permit/exist_permit/yet_permit/zxc_permit/fcr:content", location);
+                "/does_permit/not_permit/exist_permit/yet_permit/zxc_permit/jcr:content", location);
     }
 
     @Test
@@ -126,7 +126,7 @@ public class FedoraResponseCodesIT extends AbstractResourceIT {
         final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
-        final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
+        final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/jcr:content");
         assertEquals(200, getStatus(method_test_get));
 
         final HttpResponse response = client.execute(method_test_get);

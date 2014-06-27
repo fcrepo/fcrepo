@@ -87,7 +87,7 @@ public abstract class AbstractResourceIT {
             throws UnsupportedEncodingException {
         final HttpPost post =
                 new HttpPost(serverAddress + pid + "/" + ds +
-                        "/fcr:content");
+                        "/jcr:content");
         post.setEntity(new StringEntity(content));
         return post;
     }
@@ -97,7 +97,7 @@ public abstract class AbstractResourceIT {
             throws UnsupportedEncodingException {
         final HttpPut put =
                 new HttpPut(serverAddress + pid + "/" + ds +
-                        "/fcr:content");
+                        "/jcr:content");
 
         put.setEntity(new StringEntity(content));
         return put;

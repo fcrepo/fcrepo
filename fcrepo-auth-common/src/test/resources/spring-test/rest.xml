@@ -15,6 +15,5 @@
   <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
     <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
   </util:list>
-  
-  <context:component-scan base-package="org.fcrepo.http, org.fcrepo.kernel, org.fcrepo.serialization" />
+
 </beans>

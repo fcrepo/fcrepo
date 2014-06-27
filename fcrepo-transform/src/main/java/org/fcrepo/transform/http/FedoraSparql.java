@@ -73,9 +73,9 @@ import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_SPARQL_RDF_VARIANTS;
-import static org.fcrepo.http.commons.responses.BaseHtmlProvider.templateFilenameExtension;
-import static org.fcrepo.http.commons.responses.BaseHtmlProvider.templatesLocation;
-import static org.fcrepo.http.commons.responses.BaseHtmlProvider.velocityPropertiesLocation;
+import static org.fcrepo.http.api.responses.BaseHtmlProvider.templateFilenameExtension;
+import static org.fcrepo.http.api.responses.BaseHtmlProvider.templatesLocation;
+import static org.fcrepo.http.api.responses.BaseHtmlProvider.velocityPropertiesLocation;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
