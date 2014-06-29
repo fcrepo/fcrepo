@@ -338,7 +338,7 @@ public class FedoraNodesTest {
             .thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
 
-        final Response actual = testObj.deleteObject(createPathList(pid), mockRequest);
+        final Response actual = testObj.deleteObject(createPathList(pid), mockRequest, mockResponse);
 
         assertNotNull(actual);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
@@ -559,7 +559,7 @@ public class FedoraNodesTest {
 
         final String pid = "foo";
 
-        testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar", mockRequest);
+        testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar", mockRequest, mockResponse);
         verify(mockNodes).moveObject(mockSession, "/foo", "/bar");
     }
 
@@ -574,7 +574,10 @@ public class FedoraNodesTest {
 
         final String pid = "foo";
 
-        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/bar", mockRequest);
+        final Response response =
+                testObj.moveObject(createPathList(pid),
+                        "http://localhost/fcrepo/bar", mockRequest,
+                        mockResponse);
         assertEquals(CONFLICT.getStatusCode(), response.getStatus());
     }
 
@@ -590,7 +593,10 @@ public class FedoraNodesTest {
 
         final String pid = "foo";
 
-        final Response response = testObj.moveObject(createPathList(pid), "http://localhost/fcrepo/baz", mockRequest);
+        final Response response =
+                testObj.moveObject(createPathList(pid),
+                        "http://localhost/fcrepo/baz", mockRequest,
+                        mockResponse);
 
         assertEquals(PRECONDITION_FAILED.getStatusCode(), response.getStatus());
     }
@@ -606,7 +612,9 @@ public class FedoraNodesTest {
 
         final String pid = "foo";
 
-        final Response response = testObj.moveObject(createPathList(pid), "http://somewhere/else/baz", mockRequest);
+        final Response response =
+                testObj.moveObject(createPathList(pid),
+                        "http://somewhere/else/baz", mockRequest, mockResponse);
 
         // BAD GATEWAY
         assertEquals(SC_BAD_GATEWAY, response.getStatus());

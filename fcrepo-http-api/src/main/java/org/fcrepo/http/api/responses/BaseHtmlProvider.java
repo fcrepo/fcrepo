@@ -190,7 +190,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
         // add standard headers
         httpHeaders.put("Content-type", of((Object) TEXT_HTML));
-        setCachingHeaders(httpHeaders, rdf);
+        setCachingHeaders(httpHeaders, rdf, uriInfo);
 
         final Template nodeTypeTemplate =
                 getTemplate(rdf, subject, annotations);

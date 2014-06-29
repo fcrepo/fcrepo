@@ -45,11 +45,11 @@ import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
-import static org.jgroups.util.Util.assertFalse;
 import static org.fcrepo.kernel.impl.TransactionImpl.DEFAULT_TIMEOUT;
 import static org.fcrepo.kernel.impl.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.REAP_INTERVAL;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -417,7 +417,41 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     }
 
+    /**
+     * Tests that caching headers are disabled during transactions.
+     * 
+     * The Last-Modified date is only updated when Modeshape's
+     * session.save() is invoked. Since this operation is not
+     * invoked during a Fedora transaction, the Last-Modified
+     * date never gets updated during a transaction and the
+     * delivered content may be stale. Etag won't work either
+     * because it is directly derived from Last-Modified.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testNoCachingHeadersDuringTransaction() throws Exception {
+        final String txLocation = createTransaction();
+        final HttpPost post = new HttpPost(txLocation);
+        final HttpResponse response = execute(post);
 
+        assertFalse("Last-Modified header must not be present during a transaction", response
+                .containsHeader("Last-Modified"));
+        assertFalse("ETag header must not be present during a transaction", response.containsHeader("ETag"));
+
+        // Assert Cache-Control headers are present to invalidate caches
+        final String location = response.getFirstHeader("Location").getValue();
+        final HttpGet get = new HttpGet(location);
+        final HttpResponse responseFromGet = execute(get);
+
+        final String cacheControl = "Cache-Control";
+        final Header[] headers = responseFromGet.getHeaders(cacheControl);
+        assertEquals("Two cache control headers expected: ", 2, headers.length);
+        assertEquals(cacheControl + "expected", cacheControl, headers[0].getName());
+        assertEquals(cacheControl + "expected", cacheControl, headers[1].getName());
+        assertEquals("must-revalidate expected", "must-revalidate", headers[0].getValue());
+        assertEquals("max-age=0 expected", "max-age=0", headers[1].getValue());
+    }
 
     /**
      * Tests that transactions are treated as atomic with regards to nodes.
@@ -481,13 +515,6 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         resp = execute(commitDeleteTx);
         assertNotEquals("Transaction is not atomic with regards to the object!",
                 204, resp.getStatusLine().getStatusCode());
-    }
-
-    private String createTransaction() throws IOException {
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        final HttpResponse response = execute(createTx);
-        assertEquals(201, response.getStatusLine().getStatusCode());
-        return response.getFirstHeader("Location").getValue();
     }
 
     private void verifyProperty(final String assertionMessage, final String pid, final String txId,

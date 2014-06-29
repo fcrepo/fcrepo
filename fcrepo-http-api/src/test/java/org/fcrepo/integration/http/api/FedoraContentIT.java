@@ -18,6 +18,7 @@ package org.fcrepo.integration.http.api;
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -133,6 +134,33 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String lastmod = response.getFirstHeader("Last-Modified").getValue();
         assertNotNull("Should set Last-Modified for new nodes", lastmod);
         assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
+    }
+
+    @Test
+    public void testPutDatastreamDuringTransaction() throws Exception {
+
+        final String txLocation = createTransaction();
+        final String pid = getRandomUniquePid();
+
+        final String contentLocation = txLocation + "/" + pid + "/fcr:content";
+
+        final HttpPut put = new HttpPut(contentLocation);
+        put.setEntity(new StringEntity("foo content"));
+        final HttpResponse response = execute(put);
+
+        assertFalse("Found Last-Modified header within transaction!",
+                response.containsHeader("Last-Modified"));
+        assertFalse("Found ETag header within transaction!",
+                response.containsHeader("ETag"));
+
+        final HttpGet testGet = new HttpGet(contentLocation);
+        final HttpResponse responseFromGet = execute(testGet);
+
+        assertFalse("Found Last-Modified header within transaction!",
+                responseFromGet.containsHeader("Last-Modified"));
+        assertFalse("Found ETag header within transaction!",
+                responseFromGet.containsHeader("ETag"));
+
     }
 
     @Test
@@ -385,4 +413,5 @@ public class FedoraContentIT extends AbstractResourceIT {
         repostDSMethod.addHeader("Content-Type", "application/foo");
         assertEquals(409, getStatus(repostDSMethod));
     }
+
 }

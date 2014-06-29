@@ -37,14 +37,18 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.context.Context;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -60,11 +64,12 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
  */
 public class BaseHtmlProviderTest {
 
-    final BaseHtmlProvider baseHtmlProvider = new BaseHtmlProvider();
+    private final BaseHtmlProvider baseHtmlProvider = new BaseHtmlProvider();
 
-    Dataset testData = new DatasetImpl(createDefaultModel());
+    private final Dataset testData = new DatasetImpl(createDefaultModel());
 
-    {
+    @Before
+    public void setup() {
         testData.asDatasetGraph().getDefaultGraph().add(
                 new Triple(createURI("test:subject"),
                         createURI("test:predicate"),
@@ -73,6 +78,8 @@ public class BaseHtmlProviderTest {
                 new Triple(createURI("test:subject"), primaryTypePredicate,
                         createLiteral("nt:file")));
 
+        final UriInfo info = Mockito.mock(UriInfo.class);
+        setField(baseHtmlProvider, "uriInfo", info);
     }
 
     @Test
