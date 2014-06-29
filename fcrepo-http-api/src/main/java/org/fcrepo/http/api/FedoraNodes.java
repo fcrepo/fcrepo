@@ -162,7 +162,7 @@ public class FedoraNodes extends AbstractResource {
         final HttpIdentifierTranslator subjects =
             new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
-        checkCacheControlHeaders(request, servletResponse, resource);
+        checkCacheControlHeaders(request, servletResponse, resource, session);
 
         addResourceHttpHeaders(servletResponse, resource, subjects);
 
@@ -199,7 +199,7 @@ public class FedoraNodes extends AbstractResource {
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        checkCacheControlHeaders(request, servletResponse, resource);
+        checkCacheControlHeaders(request, servletResponse, resource, session);
 
         final HttpIdentifierTranslator subjects =
             new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
@@ -369,7 +369,7 @@ public class FedoraNodes extends AbstractResource {
             final FedoraResource resource =
                     nodeService.getObject(session, path);
 
-            evaluateRequestPreconditions(request, resource);
+            evaluateRequestPreconditions(request, servletResponse, resource, session);
 
             final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
                     session, FedoraNodes.class, uriInfo), requestBody);
@@ -386,7 +386,7 @@ public class FedoraNodes extends AbstractResource {
             session.save();
             versionService.nodeUpdated(resource.getNode());
 
-            addCacheControlHeaders(servletResponse, resource);
+            addCacheControlHeaders(servletResponse, resource, session);
 
             return noContent().build();
 
@@ -453,7 +453,7 @@ public class FedoraNodes extends AbstractResource {
                 preexisting = false;
             }
 
-            evaluateRequestPreconditions(request, resource);
+            evaluateRequestPreconditions(request, servletResponse, resource, session);
 
             final HttpIdentifierTranslator graphSubjects =
                 new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
@@ -473,7 +473,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             session.save();
-            addCacheControlHeaders(servletResponse, resource);
+            addCacheControlHeaders(servletResponse, resource, session);
             versionService.nodeUpdated(resource.getNode());
 
             return response.build();
@@ -608,7 +608,7 @@ public class FedoraNodes extends AbstractResource {
 
             LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
-            addCacheControlHeaders(servletResponse, result);
+            addCacheControlHeaders(servletResponse, result, session);
 
             return response.build();
 
@@ -705,7 +705,8 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response deleteObject(@PathParam("path")
             final List<PathSegment> pathList,
-            @Context final Request request) throws RepositoryException {
+            @Context final Request request,
+            @Context final HttpServletResponse servletResponse) throws RepositoryException {
         throwIfPathIncludesJcr(pathList, "DELETE");
 
         try {
@@ -714,7 +715,7 @@ public class FedoraNodes extends AbstractResource {
 
             final FedoraResource resource =
                 nodeService.getObject(session, path);
-            evaluateRequestPreconditions(request, resource);
+            evaluateRequestPreconditions(request, servletResponse, resource, session);
 
             nodeService.deleteObject(session, path);
             session.save();
@@ -779,7 +780,8 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response moveObject(@PathParam("path") final List<PathSegment> pathList,
                                @HeaderParam("Destination") final String destinationUri,
-                               @Context final Request request)
+                               @Context final Request request,
+                               @Context final HttpServletResponse servletResponse)
         throws RepositoryException, URISyntaxException {
         throwIfPathIncludesJcr(pathList, "MOVE");
 
@@ -796,7 +798,7 @@ public class FedoraNodes extends AbstractResource {
                 nodeService.getObject(session, path);
 
 
-            evaluateRequestPreconditions(request, resource);
+            evaluateRequestPreconditions(request, servletResponse, resource, session);
 
             final IdentifierTranslator subjects =
                 new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);

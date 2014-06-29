@@ -37,6 +37,7 @@ import java.lang.reflect.Type;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
@@ -58,6 +59,9 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
 
     private static final Logger LOGGER = getLogger(RdfProvider.class);
 
+    @javax.ws.rs.core.Context
+    private UriInfo uriInfo;
+
     @Override
     public void writeTo(final Dataset rdf, final Class<?> type,
             final Type genericType, final Annotation[] annotations,
@@ -71,7 +75,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
         // add standard headers
         httpHeaders.put("Content-type", singletonList((Object) mediaType.toString()));
 
-        setCachingHeaders(httpHeaders, rdf);
+        setCachingHeaders(httpHeaders, rdf, uriInfo);
 
         new GraphStoreStreamingOutput(rdf, mediaType).write(entityStream);
     }

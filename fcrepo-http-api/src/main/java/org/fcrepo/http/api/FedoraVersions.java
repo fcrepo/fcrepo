@@ -244,7 +244,7 @@ public class FedoraVersions extends ContentExposingResource {
             throw new WebApplicationException(status(NOT_FOUND).build());
         }
         final FedoraResource resource = new FedoraResourceImpl(node);
-        checkCacheControlHeaders(request, servletResponse, resource);
+        checkCacheControlHeaders(request, servletResponse, resource, session);
         return resource.getTriples(nodeTranslator()).session(session).topic(
                 nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
@@ -274,7 +274,7 @@ public class FedoraVersions extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
-            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse, subjects);
+            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse, subjects, session);
 
         } finally {
             session.logout();

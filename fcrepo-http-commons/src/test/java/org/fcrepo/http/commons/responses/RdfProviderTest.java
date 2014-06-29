@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -32,8 +33,11 @@ import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
@@ -48,9 +52,10 @@ public class RdfProviderTest {
 
     final RdfProvider rdfProvider = new RdfProvider();
 
-    Dataset testData = new DatasetImpl(createDefaultModel());
+    private final Dataset testData = new DatasetImpl(createDefaultModel());
 
-    {
+    @Before
+    public void setup() {
         testData.asDatasetGraph().getDefaultGraph().add(
                 new Triple(createURI("test:subject"),
                         createURI("test:predicate"),
@@ -59,7 +64,10 @@ public class RdfProviderTest {
                 new Triple(createURI("test:subject"), primaryTypePredicate,
                         createLiteral("nt:file")));
 
+        final UriInfo info = Mockito.mock(UriInfo.class);
+        setField(rdfProvider, "uriInfo", info);
     }
+
 
     @Test
     public void testIsWriteable() {

@@ -272,6 +272,19 @@ public abstract class AbstractResourceIT {
         return dcResp;
     }
 
+    /**
+     * Creates a transaction, asserts that it's successful and
+     * returns the transaction location.
+     * @return
+     * @throws IOException
+     */
+    protected String createTransaction() throws IOException {
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+        final HttpResponse response = execute(createTx);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+        return response.getFirstHeader("Location").getValue();
+    }
+
     protected static void addMixin(final String pid, final String mixinUrl) throws IOException {
         final HttpPatch updateObjectGraphMethod =
                 new HttpPatch(serverAddress + pid);

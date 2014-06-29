@@ -18,7 +18,6 @@ package org.fcrepo.http.commons.responses;
 import static com.google.common.collect.ImmutableList.of;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.LAST_MODIFIED;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
@@ -27,9 +26,12 @@ import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.rdf.GraphProperties;
 import org.joda.time.DateTime;
@@ -128,9 +130,15 @@ public class RdfSerializationUtils {
      * @param rdf
      */
     public static void setCachingHeaders(final MultivaluedMap<String,
-            Object> httpHeaders, final Dataset rdf) {
-        httpHeaders.put(CACHE_CONTROL, singletonList((Object) "max-age=0"));
-        httpHeaders.put(CACHE_CONTROL, singletonList((Object) "must-revalidate"));
+            Object> httpHeaders, final Dataset rdf, final UriInfo uriInfo) {
+
+        final List<PathSegment> segments = uriInfo.getPathSegments();
+
+        if (!segments.isEmpty() && segments.get(0).getPath().startsWith("tx:")) {
+            return;
+        }
+
+        httpHeaders.put(CACHE_CONTROL, of((Object)"max-age=0", (Object)"must-revalidate"));
 
         LOGGER.trace("Attempting to discover the last-modified date of the node for the resource in question...");
         final Iterator<Quad> iterator =

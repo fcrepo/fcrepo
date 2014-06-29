@@ -532,19 +532,6 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         }
     }
 
-    /**
-     * Creates a transaction, asserts that it's successful and
-     * returns the transaction location.
-     * @return
-     * @throws IOException
-     */
-    private String createTransaction() throws IOException {
-        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
-        final HttpResponse response = execute(createTx);
-        Assert.assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
-        return response.getFirstHeader("Location").getValue();
-    }
-
     private HttpResponse commitTransaction(final String txId) throws IOException {
         final HttpPost commitTx = new HttpPost(serverAddress + txId + "/fcr:tx/fcr:commit");
         return execute(commitTx);
