@@ -142,7 +142,7 @@ public class FedoraContent extends ContentExposingResource {
             final ResponseBuilder builder = created(new URI(subjects.getSubject(
                     datastream.getContentNode().getPath()).getURI()));
 
-            addCacheControlHeaders(servletResponse, datastream);
+            addCacheControlHeaders(servletResponse, datastream, session);
 
             return builder.build();
 
@@ -180,8 +180,7 @@ public class FedoraContent extends ContentExposingResource {
 
                 final Datastream ds =
                         datastreamService.getDatastream(session, path);
-
-                evaluateRequestPreconditions(request, ds);
+                evaluateRequestPreconditions(request, servletResponse, ds, session);
             }
 
             LOGGER.debug("create Datastream {}", path);
@@ -209,7 +208,7 @@ public class FedoraContent extends ContentExposingResource {
                 builder = noContent();
             }
 
-            addCacheControlHeaders(servletResponse, datastream);
+            addCacheControlHeaders(servletResponse, datastream, session);
 
             return builder.build();
         } finally {
@@ -241,7 +240,7 @@ public class FedoraContent extends ContentExposingResource {
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
             return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
-                                                   subjects);
+                                                   subjects, session);
 
         } finally {
             session.logout();

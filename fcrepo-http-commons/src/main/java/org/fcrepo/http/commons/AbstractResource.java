@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons;
 
+import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -27,6 +28,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
@@ -44,6 +46,7 @@ import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.LockService;
@@ -184,13 +187,15 @@ public abstract class AbstractResource {
      * @param request
      * @param servletResponse
      * @param resource
+     * @param session
      * @throws javax.jcr.RepositoryException
      */
     protected static void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
-                                                   final FedoraResource resource) throws RepositoryException {
-        evaluateRequestPreconditions(request, resource, true);
-        addCacheControlHeaders(servletResponse, resource);
+                                                   final FedoraResource resource,
+                                                   final Session session) throws RepositoryException {
+        evaluateRequestPreconditions(request, servletResponse, resource, session, true);
+        addCacheControlHeaders(servletResponse, resource, session);
     }
 
     /**
@@ -200,7 +205,14 @@ public abstract class AbstractResource {
      * @throws RepositoryException
      */
     protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
-                                                 final FedoraResource resource) throws RepositoryException {
+                                                 final FedoraResource resource,
+                                                 final Session session) throws RepositoryException {
+
+        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
+        if (txId != null) {
+            // Do not add caching headers if in a transaction
+            return;
+        }
 
         final EntityTag etag = new EntityTag(resource.getEtagValue());
         final Date date = resource.getLastModifiedDate();
@@ -220,8 +232,10 @@ public abstract class AbstractResource {
      * @param resource
      */
     protected static void evaluateRequestPreconditions(final Request request,
-                                                       final FedoraResource resource) throws RepositoryException {
-        evaluateRequestPreconditions(request, resource, false);
+                                                       final HttpServletResponse servletResponse,
+                                                       final FedoraResource resource,
+                                                       final Session session) throws RepositoryException {
+        evaluateRequestPreconditions(request, servletResponse, resource, session, false);
     }
 
     protected static MediaType getSimpleContentType(final MediaType requestContentType) {
@@ -243,8 +257,19 @@ public abstract class AbstractResource {
         }
     }
 
-    private static void evaluateRequestPreconditions( final Request request, final FedoraResource resource,
-       final boolean cacheControl ) throws RepositoryException {
+    private static void evaluateRequestPreconditions(final Request request,
+                                                     final HttpServletResponse servletResponse,
+                                                     final FedoraResource resource,
+                                                     final Session session,
+                                                     final boolean cacheControl) throws RepositoryException {
+
+        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
+        if (txId != null) {
+            // Force cache revalidation if in a transaction
+            servletResponse.addHeader(CACHE_CONTROL, "must-revalidate");
+            servletResponse.addHeader(CACHE_CONTROL, "max-age=0");
+            return;
+        }
 
         final EntityTag etag = new EntityTag(resource.getEtagValue());
         final Date date = resource.getLastModifiedDate();

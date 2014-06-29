@@ -16,14 +16,17 @@
 package org.fcrepo.http.api;
 
 import com.sun.jersey.core.header.ContentDisposition;
+
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
 
 import javax.jcr.Binary;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
@@ -57,15 +60,20 @@ public abstract class ContentExposingResource extends AbstractResource {
      * A helper method that does most of the work associated with processing a request
      * for content (or a range of the content) into a Response
      */
-    protected Response getDatastreamContentResponse(final Datastream ds, final String rangeValue, final Request request,
+    protected Response getDatastreamContentResponse(final Datastream ds,
+                                                    final String rangeValue,
+                                                    final Request request,
                                                     final HttpServletResponse servletResponse,
-                                                    final HttpIdentifierTranslator subjects) throws
+                                                    final HttpIdentifierTranslator subjects,
+                                                    final Session session) throws
             RepositoryException, IOException {
 
         // we include an explicit etag, because the default behavior is to use the JCR node's etag, not
-        // the jcr:content node digest.
-        checkCacheControlHeaders(request, servletResponse, ds);
-
+        // the jcr:content node digest. The etag is only included if we are not within a transaction.
+        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
+        if (txId == null) {
+            checkCacheControlHeaders(request, servletResponse, ds, session);
+        }
         final CacheControl cc = new CacheControl();
         cc.setMaxAge(0);
         cc.setMustRevalidate(true);
@@ -150,11 +158,13 @@ public abstract class ContentExposingResource extends AbstractResource {
      * @param request
      * @param servletResponse
      * @param resource
+     * @param session
      * @throws javax.jcr.RepositoryException
      */
     protected static void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
-                                                   final Datastream resource) throws RepositoryException {
+                                                   final Datastream resource,
+                                                   final Session session) throws RepositoryException {
 
         final EntityTag etag = new EntityTag(resource.getContentDigest().toString());
         final Date date = resource.getLastModifiedDate();
@@ -177,7 +187,7 @@ public abstract class ContentExposingResource extends AbstractResource {
                                                   .lastModified(date).tag(etag).build());
         }
 
-        addCacheControlHeaders(servletResponse, resource);
+        addCacheControlHeaders(servletResponse, resource, session);
     }
 
     /**
@@ -187,7 +197,14 @@ public abstract class ContentExposingResource extends AbstractResource {
      * @throws RepositoryException
      */
     protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
-                                                 final Datastream resource) throws RepositoryException {
+                                                 final Datastream resource,
+                                                 final Session session) throws RepositoryException {
+
+        // Do not add caching headers if in a transaction
+        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
+        if (txId != null) {
+            return;
+        }
 
         final EntityTag etag = new EntityTag(resource.getContentDigest().toString());
         final Date date = resource.getLastModifiedDate();

@@ -24,14 +24,21 @@ import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstVa
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.lastModifiedPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.setCachingHeaders;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.UriInfo;
 
 import org.joda.time.DateTime;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
@@ -49,14 +56,23 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
  */
 public class RdfSerializationUtilsTest {
 
-    Dataset testData = new DatasetImpl(createDefaultModel());
+    private final UriInfo info = Mockito.mock(UriInfo.class);
 
-    {
+    private final Dataset testData = new DatasetImpl(createDefaultModel());
+
+    private PathSegment segment;
+
+    @Before
+    public void setup() {
         testData.asDatasetGraph().getDefaultGraph().add(
                 new Triple(createURI("test:subject"),
                         createURI("test:predicate"),
                         createLiteral("test:object")));
 
+        final List<PathSegment> segments = new ArrayList<>();
+        segment = Mockito.mock(PathSegment.class);
+        segments.add(segment);
+        Mockito.when(info.getPathSegments()).thenReturn(segments);
     }
 
     @Test
@@ -72,8 +88,31 @@ public class RdfSerializationUtilsTest {
     @Test
     public void testSetCachingHeaders() {
         final MultivaluedMap<?, ?> headers = new MultivaluedMapImpl();
-        setCachingHeaders((MultivaluedMap<String, Object>) headers, testData);
-        assertTrue(headers.get("Cache-Control").size() > 0);
+        Mockito.when(segment.getPath()).thenReturn("/fedora");
+        setCachingHeaders((MultivaluedMap<String, Object>) headers, testData, info);
+        final List<?> cacheControlHeaders = headers.get("Cache-Control");
+        assertEquals("Two cache control headers expected: ", 2, cacheControlHeaders.size());
+        assertEquals("max-age=0 expected", "max-age=0", cacheControlHeaders.get(0));
+        assertEquals("must-revalidate expected", "must-revalidate", cacheControlHeaders.get(1));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSetNoLastModifiedHeaderWithinTransaction() {
+        final MultivaluedMap<?, ?> headers = new MultivaluedMapImpl();
+
+        final Model m = createDefaultModel();
+        final Calendar c = Calendar.getInstance();
+        m.add(m.createResource("test:subject"),
+              m.createProperty(lastModifiedPredicate.getURI()),
+              m.createTypedLiteral(c));
+        final Dataset testDatasetWithLastModified = DatasetFactory.create(m);
+        final Context context = testDatasetWithLastModified.getContext();
+        context.set(Symbol.create("uri"), "test:subject");
+        Mockito.when(segment.getPath()).thenReturn("tx:abc");
+
+        setCachingHeaders((MultivaluedMap<String, Object>) headers, testDatasetWithLastModified, info);
+        assertNull("No Last-Modified header expected during transaction", headers.get("Last-Modified"));
     }
 
     @SuppressWarnings("unchecked")
@@ -90,9 +129,10 @@ public class RdfSerializationUtilsTest {
         final Dataset testDatasetWithLastModified = DatasetFactory.create(m);
         final Context context = testDatasetWithLastModified.getContext();
         context.set(Symbol.create("uri"), "test:subject");
+        Mockito.when(segment.getPath()).thenReturn("/fedora");
 
         setCachingHeaders((MultivaluedMap<String, Object>) headers,
-                testDatasetWithLastModified);
+                testDatasetWithLastModified, info);
         assertTrue(new DateTime(c).withMillisOfSecond(0).isEqual(
                 RFC2822DATEFORMAT.parseDateTime((String) headers.get(
                         "Last-Modified").get(0))));
