@@ -69,8 +69,6 @@
     <module>fcrepo-serialization</module>
     <module>fcrepo-transform</module>
     <module>fcrepo-auth-common</module>
-    <module>fcrepo-auth-roles-common</module>
-    <module>fcrepo-auth-roles-basic</module>
     <module>fcrepo-connector-file</module>
     <module>fcrepo-configs</module>
   </modules>
