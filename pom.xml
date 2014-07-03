@@ -27,7 +27,6 @@
     <!-- Dependency version properties -->
     <activemq.version>5.9.1</activemq.version>
     <enunciate.version>1.27</enunciate.version>
-    <fcrepo-build-tools.version>1.4-SNAPSHOT</fcrepo-build-tools.version>
     <httpcomponents.version>4.3.2</httpcomponents.version>
     <httpclient.version>4.3.3</httpclient.version>
     <infinispan.version>5.3.0.Final</infinispan.version>
@@ -549,7 +548,7 @@
             <dependency>
               <groupId>org.fcrepo</groupId>
               <artifactId>fcrepo-build-tools</artifactId>
-              <version>${fcrepo-build-tools.version}</version>
+              <version>${project.version}</version>
             </dependency>
           </dependencies>
           <executions>
@@ -574,7 +573,7 @@
             <dependency>
               <groupId>org.fcrepo</groupId>
               <artifactId>fcrepo-build-tools</artifactId>
-              <version>${fcrepo-build-tools.version}</version>
+              <version>${project.version}</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -1436,6 +1435,17 @@
         <role>developer</role>
       </roles>
       <timezone>-7</timezone>
+    </developer>
+    <developer>
+      <id>ksclarke</id>
+      <name>Kevin Clarke</name>
+      <email>ksclarke @ (domain of organization url)</email>
+      <organization>UC Los Angeles</organization>
+      <organizationUrl>http://library.ucla.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
     </developer>
   </developers>
   <issueManagement>
