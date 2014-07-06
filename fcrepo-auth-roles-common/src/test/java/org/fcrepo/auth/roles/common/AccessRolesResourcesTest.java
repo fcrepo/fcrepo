@@ -27,10 +27,10 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -48,7 +48,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class AccessRolesResourcesTest {
 
     @Mock
-    private IdentifierTranslator graphSubjects;
+    private HttpIdentifierTranslator graphSubjects;
 
     @Mock
     private FedoraResource fedoraResource;
@@ -99,12 +99,11 @@ public class AccessRolesResourcesTest {
 
     @Test
     public void testCreateModelForResource() throws RepositoryException {
-
         when(resourceNode.isNodeType(eq(FedoraJcrTypes.FEDORA_RESOURCE)))
                 .thenReturn(true);
 
-        when(fedoraResource.getPath()).thenReturn("/" + pathString);
-
+        when(resourceNode.getPath()).thenReturn("/" + pathString);
+        when(fedoraResource.getPath(graphSubjects)).thenReturn("/" + pathString);
         final Model model =
                 resources.createModelForResource(fedoraResource, uriInfo,
                         graphSubjects);

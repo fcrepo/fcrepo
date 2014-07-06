@@ -79,31 +79,31 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
             addRepositoryStatements(uriInfo, model, s);
         } else {
-            addNodeStatements(resource, uriInfo, model, s);
+            addNodeStatements(resource, uriInfo, model, s, graphSubjects);
         }
 
         if (resource.hasContent()) {
-            addContentStatements(resource, uriInfo, model, s);
+            addContentStatements(resource, uriInfo, model, s, graphSubjects);
         }
 
         return model;
     }
 
     private static void addContentStatements(final FedoraResource resource, final UriInfo uriInfo,
-        final Model model, final Resource s) throws RepositoryException {
+        final Model model, final Resource s, final IdentifierTranslator graphSubjects) throws RepositoryException {
         // fcr:fixity
         final Map<String, String> pathMap =
-            singletonMap("path", resource.getPath().substring(1));
+            singletonMap("path", resource.getPath(graphSubjects).substring(1));
         model.add(s, HAS_FIXITY_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(
                         pathMap).toASCIIString()));
     }
 
     private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
-        final Model model, final Resource s) throws RepositoryException {
+        final Model model, final Resource s, final IdentifierTranslator graphSubjects) throws RepositoryException {
 
         final Map<String, String> pathMap =
-                singletonMap("path", resource.getPath().substring(1));
+                singletonMap("path", resource.getPath(graphSubjects).substring(1));
 
         // hasLock
         if (resource.getNode().isLocked()) {

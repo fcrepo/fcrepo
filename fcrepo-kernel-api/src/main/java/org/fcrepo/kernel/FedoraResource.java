@@ -152,9 +152,16 @@ public interface FedoraResource {
      * @return
      * @throws RepositoryException
      */
-    Node getParent(final IdentifierTranslator graphSubjects)
-        throws RepositoryException;
+    Node getParent(final IdentifierTranslator graphSubjects) throws RepositoryException;
 
+    /**
+     * return the path of a subject
+     * @param graphSubjects
+     * @return
+     * @throws RepositoryException
+     */
+    String getPath(final IdentifierTranslator graphSubjects)
+        throws RepositoryException;
 
     /**
      * Serialize the JCR versions information as an RDF dataset

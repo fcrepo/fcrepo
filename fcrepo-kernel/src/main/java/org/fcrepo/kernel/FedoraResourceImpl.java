@@ -488,4 +488,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
         return parent;
     }
+
+     /*
+     * Get the path of the object
+     */
+    @Override
+    public String getPath(final IdentifierTranslator graphSubjects) throws RepositoryException {
+        return graphSubjects.getSubjectPath(graphSubjects.getSubject(node.getPath()));
+    }
 }

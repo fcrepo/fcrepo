@@ -237,6 +237,13 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
         assertTrue(testObj.getHierarchyLevels() >= 0);
     }
 
+    @Test
+    public void testSubjectPath() {
+        final String path = "/abc";
+        assertEquals(path, testObj.getSubjectPath(
+                ResourceFactory.createResource("http://localhost:8080/fcrepo/rest" + path)));
+    }
+
     @Path("/rest/{path}")
     protected class MockNodeController {
 

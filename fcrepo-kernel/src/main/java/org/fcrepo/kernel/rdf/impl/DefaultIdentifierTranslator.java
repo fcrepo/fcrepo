@@ -90,4 +90,9 @@ public class DefaultIdentifierTranslator implements IdentifierTranslator {
         return 0;
     }
 
+    @Override
+    public String getSubjectPath(final Resource subject) {
+        return subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
+    }
+
 }

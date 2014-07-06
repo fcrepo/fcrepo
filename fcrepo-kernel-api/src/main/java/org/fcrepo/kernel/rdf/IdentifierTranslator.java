@@ -63,4 +63,10 @@ public interface IdentifierTranslator {
      * @return
      */
     int getHierarchyLevels();
+
+    /**
+     * Reverse to get the transparent path
+     * @return
+     */
+    String getSubjectPath(final Resource subject);
 }
