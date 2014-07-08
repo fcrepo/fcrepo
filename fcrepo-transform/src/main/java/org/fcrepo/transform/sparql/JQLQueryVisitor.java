@@ -827,8 +827,20 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         throw new NotImplementedException(funcName);
                 }
 
-                appendConstraint(queryFactory.comparison(getPropertyValue(func
-                        .getArg1()), op, queryFactory.literal(getValue(value))));
+                final Expr exprArg1 = func.getArg1();
+                if (exprArg1.isFunction()) {
+                    final String symbol = exprArg1.getFunction().getFunctionSymbol().getSymbol();
+                    if (symbol.equalsIgnoreCase("str")) {
+                        appendConstraint(queryFactory.comparison(
+                                getPropertyValue(exprArg1.getFunction().getArgs().get(0)),
+                                op, queryFactory.literal(getValue(value))));
+                    } else {
+                        throw new NotImplementedException("ExprFunctionN " + symbol);
+                    }
+                } else {
+                    appendConstraint(queryFactory.comparison(getPropertyValue(func
+                            .getArg1()), op, queryFactory.literal(getValue(value))));
+                }
 
             }
 
@@ -905,7 +917,14 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     }
 
     private PropertyValue getPropertyValue(final Expr expr) {
-        return getPropertyValue(variables.get(expr.getVarName()));
+        final String varName = expr.getVarName();
+        final Column column = variables.get(varName);
+        // Not supported for subject variable value.
+        if (column.getSelectorName().equals("fedoraResource_" + varName)) {
+            throw new NotImplementedException (
+                    "Subject value is not supported for subject variable: " + "?" + varName);
+        }
+        return getPropertyValue(column);
     }
 
     private Value getValue(final Expr e) throws RepositoryException {
