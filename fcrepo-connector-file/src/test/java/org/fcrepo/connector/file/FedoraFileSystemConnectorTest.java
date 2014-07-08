@@ -160,17 +160,6 @@ public class FedoraFileSystemConnectorTest {
         mockContext.getNamespaceRegistry().register("premis", "http://www.loc.gov/premis/rdf/v1#");
     }
 
-    @Test(expected = RepositoryException.class)
-    public void testThatReadOnlyIsRequired() throws IOException, RepositoryException {
-        final FedoraFileSystemConnector c = new FedoraFileSystemConnector();
-        setField(c, "directoryPath", directoryPath.toString());
-        setField(c, "translator", mockTranslator);
-        setField(c, "context", mockContext);
-        setField(c, "extraPropertiesStore", mockExtraPropertiesStore);
-        setField(mockTranslator, "names", mockNameFactory);
-        c.initialize(mockRegistry, mockNodeTypeManager);
-    }
-
     @Test
     public void testGetDocumentByIdNull() throws Exception {
         final Document doc = connector.getDocumentById(null);

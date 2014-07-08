@@ -85,10 +85,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
                            final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
         super.initialize(registry, nodeTypeManager);
 
-        if (!isReadonly()) {
-            throw new RepositoryException("The " + getClass().getName() + " must have \"readonly\" set to true!");
-        }
-
         if (propertiesDirectoryPath != null) {
            propertiesDirectory = new File(propertiesDirectoryPath);
             if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
@@ -120,6 +116,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
 
         final Document doc = super.getDocumentById(id);
+        if ( doc == null ) {
+            LOGGER.debug("Non-existent node, document is null: {}", id);
+            return doc;
+        }
 
         final DocumentReader docReader = readDocument(doc);
         final DocumentWriter docWriter = writeDocument(doc);
@@ -145,11 +145,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         // Is Fedora Object?
         } else if (primaryType.equals(NT_FOLDER)) {
             decorateObjectNode(docReader, docWriter);
-        }
-
-        // Persist new properties (if allowed)
-        if (shouldCacheProperties()) {
-            saveProperties(docReader);
         }
 
         return docWriter.document();
