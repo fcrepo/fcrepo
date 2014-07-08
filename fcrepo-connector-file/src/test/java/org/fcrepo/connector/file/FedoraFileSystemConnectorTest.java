@@ -34,7 +34,6 @@ import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
-import javax.jcr.RepositoryException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -136,17 +135,6 @@ public class FedoraFileSystemConnectorTest {
         connector.initialize(mockRegistry, mockNodeTypeManager);
         mockContext.getNamespaceRegistry().register("fedora", "http://fedora.info/definitions/v4/repository#");
         mockContext.getNamespaceRegistry().register("premis", "http://www.loc.gov/premis/rdf/v1#");
-    }
-
-    @Test(expected = RepositoryException.class)
-    public void testThatReadOnlyIsRequired() throws IOException, RepositoryException {
-        final FedoraFileSystemConnector c = new FedoraFileSystemConnector();
-        setField(c, "directoryPath", directoryPath.toString());
-        setField(c, "translator", mockTranslator);
-        setField(c, "context", mockContext);
-        setField(c, "extraPropertiesStore", mockExtraPropertiesStore);
-        setField(mockTranslator, "names", mockNameFactory);
-        c.initialize(mockRegistry, mockNodeTypeManager);
     }
 
     @Test
