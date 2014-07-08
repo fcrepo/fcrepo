@@ -114,7 +114,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         throws RepositoryException, URISyntaxException {
         try {
             final String path = toPath(pathList);
-            LOGGER.trace("Getting lock profile for: {}", path);
+            LOGGER.trace("Creating lock for: {}", path);
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
             final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);
@@ -141,7 +141,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         throws RepositoryException, URISyntaxException {
         try {
             final String path = toPath(pathList);
-            LOGGER.trace("Getting lock profile for: {}", path);
+            LOGGER.trace("Deleting lock for: {}", path);
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
             final String jcrPath = getJCRPath(createResource(uriInfo.getBaseUri() + path), subjects);

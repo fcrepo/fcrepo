@@ -57,7 +57,7 @@ public class AccessRolesResources implements UriAwareResourceModelFactory {
         if (resource.getNode().isNodeType(
                 FedoraJcrTypes.FEDORA_RESOURCE)) {
             if (resource.getPath(graphSubjects) == null) {
-                System.out.println("resource.getPath() is Null ");
+                throw new RepositoryException("resource.getPath(graphSubjects) is Null: " + resource.getPath());
             }
             final Map<String, String> pathMap =
                     singletonMap("path", resource.getPath(graphSubjects).substring(1));
