@@ -35,7 +35,6 @@ import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
-import javax.jcr.RepositoryException;
 
 import java.io.File;
 import java.io.FileOutputStream;

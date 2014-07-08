@@ -15,10 +15,13 @@
  */
 package org.fcrepo.integration.connector.file;
 
+import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Test;
+
+import java.util.UUID;
 
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -121,5 +124,18 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         assertTrue("Exception expected - property should be missing", thrown);
 
         session.logout();
+    }
+
+    @Test
+    public void testCreateObject() throws RepositoryException {
+        final String id = UUID.randomUUID().toString();
+        Session session = repo.login();
+        objectService.createObject(session, "/" + federationName() + "/" + id);
+        session.save();
+        session.logout();
+
+        session = repo.login();
+        final FedoraObject obj = objectService.getObject(session, "/" + federationName() + "/" + id);
+        assertNotNull("Couldn't find object!", obj);
     }
 }
