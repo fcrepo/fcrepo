@@ -34,7 +34,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public interface FedoraObjectSerializer {
-
+    // Key for jcr/xml serialization
+    final String JCR_XML = "jcr/xml";
     /**
      * Get the key for the serializer (that will be
      * used at the REST API to identify the format)
@@ -50,16 +51,18 @@ public interface FedoraObjectSerializer {
     String getMediaType();
 
     /**
-     * Serialize a FedoraObject into some format, and write it
-     * to the given OutputStream
+     * Serialize a FedoraObject into some format with options for recurse
+     * and skipBinary, and write it to the given OutputStream
      *
      * @param obj
      * @param out
+     * @param skipBinary
+     * @param recurse
      * @throws RepositoryException
      * @throws IOException
      */
-    void serialize(final FedoraObject obj, final OutputStream out)
-        throws RepositoryException, IOException;
+    void serialize(final FedoraObject obj, final OutputStream out, final boolean skipBinary, final boolean recurse)
+                    throws RepositoryException, IOException;
 
     /**
      * Read the given InputStream and de-serialize the content

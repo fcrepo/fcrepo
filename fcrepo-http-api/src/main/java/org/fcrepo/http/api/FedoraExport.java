@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static java.lang.Boolean.parseBoolean;
 import static javax.ws.rs.core.Response.ok;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -67,12 +68,16 @@ public class FedoraExport extends AbstractResource {
      *
      * @param pathList
      * @param format
+     * @param skipBinary
+     * @param recurse
      * @return object in the given format
      */
     @GET
     public Response exportObject(
         @PathParam("path") final List<PathSegment> pathList,
-        @QueryParam("format") @DefaultValue("jcr/xml") final String format) {
+        @QueryParam("format") @DefaultValue("jcr/xml") final String format,
+        @QueryParam("skipBinary") @DefaultValue("true") final String skipBinary,
+        @QueryParam("recurse") @DefaultValue("false") final String recurse) {
 
         final String path = toPath(pathList);
 
@@ -91,8 +96,10 @@ public class FedoraExport extends AbstractResource {
                         try {
                             LOGGER.debug("Selecting from serializer map: {}", serializers);
                             LOGGER.debug("Retrieved serializer for format: {}", format);
-                            serializer.serialize(objectService.getObject(
-                                    session, path), out);
+                            serializer.serialize(objectService.getObject(session, path),
+                                                 out,
+                                                 parseBoolean(skipBinary),
+                                                 parseBoolean(recurse));
                             LOGGER.debug("Successfully serialized object: {}", path);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);

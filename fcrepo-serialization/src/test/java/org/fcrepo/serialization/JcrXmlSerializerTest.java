@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.serialization.jcrxml;
+package org.fcrepo.serialization;
+
+import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -29,30 +32,64 @@ import javax.jcr.Node;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.serialization.JcrXmlSerializer;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * <p>JcrXmlSerializerTest class.</p>
  *
- * @author cbeer
+ * @author lsitu
  */
 public class JcrXmlSerializerTest {
+    @Mock
+    Session mockSession;
+
+    @Mock
+    Node mockNode;
+
+    @Mock
+    FedoraObject mockObject;
+
+    private String testPath = "/path/to/node";
+    @Before
+    public void setUp() throws Exception {
+        initMocks(this);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn(testPath);
+    }
 
     @Test
     public void testSerialize() throws Exception {
-        final Session mockSession = mock(Session.class);
-        final Node mockNode = mock(Node.class);
-        final FedoraObject mockObject = mock(FedoraObject.class);
-        when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockNode.getPath()).thenReturn("/path/to/node");
 
         final OutputStream os = new ByteArrayOutputStream();
 
-        new JcrXmlSerializer().serialize(mockObject, os);
+        new JcrXmlSerializer().serialize(mockObject, os, false, false);
 
-        verify(mockSession).exportSystemView("/path/to/node", os, false, false);
+        verify(mockSession).exportSystemView(testPath, os, false, !false);
+    }
+
+    @Test
+    public void testSerializeWithSkipBinary() throws Exception {
+
+        final boolean skipBinary = true;
+        final OutputStream os = new ByteArrayOutputStream();
+
+        new JcrXmlSerializer().serialize(mockObject, os, skipBinary, false);
+
+        verify(mockSession).exportSystemView(testPath, os, skipBinary, !false);
+    }
+
+    @Test
+    public void testSerializeWithOptions() throws Exception {
+
+        final boolean skipBinary = true;
+        final boolean recurse = true;
+        final OutputStream os = new ByteArrayOutputStream();
+
+        new JcrXmlSerializer().serialize(mockObject, os, skipBinary, recurse);
+
+        verify(mockSession).exportSystemView(testPath, os, skipBinary, !recurse);
     }
 
     @Test
@@ -68,7 +105,7 @@ public class JcrXmlSerializerTest {
 
     @Test
     public void testGetKey() {
-        assertEquals("jcr/xml", new JcrXmlSerializer().getKey());
+        assertEquals(FedoraObjectSerializer.JCR_XML, new JcrXmlSerializer().getKey());
     }
 
     @Test
