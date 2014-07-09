@@ -37,6 +37,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.JcrXmlSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +73,8 @@ public class FedoraExport extends AbstractResource {
     @GET
     public Response exportObject(
         @PathParam("path") final List<PathSegment> pathList,
-        @QueryParam("format") @DefaultValue("jcr/xml") final String format) {
+        @QueryParam("format") @DefaultValue("jcr/xml") final String format,
+        @QueryParam("skipBinary") @DefaultValue("false") final String skipBinary) {
 
         final String path = toPath(pathList);
 
@@ -91,8 +93,14 @@ public class FedoraExport extends AbstractResource {
                         try {
                             LOGGER.debug("Selecting from serializer map: {}", serializers);
                             LOGGER.debug("Retrieved serializer for format: {}", format);
-                            serializer.serialize(objectService.getObject(
-                                    session, path), out);
+                            if (format.equalsIgnoreCase(FedoraObjectSerializer.JCR_XML)
+                                   && Boolean.parseBoolean(skipBinary)) {
+                                ((JcrXmlSerializer)serializer).serialize(objectService.getObject(
+                                        session, path), out, true);
+                            } else {
+                                serializer.serialize(objectService.getObject(
+                                        session, path), out);
+                            }
                             LOGGER.debug("Successfully serialized object: {}", path);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);

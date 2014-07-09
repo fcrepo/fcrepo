@@ -56,6 +56,24 @@ public class JcrXmlSerializerTest {
     }
 
     @Test
+    public void testSerializeWithOptions() throws Exception {
+        final Session mockSession = mock(Session.class);
+        final Node mockNode = mock(Node.class);
+        final FedoraObject mockObject = mock(FedoraObject.class);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn("/path/to/node");
+
+        final boolean skipBinary = true;
+        final boolean noRecursive = true;
+        final OutputStream os = new ByteArrayOutputStream();
+
+        new JcrXmlSerializer().serialize(mockObject, os, skipBinary);
+
+        verify(mockSession).exportSystemView("/path/to/node", os, skipBinary, false);
+    }
+
+    @Test
     public void testDeserialize() throws Exception {
         final Session mockSession = mock(Session.class);
         final InputStream mockIS = mock(InputStream.class);

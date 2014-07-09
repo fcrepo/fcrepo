@@ -34,6 +34,7 @@ import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.JcrXmlSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,6 +56,9 @@ public class FedoraExportTest {
 
     @Mock
     private FedoraObjectSerializer mockSerializer;
+
+    @Mock
+    private JcrXmlSerializer mockJcrXmlSerializer;
 
     @Mock
     private ObjectService mockObjects;
@@ -80,10 +84,25 @@ public class FedoraExportTest {
         when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(
                 mockObject);
         ((StreamingOutput) testObj.exportObject(
-                createPathList("test", "object"), "fake-format").getEntity())
+                createPathList("test", "object"), "fake-format", "false").getEntity())
                 .write(new ByteArrayOutputStream());
         verify(mockSerializer).serialize(eq(mockObject),
                 any(OutputStream.class));
+
+    }
+
+    @Test
+    public void testExportNoBinaryObject() throws Exception {
+        final String skipBinary = "true";
+        when(mockSerializers.getSerializer("jcr/xml")).thenReturn(
+                mockJcrXmlSerializer);
+        when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(
+                mockObject);
+        ((StreamingOutput) testObj.exportObject(
+                createPathList("test", "object"), "jcr/xml", skipBinary).getEntity())
+                .write(new ByteArrayOutputStream());
+        verify(mockJcrXmlSerializer).serialize(eq(mockObject),
+                any(OutputStream.class), eq(Boolean.valueOf(skipBinary)));
 
     }
 

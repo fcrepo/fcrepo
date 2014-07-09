@@ -37,7 +37,7 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
 
     @Override
     public String getKey() {
-        return "jcr/xml";
+        return JCR_XML;
     }
 
     @Override
@@ -48,8 +48,25 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
     @Override
     public void serialize(final FedoraObject obj, final OutputStream out)
         throws RepositoryException, IOException {
+        serialize(obj, out, false);
+    }
+
+    /**
+     * Serialize JCR/XML with options for binary and recursive output.
+     * @param obj
+     * @param out
+     * @param skipBinary
+     * @param noRecurse
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    public void serialize(
+            final FedoraObject obj,
+            final OutputStream out,
+            final boolean skipBinary)
+                    throws RepositoryException, IOException {
         final Node node = obj.getNode();
-        node.getSession().exportSystemView(node.getPath(), out, false, false);
+        node.getSession().exportSystemView(node.getPath(), out, skipBinary, false);
     }
 
     @Override

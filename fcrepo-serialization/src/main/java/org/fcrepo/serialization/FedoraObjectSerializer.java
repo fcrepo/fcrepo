@@ -34,7 +34,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public interface FedoraObjectSerializer {
-
+    // Key for jcr/xml serialization
+    final String JCR_XML = "jcr/xml";
     /**
      * Get the key for the serializer (that will be
      * used at the REST API to identify the format)

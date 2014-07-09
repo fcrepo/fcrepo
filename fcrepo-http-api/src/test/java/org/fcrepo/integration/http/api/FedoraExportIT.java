@@ -16,6 +16,8 @@
 package org.fcrepo.integration.http.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -26,6 +28,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+import org.modeshape.common.util.Base64;
 
 /**
  * <p>FedoraExportIT class.</p>
@@ -153,4 +156,34 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void shouldExportObjectWithNoBinary() throws IOException {
+        final String objName = getRandomUniquePid();
+        final String binaryValue = "stuff";
+        // set up the object
+        client.execute(postObjMethod(objName));
+        client.execute(postDSMethod(objName, "testDS", binaryValue));
+
+        // export it
+        logger.debug("Attempting to export: " + objName);
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + objName + "/fcr:export?skipBinary=true");
+        HttpResponse response = client.execute(getObjMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        logger.debug("Successfully exported: " + objName);
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Found exported object: " + content);
+        final char[] base64Value = Base64.encodeBytes(binaryValue.getBytes("UTF-8")).toCharArray();
+        assertFalse(content.indexOf(String.valueOf(base64Value)) > 0);
+
+        // Contains the binary value otherwise
+        final HttpGet getObjWithBinaryMethod = new HttpGet(serverAddress + objName + "/fcr:export");
+        response = client.execute(getObjWithBinaryMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertTrue(EntityUtils.toString(response.getEntity()).indexOf(String.valueOf(base64Value)) > 0);
+    }
 }
