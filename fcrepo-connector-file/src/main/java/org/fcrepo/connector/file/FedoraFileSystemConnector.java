@@ -89,6 +89,9 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
             if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
                 throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
                         + ", does not exist or is not a directory.");
+            } else if ( !propertiesDirectory.canRead() || !propertiesDirectory.canWrite() ) {
+                throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
+                        + ", should be readable and writable.");
             }
             if (extraPropertiesStore() != null) {
                 LOGGER.warn("Extra properties store was specified but won't be used!");

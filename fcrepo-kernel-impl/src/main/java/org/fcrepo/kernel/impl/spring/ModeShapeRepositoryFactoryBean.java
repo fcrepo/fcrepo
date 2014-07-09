@@ -70,11 +70,14 @@ public class ModeShapeRepositoryFactoryBean implements
 
         getPropertiesLoader().loadSystemProperties();
 
-        repository =
-                (JcrRepository) jcrRepositoryFactory
-                        .getRepository(singletonMap(URL,
-                                repositoryConfiguration.getURL()));
-
+        try {
+            repository = (JcrRepository) jcrRepositoryFactory.getRepository(
+                    singletonMap(URL, repositoryConfiguration.getURL()));
+        } catch ( RepositoryException ex ) {
+            LOGGER.error("Error loading repository with configuration: {}",
+                    ((ClassPathResource) repositoryConfiguration).getPath());
+            throw ex;
+        }
     }
 
     @Override
