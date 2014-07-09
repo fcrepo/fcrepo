@@ -108,6 +108,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
 
         final Document doc = super.getDocumentById(id);
+        if ( doc == null ) { return doc; }
 
         final DocumentReader docReader = readDocument(doc);
         final DocumentWriter docWriter = writeDocument(doc);

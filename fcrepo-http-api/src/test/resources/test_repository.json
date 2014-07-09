@@ -19,7 +19,7 @@
       "fileSystem" : {
         "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
         "directoryPath" : "target/test-classes/test-objects",
-        "readonly" : true,
+        "readonly" : false,
         "extraPropertiesStorage": "json",
         "cacheTtlSeconds" : 5,
         "projections" : [ "default:/files => /" ]
