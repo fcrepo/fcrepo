@@ -203,10 +203,10 @@ public class JcrPropertyStatementListener extends StatementListener {
             if (s.getPredicate().equals(RDF.type)
                     && s.getObject().isResource()) {
                 final Resource mixinResource = s.getObject().asResource();
+                final String errorPrefix = "Error removing node type";
                 try {
                     final String namespacePrefix = session.getNamespacePrefix(mixinResource.getNameSpace());
                     final String mixinName = namespacePrefix + ":" + mixinResource.getLocalName();
-
 
                     if (FedoraTypesUtils.getNodeTypeManager(subjectNode).hasNodeType(mixinName)) {
                         try {
@@ -218,13 +218,30 @@ public class JcrPropertyStatementListener extends StatementListener {
                                     RdfLexicon.COULD_NOT_STORE_PROPERTY,
                                     s.getPredicate().getURI(),
                                     e);
-                            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI());
+                            String errorMessage = e.getMessage();
+                            if (errorMessage != null || errorMessage.length() > 0) {
+                                errorMessage = errorPrefix + " '" + mixinName +
+                                        "': \n" + e.getClass().getName() + ": " + errorMessage;
+                            } else {
+                                errorMessage = errorPrefix + " '" + mixinName +
+                                        "': \n" + e.getClass().getName();
+                            }
+                            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
                         }
                         return;
                     }
 
                 } catch (final NamespaceException e) {
                     LOGGER.trace("Unable to resolve registered namespace for resource {}: {}", mixinResource, e);
+
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null || errorMessage.length() > 0) {
+                        errorMessage = errorPrefix + " " +
+                                e.getClass().getName() + ": "  + errorMessage;
+                    } else {
+                        errorMessage = errorPrefix + ": " + e.getClass().getName();
+                    }
+                    problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
                 }
 
             }

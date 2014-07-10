@@ -92,7 +92,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.sun.jersey.multipart.FormDataParam;
 
 import org.apache.commons.io.IOUtils;
@@ -379,7 +382,15 @@ public class FedoraNodes extends AbstractResource {
                 LOGGER.info(
                         "Found these problems updating the properties for {}: {}",
                         path, problems);
-                return status(FORBIDDEN).entity(problems.toString())
+                String error = "";
+                final StmtIterator sit = problems.listStatements();
+                while (sit.hasNext()) {
+                    final String message = getMessage(sit.next());
+                    if (message != null && error.indexOf(message) < 0) {
+                        error += message + " \n" ;
+                    }
+                }
+                return status(FORBIDDEN).entity(error.length() > 0 ? error : problems.toString())
                         .build();
             }
 
@@ -390,7 +401,7 @@ public class FedoraNodes extends AbstractResource {
 
             return noContent().build();
 
-        } catch ( RuntimeException ex ) {
+        } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
             if ( cause != null && cause instanceof PathNotFoundException ) {
                 // the sparql update referred to a repository resource that doesn't exist
@@ -719,7 +730,7 @@ public class FedoraNodes extends AbstractResource {
             nodeService.deleteObject(session, path);
             session.save();
             return noContent().build();
-        } catch (WebApplicationException ex) {
+        } catch (final WebApplicationException ex) {
             return (Response)ex.getResponse();
         } finally {
             session.logout();
@@ -858,4 +869,16 @@ public class FedoraNodes extends AbstractResource {
         }
     }
 
+    /*
+     * Return the statement's predicate and it's literal value if there's any
+     * @param stmt
+     * @return
+     */
+    private String getMessage(final Statement stmt) {
+        final Literal literal = stmt.getLiteral();
+        if (literal != null) {
+            return stmt.getPredicate().getURI().toString() + ": " + literal.getString();
+        }
+        return null;
+    }
 }
