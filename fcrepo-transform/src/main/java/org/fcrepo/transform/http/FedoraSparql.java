@@ -16,6 +16,7 @@
 package org.fcrepo.transform.http;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Strings;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.commons.io.IOUtils;
 import org.apache.velocity.Template;
@@ -34,10 +35,10 @@ import org.fcrepo.transform.sparql.JQLConverter;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -60,13 +61,15 @@ import java.util.Properties;
 import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
 import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
 import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
+import static org.apache.jena.riot.WebContent.contentTypeHTMLForm;
 import static org.apache.jena.riot.WebContent.contentTypeSSE;
 import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
 import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
@@ -82,6 +85,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Primitive SPARQL JAX-RS endpoint
  *
  * @author cabeer
+ * @author lsitu
  */
 @Component
 @Scope("prototype")
@@ -146,7 +150,6 @@ public class FedoraSparql extends AbstractResource {
      * @throws RepositoryException
      */
     @POST
-    @Consumes({contentTypeSPARQLQuery})
     @Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeSSE,
             contentTypeTextPlain, contentTypeResultsJSON,
             contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
@@ -162,17 +165,54 @@ public class FedoraSparql extends AbstractResource {
 
         final String sparqlQuery = IOUtils.toString(requestBodyStream);
 
-        LOGGER.trace("Running SPARQL query: {}", sparqlQuery);
+        return rexecSparql(sparqlQuery, bestPossibleResponse, graphSubjects);
+    }
 
-        final JQLConverter jqlConverter = new JQLConverter(session, graphSubjects, sparqlQuery);
+    /**
+     * Execute a SPARQL query against the JCR index
+     * @param query
+     * @param request
+     * @param uriInfo
+     * @return SPARQL query results
+     * @throws IOException
+     * @throws RepositoryException
+     */
+    @POST
+    @Consumes({contentTypeHTMLForm})
+    @Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeSSE,
+            contentTypeTextPlain, contentTypeResultsJSON,
+            contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
+            contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
+    public Response runSparqlQuery(@FormParam("query") final String query,
+                                   @Context final Request request,
+                                   @Context final UriInfo uriInfo)
+            throws IOException, RepositoryException {
+
+        LOGGER.trace("POST SPARQL query with {}: {}", contentTypeHTMLForm, query);
+        if (Strings.isNullOrEmpty(query)) {
+            return status(BAD_REQUEST)
+                    .entity("SPARQL must not be null. Please submit a query with parameter 'query'.")
+                    .build();
+        }
+        return rexecSparql(query,
+                           request.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS),
+                           new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
+    }
+
+    private Response rexecSparql(final String sparql,
+                                 final Variant bestPossibleResponse,
+                                 final IdentifierTranslator graphSubjects)
+            throws RepositoryException {
+        LOGGER.trace("Running SPARQL query: {}", sparql);
+
+        final JQLConverter jqlConverter = new JQLConverter(session, graphSubjects, sparql);
 
         LOGGER.trace("Converted to JQL query: {}", jqlConverter.getStatement());
 
         final ResultSet resultSet = jqlConverter.execute();
 
         final ResultSetStreamingOutput streamingOutput =
-            new ResultSetStreamingOutput(resultSet, bestPossibleResponse
-                    .getMediaType());
+            new ResultSetStreamingOutput(resultSet, bestPossibleResponse.getMediaType());
 
         addCallback(streamingOutput, new LogoutCallback(session));
 
