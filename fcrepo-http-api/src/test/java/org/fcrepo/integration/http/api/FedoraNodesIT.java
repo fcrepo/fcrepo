@@ -32,6 +32,7 @@ import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -71,14 +72,17 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -1642,6 +1646,47 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpGet get = new HttpGet(serverAddress + linkedFrom);
         assertEquals("Linked to should still exist!", 200, getStatus(get));
+    }
+
+    /**
+     * When I make changes to a resource in a federated filesystem, the parent
+     * folder's Last-Modified header should be updated.
+    **/
+    @Test
+    public void testLastModifiedUpdatedAfterUpdates() throws Exception {
+        final SimpleDateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+        df.setTimeZone(getTimeZone("GMT"));
+
+        // create directory containing a file in filesystem
+        final File fed = new File("target/test-classes/test-objects");
+        final String id = getRandomUniquePid();
+        final File dir = new File( fed, id );
+        final File child = new File( dir, "child" );
+        final long timestamp1 = System.currentTimeMillis();
+        dir.mkdir();
+        child.mkdir();
+        Thread.sleep(2000);
+
+        // check Last-Modified header is current
+        final HttpHead head1 = new HttpHead(serverAddress + "files/" + id);
+        final HttpResponse resp1 = client.execute(head1);
+        assertEquals( 200, resp1.getStatusLine().getStatusCode() );
+        final long lastmod1 = df.parse(resp1.getFirstHeader("Last-Modified").getValue()).getTime();
+        assertTrue( (timestamp1 - lastmod1) < 1000 ); // because rounding
+
+        // remove the file and wait for the TTL to expire
+        final long timestamp2 = System.currentTimeMillis();
+        child.delete();
+        Thread.sleep(2000);
+
+        // check Last-Modified header is updated
+        final HttpHead head2 = new HttpHead(serverAddress + "files/" + id);
+        final HttpResponse resp2 = client.execute(head2);
+        assertEquals( 200, resp2.getStatusLine().getStatusCode() );
+        final long lastmod2 = df.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
+        assertTrue( (timestamp2 - lastmod2) < 1000 ); // because rounding
+
+        assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
     }
 
 }
