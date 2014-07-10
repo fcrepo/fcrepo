@@ -28,6 +28,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.AnonId;
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -203,10 +204,10 @@ public class JcrPropertyStatementListener extends StatementListener {
             if (s.getPredicate().equals(RDF.type)
                     && s.getObject().isResource()) {
                 final Resource mixinResource = s.getObject().asResource();
+                final String errorPrefix = "Error removing node type";
                 try {
                     final String namespacePrefix = session.getNamespacePrefix(mixinResource.getNameSpace());
                     final String mixinName = namespacePrefix + ":" + mixinResource.getLocalName();
-
 
                     if (FedoraTypesUtils.getNodeTypeManager(subjectNode).hasNodeType(mixinName)) {
                         try {
@@ -218,13 +219,30 @@ public class JcrPropertyStatementListener extends StatementListener {
                                     RdfLexicon.COULD_NOT_STORE_PROPERTY,
                                     s.getPredicate().getURI(),
                                     e);
-                            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI());
+                            String errorMessage = e.getMessage();
+                            if (StringUtils.isNotBlank(errorMessage)) {
+                                errorMessage = errorPrefix + " '" + mixinName +
+                                        "': \n" + e.getClass().getName() + ": " + errorMessage;
+                            } else {
+                                errorMessage = errorPrefix + " '" + mixinName +
+                                        "': \n" + e.getClass().getName();
+                            }
+                            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
                         }
                         return;
                     }
 
                 } catch (final NamespaceException e) {
                     LOGGER.trace("Unable to resolve registered namespace for resource {}: {}", mixinResource, e);
+
+                    String errorMessage = e.getMessage();
+                    if (StringUtils.isNotBlank(errorMessage)) {
+                        errorMessage = errorPrefix + " " +
+                                e.getClass().getName() + ": "  + errorMessage;
+                    } else {
+                        errorMessage = errorPrefix + ": " + e.getClass().getName();
+                    }
+                    problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
                 }
 
             }
