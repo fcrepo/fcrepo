@@ -21,6 +21,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
+import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
@@ -39,6 +40,7 @@ import org.modeshape.connector.filesystem.ExternalJsonSidecarExtraPropertyStore;
 import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
+import org.modeshape.jcr.federation.spi.DocumentChanges;
 import org.modeshape.jcr.federation.spi.DocumentReader;
 import org.modeshape.jcr.federation.spi.DocumentWriter;
 import org.modeshape.jcr.value.BinaryValue;
@@ -115,6 +117,9 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
         final DocumentReader docReader = readDocument(doc);
         final DocumentWriter docWriter = writeDocument(doc);
+        final long lastmod = fileFor(id).lastModified();
+        LOGGER.debug("Adding lastModified={}", lastmod);
+        docWriter.addProperty(JCR_LASTMODIFIED, lastmod);
 
         final String primaryType = docReader.getPrimaryTypeName();
 
@@ -259,4 +264,38 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         extraProperties.save();
     }
 
+    /* Override write operations to also update the parent file's timestamp, so
+       its Last-Modified header correctly reflects changes to children. */
+    @Override
+    public boolean removeDocument( final String id ) {
+        if ( super.removeDocument(id) ) {
+          touchParent(id);
+          return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void storeDocument( final Document document ) {
+        super.storeDocument( document );
+        touchParent(readDocument(document).getDocumentId());
+    }
+
+    @Override
+    public void updateDocument( final DocumentChanges changes ) {
+        super.updateDocument( changes );
+        touchParent( changes.getDocumentId() );
+    }
+
+    /**
+     * Find the parent file, and set its timestamp to the current time.  This
+     * timestamp will be used for populating the Last-Modified header.
+    **/
+    private void touchParent( final String id ) {
+        if ( !isRoot(id) ) {
+            final File file = fileFor(id);
+            final File parent = file.getParentFile();
+            parent.setLastModified( System.currentTimeMillis() );
+        }
+    }
 }
