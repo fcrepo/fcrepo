@@ -186,4 +186,34 @@ public class FedoraExportIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertTrue(EntityUtils.toString(response.getEntity()).indexOf(String.valueOf(base64Value)) > 0);
     }
+
+    @Test
+    public void shouldExportObjectNoRecurse() throws IOException {
+        final String objName = getRandomUniquePid();
+        final String childName = "testDS";
+        final String binaryValue = "stuff";
+        // set up the object
+        client.execute(postObjMethod(objName));
+        client.execute(postDSMethod(objName, childName, binaryValue));
+        // export it
+        logger.debug("Attempting to export: " + objName);
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + objName + "/fcr:export?noRecurse=true");
+        HttpResponse response = client.execute(getObjMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        logger.debug("Successfully exported: " + objName);
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Found exported object: " + content);
+        assertFalse(content.indexOf("sv:name=\"" + childName + "\"") > 0);
+
+        // Contains the binary value otherwise
+        final HttpGet getObjWithBinaryMethod = new HttpGet(serverAddress + objName + "/fcr:export");
+        response = client.execute(getObjWithBinaryMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertTrue(EntityUtils.toString(response.getEntity()).indexOf("sv:name=\"" + childName + "\"") > 0);
+    }
 }

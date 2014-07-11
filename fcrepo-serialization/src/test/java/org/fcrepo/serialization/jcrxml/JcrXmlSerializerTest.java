@@ -50,9 +50,26 @@ public class JcrXmlSerializerTest {
 
         final OutputStream os = new ByteArrayOutputStream();
 
-        new JcrXmlSerializer().serialize(mockObject, os);
+        new JcrXmlSerializer().serialize(mockObject, os, false);
 
         verify(mockSession).exportSystemView("/path/to/node", os, false, false);
+    }
+
+    @Test
+    public void testSerializeWithSkipBinary() throws Exception {
+        final Session mockSession = mock(Session.class);
+        final Node mockNode = mock(Node.class);
+        final FedoraObject mockObject = mock(FedoraObject.class);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn("/path/to/node");
+
+        final boolean skipBinary = true;
+        final OutputStream os = new ByteArrayOutputStream();
+
+        new JcrXmlSerializer().serialize(mockObject, os, false, skipBinary);
+
+        verify(mockSession).exportSystemView("/path/to/node", os, skipBinary, false);
     }
 
     @Test
@@ -65,12 +82,12 @@ public class JcrXmlSerializerTest {
         when(mockNode.getPath()).thenReturn("/path/to/node");
 
         final boolean skipBinary = true;
-        final boolean noRecursive = true;
+        final boolean noRecurse = true;
         final OutputStream os = new ByteArrayOutputStream();
 
-        new JcrXmlSerializer().serialize(mockObject, os, skipBinary);
+        new JcrXmlSerializer().serialize(mockObject, os, noRecurse, skipBinary);
 
-        verify(mockSession).exportSystemView("/path/to/node", os, skipBinary, false);
+        verify(mockSession).exportSystemView("/path/to/node", os, skipBinary, noRecurse);
     }
 
     @Test
