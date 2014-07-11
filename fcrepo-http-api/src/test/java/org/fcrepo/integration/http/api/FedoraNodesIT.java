@@ -1636,4 +1636,45 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals("Linked to should still exist!", 200, getStatus(get));
     }
 
+    /**
+     * I should be able to move a node within a federated filesystem with
+     * properties preserved.
+    **/
+    @Test
+    public void testFederatedMoveWithProperties() throws Exception {
+        // create object on federation
+        final String pid = getRandomUniquePid();
+        final String source = serverAddress + "files/" + pid + "/src";
+        createObject("files/" + pid + "/src");
+
+        // add properties
+        final HttpPatch patch = new HttpPatch(source);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        final String sparql = "insert { <> <http://purl.org/dc/elements/1.1/identifier> \"identifier.123\" . "
+            + "<> <http://purl.org/dc/elements/1.1/title> \"title.123\" } where {}";
+        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
+        final HttpResponse response = client.execute(patch);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        // move object
+        final String destination = serverAddress + "files/" + pid + "/dst";
+        final HttpMove request = new HttpMove(source);
+        request.addHeader("Destination", destination);
+        final HttpResponse moveRequest = client.execute(request);
+        assertEquals(CREATED.getStatusCode(), moveRequest.getStatusLine().getStatusCode());
+
+        // check properties
+        final HttpGet get =  new HttpGet(destination);
+        get.addHeader("Accept", "application/n-triples");
+        final GraphStore graphStore = getGraphStore(get);
+        assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(destination),
+                                                 NodeFactory.createURI("http://purl.org/dc/elements/1.1/identifier"),
+                                                 NodeFactory.createLiteral("identifier.123")));
+        assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(destination),
+                                                 NodeFactory.createURI("http://purl.org/dc/elements/1.1/title"),
+                                                 NodeFactory.createLiteral("title.123")));
+    }
+
 }

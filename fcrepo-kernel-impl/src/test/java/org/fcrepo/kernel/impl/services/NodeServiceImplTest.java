@@ -130,8 +130,17 @@ public class NodeServiceImplTest {
     @Test
     public void testMoveObject() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        final Node mockObjectsNode = mock(Node.class);
+        when(mockSession.getRootNode()).thenReturn(mockRoot);
+        when(mockRoot.getNode("objects")).thenReturn(mockObjectsNode);
+        when(mockSession.getNode("foo")).thenReturn(mockObjNode);
+        when(mockObjNode.getReferences()).thenReturn(mockEmptyIterator);
+        mockStatic(ServiceHelpers.class);
+
         testObj.moveObject(mockSession, "foo", "bar");
-        verify(mockWorkspace).move("foo", "bar");
+        verify(mockWorkspace).copy("foo", "bar");
+        verify(mockSession).getNode("foo");
+        verify(mockObjNode).remove();
     }
 
     @Test

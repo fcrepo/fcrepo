@@ -190,7 +190,8 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     @Override
     public void moveObject(final Session session, final String source, final String destination)
         throws RepositoryException {
-        session.getWorkspace().move(source, destination);
+        session.getWorkspace().copy(source, destination);
+        deleteObject(session, source);
     }
 
     /**
