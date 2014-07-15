@@ -47,8 +47,8 @@ public abstract class BaseFedoraObjectSerializer implements
     protected DatastreamService dsService;
 
     @Override
-    public abstract void serialize(final FedoraObject obj,
-            final OutputStream out, final boolean noRecurse) throws RepositoryException, IOException;
+    public abstract void serialize(final FedoraObject obj, final OutputStream out,
+            final boolean skipBinary, final boolean recurse)throws RepositoryException, IOException;
 
     @Override
     public abstract void deserialize(final Session session, final String path,

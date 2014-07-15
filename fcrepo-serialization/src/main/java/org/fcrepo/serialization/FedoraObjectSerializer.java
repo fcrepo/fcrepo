@@ -51,32 +51,18 @@ public interface FedoraObjectSerializer {
     String getMediaType();
 
     /**
-     * Serialize a FedoraObject into some format with option noRecurse,
-     *  and write it to the given OutputStream
-     *
-     * @param obj
-     * @param out
-     * @param noRecurse
-     * @throws RepositoryException
-     * @throws IOException
-     */
-    void serialize(final FedoraObject obj, final OutputStream out, final boolean noRecurse)
-        throws RepositoryException, IOException;
-
-
-    /**
-     * Serialize a FedoraObject into some format with options for noRecurse
+     * Serialize a FedoraObject into some format with options for recurse
      * and skipBinary, and write it to the given OutputStream
      *
      * @param obj
      * @param out
-     * @param noRecurse
+     * @param recurse
      *  @param skipBinary
      * @throws RepositoryException
      * @throws IOException
      */
     void serialize(final FedoraObject obj, final OutputStream out,
-            boolean noRecurse, boolean skipBinary)
+            boolean skipBinary, boolean recurse)
                     throws RepositoryException, IOException;
 
     /**
