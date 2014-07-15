@@ -123,7 +123,12 @@ public class JcrPropertyStatementListener extends StatementListener {
                     skolemizedBnodeMap.put(subject.getId(), subjectNode);
                 }
             } else {
-                subjectNode = session.getNode(subjects.getPathFromSubject(subject));
+                final String path = subjects.getPathFromSubject(subject);
+                if ( path != null && path.indexOf("%20") != -1 ) {
+                    subjectNode = session.getNode(path.replaceAll("%20"," "));
+                } else {
+                    subjectNode = session.getNode(path);
+                }
             }
 
             // special logic for handling rdf:type updates.

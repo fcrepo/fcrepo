@@ -1689,4 +1689,19 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
     }
 
+    @Test
+    public void testUpdateObjectWithSpaces() throws Exception {
+        final String id = getRandomUniquePid() + " 2";
+        final HttpResponse createResponse = createObject(id);
+        final String subjectURI = createResponse.getFirstHeader("Location").getValue();
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
+        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+            "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test\" } WHERE {}".getBytes()));
+        updateObjectGraphMethod.setEntity(e);
+        final HttpResponse response = client.execute(updateObjectGraphMethod);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
+    }
+
 }
