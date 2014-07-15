@@ -16,6 +16,7 @@
 package org.fcrepo.transform.http;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Strings;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.commons.io.IOUtils;
 import org.apache.velocity.Template;
@@ -37,12 +38,12 @@ import org.springframework.stereotype.Component;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -183,20 +184,12 @@ public class FedoraSparql extends AbstractResource {
             contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
     public Response runSparqlQuery(
-            final MultivaluedMap<String, String> formParams,
-            @Context final Request request)
+            @FormParam("query") final String query,
+            @Context final Request request, @Context final UriInfo uriInfo)
                     throws IOException, RepositoryException {
-        String query = null;
-        if (formParams.size() == 1) {
-            // The only parameter is the SPARQL query. This will be flexible
-            // to accept SPARQL in any query names.
-            query = formParams.getFirst(formParams.keySet().iterator().next());
-        } else {
-            // the default parameter "query" for submitting the SPARQL
-            query = formParams.getFirst("query");
-        }
+
         LOGGER.trace("POST SPARQL query with {}: {}", contentTypeHTMLForm, query);
-        if (query == null || query.length() == 0) {
+        if (Strings.isNullOrEmpty(query)) {
             return status(BAD_REQUEST)
                     .entity("SPARQL must not be null. Please submit a query with parameter 'query'.")
                     .build();

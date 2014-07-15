@@ -220,13 +220,10 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         return content;
     }
 
-    private String getFormRequestResponseContent(final String sparql) throws IOException {
-        return getFormRequestResponseContent(sparql, null);
-    }
 
-    private String getFormRequestResponseContent(final String sparql, final String paramName)
+    private String getFormRequestResponseContent(final String sparql)
             throws IOException {
-        final HttpPost request = getFormRequest (sparql, paramName);
+        final HttpPost request = getFormRequest (sparql, "query");
 
         final HttpResponse response = client.execute(request);
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -342,21 +339,5 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         badRequest = getFormRequest(sparql, null);
         response = client.execute(badRequest);
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
-    }
-
-    @Test
-    public void testFormRequestWithDummyParamName() throws IOException {
-        final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> " +
-                "SELECT ?subject WHERE { ?subject dc:title \"xyz\"}";
-
-        final String content = getFormRequestResponseContent(sparql, "dummyName");
-        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
-
-
-        assertTrue(resultSet.hasNext());
-
-        assertEquals("subject", resultSet.getResultVars().get(0));
-
-        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
     }
 }
