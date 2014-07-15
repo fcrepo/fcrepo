@@ -18,6 +18,8 @@ package org.fcrepo.transform.http;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -31,6 +33,7 @@ import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.impl.utils.LogoutCallback;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLConverter;
+import org.fcrepo.transform.sparql.SparqlServiceDescription;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -73,6 +76,7 @@ import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_SPARQL_RDF_VARIANTS;
+import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.api.responses.BaseHtmlProvider.templateFilenameExtension;
 import static org.fcrepo.http.api.responses.BaseHtmlProvider.templatesLocation;
 import static org.fcrepo.http.api.responses.BaseHtmlProvider.velocityPropertiesLocation;
@@ -135,6 +139,45 @@ public class FedoraSparql extends AbstractResource {
         };
 
         return ok(stream).build();
+    }
+
+    /**
+     * A stub method to return sparql service description for fcr:sparql GET
+     *
+     * @return
+     * @throws IOException
+     */
+    @GET
+    @Timed
+    public Response sparqlServiceDescription(@Context final Request request,
+            @Context final UriInfo uriInfo)
+                    throws IOException {
+
+        final SparqlServiceDescription sd = new SparqlServiceDescription(session, uriInfo);
+        final Variant bestPossibleResponse =
+                request.selectVariant(POSSIBLE_RDF_VARIANTS);
+
+        LOGGER.debug("Getting sparql service description with media type {} ...",
+                bestPossibleResponse);
+
+        Lang tmpLang;
+        if (bestPossibleResponse == null || (tmpLang = RDFLanguages.contentTypeToLang(
+                bestPossibleResponse.getMediaType().toString())) == null) {
+            // set default format to rdf/xml
+            tmpLang = RDFLanguages.RDFXML;
+        }
+        final Lang rdfLang = tmpLang;
+        final StreamingOutput stream = new StreamingOutput() {
+            @Override
+            public void write(final OutputStream output) throws IOException {
+
+                LOGGER.debug("Writting sparql service description " +
+                            "with jena RdfLanguages name {} ...", rdfLang.getName());
+                final Writer outWriter = new OutputStreamWriter(output);
+                sd.createServiceDescriptoion().asModel().write(outWriter, rdfLang.getName());
+            }
+        };
+        return ok(stream).header("Content-Type", rdfLang.getContentType().getContentType()).build();
     }
 
     /**
