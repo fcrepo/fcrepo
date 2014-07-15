@@ -21,10 +21,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
 import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
+import org.modeshape.jcr.federation.spi.DocumentChanges;
+import org.modeshape.jcr.federation.spi.DocumentReader;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.NameFactory;
 import org.modeshape.jcr.value.Property;
@@ -49,8 +52,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
@@ -220,6 +227,15 @@ public class FedoraFileSystemConnectorTest {
 
         assertNotNull(sha1);
         assert(sha1.contains(chksum));
+    }
+
+    @Test
+    public void testRemoveDocument() throws IOException, RepositoryException {
+        final FedoraFileSystemConnector c = spy(new FedoraFileSystemConnector());
+        final String id = "/foo";
+        doReturn(true).when((FileSystemConnector)c).removeDocument(anyString());
+        c.removeDocument(id);
+        verify(c).touchParent(id);
     }
 
 }

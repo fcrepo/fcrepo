@@ -269,8 +269,8 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     @Override
     public boolean removeDocument( final String id ) {
         if ( super.removeDocument(id) ) {
-          touchParent(id);
-          return true;
+            touchParent(id);
+            return true;
         }
         return false;
     }
@@ -291,7 +291,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
      * Find the parent file, and set its timestamp to the current time.  This
      * timestamp will be used for populating the Last-Modified header.
     **/
-    private void touchParent( final String id ) {
+    protected void touchParent( final String id ) {
         if ( !isRoot(id) ) {
             final File file = fileFor(id);
             final File parent = file.getParentFile();
