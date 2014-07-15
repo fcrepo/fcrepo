@@ -99,6 +99,7 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.sun.jersey.multipart.FormDataParam;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
@@ -382,15 +383,15 @@ public class FedoraNodes extends AbstractResource {
                 LOGGER.info(
                         "Found these problems updating the properties for {}: {}",
                         path, problems);
-                String error = "";
+                final StringBuilder error = new StringBuilder();
                 final StmtIterator sit = problems.listStatements();
                 while (sit.hasNext()) {
                     final String message = getMessage(sit.next());
-                    if (message != null && error.indexOf(message) < 0) {
-                        error += message + " \n" ;
+                    if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
+                        error.append(message + " \n");
                     }
                 }
-                return status(FORBIDDEN).entity(error.length() > 0 ? error : problems.toString())
+                return status(FORBIDDEN).entity(error.length() > 0 ? error.toString() : problems.toString())
                         .build();
             }
 
@@ -877,7 +878,7 @@ public class FedoraNodes extends AbstractResource {
     private String getMessage(final Statement stmt) {
         final Literal literal = stmt.getLiteral();
         if (literal != null) {
-            return stmt.getPredicate().getURI().toString() + ": " + literal.getString();
+            return stmt.getPredicate().getURI() + ": " + literal.getString();
         }
         return null;
     }

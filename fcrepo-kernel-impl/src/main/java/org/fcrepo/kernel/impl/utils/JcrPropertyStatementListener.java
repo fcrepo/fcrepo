@@ -28,6 +28,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.AnonId;
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -219,7 +220,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                                     s.getPredicate().getURI(),
                                     e);
                             String errorMessage = e.getMessage();
-                            if (errorMessage != null || errorMessage.length() > 0) {
+                            if (StringUtils.isNotBlank(errorMessage)) {
                                 errorMessage = errorPrefix + " '" + mixinName +
                                         "': \n" + e.getClass().getName() + ": " + errorMessage;
                             } else {
@@ -235,7 +236,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                     LOGGER.trace("Unable to resolve registered namespace for resource {}: {}", mixinResource, e);
 
                     String errorMessage = e.getMessage();
-                    if (errorMessage != null || errorMessage.length() > 0) {
+                    if (StringUtils.isNotBlank(errorMessage)) {
                         errorMessage = errorPrefix + " " +
                                 e.getClass().getName() + ": "  + errorMessage;
                     } else {
