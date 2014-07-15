@@ -19,6 +19,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -32,6 +34,7 @@ import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.impl.utils.LogoutCallback;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLConverter;
+import org.fcrepo.transform.sparql.SparqlServiceDescription;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -59,7 +62,9 @@ import java.net.URL;
 import java.util.Properties;
 
 import static com.google.common.util.concurrent.Futures.addCallback;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -75,10 +80,18 @@ import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
 import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_SPARQL_RDF_VARIANTS;
+import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.api.responses.BaseHtmlProvider.templateFilenameExtension;
 import static org.fcrepo.http.api.responses.BaseHtmlProvider.templatesLocation;
 import static org.fcrepo.http.api.responses.BaseHtmlProvider.velocityPropertiesLocation;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -97,6 +110,42 @@ public class FedoraSparql extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraSparql.class);
 
+    /**
+     * A stub method to return sparql service description for fcr:sparql GET
+     *
+     * @return
+     * @throws IOException
+     */
+    @GET
+    @Timed
+    @Produces({RDF_XML, TURTLE, N3, N3_ALT2, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD})
+    public Response sparqlServiceDescription(@Context final Request request,
+                                             @Context final UriInfo uriInfo)
+            throws IOException {
+
+        final SparqlServiceDescription sd = new SparqlServiceDescription(session, uriInfo);
+        final Variant bestPossibleResponse = request.selectVariant(POSSIBLE_RDF_VARIANTS);
+
+        LOGGER.debug("Getting sparql service description with media type {} ...", bestPossibleResponse);
+
+        Lang tmpLang;
+        if (bestPossibleResponse == null ||
+                (tmpLang = RDFLanguages.contentTypeToLang(bestPossibleResponse.getMediaType().toString())) == null) {
+            // set default format to rdf/xml
+            tmpLang = RDFLanguages.RDFXML;
+        }
+        final Lang rdfLang = tmpLang;
+        final StreamingOutput stream = new StreamingOutput() {
+            @Override
+            public void write(final OutputStream output) throws IOException {
+
+                LOGGER.debug("Writting sparql service description with jena RdfLanguages name {}.", rdfLang.getName());
+                final Writer outWriter = new OutputStreamWriter(output);
+                sd.createServiceDescription().asModel().write(outWriter, rdfLang.getName());
+            }
+        };
+        return ok(stream).header("Content-Type", rdfLang.getContentType().getContentType()).build();
+    }
 
     /**
      * A stub method so we can return a text/html representation using

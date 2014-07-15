@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.riot.RDFLanguages;
 import org.fcrepo.integration.AbstractResourceIT;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.junit.After;
@@ -220,7 +221,6 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         return content;
     }
 
-
     private String getFormRequestResponseContent(final String sparql)
             throws IOException {
         final HttpPost request = getFormRequest (sparql, "query");
@@ -339,5 +339,30 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         badRequest = getFormRequest(sparql, null);
         response = client.execute(badRequest);
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void itShouldHaveDefaultRdfXmlServiceDescription() throws IOException {
+        final HttpGet request = new HttpGet(serverAddress + "/fcr:sparql");
+        request.addHeader("Accept", "*/*");
+        final HttpResponse response = client.execute(request);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(RDFLanguages.RDFXML.getContentType().getContentType(),
+                response.getFirstHeader("Content-Type").getValue());
+        final String content = EntityUtils.toString(response.getEntity());
+        assertTrue(content.contains("rdf:Description"));
+    }
+
+    @Test
+    public void itShouldHaveTurtleServiceDescription() throws IOException {
+        final String format = "text/turtle";
+        final HttpGet request = new HttpGet(serverAddress + "/fcr:sparql");
+        request.addHeader("Accept", format);
+        final HttpResponse response = client.execute(request);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(format,
+                response.getFirstHeader("Content-Type").getValue());
+        final String content = EntityUtils.toString(response.getEntity());
+        assertTrue(content.contains("@prefix"));
     }
 }
