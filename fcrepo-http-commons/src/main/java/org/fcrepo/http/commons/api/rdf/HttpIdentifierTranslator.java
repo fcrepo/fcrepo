@@ -152,8 +152,13 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
     @Override
     public Resource getSubject(final String absPath) throws RepositoryException {
         resetTranslationChain();
-        LOGGER.debug("Creating RDF subject from identifier: {}", absPath);
-        return doForward(absPath);
+        if ( absPath != null && absPath.indexOf("%20") != -1 ) {
+            LOGGER.debug("Creating RDF subject from identifier with spaces: {}", absPath);
+            return doForward(absPath.replaceAll("%20"," "));
+        } else {
+            LOGGER.debug("Creating RDF subject from identifier: {}", absPath);
+            return doForward(absPath);
+        }
     }
 
     @Override
