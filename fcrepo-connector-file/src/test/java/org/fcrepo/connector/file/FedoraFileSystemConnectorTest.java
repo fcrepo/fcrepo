@@ -21,13 +21,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
-import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
-import org.modeshape.jcr.federation.spi.DocumentChanges;
 import org.modeshape.jcr.federation.spi.DocumentReader;
+import org.modeshape.jcr.federation.spi.ExtraPropertiesStore;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.NameFactory;
 import org.modeshape.jcr.value.Property;
@@ -50,6 +48,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -75,6 +74,7 @@ public class FedoraFileSystemConnectorTest {
     private static Path directoryPath;
 
     private static File tmpFile;
+    private static File tmpFile2;
 
     @Mock
     private NamespaceRegistry mockRegistry;
@@ -117,12 +117,27 @@ public class FedoraFileSystemConnectorTest {
             logger.error("Error creating: {} - {}", tmpFile.getAbsolutePath(),
                     e.getMessage());
         }
+
+        tmpFile2 =
+            createTempFile(directoryPath, "fedora-filesystemtestfile",
+                    "txt").toFile();
+        try (FileOutputStream outputStream = new FileOutputStream(tmpFile2)) {
+            outputStream.write("goodbye".getBytes());
+        } catch (final IOException e) {
+            logger.error("Error creating: {} - {}", tmpFile2.getAbsolutePath(),
+                    e.getMessage());
+        }
     }
 
     @AfterClass
     public static void afterClass() {
         try {
-            tmpFile.delete();
+            if ( tmpFile.exists() ) {
+                tmpFile.delete();
+            }
+            if ( tmpFile2.exists() ) {
+                tmpFile2.delete();
+            }
         } catch (final Exception e) {
             logger.error("Error deleting: " + tmpFile.getAbsolutePath()
                     + " - " + e.getMessage());
@@ -231,11 +246,22 @@ public class FedoraFileSystemConnectorTest {
 
     @Test
     public void testRemoveDocument() throws IOException, RepositoryException {
-        final FedoraFileSystemConnector c = spy(new FedoraFileSystemConnector());
-        final String id = "/foo";
-        doReturn(true).when((FileSystemConnector)c).removeDocument(anyString());
-        c.removeDocument(id);
-        verify(c).touchParent(id);
+        final String id = "/" + tmpFile2.getName();
+        final FedoraFileSystemConnector spy = spy(connector);
+        assertTrue("Removing document should return true!", spy.removeDocument(id));
+        verify(spy).touchParent(id);
     }
 
+    @Test
+    public void testStoreDocument() throws IOException, RepositoryException {
+        final String id = "/" + tmpFile.getName();
+        final DocumentReader reader = mock(DocumentReader.class);
+        final FedoraFileSystemConnector spy = spy(connector);
+        doReturn(tmpFile).when(spy).fileFor(anyString());
+        doReturn(reader).when(spy).readDocument(any(Document.class));
+        doReturn(id).when(reader).getDocumentId();
+        doReturn(NT_FILE).when(reader).getPrimaryTypeName();
+        spy.storeDocument(spy.getDocumentById(id));
+        verify(spy).touchParent(id);
+    }
 }

@@ -298,4 +298,14 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
             parent.setLastModified( System.currentTimeMillis() );
         }
     }
+
+    /* Overriding so unit test can mock. */
+    @Override
+    protected File fileFor( final String id ) {
+        return super.fileFor(id);
+    }
+    @Override
+    protected DocumentReader readDocument( final Document document ) {
+        return super.readDocument(document);
+    }
 }
