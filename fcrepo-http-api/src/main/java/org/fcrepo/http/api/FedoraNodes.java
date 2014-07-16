@@ -296,6 +296,8 @@ public class FedoraNodes extends AbstractResource {
         addResponseInformationToStream(resource, rdfStream, uriInfo,
                 subjects);
 
+        rdfStream.removeDuplicates();
+
         return rdfStream;
 
 

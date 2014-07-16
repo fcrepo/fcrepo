@@ -24,7 +24,9 @@ import static java.util.Objects.hash;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
+
 import javax.jcr.Session;
 
 import com.google.common.base.Function;
@@ -32,6 +34,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -140,6 +143,14 @@ public class RdfStream extends ForwardingIterator<Triple> implements
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream withThisContext(final T stream) {
         return new RdfStream(stream).namespaces(namespaces()).topic(topic());
+    }
+
+    /**
+     * Removes duplicate triples.
+     */
+    public void removeDuplicates() {
+        final LinkedHashSet triplesLHS = new LinkedHashSet(Lists.newArrayList(triples));
+        triples = triplesLHS.iterator();
     }
 
     /**

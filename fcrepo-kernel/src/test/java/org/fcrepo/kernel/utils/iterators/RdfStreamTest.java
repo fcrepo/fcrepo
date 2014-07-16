@@ -332,4 +332,14 @@ public class RdfStreamTest {
         assertEquals("Didn't retrieve the session we stored!", mockNode,
                 testStream.topic(mockNode).topic());
     }
+
+    @Test
+    public void testRemoveDuplicates() {
+        testStream.concat(triple);
+        testStream.concat(triple);
+        testStream.concat(triple);
+        testStream.removeDuplicates();
+        testStream.next();
+        assertFalse(testStream.hasNext());
+    }
 }
