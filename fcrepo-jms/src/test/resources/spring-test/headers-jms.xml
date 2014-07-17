@@ -19,8 +19,6 @@
     <amq:connectionFactory id="connectionFactory"
         brokerURL="vm://localhost?broker.persistent=false&amp;broker.useJmx=false&amp;broker.enableStatistics=false"/>
 
-    <bean class="org.fcrepo.jms.headers.DefaultMessageFactory">
-      <constructor-arg value="http://localhost:8080/rest"/>
-    </bean>
+    <bean class="org.fcrepo.jms.headers.DefaultMessageFactory"/>
 
 </beans>

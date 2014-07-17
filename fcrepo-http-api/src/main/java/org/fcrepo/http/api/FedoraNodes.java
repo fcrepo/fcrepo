@@ -69,6 +69,7 @@ import javax.jcr.ItemExistsException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -136,6 +137,26 @@ public class FedoraNodes extends AbstractResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
+    private boolean baseURLSet = false;
+
+    /**
+     * Set the baseURL for JMS events.
+    **/
+    private void init( final UriInfo uriInfo ) {
+        if ( !baseURLSet ) {
+            baseURLSet = true;
+            try {
+                final URI baseURL = uriInfo.getBaseUri();
+                LOGGER.warn("FedoraNodes.init(): baseURL = " + baseURL.toString());
+                final ObservationManager obs = session.getWorkspace().getObservationManager();
+                final String json = "{\"baseURL\":\"" + baseURL.toString() + "\"}";
+                obs.setUserData(json);
+                LOGGER.warn("FedoraNodes.init(): done");
+            } catch ( Exception ex ) {
+                LOGGER.warn("Error setting baseURL", ex);
+            }
+        }
+    }
 
     /**
      * Retrieve the node headers
@@ -353,6 +374,7 @@ public class FedoraNodes extends AbstractResource {
         throws RepositoryException, IOException {
         throwIfPathIncludesJcr(pathList, "PATCH");
 
+        init(uriInfo);
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to update path: {}", path);
 
@@ -424,6 +446,7 @@ public class FedoraNodes extends AbstractResource {
             @Context final HttpServletResponse servletResponse) throws RepositoryException, ParseException,
             IOException, InvalidChecksumException, URISyntaxException {
         throwIfPathIncludesJcr(pathList, "PUT");
+        init(uriInfo);
 
         final String path = toPath(pathList);
         LOGGER.debug("Attempting to replace path: {}", path);
@@ -509,6 +532,7 @@ public class FedoraNodes extends AbstractResource {
         throws RepositoryException, ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
         throwIfPathIncludesJcr(pathList, "POST");
+        init(uriInfo);
 
         String pid;
         final String newObjectPath;
@@ -688,6 +712,7 @@ public class FedoraNodes extends AbstractResource {
                                                 @FormDataParam("file") final InputStream file
     ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {
         throwIfPathIncludesJcr(pathList, "POST with multipart attachment");
+        init(uriInfo);
 
         final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
         return createObject(pathList, mixin, null, null, effectiveContentType, slug, servletResponse, uriInfo, file);
@@ -707,6 +732,7 @@ public class FedoraNodes extends AbstractResource {
             final List<PathSegment> pathList,
             @Context final Request request) throws RepositoryException {
         throwIfPathIncludesJcr(pathList, "DELETE");
+        init(uriInfo);
 
         try {
 
@@ -735,6 +761,7 @@ public class FedoraNodes extends AbstractResource {
                                @HeaderParam("Destination") final String destinationUri)
         throws RepositoryException, URISyntaxException {
         throwIfPathIncludesJcr(path, "COPY");
+        init(uriInfo);
 
         try {
 
@@ -782,6 +809,7 @@ public class FedoraNodes extends AbstractResource {
                                @Context final Request request)
         throws RepositoryException, URISyntaxException {
         throwIfPathIncludesJcr(pathList, "MOVE");
+        init(uriInfo);
 
         try {
 

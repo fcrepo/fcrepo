@@ -33,6 +33,8 @@ import org.slf4j.Logger;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Generates JMS {@link Message}s composed entirely of headers, based entirely
@@ -61,17 +63,27 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     private String baseURL;
 
     /**
-     * @param baseURL indicating the repository server host/port/etc
+     * Get baseURL.
      */
-    public DefaultMessageFactory(final String baseURL) {
-        this.baseURL = baseURL;
-        log.debug("MessageFactory baseURL: {}", baseURL);
+    public void setBaseURL(final FedoraEvent event) {
+        try {
+            final JsonObject json = new JsonParser().parse(event.getUserData()).getAsJsonObject();
+            this.baseURL = json.get("baseURL").getAsString();
+            log.debug("MessageFactory baseURL: {}", baseURL);
+        } catch ( Exception ex ) {
+            log.warn("Error setting baseURL", ex);
+        }
     }
 
     @Override
     public Message getMessage(final FedoraEvent jcrEvent,
         final javax.jms.Session jmsSession) throws RepositoryException,
         IOException, JMSException {
+
+        if ( baseURL == null ) {
+            setBaseURL(jcrEvent);
+        }
+
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
         message.setStringProperty(IDENTIFIER_HEADER_NAME, jcrEvent.getPath());

@@ -81,6 +81,11 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2.4</version>
+    </dependency>
     <!-- axiom-api is a dependency of abdera-parser. It is only explicitly declared 
       here because abdera-parser depends on an older version of jaxen (1.1.1) than axiom-api. 
       If/when abdera-parser catches up, we can remove this explicit dependency on axiom-api -->

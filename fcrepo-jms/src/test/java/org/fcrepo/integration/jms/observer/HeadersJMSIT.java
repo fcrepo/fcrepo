@@ -27,8 +27,6 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -117,10 +115,6 @@ public class HeadersJMSIT implements MessageListener {
                                 success = true;
                             }
                         }
-
-                        final String baseUrl = messages.iterator().next().getStringProperty(BASE_URL_HEADER_NAME);
-                        assertNotNull("BaseUrl should not be null!", baseUrl);
-                        assertEquals("Defined in spring-test/headers-jms.xml", "http://localhost:8080/rest", baseUrl);
                     }
                     LOGGER.debug("Waiting for next message...");
                     wait(1000);

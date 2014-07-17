@@ -62,7 +62,7 @@ public class DefaultMessageFactoryTest {
         initMocks(this);
         when(mockSession.createMessage()).thenReturn(
                 new ActiveMQObjectMessage());
-        testDefaultMessageFactory = new DefaultMessageFactory("base-url");
+        testDefaultMessageFactory = new DefaultMessageFactory();
     }
 
     @Test
@@ -70,6 +70,7 @@ public class DefaultMessageFactoryTest {
                                   JMSException {
         final Long testDate = 46647758568747L;
         when(mockEvent.getDate()).thenReturn(testDate);
+        when(mockEvent.getUserData()).thenReturn("{\"baseURL\":\"base-url\"}");
         final String testPath = "super/calli/fragi/listic";
         when(mockEvent.getPath()).thenReturn(testPath);
         final Set<Integer> testTypes = singleton(NODE_ADDED);
