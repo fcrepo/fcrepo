@@ -33,6 +33,7 @@ import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -44,6 +45,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -164,6 +166,31 @@ public class ViewHelpersTest {
         mem.add(createAnon(), createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(),
                 createLiteral("nt:file"));
         assertFalse("Node is not a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testRdfResource() {
+        final String ns = "http://any/namespace#";
+        final String type = "anyType";
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b"),
+                ResourceFactory.createResource(RDF_NAMESPACE + "type").asNode(),
+                ResourceFactory.createResource(ns + type).asNode());
+        assertTrue("Node is a " + type + " node.",
+                testObj.isRdfResource(mem, createURI("a/b"), ns, type));
+        assertFalse("Node is not a " + type + " node.",
+                testObj.isRdfResource(mem, createURI("a/b"), ns, "otherType"));
+    }
+
+    @Test
+    public void testGetLockUrl() {
+        final Node lockUrl = createURI("a/b/fcr:lock");
+        final DatasetGraph mem = createMem();
+        mem.add(createAnon(), createURI("a/b"),
+                RdfLexicon.HAS_LOCK.asNode(),
+                lockUrl);
+        assertEquals("Wrong lock url returned!", lockUrl.getURI(),
+                testObj.getLockUrl(mem, createURI("a/b")));
     }
 
     @Test

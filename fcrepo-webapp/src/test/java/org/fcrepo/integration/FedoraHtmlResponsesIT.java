@@ -303,6 +303,30 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertTrue("New uri was not found", page2.asText().contains(uri_value));
     }
 
+    /**
+     * This test create a lock from the object page and examine the lock created.
+     */
+    @Test
+    public void testLockCreationFromObjectPage() throws IOException {
+        final String pid = randomUUID().toString();
+        createAndVerifyObjectWithIdFromRootPage(pid);
+
+        final HtmlPage page = webClient.getPage(serverAddress + pid);
+        final HtmlButton createButton = (HtmlButton) page.getElementById("btn_create_lock");
+        assertTrue("Should have Create Lock button.", createButton != null);
+        createButton.click();
+
+        webClient.waitForBackgroundJavaScript(1000);
+        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
+
+        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
+        assertTrue("Should have the View Lock button.", page1.getElementById("btn_view_lock") != null);
+
+        final HtmlPage lockPage = webClient.getPage(serverAddress + pid + "/fcr:lock");
+        assertTrue("Should have fedora:locks property.", lockPage.asText().contains("lock"));
+        assertTrue("Should have fedora:isDeep property.", lockPage.asText().contains("isDeep"));
+    }
+
     private void checkForHeaderSearch(final HtmlPage page) {
         final HtmlForm form = page.getFirstByXPath("//form[@role='search']");
         assertNotNull(form);
