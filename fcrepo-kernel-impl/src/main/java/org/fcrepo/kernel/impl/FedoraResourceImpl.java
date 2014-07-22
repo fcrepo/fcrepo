@@ -383,7 +383,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final Date lastModifiedDate = getLastModifiedDate();
 
         if (lastModifiedDate != null) {
-            return shaHex(node.getPath() + lastModifiedDate);
+            return shaHex(node.getPath() + lastModifiedDate.getTime());
         }
         return "";
     }
