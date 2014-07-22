@@ -420,7 +420,7 @@ public class FedoraResourceImplTest {
         when(mockMod.getDate()).thenReturn(modDate);
 
         assertEquals(shaHex("some-path"
-                + testObj.getLastModifiedDate().toString()), testObj
+                + testObj.getLastModifiedDate().getTime()), testObj
                 .getEtagValue());
     }
 
