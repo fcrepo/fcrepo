@@ -39,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 import java.net.URI;
+import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -54,6 +55,9 @@ import com.hp.hpl.jena.update.GraphStore;
  * @author awoods
  */
 public class FedoraFieldSearchIT extends AbstractResourceIT {
+
+    private final String testObj = UUID.randomUUID().toString();
+    private final String testObj2 = UUID.randomUUID().toString();
 
     @Test
     public void testSearchHtml() throws Exception {
@@ -74,7 +78,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         method.setHeader("Accept", "text/html");
         final URI uri =
-            new URIBuilder(method.getURI()).addParameter("q", "testobj")
+            new URIBuilder(method.getURI()).addParameter("q", testObj)
                     .addParameter("offset", "0").addParameter("limit", "1")
                     .build();
 
@@ -91,16 +95,16 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
     @Test
     public void testSearchRdf() throws Exception {
         /* first post two objects which can be used for the search */
-        createObject("testobj");
-        createObject("testobj2");
+        createObject(testObj);
+        createObject(testObj2);
 
         /* and add a dc title to the object so the query returns a result */
-        setProperty("testobj", "http://purl.org/dc/elements/1.1/title",
-                "testobj");
+        setProperty(testObj, "http://purl.org/dc/elements/1.1/title",
+                testObj);
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         final URI uri =
-            new URIBuilder(method.getURI()).addParameter("q", "testobj")
+            new URIBuilder(method.getURI()).addParameter("q", testObj)
                     .addParameter("offset", "0").addParameter("limit", "1")
                     .build();
 
@@ -110,27 +114,27 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         logger.debug("Got search results graph: {}", graphStore);
         assertTrue(graphStore.contains(ANY, createResource(
-                serverAddress + "fcr:search?q=testobj").asNode(),
+                serverAddress + "fcr:search?q=" + testObj).asNode(),
                 SEARCH_HAS_TOTAL_RESULTS.asNode(), createTypedLiteral(1)
                         .asNode()));
 
         assertTrue(graphStore.contains(ANY, createResource(
-                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                serverAddress + "fcr:search?q=" + testObj + "&offset=0&limit=1")
                 .asNode(), PAGE_OF.asNode(), createResource(
-                serverAddress + "fcr:search?q=testobj").asNode()));
+                serverAddress + "fcr:search?q=" + testObj).asNode()));
 
         assertTrue(graphStore.contains(ANY, createResource(
-                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                serverAddress + "fcr:search?q=" + testObj + "&offset=0&limit=1")
                 .asNode(), SEARCH_OFFSET.asNode(), createTypedLiteral(0)
                 .asNode()));
 
         assertTrue(graphStore.contains(ANY, createResource(
-                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                serverAddress + "fcr:search?q=" + testObj + "&offset=0&limit=1")
                 .asNode(), SEARCH_ITEMS_PER_PAGE.asNode(),
                 createTypedLiteral(1).asNode()));
 
         assertTrue(graphStore.contains(ANY, createResource(
-                serverAddress + "fcr:search?q=testobj&offset=0&limit=1")
+                serverAddress + "fcr:search?q=" + testObj + "&offset=0&limit=1")
                 .asNode(), NEXT_PAGE.asNode(), nil.asNode()));
     }
 
@@ -158,7 +162,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:search");
         final URI uri =
-                new URIBuilder(method.getURI()).addParameter("q", "testobj")
+                new URIBuilder(method.getURI()).addParameter("q", testObj)
                         .addParameter("offset", "1").addParameter("limit", "1")
                         .build();
 
@@ -168,7 +172,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         logger.debug("Got search results graph: {}", graphStore);
         assertFalse(graphStore.contains(ANY, createResource(
-                serverAddress + "fcr:search?q=testobj").asNode(),
+                serverAddress + "fcr:search?q=" + testObj).asNode(),
                 HAS_MEMBER_OF_RESULT.asNode(), ANY));
 
     }

@@ -80,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Iterator;
+import java.util.UUID;
 
 import javax.ws.rs.core.Variant;
 
@@ -1621,23 +1622,25 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testLinkedDeletion() throws Exception {
-        createObject("linked-from");
-        createObject("linked-to");
+        final String linkedFrom = UUID.randomUUID().toString();
+        final String linkedTo = UUID.randomUUID().toString();
+        createObject(linkedFrom);
+        createObject(linkedTo);
 
-        final String sparql = "insert data { <" + serverAddress + "linked-from> "
+        final String sparql = "insert data { <" + serverAddress + linkedFrom + "> "
                  + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> "
-                 + "<" + serverAddress + "linked-to> . }";
-        final HttpPatch patch = new HttpPatch(serverAddress + "linked-from");
+                 + "<" + serverAddress + linkedTo + "> . }";
+        final HttpPatch patch = new HttpPatch(serverAddress + linkedFrom);
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
         patch.setEntity(e);
         assertEquals("Couldn't link resources!", 204, getStatus(patch));
 
-        final HttpDelete delete = new HttpDelete(serverAddress + "linked-to");
+        final HttpDelete delete = new HttpDelete(serverAddress + linkedTo);
         assertEquals("Error deleting linked-to!", 204, getStatus(delete));
 
-        final HttpGet get = new HttpGet(serverAddress + "linked-from");
+        final HttpGet get = new HttpGet(serverAddress + linkedFrom);
         assertEquals("Linked to should still exist!", 200, getStatus(get));
     }
 
