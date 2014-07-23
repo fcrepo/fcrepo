@@ -16,6 +16,8 @@
 package org.fcrepo.integration.http.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -26,6 +28,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+import org.modeshape.common.util.Base64;
 
 /**
  * <p>FedoraExportIT class.</p>
@@ -122,7 +125,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
-            new HttpGet(serverAddress + objName + "/fcr:export");
+            new HttpGet(serverAddress + objName + "/fcr:export?skipBinary=false&recurse=true");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -153,4 +156,65 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void shouldExportObjectWithNoBinary() throws IOException {
+        final String objName = getRandomUniquePid();
+        final String binaryValue = "stuff";
+        // set up the object
+        client.execute(postObjMethod(objName));
+        client.execute(postDSMethod(objName, "testDS", binaryValue));
+
+        // export it
+        logger.debug("Attempting to export: " + objName);
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + objName + "/fcr:export?recurse=true");
+        HttpResponse response = client.execute(getObjMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        logger.debug("Successfully exported: " + objName);
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Found exported object: " + content);
+        final char[] base64Value = Base64.encodeBytes(binaryValue.getBytes("UTF-8")).toCharArray();
+        assertFalse(content.indexOf(String.valueOf(base64Value)) >= 0);
+
+        // Contains the binary value otherwise
+        final HttpGet getObjWithBinaryMethod = new HttpGet(
+                serverAddress + objName + "/fcr:export?recurse=true&skipBinary=false");
+        response = client.execute(getObjWithBinaryMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertTrue(EntityUtils.toString(response.getEntity()).indexOf(String.valueOf(base64Value)) >= 0);
+    }
+
+    @Test
+    public void shouldExportObjectRecurse() throws IOException {
+        final String objName = getRandomUniquePid();
+        final String childName = "testDS";
+        final String binaryValue = "stuff";
+        // set up the object
+        client.execute(postObjMethod(objName));
+        client.execute(postDSMethod(objName, childName, binaryValue));
+        // export it
+        logger.debug("Attempting to export: " + objName);
+        final HttpGet getObjMethod =
+            new HttpGet(serverAddress + objName + "/fcr:export");
+        HttpResponse response = client.execute(getObjMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        logger.debug("Successfully exported: " + objName);
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.debug("Found exported object: " + content);
+        assertFalse(content.indexOf("sv:name=\"" + childName + "\"") > 0);
+
+        // Contains the child node otherwise
+        final HttpGet getObjWithBinaryMethod = new HttpGet(serverAddress + objName + "/fcr:export?recurse=true");
+        response = client.execute(getObjWithBinaryMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertTrue(EntityUtils.toString(response.getEntity()).indexOf("sv:name=\"" + childName + "\"") > 0);
+    }
 }

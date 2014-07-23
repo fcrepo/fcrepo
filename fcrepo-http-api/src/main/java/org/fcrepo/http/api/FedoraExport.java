@@ -72,7 +72,9 @@ public class FedoraExport extends AbstractResource {
     @GET
     public Response exportObject(
         @PathParam("path") final List<PathSegment> pathList,
-        @QueryParam("format") @DefaultValue("jcr/xml") final String format) {
+        @QueryParam("format") @DefaultValue("jcr/xml") final String format,
+        @QueryParam("skipBinary") @DefaultValue("true") final String skipBinary,
+        @QueryParam("recurse") @DefaultValue("false") final String recurse) {
 
         final String path = toPath(pathList);
 
@@ -91,8 +93,8 @@ public class FedoraExport extends AbstractResource {
                         try {
                             LOGGER.debug("Selecting from serializer map: {}", serializers);
                             LOGGER.debug("Retrieved serializer for format: {}", format);
-                            serializer.serialize(objectService.getObject(
-                                    session, path), out);
+                            serializer.serialize(objectService.getObject(session, path),
+                                    out, Boolean.parseBoolean(skipBinary), Boolean.parseBoolean(recurse));
                             LOGGER.debug("Successfully serialized object: {}", path);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
