@@ -78,6 +78,12 @@ public final class RdfLexicon {
     public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
 
     /**
+     * SPARQL service description namespace.
+     */
+    public static final String SPARQL_SD_NAMESPACE =
+            "http://www.w3.org/ns/sparql-service-description#";
+
+    /**
      * The namespaces that the repository manages internally.
      */
     public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
@@ -254,7 +260,7 @@ public final class RdfLexicon {
     public static final Property NOT_IMPLEMENTED =
             createProperty(REPOSITORY_NAMESPACE + "notImplemented");
     public static final Property HAS_SPARQL_ENDPOINT =
-        createProperty(RESTAPI_NAMESPACE + "sparql");
+        createProperty(SPARQL_SD_NAMESPACE + "endpoint");
 
     public static final Set<Property> otherServiceProperties = of(
             HAS_SERIALIZATION, HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,
