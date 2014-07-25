@@ -19,10 +19,13 @@ import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.query.ResultSetFactory;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.integration.AbstractResourceIT;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
@@ -32,14 +35,19 @@ import org.junit.Test;
 import org.modeshape.jcr.api.JcrConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import static org.apache.jena.riot.WebContent.contentTypeHTMLForm;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
+import javax.ws.rs.core.Response.Status;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -210,5 +218,126 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         final String content = EntityUtils.toString(response.getEntity());
         logger.trace("Retrieved sparql feed:\n" + content);
         return content;
+    }
+
+
+    private String getFormRequestResponseContent(final String sparql)
+            throws IOException {
+        final HttpPost request = getFormRequest (sparql, "query");
+
+        final HttpResponse response = client.execute(request);
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        final String content = EntityUtils.toString(response.getEntity());
+        logger.trace("Retrieved sparql feed:\n" + content);
+        return content;
+    }
+
+    private HttpPost getFormRequest (final String sparql, final String paramName)
+            throws UnsupportedEncodingException {
+        final HttpPost post = new HttpPost(serverAddress + "/fcr:sparql");
+        post.addHeader("Content-Type", contentTypeHTMLForm);
+        final List<BasicNameValuePair> nvps = new ArrayList<>();
+        if (sparql != null) {
+            nvps.add(new BasicNameValuePair(
+                    paramName != null && paramName.length() > 0 ? paramName : "sparql", sparql));
+        }
+
+        final HttpEntity formEntity = new UrlEncodedFormEntity(nvps, "UTF-8");
+        post.setEntity(formEntity);
+        return post;
+    }
+
+    @Test
+    public void formRequestShouldWorkWithSimpleProperties() throws IOException {
+
+        final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> " +
+                "SELECT ?subject WHERE { ?subject dc:title \"xyz\"}";
+
+        final String content = getFormRequestResponseContent(sparql);
+        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
+
+
+        assertTrue(resultSet.hasNext());
+
+        assertEquals("subject", resultSet.getResultVars().get(0));
+
+        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+    }
+
+    @Test
+    public void formRequestShouldWorkWithRdfTypeMixins() throws IOException {
+
+        final String sparql =
+                "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT " +
+                        "?subject WHERE { " +
+                        "?subject a <http://fedora.info/definitions/v4/rest-api#resource> . ?subject dc:title \"xyz\"}";
+
+        final String content =  getFormRequestResponseContent(sparql);
+        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
+
+
+        assertTrue(resultSet.hasNext());
+
+        assertEquals("subject", resultSet.getResultVars().get(0));
+
+        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+
+    }
+
+    @Test
+    public void formRequestShouldWorkWithReferenceProperties() throws IOException {
+
+        final String sparql =
+                "PREFIX  fedorarelsext:  <http://fedora.info/definitions/v4/rels-ext#> SELECT " +
+                        "?subject ?part WHERE { ?subject fedorarelsext:hasPart ?part }";
+
+        final String content = getFormRequestResponseContent(sparql);
+        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
+
+
+        assertTrue(resultSet.hasNext());
+
+        assertEquals("subject", resultSet.getResultVars().get(0));
+
+        final QuerySolution row = resultSet.next();
+        assertEquals(serverAddress + "/abc", row.get("subject").toString());
+        assertEquals(serverAddress + "/xyz", row.get("part").toString());
+    }
+
+    @Test
+    public void formRequestShouldWorkWithJoinedQueries() throws IOException {
+
+        final String sparql = "PREFIX  fedorarelsext:  <http://fedora.info/definitions/v4/rels-ext#>\n" +
+                              "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>\n" +
+                              "SELECT ?part ?collectionTitle WHERE { ?part fedorarelsext:isPartOf ?collection .\n" +
+                                  "  ?collection dc:title ?collectionTitle }";
+
+        final String content = getFormRequestResponseContent(sparql);
+        final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
+
+
+        assertTrue(resultSet.hasNext());
+
+        assertEquals("part", resultSet.getResultVars().get(0));
+
+        final QuerySolution row = resultSet.next();
+        assertEquals(serverAddress + "/xyz", row.get("part").toString());
+        assertEquals("xyz", row.get("collectionTitle").asLiteral().getLexicalForm());
+    }
+
+    @Test
+    public void testBadFormRequest() throws IOException {
+
+        String sparql = "";
+
+        HttpPost badRequest = getFormRequest(sparql, null);
+        HttpResponse response = client.execute(badRequest);
+        assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        sparql = null;
+        badRequest = getFormRequest(sparql, null);
+        response = client.execute(badRequest);
+        assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 }
