@@ -1682,6 +1682,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals( 200, resp2.getStatusLine().getStatusCode() );
         final long lastmod2 = df.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
         assertTrue( (timestamp2 - lastmod2) < 1000 ); // because rounding
+
+        assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
     }
 
 }
