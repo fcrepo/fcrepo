@@ -142,7 +142,6 @@ public class JcrPropertyStatementListenerTest {
     public void testAddedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        //when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
         when(mockSubjects.getPathFromSubject(mockSubject)).thenReturn("/some/path");
         when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
         when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
@@ -243,7 +242,6 @@ public class JcrPropertyStatementListenerTest {
 
         final Resource resource = createResource("xyz");
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        //when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
         when(mockSubjects.getPathFromSubject(resource)).thenReturn("/xyz");
         when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
 
