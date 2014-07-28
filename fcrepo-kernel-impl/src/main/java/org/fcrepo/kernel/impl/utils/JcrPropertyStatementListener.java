@@ -131,9 +131,6 @@ public class JcrPropertyStatementListener extends StatementListener {
                 } catch ( UnsupportedEncodingException ex ) {
                     LOGGER.warn("Required encoding (UTF-8) not supported, trying undecoded path",ex);
                     path = subjects.getPathFromSubject(subject);
-                } catch ( NullPointerException ex ) {
-                    LOGGER.debug("Looking up null path",ex);
-                    path = null;
                 }
                 subjectNode = session.getNode(path);
             }

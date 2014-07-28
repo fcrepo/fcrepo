@@ -142,8 +142,9 @@ public class JcrPropertyStatementListenerTest {
     public void testAddedProhibitedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject)))
-                .thenReturn(mockSubjectNode);
+        //when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
+        when(mockSubjects.getPathFromSubject(mockSubject)).thenReturn("/some/path");
+        when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
         when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
 
         when(mockPredicate.getURI()).thenReturn("x");
@@ -155,7 +156,8 @@ public class JcrPropertyStatementListenerTest {
     public void testAddedStatement() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
+        when(mockSubjects.getPathFromSubject(mockSubject)).thenReturn("/some/path");
+        when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
         when(
                 mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode,
@@ -241,7 +243,9 @@ public class JcrPropertyStatementListenerTest {
 
         final Resource resource = createResource("xyz");
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
+        //when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
+        when(mockSubjects.getPathFromSubject(resource)).thenReturn("/xyz");
+        when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -282,7 +286,8 @@ public class JcrPropertyStatementListenerTest {
 
         final Resource resource = createResource("xyz");
         when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
+        when(mockSubjects.getPathFromSubject(resource)).thenReturn("/xyz");
+        when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
