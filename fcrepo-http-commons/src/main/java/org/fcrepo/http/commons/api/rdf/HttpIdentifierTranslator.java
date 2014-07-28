@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.net.URLDecoder.decode;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static javax.jcr.PropertyType.PATH;
@@ -36,6 +37,7 @@ import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentT
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -152,11 +154,11 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
     @Override
     public Resource getSubject(final String absPath) throws RepositoryException {
         resetTranslationChain();
-        if ( absPath != null && absPath.indexOf("%20") != -1 ) {
-            LOGGER.debug("Creating RDF subject from identifier with spaces: {}", absPath);
-            return doForward(absPath.replaceAll("%20"," "));
-        } else {
-            LOGGER.debug("Creating RDF subject from identifier: {}", absPath);
+        try {
+            LOGGER.debug("Creating RDF subject from identifier: {}", decode(absPath, "UTF-8"));
+            return doForward(decode(absPath, "UTF-8"));
+        } catch ( UnsupportedEncodingException ex ) {
+            LOGGER.warn("Required encoding (UTF-8) not supported, trying undecoded path",ex);
             return doForward(absPath);
         }
     }
