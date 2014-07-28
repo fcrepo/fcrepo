@@ -23,6 +23,7 @@ import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.text.SimpleDateFormat;
@@ -412,6 +413,29 @@ public class ViewHelpers {
 
         sb.append("\n");
         return sb.toString();
+    }
+
+    /**
+     * Determines whether the subject is kind of RDF resource
+     */
+    public boolean isRdfResource(final DatasetGraph dataset, final Node subject,
+            final String namespace, final String resource) {
+        final Iterator<Quad> it = dataset.find(ANY, subject,
+                ResourceFactory.createResource(RDF_NAMESPACE + "type").asNode(),
+                ResourceFactory.createResource(namespace + resource).asNode());
+        return it.hasNext();
+    }
+
+    /**
+     * Retrieve the uri for the locks
+     */
+    public String getLockUrl(final DatasetGraph dataset, final Node subject) {
+        final Iterator<Quad> it = dataset.find(ANY, subject,
+                RdfLexicon.HAS_LOCK.asNode(), ANY);
+        if (it.hasNext()) {
+            return it.next().getObject().getURI();
+        }
+        return "";
     }
 
     /**
