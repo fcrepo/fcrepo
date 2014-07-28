@@ -16,11 +16,13 @@
 package org.fcrepo.kernel.impl.utils;
 
 import static com.google.common.base.Throwables.propagate;
+import static java.net.URLDecoder.decode;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.UnsupportedEncodingException;
 import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -123,12 +125,14 @@ public class JcrPropertyStatementListener extends StatementListener {
                     skolemizedBnodeMap.put(subject.getId(), subjectNode);
                 }
             } else {
-                final String path = subjects.getPathFromSubject(subject);
-                if ( path != null && path.indexOf("%20") != -1 ) {
-                    subjectNode = session.getNode(path.replaceAll("%20"," "));
-                } else {
-                    subjectNode = session.getNode(path);
+                String path = null;
+                try {
+                    path = decode(subjects.getPathFromSubject(subject), "UTF-8");
+                } catch ( UnsupportedEncodingException ex ) {
+                    LOGGER.warn("Required encoding (UTF-8) not supported, trying undecoded path",ex);
+                    path = subjects.getPathFromSubject(subject);
                 }
+                subjectNode = session.getNode(path);
             }
 
             // special logic for handling rdf:type updates.
