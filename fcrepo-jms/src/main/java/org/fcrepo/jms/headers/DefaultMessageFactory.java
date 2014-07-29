@@ -63,9 +63,10 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     private String baseURL;
 
     /**
-     * Get baseURL.
+     * Set baseURL.
+     * @param event Fedora event object containing user data with baseURL specified.
      */
-    public void setBaseURL(final FedoraEvent event) {
+    private void setBaseURL(final FedoraEvent event) {
         try {
             final JsonObject json = new JsonParser().parse(event.getUserData()).getAsJsonObject();
             this.baseURL = json.get("baseURL").getAsString();

@@ -144,14 +144,17 @@ public class FedoraNodes extends AbstractResource {
     **/
     private void init( final UriInfo uriInfo ) {
         if ( !baseURLSet ) {
+            // set to true the first time this is run.  if there is an exception the first time, there
+            // will likely be an exception every time.  since this is run on each repository update,
+            // we should fail fast rather than retrying over and over.
             baseURLSet = true;
             try {
                 final URI baseURL = uriInfo.getBaseUri();
-                LOGGER.warn("FedoraNodes.init(): baseURL = " + baseURL.toString());
+                LOGGER.debug("FedoraNodes.init(): baseURL = " + baseURL.toString());
                 final ObservationManager obs = session.getWorkspace().getObservationManager();
                 final String json = "{\"baseURL\":\"" + baseURL.toString() + "\"}";
                 obs.setUserData(json);
-                LOGGER.warn("FedoraNodes.init(): done");
+                LOGGER.trace("FedoraNodes.init(): done");
             } catch ( Exception ex ) {
                 LOGGER.warn("Error setting baseURL", ex);
             }
