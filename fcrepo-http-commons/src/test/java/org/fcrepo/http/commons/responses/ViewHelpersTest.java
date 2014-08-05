@@ -89,6 +89,34 @@ public class ViewHelpersTest {
     }
 
     @Test
+    public void testGetOrderedVersions() {
+        final Node resource = createURI("http://localhost/fcrepo/abc");
+        final Node v1 = createURI("http://localhost/fcrepo/abc/fcr:version/1");
+        final Node v2 = createURI("http://localhost/fcrepo/abc/fcr:version/2");
+        final Node v3 = createURI("http://localhost/fcrepo/abc/fcr:version/3");
+        final Date now = new Date();
+        final Date later = new Date();
+        later.setTime(later.getTime() + 10000l);
+
+        final DatasetGraph mem = createMem();
+        final Node anon = createAnon();
+        mem.add(anon, resource, HAS_VERSION.asNode(), v1);
+        mem.add(anon, v1, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(now.toString()));
+        mem.add(anon, resource, HAS_VERSION.asNode(), v2);
+        mem.add(anon, v2, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(now.toString()));
+        mem.add(anon, resource, HAS_VERSION.asNode(), v3);
+        mem.add(anon, v3, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(later.toString()));
+
+        final Iterator<Node> versions = testObj.getOrderedVersions(mem, resource, HAS_VERSION);
+        final Node r1 = versions.next();
+        final Node r2 = versions.next();
+        final Node r3 = versions.next();
+        assertEquals("Latest version should be last.", v3, r3);
+    }
+    @Test
     public void testGetChildVersions() {
         final DatasetGraph mem = createMem();
         final Node anon = createAnon();

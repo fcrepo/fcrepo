@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
@@ -119,7 +120,10 @@ public class ViewHelpers {
     }
 
     /**
-     * Return an iterator of Quads for versions.
+     * Return an iterator of Quads for versions in order by the
+     * last modification date for the versioned content.  When
+     * multiple versions exist with the same last modification
+     * date, the order of those redundant versions is undefined.
      *
      * @param dataset
      * @param subject
@@ -135,8 +139,11 @@ public class ViewHelpers {
         while (versions.hasNext()) {
             quad = versions.next();
             date = getVersionDate(dataset, quad.getObject());
-            map.put(date == null || date.length() == 0 ?
-                    format.format(new Date()) : date, quad.getObject());
+            String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
+            while (map.containsKey(key)) {
+                key = key + "1";
+            }
+            map.put(key, quad.getObject());
         }
         return map.values().iterator();
     }
