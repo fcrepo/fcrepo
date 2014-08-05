@@ -25,6 +25,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -98,7 +99,7 @@ public interface DatastreamService extends Service {
      * @param node datastream node
      * @return node as a Datastream
      */
-    Datastream asDatastream(Node node);
+    Datastream asDatastream(Node node) throws ResourceTypeException, RepositoryException;
 
     /**
      * Get the fixity results for the datastream as a RDF Dataset

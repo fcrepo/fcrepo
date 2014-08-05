@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl.services;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.PREMIS_FILE_NAME;
 import static org.jgroups.util.Util.assertEquals;
 import static org.jgroups.util.Util.assertTrue;
@@ -178,6 +179,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
         final FedoraObject object = objectService.createObject(session, "/testLLObject");
 
         final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
+        testRandomContentNode.addMixin(FEDORA_DATASTREAM);
         final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
         testRandomContent.setProperty(JCR_DATA,
                                       factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));

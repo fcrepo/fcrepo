@@ -166,7 +166,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @return node as datastream
      */
     @Override
-    public Datastream asDatastream(final Node node) {
+    public Datastream asDatastream(final Node node) throws RepositoryException {
         return new DatastreamImpl(node);
     }
 

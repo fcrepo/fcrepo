@@ -15,6 +15,34 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.apache.tika.io.IOUtils;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.ResourceTypeException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.modeshape.jcr.api.ValueFactory;
+
+import javax.jcr.Binary;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Calendar;
+import java.util.Date;
+
 import static org.fcrepo.kernel.impl.DatastreamImpl.hasMixin;
 import static org.fcrepo.kernel.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.utils.TestHelpers.getContentNodeMock;
@@ -31,33 +59,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Calendar;
-import java.util.Date;
-
-import javax.jcr.Binary;
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-
-import org.apache.tika.io.IOUtils;
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.modeshape.jcr.api.ValueFactory;
 
 /**
  * <p>DatastreamImplTest class.</p>
@@ -69,6 +70,8 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     private static final String testDsId = "testDs";
 
     Datastream testObj;
+
+    String testObjPath;
 
     @Mock
     Session mockSession;
@@ -82,11 +85,15 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     @Mock
     ValueFactory mockVF;
 
+    @Mock
+    NodeType mockDsNodeType;
+
     @Before
     public void setUp() {
         initMocks(this);
-        final NodeType[] nodeTypes = new NodeType[0];
+        final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         try {
+            when(mockDsNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
@@ -105,6 +112,24 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         mockSession = null;
         mockRootNode = null;
         mockDsNode = null;
+    }
+
+    @Test (expected = ResourceTypeException.class)
+    public void testGetObjectAsDatastreamFromNode() throws ResourceTypeException {
+        when(mockDsNodeType.getName()).thenReturn(FEDORA_OBJECT);
+        new DatastreamImpl(mockDsNode);
+    }
+
+    @Test (expected = ResourceTypeException.class)
+    public void testGetObjectAsDatastreamFromPath() throws RepositoryException {
+        when(mockDsNodeType.getName()).thenReturn(FEDORA_OBJECT);
+
+        // Mock the current implementation of JcrTools.findOrCreateNode()
+        testObjPath = "/test";
+        when(mockSession.getRootNode()).thenReturn(mockRootNode);
+        when(mockRootNode.getNode("test")).thenReturn(mockDsNode);
+
+        new DatastreamImpl(mockSession, testObjPath, FEDORA_DATASTREAM);
     }
 
     @Test

@@ -193,7 +193,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedContent() throws RepositoryException {
         final Session session = repo.login();
 
-        final Node node = datastreamService.getDatastreamNode(session, testFilePath() + "/jcr:content");
+        final Node node = nodeService.getObject(session, testFilePath() + "/jcr:content").getNode();
         assertNotNull(node);
 
         final NodeType[] mixins = node.getMixinNodeTypes();
@@ -221,7 +221,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(datastreamService.getDatastreamNode(session, testFilePath() + "/jcr:content"));
+        checkFixity(nodeService.getObject(session, testFilePath() + "/jcr:content").getNode());
 
         session.save();
         session.logout();
@@ -231,7 +231,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final Node node = datastreamService.getDatastreamNode(session, testFilePath() + "/jcr:content");
+        final Node node = nodeService.getObject(session, testFilePath() + "/jcr:content").getNode();
 
         final String originalFixity = checkFixity(node);
 

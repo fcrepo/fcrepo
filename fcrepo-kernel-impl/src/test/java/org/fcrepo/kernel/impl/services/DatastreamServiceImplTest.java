@@ -83,6 +83,9 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     private Node mockNode;
 
     @Mock
+    private NodeType mockDsNodeType;
+
+    @Mock
     private Node mockContent;
 
     @Mock
@@ -127,7 +130,8 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         final Binary mockBinary = mock(Binary.class);
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockDsNodeType });
+        when(mockDsNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
         when(mockData.getBinary()).thenReturn(mockBinary);
 
         final InputStream mockIS = mock(InputStream.class);
