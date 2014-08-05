@@ -275,9 +275,9 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=1-3");
-        assertEquals(206, getStatus(method_test_get));
 
         final HttpResponse response = client.execute(method_test_get);
+        assertEquals(206, response.getStatusLine().getStatusCode());
         logger.debug("Returned from HTTP GET, now checking content...");
         assertEquals("Got the wrong content back!", "arb",EntityUtils.toString(response.getEntity()));
         assertEquals("bytes 1-3/20", response.getFirstHeader("Content-Range").getValue());
@@ -294,9 +294,9 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=1-21");
-        assertEquals(206, getStatus(method_test_get));
 
         final HttpResponse response = client.execute(method_test_get);
+        assertEquals(206, response.getStatusLine().getStatusCode());
         logger.debug("Returned from HTTP GET, now checking content...");
         assertEquals("Got the wrong content back!", "arge marbles for ever",
                 EntityUtils.toString(response.getEntity()));
@@ -314,11 +314,49 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=50-100");
-        assertEquals(416, getStatus(method_test_get));
 
         final HttpResponse response = client.execute(method_test_get);
+        assertEquals(416, response.getStatusLine().getStatusCode());
         assertEquals("bytes 50-100/20", response.getFirstHeader("Content-Range").getValue());
 
+    }
+
+    @Test
+    public void testRangeRequestOpenEnded() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+        final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
+        method_test_get.setHeader("Range", "bytes=2-");
+
+        final HttpResponse response = client.execute(method_test_get);
+        assertEquals(206, response.getStatusLine().getStatusCode());
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertEquals("Got the wrong content back!", "rbles for everyone",
+                EntityUtils.toString(response.getEntity()));
+        assertEquals("bytes 2-19/20", response.getFirstHeader("Content-Range").getValue());
+    }
+
+    @Test
+    public void testRangeRequestOpenStart() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        assertEquals(201, getStatus(createDSMethod));
+
+        final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
+        method_test_get.setHeader("Range", "bytes=-2");
+
+        final HttpResponse response = client.execute(method_test_get);
+        assertEquals(206, response.getStatusLine().getStatusCode());
+        logger.debug("Returned from HTTP GET, now checking content...");
+        assertEquals("Got the wrong content back!", "mar",
+                EntityUtils.toString(response.getEntity()));
+        assertEquals("bytes 0-2/20", response.getFirstHeader("Content-Range").getValue());
     }
 
     @Test
