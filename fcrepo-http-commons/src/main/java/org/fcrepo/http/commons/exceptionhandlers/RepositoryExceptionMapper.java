@@ -27,6 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.slf4j.Logger;
 
 /**
@@ -46,8 +47,9 @@ public class RepositoryExceptionMapper implements
     public Response toResponse(final RepositoryException e) {
 
         LOGGER.warn("Caught repository exception: {}", e.getMessage() );
-
-        if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
+        if (e instanceof ResourceTypeException) {
+            return status(BAD_REQUEST).entity(null).build();
+        } else if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
             return status(BAD_REQUEST).entity(e.getMessage()).build();
         } else if ( e instanceof ValueFormatException ) {
             return status(BAD_REQUEST).entity(e.getMessage()).build();

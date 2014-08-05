@@ -136,6 +136,19 @@ public class FedoraContentIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutDatastreamContentOnObject() throws Exception {
+        final String content = "foo";
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPut put = new HttpPut(serverAddress + pid + "/fcr:content");
+        put.setEntity(new StringEntity(content));
+        final HttpResponse response = client.execute(put);
+        assertEquals("Expected 400 response code when PUTing content on an object (as opposed to a datastream).",
+                400, response.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testPutDatastreamWithContentDisposition() throws Exception {
         final String pid = getRandomUniquePid();
 

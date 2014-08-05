@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl;
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
 import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -37,6 +38,7 @@ import javax.jcr.Session;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.modeshape.jcr.api.Binary;
@@ -63,12 +65,15 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * The JCR node for this datastream
      *
      * @param n an existing {@link Node}
+     * @throws ResourceTypeException if the node existed prior to this call but is not a datastream.
      */
-    public DatastreamImpl(final Node n) {
+    public DatastreamImpl(final Node n) throws ResourceTypeException {
         super(n);
 
         if (node.isNew()) {
             initializeNewDatastreamProperties();
+        } else if (!hasMixin(node) && !isFrozen.apply(n)) {
+            throw new ResourceTypeException("Attempting to perform a datastream operation on a non-datastream resource!");
         }
     }
 
@@ -78,13 +83,15 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @param session the JCR session to use to retrieve the object
      * @param path the absolute path to the object
      * @param nodeType primary type to assign to node
-     * @throws RepositoryException
+     * @throws RepositoryException in the event of an exception accessing the repository, or specifically a
+     *         ResourceTypeException if a node exists at the path but is not a datastream.
      */
     public DatastreamImpl(final Session session, final String path, final String nodeType) throws RepositoryException {
         super(session, path, nodeType);
-
         if (node.isNew()) {
             initializeNewDatastreamProperties();
+        } else if (!hasMixin(node) && !isFrozen.apply(node)) {
+            throw new ResourceTypeException("Attempting to perform a datastream operation on a non-datastream resource!");
         }
     }
 
