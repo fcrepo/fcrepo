@@ -286,17 +286,17 @@ public class JQLConverterIT {
 
         final String namespacePrefix = session.getNamespacePrefix("http://libraries.ucsd.edu/ark:/20775/");
 
-        final String expectedQuery =
-                "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, " +
-                        "[fedoraResource_subject].[ns001:bb3652744n] AS object FROM [fedora:resource] AS " +
-                        "[fedoraResource_subject] WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = " +
-                        "'bf2765355h' AND [fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND " +
-                        "[fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND " +
-                        "(([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND " +
-                        "[fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT " +
-                        "([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) ORDER BY " +
-                        "[fedoraResource_subject].[jcr:path] DESC, " +
-                        "[fedoraResource_subject].[ns001:bb3652744n] ASC LIMIT 10 OFFSET 20";
+        final String expectedQuery = "SELECT DISTINCT [fedoraResource_subject].[jcr:path] AS subject, " +
+                "[fedoraResource_subject].[ns001:bb3652744n] AS object " +
+                "FROM [fedora:resource] AS [fedoraResource_subject] " +
+                "WHERE ((([fedoraResource_subject].[ns001:bb2765355h] = 'bf2765355h' AND " +
+                "[fedoraResource_subject].[ns001:bb3652744n] IS NOT NULL) AND " +
+                "[fedoraResource_subject].[ns001:bb3652744n] LIKE 'r') AND " +
+                "(([fedoraResource_subject].[ns001:bb3652744n] >= 'abc' AND " +
+                "[fedoraResource_subject].[ns001:bb3652744n] < 'efg') OR NOT " +
+                "([fedoraResource_subject].[ns001:bb3652744n] = 'efg'))) " +
+                "ORDER BY [fedoraResource_subject].[jcr:path] DESC NULLS FIRST, " +
+                "[fedoraResource_subject].[ns001:bb3652744n] ASC NULLS LAST LIMIT 10 OFFSET 20";
 
         assertEquals(expectedQuery.replaceAll("ns001", namespacePrefix), statement);
     }

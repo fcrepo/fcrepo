@@ -95,12 +95,12 @@ public class CacheLoaderChunkInputStream extends InputStream {
         } else {
             newlen = len;
         }
-        System.arraycopy(buffer, indexInBuffer, b, off, len);
-        indexInBuffer += len;
+        System.arraycopy(buffer, indexInBuffer, b, off, newlen);
+        indexInBuffer += newlen;
         if (indexInBuffer >= buffer.length) {
             fillBufferWithNextChunk();
         }
-        return len;
+        return newlen;
     }
 
     @Override
