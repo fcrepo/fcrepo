@@ -27,7 +27,7 @@
      -->
 
     <loaders passivation="false" shared="false" preload="false">
-      <leveldbStore xmlns="urn:infinispan:config:leveldb:5.2"
+      <leveldbStore xmlns="urn:infinispan:config:leveldb:6.0"
                     location="${fcrepo.ispn.repo.CacheDirPath:target/repo}/data"
                     expiredLocation="${fcrepo.ispn.repo.CacheDirPath:target/repo}/expired"
           />
@@ -52,7 +52,7 @@
      -->
 
     <loaders passivation="false" shared="false" preload="false">
-      <leveldbStore xmlns="urn:infinispan:config:leveldb:5.2"
+      <leveldbStore xmlns="urn:infinispan:config:leveldb:6.0"
               location="${fcrepo.ispn.CacheDirPath:target}/data"
               expiredLocation="${fcrepo.ispn.CacheDirPath:target}/expired"
               />

@@ -17,17 +17,17 @@ package org.fcrepo.kernel.impl.utils.impl;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.impl.utils.FixityInputStream;
-import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.impl.utils.FixityResultImpl;
-import org.fcrepo.kernel.impl.utils.infinispan.StoreChunkInputStream;
+import org.fcrepo.kernel.impl.utils.infinispan.CacheLoaderChunkInputStream;
+import org.fcrepo.kernel.utils.ContentDigest;
+import org.fcrepo.kernel.utils.FixityResult;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
 import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.decorators.ChainingCacheStore;
+
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.CacheLoader;
 
 import java.io.InputStream;
 import java.io.Serializable;
@@ -46,28 +46,34 @@ import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
 public class DistributedFixityCheck implements DistributedCallable<String, byte[], Collection<FixityResult>>,
                                                    Serializable {
     private final String dataKey;
+    private final int chunkSize;
+    private final long length;
     private Cache<String, byte[]> cache;
 
     /**
      *
      * @param dataKey
      */
-    public DistributedFixityCheck(final String dataKey) {
+    public DistributedFixityCheck(final String dataKey, final int chunkSize, final long length) {
         this.dataKey = dataKey;
+        this.chunkSize = chunkSize;
+        this.length = length;
     }
 
     @Override
     public Collection<FixityResult> call() throws Exception {
         final ImmutableSet.Builder<FixityResult> fixityResults = new ImmutableSet.Builder<>();
 
-        for (final CacheStore store : stores()) {
+        for (final CacheLoader store : stores()) {
 
             final String digest = ContentDigest.getAlgorithm(new URI("urn:sha1"));
 
-            FixityInputStream fixityInputStream;
-            final InputStream cacheLoaderChunkInputStream = new StoreChunkInputStream(store, dataKey);
+            final InputStream cacheLoaderChunkInputStream = new CacheLoaderChunkInputStream(
+                    store, dataKey, chunkSize, length);
 
-            fixityInputStream = new FixityInputStream(cacheLoaderChunkInputStream, MessageDigest.getInstance(digest));
+            final FixityInputStream fixityInputStream = new FixityInputStream(
+                    cacheLoaderChunkInputStream, MessageDigest.getInstance(digest));
+
             IOUtils.copy(fixityInputStream, NULL_OUTPUT_STREAM);
 
             final URI calculatedChecksum = ContentDigest.asURI(digest, fixityInputStream.getMessageDigest().digest());
@@ -79,7 +85,7 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
         return fixityResults.build();
     }
 
-    private String getExternalIdentifier(final CacheStore store) {
+    private String getExternalIdentifier(final CacheLoader store) {
         final String address;
 
         if (cache.getCacheManager().getAddress() != null) {
@@ -96,13 +102,8 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
         this.cache = cache;
     }
 
-    private Set<CacheStore> stores() {
-        final CacheLoaderManager cacheLoaderManager
-            = ((CacheImpl) cache).getComponentRegistry().getLocalComponent(CacheLoaderManager.class);
-        if (cacheLoaderManager.getCacheLoader() instanceof ChainingCacheStore) {
-            return ((ChainingCacheStore)cacheLoaderManager.getCacheLoader()).getStores().keySet();
-        } else {
-            return ImmutableSet.of(cacheLoaderManager.getCacheStore());
-        }
+    private Set<CacheLoader> stores() {
+        return ((CacheImpl)cache).getComponentRegistry().getLocalComponent(PersistenceManager.class)
+                .getStores(CacheLoader.class);
     }
 }

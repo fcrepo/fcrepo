@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.services.functions;
 
-import static java.util.Arrays.asList;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -25,14 +24,13 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Map;
-
-import javax.jcr.Repository;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.TransactionConfiguration;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,10 +42,8 @@ import org.modeshape.jcr.RepositoryConfiguration.BinaryStorage;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 /**
- * <p>GetClusterConfigurationTest class.</p>
- *
- * @author awoods
- */
+ * @author ?
+**/
 public class GetClusterConfigurationTest {
 
     private GetClusterConfiguration testObj;
@@ -65,9 +61,6 @@ public class GetClusterConfigurationTest {
     private BinaryStorage mockStorage;
 
     @Mock
-    private InfinispanBinaryStore mockStore;
-
-    @Mock
     private Cache<Object, Object> mockCache;
 
     @Mock
@@ -79,6 +72,12 @@ public class GetClusterConfigurationTest {
     @Mock
     private ClusteringConfiguration mockClustering;
 
+    @Mock
+    private TransactionConfiguration mockTransactionConfiguration;
+
+    @Mock
+    private CacheContainer mockCacheContainer;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -88,21 +87,25 @@ public class GetClusterConfigurationTest {
                         .getDeclaredField("getBinaryStore");
         field.setAccessible(true);
         field.set(testObj, mockGetBinaryStore);
+
+        when(mockRepo.getConfiguration()).thenReturn(mockConfig);
+        when(mockConfig.getBinaryStorage()).thenReturn(mockStorage);
+        when(mockCacheContainer.getCache(any(String.class))).thenReturn(mockCache);
+        when(mockCache.getCacheConfiguration()).thenReturn(mockCC);
+        when(mockCC.clustering()).thenReturn(mockClustering);
+        when(mockCC.transaction()).thenReturn(mockTransactionConfiguration);
+        when(mockCC.transaction().transactionMode()).thenReturn(null);
+        when(mockClustering.cacheMode()).thenReturn(LOCAL);
+        when(mockCM.getCache()).thenReturn(mockCache);
+
+        final InfinispanBinaryStore mockStore = new InfinispanBinaryStore(mockCacheContainer, false, "x", "y");
+
+        when(mockGetBinaryStore.apply(mockRepo)).thenReturn(mockStore);
+        mockStore.start();
     }
 
     @Test
     public void testGood() throws Exception {
-        when(mockRepo.getConfiguration()).thenReturn(mockConfig);
-        when(mockConfig.getBinaryStorage()).thenReturn(mockStorage);
-        when(mockGetBinaryStore.apply(any(Repository.class))).thenReturn(
-                mockStore);
-        final List<Cache<?, ?>> mockCaches =
-                asList(new Cache<?, ?>[] {mockCache});
-        when(mockStore.getCaches()).thenReturn(mockCaches);
-        when(mockCM.getCache()).thenReturn(mockCache);
-        when(mockCache.getCacheConfiguration()).thenReturn(mockCC);
-        when(mockCC.clustering()).thenReturn(mockClustering);
-        when(mockClustering.cacheMode()).thenReturn(LOCAL);
         when(mockCache.getCacheManager()).thenReturn(mockCM);
         final Map<String, String> actual = testObj.apply(mockRepo);
         assertNotNull(actual);

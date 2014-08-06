@@ -28,7 +28,9 @@ import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.BinaryKey;
+import org.modeshape.jcr.value.binary.infinispan.ChunkBinaryMetadata;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
+import org.modeshape.jcr.value.binary.infinispan.InfinispanUtils;
 import org.slf4j.Logger;
 
 import javax.jcr.Property;
@@ -65,9 +67,12 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
         final ImmutableSet.Builder<FixityResult> fixityResults = new ImmutableSet.Builder<>();
 
         if (store().hasBinary(key)) {
-            final String dataKey = dataKeyFor(key);
+            final String dataKey = InfinispanUtils.dataKeyFrom((InfinispanBinaryStore)store(), key);
+            final ChunkBinaryMetadata metadata = InfinispanUtils.getMetadata((InfinispanBinaryStore)store(), key);
 
-            final DistributedFixityCheck task = new DistributedFixityCheck(dataKey);
+            final DistributedFixityCheck task = new DistributedFixityCheck(dataKey, metadata.getChunkSize(),
+                    metadata.getLength());
+
             final List<Future<Collection<FixityResult>>> futures
                 = clusterExecutor().submitEverywhere(task, dataKey + "-0");
 

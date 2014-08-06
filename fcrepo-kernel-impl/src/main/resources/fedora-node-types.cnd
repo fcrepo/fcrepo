@@ -107,7 +107,7 @@
  * A Fedora datastream.
  */
 [fedora:datastream] > fedora:resource mixin
-   + image:metadata (nt:unstructured) multiple
+   + image:metadata (nt:unstructured) SNS
 
 /*
  * Some content that can have a checksum

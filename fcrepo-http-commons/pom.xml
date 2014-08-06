@@ -77,6 +77,10 @@
       <artifactId>modeshape-jcr-api</artifactId>
     </dependency>
     <dependency>
+	  <groupId>org.codehaus.jackson</groupId>
+	  <artifactId>jackson-core-asl</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
