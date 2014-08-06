@@ -95,8 +95,8 @@ public abstract class ContentExposingResource extends AbstractResource {
                         .header("Content-Range", contentRangeValue);
             } else {
                 final long maxBufferSize = MAX_BUFFER_SIZE; // 10MB max buffer size?
-                final long rangeSize = range.size();
                 final long rangeStart = range.start();
+                final long rangeSize = range.size() == -1 ? contentSize - rangeStart : range.size();
                 final long remainingBytes = contentSize - rangeStart;
                 final long bufSize = rangeSize < remainingBytes ? rangeSize : remainingBytes;
 
