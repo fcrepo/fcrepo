@@ -30,7 +30,6 @@ import org.modeshape.jcr.JcrRepositoryFactory;
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 /**
@@ -63,10 +62,7 @@ public class ModeShapeRepositoryFactoryBean implements
      */
     @PostConstruct
     public void buildRepository() throws RepositoryException, IOException {
-        if (repositoryConfiguration instanceof ClassPathResource) {
-            LOGGER.info("Using repo config: {}",
-                    ((ClassPathResource) repositoryConfiguration).getPath());
-        }
+        LOGGER.info("Using repo config (classpath): {}", repositoryConfiguration.getURL());
 
         getPropertiesLoader().loadSystemProperties();
 
@@ -75,7 +71,7 @@ public class ModeShapeRepositoryFactoryBean implements
                     singletonMap(URL, repositoryConfiguration.getURL()));
         } catch ( RepositoryException ex ) {
             LOGGER.error("Error loading repository with configuration: {}",
-                    ((ClassPathResource) repositoryConfiguration).getPath());
+                    repositoryConfiguration.getURL());
             throw ex;
         }
     }
