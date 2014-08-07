@@ -73,7 +73,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         if (node.isNew()) {
             initializeNewDatastreamProperties();
         } else if (!hasMixin(node) && !isFrozen.apply(n)) {
-            throw new ResourceTypeException();
+            throw new ResourceTypeException("Attempting to perform a datastream operation on a non-datastream resource!");
         }
     }
 
@@ -91,7 +91,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         if (node.isNew()) {
             initializeNewDatastreamProperties();
         } else if (!hasMixin(node) && !isFrozen.apply(node)) {
-            throw new ResourceTypeException();
+            throw new ResourceTypeException("Attempting to perform a datastream operation on a non-datastream resource!");
         }
     }
 

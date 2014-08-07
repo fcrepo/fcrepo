@@ -32,8 +32,8 @@ public class ResourceTypeException extends RepositoryException {
     /**
      * Default constructor.
      */
-    public ResourceTypeException() {
-        super();
+    public ResourceTypeException(final String message) {
+        super(message);
     }
 
 }
