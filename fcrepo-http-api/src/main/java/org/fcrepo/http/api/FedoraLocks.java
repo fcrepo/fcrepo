@@ -109,6 +109,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         throws RepositoryException, URISyntaxException {
         try {
             final String path = toPath(pathList);
+            LOGGER.trace("Getting profile for: {}", path);
             final Node node = session.getNode(path);
             final Lock lock = lockService.acquireLock(session, path, isDeep);
             session.save();
