@@ -15,7 +15,6 @@
  */
 package org.modeshape.jcr.value.binary.infinispan;
 
-import org.infinispan.Cache;
 import org.modeshape.jcr.value.BinaryKey;
 
 /**
@@ -47,14 +46,4 @@ public class InfinispanUtils {
         final String metadataKey = binaryStore.metadataKeyFrom(key);
         return new ChunkBinaryMetadata(binaryStore.metadataCache.get(metadataKey));
     }
-
-    /**
-     * Extract the blobCache
-     * @param binaryStore
-     * @return
-     */
-    public static Cache<String, byte[]> getBlobCache(final InfinispanBinaryStore binaryStore) {
-        return binaryStore.blobCache;
-    }
-
 }

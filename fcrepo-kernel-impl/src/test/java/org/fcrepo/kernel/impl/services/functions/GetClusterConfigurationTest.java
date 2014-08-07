@@ -60,8 +60,6 @@ public class GetClusterConfigurationTest {
     @Mock
     private BinaryStorage mockStorage;
 
-    private InfinispanBinaryStore mockStore;
-
     @Mock
     private Cache<Object, Object> mockCache;
 
@@ -100,7 +98,7 @@ public class GetClusterConfigurationTest {
         when(mockClustering.cacheMode()).thenReturn(LOCAL);
         when(mockCM.getCache()).thenReturn(mockCache);
 
-        mockStore = new InfinispanBinaryStore(mockCacheContainer, false, "x", "y");
+        final InfinispanBinaryStore mockStore = new InfinispanBinaryStore(mockCacheContainer, false, "x", "y");
 
         when(mockGetBinaryStore.apply(mockRepo)).thenReturn(mockStore);
         mockStore.start();
