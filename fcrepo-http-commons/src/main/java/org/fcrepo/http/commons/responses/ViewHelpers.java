@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
@@ -138,8 +139,7 @@ public class ViewHelpers {
         while (versions.hasNext()) {
             quad = versions.next();
             date = getVersionDate(dataset, quad.getObject());
-            String key = date == null || date.length() == 0 ?
-            format.format(new Date()) : date;
+            String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
             while (map.containsKey(key)) {
                 key = key + "1";
             }
