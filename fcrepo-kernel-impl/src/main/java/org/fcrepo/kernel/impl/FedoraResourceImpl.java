@@ -166,15 +166,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public Date getLastModifiedDate() throws RepositoryException {
+        final Date createdDate = getCreatedDate();
+
         if (node.hasProperty(JCR_LASTMODIFIED)) {
-            return new Date(node.getProperty(JCR_LASTMODIFIED).getDate()
-                            .getTimeInMillis());
+            final Date lastModifiedDate = new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+
+            // make sure that lastModifiedDate isn't before createdDate
+            if ( !isFrozen.apply(node) && !node.isLocked() && createdDate != null
+                    && lastModifiedDate.before(createdDate) ) {
+                final Calendar cal = Calendar.getInstance();
+                cal.setTime(createdDate);
+                node.setProperty(JCR_LASTMODIFIED, cal);
+                return createdDate;
+            }
+            return lastModifiedDate;
         }
         LOGGER.debug(
                     "Could not get last modified date property for node {}",
                     node);
 
-        final Date createdDate = getCreatedDate();
 
         if (createdDate != null) {
             LOGGER.trace(

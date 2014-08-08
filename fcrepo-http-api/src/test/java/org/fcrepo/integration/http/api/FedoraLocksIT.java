@@ -339,7 +339,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         final String lockToken = getLockToken(lockObject(pid));
 
-        final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid));
+        final GraphStore rdf = getGraphStore(getObjectProperties(pid));
 
         final Resource subject = createResource(serverAddress + pid);
         final String [] jcrLockTriples = new String[] {
