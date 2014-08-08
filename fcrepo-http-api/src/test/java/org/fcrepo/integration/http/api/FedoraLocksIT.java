@@ -282,7 +282,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final Node nodeURI = createURI(serverAddress + pid);
         final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
 
-        final GraphStore store = getGraphStore(getObjectProperties(pid));
+        final GraphStore store = getGraphStore(getObjectProperties(pid, lockToken));
         Assert.assertTrue("HAS_LOCK assertion should be in the object's RDF.",
                 store.contains(Node.ANY, nodeURI, HAS_LOCK.asNode(), lockURI));
         assertUnlockWithToken(pid, lockToken);
@@ -297,10 +297,10 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         final String lockToken = getLockToken(lockObject(pid, true));
 
+        final GraphStore store = getGraphStore(getObjectProperties(childPid, lockToken));
+
         final Node childNodeURI = createURI(serverAddress + childPid);
         final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
-
-        final GraphStore store = getGraphStore(getObjectProperties(childPid));
         Assert.assertTrue("HAS_LOCK assertion should be in the child object's RDF.",
                 store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
         assertUnlockWithToken(pid, lockToken);
@@ -339,7 +339,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         final String lockToken = getLockToken(lockObject(pid));
 
-        final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid));
+        final GraphStore rdf = getGraphStore(getObjectProperties(pid, lockToken));
 
         final Resource subject = createResource(serverAddress + pid);
         final String [] jcrLockTriples = new String[] {
@@ -403,7 +403,8 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         Assert.assertEquals(CONFLICT.getStatusCode(), commitTransaction(txId).getStatusLine().getStatusCode());
 
         // verify that non-conflicting operation was not successful.
-        Assert.assertEquals(NOT_FOUND.getStatusCode(), getObjectProperties(inTxPid).getStatusLine().getStatusCode());
+        Assert.assertEquals(NOT_FOUND.getStatusCode(), getObjectProperties(inTxPid, lockToken)
+            .getStatusLine().getStatusCode());
     }
 
     /**
@@ -550,8 +551,10 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         return execute(commitTx);
     }
 
-    private HttpResponse getObjectProperties(final String pid) throws IOException {
-        return execute(new HttpGet(serverAddress + pid));
+    private HttpResponse getObjectProperties(final String pid, final String lockToken) throws IOException {
+        final HttpGet get = getObjMethod(pid);
+        addLockToken(get, lockToken);
+        return execute(get);
     }
 }
 

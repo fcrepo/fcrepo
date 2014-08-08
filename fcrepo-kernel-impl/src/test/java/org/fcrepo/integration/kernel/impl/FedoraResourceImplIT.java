@@ -146,6 +146,19 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    public void testLastModified() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraObject obj1 = objectService.createObject(session, "/" + pid);
+
+        session.save();
+        session.logout();
+        session = repo.login();
+
+        final FedoraObject obj2 = objectService.getObject(session, "/" + pid);
+        assertFalse( obj2.getLastModifiedDate().before(obj2.getCreatedDate()) );
+    }
+
+    @Test
     public void testRepositoryRootGraph() throws RepositoryException {
 
         final FedoraResource object = nodeService.getObject(session, "/");

@@ -81,6 +81,7 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Iterator;
@@ -108,6 +109,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
@@ -123,6 +125,7 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 
@@ -132,6 +135,17 @@ import com.hp.hpl.jena.update.GraphStore;
  * @author awoods
  */
 public class FedoraNodesIT extends AbstractResourceIT {
+
+    private SimpleDateFormat headerFormat;
+    private SimpleDateFormat tripleFormat;
+
+    @Before
+    public void setup() {
+        headerFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+        headerFormat.setTimeZone(getTimeZone("GMT"));
+        tripleFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        tripleFormat.setTimeZone(getTimeZone("GMT"));
+    }
 
     @Test
     public void testIngest() throws Exception {
@@ -1654,8 +1668,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
     **/
     @Test
     public void testLastModifiedUpdatedAfterUpdates() throws Exception {
-        final SimpleDateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-        df.setTimeZone(getTimeZone("GMT"));
 
         // create directory containing a file in filesystem
         final File fed = new File("target/test-classes/test-objects");
@@ -1671,7 +1683,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpHead head1 = new HttpHead(serverAddress + "files/" + id);
         final HttpResponse resp1 = client.execute(head1);
         assertEquals( 200, resp1.getStatusLine().getStatusCode() );
-        final long lastmod1 = df.parse(resp1.getFirstHeader("Last-Modified").getValue()).getTime();
+        final long lastmod1 = headerFormat.parse(resp1.getFirstHeader("Last-Modified").getValue()).getTime();
         assertTrue( (timestamp1 - lastmod1) < 1000 ); // because rounding
 
         // remove the file and wait for the TTL to expire
@@ -1683,7 +1695,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final HttpHead head2 = new HttpHead(serverAddress + "files/" + id);
         final HttpResponse resp2 = client.execute(head2);
         assertEquals( 200, resp2.getStatusLine().getStatusCode() );
-        final long lastmod2 = df.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
+        final long lastmod2 = headerFormat.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
         assertTrue( (timestamp2 - lastmod2) < 1000 ); // because rounding
 
         assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
@@ -1704,4 +1716,33 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
+    @Test
+    public void testCreatedAndModifiedDates() throws Exception {
+        final HttpResponse createResponse = createObject("");
+        final String location = createResponse.getFirstHeader("Location").getValue();
+        final HttpGet getObjMethod = new HttpGet(location);
+        final HttpResponse response = client.execute(getObjMethod);
+        final GraphStore results = getGraphStore(response);
+        final Model model = createModelForGraph(results.getDefaultGraph());
+        final Resource nodeUri = createResource(location);
+
+        final String lastmodString = response.getFirstHeader("Last-Modified").getValue();
+        final Date lastmodDate = headerFormat.parse(lastmodString);
+        final Date createdDateTriples = getDateFromModel( model, nodeUri,
+                createProperty(REPOSITORY_NAMESPACE + "created"));
+        final Date lastmodDateTriples = getDateFromModel( model, nodeUri,
+                createProperty(REPOSITORY_NAMESPACE + "lastModified"));
+        assertNotNull( createdDateTriples );
+        assertEquals( lastmodString, headerFormat.format(createdDateTriples) );
+        assertNotNull( lastmodDateTriples );
+        assertEquals( lastmodString, headerFormat.format(lastmodDateTriples) );
+    }
+
+    private Date getDateFromModel( final Model model, final Resource subj, final Property pred ) throws Exception {
+        final StmtIterator stmts = model.listStatements( subj, pred, (String)null );
+        if ( stmts.hasNext() ) {
+            return tripleFormat.parse(stmts.nextStatement().getString());
+        }
+        return null;
+    }
 }
