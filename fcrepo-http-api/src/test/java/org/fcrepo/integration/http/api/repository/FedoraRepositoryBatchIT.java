@@ -58,7 +58,7 @@ public class FedoraRepositoryBatchIT extends AbstractResourceIT {
         // TODO: we should actually evaluate the multipart response for the
         // things we're expecting
         final HttpGet getDSesMethod =
-            new HttpGet(getServerPath(pid) + "/fcr:batch");
+            new HttpGet(getServerPath(pid) + "/fcr:batch?child=" + dsid1 + "&child=" + dsid2);
         final HttpResponse response = client.execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
