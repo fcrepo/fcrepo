@@ -16,7 +16,7 @@
 package org.fcrepo.jms.observer;
 
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.fcrepo.kernel.utils.TestHelpers.setField;
+import static org.fcrepo.kernel.impl.utils.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;

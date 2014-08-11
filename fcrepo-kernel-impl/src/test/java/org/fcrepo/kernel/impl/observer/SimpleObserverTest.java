@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static org.fcrepo.kernel.impl.observer.SimpleObserver.EVENT_TYPES;
-import static org.fcrepo.kernel.utils.TestHelpers.setField;
+import static org.fcrepo.kernel.impl.utils.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;

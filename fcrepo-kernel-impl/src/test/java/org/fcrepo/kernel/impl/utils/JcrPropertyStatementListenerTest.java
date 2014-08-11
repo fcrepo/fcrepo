@@ -22,7 +22,7 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.utils.TestHelpers.setField;
+import static org.fcrepo.kernel.impl.utils.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;

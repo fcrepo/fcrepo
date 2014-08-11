@@ -44,9 +44,9 @@ import java.util.Calendar;
 import java.util.Date;
 
 import static org.fcrepo.kernel.impl.DatastreamImpl.hasMixin;
-import static org.fcrepo.kernel.utils.TestHelpers.checksumString;
-import static org.fcrepo.kernel.utils.TestHelpers.getContentNodeMock;
-import static org.fcrepo.kernel.utils.TestHelpers.getPropertyIterator;
+import static org.fcrepo.kernel.impl.utils.TestHelpers.checksumString;
+import static org.fcrepo.kernel.impl.utils.TestHelpers.getContentNodeMock;
+import static org.fcrepo.kernel.impl.utils.TestHelpers.getPropertyIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;

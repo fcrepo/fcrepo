@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl.spring;
 
-import static org.fcrepo.kernel.utils.TestHelpers.setField;
+import static org.fcrepo.kernel.impl.utils.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
