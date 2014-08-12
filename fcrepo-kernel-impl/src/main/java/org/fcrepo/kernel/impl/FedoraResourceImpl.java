@@ -172,7 +172,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             final Date lastModifiedDate = new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
 
             // make sure that lastModifiedDate isn't before createdDate
-            if ( createdDate != null && lastModifiedDate.before(createdDate) ) {
+            if ( !isFrozen.apply(node) && createdDate != null && lastModifiedDate.before(createdDate) ) {
                 final Calendar cal = Calendar.getInstance();
                 cal.setTime(createdDate);
                 node.setProperty(JCR_LASTMODIFIED, cal);
