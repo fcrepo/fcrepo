@@ -102,7 +102,7 @@ public class ModeShapeHonorsFADResponseIT {
         }
         final ObjectService os = new ObjectServiceImpl();
         os.createObject(session, "/myobject");
-        verify(fad, times(5)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
+        verify(fad, times(4)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 
     @Test(expected = AccessDeniedException.class)
