@@ -35,7 +35,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
@@ -119,8 +118,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             if (!isFedoraResource.apply(node) && !isFrozen.apply(node)) {
                 node.addMixin(FEDORA_RESOURCE);
             }
-
-            node.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
         }
     }
 
@@ -169,17 +166,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final Date createdDate = getCreatedDate();
 
         if (node.hasProperty(JCR_LASTMODIFIED)) {
-            final Date lastModifiedDate = new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
-
-            // make sure that lastModifiedDate isn't before createdDate
-            if ( !isFrozen.apply(node) && !node.isLocked() && createdDate != null
-                    && lastModifiedDate.before(createdDate) ) {
-                final Calendar cal = Calendar.getInstance();
-                cal.setTime(createdDate);
-                node.setProperty(JCR_LASTMODIFIED, cal);
-                return createdDate;
-            }
-            return lastModifiedDate;
+            return new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
         }
         LOGGER.debug(
                     "Could not get last modified date property for node {}",
