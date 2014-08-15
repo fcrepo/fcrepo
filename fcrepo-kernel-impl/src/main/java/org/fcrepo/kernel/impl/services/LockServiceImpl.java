@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.lock.LockException;
 import javax.jcr.lock.LockManager;
 
 /**
@@ -34,6 +35,11 @@ public class LockServiceImpl extends AbstractService implements LockService {
     public Lock acquireLock(final Session session, final String path, final boolean deep)
         throws RepositoryException {
         final LockManager lockManager = session.getWorkspace().getLockManager();
+        // The following check should be redundant according to the JCR 2.0 spec,
+        // but is apparently necessary.
+        if (lockManager.isLocked(path)) {
+            throw new LockException("Already locked!");
+        }
         return  new JCRLock(lockManager.lock(path, deep, false, -1, session.getUserID()));
     }
 

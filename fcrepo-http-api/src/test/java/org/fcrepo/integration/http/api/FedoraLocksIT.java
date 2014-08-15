@@ -235,6 +235,28 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     }
 
     /**
+     * A basic test to ensure that a lock may not be
+     * taken out when a node is already subject to a deep lock.
+     */
+    @Test
+    public void testDeepLockConflictingChildLock() throws IOException {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        final String childPid = pid + "/" + getRandomUniquePid();
+        createObject(childPid);
+        final String grandchildPid = childPid + getRandomUniquePid();
+        createObject(grandchildPid);
+        final String parentLockToken = getLockToken(lockObject(pid, true));
+
+        final HttpPost post = new HttpPost(serverAddress + grandchildPid + "/" + FCR_LOCK);
+        addLockToken(post, parentLockToken);
+        final HttpResponse response = client.execute(post);
+
+        Assert.assertEquals("May not take out a lock when grandparent is deep-locked!",
+                CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
+    }
+
+    /**
      * A sanity test to make sure you get an error if you try to unlock
      * with a bogus token.
      */
@@ -289,21 +311,34 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     }
 
     @Test
-    public void testLockLinkIsPresentOnChildrenOfDeepLockedNode() throws IOException {
-        final String pid = getRandomUniquePid();
-        final String childPid = pid + "/" + getRandomUniquePid();
-        createObject(pid);
-        createObject(childPid);
+    public void testLockLinkIsPresentOnDescendantsOfDeepLockedNode() throws IOException {
+        final String[] pids = new String[10];
+        final StringBuffer path = new StringBuffer();
+        for (int i = 0; i < pids.length; i ++) {
+            final String pid = getRandomUniquePid();
+            if (path.length() > 0) {
+                path.append('/');
+            }
+            path.append(getRandomUniquePid());
+            pids[i] = path.toString();
+            createObject(pids[i]);
+        }
 
-        final String lockToken = getLockToken(lockObject(pid, true));
+        final String lockedPid = pids[0];
+        final String lockToken = getLockToken(lockObject(lockedPid, true));
+        final Node lockURI = createURI(serverAddress + lockedPid + "/" + FCR_LOCK);
 
-        final Node childNodeURI = createURI(serverAddress + childPid);
-        final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
+        for (String childPid : pids) {
+            final Node childNodeURI = createURI(serverAddress + childPid);
 
-        final GraphStore store = getGraphStore(getObjectProperties(childPid));
-        Assert.assertTrue("HAS_LOCK assertion should be in the child object's RDF.",
-                store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
-        assertUnlockWithToken(pid, lockToken);
+            final GraphStore store = getGraphStore(getObjectProperties(childPid));
+            Assert.assertTrue("HAS_LOCK assertion should be in the child object's RDF. "
+                    + childPid  + " has no reference to the lock on " + lockedPid + "!",
+                    store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
+
+            assertCannotSetPropertyWithoutLockToken(childPid);
+        }
+        assertUnlockWithToken(lockedPid, lockToken);
     }
 
     @Test
