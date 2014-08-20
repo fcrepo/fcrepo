@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>4.0.0-beta-02-SNAPSHOT</version>
+    <version>4.0.0-beta-02</version>
   </parent>
 
   <artifactId>fcrepo-webapp</artifactId>
@@ -88,12 +88,12 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-auth-roles-common</artifactId>
-      <version>${project.version}</version>
+      <version>4.0.0-beta-02</version>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-auth-roles-basic</artifactId>
-      <version>${project.version}</version>
+      <version>4.0.0-beta-02</version>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
