@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraRepositorySitemap.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.repository</a> &gt; <span class="el_source">FedoraRepositorySitemap.java</span></div><h1>FedoraRepositorySitemap.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api.repository;
+
+import static java.lang.Integer.parseInt;
+import static javax.jcr.query.Query.JCR_SQL2;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
+import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.modeshape.jcr.api.JcrConstants.JCR_NAME;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Calendar;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.query.Query;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.Row;
+import javax.jcr.query.RowIterator;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+
+import org.fcrepo.http.api.FedoraNodes;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapEntry;
+import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapIndex;
+import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapUrlSet;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+
+/**
+ * A Sitemap implementation for Fedora objects
+ *
+ * TODO should this be fcr:sitemap?
+ * @author ajs6f
+ * @author cbeer
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/sitemap&quot;)
+<span class="fc" id="L64">public class FedoraRepositorySitemap extends AbstractResource {</span>
+
+    @InjectedSession
+    protected Session session;
+
+<span class="fc" id="L69">    private static final Logger LOGGER = getLogger(FedoraRepositorySitemap.class);</span>
+
+    public static final long entriesPerPage = 50000;
+
+    /**
+     * Get the sitemap index for the repository GET /sitemap
+     *
+     * @return sitemap index for the repository
+     */
+    @GET
+    @Timed
+    @Produces(TEXT_XML)
+    public SitemapIndex getSitemapIndex() {
+
+<span class="fc" id="L83">        LOGGER.trace(&quot;Executing getSitemapIndex()...&quot;);</span>
+
+        try {
+<span class="fc" id="L86">            final long count =</span>
+                repositoryService.getRepositoryObjectCount() / entriesPerPage;
+
+<span class="fc" id="L89">            final SitemapIndex sitemapIndex = new SitemapIndex();</span>
+
+<span class="fc bfc" id="L91" title="All 2 branches covered.">            for (int i = 0; i &lt;= count; i++) {</span>
+<span class="fc" id="L92">                sitemapIndex</span>
+                        .appendSitemapEntry(new SitemapEntry(uriInfo
+                                .getBaseUriBuilder().path(FedoraRepositorySitemap.class)
+                                .path(FedoraRepositorySitemap.class, &quot;getSitemap&quot;).build(
+                                        i + 1)));
+            }
+<span class="fc" id="L98">            LOGGER.trace(&quot;Executed getSitemapIndex().&quot;);</span>
+<span class="fc" id="L99">            return sitemapIndex;</span>
+        } finally {
+<span class="pc" id="L101">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Get the sitemap at a given page
+     *
+     * @param page
+     * @return sitemap at the given page
+     * @throws RepositoryException
+     */
+    @GET
+    @Path(&quot;/{page}&quot;)
+    @Timed
+    @Produces(TEXT_XML)
+    public SitemapUrlSet getSitemap(@PathParam(&quot;page&quot;) final String page)
+        throws RepositoryException {
+        try {
+<span class="fc" id="L119">            final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();</span>
+
+<span class="fc" id="L121">            final RowIterator rows =</span>
+                getSitemapEntries(session, parseInt(page) - 1);
+
+<span class="fc bfc" id="L124" title="All 2 branches covered.">            while (rows.hasNext()) {</span>
+<span class="fc" id="L125">                final Row r = rows.nextRow();</span>
+
+<span class="fc" id="L127">                sitemapUrlSet.appendSitemapEntry(getSitemapEntry(r));</span>
+<span class="fc" id="L128">            }</span>
+
+<span class="fc" id="L130">            return sitemapUrlSet;</span>
+        } finally {
+<span class="pc" id="L132">            session.logout();</span>
+        }
+    }
+
+    private RowIterator getSitemapEntries(final Session session, final long pg)
+        throws RepositoryException {
+
+<span class="fc" id="L139">        final QueryManager queryManager =</span>
+            session.getWorkspace().getQueryManager();
+
+        // TODO expand to more fields
+<span class="fc" id="L143">        final String sqlExpression =</span>
+            &quot;SELECT [&quot; + JCR_NAME + &quot;],[&quot; + JCR_LASTMODIFIED + &quot;] FROM [&quot;
+                    + FEDORA_OBJECT + &quot;]&quot;;
+<span class="fc" id="L146">        final Query query = queryManager.createQuery(sqlExpression, JCR_SQL2);</span>
+
+<span class="fc" id="L148">        query.setOffset(pg * entriesPerPage);</span>
+<span class="fc" id="L149">        query.setLimit(entriesPerPage);</span>
+
+<span class="fc" id="L151">        final QueryResult queryResults = query.execute();</span>
+
+<span class="fc" id="L153">        final RowIterator rows = queryResults.getRows();</span>
+
+<span class="fc" id="L155">        return rows;</span>
+    }
+
+    private SitemapEntry getSitemapEntry(final Row r)
+        throws RepositoryException {
+
+<span class="fc" id="L161">        Value lkDateValue = r.getValue(JCR_LASTMODIFIED);</span>
+<span class="fc" id="L162">        final String path = r.getNode().getPath();</span>
+
+<span class="pc bpc" id="L164" title="1 of 2 branches missed.">        if (lkDateValue == null) {</span>
+<span class="nc" id="L165">            LOGGER.warn(&quot;no value for {} on {}&quot;, JCR_LASTMODIFIED, path);</span>
+<span class="nc" id="L166">            lkDateValue = r.getValue(JCR_CREATED);</span>
+        }
+<span class="pc bpc" id="L168" title="1 of 2 branches missed.">        final Calendar lastKnownDate =</span>
+            (lkDateValue != null) ? lkDateValue.getDate() : null;
+<span class="fc" id="L170">        return new SitemapEntry(uriInfo.getBaseUriBuilder().path(</span>
+                FedoraNodes.class).build(path.substring(1)), lastKnownDate);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

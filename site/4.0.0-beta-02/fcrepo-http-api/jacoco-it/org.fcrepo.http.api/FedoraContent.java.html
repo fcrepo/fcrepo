@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraContent.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraContent.java</span></div><h1>FedoraContent.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import com.codahale.metrics.annotation.Timed;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.domain.ContentLocation;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.ParseException;
+import java.util.List;
+
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Content controller for adding, reading, and manipulating
+ * binary streams
+ *
+ * @author awoods
+ * @author gregjan
+ */
+@Component
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:content&quot;)
+<span class="fc" id="L67">public class FedoraContent extends ContentExposingResource {</span>
+
+    @InjectedSession
+    protected Session session;
+
+<span class="fc" id="L72">    private static final Logger LOGGER = getLogger(FedoraContent.class);</span>
+
+    /**
+     * Create an anonymous DS with a newly minted name and content from request
+     * body
+     *
+     * @param pathList
+     * @throws RepositoryException
+     */
+    @POST
+    @Timed
+    public Response create(@PathParam(&quot;path&quot;)
+            final List&lt;PathSegment&gt; pathList,
+            @HeaderParam(&quot;Slug&quot;) final String slug,
+            @HeaderParam(&quot;Content-Disposition&quot;) final String contentDisposition,
+            @QueryParam(&quot;checksum&quot;) final String checksum,
+            @HeaderParam(&quot;Content-Type&quot;) final MediaType requestContentType,
+            @ContentLocation final InputStream requestBodyStream,
+            @Context final HttpServletResponse servletResponse)
+        throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
+<span class="fc" id="L92">        final MediaType contentType = getSimpleContentType(requestContentType);</span>
+
+
+        final String newDatastreamPath;
+<span class="fc" id="L96">        final String path = toPath(pathList);</span>
+
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (nodeService.exists(session, path)) {</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            if ( nodeService.getObject(session, path).hasContent() ) {</span>
+<span class="fc" id="L100">                return status(SC_CONFLICT)</span>
+                           .entity(path + &quot; is an existing resource!&quot;).build();
+            }
+
+            final String pid;
+
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            if (slug != null) {</span>
+<span class="nc" id="L107">                pid = slug;</span>
+            }  else {
+<span class="nc" id="L109">                pid = pidMinter.mintPid();</span>
+            }
+
+<span class="nc" id="L112">            newDatastreamPath = path + &quot;/&quot; + pid;</span>
+<span class="nc" id="L113">        } else {</span>
+<span class="fc" id="L114">            newDatastreamPath = path;</span>
+        }
+
+
+<span class="fc" id="L118">        LOGGER.trace(&quot;Attempting to ingest fcr:content with path: {}&quot;, newDatastreamPath);</span>
+
+        try {
+
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">            if (nodeService.exists(session, newDatastreamPath)) {</span>
+<span class="nc" id="L123">                return status(SC_CONFLICT)</span>
+                           .entity(path + &quot; is an existing resource!&quot;).build();
+            }
+
+<span class="fc" id="L127">            final URI checksumURI = checksumURI(checksum);</span>
+<span class="fc" id="L128">            final String originalFileName = originalFileName(contentDisposition);</span>
+
+<span class="fc" id="L130">            final Datastream datastream =</span>
+                    datastreamService.createDatastream(session, newDatastreamPath,
+                            contentType.toString(), originalFileName, requestBodyStream,
+                            checksumURI);
+
+<span class="fc" id="L135">            final HttpIdentifierTranslator subjects =</span>
+                    new HttpIdentifierTranslator(session, FedoraNodes.class,
+                            uriInfo);
+
+<span class="fc" id="L139">            session.save();</span>
+<span class="fc" id="L140">            versionService.nodeUpdated(datastream.getNode());</span>
+
+<span class="fc" id="L142">            final ResponseBuilder builder = created(new URI(subjects.getSubject(</span>
+                    datastream.getContentNode().getPath()).getURI()));
+
+<span class="fc" id="L145">            addCacheControlHeaders(servletResponse, datastream, session);</span>
+
+<span class="fc" id="L147">            return builder.build();</span>
+
+        } finally {
+<span class="pc" id="L150">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Modify an existing datastream's content
+     *
+     * @param pathList
+     * @param requestContentType Content-Type header
+     * @param requestBodyStream Binary blob
+     * @return 201 Created
+     * @throws RepositoryException
+     * @throws InvalidChecksumException
+     */
+    @PUT
+    @Timed
+    public Response modifyContent(@PathParam(&quot;path&quot;) final List&lt;PathSegment&gt; pathList,
+                                  @QueryParam(&quot;checksum&quot;) final String checksum,
+                                  @HeaderParam(&quot;Content-Disposition&quot;) final String contentDisposition,
+                                  @HeaderParam(&quot;Content-Type&quot;) final MediaType requestContentType,
+                                  @ContentLocation final InputStream requestBodyStream,
+                                  @Context final Request request,
+                                  @Context final HttpServletResponse servletResponse)
+        throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
+
+        try {
+<span class="fc" id="L176">            final String path = toPath(pathList);</span>
+<span class="fc" id="L177">            final MediaType contentType = getSimpleContentType(requestContentType);</span>
+
+<span class="fc bfc" id="L179" title="All 2 branches covered.">            if (nodeService.exists(session, path)) {</span>
+
+<span class="fc" id="L181">                final Datastream ds =</span>
+                        datastreamService.getDatastream(session, path);
+<span class="fc" id="L183">                evaluateRequestPreconditions(request, servletResponse, ds, session);</span>
+            }
+
+<span class="fc" id="L186">            LOGGER.debug(&quot;create Datastream {}&quot;, path);</span>
+
+<span class="fc" id="L188">            final URI checksumURI = checksumURI(checksum);</span>
+<span class="fc" id="L189">            final String originalFileName = originalFileName(contentDisposition);</span>
+
+<span class="fc" id="L191">            final Datastream datastream =</span>
+                datastreamService.createDatastream(session, path,
+                    contentType.toString(), originalFileName, requestBodyStream, checksumURI);
+
+<span class="fc" id="L195">            final boolean isNew = datastream.isNew();</span>
+<span class="fc" id="L196">            session.save();</span>
+<span class="fc" id="L197">            versionService.nodeUpdated(datastream.getNode());</span>
+
+            ResponseBuilder builder;
+<span class="fc bfc" id="L200" title="All 2 branches covered.">            if (isNew) {</span>
+<span class="fc" id="L201">                final HttpIdentifierTranslator subjects =</span>
+                        new HttpIdentifierTranslator(session, FedoraNodes.class,
+                                uriInfo);
+
+<span class="fc" id="L205">                builder = created(new URI(subjects.getSubject(</span>
+                        datastream.getContentNode().getPath()).getURI()));
+<span class="fc" id="L207">            } else {</span>
+<span class="fc" id="L208">                builder = noContent();</span>
+            }
+
+<span class="fc" id="L211">            addCacheControlHeaders(servletResponse, datastream, session);</span>
+
+<span class="fc" id="L213">            return builder.build();</span>
+        } finally {
+<span class="fc" id="L215">            session.logout();</span>
+        }
+    }
+
+    /**
+     * Get the binary content of a datastream
+     *
+     * @param pathList
+     * @return Binary blob
+     * @throws RepositoryException
+     */
+    @GET
+    @Timed
+    public Response getContent(@PathParam(&quot;path&quot;) final List&lt;PathSegment&gt; pathList,
+                               @HeaderParam(&quot;Range&quot;) final String rangeValue,
+                               @Context final Request request,
+                               @Context final HttpServletResponse servletResponse)
+        throws RepositoryException, IOException {
+        try {
+<span class="fc" id="L234">            final String path = toPath(pathList);</span>
+<span class="fc" id="L235">            LOGGER.info(&quot;Attempting get of {}.&quot;, path);</span>
+
+<span class="fc" id="L237">            final Datastream ds =</span>
+                    datastreamService.getDatastream(session, path);
+<span class="fc" id="L239">            final HttpIdentifierTranslator subjects =</span>
+                    new HttpIdentifierTranslator(session, FedoraNodes.class,
+                            uriInfo);
+<span class="fc" id="L242">            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,</span>
+                                                   subjects, session);
+
+        } finally {
+<span class="fc" id="L246">            session.logout();</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
