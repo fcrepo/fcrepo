@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TransactionImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl</a> &gt; <span class="el_source">TransactionImpl.java</span></div><h1>TransactionImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl;
+
+import static java.lang.System.currentTimeMillis;
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.Transaction.State.NEW;
+import static org.fcrepo.kernel.Transaction.State.COMMITED;
+import static org.fcrepo.kernel.Transaction.State.DIRTY;
+import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
+
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.services.VersionService;
+
+/**
+ * A Fedora Transaction wraps a JCR session with some expiration logic.
+ * Whenever the transaction's session is requested, the expiration is extended
+ *
+ * @author bbpennel
+ */
+public class TransactionImpl implements Transaction {
+
+    // the default timeout is 3 minutes
+    public static final long DEFAULT_TIMEOUT = 3L * 60L * 1000L;
+
+    public static final String TIMEOUT_SYSTEM_PROPERTY = &quot;fcrepo4.tx.timeout&quot;;
+
+    private final Session session;
+
+    private final String id;
+
+    private final String userName;
+
+    private final Date created;
+
+    private final Calendar expires;
+
+<span class="fc" id="L60">    private State state = NEW;</span>
+
+    private Set&lt;String&gt; versionedPaths;
+
+    /**
+     * Create a transaction for the given Session
+     * @param session
+     */
+
+    public TransactionImpl(final Session session, final String userName) {
+<span class="fc" id="L70">        super();</span>
+<span class="fc" id="L71">        this.session = session;</span>
+<span class="fc" id="L72">        this.created = new Date();</span>
+<span class="fc" id="L73">        this.id = randomUUID().toString();</span>
+<span class="fc" id="L74">        this.expires = Calendar.getInstance();</span>
+<span class="fc" id="L75">        this.updateExpiryDate();</span>
+<span class="fc" id="L76">        this.userName = userName;</span>
+<span class="fc" id="L77">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getSession()
+     */
+    @Override
+    public Session getSession() {
+<span class="nc" id="L84">        updateExpiryDate();</span>
+<span class="nc" id="L85">        return TxAwareSession.newInstance(session, id);</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getCreated()
+     */
+    @Override
+    public Date getCreated() {
+<span class="nc" id="L93">        return new Date(created.getTime());</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getId()
+     */
+    @Override
+    public String getId() {
+<span class="fc" id="L101">        return id;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getState()
+     */
+    @Override
+    public State getState() throws RepositoryException {
+<span class="nc bnc" id="L109" title="All 4 branches missed.">        if (this.session != null &amp;&amp; this.session.hasPendingChanges()) {</span>
+<span class="nc" id="L110">            return DIRTY;</span>
+        }
+<span class="nc" id="L112">        return state;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#getExpires()
+     */
+    @Override
+    public Date getExpires() {
+<span class="fc" id="L120">        return expires.getTime();</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#addPathToVersion(java.lang.String)
+     */
+    @Override
+    public void addPathToVersion(final String absPath) {
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (versionedPaths == null) {</span>
+<span class="nc" id="L129">            versionedPaths = Collections.newSetFromMap(</span>
+                    new ConcurrentHashMap&lt;String, Boolean&gt;());
+        }
+<span class="nc" id="L132">        versionedPaths.add(absPath);</span>
+<span class="nc" id="L133">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#commit(org.fcrepo.kernel.services.VersionService)
+     */
+    @Override
+    public void commit(final VersionService vService) throws RepositoryException {
+
+<span class="fc" id="L141">        this.session.save();</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">        if (this.versionedPaths != null) {</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            if (vService == null) {</span>
+<span class="nc" id="L144">                throw new IllegalStateException(&quot;Versioned Paths were added,&quot; +</span>
+                        &quot; but no VersionService was provided!&quot;);
+            }
+<span class="nc" id="L147">            vService.createVersion(session.getWorkspace(), versionedPaths);</span>
+        }
+<span class="fc" id="L149">        this.state = COMMITED;</span>
+<span class="fc" id="L150">        this.expire();</span>
+<span class="fc" id="L151">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#expire()
+     */
+    @Override
+    public void expire() {
+<span class="fc" id="L158">        this.session.logout();</span>
+<span class="fc" id="L159">        this.expires.setTimeInMillis(currentTimeMillis());</span>
+<span class="fc" id="L160">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#isAssociatedWithUser()
+     */
+    @Override
+    public boolean isAssociatedWithUser(final String userName) {
+<span class="fc" id="L167">        boolean associatedWith = false;</span>
+<span class="pc bpc" id="L168" title="1 of 2 branches missed.">        if (this.userName == null) {</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            if (userName == null) {</span>
+<span class="nc" id="L170">                associatedWith = true;</span>
+            }
+        } else {
+<span class="fc" id="L173">            associatedWith = this.userName.equals(userName);</span>
+        }
+<span class="fc" id="L175">        return associatedWith;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#rollback()
+     */
+    @Override
+    public void rollback() throws RepositoryException {
+<span class="fc" id="L183">        this.state = ROLLED_BACK;</span>
+<span class="fc" id="L184">        this.session.refresh(false);</span>
+<span class="fc" id="L185">        this.expire();</span>
+<span class="fc" id="L186">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.Transaction#updateExpiryDate()
+     */
+    @Override
+    public void updateExpiryDate() {
+        long duration;
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if (System.getProperty(TIMEOUT_SYSTEM_PROPERTY) != null) {</span>
+<span class="nc" id="L195">            duration =</span>
+                    Long.parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY));
+        } else {
+<span class="fc" id="L198">            duration = DEFAULT_TIMEOUT;</span>
+        }
+<span class="fc" id="L200">        this.expires.setTimeInMillis(currentTimeMillis() + duration);</span>
+<span class="fc" id="L201">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RdfAdder.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.utils.iterators</a> &gt; <span class="el_source">RdfAdder.java</span></div><h1>RdfAdder.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.utils.iterators;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.NodeTypeTemplate;
+
+import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+
+/**
+ * Consumes an {@link org.fcrepo.kernel.utils.iterators.RdfStream} by adding its contents to the
+ * JCR.
+ *
+ * @see RdfRemover
+ * @author ajs6f
+ * @since Oct 24, 2013
+ */
+public class RdfAdder extends PersistingRdfStreamConsumer {
+
+<span class="fc" id="L46">    private static final Logger LOGGER = getLogger(RdfAdder.class);</span>
+
+<span class="fc" id="L48">    private final NodePropertiesTools propertiesTools = new NodePropertiesTools();</span>
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param graphSubjects
+     * @param session
+     * @param stream
+     */
+    public RdfAdder(final IdentifierTranslator graphSubjects, final Session session,
+        final RdfStream stream) {
+<span class="fc" id="L59">        super(graphSubjects, session, stream);</span>
+<span class="fc" id="L60">    }</span>
+
+    @Override
+    protected void operateOnMixin(final Resource mixinResource,
+        final Node subjectNode) throws RepositoryException {
+
+<span class="nc" id="L66">        final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (!session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {</span>
+<span class="nc" id="L68">            final NodeTypeManager mgr = session().getWorkspace().getNodeTypeManager();</span>
+<span class="nc" id="L69">            final NodeTypeTemplate type = mgr.createNodeTypeTemplate();</span>
+<span class="nc" id="L70">            type.setName(mixinName);</span>
+<span class="nc" id="L71">            type.setMixin(true);</span>
+<span class="nc" id="L72">            type.setQueryable(true);</span>
+<span class="nc" id="L73">            mgr.registerNodeType(type, false);</span>
+        }
+
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (subjectNode.canAddMixin(mixinName)) {</span>
+<span class="nc" id="L77">            LOGGER.debug(&quot;Adding mixin: {} to node: {}.&quot;, mixinName, subjectNode.getPath());</span>
+<span class="nc" id="L78">            subjectNode.addMixin(mixinName);</span>
+        } else {
+<span class="nc" id="L80">            throw new MalformedRdfException(&quot;Could not persist triple containing type assertion: &quot;</span>
+                                                    + mixinResource.toString()
+                                                    + &quot; because no such mixin/type can be added to this node: &quot;
+                                                    + subjectNode.getPath() + &quot;!&quot;);
+        }
+<span class="nc" id="L85">    }</span>
+
+
+    @Override
+    protected void operateOnProperty(final Statement t, final Node n) throws RepositoryException {
+<span class="fc" id="L90">        LOGGER.debug(&quot;Adding property from triple: {} to node: {}.&quot;, t, n</span>
+                .getPath());
+<span class="fc" id="L92">        final String propertyName =</span>
+            getPropertyNameFromPredicate(n, t.getPredicate());
+<span class="fc" id="L94">        final Value v =</span>
+            createValue(n, t.getObject(), propertiesTools.getPropertyType(n,
+                    propertyName));
+<span class="fc" id="L97">        propertiesTools.appendOrReplaceNodeProperty(idTranslator(), n, propertyName, v);</span>
+<span class="fc" id="L98">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

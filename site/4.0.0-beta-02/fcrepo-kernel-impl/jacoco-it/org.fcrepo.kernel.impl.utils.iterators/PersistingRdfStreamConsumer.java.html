@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>PersistingRdfStreamConsumer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.utils.iterators</a> &gt; <span class="el_source">PersistingRdfStreamConsumer.java</span></div><h1>PersistingRdfStreamConsumer.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.utils.iterators;
+
+import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Predicates.not;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
+import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedTriple;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+
+import com.hp.hpl.jena.rdf.model.AnonId;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.utils.iterators.RdfStreamConsumer;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+
+import com.google.common.base.Predicate;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @author ajs6f
+ * @since Oct 24, 2013
+ */
+public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
+
+    private final RdfStream stream;
+
+    private final IdentifierTranslator idTranslator;
+
+    private final Session session;
+
+    // if it's not about a Fedora resource, we don't care.
+    protected final Predicate&lt;Triple&gt; isFedoraSubjectTriple;
+
+    private final Map&lt;AnonId, Resource&gt; skolemizedBnodeMap;
+
+    private final JcrRdfTools jcrRdfTools;
+
+<span class="fc" id="L72">    private static final JcrTools jcrTools = new JcrTools();</span>
+
+<span class="fc" id="L74">    private static final Model m = createDefaultModel();</span>
+
+<span class="fc" id="L76">    private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumer.class);</span>
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param graphSubjects
+     * @param session
+     * @param stream
+     */
+    public PersistingRdfStreamConsumer(final IdentifierTranslator graphSubjects,
+<span class="fc" id="L86">            final Session session, final RdfStream stream) {</span>
+<span class="fc" id="L87">        this.idTranslator = graphSubjects;</span>
+<span class="fc" id="L88">        this.jcrRdfTools = JcrRdfTools.withContext(graphSubjects, session);</span>
+<span class="fc" id="L89">        this.isFedoraSubjectTriple = new Predicate&lt;Triple&gt;() {</span>
+
+            @Override
+            public boolean apply(final Triple t) {
+
+<span class="pc bpc" id="L94" title="1 of 4 branches missed.">                final boolean result =</span>
+                        graphSubjects.isFedoraGraphSubject(m.asStatement(t).getSubject()) || t.getSubject().isBlank();
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">                if (result) {</span>
+<span class="fc" id="L97">                    LOGGER.debug(</span>
+                            &quot;Discovered a Fedora-relevant subject in triple: {}.&quot;,
+                            t);
+                } else {
+<span class="nc" id="L101">                    LOGGER.debug(&quot;Ignoring triple: {}.&quot;, t);</span>
+                }
+<span class="fc" id="L103">                return result;</span>
+            }
+
+        };
+<span class="fc" id="L107">        this.skolemizedBnodeMap = new HashMap&lt;&gt;();</span>
+        // we knock out managed RDF and non-Fedora RDF
+<span class="fc" id="L109">        this.stream =</span>
+            stream.withThisContext(stream.filter(and(not(isManagedTriple),
+                    isFedoraSubjectTriple)).iterator());
+<span class="fc" id="L112">        this.session = session;</span>
+<span class="fc" id="L113">    }</span>
+
+    @Override
+    public void consume() throws RepositoryException {
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        while (stream.hasNext()) {</span>
+<span class="fc" id="L118">            Statement t = m.asStatement(stream.next());</span>
+<span class="fc" id="L119">            LOGGER.debug(&quot;Operating triple {}.&quot;, t);</span>
+
+<span class="fc bfc" id="L121" title="All 2 branches covered.">            if (t.getObject().isAnon()) {</span>
+<span class="fc" id="L122">                t = t.changeObject(getSkolemizedResource(t.getObject()));</span>
+            }
+
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            if (t.getSubject().isAnon()) {</span>
+<span class="fc" id="L126">                t = m.createStatement(getSkolemizedResource(t.getSubject()), t.getPredicate(), t.getObject());</span>
+            }
+
+<span class="fc" id="L129">            LOGGER.trace(&quot;Operating on skolemized triple {}.&quot;, t);</span>
+
+<span class="fc" id="L131">            operateOnTriple(t);</span>
+<span class="fc" id="L132">        }</span>
+
+<span class="fc" id="L134">    }</span>
+
+    private Resource getSkolemizedResource(final RDFNode resource) throws RepositoryException {
+<span class="fc" id="L137">        final AnonId id = resource.asResource().getId();</span>
+
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        if (!skolemizedBnodeMap.containsKey(id)) {</span>
+<span class="fc" id="L140">            final Node orCreateNode =</span>
+                    jcrTools.findOrCreateNode(session, &quot;/.well-known/genid/&quot; + randomUUID().toString());
+<span class="fc" id="L142">            orCreateNode.addMixin(&quot;fedora:blanknode&quot;);</span>
+<span class="fc" id="L143">            final Resource skolemizedSubject = idTranslator().getSubject(orCreateNode.getPath());</span>
+<span class="fc" id="L144">            skolemizedBnodeMap.put(id, skolemizedSubject);</span>
+        }
+
+<span class="fc" id="L147">        return skolemizedBnodeMap.get(id);</span>
+    }
+
+    protected void operateOnTriple(final Statement t)
+        throws RepositoryException {
+<span class="fc" id="L152">        final Resource subject = t.getSubject();</span>
+<span class="fc" id="L153">        final Node subjectNode = session().getNode(idTranslator().getPathFromSubject(subject));</span>
+
+        // if this is a user-managed RDF type assertion, update the node's
+        // mixins. If it isn't, treat it as a &quot;data&quot; property.
+<span class="pc bpc" id="L157" title="1 of 4 branches missed.">        if (t.getPredicate().equals(type) &amp;&amp; t.getObject().isResource()) {</span>
+<span class="fc" id="L158">            final Resource mixinResource = t.getObject().asResource();</span>
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">            if (!isManagedMixin.apply(mixinResource)) {</span>
+<span class="nc" id="L160">                LOGGER.debug(&quot;Operating on node: {} with mixin: {}.&quot;,</span>
+                        subjectNode, mixinResource);
+<span class="nc" id="L162">                operateOnMixin(mixinResource, subjectNode);</span>
+            } else {
+<span class="fc" id="L164">                LOGGER.debug(&quot;Found repository-managed mixin on which we will not operate.&quot;);</span>
+            }
+<span class="fc" id="L166">        } else {</span>
+<span class="fc" id="L167">            LOGGER.debug(&quot;Operating on node: {} from triple: {}.&quot;, subjectNode,</span>
+                    t);
+<span class="fc" id="L169">            operateOnProperty(t, subjectNode);</span>
+        }
+<span class="fc" id="L171">    }</span>
+
+    protected String getPropertyNameFromPredicate(final Node subjectNode,
+        final Property predicate) throws RepositoryException {
+<span class="fc" id="L175">        return jcrRdfTools().getPropertyNameFromPredicate(subjectNode, predicate,</span>
+                stream.namespaces());
+    }
+
+    protected String getPropertyNameFromPredicate(final Node subjectNode,
+                                                  final Resource predicate) throws RepositoryException {
+<span class="nc" id="L181">        return jcrRdfTools().getPropertyNameFromPredicate(subjectNode, predicate, stream.namespaces());</span>
+    }
+
+    protected Value createValue(final Node subjectNode, final RDFNode object,
+        final Integer propertyType) throws RepositoryException {
+<span class="fc" id="L186">        return jcrRdfTools().createValue(subjectNode, object, propertyType);</span>
+    }
+
+    protected abstract void operateOnProperty(final Statement t,
+        final Node subjectNode) throws RepositoryException;
+
+    protected abstract void operateOnMixin(final Resource mixinResource,
+        final Node subjectNode) throws RepositoryException;
+
+    @Override
+    public ListenableFuture&lt;Boolean&gt; consumeAsync() {
+        // TODO make this actually asynch
+<span class="nc" id="L198">        final SettableFuture&lt;Boolean&gt; result = SettableFuture.create();</span>
+        try {
+<span class="nc" id="L200">            consume();</span>
+<span class="nc" id="L201">            result.set(true);</span>
+<span class="nc" id="L202">        } catch (final Exception e) {</span>
+<span class="nc" id="L203">            LOGGER.warn(&quot;Got exception consuming RDF stream&quot;, e);</span>
+<span class="nc" id="L204">            result.setException(e);</span>
+<span class="nc" id="L205">            result.set(false);</span>
+<span class="nc" id="L206">        }</span>
+<span class="nc" id="L207">        return result;</span>
+    }
+
+
+    /**
+     * @return the stream
+     */
+    public RdfStream stream() {
+<span class="nc" id="L215">        return stream;</span>
+    }
+
+
+    /**
+     * @return the idTranslator
+     */
+    public IdentifierTranslator idTranslator() {
+<span class="fc" id="L223">        return idTranslator;</span>
+    }
+
+
+    /**
+     * @return the session
+     */
+    public Session session() {
+<span class="fc" id="L231">        return session;</span>
+    }
+
+
+    /**
+     * @return the jcrRdfTools
+     */
+    public JcrRdfTools jcrRdfTools() {
+<span class="fc" id="L239">        return jcrRdfTools;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

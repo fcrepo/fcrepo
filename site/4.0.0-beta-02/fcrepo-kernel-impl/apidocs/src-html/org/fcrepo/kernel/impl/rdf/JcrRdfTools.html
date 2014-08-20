@@ -1,0 +1,726 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/**<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright 2014 DuraSpace, Inc.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * You may obtain a copy of the License at<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * See the License for the specific language governing permissions and<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * limitations under the License.<a name="line.14"></a>
+<span class="sourceLineNo">015</span> */<a name="line.15"></a>
+<span class="sourceLineNo">016</span>package org.fcrepo.kernel.impl.rdf;<a name="line.16"></a>
+<span class="sourceLineNo">017</span><a name="line.17"></a>
+<span class="sourceLineNo">018</span>import static com.google.common.base.Preconditions.checkNotNull;<a name="line.18"></a>
+<span class="sourceLineNo">019</span>import static com.google.common.base.Throwables.propagate;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import static com.google.common.collect.Iterables.any;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import static com.hp.hpl.jena.graph.Triple.create;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import static java.util.Collections.emptyMap;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import static java.util.Collections.singleton;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import static javax.jcr.PropertyType.REFERENCE;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import static javax.jcr.PropertyType.STRING;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import static javax.jcr.PropertyType.UNDEFINED;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import static javax.jcr.PropertyType.URI;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import static javax.jcr.PropertyType.WEAKREFERENCE;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyOriginalName;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import static org.slf4j.LoggerFactory.getLogger;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>import java.util.Iterator;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.util.Map;<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>import javax.jcr.Node;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import javax.jcr.Property;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import javax.jcr.PropertyType;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import javax.jcr.RepositoryException;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import javax.jcr.Session;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import javax.jcr.Value;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import javax.jcr.ValueFormatException;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>import javax.jcr.ValueFactory;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>import javax.jcr.nodetype.NodeType;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>import javax.jcr.nodetype.PropertyDefinition;<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>import org.fcrepo.kernel.RdfLexicon;<a name="line.54"></a>
+<span class="sourceLineNo">055</span>import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>import org.fcrepo.kernel.rdf.IdentifierTranslator;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>import org.fcrepo.kernel.impl.rdf.impl.HierarchyRdfContext;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>import org.fcrepo.kernel.impl.rdf.impl.WorkspaceRdfContext;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>import org.fcrepo.kernel.utils.FixityResult;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>import org.fcrepo.kernel.utils.iterators.RdfStream;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>import org.modeshape.jcr.api.NamespaceRegistry;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>import org.modeshape.jcr.api.Namespaced;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>import org.slf4j.Logger;<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>import com.google.common.base.Function;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>import com.google.common.base.Predicate;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>import com.google.common.collect.BiMap;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>import com.google.common.collect.ImmutableBiMap;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>import com.google.common.collect.ImmutableList;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>import com.hp.hpl.jena.datatypes.RDFDatatype;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>import com.hp.hpl.jena.rdf.model.Literal;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>import com.hp.hpl.jena.rdf.model.Model;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>import com.hp.hpl.jena.rdf.model.RDFNode;<a name="line.79"></a>
+<span class="sourceLineNo">080</span>import com.hp.hpl.jena.rdf.model.Resource;<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>/**<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * A set of helpful tools for converting JCR properties to RDF<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * @author Chris Beer<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * @since May 10, 2013<a name="line.86"></a>
+<span class="sourceLineNo">087</span> */<a name="line.87"></a>
+<span class="sourceLineNo">088</span>public class JcrRdfTools {<a name="line.88"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>    private static final Logger LOGGER = getLogger(JcrRdfTools.class);<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span>    /**<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * A map of JCR namespaces to Fedora's RDF namespaces<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    public static BiMap&lt;String, String&gt; jcrNamespacesToRDFNamespaces =<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        ImmutableBiMap.of(JCR_NAMESPACE,<a name="line.96"></a>
+<span class="sourceLineNo">097</span>                RdfLexicon.REPOSITORY_NAMESPACE);<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * A map of Fedora's RDF namespaces to the JCR equivalent<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     */<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    public static BiMap&lt;String, String&gt; rdfNamespacesToJcrNamespaces =<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        jcrNamespacesToRDFNamespaces.inverse();<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    private final IdentifierTranslator graphSubjects;<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    private Session session;<a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>    /**<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * Factory method to create a new JcrRdfTools utility with a graph subjects<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * converter<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     *<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * @param graphSubjects<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    public JcrRdfTools(final IdentifierTranslator graphSubjects) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        this(graphSubjects, null);<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    }<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    /**<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * Constructor with even more context.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     *<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * @param graphSubjects<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @param session<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    public JcrRdfTools(final IdentifierTranslator graphSubjects, final Session session) {<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        this.graphSubjects = graphSubjects;<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        this.session = session;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    }<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * Factory method to create a new JcrRdfTools instance<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @param graphSubjects<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @return new JcrRdfTools instance<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     */<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects) {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        return new JcrRdfTools(graphSubjects);<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    }<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Factory method to create a new JcrRdfTools instance<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @param idTranslator<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @param session<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @return new JcrRdfTools instance<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     */<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    public static JcrRdfTools withContext(final IdentifierTranslator idTranslator,<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        final Session session) {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        checkNotNull(idTranslator, "JcrRdfTools must operate with a non-null IdentifierTranslator for context!");<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        return new JcrRdfTools(idTranslator, session);<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    }<a name="line.150"></a>
+<span class="sourceLineNo">151</span><a name="line.151"></a>
+<span class="sourceLineNo">152</span>    /**<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * Convert a Fedora RDF Namespace into its JCR equivalent<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @param rdfNamespaceUri a namespace from an RDF document<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * @return the JCR namespace, or the RDF namespace if no matching JCR<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *         namespace is found<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     */<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    public static String getJcrNamespaceForRDFNamespace(<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            final String rdfNamespaceUri) {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        }<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        return rdfNamespaceUri;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    }<a name="line.165"></a>
+<span class="sourceLineNo">166</span><a name="line.166"></a>
+<span class="sourceLineNo">167</span>    /**<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * Convert a JCR namespace into an RDF namespace fit for downstream<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * consumption.<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @param jcrNamespaceUri a namespace from the JCR NamespaceRegistry<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @return an RDF namespace for downstream consumption.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     */<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    public static String getRDFNamespaceForJcrNamespace(<a name="line.174"></a>
+<span class="sourceLineNo">175</span>            final String jcrNamespaceUri) {<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        }<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        return jcrNamespaceUri;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>    /**<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * Get a model in which to collect statements of RDF extraction problems<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     *<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * @return an empty model<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     */<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    public static Model getProblemsModel() {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        return createDefaultModel();<a name="line.188"></a>
+<span class="sourceLineNo">189</span>    }<a name="line.189"></a>
+<span class="sourceLineNo">190</span><a name="line.190"></a>
+<span class="sourceLineNo">191</span>    /**<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * Using the same graph subjects, create a new JcrRdfTools with the given<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * session<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * @param session<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @return a new JcrRdfTools instance with the given session<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     */<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    public JcrRdfTools withSession(final Session session) {<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        return new JcrRdfTools(graphSubjects, session);<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    }<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    /**<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * Get an {@link RdfStream} for the given JCR NodeIterator<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     *<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * @param nodeIterator<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @param iteratorSubject<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * @return RdfStream for the given JCR NodeIterator<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * @throws RepositoryException<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     */<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    public RdfStream getJcrPropertiesModel(final Iterator&lt;Node&gt; nodeIterator,<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            final Resource iteratorSubject) throws RepositoryException {<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>        final RdfStream results = new RdfStream();<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        while (nodeIterator.hasNext()) {<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            final Node node = nodeIterator.next();<a name="line.215"></a>
+<span class="sourceLineNo">216</span>            results.concat(new PropertiesRdfContext(node, graphSubjects));<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            if (iteratorSubject != null) {<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                results.concat(singleton(create(iteratorSubject.asNode(), HAS_MEMBER_OF_RESULT.asNode(), graphSubjects<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                        .getSubject(node.getPath()).asNode())));<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            }<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        }<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        return results;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>    }<a name="line.223"></a>
+<span class="sourceLineNo">224</span><a name="line.224"></a>
+<span class="sourceLineNo">225</span>    /**<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * Get an {@link RdfStream} for a node that includes all its own JCR properties,<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * as well as the properties of its immediate children. TODO add triples for<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * root node, ala addRepositoryMetricsToModel()<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     *<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * @param node<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * @return RdfStream including all its own JCR properties and properties from immediate children<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * @throws RepositoryException<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     */<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    public RdfStream getJcrTriples(final Node node) throws RepositoryException {<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        return new PropertiesRdfContext(node, graphSubjects);<a name="line.235"></a>
+<span class="sourceLineNo">236</span>    }<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span>    /**<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * Get an {@link RdfStream} for the JCR version history information for a node<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     *<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * @param node<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * @return RdfStream for the JCR version history information for the given node<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @throws RepositoryException<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     */<a name="line.244"></a>
+<span class="sourceLineNo">245</span>    public RdfStream getVersionTriples(final Node node)<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        throws RepositoryException {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        return new VersionsRdfContext(node, graphSubjects);<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    }<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>    /**<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * Serialize the JCR fixity information in an {@link RdfStream}<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     *<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @param node<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @param blobs<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * @return fixity information triples as an RdfStream<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @throws RepositoryException<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     */<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    public RdfStream getJcrTriples(final Node node,<a name="line.258"></a>
+<span class="sourceLineNo">259</span>            final Iterable&lt;FixityResult&gt; blobs) throws RepositoryException {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        return new FixityRdfContext(node, graphSubjects, blobs);<a name="line.260"></a>
+<span class="sourceLineNo">261</span>    }<a name="line.261"></a>
+<span class="sourceLineNo">262</span><a name="line.262"></a>
+<span class="sourceLineNo">263</span>    /**<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * Get an {@link RdfStream} of the registered JCR namespaces<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     *<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * @return namespace triples as an RdfStream<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * @throws RepositoryException<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     */<a name="line.268"></a>
+<span class="sourceLineNo">269</span>    public RdfStream getNamespaceTriples() throws RepositoryException {<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        return new NamespaceRdfContext(session);<a name="line.270"></a>
+<span class="sourceLineNo">271</span>    }<a name="line.271"></a>
+<span class="sourceLineNo">272</span><a name="line.272"></a>
+<span class="sourceLineNo">273</span>    /**<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * Get an {@link RdfStream} of the registered JCR workspaces<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     *<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * @return workspace triples as an RdfStream<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * @throws RepositoryException<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     */<a name="line.278"></a>
+<span class="sourceLineNo">279</span>    public RdfStream getWorkspaceTriples(final IdentifierTranslator subjects) throws RepositoryException {<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        return new WorkspaceRdfContext(session, subjects);<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    }<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>    /**<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * Add the properties of a Node's parent and immediate children (as well as<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * the jcr:content of children) to the given {@link RdfStream}<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     *<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * @param node<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * @throws RepositoryException<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     */<a name="line.289"></a>
+<span class="sourceLineNo">290</span>    public RdfStream getTreeTriples(final Node node,<a name="line.290"></a>
+<span class="sourceLineNo">291</span>                                    final HierarchyRdfContextOptions options) throws RepositoryException {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        return new HierarchyRdfContext(node, graphSubjects, options);<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    }<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span>    /**<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * Add the properties of a Node's parent and immediate children using the default<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * serialization options<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * @param node<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * @return RdfStream of properties for the node's parent and immediate children<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * @throws RepositoryException<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     */<a name="line.301"></a>
+<span class="sourceLineNo">302</span>    public RdfStream getTreeTriples(final Node node) throws RepositoryException {<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        return getTreeTriples(node, HierarchyRdfContextOptions.DEFAULT);<a name="line.303"></a>
+<span class="sourceLineNo">304</span>    }<a name="line.304"></a>
+<span class="sourceLineNo">305</span><a name="line.305"></a>
+<span class="sourceLineNo">306</span><a name="line.306"></a>
+<span class="sourceLineNo">307</span>    /**<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * Add the properties for inbound references to this node<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * @param node<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * @return RdfStream containing propeties for inbound references to the given node<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @throws RepositoryException<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     */<a name="line.312"></a>
+<span class="sourceLineNo">313</span>    public RdfStream getReferencesTriples(final Node node) throws RepositoryException {<a name="line.313"></a>
+<span class="sourceLineNo">314</span>        return new ReferencesRdfContext(node, graphSubjects);<a name="line.314"></a>
+<span class="sourceLineNo">315</span>    }<a name="line.315"></a>
+<span class="sourceLineNo">316</span><a name="line.316"></a>
+<span class="sourceLineNo">317</span>    /**<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * Decides whether the RDF representation of this {@link Node} will receive LDP Container status.<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     *<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * @param node<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * @return true if the node will receive LDP Container status<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * @throws RepositoryException<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     */<a name="line.323"></a>
+<span class="sourceLineNo">324</span>    public static boolean isContainer(final Node node) throws RepositoryException {<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        return HAS_CHILD_NODE_DEFINITIONS.apply(node.getPrimaryNodeType())<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                || any(ImmutableList.copyOf(node.getMixinNodeTypes()),<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                        HAS_CHILD_NODE_DEFINITIONS);<a name="line.327"></a>
+<span class="sourceLineNo">328</span>    }<a name="line.328"></a>
+<span class="sourceLineNo">329</span><a name="line.329"></a>
+<span class="sourceLineNo">330</span>    static Predicate&lt;NodeType&gt; HAS_CHILD_NODE_DEFINITIONS =<a name="line.330"></a>
+<span class="sourceLineNo">331</span>        new Predicate&lt;NodeType&gt;() {<a name="line.331"></a>
+<span class="sourceLineNo">332</span><a name="line.332"></a>
+<span class="sourceLineNo">333</span>            @Override<a name="line.333"></a>
+<span class="sourceLineNo">334</span>            public boolean apply(final NodeType input) {<a name="line.334"></a>
+<span class="sourceLineNo">335</span>                return input.getChildNodeDefinitions().length &gt; 0;<a name="line.335"></a>
+<span class="sourceLineNo">336</span>            }<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        };<a name="line.337"></a>
+<span class="sourceLineNo">338</span><a name="line.338"></a>
+<span class="sourceLineNo">339</span>    /**<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * Determine if a predicate is an internal property of a node (and should<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * not be modified from external sources)<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     *<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @param subjectNode<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * @param predicate<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * @return True if a predicate is an internal property of a node<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     */<a name="line.346"></a>
+<span class="sourceLineNo">347</span>    public boolean isInternalProperty(final Node subjectNode,<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            final Resource predicate) {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        switch (predicate.getNameSpace()) {<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            case REPOSITORY_NAMESPACE:<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            case JCR_NAMESPACE:<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            case LDP_NAMESPACE:<a name="line.352"></a>
+<span class="sourceLineNo">353</span>                return true;<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            default:<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                return false;<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        }<a name="line.356"></a>
+<span class="sourceLineNo">357</span>    }<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>    /**<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * Create a JCR value from an RDFNode, either by using the given JCR<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * PropertyType or by looking at the RDFNode Datatype<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     *<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * @param data an RDF Node (possibly with a DataType)<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * @param type a JCR PropertyType value<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * @return a JCR Value<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * @throws javax.jcr.RepositoryException<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     */<a name="line.367"></a>
+<span class="sourceLineNo">368</span>    public Value createValue(final Node node, final RDFNode data, final int type)<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        throws RepositoryException {<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        final ValueFactory valueFactory = node.getSession().getValueFactory();<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        return createValue(valueFactory, data, type);<a name="line.371"></a>
+<span class="sourceLineNo">372</span><a name="line.372"></a>
+<span class="sourceLineNo">373</span>    }<a name="line.373"></a>
+<span class="sourceLineNo">374</span><a name="line.374"></a>
+<span class="sourceLineNo">375</span>    /**<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * Create a JCR value (with an undefined type) from a RDFNode<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * @param data<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * @return created JCR value<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * @throws RepositoryException<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     */<a name="line.380"></a>
+<span class="sourceLineNo">381</span>    public Value createValue(final RDFNode data) throws RepositoryException {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>        return createValue(data, UNDEFINED);<a name="line.382"></a>
+<span class="sourceLineNo">383</span>    }<a name="line.383"></a>
+<span class="sourceLineNo">384</span><a name="line.384"></a>
+<span class="sourceLineNo">385</span>    /**<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * Create a JCR value from an RDFNode with the given JCR type<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * @param data<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * @param type<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * @return created JCR value<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * @throws RepositoryException<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     */<a name="line.391"></a>
+<span class="sourceLineNo">392</span>    public Value createValue(final RDFNode data, final int type) throws RepositoryException {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        return createValue(session.getValueFactory(), data, type);<a name="line.393"></a>
+<span class="sourceLineNo">394</span>    }<a name="line.394"></a>
+<span class="sourceLineNo">395</span><a name="line.395"></a>
+<span class="sourceLineNo">396</span>    /**<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * Create a JCR value from an RDF node with the given JCR type<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * @param valueFactory<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * @param data<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * @param type<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * @return created value<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * @throws RepositoryException<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     */<a name="line.403"></a>
+<span class="sourceLineNo">404</span>    public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)<a name="line.404"></a>
+<span class="sourceLineNo">405</span>        throws RepositoryException {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        assert (valueFactory != null);<a name="line.406"></a>
+<span class="sourceLineNo">407</span><a name="line.407"></a>
+<span class="sourceLineNo">408</span>        if (data.isURIResource()<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                &amp;&amp; (type == REFERENCE || type == WEAKREFERENCE)) {<a name="line.409"></a>
+<span class="sourceLineNo">410</span>            // reference to another node (by path)<a name="line.410"></a>
+<span class="sourceLineNo">411</span>            final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromSubject(data.asResource()));<a name="line.411"></a>
+<span class="sourceLineNo">412</span>            return valueFactory.createValue(nodeFromGraphSubject,<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                    type == WEAKREFERENCE);<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        } else if (!data.isURIResource() &amp;&amp; (type == REFERENCE || type == WEAKREFERENCE)) {<a name="line.414"></a>
+<span class="sourceLineNo">415</span>            throw new ValueFormatException("Reference properties can only refer to URIs, not literals");<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        } else if (data.isURIResource() || type == URI) {<a name="line.416"></a>
+<span class="sourceLineNo">417</span>            // some random opaque URI<a name="line.417"></a>
+<span class="sourceLineNo">418</span>            return valueFactory.createValue(data.toString(), PropertyType.URI);<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        } else if (data.isResource()) {<a name="line.419"></a>
+<span class="sourceLineNo">420</span>            // a non-URI resource (e.g. a blank node)<a name="line.420"></a>
+<span class="sourceLineNo">421</span>            return valueFactory.createValue(data.toString(), UNDEFINED);<a name="line.421"></a>
+<span class="sourceLineNo">422</span>        } else if (data.isLiteral() &amp;&amp; type == UNDEFINED) {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>            // the JCR schema doesn't know what this should be; so introspect<a name="line.423"></a>
+<span class="sourceLineNo">424</span>            // the RDF and try to figure it out<a name="line.424"></a>
+<span class="sourceLineNo">425</span>            final Literal literal = data.asLiteral();<a name="line.425"></a>
+<span class="sourceLineNo">426</span>            final RDFDatatype dataType = literal.getDatatype();<a name="line.426"></a>
+<span class="sourceLineNo">427</span>            final Object rdfValue = literal.getValue();<a name="line.427"></a>
+<span class="sourceLineNo">428</span><a name="line.428"></a>
+<span class="sourceLineNo">429</span>            if (rdfValue instanceof Boolean) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                return valueFactory.createValue((Boolean) rdfValue);<a name="line.430"></a>
+<span class="sourceLineNo">431</span>            } else if (rdfValue instanceof Byte<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                    || (dataType != null &amp;&amp; dataType.getJavaClass() == Byte.class)) {<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                return valueFactory.createValue(literal.getByte());<a name="line.433"></a>
+<span class="sourceLineNo">434</span>            } else if (rdfValue instanceof Double) {<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                return valueFactory.createValue((Double) rdfValue);<a name="line.435"></a>
+<span class="sourceLineNo">436</span>            } else if (rdfValue instanceof Float) {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                return valueFactory.createValue((Float) rdfValue);<a name="line.437"></a>
+<span class="sourceLineNo">438</span>            } else if (rdfValue instanceof Long<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                    || (dataType != null &amp;&amp; dataType.getJavaClass() == Long.class)) {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                return valueFactory.createValue(literal.getLong());<a name="line.440"></a>
+<span class="sourceLineNo">441</span>            } else if (rdfValue instanceof Short<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                    || (dataType != null &amp;&amp; dataType.getJavaClass() == Short.class)) {<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                return valueFactory.createValue(literal.getShort());<a name="line.443"></a>
+<span class="sourceLineNo">444</span>            } else if (rdfValue instanceof Integer) {<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                return valueFactory.createValue((Integer) rdfValue);<a name="line.445"></a>
+<span class="sourceLineNo">446</span>            } else if (rdfValue instanceof XSDDateTime) {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                return valueFactory.createValue(((XSDDateTime) rdfValue)<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                        .asCalendar());<a name="line.448"></a>
+<span class="sourceLineNo">449</span>            } else {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                return valueFactory.createValue(literal.getString(), STRING);<a name="line.450"></a>
+<span class="sourceLineNo">451</span>            }<a name="line.451"></a>
+<span class="sourceLineNo">452</span><a name="line.452"></a>
+<span class="sourceLineNo">453</span>        } else {<a name="line.453"></a>
+<span class="sourceLineNo">454</span>            LOGGER.debug("Using default JCR value creation for RDF literal: {}",<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                    data);<a name="line.455"></a>
+<span class="sourceLineNo">456</span>            return valueFactory.createValue(data.asLiteral().getString(), type);<a name="line.456"></a>
+<span class="sourceLineNo">457</span>        }<a name="line.457"></a>
+<span class="sourceLineNo">458</span>    }<a name="line.458"></a>
+<span class="sourceLineNo">459</span><a name="line.459"></a>
+<span class="sourceLineNo">460</span>    /**<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * Given an RDF predicate value (namespace URI + local name), figure out<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * what JCR property to use<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     *<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     * @param node the JCR node we want a property for<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * @param predicate the predicate to map to a property name<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     * @return JCR property name<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     * @throws RepositoryException<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     */<a name="line.468"></a>
+<span class="sourceLineNo">469</span>    public String getPropertyNameFromPredicate(final Node node,<a name="line.469"></a>
+<span class="sourceLineNo">470</span>        final com.hp.hpl.jena.rdf.model.Property predicate)<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        throws RepositoryException {<a name="line.471"></a>
+<span class="sourceLineNo">472</span>        final Map&lt;String, String&gt; s = emptyMap();<a name="line.472"></a>
+<span class="sourceLineNo">473</span>        return getPropertyNameFromPredicate(node, predicate, s);<a name="line.473"></a>
+<span class="sourceLineNo">474</span><a name="line.474"></a>
+<span class="sourceLineNo">475</span>    }<a name="line.475"></a>
+<span class="sourceLineNo">476</span><a name="line.476"></a>
+<span class="sourceLineNo">477</span>    /**<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * Given an RDF predicate value (namespace URI + local name), figure out<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * what JCR property to use<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     *<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * @param node the JCR node we want a property for<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * @param predicate the predicate to map to a property name<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * @param namespaceMapping prefix =&gt; uri namespace mapping<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * @return the JCR property name<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * @throws RepositoryException<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     */<a name="line.486"></a>
+<span class="sourceLineNo">487</span><a name="line.487"></a>
+<span class="sourceLineNo">488</span>    public String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                                               final Map&lt;String, String&gt; namespaceMapping) throws RepositoryException {<a name="line.489"></a>
+<span class="sourceLineNo">490</span><a name="line.490"></a>
+<span class="sourceLineNo">491</span>        final NamespaceRegistry namespaceRegistry =<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            getNamespaceRegistry.apply(node);<a name="line.492"></a>
+<span class="sourceLineNo">493</span><a name="line.493"></a>
+<span class="sourceLineNo">494</span>        return getJcrNameForRdfNode(namespaceRegistry,<a name="line.494"></a>
+<span class="sourceLineNo">495</span>                                    predicate.getNameSpace(),<a name="line.495"></a>
+<span class="sourceLineNo">496</span>                                    predicate.getLocalName(),<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                                    namespaceMapping);<a name="line.497"></a>
+<span class="sourceLineNo">498</span>    }<a name="line.498"></a>
+<span class="sourceLineNo">499</span><a name="line.499"></a>
+<span class="sourceLineNo">500</span>    /**<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * Get a property name for an RDF predicate<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * @param predicate<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * @return property name from the given predicate<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * @throws RepositoryException<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     */<a name="line.505"></a>
+<span class="sourceLineNo">506</span>    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)<a name="line.506"></a>
+<span class="sourceLineNo">507</span>        throws RepositoryException {<a name="line.507"></a>
+<span class="sourceLineNo">508</span><a name="line.508"></a>
+<span class="sourceLineNo">509</span>        final NamespaceRegistry namespaceRegistry =<a name="line.509"></a>
+<span class="sourceLineNo">510</span>            (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();<a name="line.510"></a>
+<span class="sourceLineNo">511</span><a name="line.511"></a>
+<span class="sourceLineNo">512</span>        final Map&lt;String, String&gt; namespaceMapping = emptyMap();<a name="line.512"></a>
+<span class="sourceLineNo">513</span>        return getJcrNameForRdfNode(namespaceRegistry,<a name="line.513"></a>
+<span class="sourceLineNo">514</span>                                    predicate.getNameSpace(),<a name="line.514"></a>
+<span class="sourceLineNo">515</span>                                    predicate.getLocalName(),<a name="line.515"></a>
+<span class="sourceLineNo">516</span>                                    namespaceMapping);<a name="line.516"></a>
+<span class="sourceLineNo">517</span>    }<a name="line.517"></a>
+<span class="sourceLineNo">518</span><a name="line.518"></a>
+<span class="sourceLineNo">519</span>    /**<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * Get the JCR name for the given RDF resource<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * @param node<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     * @param resource<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * @param namespaces<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     * @return JCR name for the given RDF resource<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * @throws RepositoryException<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     */<a name="line.526"></a>
+<span class="sourceLineNo">527</span>    public String getPropertyNameFromPredicate(final Node node,<a name="line.527"></a>
+<span class="sourceLineNo">528</span>                                               final Resource resource,<a name="line.528"></a>
+<span class="sourceLineNo">529</span>                                               final Map&lt;String,String&gt; namespaces) throws RepositoryException {<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry.apply(node);<a name="line.530"></a>
+<span class="sourceLineNo">531</span>        return getJcrNameForRdfNode(namespaceRegistry,<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                                    resource.getNameSpace(),<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                                    resource.getLocalName(),<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                                    namespaces);<a name="line.534"></a>
+<span class="sourceLineNo">535</span>    }<a name="line.535"></a>
+<span class="sourceLineNo">536</span><a name="line.536"></a>
+<span class="sourceLineNo">537</span>    /**<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     * Get the JCR property name for an RDF predicate<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     *<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * @param namespaceRegistry<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * @param rdfNamespace<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * @param rdfLocalname<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * @param namespaceMapping<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     * @return JCR property name for an RDF predicate<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * @throws RepositoryException<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     */<a name="line.546"></a>
+<span class="sourceLineNo">547</span>    private String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,<a name="line.547"></a>
+<span class="sourceLineNo">548</span>                                        final String rdfNamespace,<a name="line.548"></a>
+<span class="sourceLineNo">549</span>                                        final String rdfLocalname,<a name="line.549"></a>
+<span class="sourceLineNo">550</span>                                        final Map&lt;String, String&gt; namespaceMapping)<a name="line.550"></a>
+<span class="sourceLineNo">551</span>        throws RepositoryException {<a name="line.551"></a>
+<span class="sourceLineNo">552</span><a name="line.552"></a>
+<span class="sourceLineNo">553</span>        final String prefix;<a name="line.553"></a>
+<span class="sourceLineNo">554</span><a name="line.554"></a>
+<span class="sourceLineNo">555</span>        final String namespace =<a name="line.555"></a>
+<span class="sourceLineNo">556</span>            getJcrNamespaceForRDFNamespace(rdfNamespace);<a name="line.556"></a>
+<span class="sourceLineNo">557</span><a name="line.557"></a>
+<span class="sourceLineNo">558</span>        assert (namespaceRegistry != null);<a name="line.558"></a>
+<span class="sourceLineNo">559</span><a name="line.559"></a>
+<span class="sourceLineNo">560</span>        if (namespaceRegistry.isRegisteredUri(namespace)) {<a name="line.560"></a>
+<span class="sourceLineNo">561</span>            LOGGER.debug("Discovered namespace: {} in namespace registry.",namespace);<a name="line.561"></a>
+<span class="sourceLineNo">562</span>            prefix = namespaceRegistry.getPrefix(namespace);<a name="line.562"></a>
+<span class="sourceLineNo">563</span>        } else {<a name="line.563"></a>
+<span class="sourceLineNo">564</span>            LOGGER.debug("Didn't discover namespace: {} in namespace registry.",namespace);<a name="line.564"></a>
+<span class="sourceLineNo">565</span>            final ImmutableBiMap&lt;String, String&gt; nsMap =<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                ImmutableBiMap.copyOf(namespaceMapping);<a name="line.566"></a>
+<span class="sourceLineNo">567</span>            if (nsMap.containsValue(namespace)) {<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                LOGGER.debug("Discovered namespace: {} in namespace map: {}.", namespace,<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                        nsMap);<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                prefix = nsMap.inverse().get(namespace);<a name="line.570"></a>
+<span class="sourceLineNo">571</span>                namespaceRegistry.registerNamespace(prefix, namespace);<a name="line.571"></a>
+<span class="sourceLineNo">572</span>            } else {<a name="line.572"></a>
+<span class="sourceLineNo">573</span>                prefix = namespaceRegistry.registerNamespace(namespace);<a name="line.573"></a>
+<span class="sourceLineNo">574</span>            }<a name="line.574"></a>
+<span class="sourceLineNo">575</span>        }<a name="line.575"></a>
+<span class="sourceLineNo">576</span><a name="line.576"></a>
+<span class="sourceLineNo">577</span>        final String propertyName = prefix + ":" + rdfLocalname;<a name="line.577"></a>
+<span class="sourceLineNo">578</span><a name="line.578"></a>
+<span class="sourceLineNo">579</span>        LOGGER.debug("Took RDF predicate {} and translated it to JCR property {}", namespace, propertyName);<a name="line.579"></a>
+<span class="sourceLineNo">580</span><a name="line.580"></a>
+<span class="sourceLineNo">581</span>        return propertyName;<a name="line.581"></a>
+<span class="sourceLineNo">582</span><a name="line.582"></a>
+<span class="sourceLineNo">583</span>    }<a name="line.583"></a>
+<span class="sourceLineNo">584</span><a name="line.584"></a>
+<span class="sourceLineNo">585</span>    /**<a name="line.585"></a>
+<span class="sourceLineNo">586</span>     * Given a node type and a property name, figure out an appropriate jcr value type<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * @param nodeType<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * @param propertyName<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * @return jcr value type<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * @throws RepositoryException<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     */<a name="line.591"></a>
+<span class="sourceLineNo">592</span>    public int getPropertyType(final String nodeType, final String propertyName) throws RepositoryException {<a name="line.592"></a>
+<span class="sourceLineNo">593</span>        return getPropertyType(session.getWorkspace().getNodeTypeManager().getNodeType(nodeType), propertyName);<a name="line.593"></a>
+<span class="sourceLineNo">594</span><a name="line.594"></a>
+<span class="sourceLineNo">595</span>    }<a name="line.595"></a>
+<span class="sourceLineNo">596</span><a name="line.596"></a>
+<span class="sourceLineNo">597</span>    /**<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * Given a node type and a property name, figure out an appropraite jcr value type<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * @param nodeType<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * @param propertyName<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * @return jcr value type<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     */<a name="line.602"></a>
+<span class="sourceLineNo">603</span>    public int getPropertyType(final NodeType nodeType, final String propertyName) {<a name="line.603"></a>
+<span class="sourceLineNo">604</span>        final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();<a name="line.604"></a>
+<span class="sourceLineNo">605</span>        int type = UNDEFINED;<a name="line.605"></a>
+<span class="sourceLineNo">606</span>        for (final PropertyDefinition propertyDefinition : propertyDefinitions) {<a name="line.606"></a>
+<span class="sourceLineNo">607</span>            if (propertyDefinition.getName().equals(propertyName)) {<a name="line.607"></a>
+<span class="sourceLineNo">608</span>                if (type != UNDEFINED) {<a name="line.608"></a>
+<span class="sourceLineNo">609</span>                    return UNDEFINED;<a name="line.609"></a>
+<span class="sourceLineNo">610</span>                }<a name="line.610"></a>
+<span class="sourceLineNo">611</span><a name="line.611"></a>
+<span class="sourceLineNo">612</span>                type = propertyDefinition.getRequiredType();<a name="line.612"></a>
+<span class="sourceLineNo">613</span>            }<a name="line.613"></a>
+<span class="sourceLineNo">614</span>        }<a name="line.614"></a>
+<span class="sourceLineNo">615</span><a name="line.615"></a>
+<span class="sourceLineNo">616</span>        return type;<a name="line.616"></a>
+<span class="sourceLineNo">617</span>    }<a name="line.617"></a>
+<span class="sourceLineNo">618</span><a name="line.618"></a>
+<span class="sourceLineNo">619</span>    /**<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * Map a JCR property to an RDF property with the right namespace URI and<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     * local name<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     */<a name="line.622"></a>
+<span class="sourceLineNo">623</span>    public static Function&lt;Property, com.hp.hpl.jena.rdf.model.Property&gt; getPredicateForProperty =<a name="line.623"></a>
+<span class="sourceLineNo">624</span>            new Function&lt;Property, com.hp.hpl.jena.rdf.model.Property&gt;() {<a name="line.624"></a>
+<span class="sourceLineNo">625</span><a name="line.625"></a>
+<span class="sourceLineNo">626</span>                @Override<a name="line.626"></a>
+<span class="sourceLineNo">627</span>                public com.hp.hpl.jena.rdf.model.Property apply(<a name="line.627"></a>
+<span class="sourceLineNo">628</span>                        final Property property) {<a name="line.628"></a>
+<span class="sourceLineNo">629</span>                    LOGGER.trace("Creating predicate for property: {}",<a name="line.629"></a>
+<span class="sourceLineNo">630</span>                            property);<a name="line.630"></a>
+<span class="sourceLineNo">631</span>                    try {<a name="line.631"></a>
+<span class="sourceLineNo">632</span>                        if (property instanceof Namespaced) {<a name="line.632"></a>
+<span class="sourceLineNo">633</span>                            final Namespaced nsProperty = (Namespaced) property;<a name="line.633"></a>
+<span class="sourceLineNo">634</span>                            final String uri = nsProperty.getNamespaceURI();<a name="line.634"></a>
+<span class="sourceLineNo">635</span>                            final String localName = nsProperty.getLocalName();<a name="line.635"></a>
+<span class="sourceLineNo">636</span>                            final String rdfLocalName;<a name="line.636"></a>
+<span class="sourceLineNo">637</span><a name="line.637"></a>
+<span class="sourceLineNo">638</span>                            if (isReferenceProperty.apply(property)) {<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                                rdfLocalName = getReferencePropertyOriginalName(localName);<a name="line.639"></a>
+<span class="sourceLineNo">640</span>                            } else {<a name="line.640"></a>
+<span class="sourceLineNo">641</span>                                rdfLocalName = localName;<a name="line.641"></a>
+<span class="sourceLineNo">642</span>                            }<a name="line.642"></a>
+<span class="sourceLineNo">643</span>                            return createProperty(<a name="line.643"></a>
+<span class="sourceLineNo">644</span>                                    getRDFNamespaceForJcrNamespace(uri),<a name="line.644"></a>
+<span class="sourceLineNo">645</span>                                                     rdfLocalName);<a name="line.645"></a>
+<span class="sourceLineNo">646</span>                        }<a name="line.646"></a>
+<span class="sourceLineNo">647</span>                        return createProperty(property.getName());<a name="line.647"></a>
+<span class="sourceLineNo">648</span>                    } catch (final RepositoryException e) {<a name="line.648"></a>
+<span class="sourceLineNo">649</span>                        throw propagate(e);<a name="line.649"></a>
+<span class="sourceLineNo">650</span>                    }<a name="line.650"></a>
+<span class="sourceLineNo">651</span><a name="line.651"></a>
+<span class="sourceLineNo">652</span>                }<a name="line.652"></a>
+<span class="sourceLineNo">653</span>            };<a name="line.653"></a>
+<span class="sourceLineNo">654</span>}<a name="line.654"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

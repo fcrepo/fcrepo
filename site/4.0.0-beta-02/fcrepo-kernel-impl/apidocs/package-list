@@ -1,0 +1,17 @@
+org.fcrepo.kernel.impl
+org.fcrepo.kernel.impl.identifiers
+org.fcrepo.kernel.impl.observer
+org.fcrepo.kernel.impl.observer.eventmappings
+org.fcrepo.kernel.impl.rdf
+org.fcrepo.kernel.impl.rdf.impl
+org.fcrepo.kernel.impl.rdf.impl.mappings
+org.fcrepo.kernel.impl.services
+org.fcrepo.kernel.impl.services.functions
+org.fcrepo.kernel.impl.spring
+org.fcrepo.kernel.impl.utils
+org.fcrepo.kernel.impl.utils.impl
+org.fcrepo.kernel.impl.utils.infinispan
+org.fcrepo.kernel.impl.utils.iterators
+org.modeshape
+org.modeshape.jcr
+org.modeshape.jcr.value.binary.infinispan

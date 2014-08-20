@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultFilter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.observer</a> &gt; <span class="el_source">DefaultFilter.java</span></div><h1>DefaultFilter.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.observer;
+
+import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.kernel.utils.EventType.valueOf;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.observation.Event;
+
+import com.google.common.base.Predicate;
+
+import org.fcrepo.kernel.observer.EventFilter;
+import org.slf4j.Logger;
+
+/**
+ * {@link EventFilter} that passes only events emitted from nodes with a Fedora
+ * JCR type, or properties attached to them, except in the case of a node
+ * removal. In that case, since we cannot test the node for its types, we assume
+ * that any non-JCR namespaced node is fair game.
+ *
+ * @author ajs6f
+ * @author barmintor
+ * @since Dec 2013
+ * @author eddies
+ * @since Feb 7, 2013
+ * @author escowles
+ * @since Oct 3, 2013
+ */
+public class DefaultFilter implements EventFilter {
+
+<span class="fc" id="L51">    private static final Logger LOGGER = getLogger(DefaultFilter.class);</span>
+
+    private Session session;
+
+    /**
+     * Default constructor.
+     */
+<span class="fc" id="L58">    public DefaultFilter() {</span>
+<span class="fc" id="L59">    }</span>
+
+    /**
+     * @param session
+     */
+<span class="fc" id="L64">    private DefaultFilter(final Session session) {</span>
+<span class="fc" id="L65">        this.session = session;</span>
+<span class="fc" id="L66">    }</span>
+
+    @Override
+    public Predicate&lt;Event&gt; getFilter(final Session session) {
+<span class="fc" id="L70">        return new DefaultFilter(session);</span>
+    }
+
+    @Override
+    public boolean apply(final Event event) {
+        try {
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">            switch (valueOf(event.getType())) {</span>
+                case NODE_REMOVED:
+<span class="nc" id="L78">                    final String path = event.getPath();</span>
+                    // only propagate non-jcr node removals, a simple test, but
+                    // we cannot use the predicates we use below in the absence
+                    // of a node to test
+<span class="nc bnc" id="L82" title="All 2 branches missed.">                    if (!path.startsWith(&quot;jcr:&quot;, path.lastIndexOf('/') + 1)) {</span>
+<span class="nc" id="L83">                        return true;</span>
+                    }
+                    break;
+                default:
+<span class="fc" id="L87">                    final String nodeId = event.getIdentifier();</span>
+<span class="fc" id="L88">                    final Node n = session.getNodeByIdentifier(nodeId);</span>
+<span class="fc bfc" id="L89" title="All 4 branches covered.">                    if (isFedoraObject.apply(n) || isFedoraDatastream.apply(n)) {</span>
+<span class="fc" id="L90">                        return true;</span>
+                    }
+                    break;
+            }
+<span class="nc" id="L94">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L95">            LOGGER.trace(&quot;Dropping event from outside our assigned workspace:\n&quot;, e);</span>
+<span class="nc" id="L96">            return false;</span>
+<span class="nc" id="L97">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L98">            throw propagate(e);</span>
+<span class="fc" id="L99">        }</span>
+<span class="fc" id="L100">        return false;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

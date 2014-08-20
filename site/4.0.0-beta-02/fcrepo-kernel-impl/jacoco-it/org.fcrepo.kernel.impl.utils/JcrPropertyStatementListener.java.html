@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>JcrPropertyStatementListener.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.utils</a> &gt; <span class="el_source">JcrPropertyStatementListener.java</span></div><h1>JcrPropertyStatementListener.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.utils;
+
+import static com.google.common.base.Throwables.propagate;
+import static java.net.URLDecoder.decode;
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.UnsupportedEncodingException;
+import javax.jcr.NamespaceException;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+
+import com.hp.hpl.jena.rdf.model.AnonId;
+import org.apache.commons.lang.StringUtils;
+import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.rdf.listeners.StatementListener;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.vocabulary.RDF;
+
+import java.util.HashMap;
+
+/**
+ * Listen to Jena statement events, and when the statement is changed in the
+ * graph store, make the change within JCR as well.
+ *
+ * @author awoods
+ */
+public class JcrPropertyStatementListener extends StatementListener {
+
+<span class="fc" id="L56">    private static final Logger LOGGER = getLogger(JcrPropertyStatementListener.class);</span>
+
+    private final JcrRdfTools jcrRdfTools;
+
+    private final HashMap&lt;AnonId, Node&gt; skolemizedBnodeMap;
+
+<span class="fc" id="L62">    private NodePropertiesTools propertiesTools = new NodePropertiesTools();</span>
+
+    private Model problems;
+
+    private final IdentifierTranslator subjects;
+
+    private final Session session;
+
+<span class="fc" id="L70">    private static final JcrTools jcrTools = new JcrTools();</span>
+
+    /**
+     * Return a Listener given the subject factory and JcrSession.
+     * @param subjects
+     * @param session
+     * @param problemModel
+     * @return JcrPropertyStatementListener for the given subject factory and JcrSession
+     */
+    public static JcrPropertyStatementListener getListener(
+            final IdentifierTranslator subjects, final Session session, final Model problemModel) {
+<span class="fc" id="L81">        return new JcrPropertyStatementListener(subjects, session, problemModel);</span>
+    }
+
+    /**
+     * Construct a statement listener within the given session
+     *
+     * @param subjects
+     * @param session
+     */
+    private JcrPropertyStatementListener(final IdentifierTranslator subjects,
+            final Session session, final Model problems) {
+<span class="fc" id="L92">        super();</span>
+<span class="fc" id="L93">        this.session = session;</span>
+<span class="fc" id="L94">        this.subjects = subjects;</span>
+<span class="fc" id="L95">        this.problems = problems;</span>
+<span class="fc" id="L96">        this.jcrRdfTools = JcrRdfTools.withContext(subjects, session);</span>
+<span class="fc" id="L97">        this.skolemizedBnodeMap = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L98">    }</span>
+
+    /**
+     * When a statement is added to the graph, serialize it to a JCR property
+     *
+     * @param s
+     */
+    @Override
+    public void addedStatement(final Statement s) {
+<span class="fc" id="L107">        LOGGER.debug(&quot;&gt;&gt; added statement {}&quot;, s);</span>
+
+        try {
+<span class="fc" id="L110">            final Resource subject = s.getSubject();</span>
+
+            // if it's not about a node, ignore it.
+<span class="pc bpc" id="L113" title="1 of 4 branches missed.">            if (!subjects.isFedoraGraphSubject(subject) &amp;&amp; !subject.isAnon()) {</span>
+<span class="fc" id="L114">                return;</span>
+            }
+
+            final Node subjectNode;
+
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">            if (subject.isAnon()) {</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">                if (skolemizedBnodeMap.containsKey(subject.getId())) {</span>
+<span class="nc" id="L121">                    subjectNode = skolemizedBnodeMap.get(subject.getId());</span>
+                } else {
+<span class="nc" id="L123">                    subjectNode = jcrTools.findOrCreateNode(session, &quot;/.well-known/genid/&quot; + randomUUID().toString());</span>
+<span class="nc" id="L124">                    subjectNode.addMixin(&quot;fedora:blanknode&quot;);</span>
+<span class="nc" id="L125">                    skolemizedBnodeMap.put(subject.getId(), subjectNode);</span>
+                }
+            } else {
+<span class="fc" id="L128">                String path = null;</span>
+                try {
+<span class="fc" id="L130">                    path = decode(subjects.getPathFromSubject(subject), &quot;UTF-8&quot;);</span>
+<span class="nc" id="L131">                } catch ( UnsupportedEncodingException ex ) {</span>
+<span class="nc" id="L132">                    LOGGER.warn(&quot;Required encoding (UTF-8) not supported, trying undecoded path&quot;,ex);</span>
+<span class="nc" id="L133">                    path = subjects.getPathFromSubject(subject);</span>
+<span class="fc" id="L134">                }</span>
+<span class="fc" id="L135">                subjectNode = session.getNode(path);</span>
+            }
+
+            // special logic for handling rdf:type updates.
+            // if the object is an already-existing mixin, update
+            // the node's mixins. If it isn't, just treat it normally.
+<span class="pc bpc" id="L141" title="1 of 4 branches missed.">            if (s.getPredicate().equals(RDF.type)</span>
+                    &amp;&amp; s.getObject().isResource()) {
+<span class="fc" id="L143">                final Resource mixinResource = s.getObject().asResource();</span>
+
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">                if (mixinResource.getNameSpace().equals(LDP_NAMESPACE)) {</span>
+<span class="nc" id="L146">                    return;</span>
+                }
+
+                try {
+<span class="nc" id="L150">                    final String namespacePrefix = session.getNamespacePrefix(mixinResource.getNameSpace());</span>
+<span class="nc" id="L151">                    final String mixinName = namespacePrefix + &quot;:&quot; + mixinResource.getLocalName();</span>
+
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                    if (FedoraTypesUtils.getNodeTypeManager(subjectNode).hasNodeType(mixinName)) {</span>
+
+<span class="nc bnc" id="L155" title="All 2 branches missed.">                        if (subjectNode.canAddMixin(mixinName)) {</span>
+<span class="nc" id="L156">                            subjectNode.addMixin(mixinName);</span>
+                        } else {
+<span class="nc" id="L158">                            problems.add(subject, COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI());</span>
+                        }
+
+<span class="nc" id="L161">                        return;</span>
+
+                    }
+<span class="fc" id="L164">                } catch (final NamespaceException e) {</span>
+<span class="fc" id="L165">                    LOGGER.trace(&quot;Unable to resolve registered namespace for resource {}: {}&quot;, mixinResource, e);</span>
+<span class="nc" id="L166">                }</span>
+            }
+
+            // extract the JCR propertyName from the predicate
+<span class="fc" id="L170">            final String propertyName =</span>
+                    jcrRdfTools.getPropertyNameFromPredicate(subjectNode,
+                                                             s.getPredicate(),
+                                                             s.getModel()
+                                                                     .getNsPrefixMap());
+
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">            if (validateModificationsForPropertyName(</span>
+                    subject, subjectNode, s.getPredicate())) {
+<span class="fc" id="L178">                final Value v =</span>
+                    jcrRdfTools.createValue(subjectNode, s.getObject(),
+                            propertiesTools.getPropertyType(subjectNode,
+                                    propertyName));
+<span class="fc" id="L182">                propertiesTools.appendOrReplaceNodeProperty(subjects,</span>
+                        subjectNode, propertyName, v);
+            }
+<span class="nc" id="L185">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L186">            throw propagate(e);</span>
+<span class="fc" id="L187">        }</span>
+
+<span class="fc" id="L189">    }</span>
+
+    /**
+     * When a statement is removed, remove it from the JCR properties
+     *
+     * @param s
+     */
+    @Override
+    public void removedStatement(final Statement s) {
+<span class="fc" id="L198">        LOGGER.trace(&quot;&gt;&gt; removed statement {}&quot;, s);</span>
+
+        try {
+<span class="fc" id="L201">            final Resource subject = s.getSubject();</span>
+
+            // if it's not about a node, we don't care.
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">            if (!subjects.isFedoraGraphSubject(subject)) {</span>
+<span class="nc" id="L205">                return;</span>
+            }
+
+<span class="fc" id="L208">            final Node subjectNode = session.getNode(subjects.getPathFromSubject(subject));</span>
+
+            // special logic for handling rdf:type updates.
+            // if the object is an already-existing mixin, update
+            // the node's mixins. If it isn't, just treat it normally.
+<span class="pc bpc" id="L213" title="3 of 4 branches missed.">            if (s.getPredicate().equals(RDF.type)</span>
+                    &amp;&amp; s.getObject().isResource()) {
+<span class="nc" id="L215">                final Resource mixinResource = s.getObject().asResource();</span>
+<span class="nc" id="L216">                final String errorPrefix = &quot;Error removing node type&quot;;</span>
+                try {
+<span class="nc" id="L218">                    final String namespacePrefix = session.getNamespacePrefix(mixinResource.getNameSpace());</span>
+<span class="nc" id="L219">                    final String mixinName = namespacePrefix + &quot;:&quot; + mixinResource.getLocalName();</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">                    if (FedoraTypesUtils.getNodeTypeManager(subjectNode).hasNodeType(mixinName)) {</span>
+                        try {
+<span class="nc" id="L223">                            subjectNode.removeMixin(mixinName);</span>
+<span class="nc" id="L224">                        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L225">                            LOGGER.info(</span>
+                                    &quot;problem with removing &lt;{}&gt; &lt;{}&gt; &lt;{}&gt;: {}&quot;,
+                                    subject.getURI(),
+                                    RdfLexicon.COULD_NOT_STORE_PROPERTY,
+                                    s.getPredicate().getURI(),
+                                    e);
+<span class="nc" id="L231">                            String errorMessage = e.getMessage();</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">                            if (StringUtils.isNotBlank(errorMessage)) {</span>
+<span class="nc" id="L233">                                errorMessage = errorPrefix + &quot; '&quot; + mixinName +</span>
+                                        &quot;': \n&quot; + e.getClass().getName() + &quot;: &quot; + errorMessage;
+                            } else {
+<span class="nc" id="L236">                                errorMessage = errorPrefix + &quot; '&quot; + mixinName +</span>
+                                        &quot;': \n&quot; + e.getClass().getName();
+                            }
+<span class="nc" id="L239">                            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);</span>
+<span class="nc" id="L240">                        }</span>
+<span class="nc" id="L241">                        return;</span>
+                    }
+
+<span class="nc" id="L244">                } catch (final NamespaceException e) {</span>
+<span class="nc" id="L245">                    LOGGER.trace(&quot;Unable to resolve registered namespace for resource {}: {}&quot;, mixinResource, e);</span>
+
+<span class="nc" id="L247">                    String errorMessage = e.getMessage();</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">                    if (StringUtils.isNotBlank(errorMessage)) {</span>
+<span class="nc" id="L249">                        errorMessage = errorPrefix + &quot; &quot; +</span>
+                                e.getClass().getName() + &quot;: &quot;  + errorMessage;
+                    } else {
+<span class="nc" id="L252">                        errorMessage = errorPrefix + &quot;: &quot; + e.getClass().getName();</span>
+                    }
+<span class="nc" id="L254">                    problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);</span>
+<span class="nc" id="L255">                }</span>
+
+            }
+
+<span class="fc" id="L259">            final String propertyName =</span>
+                jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+
+
+            // if the property doesn't exist, we don't need to worry about it.
+<span class="pc bpc" id="L264" title="2 of 4 branches missed.">            if (subjectNode.hasProperty(propertyName) &amp;&amp;</span>
+                    validateModificationsForPropertyName(subject, subjectNode,
+                                                            s.getPredicate())) {
+<span class="fc" id="L267">                final Value v =</span>
+                    jcrRdfTools.createValue(subjectNode, s.getObject(),
+                            propertiesTools.getPropertyType(subjectNode,
+                                    propertyName));
+<span class="fc" id="L271">                propertiesTools.removeNodeProperty(subjects, subjectNode,</span>
+                        propertyName, v);
+            }
+
+<span class="nc" id="L275">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L276">            throw propagate(e);</span>
+<span class="fc" id="L277">        }</span>
+
+<span class="fc" id="L279">    }</span>
+
+    private boolean validateModificationsForPropertyName(
+            final Resource subject, final Node subjectNode, final Resource predicate) {
+<span class="pc bpc" id="L283" title="1 of 2 branches missed.">        if (jcrRdfTools.isInternalProperty(subjectNode, predicate)) {</span>
+<span class="nc" id="L284">            LOGGER.debug(&quot;problem with &lt;{}&gt; &lt;{}&gt; &lt;{}&gt;&quot;,</span>
+                         subject.getURI(),
+                         RdfLexicon.COULD_NOT_STORE_PROPERTY,
+                         predicate.getURI());
+<span class="nc" id="L288">            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, predicate.getURI());</span>
+<span class="nc" id="L289">            return false;</span>
+        }
+
+<span class="fc" id="L292">        return true;</span>
+    }
+
+    /**
+     * Get a list of any problems from trying to apply the statement changes to
+     * the node's properties
+     *
+     * @return model containing any problems from applying the statement changes
+     */
+    public Model getProblems() {
+<span class="nc" id="L302">        return problems;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
