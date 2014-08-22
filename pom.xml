@@ -654,7 +654,7 @@
           </configuration> </execution> </executions> </plugin> -->
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.16</version>
+          <version>2.17</version>
           <configuration>
             <systemPropertyVariables>
               <test.port>${test.port}</test.port>
@@ -732,7 +732,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.16</version>
+          <version>2.17</version>
           <configuration>
             <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
           </configuration>
@@ -1006,7 +1006,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.15</version>
+        <version>2.17</version>
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
@@ -1021,7 +1021,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.15</version>
+        <version>2.17</version>
         <configuration>
           <argLine>-XX:-UseSplitVerifier</argLine>
           <outputName>surefire-report</outputName>
