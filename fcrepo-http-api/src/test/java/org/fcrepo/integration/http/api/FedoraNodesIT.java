@@ -136,6 +136,7 @@ import com.hp.hpl.jena.update.GraphStore;
  */
 public class FedoraNodesIT extends AbstractResourceIT {
 
+    private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
     private SimpleDateFormat headerFormat;
     private SimpleDateFormat tripleFormat;
 
@@ -278,6 +279,21 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(204, getStatus(new HttpDelete(location)));
         assertEquals("Object wasn't really deleted!", 404,
                 getStatus(new HttpGet(location)));
+    }
+
+    @Test
+    public void testCreateManyObjects() throws Exception {
+        if (System.getProperty(TEST_ACTIVATION_PROPERTY) == null) {
+            logger.info("Not running test because system property not set: {}", TEST_ACTIVATION_PROPERTY);
+            return;
+        }
+
+        final int manyObjects = 2000;
+        for ( int i = 0; i < manyObjects; i++ ) {
+            Thread.sleep(10); // needed to prevent overloading
+            final HttpResponse response = createObject("");
+            logger.debug( response.getFirstHeader("Location").getValue() );
+        }
     }
 
     @Test

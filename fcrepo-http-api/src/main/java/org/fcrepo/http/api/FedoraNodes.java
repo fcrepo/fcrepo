@@ -141,7 +141,7 @@ public class FedoraNodes extends AbstractResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
-    private boolean baseURLSet = false;
+    private static boolean baseURLSet = false;
 
     /**
      * Set the baseURL for JMS events.
