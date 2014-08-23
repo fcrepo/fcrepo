@@ -198,5 +198,38 @@ public class FedoraStoragePolicyTest {
         assertEquals(200, response.getStatus());
     }
 
+    @Test (expected = RepositoryException.class)
+    public void testDeleteNodeTypeInvalid() throws Exception {
+        final FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
+        when (mockJcrTools.findOrCreateNode(any(Session.class), anyString(),
+                                            anyString())).thenReturn(mockCodeNode);
+        storagePolicy.setJcrTools(mockJcrTools);
+        storagePolicy.session = mockSession;
+        storagePolicy.storagePolicyDecisionPoint = mockPolicyDecisionPoint;
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
+        when(mockNodeTypeManager.getNodeType("mix:mimeType")).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn("invalid");
+        when(mockCodeNode.getProperty("mix:mimeType")).thenReturn(mockProperty);
+        final Response response = storagePolicy.deleteNodeType("mix:mimeType");
+    }
+
+    @Test
+    public void testDeleteNodeType() throws Exception {
+        final FedoraStoragePolicy storagePolicy = new FedoraStoragePolicy();
+        when (mockJcrTools.findOrCreateNode(any(Session.class), anyString(),
+                                            anyString())).thenReturn(mockCodeNode);
+        storagePolicy.setJcrTools(mockJcrTools);
+        storagePolicy.session = mockSession;
+        storagePolicy.storagePolicyDecisionPoint = mockPolicyDecisionPoint;
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
+        when(mockNodeTypeManager.getNodeType("mix:mimeType")).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn("mix:mimeType");
+        when(mockCodeNode.getProperty("mix:mimeType")).thenReturn(mockProperty);
+        final Response response = storagePolicy.deleteNodeType("mix:mimeType");
+        assertNotNull(response);
+        assertEquals(204,response.getStatus());
+    }
 
 }
