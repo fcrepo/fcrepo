@@ -281,6 +281,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCreateManyObjects() throws Exception {
+        final int manyObjects = 2000;
+        for ( int i = 0; i < manyObjects; i++ ) {
+            Thread.sleep(10); // needed to prevent overloading
+            final HttpResponse response = createObject("");
+            logger.debug( response.getFirstHeader("Location").getValue() );
+        }
+    }
+
+    @Test
     public void testDeleteWithBadEtag() throws Exception {
 
         final HttpPost method = postObjMethod("");
