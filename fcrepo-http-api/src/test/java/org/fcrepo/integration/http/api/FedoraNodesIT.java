@@ -136,6 +136,7 @@ import com.hp.hpl.jena.update.GraphStore;
  */
 public class FedoraNodesIT extends AbstractResourceIT {
 
+    private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
     private SimpleDateFormat headerFormat;
     private SimpleDateFormat tripleFormat;
 
@@ -282,6 +283,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testCreateManyObjects() throws Exception {
+        if (System.getProperty(TEST_ACTIVATION_PROPERTY) == null) {
+            logger.info("Not running test because system property not set: {}", TEST_ACTIVATION_PROPERTY);
+            return;
+        }
+
         final int manyObjects = 2000;
         for ( int i = 0; i < manyObjects; i++ ) {
             Thread.sleep(10); // needed to prevent overloading
