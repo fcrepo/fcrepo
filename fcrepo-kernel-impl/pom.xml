@@ -144,9 +144,6 @@
         <!-- Using Surefire instead of Failsafe as workaround: https://code.google.com/p/powermock/issues/detail?id=504  -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>-XX:-UseSplitVerifier</argLine>
-        </configuration>
       </plugin>
     </plugins>
   </build>
