@@ -967,7 +967,7 @@
             This line enables code-coverage. However, it also blows the build's permgen.
             Fix me!
           -->
-          <argLine>${jacoco.agent.unit.arg}</argLine>
+          <argLine>-XX:-UseSplitVerifier ${jacoco.agent.unit.arg}</argLine>
         </configuration>
       </plugin>
       <plugin>
