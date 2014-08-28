@@ -1,0 +1,2103 @@
+Apache Maven 3.2.3 (33f8c3e1027c3ddde99d3cdebad2656a31e8fdf4; 2014-08-11T13:58:10-07:00)
+Maven home: /usr/local/maven
+Java version: 1.7.0_55, vendor: Oracle Corporation
+Java home: /usr/java/jdk1.7.0_55/jre
+Default locale: en_US, platform encoding: UTF-8
+OS name: "linux", version: "2.6.32-431.17.1.el6.x86_64", arch: "amd64", family: "unix"
+[INFO] Error stacktraces are turned on.
+[DEBUG] Reading global settings from /usr/local/maven/conf/settings.xml
+[DEBUG] Reading user settings from /home/fedora/.m2/settings.xml
+[DEBUG] Using local repository at /home/fedora/.m2/repository
+[DEBUG] Using manager EnhancedLocalRepositoryManager with priority 10.0 for /home/fedora/.m2/repository
+[INFO] Scanning for projects...
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=2, ConflictMarker.markTime=1, ConflictMarker.nodeCount=150, ConflictIdSorter.graphTime=1, ConflictIdSorter.topsortTime=0, ConflictIdSorter.conflictIdCount=35, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=10, ConflictResolver.conflictItemCount=75, DefaultDependencyCollector.collectTime=405, DefaultDependencyCollector.transformTime=15}
+[DEBUG] org.apache.felix:maven-bundle-plugin:jar:2.4.0:
+[DEBUG]    biz.aQute.bnd:bndlib:jar:2.1.0:compile
+[DEBUG]       org.osgi:org.osgi.core:jar:4.2.0:compile
+[DEBUG]    org.apache.felix:org.apache.felix.bundlerepository:jar:1.6.6:compile
+[DEBUG]       org.easymock:easymock:jar:2.4:compile
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-settings:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.7:compile
+[DEBUG]       org.apache.maven.reporting:maven-reporting-api:jar:2.0.7:compile
+[DEBUG]          org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-model:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-artifact:jar:2.0.7:compile
+[DEBUG]       org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1:compile
+[DEBUG]          junit:junit:jar:3.8.1:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-project:jar:2.0.7:compile
+[DEBUG]          org.apache.maven:maven-plugin-registry:jar:2.0.7:compile
+[DEBUG]       commons-cli:commons-cli:jar:1.0:compile
+[DEBUG]       org.apache.maven:maven-plugin-api:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.7:compile
+[DEBUG]       org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.7:compile
+[DEBUG]       org.apache.maven:maven-monitor:jar:2.0.7:compile
+[DEBUG]       classworlds:classworlds:jar:1.1:compile
+[DEBUG]    org.apache.maven:maven-archiver:jar:2.5:compile
+[DEBUG]       org.codehaus.plexus:plexus-archiver:jar:2.1:compile
+[DEBUG]          org.codehaus.plexus:plexus-io:jar:2.0.2:compile
+[DEBUG]       org.codehaus.plexus:plexus-interpolation:jar:1.15:compile
+[DEBUG]    org.apache.maven.shared:maven-dependency-tree:jar:2.1:compile
+[DEBUG]       org.codehaus.plexus:plexus-component-annotations:jar:1.5.5:compile
+[DEBUG]       org.eclipse.aether:aether-util:jar:0.9.0.M2:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:3.0.10:compile
+[DEBUG] Created new class realm maven.api
+[DEBUG] Importing foreign packages into class realm maven.api
+[DEBUG]   Imported: org.apache.maven.wagon.events < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.impl < plexus.core
+[DEBUG]   Imported: org.apache.maven.exception < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.Xpp3Dom < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.version < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.metadata < plexus.core
+[DEBUG]   Imported: javax.enterprise.util.* < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.collection < plexus.core
+[DEBUG]   Imported: org.apache.maven.monitor < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.repository < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.resource < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.logging < plexus.core
+[DEBUG]   Imported: org.apache.maven.profiles < plexus.core
+[DEBUG]   Imported: org.apache.maven.classrealm < plexus.core
+[DEBUG]   Imported: org.apache.maven.execution.scope < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.artifact < plexus.core
+[DEBUG]   Imported: org.apache.maven.execution < plexus.core
+[DEBUG]   Imported: org.apache.maven.reporting < plexus.core
+[DEBUG]   Imported: org.apache.maven.usability < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.container < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.component < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.transfer < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authentication < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlSerializer < plexus.core
+[DEBUG]   Imported: org.apache.maven.lifecycle < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.* < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.graph < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.classworlds < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.internal.impl < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.repository < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.resolution < plexus.core
+[DEBUG]   Imported: javax.inject.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.settings < plexus.core
+[DEBUG]   Imported: org.codehaus.classworlds < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.toolchain < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.spi < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.observers < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParserException < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.util.xml.pull.XmlPullParser < plexus.core
+[DEBUG]   Imported: org.apache.maven.configuration < plexus.core
+[DEBUG]   Imported: org.apache.maven.cli < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.context < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.authorization < plexus.core
+[DEBUG]   Imported: org.apache.maven.project < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.installation < plexus.core
+[DEBUG]   Imported: org.eclipse.aether.deployment < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.lifecycle < plexus.core
+[DEBUG]   Imported: org.apache.maven.rtinfo < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.configuration < plexus.core
+[DEBUG]   Imported: org.apache.maven.artifact < plexus.core
+[DEBUG]   Imported: org.apache.maven.model < plexus.core
+[DEBUG]   Imported: org.slf4j.* < plexus.core
+[DEBUG]   Imported: javax.enterprise.inject.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.wagon.proxy < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.* < plexus.core
+[DEBUG]   Imported: org.apache.maven.plugin < plexus.core
+[DEBUG]   Imported: org.codehaus.plexus.personality < plexus.core
+[DEBUG] Populating class realm maven.api
+[DEBUG] Created new class realm extension>org.apache.felix:maven-bundle-plugin:2.4.0
+[DEBUG] Importing foreign packages into class realm extension>org.apache.felix:maven-bundle-plugin:2.4.0
+[DEBUG]   Imported:  < maven.api
+[DEBUG] Populating class realm extension>org.apache.felix:maven-bundle-plugin:2.4.0
+[DEBUG]   Included: org.apache.felix:maven-bundle-plugin:jar:2.4.0
+[DEBUG]   Included: biz.aQute.bnd:bndlib:jar:2.1.0
+[DEBUG]   Included: org.osgi:org.osgi.core:jar:4.2.0
+[DEBUG]   Included: org.apache.felix:org.apache.felix.bundlerepository:jar:1.6.6
+[DEBUG]   Included: org.easymock:easymock:jar:2.4
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-api:jar:2.0.7
+[DEBUG]   Included: org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7
+[DEBUG]   Included: junit:junit:jar:3.8.1
+[DEBUG]   Included: commons-cli:commons-cli:jar:1.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4
+[DEBUG]   Included: org.apache.maven:maven-archiver:jar:2.5
+[DEBUG]   Included: org.codehaus.plexus:plexus-archiver:jar:2.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-io:jar:2.0.2
+[DEBUG]   Included: org.codehaus.plexus:plexus-interpolation:jar:1.15
+[DEBUG]   Included: org.apache.maven.shared:maven-dependency-tree:jar:2.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-component-annotations:jar:1.5.5
+[DEBUG]   Included: org.eclipse.aether:aether-util:jar:0.9.0.M2
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:3.0.10
+[DEBUG] Extension realms for project org.fcrepo:fcrepo:pom:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Created new class realm project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Populating class realm project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.sonatype.oss:oss-parent:pom:7: (none)
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[plexus.core, parent: null]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-boms:pom:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo4-bom:pom:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-jcr-bom:pom:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging pom from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-kernel:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-kernel-impl:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-audit:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-webapp:war:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging war from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-jms:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-generator-dc:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-http-commons:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-http-api:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-storage-policy:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-serialization:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-transform:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-auth-common:bundle:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging bundle from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-connector-file:jar:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[DEBUG] Extension realms for project org.fcrepo:fcrepo-configs:jar:4.0.0-beta-03-SNAPSHOT: [ClassRealm[extension>org.apache.felix:maven-bundle-plugin:2.4.0, parent: sun.misc.Launcher$AppClassLoader@77a6686]]
+[DEBUG] Looking up lifecyle mappings for packaging jar from ClassRealm[project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT, parent: ClassRealm[maven.api, parent: null]]
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] Fedora Repository Metrics Module
+[INFO] Fedora Repository Configurations Module
+[INFO] Fedora Repository Kernel Implementation
+[INFO] Fedora Repository Audit Module
+[INFO] Fedora Repository Object Serialization Module
+[INFO] Fedora Repository HTTP Commons Module
+[INFO] Fedora Repository JMS Module
+[INFO] Fedora Repository FileSystem Connector Module
+[INFO] Fedora Repository Authorization Commons Module
+[INFO] Fedora Repository HTTP API Module
+[INFO] Fedora Repository Dublin Core Module
+[INFO] Fedora Repository RDF Transformations Module
+[INFO] Fedora Repository Storage Strategies Module
+[INFO] Fedora Repository Deployable Web Application
+[DEBUG] === REACTOR BUILD PLAN ================================================
+[DEBUG] Project: org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-configs:jar:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-kernel-impl:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-audit:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-serialization:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-http-commons:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-jms:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-connector-file:jar:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-auth-common:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-http-api:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-generator-dc:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-transform:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-storage-policy:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Project: org.fcrepo:fcrepo-webapp:war:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Tasks:   [clean, verify]
+[DEBUG] Style:   Regular
+[DEBUG] =======================================================================
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Fedora Repository Metrics Module 4.0.0-beta-03-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] Lifecycle default -> [validate, initialize, generate-sources, process-sources, generate-resources, process-resources, compile, process-classes, generate-test-sources, process-test-sources, generate-test-resources, process-test-resources, test-compile, process-test-classes, test, prepare-package, package, pre-integration-test, integration-test, post-integration-test, verify, install, deploy]
+[DEBUG] Lifecycle clean -> [pre-clean, clean, post-clean]
+[DEBUG] Lifecycle site -> [pre-site, site, post-site, site-deploy]
+[DEBUG] === PROJECT BUILD PLAN ================================================
+[DEBUG] Project:       org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Dependencies (collect): [test]
+[DEBUG] Dependencies (resolve): [compile, runtime, test]
+[DEBUG] Repositories (dependencies): [fcrepo-snapshot (http://maven.fcrepo.org/nexus/content/repositories/snapshots/, snapshots), fcrepo-thirdparty (http://maven.fcrepo.org/nexus/content/repositories/thirdparty/, releases), jboss-public-repository-group (http://repository.jboss.org/nexus/content/groups/public/, releases), jboss-public-repository-group-snapshot (http://snapshots.jboss.org/maven2/, snapshots), maven2-repository.dev.java.net (http://download.java.net/maven/2/, releases), apache-snapshot (http://repository.apache.org/snapshots/, snapshots), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, snapshots), central (https://repo.maven.apache.org/maven2, releases)]
+[DEBUG] Repositories (plugins)     : [fcrepo-thirdparty (http://maven.fcrepo.org/nexus/content/repositories/thirdparty/, releases), sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots, snapshots), central (https://repo.maven.apache.org/maven2, releases)]
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-clean-plugin:2.5:clean (default-clean)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <directory default-value="${project.build.directory}"/>
+  <excludeDefaultDirectories default-value="false">${clean.excludeDefaultDirectories}</excludeDefaultDirectories>
+  <failOnError default-value="true">${maven.clean.failOnError}</failOnError>
+  <followSymLinks default-value="false">${clean.followSymLinks}</followSymLinks>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <reportDirectory default-value="${project.reporting.outputDirectory}"/>
+  <retryOnError default-value="true">${maven.clean.retryOnError}</retryOnError>
+  <skip default-value="false">${clean.skip}</skip>
+  <testOutputDirectory default-value="${project.build.testOutputDirectory}"/>
+  <verbose>${clean.verbose}</verbose>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce (enforce-maven)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <fail default-value="true">${enforcer.fail}</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <rules>
+    <requireMavenVersion>
+      <version>(,2.1.0),(2.1.0,2.2.0),(2.2.0,)</version>
+      <message>Maven 2.1.0 and 2.2.0 produce incorrect GPG signatures and checksums respectively.</message>
+    </requireMavenVersion>
+  </rules>
+  <skip default-value="false">${enforcer.skip}</skip>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce (default)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <fail default-value="true">${enforcer.fail}</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <rules>
+    <DependencyConvergence/>
+    <bannedDependencies>
+      <searchTransitive>true</searchTransitive>
+      <excludes>
+        <exclude>commons-logging</exclude>
+        <exclude>log4j:log4j</exclude>
+        <exclude>org.slf4j:slf4j-jcl</exclude>
+        <exclude>org.slf4j:slf4j-jdk14</exclude>
+        <exclude>org.slf4j:slf4j-log4j12</exclude>
+        <exclude>org.slf4j:slf4j-log4j13</exclude>
+        <exclude>org.slf4j:slf4j-nop</exclude>
+        <exclude>org.slf4j:slf4j-simple</exclude>
+        <exclude>org.apache.cxf</exclude>
+      </excludes>
+    </bannedDependencies>
+  </rules>
+  <skip default-value="false">${enforcer.skip}</skip>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.jacoco:jacoco-maven-plugin:0.6.4.201312101107:prepare-agent (default-prepare-agent)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <address>${jacoco.address}</address>
+  <append>true</append>
+  <classDumpDir>${jacoco.classDumpDir}</classDumpDir>
+  <destFile default-value="${project.build.directory}/jacoco.exec">/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec</destFile>
+  <dumpOnExit>${jacoco.dumpOnExit}</dumpOnExit>
+  <exclClassLoaders>${jacoco.exclClassLoaders}</exclClassLoaders>
+  <jmx>${jacoco.jmx}</jmx>
+  <output>${jacoco.output}</output>
+  <pluginArtifactMap>${plugin.artifactMap}</pluginArtifactMap>
+  <port>${jacoco.port}</port>
+  <project>${project}</project>
+  <propertyName>jacoco.agent.unit.arg</propertyName>
+  <sessionId>${jacoco.sessionId}</sessionId>
+  <skip default-value="false">${jacoco.skip}</skip>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-resources-plugin:2.6:resources (default-resources)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <buildFilters default-value="${project.build.filters}"/>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <escapeString>${maven.resources.escapeString}</escapeString>
+  <escapeWindowsPaths default-value="true">${maven.resources.escapeWindowsPaths}</escapeWindowsPaths>
+  <includeEmptyDirs default-value="false">${maven.resources.includeEmptyDirs}</includeEmptyDirs>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <overwrite default-value="false">${maven.resources.overwrite}</overwrite>
+  <project default-value="${project}"/>
+  <resources default-value="${project.resources}"/>
+  <session default-value="${session}"/>
+  <supportMultiLineFiltering default-value="false">${maven.resources.supportMultiLineFiltering}</supportMultiLineFiltering>
+  <useBuildFilters default-value="true"/>
+  <useDefaultDelimiters default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-compiler-plugin:3.1:compile (default-compile)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <basedir default-value="${basedir}"/>
+  <buildDirectory default-value="${project.build.directory}"/>
+  <classpathElements default-value="${project.compileClasspathElements}"/>
+  <compileSourceRoots default-value="${project.compileSourceRoots}"/>
+  <compilerArgument>-Xlint:unchecked</compilerArgument>
+  <compilerId default-value="javac">${maven.compiler.compilerId}</compilerId>
+  <compilerReuseStrategy default-value="${reuseCreated}">${maven.compiler.compilerReuseStrategy}</compilerReuseStrategy>
+  <compilerVersion>${maven.compiler.compilerVersion}</compilerVersion>
+  <debug default-value="true">true</debug>
+  <debuglevel>${maven.compiler.debuglevel}</debuglevel>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <executable>${maven.compiler.executable}</executable>
+  <failOnError default-value="true">${maven.compiler.failOnError}</failOnError>
+  <forceJavacCompilerUse default-value="false">${maven.compiler.forceJavacCompilerUse}</forceJavacCompilerUse>
+  <fork default-value="false">${maven.compiler.fork}</fork>
+  <generatedSourcesDirectory default-value="${project.build.directory}/generated-sources/annotations"/>
+  <maxmem>${maven.compiler.maxmem}</maxmem>
+  <meminitial>${maven.compiler.meminitial}</meminitial>
+  <mojoExecution>${mojoExecution}</mojoExecution>
+  <optimize default-value="false">${maven.compiler.optimize}</optimize>
+  <outputDirectory default-value="${project.build.outputDirectory}"/>
+  <projectArtifact default-value="${project.artifact}"/>
+  <showDeprecation default-value="false">${maven.compiler.showDeprecation}</showDeprecation>
+  <showWarnings default-value="false">${maven.compiler.showWarnings}</showWarnings>
+  <skipMain>${maven.main.skip}</skipMain>
+  <skipMultiThreadWarning default-value="false">${maven.compiler.skipMultiThreadWarning}</skipMultiThreadWarning>
+  <source default-value="1.5">1.7</source>
+  <staleMillis default-value="0">${lastModGranularityMs}</staleMillis>
+  <target default-value="1.5">1.7</target>
+  <useIncrementalCompilation default-value="true">${maven.compiler.useIncrementalCompilation}</useIncrementalCompilation>
+  <verbose default-value="false">${maven.compiler.verbose}</verbose>
+  <mavenSession default-value="${session}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-resources-plugin:2.6:testResources (default-testResources)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <buildFilters default-value="${project.build.filters}"/>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <escapeString>${maven.resources.escapeString}</escapeString>
+  <escapeWindowsPaths default-value="true">${maven.resources.escapeWindowsPaths}</escapeWindowsPaths>
+  <includeEmptyDirs default-value="false">${maven.resources.includeEmptyDirs}</includeEmptyDirs>
+  <outputDirectory default-value="${project.build.testOutputDirectory}"/>
+  <overwrite default-value="false">${maven.resources.overwrite}</overwrite>
+  <project default-value="${project}"/>
+  <resources default-value="${project.testResources}"/>
+  <session default-value="${session}"/>
+  <skip>${maven.test.skip}</skip>
+  <supportMultiLineFiltering default-value="false">${maven.resources.supportMultiLineFiltering}</supportMultiLineFiltering>
+  <useBuildFilters default-value="true"/>
+  <useDefaultDelimiters default-value="true"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile (default-testCompile)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <basedir default-value="${basedir}"/>
+  <buildDirectory default-value="${project.build.directory}"/>
+  <classpathElements default-value="${project.testClasspathElements}"/>
+  <compileSourceRoots default-value="${project.testCompileSourceRoots}"/>
+  <compilerArgument>-Xlint:unchecked</compilerArgument>
+  <compilerId default-value="javac">${maven.compiler.compilerId}</compilerId>
+  <compilerReuseStrategy default-value="${reuseCreated}">${maven.compiler.compilerReuseStrategy}</compilerReuseStrategy>
+  <compilerVersion>${maven.compiler.compilerVersion}</compilerVersion>
+  <debug default-value="true">true</debug>
+  <debuglevel>${maven.compiler.debuglevel}</debuglevel>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <executable>${maven.compiler.executable}</executable>
+  <failOnError default-value="true">${maven.compiler.failOnError}</failOnError>
+  <forceJavacCompilerUse default-value="false">${maven.compiler.forceJavacCompilerUse}</forceJavacCompilerUse>
+  <fork default-value="false">${maven.compiler.fork}</fork>
+  <generatedTestSourcesDirectory default-value="${project.build.directory}/generated-test-sources/test-annotations"/>
+  <maxmem>${maven.compiler.maxmem}</maxmem>
+  <meminitial>${maven.compiler.meminitial}</meminitial>
+  <mojoExecution>${mojoExecution}</mojoExecution>
+  <optimize default-value="false">${maven.compiler.optimize}</optimize>
+  <outputDirectory default-value="${project.build.testOutputDirectory}"/>
+  <showDeprecation default-value="false">${maven.compiler.showDeprecation}</showDeprecation>
+  <showWarnings default-value="false">${maven.compiler.showWarnings}</showWarnings>
+  <skip>${maven.test.skip}</skip>
+  <skipMultiThreadWarning default-value="false">${maven.compiler.skipMultiThreadWarning}</skipMultiThreadWarning>
+  <source default-value="1.5">1.7</source>
+  <staleMillis default-value="0">${lastModGranularityMs}</staleMillis>
+  <target default-value="1.5">1.7</target>
+  <testSource>${maven.compiler.testSource}</testSource>
+  <testTarget>${maven.compiler.testTarget}</testTarget>
+  <useIncrementalCompilation default-value="true">${maven.compiler.useIncrementalCompilation}</useIncrementalCompilation>
+  <verbose default-value="false">${maven.compiler.verbose}</verbose>
+  <mavenSession default-value="${session}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-surefire-plugin:2.17:test (default-test)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <additionalClasspathElements>${maven.test.additionalClasspath}</additionalClasspathElements>
+  <argLine>${jacoco.agent.unit.arg}</argLine>
+  <basedir default-value="${basedir}"/>
+  <childDelegation default-value="false">${childDelegation}</childDelegation>
+  <classesDirectory default-value="${project.build.outputDirectory}"/>
+  <classpathDependencyExcludes>${maven.test.dependency.excludes}</classpathDependencyExcludes>
+  <debugForkedProcess>${maven.surefire.debug}</debugForkedProcess>
+  <dependenciesToScan>${dependenciesToScan}</dependenciesToScan>
+  <disableXmlReport default-value="false">${disableXmlReport}</disableXmlReport>
+  <enableAssertions default-value="true">${enableAssertions}</enableAssertions>
+  <excludedGroups>${excludedGroups}</excludedGroups>
+  <failIfNoSpecifiedTests>${surefire.failIfNoSpecifiedTests}</failIfNoSpecifiedTests>
+  <failIfNoTests>${failIfNoTests}</failIfNoTests>
+  <forkCount default-value="1">${forkCount}</forkCount>
+  <forkMode default-value="once">${forkMode}</forkMode>
+  <forkedProcessTimeoutInSeconds>${surefire.timeout}</forkedProcessTimeoutInSeconds>
+  <groups>${groups}</groups>
+  <junitArtifactName default-value="junit:junit">${junitArtifactName}</junitArtifactName>
+  <jvm>${jvm}</jvm>
+  <localRepository default-value="${localRepository}"/>
+  <objectFactory>${objectFactory}</objectFactory>
+  <parallel>${parallel}</parallel>
+  <parallelMavenExecution default-value="${session.parallel}"/>
+  <parallelOptimized default-value="true">${parallelOptimized}</parallelOptimized>
+  <parallelTestsTimeoutForcedInSeconds>${surefire.parallel.forcedTimeout}</parallelTestsTimeoutForcedInSeconds>
+  <parallelTestsTimeoutInSeconds>${surefire.parallel.timeout}</parallelTestsTimeoutInSeconds>
+  <perCoreThreadCount default-value="true">${perCoreThreadCount}</perCoreThreadCount>
+  <pluginArtifactMap>${plugin.artifactMap}</pluginArtifactMap>
+  <pluginDescriptor default-value="${plugin}"/>
+  <printSummary default-value="true">${surefire.printSummary}</printSummary>
+  <projectArtifactMap>${project.artifactMap}</projectArtifactMap>
+  <redirectTestOutputToFile default-value="false">${maven.test.redirectTestOutputToFile}</redirectTestOutputToFile>
+  <remoteRepositories default-value="${project.pluginArtifactRepositories}"/>
+  <reportFormat default-value="brief">${surefire.reportFormat}</reportFormat>
+  <reportNameSuffix default-value="">${surefire.reportNameSuffix}</reportNameSuffix>
+  <reportsDirectory default-value="${project.build.directory}/surefire-reports"/>
+  <reuseForks default-value="true">${reuseForks}</reuseForks>
+  <runOrder default-value="filesystem"/>
+  <skip default-value="false">${maven.test.skip}</skip>
+  <skipExec>${maven.test.skip.exec}</skipExec>
+  <skipTests default-value="false">${skipTests}</skipTests>
+  <test>${test}</test>
+  <testClassesDirectory default-value="${project.build.testOutputDirectory}"/>
+  <testFailureIgnore default-value="false">${maven.test.failure.ignore}</testFailureIgnore>
+  <testNGArtifactName default-value="org.testng:testng">${testNGArtifactName}</testNGArtifactName>
+  <testSourceDirectory default-value="${project.build.testSourceDirectory}"/>
+  <threadCount>${threadCount}</threadCount>
+  <threadCountClasses default-value="0">${threadCountClasses}</threadCountClasses>
+  <threadCountMethods default-value="0">${threadCountMethods}</threadCountMethods>
+  <threadCountSuites default-value="0">${threadCountSuites}</threadCountSuites>
+  <trimStackTrace default-value="true">${trimStackTrace}</trimStackTrace>
+  <useFile default-value="true">${surefire.useFile}</useFile>
+  <useManifestOnlyJar default-value="true">${surefire.useManifestOnlyJar}</useManifestOnlyJar>
+  <useSystemClassLoader default-value="true">${surefire.useSystemClassLoader}</useSystemClassLoader>
+  <useUnlimitedThreads default-value="false">${useUnlimitedThreads}</useUnlimitedThreads>
+  <workingDirectory>${basedir}</workingDirectory>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.felix:maven-bundle-plugin:2.4.0:bundle (default-bundle)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <buildDirectory>${project.build.directory}</buildDirectory>
+  <dumpClasspath>${dumpClasspath}</dumpClasspath>
+  <dumpInstructions>${dumpInstructions}</dumpInstructions>
+  <excludeDependencies>${excludeDependencies}</excludeDependencies>
+  <finalName>${project.build.finalName}</finalName>
+  <m_mavenSession default-value="${session}"/>
+  <manifestLocation default-value="${project.build.outputDirectory}/META-INF">${manifestLocation}</manifestLocation>
+  <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+  <project>${project}</project>
+  <unpackBundle>${unpackBundle}</unpackBundle>
+</configuration>
+[DEBUG] --- init fork of org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT for org.apache.maven.plugins:maven-source-plugin:2.2.1:jar (attach-sources) ---
+[DEBUG] Dependencies (collect): [test]
+[DEBUG] Dependencies (resolve): [runtime]
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce (enforce-maven)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <fail default-value="true">${enforcer.fail}</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <rules>
+    <requireMavenVersion>
+      <version>(,2.1.0),(2.1.0,2.2.0),(2.2.0,)</version>
+      <message>Maven 2.1.0 and 2.2.0 produce incorrect GPG signatures and checksums respectively.</message>
+    </requireMavenVersion>
+  </rules>
+  <skip default-value="false">${enforcer.skip}</skip>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce (default)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <fail default-value="true">${enforcer.fail}</fail>
+  <failFast default-value="false">${enforcer.failFast}</failFast>
+  <ignoreCache default-value="false">${enforcer.ignoreCache}</ignoreCache>
+  <rules>
+    <DependencyConvergence/>
+    <bannedDependencies>
+      <searchTransitive>true</searchTransitive>
+      <excludes>
+        <exclude>commons-logging</exclude>
+        <exclude>log4j:log4j</exclude>
+        <exclude>org.slf4j:slf4j-jcl</exclude>
+        <exclude>org.slf4j:slf4j-jdk14</exclude>
+        <exclude>org.slf4j:slf4j-log4j12</exclude>
+        <exclude>org.slf4j:slf4j-log4j13</exclude>
+        <exclude>org.slf4j:slf4j-nop</exclude>
+        <exclude>org.slf4j:slf4j-simple</exclude>
+        <exclude>org.apache.cxf</exclude>
+      </excludes>
+    </bannedDependencies>
+  </rules>
+  <skip default-value="false">${enforcer.skip}</skip>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.jacoco:jacoco-maven-plugin:0.6.4.201312101107:prepare-agent (default-prepare-agent)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <address>${jacoco.address}</address>
+  <append>true</append>
+  <classDumpDir>${jacoco.classDumpDir}</classDumpDir>
+  <destFile default-value="${project.build.directory}/jacoco.exec">/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec</destFile>
+  <dumpOnExit>${jacoco.dumpOnExit}</dumpOnExit>
+  <exclClassLoaders>${jacoco.exclClassLoaders}</exclClassLoaders>
+  <jmx>${jacoco.jmx}</jmx>
+  <output>${jacoco.output}</output>
+  <pluginArtifactMap>${plugin.artifactMap}</pluginArtifactMap>
+  <port>${jacoco.port}</port>
+  <project>${project}</project>
+  <propertyName>jacoco.agent.unit.arg</propertyName>
+  <sessionId>${jacoco.sessionId}</sessionId>
+  <skip default-value="false">${jacoco.skip}</skip>
+</configuration>
+[DEBUG] --- exit fork of org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT for org.apache.maven.plugins:maven-source-plugin:2.2.1:jar (attach-sources) ---
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-source-plugin:2.2.1:jar (attach-sources)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <attach default-value="true">${attach}</attach>
+  <classifier default-value="sources">${maven.source.classifier}</classifier>
+  <defaultManifestFile default-value="${project.build.outputDirectory}/META-INF/MANIFEST.MF"/>
+  <excludeResources default-value="false">${source.excludeResources}</excludeResources>
+  <finalName default-value="${project.build.finalName}"/>
+  <forceCreation default-value="false">${source.forceCreation}</forceCreation>
+  <includePom default-value="false">${source.includePom}</includePom>
+  <outputDirectory default-value="${project.build.directory}"/>
+  <project default-value="${project}"/>
+  <reactorProjects default-value="${reactorProjects}"/>
+  <skipSource default-value="false">${source.skip}</skipSource>
+  <useDefaultExcludes default-value="true"/>
+  <useDefaultManifestFile default-value="false"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-javadoc-plugin:2.9.1:jar (attach-javadocs)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <additionalJOption>${additionalJOption}</additionalJOption>
+  <additionalparam>${additionalparam}</additionalparam>
+  <aggregate default-value="false">${aggregate}</aggregate>
+  <applyJavadocSecurityFix default-value="true">${maven.javadoc.applyJavadocSecurityFix}</applyJavadocSecurityFix>
+  <attach default-value="true">${attach}</attach>
+  <author default-value="true">${author}</author>
+  <bootclasspath>${bootclasspath}</bootclasspath>
+  <bootclasspathArtifacts>${bootclasspathArtifacts}</bootclasspathArtifacts>
+  <bottom default-value="Copyright &amp;#169; {inceptionYear}&amp;#x2013;{currentYear} {organizationName}. All rights reserved.">${bottom}</bottom>
+  <breakiterator default-value="false">${breakiterator}</breakiterator>
+  <charset>${charset}</charset>
+  <debug default-value="false">${debug}</debug>
+  <defaultManifestFile default-value="${project.build.outputDirectory}/META-INF/MANIFEST.MF"/>
+  <destDir>${destDir}</destDir>
+  <detectJavaApiLink default-value="true">${detectJavaApiLink}</detectJavaApiLink>
+  <detectLinks default-value="false">${detectLinks}</detectLinks>
+  <detectOfflineLinks default-value="true">${detectOfflineLinks}</detectOfflineLinks>
+  <docencoding default-value="${project.reporting.outputEncoding}">${docencoding}</docencoding>
+  <docfilessubdirs default-value="false">${docfilessubdirs}</docfilessubdirs>
+  <doclet>${doclet}</doclet>
+  <docletArtifact>${docletArtifact}</docletArtifact>
+  <docletArtifacts>${docletArtifacts}</docletArtifacts>
+  <docletPath>${docletPath}</docletPath>
+  <doctitle default-value="${project.name} ${project.version} API">${doctitle}</doctitle>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <excludePackageNames>${excludePackageNames}</excludePackageNames>
+  <excludedocfilessubdir>${excludedocfilessubdir}</excludedocfilessubdir>
+  <extdirs>${extdirs}</extdirs>
+  <failOnError default-value="true">${maven.javadoc.failOnError}</failOnError>
+  <finalName>${project.build.finalName}</finalName>
+  <footer>${footer}</footer>
+  <groups>${groups}</groups>
+  <header>${header}</header>
+  <helpfile>${helpfile}</helpfile>
+  <includeDependencySources default-value="false"/>
+  <includeTransitiveDependencySources default-value="false"/>
+  <isOffline default-value="${settings.offline}"/>
+  <jarOutputDirectory>${project.build.directory}</jarOutputDirectory>
+  <javaApiLinks>${javaApiLinks}</javaApiLinks>
+  <javadocDirectory default-value="${basedir}/src/main/javadoc"/>
+  <javadocExecutable>${javadocExecutable}</javadocExecutable>
+  <javadocOptionsDir default-value="${project.build.directory}/javadoc-bundle-options"/>
+  <javadocVersion>${javadocVersion}</javadocVersion>
+  <keywords default-value="false">${keywords}</keywords>
+  <links>${links}</links>
+  <linksource default-value="false">${linksource}</linksource>
+  <localRepository>${localRepository}</localRepository>
+  <locale>${locale}</locale>
+  <maxmemory>${maxmemory}</maxmemory>
+  <minmemory>${minmemory}</minmemory>
+  <nocomment default-value="false">${nocomment}</nocomment>
+  <nodeprecated default-value="false">${nodeprecated}</nodeprecated>
+  <nodeprecatedlist default-value="false">${nodeprecatedlist}</nodeprecatedlist>
+  <nohelp default-value="false">${nohelp}</nohelp>
+  <noindex default-value="false">${noindex}</noindex>
+  <nonavbar default-value="false">${nonavbar}</nonavbar>
+  <nooverview default-value="false">${nooverview}</nooverview>
+  <noqualifier>${noqualifier}</noqualifier>
+  <nosince default-value="false">${nosince}</nosince>
+  <notimestamp default-value="false">${notimestamp}</notimestamp>
+  <notree default-value="false">${notree}</notree>
+  <offlineLinks>${offlineLinks}</offlineLinks>
+  <old default-value="false">${old}</old>
+  <outputDirectory default-value="${project.build.directory}/apidocs">${destDir}</outputDirectory>
+  <overview default-value="${basedir}/src/main/javadoc/overview.html">${overview}</overview>
+  <packagesheader>${packagesheader}</packagesheader>
+  <proxyHost>${proxyHost}</proxyHost>
+  <proxyPort>${proxyPort}</proxyPort>
+  <quiet default-value="false">${quiet}</quiet>
+  <reactorProjects>${reactorProjects}</reactorProjects>
+  <remoteRepositories>${project.remoteArtifactRepositories}</remoteRepositories>
+  <resourcesArtifacts>${resourcesArtifacts}</resourcesArtifacts>
+  <serialwarn default-value="false">${serialwarn}</serialwarn>
+  <show default-value="protected">${show}</show>
+  <skip default-value="false">${maven.javadoc.skip}</skip>
+  <source>${source}</source>
+  <sourceDependencyCacheDir default-value="${project.build.directory}/distro-javadoc-sources"/>
+  <sourcepath>${sourcepath}</sourcepath>
+  <sourcetab>${sourcetab}</sourcetab>
+  <splitindex default-value="false">${splitindex}</splitindex>
+  <stylesheet default-value="java">${stylesheet}</stylesheet>
+  <stylesheetfile>${stylesheetfile}</stylesheetfile>
+  <subpackages>${subpackages}</subpackages>
+  <taglet>${taglet}</taglet>
+  <tagletArtifact>${tagletArtifact}</tagletArtifact>
+  <tagletArtifacts>${tagletArtifacts}</tagletArtifacts>
+  <tagletpath>${tagletpath}</tagletpath>
+  <taglets>${taglets}</taglets>
+  <tags>${tags}</tags>
+  <top>${top}</top>
+  <use default-value="true">${use}</use>
+  <useDefaultManifestFile default-value="false"/>
+  <useStandardDocletOptions default-value="true">${useStandardDocletOptions}</useStandardDocletOptions>
+  <validateLinks default-value="false">${validateLinks}</validateLinks>
+  <verbose default-value="false">${verbose}</verbose>
+  <version default-value="true">${version}</version>
+  <windowtitle default-value="${project.name} ${project.version} API">${windowtitle}</windowtitle>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+  <settings default-value="${settings}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.jacoco:jacoco-maven-plugin:0.6.4.201312101107:prepare-agent-integration (default-prepare-agent-integration)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <address>${jacoco.address}</address>
+  <append>true</append>
+  <classDumpDir>${jacoco.classDumpDir}</classDumpDir>
+  <destFile default-value="${project.build.directory}/jacoco-it.exec">/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-it.exec</destFile>
+  <dumpOnExit>${jacoco.dumpOnExit}</dumpOnExit>
+  <exclClassLoaders>${jacoco.exclClassLoaders}</exclClassLoaders>
+  <jmx>${jacoco.jmx}</jmx>
+  <output>${jacoco.output}</output>
+  <pluginArtifactMap>${plugin.artifactMap}</pluginArtifactMap>
+  <port>${jacoco.port}</port>
+  <project>${project}</project>
+  <propertyName>jacoco.agent.it.arg</propertyName>
+  <sessionId>${jacoco.sessionId}</sessionId>
+  <skip default-value="false">${jacoco.skip}</skip>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-failsafe-plugin:2.17:integration-test (integration-test)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <additionalClasspathElements>${maven.test.additionalClasspath}</additionalClasspathElements>
+  <argLine>-XX:MaxPermSize=128m ${jacoco.agent.it.arg}</argLine>
+  <basedir default-value="${basedir}"/>
+  <childDelegation default-value="false">${childDelegation}</childDelegation>
+  <classesDirectory default-value="${project.build.outputDirectory}"/>
+  <classpathDependencyExcludes>${maven.test.dependency.excludes}</classpathDependencyExcludes>
+  <debugForkedProcess>${maven.failsafe.debug}</debugForkedProcess>
+  <dependenciesToScan>${dependenciesToScan}</dependenciesToScan>
+  <disableXmlReport default-value="false">${disableXmlReport}</disableXmlReport>
+  <enableAssertions default-value="true">${enableAssertions}</enableAssertions>
+  <encoding default-value="${project.reporting.outputEncoding}">${encoding}</encoding>
+  <excludedGroups>${excludedGroups}</excludedGroups>
+  <failIfNoSpecifiedTests>${it.failIfNoSpecifiedTests}</failIfNoSpecifiedTests>
+  <failIfNoTests>${failIfNoTests}</failIfNoTests>
+  <forkCount default-value="1">${forkCount}</forkCount>
+  <forkMode default-value="once">${forkMode}</forkMode>
+  <forkedProcessTimeoutInSeconds>${failsafe.timeout}</forkedProcessTimeoutInSeconds>
+  <groups>${groups}</groups>
+  <junitArtifactName default-value="junit:junit">${junitArtifactName}</junitArtifactName>
+  <jvm>${jvm}</jvm>
+  <localRepository default-value="${localRepository}"/>
+  <objectFactory>${objectFactory}</objectFactory>
+  <parallel>${parallel}</parallel>
+  <parallelMavenExecution default-value="${session.parallel}"/>
+  <parallelOptimized default-value="true">${parallelOptimized}</parallelOptimized>
+  <parallelTestsTimeoutForcedInSeconds>${failsafe.parallel.forcedTimeout}</parallelTestsTimeoutForcedInSeconds>
+  <parallelTestsTimeoutInSeconds>${failsafe.parallel.timeout}</parallelTestsTimeoutInSeconds>
+  <perCoreThreadCount default-value="true">${perCoreThreadCount}</perCoreThreadCount>
+  <pluginArtifactMap>${plugin.artifactMap}</pluginArtifactMap>
+  <pluginDescriptor default-value="${plugin}"/>
+  <printSummary default-value="true">${failsafe.printSummary}</printSummary>
+  <projectArtifactMap>${project.artifactMap}</projectArtifactMap>
+  <redirectTestOutputToFile default-value="false">${maven.test.redirectTestOutputToFile}</redirectTestOutputToFile>
+  <remoteRepositories default-value="${project.pluginArtifactRepositories}"/>
+  <reportFormat default-value="brief">${failsafe.reportFormat}</reportFormat>
+  <reportNameSuffix default-value="">${surefire.reportNameSuffix}</reportNameSuffix>
+  <reportsDirectory default-value="${project.build.directory}/failsafe-reports"/>
+  <reuseForks default-value="true">${reuseForks}</reuseForks>
+  <runOrder default-value="filesystem"/>
+  <skip default-value="false">${maven.test.skip}</skip>
+  <skipExec>${maven.test.skip.exec}</skipExec>
+  <skipITs>${skipITs}</skipITs>
+  <skipTests default-value="false">${skipTests}</skipTests>
+  <summaryFile default-value="${project.build.directory}/failsafe-reports/failsafe-summary.xml"/>
+  <systemPropertyVariables>
+    <test.port>${test.port}</test.port>
+    <test.context.path>${test.context.path}</test.context.path>
+    <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>/opt/Fedora/fcrepo4/fcrepo-metrics/target/object-store-default</com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
+    <com.arjuna.ats.arjuna.objectstore.objectStoreDir>/opt/Fedora/fcrepo4/fcrepo-metrics/target/object-store</com.arjuna.ats.arjuna.objectstore.objectStoreDir>
+    <integration-test>true</integration-test>
+  </systemPropertyVariables>
+  <test>${it.test}</test>
+  <testClassesDirectory default-value="${project.build.testOutputDirectory}"/>
+  <testNGArtifactName default-value="org.testng:testng">${testNGArtifactName}</testNGArtifactName>
+  <testSourceDirectory default-value="${project.build.testSourceDirectory}"/>
+  <threadCount>${threadCount}</threadCount>
+  <threadCountClasses default-value="0">${threadCountClasses}</threadCountClasses>
+  <threadCountMethods default-value="0">${threadCountMethods}</threadCountMethods>
+  <threadCountSuites default-value="0">${threadCountSuites}</threadCountSuites>
+  <trimStackTrace default-value="true">${trimStackTrace}</trimStackTrace>
+  <useFile default-value="true">${failsafe.useFile}</useFile>
+  <useManifestOnlyJar default-value="true">${failsafe.useManifestOnlyJar}</useManifestOnlyJar>
+  <useSystemClassLoader default-value="true">${failsafe.useSystemClassLoader}</useSystemClassLoader>
+  <useUnlimitedThreads default-value="false">${useUnlimitedThreads}</useUnlimitedThreads>
+  <workingDirectory>${basedir}</workingDirectory>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-failsafe-plugin:2.17:integration-test (default-integration-test)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <additionalClasspathElements>${maven.test.additionalClasspath}</additionalClasspathElements>
+  <argLine>-XX:MaxPermSize=128m ${jacoco.agent.it.arg}</argLine>
+  <basedir default-value="${basedir}"/>
+  <childDelegation default-value="false">${childDelegation}</childDelegation>
+  <classesDirectory default-value="${project.build.outputDirectory}"/>
+  <classpathDependencyExcludes>${maven.test.dependency.excludes}</classpathDependencyExcludes>
+  <debugForkedProcess>${maven.failsafe.debug}</debugForkedProcess>
+  <dependenciesToScan>${dependenciesToScan}</dependenciesToScan>
+  <disableXmlReport default-value="false">${disableXmlReport}</disableXmlReport>
+  <enableAssertions default-value="true">${enableAssertions}</enableAssertions>
+  <encoding default-value="${project.reporting.outputEncoding}">${encoding}</encoding>
+  <excludedGroups>${excludedGroups}</excludedGroups>
+  <failIfNoSpecifiedTests>${it.failIfNoSpecifiedTests}</failIfNoSpecifiedTests>
+  <failIfNoTests>${failIfNoTests}</failIfNoTests>
+  <forkCount default-value="1">${forkCount}</forkCount>
+  <forkMode default-value="once">${forkMode}</forkMode>
+  <forkedProcessTimeoutInSeconds>${failsafe.timeout}</forkedProcessTimeoutInSeconds>
+  <groups>${groups}</groups>
+  <junitArtifactName default-value="junit:junit">${junitArtifactName}</junitArtifactName>
+  <jvm>${jvm}</jvm>
+  <localRepository default-value="${localRepository}"/>
+  <objectFactory>${objectFactory}</objectFactory>
+  <parallel>${parallel}</parallel>
+  <parallelMavenExecution default-value="${session.parallel}"/>
+  <parallelOptimized default-value="true">${parallelOptimized}</parallelOptimized>
+  <parallelTestsTimeoutForcedInSeconds>${failsafe.parallel.forcedTimeout}</parallelTestsTimeoutForcedInSeconds>
+  <parallelTestsTimeoutInSeconds>${failsafe.parallel.timeout}</parallelTestsTimeoutInSeconds>
+  <perCoreThreadCount default-value="true">${perCoreThreadCount}</perCoreThreadCount>
+  <pluginArtifactMap>${plugin.artifactMap}</pluginArtifactMap>
+  <pluginDescriptor default-value="${plugin}"/>
+  <printSummary default-value="true">${failsafe.printSummary}</printSummary>
+  <projectArtifactMap>${project.artifactMap}</projectArtifactMap>
+  <redirectTestOutputToFile default-value="false">${maven.test.redirectTestOutputToFile}</redirectTestOutputToFile>
+  <remoteRepositories default-value="${project.pluginArtifactRepositories}"/>
+  <reportFormat default-value="brief">${failsafe.reportFormat}</reportFormat>
+  <reportNameSuffix default-value="">${surefire.reportNameSuffix}</reportNameSuffix>
+  <reportsDirectory default-value="${project.build.directory}/failsafe-reports"/>
+  <reuseForks default-value="true">${reuseForks}</reuseForks>
+  <runOrder default-value="filesystem"/>
+  <skip default-value="false">${maven.test.skip}</skip>
+  <skipExec>${maven.test.skip.exec}</skipExec>
+  <skipITs>${skipITs}</skipITs>
+  <skipTests default-value="false">${skipTests}</skipTests>
+  <summaryFile default-value="${project.build.directory}/failsafe-reports/failsafe-summary.xml"/>
+  <systemPropertyVariables>
+    <test.port>${test.port}</test.port>
+    <test.context.path>${test.context.path}</test.context.path>
+    <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>/opt/Fedora/fcrepo4/fcrepo-metrics/target/object-store-default</com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
+    <com.arjuna.ats.arjuna.objectstore.objectStoreDir>/opt/Fedora/fcrepo4/fcrepo-metrics/target/object-store</com.arjuna.ats.arjuna.objectstore.objectStoreDir>
+    <integration-test>true</integration-test>
+  </systemPropertyVariables>
+  <test>${it.test}</test>
+  <testClassesDirectory default-value="${project.build.testOutputDirectory}"/>
+  <testNGArtifactName default-value="org.testng:testng">${testNGArtifactName}</testNGArtifactName>
+  <testSourceDirectory default-value="${project.build.testSourceDirectory}"/>
+  <threadCount>${threadCount}</threadCount>
+  <threadCountClasses default-value="0">${threadCountClasses}</threadCountClasses>
+  <threadCountMethods default-value="0">${threadCountMethods}</threadCountMethods>
+  <threadCountSuites default-value="0">${threadCountSuites}</threadCountSuites>
+  <trimStackTrace default-value="true">${trimStackTrace}</trimStackTrace>
+  <useFile default-value="true">${failsafe.useFile}</useFile>
+  <useManifestOnlyJar default-value="true">${failsafe.useManifestOnlyJar}</useManifestOnlyJar>
+  <useSystemClassLoader default-value="true">${failsafe.useSystemClassLoader}</useSystemClassLoader>
+  <useUnlimitedThreads default-value="false">${useUnlimitedThreads}</useUnlimitedThreads>
+  <workingDirectory>${basedir}</workingDirectory>
+  <project default-value="${project}"/>
+  <session default-value="${session}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          com.mycila:license-maven-plugin:2.6:check (default)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <aggregate default-value="false">${license.aggregate}</aggregate>
+  <basedir default-value="${basedir}">${license.basedir}</basedir>
+  <concurrencyFactor default-value="1.5">${license.concurrencyFactor}</concurrencyFactor>
+  <dryRun default-value="false">${license.dryRun}</dryRun>
+  <encoding default-value="${project.build.sourceEncoding}">UTF-8</encoding>
+  <excludes>
+    <exclude>target/**</exclude>
+    <exclude>**/src/test/resources/**</exclude>
+    <exclude>**/src/main/resources/**</exclude>
+    <exclude>**/*.properties</exclude>
+  </excludes>
+  <failIfMissing default-value="true">${license.failIfMissing}</failIfMissing>
+  <header>fcrepo-license/LICENSE_HEADER.txt</header>
+  <includes>
+    <include>**/src/main/java/**</include>
+    <include>**/src/test/java/**</include>
+  </includes>
+  <properties>
+    <name>fcrepo-metrics</name>
+    <year>2014</year>
+    <holder>DuraSpace, Inc.</holder>
+  </properties>
+  <quiet default-value="false">${license.quiet}</quiet>
+  <skip default-value="false">${license.skip}</skip>
+  <skipExistingHeaders default-value="false">${license.skipExistingHeaders}</skipExistingHeaders>
+  <strictCheck default-value="true">true</strictCheck>
+  <useDefaultExcludes default-value="true">${license.useDefaultExcludes}</useDefaultExcludes>
+  <useDefaultMapping default-value="true">${license.useDefaultMapping}</useDefaultMapping>
+  <project default-value="${project}"/>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-checkstyle-plugin:2.12.1:check (checkstyle)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <cacheFile default-value="${project.build.directory}/checkstyle-cachefile"/>
+  <configLocation default-value="config/sun_checks.xml">fcrepo-checkstyle/checkstyle.xml</configLocation>
+  <consoleOutput default-value="false">true</consoleOutput>
+  <encoding default-value="${project.build.sourceEncoding}">${encoding}</encoding>
+  <excludes>${checkstyle.excludes}</excludes>
+  <failOnViolation default-value="true">true</failOnViolation>
+  <failsOnError default-value="false">true</failsOnError>
+  <headerLocation default-value="LICENSE.txt">${checkstyle.header.file}</headerLocation>
+  <includeResources default-value="true">${checkstyle.includeResources}</includeResources>
+  <includeTestResources default-value="true">${checkstyle.includeTestResources}</includeTestResources>
+  <includeTestSourceDirectory default-value="false">true</includeTestSourceDirectory>
+  <includes default-value="**\/*.java">${checkstyle.includes}</includes>
+  <logViolationsToConsole default-value="false">true</logViolationsToConsole>
+  <maxAllowedViolations default-value="0">${checkstyle.maxAllowedViolations}</maxAllowedViolations>
+  <mojoExecution default-value="${mojoExecution}"/>
+  <outputFile default-value="${project.build.directory}/checkstyle-result.xml">${checkstyle.output.file}</outputFile>
+  <outputFileFormat default-value="xml">${checkstyle.output.format}</outputFileFormat>
+  <plugin default-value="${plugin}"/>
+  <project default-value="${project}"/>
+  <propertiesLocation>${checkstyle.properties.location}</propertiesLocation>
+  <resourceExcludes>${checkstyle.resourceExcludes}</resourceExcludes>
+  <resourceIncludes default-value="**/*.properties">${checkstyle.resourceIncludes}</resourceIncludes>
+  <resources default-value="${project.resources}"/>
+  <rulesFiles default-value="${project.build.directory}/checkstyle-rules.xml">${checkstyle.output.rules.file}</rulesFiles>
+  <skip default-value="false">${checkstyle.skip}</skip>
+  <skipExec default-value="false">${checkstyle.skipExec}</skipExec>
+  <sourceDirectory default-value="${project.build.sourceDirectory}"/>
+  <suppressionsFileExpression default-value="checkstyle.suppressions.file">${checkstyle.suppression.expression}</suppressionsFileExpression>
+  <suppressionsLocation>fcrepo-checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
+  <testSourceDirectory default-value="${project.build.testSourceDirectory}"/>
+  <violationSeverity default-value="error">warning</violationSeverity>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.apache.maven.plugins:maven-failsafe-plugin:2.17:verify (verify)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <basedir default-value="${basedir}"/>
+  <encoding default-value="${project.reporting.outputEncoding}">${encoding}</encoding>
+  <failIfNoTests>${failIfNoTests}</failIfNoTests>
+  <reportsDirectory default-value="${project.build.directory}/failsafe-reports"/>
+  <skip default-value="false">${maven.test.skip}</skip>
+  <skipExec>${maven.test.skip.exec}</skipExec>
+  <skipITs>${skipITs}</skipITs>
+  <skipTests>${skipTests}</skipTests>
+  <summaryFile default-value="${project.build.directory}/failsafe-reports/failsafe-summary.xml"/>
+  <testClassesDirectory default-value="${project.build.testOutputDirectory}"/>
+  <testFailureIgnore default-value="false">${maven.test.failure.ignore}</testFailureIgnore>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.jacoco:jacoco-maven-plugin:0.6.4.201312101107:report (default-report)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <dataFile default-value="${project.build.directory}/jacoco.exec"/>
+  <outputDirectory default-value="${project.reporting.outputDirectory}/jacoco"/>
+  <outputEncoding default-value="UTF-8">${project.reporting.outputEncoding}</outputEncoding>
+  <project>${project}</project>
+  <skip default-value="false">${jacoco.skip}</skip>
+  <sourceEncoding default-value="UTF-8">${project.build.sourceEncoding}</sourceEncoding>
+</configuration>
+[DEBUG] -----------------------------------------------------------------------
+[DEBUG] Goal:          org.jacoco:jacoco-maven-plugin:0.6.4.201312101107:report-integration (default-report-integration)
+[DEBUG] Style:         Regular
+[DEBUG] Configuration: <?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <dataFile default-value="${project.build.directory}/jacoco-it.exec"/>
+  <outputDirectory default-value="${project.reporting.outputDirectory}/jacoco-it"/>
+  <outputEncoding default-value="UTF-8">${project.reporting.outputEncoding}</outputEncoding>
+  <project>${project}</project>
+  <skip default-value="false">${jacoco.skip}</skip>
+  <sourceEncoding default-value="UTF-8">${project.build.sourceEncoding}</sourceEncoding>
+</configuration>
+[DEBUG] =======================================================================
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=0, ConflictMarker.markTime=0, ConflictMarker.nodeCount=55, ConflictIdSorter.graphTime=0, ConflictIdSorter.topsortTime=0, ConflictIdSorter.conflictIdCount=33, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=7, ConflictResolver.conflictItemCount=53, DefaultDependencyCollector.collectTime=87, DefaultDependencyCollector.transformTime=7}
+[DEBUG] org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG]    com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.7:compile (version managed from 1.7.5 by org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT)
+[DEBUG]    com.codahale.metrics:metrics-graphite:jar:3.0.2:compile
+[DEBUG]    com.codahale.metrics:metrics-jersey:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-annotation:jar:3.0.2:compile
+[DEBUG]       com.sun.jersey:jersey-server:jar:1.17.1:compile
+[DEBUG]          asm:asm:jar:3.1:compile
+[DEBUG]          com.sun.jersey:jersey-core:jar:1.17.1:compile
+[DEBUG]    com.codahale.metrics:metrics-servlets:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-healthchecks:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-json:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-jvm:jar:3.0.2:compile
+[DEBUG]    org.springframework:spring-context:jar:4.0.3.RELEASE:compile
+[DEBUG]       org.springframework:spring-aop:jar:4.0.3.RELEASE:compile
+[DEBUG]          aopalliance:aopalliance:jar:1.0:compile
+[DEBUG]       org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]       org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       org.springframework:spring-expression:jar:4.0.3.RELEASE:compile
+[DEBUG]    javax.inject:javax.inject:jar:1:compile
+[DEBUG]    javax.servlet:javax.servlet-api:jar:3.0.1:provided
+[DEBUG]    javax.ws.rs:jsr311-api:jar:1.1.1:provided
+[DEBUG]    javax.jcr:jcr:jar:2.0:compile
+[DEBUG]    org.powermock:powermock-module-junit4:jar:1.5.4:test
+[DEBUG]       junit:junit:jar:4.11:test (scope managed from compile by org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT)
+[DEBUG]          org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]       org.powermock:powermock-module-junit4-common:jar:1.5.4:test
+[DEBUG]          org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]             org.javassist:javassist:jar:3.18.1-GA:test
+[DEBUG]          org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]             org.objenesis:objenesis:jar:2.1:test
+[DEBUG]    org.powermock:powermock-api-mockito:jar:1.5.4:test
+[DEBUG]       org.mockito:mockito-all:jar:1.9.5:test
+[DEBUG]       org.powermock:powermock-api-support:jar:1.5.4:test
+[INFO] 
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ fcrepo-metrics ---
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=0, ConflictMarker.markTime=0, ConflictMarker.nodeCount=3, ConflictIdSorter.graphTime=0, ConflictIdSorter.topsortTime=0, ConflictIdSorter.conflictIdCount=3, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=0, ConflictResolver.conflictItemCount=3, DefaultDependencyCollector.collectTime=3, DefaultDependencyCollector.transformTime=0}
+[DEBUG] org.apache.maven.plugins:maven-clean-plugin:jar:2.5:
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.6:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:3.0:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-clean-plugin:2.5
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-clean-plugin:2.5
+[DEBUG]   Imported:  < project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-clean-plugin:2.5
+[DEBUG]   Included: org.apache.maven.plugins:maven-clean-plugin:jar:2.5
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:3.0
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.6
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-clean-plugin:2.5:clean from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-clean-plugin:2.5, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-clean-plugin:2.5:clean' with basic configurator -->
+[DEBUG]   (f) directory = /opt/Fedora/fcrepo4/fcrepo-metrics/target
+[DEBUG]   (f) excludeDefaultDirectories = false
+[DEBUG]   (f) failOnError = true
+[DEBUG]   (f) followSymLinks = false
+[DEBUG]   (f) outputDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG]   (f) reportDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/site
+[DEBUG]   (f) retryOnError = true
+[DEBUG]   (f) skip = false
+[DEBUG]   (f) testOutputDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[DEBUG] -- end configuration --
+[INFO] Deleting /opt/Fedora/fcrepo4/fcrepo-metrics/target
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics/MetricsConfig.class
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics/MetricsContextListener.class
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics/ReporterFactory.class
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics/MetricsProvider.class
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics/MetricsConfig$JmxConfig.class
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics/MetricsConfig$GraphiteConfig.class
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics/RegistryService.class
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo/metrics
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org/fcrepo
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes/org
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-test-sources/test-annotations
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-test-sources
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/testCompile
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/compile/default-compile
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin/compile
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status/maven-compiler-plugin
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/maven-status
+[INFO] Deleting file /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes/org/fcrepo/services/MetricsServiceTest.class
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes/org/fcrepo/services
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes/org/fcrepo
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes/org
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-sources/annotations
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-sources
+[INFO] Deleting directory /opt/Fedora/fcrepo4/fcrepo-metrics/target
+[DEBUG] Skipping non-existing directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG] Skipping non-existing directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[DEBUG] Skipping non-existing directory /opt/Fedora/fcrepo4/fcrepo-metrics/target/site
+[INFO] 
+[INFO] --- maven-enforcer-plugin:1.3:enforce (enforce-maven) @ fcrepo-metrics ---
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=0, ConflictMarker.markTime=1, ConflictMarker.nodeCount=101, ConflictIdSorter.graphTime=0, ConflictIdSorter.topsortTime=0, ConflictIdSorter.conflictIdCount=38, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=5, ConflictResolver.conflictItemCount=85, DefaultDependencyCollector.collectTime=72, DefaultDependencyCollector.transformTime=6}
+[DEBUG] org.apache.maven.plugins:maven-enforcer-plugin:jar:1.3:
+[DEBUG]    org.apache.maven:maven-artifact:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-project:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-settings:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-model:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-registry:jar:2.0.9:compile
+[DEBUG]       org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1:compile
+[DEBUG]          junit:junit:jar:4.11:test
+[DEBUG]             org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9:compile
+[DEBUG]       org.apache.maven.reporting:maven-reporting-api:jar:2.0.9:compile
+[DEBUG]          org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-10:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.9:compile
+[DEBUG]       commons-cli:commons-cli:jar:1.0:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.9:compile
+[DEBUG]       org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4:compile
+[DEBUG]       org.apache.maven:maven-monitor:jar:2.0.9:compile
+[DEBUG]       classworlds:classworlds:jar:1.1:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:1.5.8:compile
+[DEBUG]    commons-lang:commons-lang:jar:2.3:compile
+[DEBUG]    org.apache.maven.enforcer:enforcer-api:jar:1.3:compile
+[DEBUG]    org.apache.maven.enforcer:enforcer-rules:jar:1.3:compile
+[DEBUG]       org.apache.maven.shared:maven-common-artifact-filters:jar:1.4:compile
+[DEBUG]       org.beanshell:bsh:jar:2.0b4:compile
+[DEBUG]       org.apache.maven.shared:maven-dependency-tree:jar:2.1:compile
+[DEBUG]          org.codehaus.plexus:plexus-component-annotations:jar:1.5.5:compile
+[DEBUG]          org.eclipse.aether:aether-util:jar:0.9.0.M2:compile
+[DEBUG]       org.codehaus.plexus:plexus-i18n:jar:1.0-beta-6:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.3
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.3
+[DEBUG]   Imported:  < project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.3
+[DEBUG]   Included: org.apache.maven.plugins:maven-enforcer-plugin:jar:1.3
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-api:jar:2.0.9
+[DEBUG]   Included: org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-10
+[DEBUG]   Included: commons-cli:commons-cli:jar:1.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:1.5.8
+[DEBUG]   Included: commons-lang:commons-lang:jar:2.3
+[DEBUG]   Included: org.apache.maven.enforcer:enforcer-api:jar:1.3
+[DEBUG]   Included: org.apache.maven.enforcer:enforcer-rules:jar:1.3
+[DEBUG]   Included: org.apache.maven.shared:maven-common-artifact-filters:jar:1.4
+[DEBUG]   Included: org.beanshell:bsh:jar:2.0b4
+[DEBUG]   Included: org.apache.maven.shared:maven-dependency-tree:jar:2.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-component-annotations:jar:1.5.5
+[DEBUG]   Included: org.eclipse.aether:aether-util:jar:0.9.0.M2
+[DEBUG]   Included: org.codehaus.plexus:plexus-i18n:jar:1.0-beta-6
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.0.9
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1
+[DEBUG]   Excluded: junit:junit:jar:4.11
+[DEBUG]   Excluded: org.hamcrest:hamcrest-core:jar:1.3
+[DEBUG]   Excluded: org.apache.maven:maven-core:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-error-diagnostics:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-descriptor:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-monitor:jar:2.0.9
+[DEBUG]   Excluded: classworlds:classworlds:jar:1.1
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.3, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce' with basic configurator -->
+[DEBUG]   (s) fail = true
+[DEBUG]   (s) failFast = false
+[DEBUG]   (f) ignoreCache = false
+[DEBUG]   (s) version = (,2.1.0),(2.1.0,2.2.0),(2.2.0,)
+[DEBUG]   (s) message = Maven 2.1.0 and 2.2.0 produce incorrect GPG signatures and checksums respectively.
+[DEBUG]   (s) rules = [org.apache.maven.plugins.enforcer.RequireMavenVersion@4a0bd13d]
+[DEBUG]   (s) skip = false
+[DEBUG]   (s) project = MavenProject: org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT @ /opt/Fedora/fcrepo4/fcrepo-metrics/pom.xml
+[DEBUG]   (s) session = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG] -- end configuration --
+[DEBUG] Executing rule: org.apache.maven.plugins.enforcer.RequireMavenVersion
+[DEBUG] Rule org.apache.maven.plugins.enforcer.RequireMavenVersion is cacheable.
+[DEBUG] Detected Maven Version: 3.2.3
+[DEBUG] Detected Maven Version: 3.2.3 is allowed in the range (,2.1.0),(2.1.0,2.2.0),(2.2.0,).
+[INFO] 
+[INFO] --- maven-enforcer-plugin:1.3:enforce (default) @ fcrepo-metrics ---
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-enforcer-plugin:1.3, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-enforcer-plugin:1.3:enforce' with basic configurator -->
+[DEBUG]   (s) fail = true
+[DEBUG]   (s) failFast = false
+[DEBUG]   (f) ignoreCache = false
+[DEBUG]   (s) searchTransitive = true
+[DEBUG]   (s) excludes = [commons-logging, log4j:log4j, org.slf4j:slf4j-jcl, org.slf4j:slf4j-jdk14, org.slf4j:slf4j-log4j12, org.slf4j:slf4j-log4j13, org.slf4j:slf4j-nop, org.slf4j:slf4j-simple, org.apache.cxf]
+[DEBUG]   (s) rules = [org.apache.maven.plugins.enforcer.DependencyConvergence@9d5cf1b, org.apache.maven.plugins.enforcer.BannedDependencies@340ffaa8]
+[DEBUG]   (s) skip = false
+[DEBUG]   (s) project = MavenProject: org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT @ /opt/Fedora/fcrepo4/fcrepo-metrics/pom.xml
+[DEBUG]   (s) session = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG] -- end configuration --
+[DEBUG] Executing rule: org.apache.maven.plugins.enforcer.DependencyConvergence
+[DEBUG] Dependency tree resolution listener events:
+[DEBUG] testArtifact: artifact=org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] includeArtifact: artifact=org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] startProcessChildren: artifact=org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG]   testArtifact: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]   includeArtifact: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]   startProcessChildren: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     includeArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     startProcessChildren: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     endProcessChildren: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]   endProcessChildren: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]   testArtifact: artifact=com.codahale.metrics:metrics-graphite:jar:3.0.2:compile
+[DEBUG]   includeArtifact: artifact=com.codahale.metrics:metrics-graphite:jar:3.0.2:compile
+[DEBUG]   startProcessChildren: artifact=com.codahale.metrics:metrics-graphite:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]     omitForNearer: omitted=com.codahale.metrics:metrics-core:jar:3.0.2:compile kept=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     omitForNearer: omitted=org.slf4j:slf4j-api:jar:1.7.7:compile kept=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]   endProcessChildren: artifact=com.codahale.metrics:metrics-graphite:jar:3.0.2:compile
+[DEBUG]   testArtifact: artifact=com.codahale.metrics:metrics-jersey:jar:3.0.2:compile
+[DEBUG]   includeArtifact: artifact=com.codahale.metrics:metrics-jersey:jar:3.0.2:compile
+[DEBUG]   startProcessChildren: artifact=com.codahale.metrics:metrics-jersey:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]     omitForNearer: omitted=com.codahale.metrics:metrics-core:jar:3.0.2:compile kept=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.codahale.metrics:metrics-annotation:jar:3.0.2:compile
+[DEBUG]     includeArtifact: artifact=com.codahale.metrics:metrics-annotation:jar:3.0.2:compile
+[DEBUG]     startProcessChildren: artifact=com.codahale.metrics:metrics-annotation:jar:3.0.2:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       omitForNearer: omitted=org.slf4j:slf4j-api:jar:1.7.7:compile kept=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     endProcessChildren: artifact=com.codahale.metrics:metrics-annotation:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.sun.jersey:jersey-server:jar:1.17.1:compile
+[DEBUG]     includeArtifact: artifact=com.sun.jersey:jersey-server:jar:1.17.1:compile
+[DEBUG]     startProcessChildren: artifact=com.sun.jersey:jersey-server:jar:1.17.1:compile
+[DEBUG]       manageArtifactVersion: artifact=asm:asm:jar:3.1:compile, replacement=asm:asm:jar:3.1
+[DEBUG]       testArtifact: artifact=asm:asm:jar:3.1:compile
+[DEBUG]       manageArtifactVersion: artifact=asm:asm:jar:3.1:compile, replacement=asm:asm:jar:3.1
+[DEBUG]       includeArtifact: artifact=asm:asm:jar:3.1:compile
+[DEBUG]       startProcessChildren: artifact=asm:asm:jar:3.1:compile
+[DEBUG]       endProcessChildren: artifact=asm:asm:jar:3.1:compile
+[DEBUG]       manageArtifactVersion: artifact=com.sun.jersey:jersey-core:jar:1.17.1:compile, replacement=com.sun.jersey:jersey-core:jar:1.17.1
+[DEBUG]       testArtifact: artifact=com.sun.jersey:jersey-core:jar:1.17.1:compile
+[DEBUG]       manageArtifactVersion: artifact=com.sun.jersey:jersey-core:jar:1.17.1:compile, replacement=com.sun.jersey:jersey-core:jar:1.17.1
+[DEBUG]       includeArtifact: artifact=com.sun.jersey:jersey-core:jar:1.17.1:compile
+[DEBUG]       startProcessChildren: artifact=com.sun.jersey:jersey-core:jar:1.17.1:compile
+[DEBUG]       endProcessChildren: artifact=com.sun.jersey:jersey-core:jar:1.17.1:compile
+[DEBUG]     endProcessChildren: artifact=com.sun.jersey:jersey-server:jar:1.17.1:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     omitForNearer: omitted=org.slf4j:slf4j-api:jar:1.7.7:compile kept=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]   endProcessChildren: artifact=com.codahale.metrics:metrics-jersey:jar:3.0.2:compile
+[DEBUG]   testArtifact: artifact=com.codahale.metrics:metrics-servlets:jar:3.0.2:compile
+[DEBUG]   includeArtifact: artifact=com.codahale.metrics:metrics-servlets:jar:3.0.2:compile
+[DEBUG]   startProcessChildren: artifact=com.codahale.metrics:metrics-servlets:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]     omitForNearer: omitted=com.codahale.metrics:metrics-core:jar:3.0.2:compile kept=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.codahale.metrics:metrics-healthchecks:jar:3.0.2:compile
+[DEBUG]     includeArtifact: artifact=com.codahale.metrics:metrics-healthchecks:jar:3.0.2:compile
+[DEBUG]     startProcessChildren: artifact=com.codahale.metrics:metrics-healthchecks:jar:3.0.2:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       omitForNearer: omitted=org.slf4j:slf4j-api:jar:1.7.7:compile kept=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     endProcessChildren: artifact=com.codahale.metrics:metrics-healthchecks:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.codahale.metrics:metrics-json:jar:3.0.2:compile
+[DEBUG]     includeArtifact: artifact=com.codahale.metrics:metrics-json:jar:3.0.2:compile
+[DEBUG]     startProcessChildren: artifact=com.codahale.metrics:metrics-json:jar:3.0.2:compile
+[DEBUG]       testArtifact: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]       omitForNearer: omitted=com.codahale.metrics:metrics-core:jar:3.0.2:compile kept=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       omitForNearer: omitted=org.slf4j:slf4j-api:jar:1.7.7:compile kept=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     endProcessChildren: artifact=com.codahale.metrics:metrics-json:jar:3.0.2:compile
+[DEBUG]     testArtifact: artifact=com.codahale.metrics:metrics-jvm:jar:3.0.2:compile
+[DEBUG]     includeArtifact: artifact=com.codahale.metrics:metrics-jvm:jar:3.0.2:compile
+[DEBUG]     startProcessChildren: artifact=com.codahale.metrics:metrics-jvm:jar:3.0.2:compile
+[DEBUG]       testArtifact: artifact=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]       omitForNearer: omitted=com.codahale.metrics:metrics-core:jar:3.0.2:compile kept=com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]       manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]       omitForNearer: omitted=org.slf4j:slf4j-api:jar:1.7.7:compile kept=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     endProcessChildren: artifact=com.codahale.metrics:metrics-jvm:jar:3.0.2:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.5:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     testArtifact: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]     manageArtifactVersion: artifact=org.slf4j:slf4j-api:jar:1.7.7:compile, replacement=org.slf4j:slf4j-api:jar:1.7.7
+[DEBUG]     omitForNearer: omitted=org.slf4j:slf4j-api:jar:1.7.7:compile kept=org.slf4j:slf4j-api:jar:1.7.7:compile
+[DEBUG]   endProcessChildren: artifact=com.codahale.metrics:metrics-servlets:jar:3.0.2:compile
+[DEBUG]   testArtifact: artifact=org.springframework:spring-context:jar:4.0.3.RELEASE:compile
+[DEBUG]   includeArtifact: artifact=org.springframework:spring-context:jar:4.0.3.RELEASE:compile
+[DEBUG]   startProcessChildren: artifact=org.springframework:spring-context:jar:4.0.3.RELEASE:compile
+[DEBUG]     manageArtifactVersion: artifact=org.springframework:spring-aop:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-aop:jar:4.0.3.RELEASE
+[DEBUG]     testArtifact: artifact=org.springframework:spring-aop:jar:4.0.3.RELEASE:compile
+[DEBUG]     manageArtifactVersion: artifact=org.springframework:spring-aop:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-aop:jar:4.0.3.RELEASE
+[DEBUG]     includeArtifact: artifact=org.springframework:spring-aop:jar:4.0.3.RELEASE:compile
+[DEBUG]     startProcessChildren: artifact=org.springframework:spring-aop:jar:4.0.3.RELEASE:compile
+[DEBUG]       testArtifact: artifact=aopalliance:aopalliance:jar:1.0:compile
+[DEBUG]       includeArtifact: artifact=aopalliance:aopalliance:jar:1.0:compile
+[DEBUG]       startProcessChildren: artifact=aopalliance:aopalliance:jar:1.0:compile
+[DEBUG]       endProcessChildren: artifact=aopalliance:aopalliance:jar:1.0:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-beans:jar:4.0.3.RELEASE
+[DEBUG]       testArtifact: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-beans:jar:4.0.3.RELEASE
+[DEBUG]       includeArtifact: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]       startProcessChildren: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]         manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]         testArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]         manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]         includeArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]         startProcessChildren: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]         endProcessChildren: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       endProcessChildren: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]       testArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]       omitForNearer: omitted=org.springframework:spring-core:jar:4.0.3.RELEASE:compile kept=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       includeArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       startProcessChildren: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       endProcessChildren: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     endProcessChildren: artifact=org.springframework:spring-aop:jar:4.0.3.RELEASE:compile
+[DEBUG]     manageArtifactVersion: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-beans:jar:4.0.3.RELEASE
+[DEBUG]     testArtifact: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]     manageArtifactVersion: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-beans:jar:4.0.3.RELEASE
+[DEBUG]     omitForNearer: omitted=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile kept=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]     includeArtifact: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]     startProcessChildren: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]       testArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]       omitForNearer: omitted=org.springframework:spring-core:jar:4.0.3.RELEASE:compile kept=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     endProcessChildren: artifact=org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]     manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]     testArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]     omitForNearer: omitted=org.springframework:spring-core:jar:4.0.3.RELEASE:compile kept=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     includeArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     startProcessChildren: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     endProcessChildren: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     testArtifact: artifact=org.springframework:spring-expression:jar:4.0.3.RELEASE:compile
+[DEBUG]     includeArtifact: artifact=org.springframework:spring-expression:jar:4.0.3.RELEASE:compile
+[DEBUG]     startProcessChildren: artifact=org.springframework:spring-expression:jar:4.0.3.RELEASE:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]       testArtifact: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       manageArtifactVersion: artifact=org.springframework:spring-core:jar:4.0.3.RELEASE:compile, replacement=org.springframework:spring-core:jar:4.0.3.RELEASE
+[DEBUG]       omitForNearer: omitted=org.springframework:spring-core:jar:4.0.3.RELEASE:compile kept=org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]     endProcessChildren: artifact=org.springframework:spring-expression:jar:4.0.3.RELEASE:compile
+[DEBUG]   endProcessChildren: artifact=org.springframework:spring-context:jar:4.0.3.RELEASE:compile
+[DEBUG]   testArtifact: artifact=javax.inject:javax.inject:jar:1:compile
+[DEBUG]   includeArtifact: artifact=javax.inject:javax.inject:jar:1:compile
+[DEBUG]   startProcessChildren: artifact=javax.inject:javax.inject:jar:1:compile
+[DEBUG]   endProcessChildren: artifact=javax.inject:javax.inject:jar:1:compile
+[DEBUG]   testArtifact: artifact=javax.servlet:javax.servlet-api:jar:3.0.1:provided
+[DEBUG]   includeArtifact: artifact=javax.servlet:javax.servlet-api:jar:3.0.1:provided
+[DEBUG]   startProcessChildren: artifact=javax.servlet:javax.servlet-api:jar:3.0.1:provided
+[DEBUG]   endProcessChildren: artifact=javax.servlet:javax.servlet-api:jar:3.0.1:provided
+[DEBUG]   testArtifact: artifact=javax.ws.rs:jsr311-api:jar:1.1.1:provided
+[DEBUG]   includeArtifact: artifact=javax.ws.rs:jsr311-api:jar:1.1.1:provided
+[DEBUG]   startProcessChildren: artifact=javax.ws.rs:jsr311-api:jar:1.1.1:provided
+[DEBUG]   endProcessChildren: artifact=javax.ws.rs:jsr311-api:jar:1.1.1:provided
+[DEBUG]   testArtifact: artifact=javax.jcr:jcr:jar:2.0:compile
+[DEBUG]   includeArtifact: artifact=javax.jcr:jcr:jar:2.0:compile
+[DEBUG]   startProcessChildren: artifact=javax.jcr:jcr:jar:2.0:compile
+[DEBUG]   endProcessChildren: artifact=javax.jcr:jcr:jar:2.0:compile
+[DEBUG]   testArtifact: artifact=org.powermock:powermock-module-junit4:jar:1.5.4:test
+[DEBUG]   includeArtifact: artifact=org.powermock:powermock-module-junit4:jar:1.5.4:test
+[DEBUG]   startProcessChildren: artifact=org.powermock:powermock-module-junit4:jar:1.5.4:test
+[DEBUG]     manageArtifactVersion: artifact=junit:junit:jar:4.11:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]     manageArtifactScope: artifact=junit:junit:jar:4.11:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]     testArtifact: artifact=junit:junit:jar:4.11:test
+[DEBUG]     manageArtifactVersion: artifact=junit:junit:jar:4.11:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]     manageArtifactScope: artifact=junit:junit:jar:4.11:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]     includeArtifact: artifact=junit:junit:jar:4.11:test
+[DEBUG]     startProcessChildren: artifact=junit:junit:jar:4.11:test
+[DEBUG]       testArtifact: artifact=org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]       includeArtifact: artifact=org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]       startProcessChildren: artifact=org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]       endProcessChildren: artifact=org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]     endProcessChildren: artifact=junit:junit:jar:4.11:test
+[DEBUG]     testArtifact: artifact=org.powermock:powermock-module-junit4-common:jar:1.5.4:test
+[DEBUG]     includeArtifact: artifact=org.powermock:powermock-module-junit4-common:jar:1.5.4:test
+[DEBUG]     startProcessChildren: artifact=org.powermock:powermock-module-junit4-common:jar:1.5.4:test
+[DEBUG]       manageArtifactVersion: artifact=junit:junit:jar:4.4:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]       manageArtifactScope: artifact=junit:junit:jar:4.11:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]       testArtifact: artifact=junit:junit:jar:4.11:test
+[DEBUG]       manageArtifactVersion: artifact=junit:junit:jar:4.11:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]       manageArtifactScope: artifact=junit:junit:jar:4.11:test, replacement=junit:junit:jar:4.11:test
+[DEBUG]       omitForNearer: omitted=junit:junit:jar:4.11:test kept=junit:junit:jar:4.11:test
+[DEBUG]       testArtifact: artifact=org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]       includeArtifact: artifact=org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]       startProcessChildren: artifact=org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]         testArtifact: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]         includeArtifact: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]         startProcessChildren: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]           testArtifact: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]           includeArtifact: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]           startProcessChildren: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]           endProcessChildren: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]         endProcessChildren: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]         testArtifact: artifact=org.javassist:javassist:jar:3.18.1-GA:test
+[DEBUG]         includeArtifact: artifact=org.javassist:javassist:jar:3.18.1-GA:test
+[DEBUG]         startProcessChildren: artifact=org.javassist:javassist:jar:3.18.1-GA:test
+[DEBUG]         endProcessChildren: artifact=org.javassist:javassist:jar:3.18.1-GA:test
+[DEBUG]       endProcessChildren: artifact=org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]       testArtifact: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]       omitForNearer: omitted=org.powermock:powermock-reflect:jar:1.5.4:test kept=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]       includeArtifact: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]       startProcessChildren: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]         testArtifact: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]         includeArtifact: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]         startProcessChildren: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]         endProcessChildren: artifact=org.objenesis:objenesis:jar:2.1:test
+[DEBUG]       endProcessChildren: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]     endProcessChildren: artifact=org.powermock:powermock-module-junit4-common:jar:1.5.4:test
+[DEBUG]   endProcessChildren: artifact=org.powermock:powermock-module-junit4:jar:1.5.4:test
+[DEBUG]   testArtifact: artifact=org.powermock:powermock-api-mockito:jar:1.5.4:test
+[DEBUG]   includeArtifact: artifact=org.powermock:powermock-api-mockito:jar:1.5.4:test
+[DEBUG]   startProcessChildren: artifact=org.powermock:powermock-api-mockito:jar:1.5.4:test
+[DEBUG]     testArtifact: artifact=org.mockito:mockito-all:jar:1.9.5:test
+[DEBUG]     includeArtifact: artifact=org.mockito:mockito-all:jar:1.9.5:test
+[DEBUG]     startProcessChildren: artifact=org.mockito:mockito-all:jar:1.9.5:test
+[DEBUG]     endProcessChildren: artifact=org.mockito:mockito-all:jar:1.9.5:test
+[DEBUG]     testArtifact: artifact=org.powermock:powermock-api-support:jar:1.5.4:test
+[DEBUG]     includeArtifact: artifact=org.powermock:powermock-api-support:jar:1.5.4:test
+[DEBUG]     startProcessChildren: artifact=org.powermock:powermock-api-support:jar:1.5.4:test
+[DEBUG]       testArtifact: artifact=org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]       omitForNearer: omitted=org.powermock:powermock-core:jar:1.5.4:test kept=org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]       testArtifact: artifact=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]       omitForNearer: omitted=org.powermock:powermock-reflect:jar:1.5.4:test kept=org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]     endProcessChildren: artifact=org.powermock:powermock-api-support:jar:1.5.4:test
+[DEBUG]   endProcessChildren: artifact=org.powermock:powermock-api-mockito:jar:1.5.4:test
+[DEBUG] endProcessChildren: artifact=org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Executing rule: org.apache.maven.plugins.enforcer.BannedDependencies
+[DEBUG] building maven31 dependency graph for org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=0, ConflictMarker.markTime=1, ConflictMarker.nodeCount=55, ConflictIdSorter.graphTime=0, ConflictIdSorter.topsortTime=0, ConflictIdSorter.conflictIdCount=33, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=4, ConflictResolver.conflictItemCount=53, DefaultDependencyCollector.collectTime=9, DefaultDependencyCollector.transformTime=5}
+[DEBUG] org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG]    com.codahale.metrics:metrics-core:jar:3.0.2:compile
+[DEBUG]       org.slf4j:slf4j-api:jar:1.7.7:compile (version managed from 1.7.5 by org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT)
+[DEBUG]    com.codahale.metrics:metrics-graphite:jar:3.0.2:compile
+[DEBUG]    com.codahale.metrics:metrics-jersey:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-annotation:jar:3.0.2:compile
+[DEBUG]       com.sun.jersey:jersey-server:jar:1.17.1:compile
+[DEBUG]          asm:asm:jar:3.1:compile
+[DEBUG]          com.sun.jersey:jersey-core:jar:1.17.1:compile
+[DEBUG]    com.codahale.metrics:metrics-servlets:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-healthchecks:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-json:jar:3.0.2:compile
+[DEBUG]       com.codahale.metrics:metrics-jvm:jar:3.0.2:compile
+[DEBUG]    org.springframework:spring-context:jar:4.0.3.RELEASE:compile
+[DEBUG]       org.springframework:spring-aop:jar:4.0.3.RELEASE:compile
+[DEBUG]          aopalliance:aopalliance:jar:1.0:compile
+[DEBUG]       org.springframework:spring-beans:jar:4.0.3.RELEASE:compile
+[DEBUG]       org.springframework:spring-core:jar:4.0.3.RELEASE:compile
+[DEBUG]       org.springframework:spring-expression:jar:4.0.3.RELEASE:compile
+[DEBUG]    javax.inject:javax.inject:jar:1:compile
+[DEBUG]    javax.servlet:javax.servlet-api:jar:3.0.1:provided
+[DEBUG]    javax.ws.rs:jsr311-api:jar:1.1.1:provided
+[DEBUG]    javax.jcr:jcr:jar:2.0:compile
+[DEBUG]    org.powermock:powermock-module-junit4:jar:1.5.4:test
+[DEBUG]       junit:junit:jar:4.11:test (scope managed from compile by org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT)
+[DEBUG]          org.hamcrest:hamcrest-core:jar:1.3:test
+[DEBUG]       org.powermock:powermock-module-junit4-common:jar:1.5.4:test
+[DEBUG]          org.powermock:powermock-core:jar:1.5.4:test
+[DEBUG]             org.javassist:javassist:jar:3.18.1-GA:test
+[DEBUG]          org.powermock:powermock-reflect:jar:1.5.4:test
+[DEBUG]             org.objenesis:objenesis:jar:2.1:test
+[DEBUG]    org.powermock:powermock-api-mockito:jar:1.5.4:test
+[DEBUG]       org.mockito:mockito-all:jar:1.9.5:test
+[DEBUG]       org.powermock:powermock-api-support:jar:1.5.4:test
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.6.4.201312101107:prepare-agent (default-prepare-agent) @ fcrepo-metrics ---
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=1, ConflictMarker.markTime=0, ConflictMarker.nodeCount=158, ConflictIdSorter.graphTime=0, ConflictIdSorter.topsortTime=1, ConflictIdSorter.conflictIdCount=47, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=10, ConflictResolver.conflictItemCount=108, DefaultDependencyCollector.collectTime=250, DefaultDependencyCollector.transformTime=12}
+[DEBUG] org.jacoco:jacoco-maven-plugin:jar:0.6.4.201312101107:
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.2.1:compile
+[DEBUG]    org.apache.maven:maven-project:jar:2.2.1:compile
+[DEBUG]       org.apache.maven:maven-settings:jar:2.2.1:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.2.1:compile
+[DEBUG]       org.apache.maven:maven-model:jar:2.2.1:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.2.1:compile
+[DEBUG]          org.apache.maven:maven-repository-metadata:jar:2.2.1:compile
+[DEBUG]          backport-util-concurrent:backport-util-concurrent:jar:3.1:compile
+[DEBUG]       org.apache.maven:maven-plugin-registry:jar:2.2.1:compile
+[DEBUG]       org.codehaus.plexus:plexus-interpolation:jar:1.11:compile
+[DEBUG]       org.apache.maven:maven-artifact:jar:2.2.1:compile
+[DEBUG]       org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1:compile
+[DEBUG]          junit:junit:jar:4.8.2:compile
+[DEBUG]          classworlds:classworlds:jar:1.1-alpha-2:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:1.5.6:compile
+[DEBUG]    org.apache.maven.shared:file-management:jar:1.2.1:compile
+[DEBUG]       org.apache.maven.shared:maven-shared-io:jar:1.1:compile
+[DEBUG]          org.apache.maven.wagon:wagon-provider-api:jar:1.0-alpha-6:compile
+[DEBUG]    org.apache.maven.reporting:maven-reporting-api:jar:2.2.1:compile
+[DEBUG]       org.apache.maven.doxia:doxia-sink-api:jar:1.1:compile
+[DEBUG]       org.apache.maven.doxia:doxia-logging-api:jar:1.1:compile
+[DEBUG]    org.apache.maven.reporting:maven-reporting-impl:jar:2.1:compile
+[DEBUG]       org.apache.maven.doxia:doxia-core:jar:1.1.2:compile
+[DEBUG]          xerces:xercesImpl:jar:2.8.1:compile
+[DEBUG]          commons-lang:commons-lang:jar:2.4:compile
+[DEBUG]          commons-httpclient:commons-httpclient:jar:3.1:compile
+[DEBUG]             commons-codec:commons-codec:jar:1.2:compile
+[DEBUG]       org.apache.maven.doxia:doxia-site-renderer:jar:1.1.2:compile
+[DEBUG]          org.apache.maven.doxia:doxia-decoration-model:jar:1.1.2:compile
+[DEBUG]          org.apache.maven.doxia:doxia-module-xhtml:jar:1.1.2:compile
+[DEBUG]          org.apache.maven.doxia:doxia-module-fml:jar:1.1.2:compile
+[DEBUG]          org.codehaus.plexus:plexus-i18n:jar:1.0-beta-7:compile
+[DEBUG]          org.codehaus.plexus:plexus-velocity:jar:1.1.7:compile
+[DEBUG]          org.apache.velocity:velocity:jar:1.5:compile
+[DEBUG]          commons-collections:commons-collections:jar:3.2:compile
+[DEBUG]       commons-validator:commons-validator:jar:1.2.0:compile
+[DEBUG]          commons-beanutils:commons-beanutils:jar:1.7.0:compile
+[DEBUG]          commons-digester:commons-digester:jar:1.6:compile
+[DEBUG]          commons-logging:commons-logging:jar:1.0.4:compile
+[DEBUG]          oro:oro:jar:2.0.8:compile
+[DEBUG]          xml-apis:xml-apis:jar:1.0.b2:compile
+[DEBUG]    org.jacoco:org.jacoco.agent:jar:runtime:0.6.4.201312101107:compile
+[DEBUG]    org.jacoco:org.jacoco.core:jar:0.6.4.201312101107:compile
+[DEBUG]       org.ow2.asm:asm-all:jar:4.1:compile
+[DEBUG]    org.jacoco:org.jacoco.report:jar:0.6.4.201312101107:compile
+[DEBUG] Created new class realm plugin>org.jacoco:jacoco-maven-plugin:0.6.4.201312101107
+[DEBUG] Importing foreign packages into class realm plugin>org.jacoco:jacoco-maven-plugin:0.6.4.201312101107
+[DEBUG]   Imported:  < project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Populating class realm plugin>org.jacoco:jacoco-maven-plugin:0.6.4.201312101107
+[DEBUG]   Included: org.jacoco:jacoco-maven-plugin:jar:0.6.4.201312101107
+[DEBUG]   Included: backport-util-concurrent:backport-util-concurrent:jar:3.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-interpolation:jar:1.11
+[DEBUG]   Included: junit:junit:jar:4.8.2
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:1.5.6
+[DEBUG]   Included: org.apache.maven.shared:file-management:jar:1.2.1
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-io:jar:1.1
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-api:jar:2.2.1
+[DEBUG]   Included: org.apache.maven.doxia:doxia-sink-api:jar:1.1
+[DEBUG]   Included: org.apache.maven.doxia:doxia-logging-api:jar:1.1
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-impl:jar:2.1
+[DEBUG]   Included: org.apache.maven.doxia:doxia-core:jar:1.1.2
+[DEBUG]   Included: xerces:xercesImpl:jar:2.8.1
+[DEBUG]   Included: commons-lang:commons-lang:jar:2.4
+[DEBUG]   Included: commons-httpclient:commons-httpclient:jar:3.1
+[DEBUG]   Included: commons-codec:commons-codec:jar:1.2
+[DEBUG]   Included: org.apache.maven.doxia:doxia-site-renderer:jar:1.1.2
+[DEBUG]   Included: org.apache.maven.doxia:doxia-decoration-model:jar:1.1.2
+[DEBUG]   Included: org.apache.maven.doxia:doxia-module-xhtml:jar:1.1.2
+[DEBUG]   Included: org.apache.maven.doxia:doxia-module-fml:jar:1.1.2
+[DEBUG]   Included: org.codehaus.plexus:plexus-i18n:jar:1.0-beta-7
+[DEBUG]   Included: org.codehaus.plexus:plexus-velocity:jar:1.1.7
+[DEBUG]   Included: org.apache.velocity:velocity:jar:1.5
+[DEBUG]   Included: commons-collections:commons-collections:jar:3.2
+[DEBUG]   Included: commons-validator:commons-validator:jar:1.2.0
+[DEBUG]   Included: commons-beanutils:commons-beanutils:jar:1.7.0
+[DEBUG]   Included: commons-digester:commons-digester:jar:1.6
+[DEBUG]   Included: commons-logging:commons-logging:jar:1.0.4
+[DEBUG]   Included: oro:oro:jar:2.0.8
+[DEBUG]   Included: xml-apis:xml-apis:jar:1.0.b2
+[DEBUG]   Included: org.jacoco:org.jacoco.agent:jar:runtime:0.6.4.201312101107
+[DEBUG]   Included: org.jacoco:org.jacoco.core:jar:0.6.4.201312101107
+[DEBUG]   Included: org.ow2.asm:asm-all:jar:4.1
+[DEBUG]   Included: org.jacoco:org.jacoco.report:jar:0.6.4.201312101107
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.2.1
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.2.1
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1
+[DEBUG]   Excluded: classworlds:classworlds:jar:1.1-alpha-2
+[DEBUG]   Excluded: org.apache.maven.wagon:wagon-provider-api:jar:1.0-alpha-6
+[DEBUG] Configuring mojo org.jacoco:jacoco-maven-plugin:0.6.4.201312101107:prepare-agent from plugin realm ClassRealm[plugin>org.jacoco:jacoco-maven-plugin:0.6.4.201312101107, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.jacoco:jacoco-maven-plugin:0.6.4.201312101107:prepare-agent' with basic configurator -->
+[DEBUG]   (f) append = true
+[DEBUG]   (f) destFile = /opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec
+[DEBUG]   (f) pluginArtifactMap = {org.jacoco:jacoco-maven-plugin=org.jacoco:jacoco-maven-plugin:maven-plugin:0.6.4.201312101107:, backport-util-concurrent:backport-util-concurrent=backport-util-concurrent:backport-util-concurrent:jar:3.1:compile, org.codehaus.plexus:plexus-interpolation=org.codehaus.plexus:plexus-interpolation:jar:1.11:compile, junit:junit=junit:junit:jar:4.8.2:compile, org.codehaus.plexus:plexus-utils=org.codehaus.plexus:plexus-utils:jar:1.5.6:compile, org.apache.maven.shared:file-management=org.apache.maven.shared:file-management:jar:1.2.1:compile, org.apache.maven.shared:maven-shared-io=org.apache.maven.shared:maven-shared-io:jar:1.1:compile, org.apache.maven.reporting:maven-reporting-api=org.apache.maven.reporting:maven-reporting-api:jar:2.2.1:compile, org.apache.maven.doxia:doxia-sink-api=org.apache.maven.doxia:doxia-sink-api:jar:1.1:compile, org.apache.maven.doxia:doxia-logging-api=org.apache.maven.doxia:doxia-logging-api:jar:1.1:compile, org.apache.maven.reporting:maven-reporting-impl=org.apache.maven.reporting:maven-reporting-impl:jar:2.1:compile, org.apache.maven.doxia:doxia-core=org.apache.maven.doxia:doxia-core:jar:1.1.2:compile, xerces:xercesImpl=xerces:xercesImpl:jar:2.8.1:compile, commons-lang:commons-lang=commons-lang:commons-lang:jar:2.4:compile, commons-httpclient:commons-httpclient=commons-httpclient:commons-httpclient:jar:3.1:compile, commons-codec:commons-codec=commons-codec:commons-codec:jar:1.2:compile, org.apache.maven.doxia:doxia-site-renderer=org.apache.maven.doxia:doxia-site-renderer:jar:1.1.2:compile, org.apache.maven.doxia:doxia-decoration-model=org.apache.maven.doxia:doxia-decoration-model:jar:1.1.2:compile, org.apache.maven.doxia:doxia-module-xhtml=org.apache.maven.doxia:doxia-module-xhtml:jar:1.1.2:compile, org.apache.maven.doxia:doxia-module-fml=org.apache.maven.doxia:doxia-module-fml:jar:1.1.2:compile, org.codehaus.plexus:plexus-i18n=org.codehaus.plexus:plexus-i18n:jar:1.0-beta-7:compile, org.codehaus.plexus:plexus-velocity=org.codehaus.plexus:plexus-velocity:jar:1.1.7:compile, org.apache.velocity:velocity=org.apache.velocity:velocity:jar:1.5:compile, commons-collections:commons-collections=commons-collections:commons-collections:jar:3.2:compile, commons-validator:commons-validator=commons-validator:commons-validator:jar:1.2.0:compile, commons-beanutils:commons-beanutils=commons-beanutils:commons-beanutils:jar:1.7.0:compile, commons-digester:commons-digester=commons-digester:commons-digester:jar:1.6:compile, commons-logging:commons-logging=commons-logging:commons-logging:jar:1.0.4:compile, oro:oro=oro:oro:jar:2.0.8:compile, xml-apis:xml-apis=xml-apis:xml-apis:jar:1.0.b2:compile, org.jacoco:org.jacoco.agent=org.jacoco:org.jacoco.agent:jar:runtime:0.6.4.201312101107:compile, org.jacoco:org.jacoco.core=org.jacoco:org.jacoco.core:jar:0.6.4.201312101107:compile, org.ow2.asm:asm-all=org.ow2.asm:asm-all:jar:4.1:compile, org.jacoco:org.jacoco.report=org.jacoco:org.jacoco.report:jar:0.6.4.201312101107:compile}
+[DEBUG]   (f) project = MavenProject: org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT @ /opt/Fedora/fcrepo4/fcrepo-metrics/pom.xml
+[DEBUG]   (f) propertyName = jacoco.agent.unit.arg
+[DEBUG]   (f) skip = false
+[DEBUG] -- end configuration --
+[INFO] jacoco.agent.unit.arg set to -javaagent:/home/fedora/.m2/repository/org/jacoco/org.jacoco.agent/0.6.4.201312101107/org.jacoco.agent-0.6.4.201312101107-runtime.jar=destfile=/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec,append=true
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ fcrepo-metrics ---
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=1, ConflictMarker.markTime=0, ConflictMarker.nodeCount=77, ConflictIdSorter.graphTime=0, ConflictIdSorter.topsortTime=0, ConflictIdSorter.conflictIdCount=26, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=2, ConflictResolver.conflictItemCount=74, DefaultDependencyCollector.collectTime=19, DefaultDependencyCollector.transformTime=3}
+[DEBUG] org.apache.maven.plugins:maven-resources-plugin:jar:2.6:
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-project:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-plugin-registry:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.6:compile
+[DEBUG]       org.apache.maven.reporting:maven-reporting-api:jar:2.0.6:compile
+[DEBUG]          org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.6:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.6:compile
+[DEBUG]       commons-cli:commons-cli:jar:1.0:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.6:compile
+[DEBUG]       org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4:compile
+[DEBUG]       classworlds:classworlds:jar:1.1:compile
+[DEBUG]    org.apache.maven:maven-artifact:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-settings:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-model:jar:2.0.6:compile
+[DEBUG]    org.apache.maven:maven-monitor:jar:2.0.6:compile
+[DEBUG]    org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1:compile
+[DEBUG]       junit:junit:jar:3.8.1:compile
+[DEBUG]    org.codehaus.plexus:plexus-utils:jar:2.0.5:compile
+[DEBUG]    org.apache.maven.shared:maven-filtering:jar:1.1:compile
+[DEBUG]       org.sonatype.plexus:plexus-build-api:jar:0.0.4:compile
+[DEBUG]    org.codehaus.plexus:plexus-interpolation:jar:1.13:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-resources-plugin:2.6
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-resources-plugin:2.6
+[DEBUG]   Imported:  < project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-resources-plugin:2.6
+[DEBUG]   Included: org.apache.maven.plugins:maven-resources-plugin:jar:2.6
+[DEBUG]   Included: org.apache.maven.reporting:maven-reporting-api:jar:2.0.6
+[DEBUG]   Included: org.apache.maven.doxia:doxia-sink-api:jar:1.0-alpha-7
+[DEBUG]   Included: commons-cli:commons-cli:jar:1.0
+[DEBUG]   Included: org.codehaus.plexus:plexus-interactivity-api:jar:1.0-alpha-4
+[DEBUG]   Included: junit:junit:jar:3.8.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:2.0.5
+[DEBUG]   Included: org.apache.maven.shared:maven-filtering:jar:1.1
+[DEBUG]   Included: org.sonatype.plexus:plexus-build-api:jar:0.0.4
+[DEBUG]   Included: org.codehaus.plexus:plexus-interpolation:jar:1.13
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-core:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-error-diagnostics:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-descriptor:jar:2.0.6
+[DEBUG]   Excluded: classworlds:classworlds:jar:1.1
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0.6
+[DEBUG]   Excluded: org.apache.maven:maven-monitor:jar:2.0.6
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-stable-1
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-resources-plugin:2.6:resources from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-resources-plugin:2.6, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-resources-plugin:2.6:resources' with basic configurator -->
+[DEBUG]   (f) buildFilters = []
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) escapeWindowsPaths = true
+[DEBUG]   (s) includeEmptyDirs = false
+[DEBUG]   (s) outputDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG]   (s) overwrite = false
+[DEBUG]   (f) project = MavenProject: org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT @ /opt/Fedora/fcrepo4/fcrepo-metrics/pom.xml
+[DEBUG]   (s) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG]   (f) supportMultiLineFiltering = false
+[DEBUG]   (f) useBuildFilters = true
+[DEBUG]   (s) useDefaultDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] properties used {java.vendor=Oracle Corporation, jacoco.out.unit.file=jacoco-ut.exec, enunciate.version=1.27, env.LESSOPEN=|/usr/bin/lesspipe.sh %s, sun.java.launcher=SUN_STANDARD, sun.management.compiler=HotSpot 64-Bit Tiered Compilers, os.name=Linux, sonar.jacoco.reportPath=/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec, sun.boot.class.path=/usr/java/jdk1.7.0_55/jre/lib/resources.jar:/usr/java/jdk1.7.0_55/jre/lib/rt.jar:/usr/java/jdk1.7.0_55/jre/lib/sunrsasign.jar:/usr/java/jdk1.7.0_55/jre/lib/jsse.jar:/usr/java/jdk1.7.0_55/jre/lib/jce.jar:/usr/java/jdk1.7.0_55/jre/lib/charsets.jar:/usr/java/jdk1.7.0_55/jre/lib/jfr.jar:/usr/java/jdk1.7.0_55/jre/classes, env.PWD=/opt/Fedora/fcrepo4, env.LANG=en_US.UTF-8, java.vm.specification.vendor=Oracle Corporation, httpcomponents.version=4.3.2, java.runtime.version=1.7.0_55-b13, env.HISTSIZE=1000, httpclient.version=4.3.3, project.build.sourceEncoding=UTF-8, user.name=fedora, maven.build.version=Apache Maven 3.2.3 (33f8c3e1027c3ddde99d3cdebad2656a31e8fdf4; 2014-08-11T13:58:10-07:00), env.USER=fedora, env.HISTCONTROL=ignoredups, logback.version=1.0.13, env.SHELL=/bin/bash, env.NLSPATH=/usr/dt/lib/nls/msg/%L/%N.cat, jacoco.out.it.file=jacoco-it.exec, env.PATH=/usr/local/maven/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/fedora/bin, user.language=en, sun.boot.library.path=/usr/java/jdk1.7.0_55/jre/lib/amd64, classworlds.conf=/usr/local/maven/bin/m2.conf, powermock.version=1.5.4, java.version=1.7.0_55, user.timezone=America/Los_Angeles, sun.arch.data.model=64, env.SSH_AGENT_PID=13252, java.endorsed.dirs=/usr/java/jdk1.7.0_55/jre/lib/endorsed, sun.cpu.isalist=, project.copyrightYear=2014, sun.jnu.encoding=UTF-8, file.encoding.pkg=sun.io, env.SHLVL=1, file.separator=/, env.HOSTNAME=vm160, java.specification.name=Java Platform API Specification, java.class.version=51.0, org.slf4j.simpleLogger.defaultLogLevel=debug, user.country=US, jacoco.agent.unit.arg=-javaagent:/home/fedora/.m2/repository/org/jacoco/org.jacoco.agent/0.6.4.201312101107/org.jacoco.agent-0.6.4.201312101107-runtime.jar=destfile=/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec,append=true, java.home=/usr/java/jdk1.7.0_55/jre, java.vm.info=mixed mode, env.LOGNAME=fedora, os.version=2.6.32-431.17.1.el6.x86_64, project_name=fcrepo4, project.reporting.outputEncoding=UTF-8, env.G_BROKEN_FILENAMES=1, path.separator=:, java.vm.version=24.55-b03, env.JAVA_HOME=/usr/java/jdk1.7.0_55, java.awt.printerjob=sun.print.PSPrinterJob, env.TERM=xterm, sun.io.unicode.encoding=UnicodeLittle, awt.toolkit=sun.awt.X11.XToolkit, metrics.version=3.0.2, jsonld.version=0.4.1, user.home=/home/fedora, jersey.version=1.17.1, guava.version=17.0, java.specification.vendor=Oracle Corporation, env.M2_HOME=/usr/local/maven, java.library.path=/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib, java.vendor.url=http://java.oracle.com/, env.MAVEN_CMD_LINE_ARGS=clean verify -X --errors -rf :fcrepo-metrics, java.vm.vendor=Oracle Corporation, maven.home=/usr/local/maven, java.runtime.name=Java(TM) SE Runtime Environment, sun.java.command=org.codehaus.plexus.classworlds.launcher.Launcher clean verify -X --errors -rf :fcrepo-metrics, java.class.path=/usr/local/maven/boot/plexus-classworlds-2.5.1.jar, sonatypeOssDistMgmtSnapshotsUrl=https://oss.sonatype.org/content/repositories/snapshots/, jena.version=2.11.1, maven.version=3.2.3, env.XFILESEARCHPATH=/usr/dt/app-defaults/%L/Dt, slf4j.version=1.7.7, java.vm.specification.name=Java Virtual Machine Specification, jacoco.outputDir=/opt/Fedora/fcrepo4/fcrepo-metrics/target, github.global.server=github, java.vm.specification.version=1.7, sun.cpu.endian=little, sun.os.patch.level=unknown, env.HOME=/home/fedora, env.LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.tbz=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.axa=01;36:*.oga=01;36:*.spx=01;36:*.xspf=01;36:, java.io.tmpdir=/tmp, java.vendor.url.bug=http://bugreport.sun.com/bugreport/, jgroups.version=3.4.0.Final, env.MAVEN_OPTS=-Xms256m -Xmx512m, env.SSH_AUTH_SOCK=/tmp/ssh-cjoKr13251/agent.13251, modeshape.version=4.0.0.Alpha4, grizzly.version=2.3.6, os.arch=amd64, java.awt.graphicsenv=sun.awt.X11GraphicsEnvironment, infinispan.version=6.0.2.Final, java.ext.dirs=/usr/java/jdk1.7.0_55/jre/lib/ext:/usr/java/packages/lib/ext, user.dir=/opt/Fedora/fcrepo4, line.separator=
+, java.vm.name=Java HotSpot(TM) 64-Bit Server VM, activemq.version=5.9.1, env.M2=/usr/local/maven/bin, spring.version=4.0.3.RELEASE, env.MAIL=/var/spool/mail/fedora, file.encoding=UTF-8, sonar.jacoco.itReportPath=/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-it.exec, java.specification.version=1.7, sesame.version=2.7.7, checkstyle.plugin.version=2.12.1}
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[DEBUG] resource with targetPath null
+directory /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/resources
+excludes []
+includes []
+[INFO] skip non existing resourceDirectory /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/resources
+[DEBUG] no use filter components
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ fcrepo-metrics ---
+[DEBUG] Dependency collection stats: {ConflictMarker.analyzeTime=1, ConflictMarker.markTime=0, ConflictMarker.nodeCount=160, ConflictIdSorter.graphTime=1, ConflictIdSorter.topsortTime=0, ConflictIdSorter.conflictIdCount=43, ConflictIdSorter.conflictIdCycleCount=0, ConflictResolver.totalTime=3, ConflictResolver.conflictItemCount=63, DefaultDependencyCollector.collectTime=52, DefaultDependencyCollector.transformTime=5}
+[DEBUG] org.apache.maven.plugins:maven-compiler-plugin:jar:3.1:
+[DEBUG]    org.apache.maven:maven-plugin-api:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-artifact:jar:2.0.9:compile
+[DEBUG]       org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
+[DEBUG]    org.apache.maven:maven-core:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-settings:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-profile:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-model:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-repository-metadata:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-error-diagnostics:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-project:jar:2.0.9:compile
+[DEBUG]          org.apache.maven:maven-plugin-registry:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-plugin-descriptor:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-artifact-manager:jar:2.0.9:compile
+[DEBUG]       org.apache.maven:maven-monitor:jar:2.0.9:compile
+[DEBUG]    org.apache.maven:maven-toolchain:jar:1.0:compile
+[DEBUG]    org.apache.maven.shared:maven-shared-utils:jar:0.1:compile
+[DEBUG]       com.google.code.findbugs:jsr305:jar:2.0.1:compile
+[DEBUG]    org.apache.maven.shared:maven-shared-incremental:jar:1.1:compile
+[DEBUG]       org.codehaus.plexus:plexus-component-annotations:jar:1.5.5:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-api:jar:2.2:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-manager:jar:2.2:compile
+[DEBUG]    org.codehaus.plexus:plexus-compiler-javac:jar:2.2:runtime
+[DEBUG]    org.codehaus.plexus:plexus-container-default:jar:1.5.5:compile
+[DEBUG]       org.codehaus.plexus:plexus-classworlds:jar:2.2.2:compile
+[DEBUG]       org.apache.xbean:xbean-reflect:jar:3.4:compile
+[DEBUG]          log4j:log4j:jar:1.2.12:compile
+[DEBUG]          commons-logging:commons-logging-api:jar:1.1:compile
+[DEBUG]       com.google.collections:google-collections:jar:1.0:compile
+[DEBUG]       junit:junit:jar:3.8.2:compile
+[DEBUG] Created new class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.1
+[DEBUG] Importing foreign packages into class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.1
+[DEBUG]   Imported:  < project>org.fcrepo:fcrepo:4.0.0-beta-03-SNAPSHOT
+[DEBUG] Populating class realm plugin>org.apache.maven.plugins:maven-compiler-plugin:3.1
+[DEBUG]   Included: org.apache.maven.plugins:maven-compiler-plugin:jar:3.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-utils:jar:1.5.1
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-utils:jar:0.1
+[DEBUG]   Included: com.google.code.findbugs:jsr305:jar:2.0.1
+[DEBUG]   Included: org.apache.maven.shared:maven-shared-incremental:jar:1.1
+[DEBUG]   Included: org.codehaus.plexus:plexus-component-annotations:jar:1.5.5
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-api:jar:2.2
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-manager:jar:2.2
+[DEBUG]   Included: org.codehaus.plexus:plexus-compiler-javac:jar:2.2
+[DEBUG]   Included: org.apache.xbean:xbean-reflect:jar:3.4
+[DEBUG]   Included: log4j:log4j:jar:1.2.12
+[DEBUG]   Included: commons-logging:commons-logging-api:jar:1.1
+[DEBUG]   Included: com.google.collections:google-collections:jar:1.0
+[DEBUG]   Included: junit:junit:jar:3.8.2
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-api:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-artifact:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-core:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-settings:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-parameter-documenter:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-profile:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-model:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-repository-metadata:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-error-diagnostics:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-project:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-registry:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-plugin-descriptor:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-artifact-manager:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-monitor:jar:2.0.9
+[DEBUG]   Excluded: org.apache.maven:maven-toolchain:jar:1.0
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-container-default:jar:1.5.5
+[DEBUG]   Excluded: org.codehaus.plexus:plexus-classworlds:jar:2.2.2
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-compiler-plugin:3.1:compile from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-compiler-plugin:3.1, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-compiler-plugin:3.1:compile' with basic configurator -->
+[DEBUG]   (f) basedir = /opt/Fedora/fcrepo4/fcrepo-metrics
+[DEBUG]   (f) buildDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target
+[DEBUG]   (f) classpathElements = [/opt/Fedora/fcrepo4/fcrepo-metrics/target/classes, /home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar, /home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar, /home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar, /home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar, /home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar, /home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar, /home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar, /home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar, /home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar, /home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar]
+[DEBUG]   (f) compileSourceRoots = [/opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java]
+[DEBUG]   (f) compilerArgument = -Xlint:unchecked
+[DEBUG]   (f) compilerId = javac
+[DEBUG]   (f) debug = true
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) failOnError = true
+[DEBUG]   (f) forceJavacCompilerUse = false
+[DEBUG]   (f) fork = false
+[DEBUG]   (f) generatedSourcesDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-sources/annotations
+[DEBUG]   (f) mojoExecution = org.apache.maven.plugins:maven-compiler-plugin:3.1:compile {execution: default-compile}
+[DEBUG]   (f) optimize = false
+[DEBUG]   (f) outputDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG]   (f) projectArtifact = org.fcrepo:fcrepo-metrics:bundle:4.0.0-beta-03-SNAPSHOT
+[DEBUG]   (f) showDeprecation = false
+[DEBUG]   (f) showWarnings = false
+[DEBUG]   (f) skipMultiThreadWarning = false
+[DEBUG]   (f) source = 1.7
+[DEBUG]   (f) staleMillis = 0
+[DEBUG]   (f) target = 1.7
+[DEBUG]   (f) useIncrementalCompilation = true
+[DEBUG]   (f) verbose = false
+[DEBUG]   (f) mavenSession = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG] -- end configuration --
+[DEBUG] Using compiler 'javac'.
+[DEBUG] Source directories: [/opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java]
+[DEBUG] Classpath: [/opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar
+ /home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar
+ /home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar
+ /home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar
+ /home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar
+ /home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar
+ /home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar
+ /home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar
+ /home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar
+ /home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar]
+[DEBUG] Output directory: /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG] CompilerReuseStrategy: reuseCreated
+[DEBUG] useIncrementalCompilation enabled
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/package-info.java
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/ReporterFactory.java
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/MetricsProvider.java
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/MetricsContextListener.java
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/RegistryService.java
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/MetricsConfig.java
+[INFO] Changes detected - recompiling the module!
+[DEBUG] Classpath:
+[DEBUG]  /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar
+[DEBUG]  /home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar
+[DEBUG]  /home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar
+[DEBUG] Source roots:
+[DEBUG]  /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java
+[DEBUG] Command line options:
+[DEBUG] -d /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes -classpath /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes:/home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar:/home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar:/home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar:/home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar:/home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar:/home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar:/home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar:/home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar:/home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar:/home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar: -sourcepath /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java: -s /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-sources/annotations -g -nowarn -target 1.7 -source 1.7 -encoding UTF-8 -Xlint:unchecked
+[DEBUG] incrementalBuildHelper#beforeRebuildExecution
+[INFO] Compiling 6 source files to /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG] incrementalBuildHelper#afterRebuildExecution
+[WARNING] /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/MetricsContextListener.java: /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/MetricsContextListener.java uses or overrides a deprecated API.
+[WARNING] /opt/Fedora/fcrepo4/fcrepo-metrics/src/main/java/org/fcrepo/metrics/MetricsContextListener.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ fcrepo-metrics ---
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-resources-plugin:2.6:testResources from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-resources-plugin:2.6, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-resources-plugin:2.6:testResources' with basic configurator -->
+[DEBUG]   (f) buildFilters = []
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) escapeWindowsPaths = true
+[DEBUG]   (s) includeEmptyDirs = false
+[DEBUG]   (s) outputDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[DEBUG]   (s) overwrite = false
+[DEBUG]   (f) project = MavenProject: org.fcrepo:fcrepo-metrics:4.0.0-beta-03-SNAPSHOT @ /opt/Fedora/fcrepo4/fcrepo-metrics/pom.xml
+[DEBUG]   (s) resources = [Resource {targetPath: null, filtering: false, FileSet {directory: /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/resources, PatternSet [includes: {}, excludes: {}]}}]
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG]   (f) supportMultiLineFiltering = false
+[DEBUG]   (f) useBuildFilters = true
+[DEBUG]   (s) useDefaultDelimiters = true
+[DEBUG] -- end configuration --
+[DEBUG] properties used {java.vendor=Oracle Corporation, jacoco.out.unit.file=jacoco-ut.exec, enunciate.version=1.27, env.LESSOPEN=|/usr/bin/lesspipe.sh %s, sun.java.launcher=SUN_STANDARD, sun.management.compiler=HotSpot 64-Bit Tiered Compilers, os.name=Linux, sonar.jacoco.reportPath=/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec, sun.boot.class.path=/usr/java/jdk1.7.0_55/jre/lib/resources.jar:/usr/java/jdk1.7.0_55/jre/lib/rt.jar:/usr/java/jdk1.7.0_55/jre/lib/sunrsasign.jar:/usr/java/jdk1.7.0_55/jre/lib/jsse.jar:/usr/java/jdk1.7.0_55/jre/lib/jce.jar:/usr/java/jdk1.7.0_55/jre/lib/charsets.jar:/usr/java/jdk1.7.0_55/jre/lib/jfr.jar:/usr/java/jdk1.7.0_55/jre/classes, env.PWD=/opt/Fedora/fcrepo4, env.LANG=en_US.UTF-8, java.vm.specification.vendor=Oracle Corporation, httpcomponents.version=4.3.2, java.runtime.version=1.7.0_55-b13, env.HISTSIZE=1000, httpclient.version=4.3.3, project.build.sourceEncoding=UTF-8, user.name=fedora, maven.build.version=Apache Maven 3.2.3 (33f8c3e1027c3ddde99d3cdebad2656a31e8fdf4; 2014-08-11T13:58:10-07:00), env.USER=fedora, env.HISTCONTROL=ignoredups, logback.version=1.0.13, env.SHELL=/bin/bash, env.NLSPATH=/usr/dt/lib/nls/msg/%L/%N.cat, jacoco.out.it.file=jacoco-it.exec, env.PATH=/usr/local/maven/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/fedora/bin, user.language=en, sun.boot.library.path=/usr/java/jdk1.7.0_55/jre/lib/amd64, classworlds.conf=/usr/local/maven/bin/m2.conf, powermock.version=1.5.4, java.version=1.7.0_55, user.timezone=America/Los_Angeles, sun.arch.data.model=64, env.SSH_AGENT_PID=13252, java.endorsed.dirs=/usr/java/jdk1.7.0_55/jre/lib/endorsed, sun.cpu.isalist=, project.copyrightYear=2014, sun.jnu.encoding=UTF-8, file.encoding.pkg=sun.io, env.SHLVL=1, file.separator=/, env.HOSTNAME=vm160, java.specification.name=Java Platform API Specification, java.class.version=51.0, org.slf4j.simpleLogger.defaultLogLevel=debug, user.country=US, jacoco.agent.unit.arg=-javaagent:/home/fedora/.m2/repository/org/jacoco/org.jacoco.agent/0.6.4.201312101107/org.jacoco.agent-0.6.4.201312101107-runtime.jar=destfile=/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-ut.exec,append=true, java.home=/usr/java/jdk1.7.0_55/jre, java.vm.info=mixed mode, env.LOGNAME=fedora, os.version=2.6.32-431.17.1.el6.x86_64, project_name=fcrepo4, project.reporting.outputEncoding=UTF-8, env.G_BROKEN_FILENAMES=1, path.separator=:, java.vm.version=24.55-b03, env.JAVA_HOME=/usr/java/jdk1.7.0_55, java.awt.printerjob=sun.print.PSPrinterJob, env.TERM=xterm, sun.io.unicode.encoding=UnicodeLittle, awt.toolkit=sun.awt.X11.XToolkit, metrics.version=3.0.2, jsonld.version=0.4.1, user.home=/home/fedora, jersey.version=1.17.1, guava.version=17.0, java.specification.vendor=Oracle Corporation, env.M2_HOME=/usr/local/maven, java.library.path=/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib, java.vendor.url=http://java.oracle.com/, env.MAVEN_CMD_LINE_ARGS=clean verify -X --errors -rf :fcrepo-metrics, java.vm.vendor=Oracle Corporation, maven.home=/usr/local/maven, java.runtime.name=Java(TM) SE Runtime Environment, sun.java.command=org.codehaus.plexus.classworlds.launcher.Launcher clean verify -X --errors -rf :fcrepo-metrics, java.class.path=/usr/local/maven/boot/plexus-classworlds-2.5.1.jar, sonatypeOssDistMgmtSnapshotsUrl=https://oss.sonatype.org/content/repositories/snapshots/, jena.version=2.11.1, maven.version=3.2.3, env.XFILESEARCHPATH=/usr/dt/app-defaults/%L/Dt, slf4j.version=1.7.7, java.vm.specification.name=Java Virtual Machine Specification, jacoco.outputDir=/opt/Fedora/fcrepo4/fcrepo-metrics/target, github.global.server=github, java.vm.specification.version=1.7, sun.cpu.endian=little, sun.os.patch.level=unknown, env.HOME=/home/fedora, env.LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;05;37;41:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.tbz=01;31:*.tbz2=01;31:*.bz=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.axa=01;36:*.oga=01;36:*.spx=01;36:*.xspf=01;36:, java.io.tmpdir=/tmp, java.vendor.url.bug=http://bugreport.sun.com/bugreport/, jgroups.version=3.4.0.Final, env.MAVEN_OPTS=-Xms256m -Xmx512m, env.SSH_AUTH_SOCK=/tmp/ssh-cjoKr13251/agent.13251, modeshape.version=4.0.0.Alpha4, grizzly.version=2.3.6, os.arch=amd64, java.awt.graphicsenv=sun.awt.X11GraphicsEnvironment, infinispan.version=6.0.2.Final, java.ext.dirs=/usr/java/jdk1.7.0_55/jre/lib/ext:/usr/java/packages/lib/ext, user.dir=/opt/Fedora/fcrepo4, line.separator=
+, java.vm.name=Java HotSpot(TM) 64-Bit Server VM, activemq.version=5.9.1, env.M2=/usr/local/maven/bin, spring.version=4.0.3.RELEASE, env.MAIL=/var/spool/mail/fedora, file.encoding=UTF-8, sonar.jacoco.itReportPath=/opt/Fedora/fcrepo4/fcrepo-metrics/target/jacoco-it.exec, java.specification.version=1.7, sesame.version=2.7.7, checkstyle.plugin.version=2.12.1}
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[DEBUG] resource with targetPath null
+directory /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/resources
+excludes []
+includes []
+[INFO] skip non existing resourceDirectory /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/resources
+[DEBUG] no use filter components
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.1:testCompile (default-testCompile) @ fcrepo-metrics ---
+[DEBUG] Configuring mojo org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile from plugin realm ClassRealm[plugin>org.apache.maven.plugins:maven-compiler-plugin:3.1, parent: sun.misc.Launcher$AppClassLoader@77a6686]
+[DEBUG] Configuring mojo 'org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile' with basic configurator -->
+[DEBUG]   (f) basedir = /opt/Fedora/fcrepo4/fcrepo-metrics
+[DEBUG]   (f) buildDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target
+[DEBUG]   (f) classpathElements = [/opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes, /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes, /home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar, /home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar, /home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar, /home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar, /home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar, /home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar, /home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar, /home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar, /home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar, /home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar, /home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar, /home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar, /home/fedora/.m2/repository/org/powermock/powermock-module-junit4/1.5.4/powermock-module-junit4-1.5.4.jar, /home/fedora/.m2/repository/junit/junit/4.11/junit-4.11.jar, /home/fedora/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar, /home/fedora/.m2/repository/org/powermock/powermock-module-junit4-common/1.5.4/powermock-module-junit4-common-1.5.4.jar, /home/fedora/.m2/repository/org/powermock/powermock-core/1.5.4/powermock-core-1.5.4.jar, /home/fedora/.m2/repository/org/javassist/javassist/3.18.1-GA/javassist-3.18.1-GA.jar, /home/fedora/.m2/repository/org/powermock/powermock-reflect/1.5.4/powermock-reflect-1.5.4.jar, /home/fedora/.m2/repository/org/objenesis/objenesis/2.1/objenesis-2.1.jar, /home/fedora/.m2/repository/org/powermock/powermock-api-mockito/1.5.4/powermock-api-mockito-1.5.4.jar, /home/fedora/.m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar, /home/fedora/.m2/repository/org/powermock/powermock-api-support/1.5.4/powermock-api-support-1.5.4.jar]
+[DEBUG]   (f) compileSourceRoots = [/opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java]
+[DEBUG]   (f) compilerArgument = -Xlint:unchecked
+[DEBUG]   (f) compilerId = javac
+[DEBUG]   (f) debug = true
+[DEBUG]   (f) encoding = UTF-8
+[DEBUG]   (f) failOnError = true
+[DEBUG]   (f) forceJavacCompilerUse = false
+[DEBUG]   (f) fork = false
+[DEBUG]   (f) generatedTestSourcesDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-test-sources/test-annotations
+[DEBUG]   (f) mojoExecution = org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile {execution: default-testCompile}
+[DEBUG]   (f) optimize = false
+[DEBUG]   (f) outputDirectory = /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[DEBUG]   (f) showDeprecation = false
+[DEBUG]   (f) showWarnings = false
+[DEBUG]   (f) skipMultiThreadWarning = false
+[DEBUG]   (f) source = 1.7
+[DEBUG]   (f) staleMillis = 0
+[DEBUG]   (f) target = 1.7
+[DEBUG]   (f) useIncrementalCompilation = true
+[DEBUG]   (f) verbose = false
+[DEBUG]   (f) mavenSession = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG]   (f) session = org.apache.maven.execution.MavenSession@4dd621c5
+[DEBUG] -- end configuration --
+[DEBUG] Using compiler 'javac'.
+[DEBUG] Source directories: [/opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java]
+[DEBUG] Classpath: [/opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+ /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar
+ /home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar
+ /home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar
+ /home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar
+ /home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar
+ /home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar
+ /home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar
+ /home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar
+ /home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar
+ /home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar
+ /home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar
+ /home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar
+ /home/fedora/.m2/repository/org/powermock/powermock-module-junit4/1.5.4/powermock-module-junit4-1.5.4.jar
+ /home/fedora/.m2/repository/junit/junit/4.11/junit-4.11.jar
+ /home/fedora/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar
+ /home/fedora/.m2/repository/org/powermock/powermock-module-junit4-common/1.5.4/powermock-module-junit4-common-1.5.4.jar
+ /home/fedora/.m2/repository/org/powermock/powermock-core/1.5.4/powermock-core-1.5.4.jar
+ /home/fedora/.m2/repository/org/javassist/javassist/3.18.1-GA/javassist-3.18.1-GA.jar
+ /home/fedora/.m2/repository/org/powermock/powermock-reflect/1.5.4/powermock-reflect-1.5.4.jar
+ /home/fedora/.m2/repository/org/objenesis/objenesis/2.1/objenesis-2.1.jar
+ /home/fedora/.m2/repository/org/powermock/powermock-api-mockito/1.5.4/powermock-api-mockito-1.5.4.jar
+ /home/fedora/.m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar
+ /home/fedora/.m2/repository/org/powermock/powermock-api-support/1.5.4/powermock-api-support-1.5.4.jar]
+[DEBUG] Output directory: /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[DEBUG] CompilerReuseStrategy: reuseCreated
+[DEBUG] useIncrementalCompilation enabled
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java/org/fcrepo/services/ReporterFactoryTest.java
+[DEBUG] Stale source detected: /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java/org/fcrepo/services/MetricsServiceTest.java
+[INFO] Changes detected - recompiling the module!
+[DEBUG] Classpath:
+[DEBUG]  /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[DEBUG]  /opt/Fedora/fcrepo4/fcrepo-metrics/target/classes
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar
+[DEBUG]  /home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar
+[DEBUG]  /home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar
+[DEBUG]  /home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar
+[DEBUG]  /home/fedora/.m2/repository/org/powermock/powermock-module-junit4/1.5.4/powermock-module-junit4-1.5.4.jar
+[DEBUG]  /home/fedora/.m2/repository/junit/junit/4.11/junit-4.11.jar
+[DEBUG]  /home/fedora/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar
+[DEBUG]  /home/fedora/.m2/repository/org/powermock/powermock-module-junit4-common/1.5.4/powermock-module-junit4-common-1.5.4.jar
+[DEBUG]  /home/fedora/.m2/repository/org/powermock/powermock-core/1.5.4/powermock-core-1.5.4.jar
+[DEBUG]  /home/fedora/.m2/repository/org/javassist/javassist/3.18.1-GA/javassist-3.18.1-GA.jar
+[DEBUG]  /home/fedora/.m2/repository/org/powermock/powermock-reflect/1.5.4/powermock-reflect-1.5.4.jar
+[DEBUG]  /home/fedora/.m2/repository/org/objenesis/objenesis/2.1/objenesis-2.1.jar
+[DEBUG]  /home/fedora/.m2/repository/org/powermock/powermock-api-mockito/1.5.4/powermock-api-mockito-1.5.4.jar
+[DEBUG]  /home/fedora/.m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar
+[DEBUG]  /home/fedora/.m2/repository/org/powermock/powermock-api-support/1.5.4/powermock-api-support-1.5.4.jar
+[DEBUG] Source roots:
+[DEBUG]  /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java
+[DEBUG] Command line options:
+[DEBUG] -d /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes -classpath /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes:/opt/Fedora/fcrepo4/fcrepo-metrics/target/classes:/home/fedora/.m2/repository/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar:/home/fedora/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-graphite/3.0.2/metrics-graphite-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-jersey/3.0.2/metrics-jersey-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-annotation/3.0.2/metrics-annotation-3.0.2.jar:/home/fedora/.m2/repository/com/sun/jersey/jersey-server/1.17.1/jersey-server-1.17.1.jar:/home/fedora/.m2/repository/asm/asm/3.1/asm-3.1.jar:/home/fedora/.m2/repository/com/sun/jersey/jersey-core/1.17.1/jersey-core-1.17.1.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-servlets/3.0.2/metrics-servlets-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-healthchecks/3.0.2/metrics-healthchecks-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-json/3.0.2/metrics-json-3.0.2.jar:/home/fedora/.m2/repository/com/codahale/metrics/metrics-jvm/3.0.2/metrics-jvm-3.0.2.jar:/home/fedora/.m2/repository/org/springframework/spring-context/4.0.3.RELEASE/spring-context-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/org/springframework/spring-aop/4.0.3.RELEASE/spring-aop-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/aopalliance/aopalliance/1.0/aopalliance-1.0.jar:/home/fedora/.m2/repository/org/springframework/spring-beans/4.0.3.RELEASE/spring-beans-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/org/springframework/spring-core/4.0.3.RELEASE/spring-core-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/org/springframework/spring-expression/4.0.3.RELEASE/spring-expression-4.0.3.RELEASE.jar:/home/fedora/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar:/home/fedora/.m2/repository/javax/servlet/javax.servlet-api/3.0.1/javax.servlet-api-3.0.1.jar:/home/fedora/.m2/repository/javax/ws/rs/jsr311-api/1.1.1/jsr311-api-1.1.1.jar:/home/fedora/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar:/home/fedora/.m2/repository/org/powermock/powermock-module-junit4/1.5.4/powermock-module-junit4-1.5.4.jar:/home/fedora/.m2/repository/junit/junit/4.11/junit-4.11.jar:/home/fedora/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:/home/fedora/.m2/repository/org/powermock/powermock-module-junit4-common/1.5.4/powermock-module-junit4-common-1.5.4.jar:/home/fedora/.m2/repository/org/powermock/powermock-core/1.5.4/powermock-core-1.5.4.jar:/home/fedora/.m2/repository/org/javassist/javassist/3.18.1-GA/javassist-3.18.1-GA.jar:/home/fedora/.m2/repository/org/powermock/powermock-reflect/1.5.4/powermock-reflect-1.5.4.jar:/home/fedora/.m2/repository/org/objenesis/objenesis/2.1/objenesis-2.1.jar:/home/fedora/.m2/repository/org/powermock/powermock-api-mockito/1.5.4/powermock-api-mockito-1.5.4.jar:/home/fedora/.m2/repository/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar:/home/fedora/.m2/repository/org/powermock/powermock-api-support/1.5.4/powermock-api-support-1.5.4.jar: -sourcepath /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java: -s /opt/Fedora/fcrepo4/fcrepo-metrics/target/generated-test-sources/test-annotations -g -nowarn -target 1.7 -source 1.7 -encoding UTF-8 -Xlint:unchecked
+[DEBUG] incrementalBuildHelper#beforeRebuildExecution
+[INFO] Compiling 2 source files to /opt/Fedora/fcrepo4/fcrepo-metrics/target/test-classes
+[DEBUG] incrementalBuildHelper#afterRebuildExecution
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java/org/fcrepo/services/ReporterFactoryTest.java:[83,40] 'void' type not allowed here
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] Fedora Repository Metrics Module ................... FAILURE [  2.408 s]
+[INFO] Fedora Repository Configurations Module ............ SKIPPED
+[INFO] Fedora Repository Kernel Implementation ............ SKIPPED
+[INFO] Fedora Repository Audit Module ..................... SKIPPED
+[INFO] Fedora Repository Object Serialization Module ...... SKIPPED
+[INFO] Fedora Repository HTTP Commons Module .............. SKIPPED
+[INFO] Fedora Repository JMS Module ....................... SKIPPED
+[INFO] Fedora Repository FileSystem Connector Module ...... SKIPPED
+[INFO] Fedora Repository Authorization Commons Module ..... SKIPPED
+[INFO] Fedora Repository HTTP API Module .................. SKIPPED
+[INFO] Fedora Repository Dublin Core Module ............... SKIPPED
+[INFO] Fedora Repository RDF Transformations Module ....... SKIPPED
+[INFO] Fedora Repository Storage Strategies Module ........ SKIPPED
+[INFO] Fedora Repository Deployable Web Application ....... SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 4.114 s
+[INFO] Finished at: 2014-08-27T14:09:53-07:00
+[INFO] Final Memory: 39M/247M
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile (default-testCompile) on project fcrepo-metrics: Compilation failure
+[ERROR] /opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java/org/fcrepo/services/ReporterFactoryTest.java:[83,40] 'void' type not allowed here
+[ERROR] -> [Help 1]
+org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile (default-testCompile) on project fcrepo-metrics: Compilation failure
+/opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java/org/fcrepo/services/ReporterFactoryTest.java:[83,40] 'void' type not allowed here
+
+	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:212)
+	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:153)
+	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:145)
+	at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:116)
+	at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:80)
+	at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build(SingleThreadedBuilder.java:51)
+	at org.apache.maven.lifecycle.internal.LifecycleStarter.execute(LifecycleStarter.java:120)
+	at org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:347)
+	at org.apache.maven.DefaultMaven.execute(DefaultMaven.java:154)
+	at org.apache.maven.cli.MavenCli.execute(MavenCli.java:582)
+	at org.apache.maven.cli.MavenCli.doMain(MavenCli.java:214)
+	at org.apache.maven.cli.MavenCli.main(MavenCli.java:158)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:606)
+	at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced(Launcher.java:289)
+	at org.codehaus.plexus.classworlds.launcher.Launcher.launch(Launcher.java:229)
+	at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode(Launcher.java:415)
+	at org.codehaus.plexus.classworlds.launcher.Launcher.main(Launcher.java:356)
+Caused by: org.apache.maven.plugin.compiler.CompilationFailureException: Compilation failure
+/opt/Fedora/fcrepo4/fcrepo-metrics/src/test/java/org/fcrepo/services/ReporterFactoryTest.java:[83,40] 'void' type not allowed here
+
+	at org.apache.maven.plugin.compiler.AbstractCompilerMojo.execute(AbstractCompilerMojo.java:858)
+	at org.apache.maven.plugin.compiler.TestCompilerMojo.execute(TestCompilerMojo.java:152)
+	at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo(DefaultBuildPluginManager.java:132)
+	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:208)
+	... 19 more
+[ERROR] 
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
