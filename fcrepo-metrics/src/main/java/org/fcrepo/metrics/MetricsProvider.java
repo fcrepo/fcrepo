@@ -29,7 +29,6 @@ public class MetricsProvider {
      * Default constructor that provides a MetricsRegistry
      */
     public MetricsProvider() {
-
 	RegistryService registryService = RegistryService.getIntance();
 	registryService.getMetrics();
     }

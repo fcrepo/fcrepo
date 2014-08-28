@@ -72,6 +72,5 @@ public class ReporterFactoryTest {
         final ReporterFactory factory = new ReporterFactory();
         final JmxReporter reporter = factory.getJmxReporter("not-used");
         Assert.assertNotNull(reporter);
-
     }
 }
