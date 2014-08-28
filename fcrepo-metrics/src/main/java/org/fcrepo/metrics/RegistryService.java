@@ -31,7 +31,7 @@ import com.codahale.metrics.MetricRegistry;
  * @author cbeer
  * @since Mar 22, 2013
  */
-public abstract class RegistryService {
+public class RegistryService {
 
     private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
 
@@ -41,7 +41,7 @@ public abstract class RegistryService {
      * TODO the new upstream SharedMetricRegistries may make this obsolete
      * @return the current registry service
      */
-    public static MetricRegistry getMetrics() {
+    public MetricRegistry getMetrics() {
         return METRICS;
     }
 
@@ -50,7 +50,7 @@ public abstract class RegistryService {
      * 
      * @param os
      */
-    public static void dumpMetrics(final PrintStream os) {
+    public void dumpMetrics(final PrintStream os) {
 
         final MetricRegistry registry = getMetrics();
 

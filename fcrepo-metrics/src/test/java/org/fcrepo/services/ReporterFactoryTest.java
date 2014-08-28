@@ -15,36 +15,18 @@
  */
 package org.fcrepo.services;
 
-import java.io.IOException;
-import java.util.Map;
-
-import static com.codahale.metrics.MetricFilter.ALL;
-import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
 import java.lang.management.ManagementFactory;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import  java.util.concurrent.TimeUnit;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricFilter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.jcr.RepositoryException;
 import javax.management.MBeanServer;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -57,9 +39,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.fcrepo.metrics.ReporterFactory;
 
 @RunWith(PowerMockRunner.class)
-// PowerMock needs to ignore some packages to prevent class-cast errors
-    @PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
-    @PrepareForTest({ManagementFactory.class,JmxReporter.class})
+@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
+@PrepareForTest({ManagementFactory.class})
 
 /**
  * <p>ReporterFactoryTest class.</p>
@@ -67,11 +48,6 @@ import org.fcrepo.metrics.ReporterFactory;
  * @author ghill
  */
 public class ReporterFactoryTest {
-
-    private JmxReporter testObj;
-
-    @Mock
-    private JmxReporter mockJmxReporter;
 
     @Mock
     private MetricRegistry mockRegistry;
@@ -82,30 +58,19 @@ public class ReporterFactoryTest {
     @Mock
     private MetricFilter mockFilter;
 
-    @Mock
-    private Logger mockLogger;
-
     @Before
     public void setUp() throws RepositoryException {
-	initMocks(this);
-	mockStatic(ManagementFactory.class);
-	mockStatic(JmxReporter.class);
-	mockJmxReporter = mock(JmxReporter.class);
-        when(ManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
-        when (JmxReporter.forRegistry(mockRegistry).registerWith(mockMBeanServer).inDomain(anyString()).convertDurationsTo(MILLISECONDS).convertRatesTo(SECONDS).filter(mockFilter).build()).thenReturn(mockJmxReporter);
-        when(LoggerFactory.getLogger(any(Class.class))).thenReturn(mockLogger);
-	// set up a test
-        testObj = JmxReporter.forRegistry(mockRegistry).registerWith(mockMBeanServer).inDomain("org.fcrepo").convertDurationsTo(MILLISECONDS).convertRatesTo(SECONDS).filter(mockFilter).build();
-	testObj.start();
+        initMocks(this);
     }
-    
+
     @Test
-	public void testGetJmxReporter() {
-	when(ManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
-	when (JmxReporter.forRegistry(mockRegistry).registerWith(mockMBeanServer).inDomain(anyString()).convertDurationsTo(any(TimeUnit.class)).convertRatesTo(any(TimeUnit.class)).filter(mockFilter).build()).thenReturn(mockJmxReporter);
-	when(LoggerFactory.getLogger(any(Class.class))).thenReturn(mockLogger);
-	ReporterFactory factory = new ReporterFactory();
-        JmxReporter rep = factory.getJmxReporter("test");
-	assertEquals(rep, testObj);
+    public void testGetJmxReporterAW() {
+        mockStatic(ManagementFactory.class);
+        final ManagementFactory mockManagementFactory = mock(ManagementFactory.class);
+        when(mockManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
+
+        final ReporterFactory factory = new ReporterFactory();
+        final JmxReporter reporter = factory.getJmxReporter("not-used");
+        Assert.assertNotNull(reporter);
     }
 }

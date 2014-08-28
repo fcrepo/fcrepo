@@ -31,6 +31,6 @@ public class MetricsProvider extends InstrumentedResourceMethodDispatchAdapter {
      * Default constructor that provides a MetricsRegistry
      */
     public MetricsProvider() {
-        super(RegistryService.getMetrics());
+        super(new RegistryService().getMetrics());
     }
 }
