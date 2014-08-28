@@ -15,13 +15,10 @@
  */
 package org.fcrepo.services;
 
-import static org.fcrepo.metrics.RegistryService.dumpMetrics;
-
 import java.io.PrintStream;
 
+import org.fcrepo.metrics.RegistryService;
 import org.junit.Test;
-
-import com.codahale.metrics.MetricRegistry;
 
 /**
  * <p>MetricsServiceTest class.</p>
@@ -30,12 +27,11 @@ import com.codahale.metrics.MetricRegistry;
  */
 public class MetricsServiceTest {
 
-    MetricRegistry mockMetricRegistry;
-
     PrintStream mockPrintStream;
 
     @Test
     public void testDumpMetrics() {
-        dumpMetrics(mockPrintStream);
+      final RegistryService registryService = RegistryService.getInstance();
+      registryService.dumpMetrics(mockPrintStream);
     }
 }

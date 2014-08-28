@@ -15,8 +15,6 @@
  */
 package org.fcrepo.metrics;
 
-import static org.fcrepo.metrics.RegistryService.getMetrics;
-
 import javax.servlet.annotation.WebListener;
 
 import com.codahale.metrics.MetricRegistry;
@@ -40,7 +38,7 @@ public class MetricsContextListener extends AdminServletContextListener {
      */
     @Override
     protected MetricRegistry getMetricRegistry() {
-        return getMetrics();
+        return RegistryService.getInstance().getMetrics();
     }
 
     /**

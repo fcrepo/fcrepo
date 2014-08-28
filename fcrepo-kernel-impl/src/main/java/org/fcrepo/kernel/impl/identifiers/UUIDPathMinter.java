@@ -19,7 +19,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Splitter.fixedLength;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
+import org.fcrepo.metrics.RegistryService;
 
 import com.codahale.metrics.Timer;
 
@@ -30,7 +30,7 @@ import com.codahale.metrics.Timer;
  */
 public class UUIDPathMinter extends BasePidMinter {
 
-    static final Timer timer = getMetrics().timer(
+    static final Timer timer = RegistryService.getInstance().getMetrics().timer(
             name(UUIDPathMinter.class, "mint"));
 
     private static final int DEFAULT_LENGTH = 2;

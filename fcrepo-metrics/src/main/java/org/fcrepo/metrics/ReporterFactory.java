@@ -20,7 +20,6 @@ import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.management.MBeanServer;
@@ -41,6 +40,8 @@ public class ReporterFactory {
 
     private static final Logger LOGGER = getLogger(ReporterFactory.class);
 
+    private RegistryService registryService = RegistryService.getInstance();
+
     /**
      * Start a new GraphiteReporter, with reports every minute
      * 
@@ -51,7 +52,7 @@ public class ReporterFactory {
     public GraphiteReporter getGraphiteReporter(final String prefix,
             final Graphite g) {
         final GraphiteReporter reporter =
-                GraphiteReporter.forRegistry(getMetrics()).prefixedWith(prefix)
+                GraphiteReporter.forRegistry(registryService.getMetrics()).prefixedWith(prefix)
                         .convertRatesTo(SECONDS).convertDurationsTo(
                                 MILLISECONDS).filter(ALL).build(g);
         reporter.start(1, MINUTES);
@@ -68,7 +69,7 @@ public class ReporterFactory {
     public JmxReporter getJmxReporter(final String prefix) {
         final MBeanServer mbs = getPlatformMBeanServer();
         final JmxReporter reporter =
-                JmxReporter.forRegistry(getMetrics()).registerWith(mbs)
+                JmxReporter.forRegistry(registryService.getMetrics()).registerWith(mbs)
                         .inDomain("org.fcrepo")
                         .convertDurationsTo(MILLISECONDS).convertRatesTo(
                                 SECONDS).filter(ALL).build();
