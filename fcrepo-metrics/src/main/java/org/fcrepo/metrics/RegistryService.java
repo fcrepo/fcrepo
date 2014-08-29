@@ -32,6 +32,7 @@ import com.codahale.metrics.MetricRegistry;
  * @since Mar 22, 2013
  */
 
+
 public class RegistryService {
 
     private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
