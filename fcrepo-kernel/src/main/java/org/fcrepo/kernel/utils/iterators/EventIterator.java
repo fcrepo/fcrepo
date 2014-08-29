@@ -23,7 +23,7 @@ import com.google.common.collect.ForwardingIterator;
 
 /**
  * Encapsulates JCR's pre-generics {@link EventIterator} with a fully-typed
- * {@link Iterator}<Event>
+ * {@link Iterator}{@literal <Event>}
  *
  * @author ajs6f
  * @since Apr 20, 2013
@@ -33,7 +33,7 @@ public class EventIterator extends ForwardingIterator<Event> implements Iterable
     private Iterator<Event> i;
 
     /**
-     * Wrap the given EventIterator with the generic Iterator<Event>
+     * Wrap the given EventIterator with the generic Iterator{@literal <Event>}
      *
      * @param i
      */

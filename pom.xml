@@ -43,7 +43,7 @@
     <jsonld.version>0.4.1</jsonld.version>
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
-    <powermock.version>1.5.4</powermock.version>
+    <powermock.version>1.5.5</powermock.version>
     <guava.version>17.0</guava.version>
     <!-- plugin versions -->
     <checkstyle.plugin.version>2.12.1</checkstyle.plugin.version>
@@ -849,7 +849,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.6.4.201312101107</version>
+          <version>0.7.1.201405082137</version>
           <executions>
             <execution>
               <id>default-prepare-agent</id>
@@ -1050,7 +1050,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.6.3.201306030806</version>
+        <version>0.7.1.201405082137</version>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
