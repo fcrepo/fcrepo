@@ -849,7 +849,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.6.4.201312101107</version>
+          <version>0.7.1.201405082137</version>
           <executions>
             <execution>
               <id>default-prepare-agent</id>
@@ -1050,7 +1050,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.6.3.201306030806</version>
+        <version>0.7.1.201405082137</version>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
