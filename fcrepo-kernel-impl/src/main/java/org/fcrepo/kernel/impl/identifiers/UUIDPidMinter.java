@@ -17,7 +17,7 @@ package org.fcrepo.kernel.impl.identifiers;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
+import org.fcrepo.metrics.RegistryService;
 
 import com.codahale.metrics.Timer;
 
@@ -30,7 +30,8 @@ import com.codahale.metrics.Timer;
  */
 public class UUIDPidMinter extends BasePidMinter {
 
-    static final Timer timer = getMetrics().timer(
+    static final RegistryService registryService = RegistryService.getInstance();
+    static final Timer timer = registryService.getMetrics().timer(
             name(UUIDPidMinter.class, "mint"));
 
     /**

@@ -35,6 +35,7 @@ public class MetricsServiceTest {
 
     @Test
     public void testDumpMetrics() {
-        new RegistryService().dumpMetrics(mockPrintStream);
+      final RegistryService registryService = RegistryService.getInstance();
+      registryService.dumpMetrics(mockPrintStream);
     }
 }

@@ -18,8 +18,8 @@ package org.fcrepo.kernel.impl.observer;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static javax.jcr.observation.Event.NODE_REMOVED;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.metrics.RegistryService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -51,7 +51,8 @@ public class NodeRemovalEventObserver implements EventListener {
     /**
      * A simple counter of events that pass through this observer
      */
-    static final Counter EVENT_COUNTER = getMetrics().counter(
+    static final RegistryService registryService = RegistryService.getInstance();
+    static final Counter EVENT_COUNTER = registryService.getMetrics().counter(
             name(
             NodeRemovalEventObserver.class, "onEvent"));
 

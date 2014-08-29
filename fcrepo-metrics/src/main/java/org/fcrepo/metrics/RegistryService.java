@@ -38,13 +38,20 @@ public class RegistryService {
     private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
 
     private static RegistryService instance = null;
-    protected RegistryService(){
-	//
+    protected RegistryService() {
+      //
     }
-    public static RegistryService getIntance() {
-	if (instance == null)
-	    instance = new RegistryService();
-	return instance;
+
+    /**
+     * Create the instance
+     *
+     */
+
+    public static RegistryService getInstance() {
+      if (instance == null) {
+        instance = new RegistryService();
+      }
+      return instance;
     }
 
     /**

@@ -18,10 +18,10 @@ package org.fcrepo.kernel.impl.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -62,10 +62,11 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     @Autowired(required = false)
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
+    static final RegistryService registryService = RegistryService.getInstance();
     static final Counter fixityCheckCounter
-        = getMetrics().counter(name(DatastreamService.class, "fixity-check-counter"));
+        = registryService.getMetrics().counter(name(DatastreamService.class, "fixity-check-counter"));
 
-    static final Timer timer = getMetrics().timer(
+    static final Timer timer = registryService.getMetrics().timer(
             name(Datastream.class, "fixity-check-time"));
 
     private static final Logger LOGGER = getLogger(DatastreamService.class);

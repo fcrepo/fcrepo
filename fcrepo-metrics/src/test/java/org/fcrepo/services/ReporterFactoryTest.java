@@ -60,17 +60,17 @@ public class ReporterFactoryTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
+      initMocks(this);
     }
 
     @Test
     public void testGetJmxReporterAW() {
-        mockStatic(ManagementFactory.class);
-        final ManagementFactory mockManagementFactory = mock(ManagementFactory.class);
-        when(mockManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
+      mockStatic(ManagementFactory.class);
+      final ManagementFactory mockManagementFactory = mock(ManagementFactory.class);
+      when(mockManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
 
-        final ReporterFactory factory = new ReporterFactory();
-        final JmxReporter reporter = factory.getJmxReporter("not-used");
-        Assert.assertNotNull(reporter);
-    }
+      final ReporterFactory factory = new ReporterFactory();
+      final JmxReporter reporter = factory.getJmxReporter("not-used");
+     Assert.assertNotNull(reporter);
+   }
 }
