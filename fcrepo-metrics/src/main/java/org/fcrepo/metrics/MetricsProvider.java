@@ -17,20 +17,20 @@ package org.fcrepo.metrics;
 
 import javax.ws.rs.ext.Provider;
 
-import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
-
 /**
  * Provide a metrics registry for Jersey instrumenting
  *
  * @author eddies
  */
 @Provider
-public class MetricsProvider extends InstrumentedResourceMethodDispatchAdapter {
+public class MetricsProvider {
 
     /**
      * Default constructor that provides a MetricsRegistry
      */
     public MetricsProvider() {
-        super(new RegistryService().getMetrics());
+
+	RegistryService registryService = RegistryService.getIntance();
+	registryService.getMetrics();
     }
 }

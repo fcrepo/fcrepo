@@ -31,9 +31,19 @@ import com.codahale.metrics.MetricRegistry;
  * @author cbeer
  * @since Mar 22, 2013
  */
-public class RegistryService {
+public  class RegistryService {
 
     private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
+
+    private static RegistryService instance = null;
+    protected RegistryService(){
+	//
+    }
+    public static RegistryService getIntance() {
+	if (instance == null)
+	    instance = new RegistryService();
+	return instance;
+    }
 
     /**
      * Get the current registry service
