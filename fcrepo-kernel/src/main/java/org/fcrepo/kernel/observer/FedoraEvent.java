@@ -81,7 +81,7 @@ public class FedoraEvent {
     }
 
     /**
-     * @return the property names of the underlying JCR property {@linkEvent}s
+     * @return the property names of the underlying JCR property {@link Event}s
     **/
     public Set<String> getProperties() {
         return eventProperties;
