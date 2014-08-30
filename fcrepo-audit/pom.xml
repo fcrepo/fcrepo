@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>4.0.0-beta-03-SNAPSHOT</version>
+    <version>4.0.0-beta-03</version>
   </parent>
 
   <artifactId>fcrepo-audit</artifactId>
