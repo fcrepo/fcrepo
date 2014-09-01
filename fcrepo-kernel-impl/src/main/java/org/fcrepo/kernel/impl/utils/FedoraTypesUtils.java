@@ -342,8 +342,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * Convenience method for transforming arrays into {@link Collection}s
      * through a mapping {@link Function}.
      *
-     * @param input A Collection<F>.
-     * @param f A Function<F,T>.
+     * @param input A {@literal Collection<F> }.
+     * @param f A {@literal Function<F,T> }.
      * @return An ImmutableSet copy of input after transformation by f
      */
     public static <F, T> Collection<T> map(final F[] input,

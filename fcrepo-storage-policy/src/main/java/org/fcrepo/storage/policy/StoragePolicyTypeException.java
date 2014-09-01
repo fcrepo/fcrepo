@@ -16,7 +16,7 @@
 package org.fcrepo.storage.policy;
 
 /**
- * Note: Mainly for reporting conversion errors & future use
+ * Note: Mainly for reporting conversion errors and future use
  * (where other exceptions are not adequate).
  *
  * @author awoods

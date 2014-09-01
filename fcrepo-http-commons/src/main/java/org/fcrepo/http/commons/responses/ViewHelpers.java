@@ -302,7 +302,7 @@ public class ViewHelpers {
     }
 
     /**
-     * Generate url -> local name breadcrumbs for a given node's tree
+     * Generate url to local name breadcrumbs for a given node's tree
      *
      * @param uriInfo
      * @param subject

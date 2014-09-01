@@ -366,7 +366,6 @@ public class FedoraNodes extends AbstractResource {
      * @param pathList
      * @return 201
      * @throws RepositoryException
-     * @throws org.fcrepo.kernel.exception.InvalidChecksumException
      * @throws IOException
      */
     @PATCH
@@ -446,7 +445,6 @@ public class FedoraNodes extends AbstractResource {
      * @param requestContentType
      * @param requestBodyStream
      * @return 204
-     * @throws Exception
      */
     @PUT
     @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES, JSON_LD})
@@ -525,7 +523,6 @@ public class FedoraNodes extends AbstractResource {
      *
      * @param pathList
      * @return 201
-     * @throws Exception
      */
     @POST
     @Timed
@@ -713,7 +710,6 @@ public class FedoraNodes extends AbstractResource {
      * @param uriInfo
      * @param file
      * @return response
-     * @throws Exception
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)

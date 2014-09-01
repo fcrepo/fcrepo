@@ -70,7 +70,7 @@ public class PropertyToTriple implements
      * This nightmare of Java signature verbosity is a curried transformation.
      * We want to go from an iterator of JCR {@link Property} to an iterator
      * of RDF {@link Triple}s. An annoyance: some properties may produce several
-     * triples (multi-valued properties). So we cannot find a simple Property ->
+     * triples (multi-valued properties). So we cannot find a simple Property to
      * Triple mapping. Instead, we wax clever and offer a function from any
      * specific property to a new function, one that takes multiple values (such
      * as occur in our multi-valued properties) to multiple triples. In other
