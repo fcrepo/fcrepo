@@ -791,7 +791,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                                 + func.getArg1() + "; " + func.getArg2());
             } else {
                 final String op;
-                String value = func.getArg2().getConstant().getString();
+                NodeValue value = func.getArg2().getConstant();
                 switch(funcName) {
                     case "eq":
                         op = JCR_OPERATOR_EQUAL_TO;
@@ -813,15 +813,15 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         break;
                     case "contains":
                         op = JCR_OPERATOR_LIKE;
-                        value = "%" + value + "%";
+                        value = NodeValue.makeString("%" + value.asUnquotedString() + "%");
                         break;
                     case "strstarts":
                         op = JCR_OPERATOR_LIKE;
-                        value = value + "%";
+                        value = NodeValue.makeString(value.asUnquotedString() + "%");
                         break;
                     case "strends":
                         op = JCR_OPERATOR_LIKE;
-                        value = "%" + value;
+                        value = NodeValue.makeString("%" + value.asUnquotedString());
                         break;
                     default:
                         throw new NotImplementedException(funcName);

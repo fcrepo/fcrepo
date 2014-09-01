@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration;
 
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.transform.sparql.JQLConverter;
@@ -270,7 +271,6 @@ public class JQLConverterIT {
 
     }
 
-
     @Test
     public void testComplexQuery() throws RepositoryException {
 
@@ -357,5 +357,16 @@ public class JQLConverterIT {
                         "[fedoraResource_part].[dc:title] IS NOT NULL)";
         final JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
         assertEquals(expectedQuery, testObj.getStatement());
+    }
+
+    @Test
+    public void testDateConstraintsQuery() throws RepositoryException {
+        final String sparql = "PREFIX  xsd: <http://www.w3.org/2001/XMLSchema#> SELECT ?s ?o WHERE {?s <" +
+                RdfLexicon.LAST_MODIFIED_DATE + "> ?o . FILTER (?o <= \"2013-01-01T00:30Z\"^^xsd:dateTime)}";
+        final JQLConverter converter = new JQLConverter(session, subjects, sparql);
+        final String expected = "SELECT [fedoraResource_s].[jcr:path] AS s, [fedoraResource_s].[jcr:lastModified] " +
+                "AS o FROM [fedora:resource] AS [fedoraResource_s] WHERE ([fedoraResource_s].[jcr:lastModified] IS " +
+                "NOT NULL AND [fedoraResource_s].[jcr:lastModified] <= '2013-01-01T00:30Z')";
+        assertEquals(expected, converter.getStatement());
     }
 }
