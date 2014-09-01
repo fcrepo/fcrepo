@@ -40,7 +40,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.github.jsonldjava.jena.JenaJSONLD;
 import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
@@ -68,11 +67,6 @@ import com.google.common.eventbus.EventBus;
  * @author ajs6f
  */
 public abstract class AbstractResource {
-
-
-    static {
-        JenaJSONLD.init();
-    }
 
     private static final Logger LOGGER = getLogger(AbstractResource.class);
 

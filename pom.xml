@@ -25,26 +25,29 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.copyrightYear>2014</project.copyrightYear>
     <!-- Dependency version properties -->
-    <activemq.version>5.9.1</activemq.version>
+    <activemq.version>5.10.0</activemq.version>
     <enunciate.version>1.27</enunciate.version>
+    <htmlunit.version>2.15</htmlunit.version>
     <httpcomponents.version>4.3.2</httpcomponents.version>
     <httpclient.version>4.3.3</httpclient.version>
     <infinispan.version>6.0.2.Final</infinispan.version>
+    <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
     <jersey.version>1.17.1</jersey.version>
-    <jgroups.version>3.4.0.Final</jgroups.version>
-    <logback.version>1.0.13</logback.version>
+    <jgroups.version>3.5.0.Final</jgroups.version>
+    <joda-time.version>2.4</joda-time.version>
+    <logback.version>1.1.2</logback.version>
     <modeshape.version>4.0.0.Beta1</modeshape.version>
     <metrics.version>3.0.2</metrics.version>
-    <sesame.version>2.7.7</sesame.version>
+    <sesame.version>2.7.13</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
     <spring.version>4.0.3.RELEASE</spring.version>
-    <grizzly.version>2.3.6</grizzly.version>
-    <jena.version>2.11.1</jena.version>
-    <jsonld.version>0.4.1</jsonld.version>
+    <grizzly.version>2.3.16</grizzly.version>
+    <jena.version>2.12.0</jena.version>
+    <jsonld.version>0.5.0</jsonld.version>
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <powermock.version>1.5.5</powermock.version>
-    <guava.version>17.0</guava.version>
+    <guava.version>18.0</guava.version>
     <!-- plugin versions -->
     <checkstyle.plugin.version>2.12.1</checkstyle.plugin.version>
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
@@ -120,12 +123,12 @@
       <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
-        <version>3.0.1</version>
+        <version>${javax.servlet-api.version}</version>
       </dependency>
       <dependency>
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
-        <version>2.3</version>
+        <version>${joda-time.version}</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
@@ -215,7 +218,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.8</version>
+        <version>1.8.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.jena</groupId>

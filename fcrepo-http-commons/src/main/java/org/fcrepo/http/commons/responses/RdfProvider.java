@@ -18,7 +18,7 @@ package org.fcrepo.http.commons.responses;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static org.apache.jena.riot.WebContent.contentTypeToLang;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
