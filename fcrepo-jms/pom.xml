@@ -14,7 +14,7 @@
     <dependency>
       <groupId>com.thoughtworks.xstream</groupId>
       <artifactId>xstream</artifactId>
-      <version>1.4.4</version>
+      <version>1.4.7</version>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -84,7 +84,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.2.4</version>
+      <version>2.3</version>
     </dependency>
     <!-- axiom-api is a dependency of abdera-parser. It is only explicitly declared 
       here because abdera-parser depends on an older version of jaxen (1.1.1) than axiom-api. 
