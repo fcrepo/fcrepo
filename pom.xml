@@ -27,6 +27,7 @@
     <!-- Dependency version properties -->
     <activemq.version>5.9.1</activemq.version>
     <enunciate.version>1.27</enunciate.version>
+    <htmlunit.version>2.15</htmlunit.version>
     <httpcomponents.version>4.3.2</httpcomponents.version>
     <httpclient.version>4.3.3</httpclient.version>
     <infinispan.version>6.0.2.Final</infinispan.version>
