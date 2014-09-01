@@ -18,7 +18,7 @@ package org.fcrepo.http.commons.test.util;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.net.URI.create;
 import static org.junit.Assert.assertNotNull;
-import static org.apache.jena.riot.WebContent.contentTypeToLang;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
