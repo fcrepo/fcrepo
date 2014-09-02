@@ -813,15 +813,15 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         break;
                     case "contains":
                         op = JCR_OPERATOR_LIKE;
-                        value = NodeValue.parse("%" + value + "%");
+                        value = NodeValue.makeString("%" + value.asUnquotedString() + "%");
                         break;
                     case "strstarts":
                         op = JCR_OPERATOR_LIKE;
-                        value = NodeValue.parse(value + "%");
+                        value = NodeValue.makeString(value.asUnquotedString() + "%");
                         break;
                     case "strends":
                         op = JCR_OPERATOR_LIKE;
-                        value = NodeValue.parse("%" + value);
+                        value = NodeValue.makeString("%" + value.asUnquotedString());
                         break;
                     default:
                         throw new NotImplementedException(funcName);
