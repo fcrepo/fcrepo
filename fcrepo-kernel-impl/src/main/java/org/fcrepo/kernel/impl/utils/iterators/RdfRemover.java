@@ -64,6 +64,12 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
         if (session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
             LOGGER.debug("Removing mixin: {} from node: {}.", mixinName,
                     subjectNode.getPath());
+
+            if (subjectNode.getPrimaryNodeType().isNodeType(mixinName)) {
+                LOGGER.debug("Unable to remove primary type from node");
+                return;
+            }
+
             try {
                 subjectNode.removeMixin(mixinName);
             } catch (final NoSuchNodeTypeException e) {
