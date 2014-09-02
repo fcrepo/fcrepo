@@ -17,6 +17,8 @@ package org.fcrepo.services;
 
 import java.lang.management.ManagementFactory;
 import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricFilter;
 
@@ -58,6 +60,9 @@ public class ReporterFactoryTest {
     @Mock
     private MetricFilter mockFilter;
 
+    @Mock
+    private Graphite mockGraphite;
+
     @Before
     public void setUp() throws RepositoryException {
       initMocks(this);
@@ -65,12 +70,26 @@ public class ReporterFactoryTest {
 
     @Test
     public void testGetJmxReporterAW() {
-      mockStatic(ManagementFactory.class);
-      final ManagementFactory mockManagementFactory = mock(ManagementFactory.class);
-      when(mockManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
 
-      final ReporterFactory factory = new ReporterFactory();
-      final JmxReporter reporter = factory.getJmxReporter("not-used");
-     Assert.assertNotNull(reporter);
-   }
+        mockStatic(ManagementFactory.class);
+        final ManagementFactory mockManagementFactory = mock(ManagementFactory.class);
+        when(mockManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
+
+        final ReporterFactory factory = new ReporterFactory();
+        final JmxReporter reporter = factory.getJmxReporter("not-used");
+        Assert.assertNotNull(reporter);
+    }
+
+    @Test
+        public void testGetGraphiteReporter() {
+
+        mockStatic(ManagementFactory.class);
+        final ManagementFactory mockManagementFactory = mock(ManagementFactory.class);
+        when(mockManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
+
+        final ReporterFactory factory = new ReporterFactory();
+        final Graphite graphite = mock(Graphite.class);
+        final GraphiteReporter reporter = factory.getGraphiteReporter("not-used",graphite);
+        Assert.assertNotNull(reporter);
+    }
 }
