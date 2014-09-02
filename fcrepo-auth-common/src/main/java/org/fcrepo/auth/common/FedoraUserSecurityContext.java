@@ -75,7 +75,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
     }
 
     /**
-     * {@inheritDoc SecurityContext#getUserName()}
+     * {@inheritDoc}
      *
      * @see SecurityContext#getUserName()
      */
@@ -85,7 +85,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
     }
 
     /**
-     * {@inheritDoc SecurityContext#hasRole(String)}
+     * {@inheritDoc}
      *
      * @see SecurityContext#hasRole(String)
      */

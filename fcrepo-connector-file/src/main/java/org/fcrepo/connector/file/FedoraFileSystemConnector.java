@@ -105,7 +105,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     /**
      * This method returns the object/document for the node with the federated arg 'id'.
-     * <p/>
+     *
      * Additionally, this method adds Fedora datastream and content properties to the result of the parent class
      * implementation.
      */

@@ -480,7 +480,7 @@ public class JcrRdfTools {
      *
      * @param node the JCR node we want a property for
      * @param predicate the predicate to map to a property name
-     * @param namespaceMapping prefix => uri namespace mapping
+     * @param namespaceMapping prefix to uri namespace mapping
      * @return the JCR property name
      * @throws RepositoryException
      */

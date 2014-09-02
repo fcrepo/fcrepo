@@ -40,7 +40,7 @@ public class MimeTypeStoragePolicy implements StoragePolicy {
     private final String hint;
 
     /**
-     * Register a mime type => binary storage hint mapping
+     * Register a mime type to binary storage hint mapping
      */
     public MimeTypeStoragePolicy(final String mimeType, final String hint) {
         this.mimeType = mimeType;

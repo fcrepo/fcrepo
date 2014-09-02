@@ -64,7 +64,7 @@ public class FedoraExport extends AbstractResource {
 
     /**
      * Export an object with the given format, e.g.: GET
-     * /path/to/object/fcr:export?format=jcr/xml -> the node as JCR/XML
+     * /path/to/object/fcr:export?format=jcr/xml : the node as JCR/XML
      *
      * @param pathList
      * @param format
