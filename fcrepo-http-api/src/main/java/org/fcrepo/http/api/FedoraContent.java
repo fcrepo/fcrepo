@@ -30,6 +30,7 @@ import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -47,8 +48,10 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 
+import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -67,6 +70,42 @@ public class FedoraContent extends ContentExposingResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraContent.class);
+
+
+    /**
+     * Outputs information about the supported HTTP methods, etc.
+     */
+    @OPTIONS
+    @Timed
+    public Response options(@PathParam("path") final List<PathSegment> pathList,
+                            @Context final HttpServletResponse servletResponse)
+        throws RepositoryException {
+
+
+        try {
+            final String path = toPath(pathList);
+            if (nodeService.exists(session, path)) {
+
+                final Datastream ds =
+                    datastreamService.getDatastream(session, path);
+
+                final HttpIdentifierTranslator subjects =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class,
+                        uriInfo);
+                addOptionsHttpHeaders(servletResponse);
+                addResourceOptionsHeaders(servletResponse, subjects, ds);
+            }
+            return status(OK).build();
+
+        } finally {
+            session.logout();
+        }
+    }
+
+
+    private void addOptionsHttpHeaders(final HttpServletResponse servletResponse) {
+        servletResponse.addHeader("Allow", "HEAD,GET,PUT,OPTIONS");
+    }
 
     /**
      * Modify an existing datastream's content
@@ -156,6 +195,9 @@ public class FedoraContent extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
+
+            addOptionsHttpHeaders(servletResponse);
+
             return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
                                                    subjects, session);
 

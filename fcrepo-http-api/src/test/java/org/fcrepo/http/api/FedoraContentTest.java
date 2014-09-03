@@ -22,9 +22,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -40,7 +38,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -212,11 +209,6 @@ public class FedoraContentTest {
         verify(mockSession, never()).save();
         final String actualContent =
             IOUtils.toString((InputStream) actual.getEntity());
-        final List<Object> linkHeaders = actual.getMetadata().get("Link");
-        assertTrue("Expected to find describedby Link header",
-            linkHeaders.contains("<http://localhost/fcrepo" + path + ">;rel=\"describedby\""));
-        assertTrue("Expected to find NonRDFSource Link header",
-            linkHeaders.contains("<" + NON_RDF_SOURCE + ">;rel=\"type\""));
         assertEquals("asdf", actualContent);
     }
 

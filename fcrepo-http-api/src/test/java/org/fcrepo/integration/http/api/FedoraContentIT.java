@@ -17,6 +17,8 @@ package org.fcrepo.integration.http.api;
 
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -24,12 +26,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
@@ -251,6 +261,21 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
                 response.getFirstHeader("ETag").getValue().replace("\"", ""));
 
+
+        final List<String> linkHeaders = Lists.transform(
+            ImmutableList.copyOf(response.getHeaders("Link")), new Function<Header, String>() {
+                @Override
+                public String apply(final Header header) {
+                    return header.getValue();
+                }
+            }
+        );
+
+        assertTrue("Expected to find describedby Link header",
+            linkHeaders.contains("<" + serverAddress + pid + "/ds1" + ">;rel=\"describedby\""));
+        assertTrue("Expected to find NonRDFSource Link header",
+            linkHeaders.contains("<" + NON_RDF_SOURCE + ">;rel=\"type\""));
+
         final ContentDisposition contentDisposition =
                 new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
 
@@ -386,5 +411,34 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals("Got the wrong content back!", "mar",
             EntityUtils.toString(response.getEntity()));
         assertEquals("bytes 0-2/20", response.getFirstHeader("Content-Range").getValue());
+    }
+
+    @Test
+    public void testOptions() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        createDatastream(pid, "ds1", "marbles for everyone");
+        final HttpOptions optionsRequest = new HttpOptions(serverAddress + pid + "/ds1/fcr:content");
+        final HttpResponse optionsResponse = client.execute(optionsRequest);
+        assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
+
+
+        final List<String> methods = headerValues(optionsResponse,"Allow");
+        assertTrue("Should allow HEAD", methods.contains(HttpHead.METHOD_NAME));
+        assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
+        assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
+        assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
+
+    }
+
+    private static List<String> headerValues( final HttpResponse response, final String headerName ) {
+        final List<String> values = new ArrayList<String>();
+        for ( final Header header : response.getHeaders(headerName) ) {
+            for ( final String elem : header.getValue().split(",") ) {
+                values.add( elem.trim() );
+            }
+        }
+        return values;
     }
 }
