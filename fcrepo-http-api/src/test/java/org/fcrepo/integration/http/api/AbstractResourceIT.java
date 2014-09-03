@@ -30,6 +30,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
 import com.hp.hpl.jena.update.GraphStore;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -126,7 +128,7 @@ public abstract class AbstractResourceIT {
     protected static HttpPost postDSMethod(final String pid, final String ds,
         final String content) throws UnsupportedEncodingException {
         final HttpPost post =
-                new HttpPost(serverAddress + pid + "/" + ds +
+                new HttpPost(getServerPath (pid) + "/"  + ds +
                         "/fcr:content");
         post.setEntity(new StringEntity(content));
         return post;
@@ -135,7 +137,7 @@ public abstract class AbstractResourceIT {
     protected static HttpPut putDSMethod(final String pid, final String ds,
         final String content) throws UnsupportedEncodingException {
         final HttpPut put =
-                new HttpPut(serverAddress + pid + "/" + ds +
+                new HttpPut(getServerPath (pid) + "/"  + ds +
                         "/fcr:content");
 
         put.setEntity(new StringEntity(content));
@@ -144,7 +146,7 @@ public abstract class AbstractResourceIT {
 
     protected static HttpGet getDSMethod(final String pid, final String ds) throws UnsupportedEncodingException {
             final HttpGet get =
-                    new HttpGet(serverAddress + pid + "/" + ds +
+                    new HttpGet(getServerPath (pid) + "/" + ds +
                             "/fcr:content");
             return get;
         }
@@ -287,7 +289,7 @@ public abstract class AbstractResourceIT {
 
     protected static void addMixin(final String pid, final String mixinUrl) throws IOException {
         final HttpPatch updateObjectGraphMethod =
-                new HttpPatch(serverAddress + pid);
+                new HttpPatch(getServerPath (pid));
         updateObjectGraphMethod.addHeader("Content-Type",
                 "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
@@ -322,5 +324,15 @@ public abstract class AbstractResourceIT {
     protected static String getRandomPropertyValue() {
         return UUID.randomUUID().toString();
     }
-
+    /**
+     * Gets a url with/without identifier for use in testing.
+     */
+    protected static String getServerPath (final String pid) {
+        if (StringUtils.isBlank(pid)) {
+            return serverAddress.endsWith("/") ?
+                    serverAddress.substring(0, serverAddress.length() - 1) : serverAddress;
+        } else {
+            return serverAddress + pid;
+        }
+    }
 }
