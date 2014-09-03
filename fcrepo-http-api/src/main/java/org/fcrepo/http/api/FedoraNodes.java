@@ -280,12 +280,12 @@ public class FedoraNodes extends AbstractResource {
             final List<String> appliedIncludes = new ArrayList<>();
 
             final boolean membership =
-                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
+                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
                      contains(includes, LDP_NAMESPACE + "PreferMembership"))
                     && !contains(omits, LDP_NAMESPACE + "PreferMembership");
 
             final boolean containment =
-                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
+                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
                      contains(includes, LDP_NAMESPACE + "PreferContainment"))
                     && !contains(omits, LDP_NAMESPACE + "PreferContainment");
 
