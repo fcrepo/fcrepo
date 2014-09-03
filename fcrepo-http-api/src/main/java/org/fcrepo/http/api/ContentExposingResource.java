@@ -40,6 +40,7 @@ import java.util.Date;
 
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 
 /**
@@ -145,6 +146,7 @@ public abstract class ContentExposingResource extends AbstractResource {
 
         return builder.type(ds.getMimeType())
                 .header("Link", "<" + subjects.getSubject(ds.getNode().getPath()) + ">;rel=\"describedby\"")
+                .header("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"")
                 .header("Link", "<" + NON_RDF_SOURCE + ">;rel=\"type\"")
                 .header("Accept-Ranges", "bytes")
                 .header("Content-Disposition", contentDisposition)
