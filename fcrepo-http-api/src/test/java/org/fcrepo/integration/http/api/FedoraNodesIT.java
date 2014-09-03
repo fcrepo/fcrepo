@@ -248,7 +248,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpPost method = postObjMethod("");
         method.addHeader("Slug", pid);
-        assertEquals(409, getStatus(method));
+        final HttpResponse response = client.execute(method);
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response!",
+            CREATED.getStatusCode(), status);
+        assertNotEquals("Expected server to mint unique identifier",
+            serverAddress + pid, response.getFirstHeader("Location").getValue());
     }
 
     @Test
