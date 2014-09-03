@@ -22,12 +22,12 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -40,7 +40,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -213,6 +212,26 @@ public class FedoraContentTest {
         final String actualContent =
             IOUtils.toString((InputStream) actual.getEntity());
         assertEquals("asdf", actualContent);
+    }
+
+    @Test
+    public void testDeleteContent() throws RepositoryException {
+        final String pid = "FedoraDatastreamsTest1";
+        final String dsId = "testDS";
+        final String path = "/" + pid + "/" + dsId;
+        final String dsContent = "asdf";
+
+        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
+        when(mockDatastreams.getDatastream(isA(Session.class), isA(String.class))).thenReturn(mockDs);
+        when(mockDs.getEtagValue()).thenReturn("");
+        final Request mockRequest = mock(Request.class);
+
+        final Response actual = testObj.deleteContent(createPathList(pid + "/" + dsId), mockRequest, mockResponse);
+
+        assertNotNull(actual);
+        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
+        verify(mockNodeService).deleteObject(mockSession, path);
+        verify(mockSession).save();
     }
 
 }

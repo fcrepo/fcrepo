@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.OPTIONS;
@@ -35,6 +36,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
@@ -104,7 +106,7 @@ public class FedoraContent extends ContentExposingResource {
 
 
     private void addOptionsHttpHeaders(final HttpServletResponse servletResponse) {
-        servletResponse.addHeader("Allow", "HEAD,GET,PUT,OPTIONS");
+        servletResponse.addHeader("Allow", "HEAD,GET,PUT,DELETE,OPTIONS");
     }
 
     /**
@@ -201,6 +203,31 @@ public class FedoraContent extends ContentExposingResource {
             return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
                                                    subjects, session);
 
+        } finally {
+            session.logout();
+        }
+    }
+
+    /**
+     * Delete the binary content and the parent object
+     */
+    @DELETE
+    @Timed
+    public Response deleteContent(@PathParam("path") final List<PathSegment> pathList,
+                                 @Context final Request request,
+                                 @Context final HttpServletResponse servletResponse) throws RepositoryException {
+
+        try {
+            final String path = toPath(pathList);
+
+            final Datastream ds = datastreamService.getDatastream(session, path);
+            evaluateRequestPreconditions(request, servletResponse, ds, session);
+
+            nodeService.deleteObject(session, path);
+            session.save();
+            return noContent().build();
+        } catch (final WebApplicationException ex) {
+            return (Response)ex.getResponse();
         } finally {
             session.logout();
         }

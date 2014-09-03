@@ -37,6 +37,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
@@ -429,8 +430,21 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
         assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
         assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
+        assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
 
     }
+
+    @Test
+    public void testDeleteDatastream() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        createDatastream(pid, "ds1", "marbles for everyone");
+        final String location = serverAddress + pid + "/ds1/fcr:content";
+        assertEquals(204, getStatus(new HttpDelete(location)));
+        assertEquals("Object wasn't really deleted!", 404, getStatus(new HttpGet(location)));
+    }
+
 
     private static List<String> headerValues( final HttpResponse response, final String headerName ) {
         final List<String> values = new ArrayList<String>();
