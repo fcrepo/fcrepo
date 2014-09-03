@@ -20,16 +20,12 @@ import java.io.PrintStream;
 import org.fcrepo.metrics.RegistryService;
 import org.junit.Test;
 
-import com.codahale.metrics.MetricRegistry;
-
 /**
  * <p>MetricsServiceTest class.</p>
  *
  * @author eddies
  */
 public class MetricsServiceTest {
-
-    MetricRegistry mockMetricRegistry;
 
     PrintStream mockPrintStream;
 

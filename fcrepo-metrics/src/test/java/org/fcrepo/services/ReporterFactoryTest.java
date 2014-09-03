@@ -40,15 +40,14 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import org.fcrepo.metrics.ReporterFactory;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({ManagementFactory.class})
-
 /**
- * <p>ReporterFactoryTest class.</p>
+ * ReporterFactoryTest class.
  *
  * @author ghill
  */
+@RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
+@PrepareForTest({ManagementFactory.class})
 public class ReporterFactoryTest {
 
     @Mock
@@ -89,7 +88,7 @@ public class ReporterFactoryTest {
 
         final ReporterFactory factory = new ReporterFactory();
         final Graphite graphite = mock(Graphite.class);
-        final GraphiteReporter reporter = factory.getGraphiteReporter("not-used",graphite);
+        final GraphiteReporter reporter = factory.getGraphiteReporter("some-prefix", graphite);
         Assert.assertNotNull(reporter);
     }
 }

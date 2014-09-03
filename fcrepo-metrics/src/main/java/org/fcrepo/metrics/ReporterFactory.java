@@ -40,7 +40,7 @@ public class ReporterFactory {
 
     private static final Logger LOGGER = getLogger(ReporterFactory.class);
 
-    private RegistryService registryService = new RegistryService();
+    private RegistryService registryService = RegistryService.getInstance();
 
     /**
      * Start a new GraphiteReporter, with reports every minute
