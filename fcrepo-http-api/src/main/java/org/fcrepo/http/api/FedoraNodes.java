@@ -332,6 +332,10 @@ public class FedoraNodes extends AbstractResource {
 
         addOptionsHttpHeaders(servletResponse);
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
+        addContainerHeader(servletResponse);
+    }
+
+    private void addContainerHeader(final HttpServletResponse servletResponse) {
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
     }
 
@@ -408,6 +412,7 @@ public class FedoraNodes extends AbstractResource {
             versionService.nodeUpdated(resource.getNode());
 
             addCacheControlHeaders(servletResponse, resource, session);
+            addContainerHeader(servletResponse);
 
             return noContent().build();
 
@@ -495,6 +500,8 @@ public class FedoraNodes extends AbstractResource {
 
             session.save();
             addCacheControlHeaders(servletResponse, resource, session);
+            addContainerHeader(servletResponse);
+
             versionService.nodeUpdated(resource.getNode());
 
             return response.build();
@@ -620,6 +627,8 @@ public class FedoraNodes extends AbstractResource {
             LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
             addCacheControlHeaders(servletResponse, result, session);
+
+            addContainerHeader(servletResponse);
 
             return response.build();
 
