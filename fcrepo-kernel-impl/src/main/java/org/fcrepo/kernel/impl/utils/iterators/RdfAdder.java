@@ -73,6 +73,11 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
             mgr.registerNodeType(type, false);
         }
 
+        if (subjectNode.isNodeType(mixinName)) {
+            LOGGER.trace("Subject {} is already a {}; skipping", subjectNode, mixinName);
+            return;
+        }
+
         if (subjectNode.canAddMixin(mixinName)) {
             LOGGER.debug("Adding mixin: {} to node: {}.", mixinName, subjectNode.getPath());
             subjectNode.addMixin(mixinName);

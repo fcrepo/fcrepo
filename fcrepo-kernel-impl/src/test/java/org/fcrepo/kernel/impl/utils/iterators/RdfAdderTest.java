@@ -27,6 +27,7 @@ import static javax.jcr.PropertyType.UNDEFINED;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -125,6 +126,16 @@ public class RdfAdderTest {
         testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), mockNode);
         verify(mockNode).addMixin(anyString());
+    }
+
+    @Test
+    public void testAddingModelWithPrimaryType() throws Exception {
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        when(mockNode.isNodeType(mixinShortName)).thenReturn(true);
+        testAdder.operateOnMixin(createResource(mixinLongName), mockNode);
+
+
+        verify(mockNode, never()).addMixin(mixinShortName);
     }
 
     @Test

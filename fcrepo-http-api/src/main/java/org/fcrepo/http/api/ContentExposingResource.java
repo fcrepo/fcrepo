@@ -40,6 +40,7 @@ import java.util.Date;
 
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -142,12 +143,12 @@ public abstract class ContentExposingResource extends AbstractResource {
                 .size(ds.getContentSize())
                 .build();
 
-        return builder.type(ds.getMimeType()).header(
-                "Link",
-                "<" + subjects.getSubject(ds.getNode().getPath()) +
-                        ">;rel=\"describedby\"").header("Accept-Ranges",
-                "bytes").cacheControl(cc)
+        return builder.type(ds.getMimeType())
+                .header("Link", "<" + subjects.getSubject(ds.getNode().getPath()) + ">;rel=\"describedby\"")
+                .header("Link", "<" + NON_RDF_SOURCE + ">;rel=\"type\"")
+                .header("Accept-Ranges", "bytes")
                 .header("Content-Disposition", contentDisposition)
+                .cacheControl(cc)
                 .build();
     }
 

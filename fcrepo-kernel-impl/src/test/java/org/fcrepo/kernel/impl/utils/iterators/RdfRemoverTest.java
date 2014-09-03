@@ -100,6 +100,20 @@ public class RdfRemoverTest {
     }
 
     @Test
+    public void testRemovingPrimaryType() throws Exception {
+
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.isNodeType(mixinShortName)).thenReturn(true);
+
+        testRemover =
+            new RdfRemover(mockGraphSubjects, mockSession, testStream);
+        testRemover.operateOnMixin(mixinStmnt.getObject().asResource(),
+            mockNode);
+
+        verify(mockNode, never()).removeMixin(mixinShortName);
+    }
+
+    @Test
     public void testRemovingNonExistentMixin() throws Exception {
         doThrow(new NoSuchNodeTypeException("Expected.")).when(mockNode)
                 .removeMixin(mixinShortName);

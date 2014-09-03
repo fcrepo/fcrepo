@@ -393,7 +393,7 @@ public class FedoraNodesTest {
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
         final Prefer prefer = new Prefer("return=representation;"
-                                            + "include=\"http://www.w3.org/ns/ldp#PreferEmptyContainer\"");
+                                            + "include=\"http://www.w3.org/ns/ldp#PreferMinimalContainer\"");
         final RdfStream rdfStream =
             testObj.describe(createPathList(path), 0, -1, prefer, mockRequest, mockResponse, mockUriInfo);
         assertEquals("Got wrong RDF!", mockRdfStream.concat(mockRdfStream2).concat(mockRdfStream3),

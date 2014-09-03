@@ -62,7 +62,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.jcr.ItemExistsException;
@@ -117,7 +116,6 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.openrdf.util.iterators.Iterators;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -277,15 +275,13 @@ public class FedoraNodes extends AbstractResource {
                 }
             }
 
-            final List<String> appliedIncludes = new ArrayList<>();
-
             final boolean membership =
-                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
+                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
                      contains(includes, LDP_NAMESPACE + "PreferMembership"))
                     && !contains(omits, LDP_NAMESPACE + "PreferMembership");
 
             final boolean containment =
-                (!contains(includes, LDP_NAMESPACE + "PreferEmptyContainer") ||
+                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
                      contains(includes, LDP_NAMESPACE + "PreferContainment"))
                     && !contains(omits, LDP_NAMESPACE + "PreferContainment");
 
@@ -295,24 +291,13 @@ public class FedoraNodes extends AbstractResource {
             final HierarchyRdfContextOptions hierarchyRdfContextOptions
                 = new HierarchyRdfContextOptions(limit, offset, membership, containment);
 
-            if (hierarchyRdfContextOptions.membershipEnabled()) {
-                appliedIncludes.add(LDP_NAMESPACE + "PreferMembership");
-            }
-
-            if (hierarchyRdfContextOptions.containmentEnabled()) {
-                appliedIncludes.add(LDP_NAMESPACE + "PreferContainment");
-            }
-
             if (references) {
                 rdfStream.concat(resource.getReferencesTriples(subjects));
-                appliedIncludes.add(INBOUND_REFERENCES.toString());
             }
 
             rdfStream.concat(resource.getHierarchyTriples(subjects, hierarchyRdfContextOptions));
 
-            final String preferences = "return=representation; include=\""
-                                           + Iterators.toString(appliedIncludes.iterator(), " ") + "\"";
-            servletResponse.addHeader("Preference-Applied", preferences);
+            servletResponse.addHeader("Preference-Applied", "return=representation");
 
         } else {
             servletResponse.addHeader("Preference-Applied", "return=minimal");
