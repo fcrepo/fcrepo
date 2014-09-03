@@ -30,7 +30,6 @@ import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -50,8 +49,6 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.status;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -70,86 +67,6 @@ public class FedoraContent extends ContentExposingResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraContent.class);
-
-    /**
-     * Create an anonymous DS with a newly minted name and content from request
-     * body
-     *
-     * @param pathList
-     * @throws RepositoryException
-     */
-    @POST
-    @Timed
-    public Response create(@PathParam("path")
-            final List<PathSegment> pathList,
-            @HeaderParam("Slug") final String slug,
-            @HeaderParam("Content-Disposition") final String contentDisposition,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            @ContentLocation final InputStream requestBodyStream,
-            @Context final HttpServletResponse servletResponse)
-        throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
-        final MediaType contentType = getSimpleContentType(requestContentType);
-
-
-        final String newDatastreamPath;
-        final String path = toPath(pathList);
-
-        if (nodeService.exists(session, path)) {
-            if ( nodeService.getObject(session, path).hasContent() ) {
-                return status(SC_CONFLICT)
-                           .entity(path + " is an existing resource!").build();
-            }
-
-            final String pid;
-
-            if (slug != null) {
-                pid = slug;
-            }  else {
-                pid = pidMinter.mintPid();
-            }
-
-            newDatastreamPath = path + "/" + pid;
-        } else {
-            newDatastreamPath = path;
-        }
-
-
-        LOGGER.trace("Attempting to ingest fcr:content with path: {}", newDatastreamPath);
-
-        try {
-
-            if (nodeService.exists(session, newDatastreamPath)) {
-                return status(SC_CONFLICT)
-                           .entity(path + " is an existing resource!").build();
-            }
-
-            final URI checksumURI = checksumURI(checksum);
-            final String originalFileName = originalFileName(contentDisposition);
-
-            final Datastream datastream =
-                    datastreamService.createDatastream(session, newDatastreamPath,
-                            contentType.toString(), originalFileName, requestBodyStream,
-                            checksumURI);
-
-            final HttpIdentifierTranslator subjects =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class,
-                            uriInfo);
-
-            session.save();
-            versionService.nodeUpdated(datastream.getNode());
-
-            final ResponseBuilder builder = created(new URI(subjects.getSubject(
-                    datastream.getContentNode().getPath()).getURI()));
-
-            addCacheControlHeaders(servletResponse, datastream, session);
-
-            return builder.build();
-
-        } finally {
-            session.logout();
-        }
-    }
 
     /**
      * Modify an existing datastream's content

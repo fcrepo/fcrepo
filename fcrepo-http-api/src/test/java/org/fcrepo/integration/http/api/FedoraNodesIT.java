@@ -360,7 +360,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        final HttpPut createDSMethod = putDSMethod(pid, "ds1", "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/jcr:content");
@@ -373,7 +373,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        final HttpPut createDSMethod = putDSMethod(pid, "ds1", "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
         final HttpPut method_test_put = new HttpPut(serverAddress + pid + "/ds1/jcr:content");

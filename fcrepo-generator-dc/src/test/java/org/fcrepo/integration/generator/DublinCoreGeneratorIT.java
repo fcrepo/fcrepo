@@ -75,17 +75,11 @@ public class DublinCoreGeneratorIT extends AbstractResourceIT {
         final String pid = randomUUID().toString();
 
         createObject(pid);
-
-        HttpResponse response = client.execute(postDSMethod(pid, "DC", "marbles for everyone"));
-        final int status = response.getStatusLine().getStatusCode();
-        if (status != 201) {
-            log.error(EntityUtils.toString(response.getEntity()));
-        }
-        assertEquals(201, status);
+        createDatastream(pid, "DC", "marbles for everyone");
 
         final HttpGet getWorstCaseOaiMethod = new HttpGet(serverOAIAddress + pid + "/oai:dc");
         getWorstCaseOaiMethod.setHeader("Accept", TEXT_XML);
-        response = client.execute(getWorstCaseOaiMethod);
+        final HttpResponse response = client.execute(getWorstCaseOaiMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
         assertTrue("Didn't find our datastream!", compile("marbles for everyone", DOTALL).matcher(content).find());
