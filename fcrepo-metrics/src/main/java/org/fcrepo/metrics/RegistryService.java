@@ -31,27 +31,32 @@ import com.codahale.metrics.MetricRegistry;
  * @author cbeer
  * @since Mar 22, 2013
  */
-
-
 public class RegistryService {
 
     private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
 
-    private static RegistryService instance = null;
-    protected RegistryService() {
-      //
+    private static volatile RegistryService instance = null;
+
+    private RegistryService() {
+      // New instances should come from the singleton
     }
 
     /**
      * Create the instance
-     *
+     * Inspired by: http://en.wikipedia.org/wiki/Double-checked_locking
      */
-
     public static RegistryService getInstance() {
-      if (instance == null) {
-        instance = new RegistryService();
-      }
-      return instance;
+        RegistryService local = instance;
+        if (null == local) {
+
+            synchronized (METRICS) {
+                local = instance;
+                if (null == local) {
+                    instance = local = new RegistryService();
+                }
+            }
+        }
+        return local;
     }
 
     /**

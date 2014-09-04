@@ -58,9 +58,8 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
 
     private static final Logger LOGGER = getLogger(DatastreamImpl.class);
 
-    static final RegistryService registryService = RegistryService.getInstance();
     static final Histogram contentSizeHistogram =
-            registryService.getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
+            RegistryService.getInstance().getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
 
     /**
      * The JCR node for this datastream

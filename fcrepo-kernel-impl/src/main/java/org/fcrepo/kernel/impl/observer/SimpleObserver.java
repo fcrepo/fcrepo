@@ -62,8 +62,8 @@ public class SimpleObserver implements EventListener {
     /**
      * A simple counter of events that pass through this observer
      */
-    static final RegistryService registryService = RegistryService.getInstance();
-    static final Counter EVENT_COUNTER = registryService.getMetrics().counter(name(SimpleObserver.class, "onEvent"));
+    static final Counter EVENT_COUNTER =
+            RegistryService.getInstance().getMetrics().counter(name(SimpleObserver.class, "onEvent"));
 
     static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED + PROPERTY_ADDED + PROPERTY_CHANGED
             + PROPERTY_REMOVED;

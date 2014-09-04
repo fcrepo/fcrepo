@@ -51,8 +51,7 @@ public class NodeRemovalEventObserver implements EventListener {
     /**
      * A simple counter of events that pass through this observer
      */
-    static final RegistryService registryService = RegistryService.getInstance();
-    static final Counter EVENT_COUNTER = registryService.getMetrics().counter(
+    static final Counter EVENT_COUNTER = RegistryService.getInstance().getMetrics().counter(
             name(
             NodeRemovalEventObserver.class, "onEvent"));
 

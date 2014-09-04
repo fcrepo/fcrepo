@@ -32,15 +32,13 @@ import com.codahale.metrics.servlets.AdminServletContextListener;
 @WebListener
 public class MetricsContextListener extends AdminServletContextListener {
 
-    private RegistryService registryService = new RegistryService();
-
     /**
      * Get the metrics registry for fcrepo
      * @return the metrics registry
      */
     @Override
     protected MetricRegistry getMetricRegistry() {
-        return registryService.getMetrics();
+        return RegistryService.getInstance().getMetrics();
     }
 
     /**

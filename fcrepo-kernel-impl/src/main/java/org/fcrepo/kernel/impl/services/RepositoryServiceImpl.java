@@ -74,8 +74,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
 
     private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);
 
-    static final RegistryService registryService = RegistryService.getInstance();
-    private final Timer objectSizeCalculationTimer = registryService.getMetrics().timer(
+    private final Timer objectSizeCalculationTimer = RegistryService.getInstance().getMetrics().timer(
             name(RepositoryService.class, "objectSizeCalculation"));
 
     /**

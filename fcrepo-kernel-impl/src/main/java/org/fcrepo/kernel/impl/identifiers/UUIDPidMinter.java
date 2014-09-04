@@ -30,8 +30,7 @@ import com.codahale.metrics.Timer;
  */
 public class UUIDPidMinter extends BasePidMinter {
 
-    static final RegistryService registryService = RegistryService.getInstance();
-    static final Timer timer = registryService.getMetrics().timer(
+    static final Timer timer = RegistryService.getInstance().getMetrics().timer(
             name(UUIDPidMinter.class, "mint"));
 
     /**
