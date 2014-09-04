@@ -332,6 +332,10 @@ public class FedoraNodes extends AbstractResource {
 
         addOptionsHttpHeaders(servletResponse);
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
+        addContainerHeader(servletResponse);
+    }
+
+    private void addContainerHeader(final HttpServletResponse servletResponse) {
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
     }
 
@@ -408,6 +412,7 @@ public class FedoraNodes extends AbstractResource {
             versionService.nodeUpdated(resource.getNode());
 
             addCacheControlHeaders(servletResponse, resource, session);
+            addContainerHeader(servletResponse);
 
             return noContent().build();
 
@@ -495,6 +500,8 @@ public class FedoraNodes extends AbstractResource {
 
             session.save();
             addCacheControlHeaders(servletResponse, resource, session);
+            addContainerHeader(servletResponse);
+
             versionService.nodeUpdated(resource.getNode());
 
             return response.build();
@@ -531,7 +538,6 @@ public class FedoraNodes extends AbstractResource {
         throwIfPathIncludesJcr(pathList, "POST");
         init(uriInfo);
 
-        String pid;
         final String newObjectPath;
         final String path = toPath(pathList);
 
@@ -544,20 +550,7 @@ public class FedoraNodes extends AbstractResource {
 
         assertPathExists(path);
 
-        if (slug != null && !slug.isEmpty()) {
-            pid = slug;
-        } else {
-            pid = pidMinter.mintPid();
-        }
-        // reverse translate the proffered or created identifier
-        LOGGER.trace("Using external identifier {} to create new resource.", pid);
-        LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
-                                                                                          + pid);
-        pid = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
-        // remove leading slash left over from translation
-        pid = pid.substring(1, pid.length());
-        LOGGER.trace("Using internal identifier {} to create new resource.", pid);
-        newObjectPath = path + "/" + pid;
+        newObjectPath = mintObjectPath(idTranslator, uriInfo, path, slug);
 
         assertPathMissing(newObjectPath);
 
@@ -617,7 +610,11 @@ public class FedoraNodes extends AbstractResource {
                             newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);
                     final URI contentLocation =
                         new URI(idTranslator.getSubject(((Datastream) result).getContentNode().getPath()).getURI());
-                    response = created(contentLocation).entity(contentLocation.toString());
+                    response = created(contentLocation)
+                                .entity(contentLocation.toString())
+                                .header("Link",
+                                    "<" + idTranslator.getSubject(result.getNode().getPath())
+                                        + ">;rel=\"describedby\"");
 
                 } else {
                     response = created(location).entity(location.toString());
@@ -631,10 +628,44 @@ public class FedoraNodes extends AbstractResource {
 
             addCacheControlHeaders(servletResponse, result, session);
 
+            addContainerHeader(servletResponse);
+
             return response.build();
 
         } finally {
             session.logout();
+        }
+    }
+
+    private String mintObjectPath(final HttpIdentifierTranslator idTranslator,
+                                  final UriInfo uriInfo,
+                                  final String path,
+                                  final String slug) throws RepositoryException {
+
+        final String newObjectPath;
+
+        String pid;
+        if (slug != null && !slug.isEmpty()) {
+            pid = slug;
+        } else {
+            pid = pidMinter.mintPid();
+        }
+
+        // reverse translate the proffered or created identifier
+        LOGGER.trace("Using external identifier {} to create new resource.", pid);
+        LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
+                                                                                          + pid);
+        pid = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
+        // remove leading slash left over from translation
+        pid = pid.substring(1, pid.length());
+        LOGGER.trace("Using internal identifier {} to create new resource.", pid);
+        newObjectPath = path + "/" + pid;
+
+        if (nodeService.exists(session, newObjectPath)) {
+            // try again.
+            return mintObjectPath(idTranslator, uriInfo, path, null);
+        } else {
+            return newObjectPath;
         }
     }
 

@@ -248,7 +248,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpPost method = postObjMethod("");
         method.addHeader("Slug", pid);
-        assertEquals(409, getStatus(method));
+        final HttpResponse response = client.execute(method);
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response!",
+            CREATED.getStatusCode(), status);
+        assertNotEquals("Expected server to mint unique identifier",
+            serverAddress + pid, response.getFirstHeader("Location").getValue());
     }
 
     @Test
@@ -355,7 +360,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        final HttpPut createDSMethod = putDSMethod(pid, "ds1", "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/jcr:content");
@@ -368,7 +373,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
+        final HttpPut createDSMethod = putDSMethod(pid, "ds1", "marbles for everyone");
         assertEquals(201, getStatus(createDSMethod));
 
         final HttpPut method_test_put = new HttpPut(serverAddress + pid + "/ds1/jcr:content");

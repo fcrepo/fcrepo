@@ -37,7 +37,7 @@ function addChild()
         }
 
         if (id == "") {
-            xhr.open( "POST", newURI + "/fcr:content" );
+            xhr.open( "POST", newURI );
         } else {
             xhr.open( "PUT", newURI + "/fcr:content" );
         }

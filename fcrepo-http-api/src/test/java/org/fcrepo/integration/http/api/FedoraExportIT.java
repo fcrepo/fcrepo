@@ -42,8 +42,9 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
@@ -83,8 +84,9 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
+
 
         // export it
         logger.debug("Attempting to export: " + objName);
@@ -119,8 +121,8 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
@@ -141,8 +143,8 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
@@ -161,8 +163,9 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
         final String binaryValue = "stuff";
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", binaryValue));
+        createObject(objName);
+        createDatastream(objName, "testDS", binaryValue);
+
 
         // export it
         logger.debug("Attempting to export: " + objName);
@@ -194,8 +197,8 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String childName = "testDS";
         final String binaryValue = "stuff";
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, childName, binaryValue));
+        createObject(objName);
+        createDatastream(objName, childName, binaryValue);
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =

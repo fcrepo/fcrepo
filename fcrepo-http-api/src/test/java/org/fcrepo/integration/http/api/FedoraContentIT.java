@@ -17,6 +17,8 @@ package org.fcrepo.integration.http.api;
 
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -24,13 +26,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
@@ -78,10 +88,9 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost httpPost = postDSMethod(pid, "zxc", "");
-        httpPost.addHeader("Content-Location", serverAddress);
-        final HttpResponse response =
-            client.execute(httpPost);
+        final HttpPut request = putDSMethod(pid, "zxc", "");
+        request.addHeader("Content-Location", serverAddress);
+        final HttpResponse response = client.execute(request);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
@@ -105,12 +114,12 @@ public class FedoraContentIT extends AbstractResourceIT {
     @Test
     public void testAddDeepDatastream() throws Exception {
         final String uuid = getRandomUniquePid();
-        final HttpPost method = postDSMethod(uuid + "/does/not/exist/yet", "zxc", "foo");
+        final HttpPut method = putDSMethod(uuid + "/does/not/exist/yet", "zxc", "foo");
         final HttpResponse response = client.execute(method);
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals("Got wrong URI in Location header for datastream creation!", serverAddress + uuid +
-                "/does/not/exist/yet/zxc/fcr:content", location);
+            "/does/not/exist/yet/zxc/fcr:content", location);
     }
 
     @Test
@@ -146,7 +155,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         put.setEntity(new StringEntity(content));
         final HttpResponse response = client.execute(put);
         assertEquals("Expected 400 response code when PUTing content on an object (as opposed to a datastream).",
-                400, response.getStatusLine().getStatusCode());
+            400, response.getStatusLine().getStatusCode());
     }
 
     @Test
@@ -162,7 +171,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpResponse response = execute(put);
 
         assertFalse("Found Last-Modified header within transaction!",
-                response.containsHeader("Last-Modified"));
+            response.containsHeader("Last-Modified"));
         assertFalse("Found ETag header within transaction!",
                 response.containsHeader("ETag"));
 
@@ -212,9 +221,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         createObject(pid);
 
-        final HttpPost createDataStreamMethod = postDSMethod(pid, "ds1", "foo");
-        assertEquals("Couldn't create a datastream!", 201,
-                getStatus(createDataStreamMethod));
+        createDatastream(pid, "ds1", "foo");
 
         final HttpPut mutateDataStreamMethod = putDSMethod(pid, "ds1", "bar");
         mutateDataStreamMethod.setEntity(new StringEntity(faulkner1, "UTF-8"));
@@ -233,16 +240,16 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet retrieveMutatedDataStreamMethod = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         assertTrue("Datastream didn't accept mutation!", faulkner1
-                .equals(EntityUtils.toString(client.execute(
-                        retrieveMutatedDataStreamMethod).getEntity())));
+            .equals(EntityUtils.toString(client.execute(
+                retrieveMutatedDataStreamMethod).getEntity())));
     }
 
     @Test
     public void testGetDatastreamContent() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         assertEquals(200, getStatus(method_test_get));
@@ -251,9 +258,24 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         logger.debug("Returned from HTTP GET, now checking content...");
         assertTrue("Got the wrong content back!", "marbles for everyone"
-                .equals(EntityUtils.toString(response.getEntity())));
+            .equals(EntityUtils.toString(response.getEntity())));
         assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
                 response.getFirstHeader("ETag").getValue().replace("\"", ""));
+
+
+        final List<String> linkHeaders = Lists.transform(
+            ImmutableList.copyOf(response.getHeaders("Link")), new Function<Header, String>() {
+                @Override
+                public String apply(final Header header) {
+                    return header.getValue();
+                }
+            }
+        );
+
+        assertTrue("Expected to find describedby Link header",
+            linkHeaders.contains("<" + serverAddress + pid + "/ds1" + ">;rel=\"describedby\""));
+        assertTrue("Expected to find NonRDFSource Link header",
+            linkHeaders.contains("<" + NON_RDF_SOURCE + ">;rel=\"type\""));
 
         final ContentDisposition contentDisposition =
                 new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
@@ -270,8 +292,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         createObject(pid);
 
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final SimpleDateFormat format =
                 new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
@@ -281,7 +302,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         method_test_get.setHeader("If-None-Match",
                 "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
         method_test_get.setHeader("If-Modified-Since", format
-                .format(new Date()));
+            .format(new Date()));
 
         assertEquals(304, getStatus(method_test_get));
 
@@ -292,8 +313,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final HttpPut method_test_put = new HttpPut(serverAddress + pid + "/ds1/fcr:content");
         method_test_put.setHeader("If-Match",
@@ -311,8 +331,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=1-3");
@@ -330,8 +349,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         ContentExposingResource.setMaxBufferSize(10);
         final String pid = getRandomUniquePid();
         createObject(pid);
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "large marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "large marbles for everyone");
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=1-21");
@@ -350,8 +368,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=50-100");
@@ -367,9 +384,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
-
+        createDatastream(pid, "ds1", "marbles for everyone");
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=2-");
 
@@ -386,8 +401,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=-2");
@@ -396,35 +410,49 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(206, response.getStatusLine().getStatusCode());
         logger.debug("Returned from HTTP GET, now checking content...");
         assertEquals("Got the wrong content back!", "mar",
-                EntityUtils.toString(response.getEntity()));
+            EntityUtils.toString(response.getEntity()));
         assertEquals("bytes 0-2/20", response.getFirstHeader("Content-Range").getValue());
     }
 
     @Test
-    public void testPostToExistingDS() throws Exception {
+    public void testOptions() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
-        final HttpPost postDSMethod = postDSMethod(pid, "ds1", "foo");
-        assertEquals("Posting should work!", 201, getStatus(postDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
+        final HttpOptions optionsRequest = new HttpOptions(serverAddress + pid + "/ds1/fcr:content");
+        final HttpResponse optionsResponse = client.execute(optionsRequest);
+        assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
 
-        final HttpPost repostDSMethod = postDSMethod(pid, "ds1", "bar");
-        assertEquals("Reposting should error!", 409, getStatus(repostDSMethod));
+
+        final List<String> methods = headerValues(optionsResponse,"Allow");
+        assertTrue("Should allow HEAD", methods.contains(HttpHead.METHOD_NAME));
+        assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
+        assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
+        assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
+        assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
+
     }
 
     @Test
-    public void testPostToExistingDSIndirect() throws Exception {
+    public void testDeleteDatastream() throws Exception {
         final String pid = getRandomUniquePid();
-        final HttpPost postDSMethod = new HttpPost(serverAddress);
-        postDSMethod.addHeader("Slug", pid);
-        postDSMethod.setEntity(new StringEntity("foo", "UTF-8"));
-        postDSMethod.addHeader("Content-Type", "application/foo");
-        assertEquals(201, getStatus(postDSMethod));
+        createObject(pid);
 
-        final HttpPost repostDSMethod = new HttpPost(serverAddress + pid);
-        repostDSMethod.setEntity(new StringEntity("bar", "UTF-8"));
-        repostDSMethod.addHeader("Content-Type", "application/foo");
-        assertEquals(409, getStatus(repostDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
+        final String location = serverAddress + pid + "/ds1/fcr:content";
+        assertEquals(204, getStatus(new HttpDelete(location)));
+        assertEquals("Object wasn't really deleted!", 404, getStatus(new HttpGet(location)));
     }
 
+
+    private static List<String> headerValues( final HttpResponse response, final String headerName ) {
+        final List<String> values = new ArrayList<String>();
+        for ( final Header header : response.getHeaders(headerName) ) {
+            for ( final String elem : header.getValue().split(",") ) {
+                values.add( elem.trim() );
+            }
+        }
+        return values;
+    }
 }
