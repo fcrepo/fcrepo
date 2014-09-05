@@ -41,6 +41,8 @@ import com.hp.hpl.jena.rdf.listeners.StatementListener;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 import java.util.HashMap;
@@ -138,24 +140,26 @@ public class JcrPropertyStatementListener extends StatementListener {
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
             // the node's mixins. If it isn't, just treat it normally.
-            if (s.getPredicate().equals(RDF.type)
-                    && s.getObject().isResource()) {
-                final Resource mixinResource = s.getObject().asResource();
+            final Property property = s.getPredicate();
+            final RDFNode RDFnode = s.getObject();
+            if (property.equals(RDF.type) && RDFnode.isResource()) {
+                final Resource mixinResource = RDFnode.asResource();
+                final String nameSpace = mixinResource.getNameSpace();
 
-                if (mixinResource.getNameSpace().equals(LDP_NAMESPACE)) {
+                if (nameSpace.equals(LDP_NAMESPACE)) {
                     return;
                 }
 
                 try {
-                    final String namespacePrefix = session.getNamespacePrefix(mixinResource.getNameSpace());
+                    final String namespacePrefix = session.getNamespacePrefix(nameSpace);
                     final String mixinName = namespacePrefix + ":" + mixinResource.getLocalName();
 
-                    if (FedoraTypesUtils.getNodeTypeManager(subjectNode).hasNodeType(mixinName)) {
+                    if (FedoraTypesUtils.nodeTypeMgrHasType(subjectNode,mixinName)) {
 
                         if (subjectNode.canAddMixin(mixinName)) {
                             subjectNode.addMixin(mixinName);
                         } else {
-                            problems.add(subject, COULD_NOT_STORE_PROPERTY, s.getPredicate().getURI());
+                            problems.add(subject, COULD_NOT_STORE_PROPERTY, property.getURI());
                         }
 
                         return;
@@ -169,18 +173,13 @@ public class JcrPropertyStatementListener extends StatementListener {
             // extract the JCR propertyName from the predicate
             final String propertyName =
                     jcrRdfTools.getPropertyNameFromPredicate(subjectNode,
-                                                             s.getPredicate(),
-                                                             s.getModel()
-                                                                     .getNsPrefixMap());
+                                                             property,
+                                                             s.getModel().getNsPrefixMap());
 
-            if (validateModificationsForPropertyName(
-                    subject, subjectNode, s.getPredicate())) {
-                final Value v =
-                    jcrRdfTools.createValue(subjectNode, s.getObject(),
-                            propertiesTools.getPropertyType(subjectNode,
-                                    propertyName));
-                propertiesTools.appendOrReplaceNodeProperty(subjects,
-                        subjectNode, propertyName, v);
+            if (validateModificationsForPropertyName(subject, subjectNode, property)) {
+                final Value v = createValue(subjectNode, RDFnode, propertyName);
+
+                propertiesTools.appendOrReplaceNodeProperty(subjects, subjectNode, propertyName, v);
             }
         } catch (final RepositoryException e) {
             throw propagate(e);
@@ -210,15 +209,18 @@ public class JcrPropertyStatementListener extends StatementListener {
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
             // the node's mixins. If it isn't, just treat it normally.
-            if (s.getPredicate().equals(RDF.type)
-                    && s.getObject().isResource()) {
-                final Resource mixinResource = s.getObject().asResource();
+            final Property property = s.getPredicate();
+            final RDFNode RDFnode = s.getObject();
+
+            if (property.equals(RDF.type) && RDFnode.isResource()) {
+                final Resource mixinResource = RDFnode.asResource();
+                final String nameSpace = mixinResource.getNameSpace();
                 final String errorPrefix = "Error removing node type";
                 try {
-                    final String namespacePrefix = session.getNamespacePrefix(mixinResource.getNameSpace());
+                    final String namespacePrefix = session.getNamespacePrefix(nameSpace);
                     final String mixinName = namespacePrefix + ":" + mixinResource.getLocalName();
 
-                    if (FedoraTypesUtils.getNodeTypeManager(subjectNode).hasNodeType(mixinName)) {
+                    if (FedoraTypesUtils.nodeTypeMgrHasType(subjectNode,mixinName)) {
                         try {
                             subjectNode.removeMixin(mixinName);
                         } catch (final RepositoryException e) {
@@ -226,15 +228,16 @@ public class JcrPropertyStatementListener extends StatementListener {
                                     "problem with removing <{}> <{}> <{}>: {}",
                                     subject.getURI(),
                                     RdfLexicon.COULD_NOT_STORE_PROPERTY,
-                                    s.getPredicate().getURI(),
+                                    property.getURI(),
                                     e);
                             String errorMessage = e.getMessage();
+                            final String className = e.getClass().getName();
                             if (StringUtils.isNotBlank(errorMessage)) {
                                 errorMessage = errorPrefix + " '" + mixinName +
-                                        "': \n" + e.getClass().getName() + ": " + errorMessage;
+                                        "': \n" + className + ": " + errorMessage;
                             } else {
                                 errorMessage = errorPrefix + " '" + mixinName +
-                                        "': \n" + e.getClass().getName();
+                                        "': \n" + className;
                             }
                             problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
                         }
@@ -245,11 +248,12 @@ public class JcrPropertyStatementListener extends StatementListener {
                     LOGGER.trace("Unable to resolve registered namespace for resource {}: {}", mixinResource, e);
 
                     String errorMessage = e.getMessage();
+                    final String className = e.getClass().getName();
                     if (StringUtils.isNotBlank(errorMessage)) {
                         errorMessage = errorPrefix + " " +
-                                e.getClass().getName() + ": "  + errorMessage;
+                               className + ": "  + errorMessage;
                     } else {
-                        errorMessage = errorPrefix + ": " + e.getClass().getName();
+                        errorMessage = errorPrefix + ": " + className;
                     }
                     problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
                 }
@@ -257,17 +261,14 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             final String propertyName =
-                jcrRdfTools.getPropertyNameFromPredicate(subjectNode, s.getPredicate());
+                jcrRdfTools.getPropertyNameFromPredicate(subjectNode, property);
 
 
             // if the property doesn't exist, we don't need to worry about it.
             if (subjectNode.hasProperty(propertyName) &&
-                    validateModificationsForPropertyName(subject, subjectNode,
-                                                            s.getPredicate())) {
-                final Value v =
-                    jcrRdfTools.createValue(subjectNode, s.getObject(),
-                            propertiesTools.getPropertyType(subjectNode,
-                                    propertyName));
+                validateModificationsForPropertyName(subject, subjectNode, property) ) {
+                final Value v = createValue(subjectNode, RDFnode, propertyName);
+
                 propertiesTools.removeNodeProperty(subjects, subjectNode,
                         propertyName, v);
             }
@@ -290,6 +291,12 @@ public class JcrPropertyStatementListener extends StatementListener {
         }
 
         return true;
+    }
+
+    private Value createValue (final Node subjectNode,
+                               final RDFNode RDFNode, final String propertyName ) throws RepositoryException {
+      return jcrRdfTools.createValue(subjectNode, RDFNode,
+                                       propertiesTools.getPropertyType(subjectNode,propertyName));
     }
 
     /**

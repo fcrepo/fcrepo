@@ -61,7 +61,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
         final Node subjectNode) throws RepositoryException {
 
         final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
-        if (session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
+        if (sessionHasType(session(),mixinName)) {
             LOGGER.debug("Removing mixin: {} from node: {}.", mixinName,
                     subjectNode.getPath());
 
@@ -84,14 +84,12 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
         throws RepositoryException {
         LOGGER.debug("Trying to remove property from triple: {} on node: {}.", t, n
                 .getPath());
+
         final String propertyName =
-            getPropertyNameFromPredicate(n, t.getPredicate());
+           getPropertyNameFromPredicate(n, t.getPredicate());
         if (n.hasProperty(propertyName)) {
-            final Value v =
-                jcrRdfTools().createValue(n, t.getObject(),
-                        propertiesTools.getPropertyType(n, propertyName));
-            propertiesTools.removeNodeProperty(idTranslator(), n, propertyName,
-                    v);
+           final Value v = createValue(n,t, propertyName);
+           propertiesTools.removeNodeProperty(idTranslator(), n, propertyName, v);
         }
     }
 }

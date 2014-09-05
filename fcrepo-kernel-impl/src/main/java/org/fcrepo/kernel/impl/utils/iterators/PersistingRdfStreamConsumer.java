@@ -23,6 +23,7 @@ import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedTriple;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -92,7 +93,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             public boolean apply(final Triple t) {
 
                 final boolean result =
-                        graphSubjects.isFedoraGraphSubject(m.asStatement(t).getSubject()) || t.getSubject().isBlank();
+                      graphSubjects.isFedoraGraphSubject(m.asStatement(t).getSubject()) || t.getSubject().isBlank();
                 if (result) {
                     LOGGER.debug(
                             "Discovered a Fedora-relevant subject in triple: {}.",
@@ -184,6 +185,23 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected Value createValue(final Node subjectNode, final RDFNode object,
         final Integer propertyType) throws RepositoryException {
         return jcrRdfTools().createValue(subjectNode, object, propertyType);
+    }
+
+
+     protected Value createValue (final Node n, final Statement t,
+                        final String propertyName) throws RepositoryException {
+
+       final NodePropertiesTools propertiesTools = new NodePropertiesTools();
+      return jcrRdfTools().createValue(n, t.getObject(),
+                    propertiesTools.getPropertyType(n, propertyName));
+    }
+
+    protected boolean sessionHasType(final Session session,
+               final String mixinName) throws RepositoryException  {
+        if (session == null) {
+          return false;
+        }
+        return session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName);
     }
 
     protected abstract void operateOnProperty(final Statement t,
