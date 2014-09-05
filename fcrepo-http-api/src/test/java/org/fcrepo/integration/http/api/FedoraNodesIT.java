@@ -1490,7 +1490,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testCopyToProjection() throws IOException {
         // create object in the repository
         final String pid = getRandomUniquePid();
-        final HttpResponse response = createDatastream(pid, "ds1", "abc123");
+        createDatastream(pid, "ds1", "abc123");
 
         // copy to federated filesystem
         final HttpCopy request = new HttpCopy(serverAddress + pid);
@@ -1568,7 +1568,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         // create a node with 4 children
         final String pid = getRandomUniquePid();
         final Node parent = createResource(serverAddress + pid).asNode();
-        final HttpResponse response = createObject(pid);
+        createObject(pid);
         createObject(pid + "/child1");
         createObject(pid + "/child2");
         createObject(pid + "/child3");
@@ -1581,7 +1581,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         // count children in response graph
         int firstChildCount = 0;
-        Iterator it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY);
+        Iterator<Quad> it = firstGraph.find(ANY,parent,HAS_CHILD.asNode(),ANY);
         for ( ; it.hasNext(); firstChildCount++ ) {
             logger.debug( "Found child: {}", it.next() );
         }
@@ -1743,7 +1743,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         final Resource nodeUri = createResource(location);
 
         final String lastmodString = response.getFirstHeader("Last-Modified").getValue();
-        final Date lastmodDate = headerFormat.parse(lastmodString);
+        headerFormat.parse(lastmodString);
         final Date createdDateTriples = getDateFromModel( model, nodeUri,
                 createProperty(REPOSITORY_NAMESPACE + "created"));
         final Date lastmodDateTriples = getDateFromModel( model, nodeUri,

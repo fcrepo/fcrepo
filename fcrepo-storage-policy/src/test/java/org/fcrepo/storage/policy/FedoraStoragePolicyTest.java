@@ -211,7 +211,7 @@ public class FedoraStoragePolicyTest {
         when(mockNodeTypeManager.getNodeType("mix:mimeType")).thenReturn(mockNodeType);
         when(mockNodeType.getName()).thenReturn("invalid");
         when(mockCodeNode.getProperty("mix:mimeType")).thenReturn(mockProperty);
-        final Response response = storagePolicy.deleteNodeType("mix:mimeType");
+        storagePolicy.deleteNodeType("mix:mimeType");
     }
 
     @Test

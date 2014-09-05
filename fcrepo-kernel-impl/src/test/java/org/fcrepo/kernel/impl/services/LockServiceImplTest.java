@@ -15,10 +15,11 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -27,9 +28,9 @@ import javax.jcr.lock.Lock;
 import javax.jcr.lock.LockException;
 import javax.jcr.lock.LockManager;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * @author Mike Durbin
@@ -74,7 +75,7 @@ public class LockServiceImplTest {
         when(mockLockManager.getLock(LOCKABLE_PATH)).thenReturn(mockLock);
         when(mockLockManager.getLock(ALREADY_LOCKED_PATH)).thenReturn(otherMockLock);
         when(mockLockManager.lock(LOCKABLE_PATH, false, false, TIMEOUT, USER)).thenReturn(mockLock);
-        when(mockLockManager.lock(ALREADY_LOCKED_PATH, false, false, TIMEOUT, USER)).thenThrow(LockException.class);
+        when(mockLockManager.lock(ALREADY_LOCKED_PATH, false, false, TIMEOUT, USER)).thenThrow(new LockException());
         when(mockLockManager.isLocked(ALREADY_LOCKED_PATH)).thenReturn(true);
         when(mockLock.getLockToken()).thenReturn(LOCK_TOKEN);
         when(mockLock.isDeep()).thenReturn(false);
@@ -84,21 +85,21 @@ public class LockServiceImplTest {
     @Test
     public void testAcquireLock() throws RepositoryException {
         final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, LOCKABLE_PATH, false);
-        Assert.assertEquals(LOCK_TOKEN, lock.getLockToken());
-        Assert.assertFalse(lock.isDeep());
+        assertEquals(LOCK_TOKEN, lock.getLockToken());
+        assertFalse(lock.isDeep());
     }
 
     @Test (expected = LockException.class)
     public void testAcquireLockFailure() throws RepositoryException {
-        final org.fcrepo.kernel.Lock lock = testObj.acquireLock(mockSession, ALREADY_LOCKED_PATH, false);
+        testObj.acquireLock(mockSession, ALREADY_LOCKED_PATH, false);
     }
 
     @Test
     public void testGetOwnedLock() throws RepositoryException {
         when(mockLockManager.isLocked(LOCKABLE_PATH)).thenReturn(true);
         final org.fcrepo.kernel.Lock lock = testObj.getLock(mockSession, LOCKABLE_PATH);
-        Assert.assertEquals(LOCK_TOKEN, lock.getLockToken());
-        Assert.assertFalse(lock.isDeep());
+        assertEquals(LOCK_TOKEN, lock.getLockToken());
+        assertFalse(lock.isDeep());
     }
 
     @Test

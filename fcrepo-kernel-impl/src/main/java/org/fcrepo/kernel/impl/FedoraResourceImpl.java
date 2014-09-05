@@ -356,8 +356,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         final RdfStream replacementStream = RdfStream.fromModel(inputModel);
 
-        final Set<Triple> replacementTriples =
-            copyOf(replacementStream.iterator());
+        final Set<Triple> replacementTriples = copyOf(replacementStream);
 
         final DifferencingIterator<Triple> differencer =
             new DifferencingIterator<>(replacementTriples, originalTriples);

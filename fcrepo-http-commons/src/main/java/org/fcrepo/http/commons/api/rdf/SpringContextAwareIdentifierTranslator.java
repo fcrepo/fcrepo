@@ -34,7 +34,10 @@ public abstract class SpringContextAwareIdentifierTranslator extends ExternalIde
     protected List<InternalIdentifierConverter> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
         if (context != null) {
-            return getApplicationContext().getBean("translationChain", List.class);
+            @SuppressWarnings("unchecked")
+            final List<InternalIdentifierConverter> tchain =
+                    getApplicationContext().getBean("translationChain", List.class);
+            return tchain;
         }
         return null;
     }

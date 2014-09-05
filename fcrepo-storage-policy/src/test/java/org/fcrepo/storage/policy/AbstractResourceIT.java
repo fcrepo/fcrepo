@@ -15,7 +15,13 @@
  */
 package org.fcrepo.storage.policy;
 
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.parseInt;
+import static java.lang.System.getProperty;
+import static org.apache.http.impl.client.HttpClientBuilder.create;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -23,16 +29,11 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -50,7 +51,7 @@ public abstract class AbstractResourceIT {
         logger = getLogger(this.getClass());
     }
 
-    protected static final int SERVER_PORT = Integer.parseInt(System.getProperty("test.port", "8080"));
+    protected static final int SERVER_PORT = parseInt(getProperty("test.port", "8080"));
 
     protected static final String HOSTNAME = "localhost";
 
@@ -59,16 +60,10 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + "/rest/";
 
-    protected final PoolingClientConnectionManager connectionManager =
-            new PoolingClientConnectionManager();
-
     protected static HttpClient client;
 
     public AbstractResourceIT() {
-        connectionManager.setMaxTotal(Integer.MAX_VALUE);
-        connectionManager.setDefaultMaxPerRoute(5);
-        connectionManager.closeIdleConnections(3, TimeUnit.SECONDS);
-        client = new DefaultHttpClient(connectionManager);
+        client = create().setMaxConnPerRoute(5).setMaxConnTotal(MAX_VALUE).build();
     }
 
     protected HttpGet HttpGetObjMethod(final String param) {

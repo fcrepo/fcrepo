@@ -15,7 +15,27 @@
  */
 package org.fcrepo.integration;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
+import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
+import static com.google.common.collect.Lists.transform;
+import static java.util.UUID.randomUUID;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.entity.BasicHttpEntity;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.Page;
@@ -30,25 +50,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
 import com.google.common.base.Function;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.entity.BasicHttpEntity;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.List;
-
-import static com.google.common.collect.Lists.transform;
-import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * <p>FedoraHtmlResponsesIT class.</p>
@@ -357,7 +358,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private WebClient getDefaultWebClient() {
 
-        final WebClient webClient = new WebClient(BrowserVersion.FIREFOX_17);
+        final WebClient webClient = new WebClient(FIREFOX_24);
         webClient.addRequestHeader("Accept", "text/html");
 
         webClient.waitForBackgroundJavaScript(1000);

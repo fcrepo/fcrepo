@@ -78,7 +78,7 @@ public class JcrGraphProperties implements GraphProperties {
     @Override
     public Dataset getProperties(final Node node, final IdentifierTranslator subjects)
         throws RepositoryException {
-        return getProperties(node, subjects, 0, -1);
+        return getProperties(node, subjects, 0, 0);
     }
 
 }
