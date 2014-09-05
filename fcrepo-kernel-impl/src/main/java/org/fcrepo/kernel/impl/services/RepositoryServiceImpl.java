@@ -25,8 +25,8 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
 import java.util.Iterator;
@@ -74,7 +74,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
 
     private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);
 
-    private final Timer objectSizeCalculationTimer = getMetrics().timer(
+    private final Timer objectSizeCalculationTimer = RegistryService.getInstance().getMetrics().timer(
             name(RepositoryService.class, "objectSizeCalculation"));
 
     /**

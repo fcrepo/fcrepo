@@ -19,12 +19,12 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -59,7 +59,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
     private static final Logger LOGGER = getLogger(DatastreamImpl.class);
 
     static final Histogram contentSizeHistogram =
-            getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
+            RegistryService.getInstance().getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
 
     /**
      * The JCR node for this datastream

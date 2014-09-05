@@ -29,8 +29,8 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositorySize;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.metrics.RegistryService;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -60,6 +60,7 @@ import com.hp.hpl.jena.graph.Triple;
 public class RootRdfContext extends NodeRdfContext {
 
     private static final Logger LOGGER = getLogger(RootRdfContext.class);
+    static final RegistryService registryService = RegistryService.getInstance();
 
     /**
      * Ordinary constructor.
@@ -115,7 +116,7 @@ public class RootRdfContext extends NodeRdfContext {
         }
 
         // retrieve the metrics from the service
-        final SortedMap<String, Counter> counters = getMetrics().getCounters();
+        final SortedMap<String, Counter> counters = registryService.getMetrics().getCounters();
         // and add the repository metrics to the RDF model
         if (counters.containsKey("LowLevelStorageService.fixity-check-counter")) {
             b.add(create(subject(), HAS_FIXITY_CHECK_COUNT.asNode(),

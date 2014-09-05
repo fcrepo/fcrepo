@@ -24,8 +24,8 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-import static org.fcrepo.metrics.RegistryService.getMetrics;
 import static org.slf4j.LoggerFactory.getLogger;
+import  org.fcrepo.metrics.RegistryService;
 
 import java.util.Iterator;
 
@@ -62,7 +62,8 @@ public class SimpleObserver implements EventListener {
     /**
      * A simple counter of events that pass through this observer
      */
-    static final Counter EVENT_COUNTER = getMetrics().counter(name(SimpleObserver.class, "onEvent"));
+    static final Counter EVENT_COUNTER =
+            RegistryService.getInstance().getMetrics().counter(name(SimpleObserver.class, "onEvent"));
 
     static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED + PROPERTY_ADDED + PROPERTY_CHANGED
             + PROPERTY_REMOVED;

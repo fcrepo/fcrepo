@@ -31,9 +31,33 @@ import com.codahale.metrics.MetricRegistry;
  * @author cbeer
  * @since Mar 22, 2013
  */
-public abstract class RegistryService {
+public class RegistryService {
 
     private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
+
+    private static volatile RegistryService instance = null;
+
+    private RegistryService() {
+      // New instances should come from the singleton
+    }
+
+    /**
+     * Create the instance
+     * Inspired by: http://en.wikipedia.org/wiki/Double-checked_locking
+     */
+    public static RegistryService getInstance() {
+        RegistryService local = instance;
+        if (null == local) {
+
+            synchronized (METRICS) {
+                local = instance;
+                if (null == local) {
+                    instance = local = new RegistryService();
+                }
+            }
+        }
+        return local;
+    }
 
     /**
      * Get the current registry service
@@ -41,7 +65,7 @@ public abstract class RegistryService {
      * TODO the new upstream SharedMetricRegistries may make this obsolete
      * @return the current registry service
      */
-    public static MetricRegistry getMetrics() {
+    public MetricRegistry getMetrics() {
         return METRICS;
     }
 
@@ -50,7 +74,7 @@ public abstract class RegistryService {
      * 
      * @param os
      */
-    public static void dumpMetrics(final PrintStream os) {
+    public void dumpMetrics(final PrintStream os) {
 
         final MetricRegistry registry = getMetrics();
 
