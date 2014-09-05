@@ -40,6 +40,7 @@ import java.util.Date;
 
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 
 /**
@@ -143,13 +144,22 @@ public abstract class ContentExposingResource extends AbstractResource {
                 .size(ds.getContentSize())
                 .build();
 
+        addResourceOptionsHeaders(servletResponse, subjects, ds);
+
         return builder.type(ds.getMimeType())
-                .header("Link", "<" + subjects.getSubject(ds.getNode().getPath()) + ">;rel=\"describedby\"")
-                .header("Link", "<" + NON_RDF_SOURCE + ">;rel=\"type\"")
-                .header("Accept-Ranges", "bytes")
                 .header("Content-Disposition", contentDisposition)
                 .cacheControl(cc)
                 .build();
+    }
+
+    protected static void addResourceOptionsHeaders(final HttpServletResponse servletResponse,
+                                                    final HttpIdentifierTranslator subjects,
+                                                    final Datastream ds) throws RepositoryException {
+
+        servletResponse.addHeader("Link", "<" + subjects.getSubject(ds.getNode().getPath()) + ">;rel=\"describedby\"");
+        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
+        servletResponse.addHeader("Link", "<" + NON_RDF_SOURCE + ">;rel=\"type\"");
+        servletResponse.addHeader("Accept-Ranges", "bytes");
     }
 
     /**

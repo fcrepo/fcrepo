@@ -617,7 +617,11 @@ public class FedoraNodes extends AbstractResource {
                             newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);
                     final URI contentLocation =
                         new URI(idTranslator.getSubject(((Datastream) result).getContentNode().getPath()).getURI());
-                    response = created(contentLocation).entity(contentLocation.toString());
+                    response = created(contentLocation)
+                                .entity(contentLocation.toString())
+                                .header("Link",
+                                    "<" + idTranslator.getSubject(result.getNode().getPath())
+                                        + ">;rel=\"describedby\"");
 
                 } else {
                     response = created(location).entity(location.toString());

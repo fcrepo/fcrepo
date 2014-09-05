@@ -30,7 +30,7 @@ import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -48,10 +48,10 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 
+import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -71,84 +71,40 @@ public class FedoraContent extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraContent.class);
 
+
     /**
-     * Create an anonymous DS with a newly minted name and content from request
-     * body
-     *
-     * @param pathList
-     * @throws RepositoryException
+     * Outputs information about the supported HTTP methods, etc.
      */
-    @POST
+    @OPTIONS
     @Timed
-    public Response create(@PathParam("path")
-            final List<PathSegment> pathList,
-            @HeaderParam("Slug") final String slug,
-            @HeaderParam("Content-Disposition") final String contentDisposition,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            @ContentLocation final InputStream requestBodyStream,
-            @Context final HttpServletResponse servletResponse)
-        throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
-        final MediaType contentType = getSimpleContentType(requestContentType);
+    public Response options(@PathParam("path") final List<PathSegment> pathList,
+                            @Context final HttpServletResponse servletResponse)
+        throws RepositoryException {
 
-
-        final String newDatastreamPath;
-        final String path = toPath(pathList);
-
-        if (nodeService.exists(session, path)) {
-            if ( nodeService.getObject(session, path).hasContent() ) {
-                return status(SC_CONFLICT)
-                           .entity(path + " is an existing resource!").build();
-            }
-
-            final String pid;
-
-            if (slug != null) {
-                pid = slug;
-            }  else {
-                pid = pidMinter.mintPid();
-            }
-
-            newDatastreamPath = path + "/" + pid;
-        } else {
-            newDatastreamPath = path;
-        }
-
-
-        LOGGER.trace("Attempting to ingest fcr:content with path: {}", newDatastreamPath);
 
         try {
+            final String path = toPath(pathList);
+            if (nodeService.exists(session, path)) {
 
-            if (nodeService.exists(session, newDatastreamPath)) {
-                return status(SC_CONFLICT)
-                           .entity(path + " is an existing resource!").build();
-            }
+                final Datastream ds =
+                    datastreamService.getDatastream(session, path);
 
-            final URI checksumURI = checksumURI(checksum);
-            final String originalFileName = originalFileName(contentDisposition);
-
-            final Datastream datastream =
-                    datastreamService.createDatastream(session, newDatastreamPath,
-                            contentType.toString(), originalFileName, requestBodyStream,
-                            checksumURI);
-
-            final HttpIdentifierTranslator subjects =
+                final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
-                            uriInfo);
-
-            session.save();
-            versionService.nodeUpdated(datastream.getNode());
-
-            final ResponseBuilder builder = created(new URI(subjects.getSubject(
-                    datastream.getContentNode().getPath()).getURI()));
-
-            addCacheControlHeaders(servletResponse, datastream, session);
-
-            return builder.build();
+                        uriInfo);
+                addOptionsHttpHeaders(servletResponse);
+                addResourceOptionsHeaders(servletResponse, subjects, ds);
+            }
+            return status(OK).build();
 
         } finally {
             session.logout();
         }
+    }
+
+
+    private void addOptionsHttpHeaders(final HttpServletResponse servletResponse) {
+        servletResponse.addHeader("Allow", "HEAD,GET,PUT,OPTIONS");
     }
 
     /**
@@ -239,6 +195,9 @@ public class FedoraContent extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
+
+            addOptionsHttpHeaders(servletResponse);
+
             return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
                                                    subjects, session);
 
