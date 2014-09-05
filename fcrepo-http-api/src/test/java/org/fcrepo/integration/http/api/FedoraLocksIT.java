@@ -15,29 +15,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.update.GraphStore;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.Logger;
-
-import java.io.IOException;
-
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -47,14 +24,41 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-
+import static org.apache.http.util.EntityUtils.consume;
+import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
 import static org.fcrepo.kernel.RdfLexicon.IS_DEEP;
 import static org.fcrepo.kernel.RdfLexicon.LOCKS;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.StringEntity;
+import org.fcrepo.jcr.FedoraJcrTypes;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.update.GraphStore;
 
 /**
  * @author Mike Durbin
@@ -110,18 +114,18 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         GraphStore lockTriples = getLockProperties(pid, lockToken);
 
-        Assert.assertTrue("Lock relationship must be present!",
+        assertTrue("Lock relationship must be present!",
                 lockTriples.contains(ANY, lockURI, createURI(LOCKS.getURI()), nodeURI));
 
-        Assert.assertTrue("Lock token must be present!",
+        assertTrue("Lock token must be present!",
                 lockTriples.contains(ANY, lockURI, createURI(HAS_LOCK_TOKEN.getURI()), createLiteral(lockToken)));
 
         lockTriples = getLockProperties(pid, null);
 
-        Assert.assertTrue("Lock relationship must be present!",
+        assertTrue("Lock relationship must be present!",
                 lockTriples.contains(ANY, lockURI, createURI(LOCKS.getURI()), nodeURI));
 
-        Assert.assertFalse("Lock token must be hidden!",
+        assertFalse("Lock token must be hidden!",
                 lockTriples.contains(ANY, lockURI, createURI(HAS_LOCK_TOKEN.getURI()), createLiteral(lockToken)));
 
         assertUnlockWithToken(pid, lockToken);
@@ -149,7 +153,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         getLockToken(lockObject(pid, false));
         lockTriples = getLockProperties(pid, null);
-        Assert.assertTrue("Lock should not be listed as deep!",
+        assertTrue("Lock should not be listed as deep!",
                 lockTriples.contains(ANY, lockURI, createURI(IS_DEEP.getURI()), falseLiteral));
         assertUnlockWithoutToken(pid);
 
@@ -196,7 +200,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         createObject(pid);
 
         final String lockToken = getLockToken(lockObject(pid));
-        Assert.assertEquals("May not take out a second lock on a locked node!",
+        assertEquals("May not take out a second lock on a locked node!",
                 CONFLICT.getStatusCode(), lockObject(pid).getStatusLine().getStatusCode());
         assertUnlockWithToken(pid, lockToken);
     }
@@ -229,8 +233,8 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final String childPid = pid + "/" + getRandomUniquePid();
         createObject(childPid);
 
-        final String childLockToken = getLockToken(lockObject(childPid));
-        Assert.assertEquals("May not take out a deep lock when a child is locked!",
+        getLockToken(lockObject(childPid));
+        assertEquals("May not take out a deep lock when a child is locked!",
                 CONFLICT.getStatusCode(), lockObject(pid, true).getStatusLine().getStatusCode());
     }
 
@@ -252,7 +256,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         addLockToken(post, parentLockToken);
         final HttpResponse response = client.execute(post);
 
-        Assert.assertEquals("May not take out a lock when grandparent is deep-locked!",
+        assertEquals("May not take out a lock when grandparent is deep-locked!",
                 CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
@@ -265,7 +269,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final String pid = getRandomUniquePid();
         createObject(pid);
         final String lockToken = getLockToken(lockObject(pid));
-        Assert.assertEquals("Should get a BAD_REQUEST when using bogus lock token!",
+        assertEquals("Should get a BAD_REQUEST when using bogus lock token!",
                 BAD_REQUEST.getStatusCode(), unlockObject(pid, lockToken + "-fake").getStatusLine().getStatusCode());
         assertUnlockWithToken(pid, lockToken);
 
@@ -281,7 +285,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         createObject(pid);
 
         final HttpGet get = new HttpGet(serverAddress + pid + "/" + FCR_LOCK);
-        Assert.assertEquals("May not view lock that doesn't exist!",
+        assertEquals("May not view lock that doesn't exist!",
                 NOT_FOUND.getStatusCode(), execute(get).getStatusLine().getStatusCode());
     }
 
@@ -291,7 +295,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     @Test
     public void testLockMissingNode() throws IOException {
         final String pid = getRandomUniquePid();
-        Assert.assertEquals("Must get a NOT_FOUND response when locking a path at which no node exists.",
+        assertEquals("Must get a NOT_FOUND response when locking a path at which no node exists.",
                 NOT_FOUND.getStatusCode(), lockObject(pid).getStatusLine().getStatusCode());
     }
 
@@ -305,8 +309,8 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final Node lockURI = createURI(serverAddress + pid + "/" + FCR_LOCK);
 
         final GraphStore store = getGraphStore(getObjectProperties(pid));
-        Assert.assertTrue("HAS_LOCK assertion should be in the object's RDF.",
-                store.contains(Node.ANY, nodeURI, HAS_LOCK.asNode(), lockURI));
+        assertTrue("HAS_LOCK assertion should be in the object's RDF.",
+                store.contains(ANY, nodeURI, HAS_LOCK.asNode(), lockURI));
         assertUnlockWithToken(pid, lockToken);
     }
 
@@ -332,9 +336,9 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
             final Node childNodeURI = createURI(serverAddress + childPid);
 
             final GraphStore store = getGraphStore(getObjectProperties(childPid));
-            Assert.assertTrue("HAS_LOCK assertion should be in the child object's RDF. "
+            assertTrue("HAS_LOCK assertion should be in the child object's RDF. "
                     + childPid  + " has no reference to the lock on " + lockedPid + "!",
-                    store.contains(Node.ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
+                    store.contains(ANY, childNodeURI, HAS_LOCK.asNode(), lockURI));
 
             assertCannotSetPropertyWithoutLockToken(childPid);
         }
@@ -347,21 +351,21 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         createObject(pid);
         final String lockToken = getLockToken(lockObject(pid));
 
-        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+        for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
             final HttpGet method =
                     new HttpGet(serverAddress + pid + "/" + FCR_LOCK);
 
             method.addHeader("Accept", type);
             addLockToken(method, lockToken);
             final HttpResponse response = execute(method);
-            Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+            assertEquals(200, response.getStatusLine().getStatusCode());
 
             // If you don't read the whole response, the session
             // may not be closed (if it's mid-stream) and your
             // next request will fail because the token is still
             // attached to that session and cannot be attached
             // again.
-            EntityUtils.consume(response.getEntity());
+            consume(response.getEntity());
 
             assertContentType(response, type);
         }
@@ -384,10 +388,10 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         for (String prohibitedProperty : jcrLockTriples) {
             assertFalse(prohibitedProperty + " must not appear in RDF for locked node!",
                     rdf.contains(
-                            Node.ANY,
+                            ANY,
                             subject.asNode(),
                             createResource(prohibitedProperty).asNode(),
-                            Node.ANY));
+                            ANY));
         }
 
         assertUnlockWithToken(pid, lockToken);
@@ -400,7 +404,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
                 return;
             }
         }
-        Assert.fail(contentType + " Content-Type header not found!");
+        fail(contentType + " Content-Type header not found!");
 
     }
 
@@ -432,13 +436,13 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
                 txId + "/" + childPid, null);
 
         // take out a lock on an affected resource (out of transaction)
-        final String lockToken = getLockToken(lockObject(rootPid, true));
+        getLockToken(lockObject(rootPid, true));
 
         // commit the transaction (which should fail with CONFLICT)
-        Assert.assertEquals(CONFLICT.getStatusCode(), commitTransaction(txId).getStatusLine().getStatusCode());
+        assertEquals(CONFLICT.getStatusCode(), commitTransaction(txId).getStatusLine().getStatusCode());
 
         // verify that non-conflicting operation was not successful.
-        Assert.assertEquals(NOT_FOUND.getStatusCode(), getObjectProperties(inTxPid).getStatusLine().getStatusCode());
+        assertEquals(NOT_FOUND.getStatusCode(), getObjectProperties(inTxPid).getStatusLine().getStatusCode());
     }
 
     /**
@@ -446,7 +450,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * asserts that property updates can again be made without the token.
      */
     private void assertUnlockWithoutToken(final String pid) throws IOException {
-        Assert.assertEquals(NO_CONTENT.getStatusCode(),
+        assertEquals(NO_CONTENT.getStatusCode(),
                 unlockObject(pid, null).getStatusLine().getStatusCode());
 
         assertCanSetProperty("Unlocked object must be able to be updated now!", pid, null);
@@ -457,7 +461,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * asserts that property updates can again be made without the token.
      */
     private void assertUnlockWithToken(final String pid, final String lockToken) throws IOException {
-        Assert.assertEquals(NO_CONTENT.getStatusCode(),
+        assertEquals(NO_CONTENT.getStatusCode(),
                 unlockObject(pid, lockToken).getStatusLine().getStatusCode());
 
         assertCanSetProperty("Unlocked object must be able to be updated now!", pid, null);
@@ -469,9 +473,9 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      */
     private String getLockToken(final HttpResponse response) {
         final StatusLine status = response.getStatusLine();
-        Assert.assertEquals(CREATED.getStatusCode(), status.getStatusCode());
+        assertEquals(CREATED.getStatusCode(), status.getStatusCode());
         final Header lockToken = response.getFirstHeader("Lock-Token");
-        Assert.assertNotNull("Lock-Token was not provided in response!", lockToken);
+        assertNotNull("Lock-Token was not provided in response!", lockToken);
         return lockToken.getValue();
     }
 
@@ -514,11 +518,11 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
             throws IOException {
         final String propertyName = getRandomPropertyName();
         final String propertyValue = getRandomPropertyValue();
-        Assert.assertEquals(message == null
-                    ? "Properties of a locked node must be updatable with the token!"
-                    : message, NO_CONTENT.getStatusCode(),
+        assertEquals(message == null
+                ? "Properties of a locked node must be updatable with the token!"
+                : message, NO_CONTENT.getStatusCode(),
                 setProperty(pid, null, lockToken, propertyName, propertyValue).getStatusLine().getStatusCode());
-    }
+  }
 
     private void assertCannotSetPropertyWithoutLockToken(final String pid) throws IOException {
         assertCannotSetPropertyWithoutLockToken(null, pid);
@@ -527,7 +531,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     private void assertCannotSetPropertyWithoutLockToken(final String message, final String pid) throws IOException {
         final String propertyName = getRandomPropertyName();
         final String propertyValue = getRandomPropertyValue();
-        Assert.assertEquals(message == null ? "Lock must prevent property updates!" : message,
+        assertEquals(message == null ? "Lock must prevent property updates!" : message,
                 CONFLICT.getStatusCode(),
                 setProperty(pid, null, null, propertyName, propertyValue).getStatusLine().getStatusCode());
     }

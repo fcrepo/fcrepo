@@ -16,20 +16,18 @@
 package org.fcrepo.kernel.impl.utils.impl;
 
 import static java.util.Objects.hash;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+
 import org.fcrepo.kernel.impl.services.functions.GetBinaryKey;
 import org.fcrepo.kernel.impl.utils.BasicCacheEntry;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.BinaryStore;
-import org.slf4j.Logger;
-
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
 
 /**
  * A LowLevelCacheEntry within a local binary store
@@ -37,8 +35,6 @@ import javax.jcr.RepositoryException;
  * @author awoods
  */
 public class LocalBinaryStoreEntry extends BasicCacheEntry {
-
-    private static final Logger LOGGER = getLogger(LocalBinaryStoreEntry.class);
 
     private GetBinaryKey getBinaryKey = new GetBinaryKey();
     private final BinaryStore store;

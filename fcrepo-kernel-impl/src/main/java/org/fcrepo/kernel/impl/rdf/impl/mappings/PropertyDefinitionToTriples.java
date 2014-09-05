@@ -15,21 +15,7 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
-import com.google.common.collect.ImmutableMap;
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.slf4j.Logger;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.PropertyDefinition;
-import java.util.Iterator;
-import java.util.Map;
-
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.emptyIterator;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDanyURI;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdate;
@@ -39,6 +25,7 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDFS.range;
+import static java.util.Collections.emptyIterator;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
@@ -53,6 +40,20 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.PropertyType.nameFromValue;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.PropertyDefinition;
+
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
+
+import com.google.common.collect.ImmutableMap;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * Utility for moving Property Definitions into RDFS triples

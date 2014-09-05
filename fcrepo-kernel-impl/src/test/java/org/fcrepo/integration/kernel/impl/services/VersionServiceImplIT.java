@@ -129,7 +129,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        final Collection<String> label = versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
@@ -146,7 +146,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        final Collection<String> label = versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
         session.save();
         assertEquals(2L, countVersions(session, resource));
 

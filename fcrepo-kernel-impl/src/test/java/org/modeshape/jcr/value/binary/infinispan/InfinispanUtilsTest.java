@@ -54,7 +54,8 @@ public class InfinispanUtilsTest {
         final InfinispanBinaryStore store = new InfinispanBinaryStore(mgr, false, "foo", "bar" );
         final BinaryKey key = new BinaryKey("foo");
 
-        final Cache cache = mock(Cache.class);
+        @SuppressWarnings("unchecked")
+        final Cache<Object, Object> cache = mock(Cache.class);
         final Metadata meta = new Metadata(0L, 1024L, 8, 128);
         when(mgr.getCache(anyString())).thenReturn(cache);
         doReturn(meta).when(cache).get(anyObject());

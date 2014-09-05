@@ -15,14 +15,19 @@
  */
 package org.fcrepo.http.api;
 
-import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.Lock;
-import org.fcrepo.kernel.services.LockService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
+import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import java.net.URISyntaxException;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -30,18 +35,15 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URISyntaxException;
-import java.util.UUID;
 
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
-import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import org.fcrepo.kernel.Lock;
+import org.fcrepo.kernel.services.LockService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * @author Mike Durbin
@@ -79,7 +81,7 @@ public class FedoraLocksTest {
 
     @Test
     public void testGetLock() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = randomUUID().toString();
         final String path = "/" + pid;
         initializeMockNode(path);
         when(mockLockService.getLock(mockSession, path)).thenReturn(mockLock);
@@ -91,7 +93,7 @@ public class FedoraLocksTest {
 
     @Test
     public void testCreateLock() throws RepositoryException, URISyntaxException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = randomUUID().toString();
         final String path = "/" + pid;
         initializeMockNode(path);
         when(mockLockService.acquireLock(mockSession, path, false)).thenReturn(mockLock);
@@ -99,24 +101,24 @@ public class FedoraLocksTest {
         final Response response = testObj.createLock(createPathList(pid), false);
 
         verify(mockLockService).acquireLock(mockSession, path, false);
-        Assert.assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
+        assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testDeleteLock() throws RepositoryException, URISyntaxException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = randomUUID().toString();
         final String path = "/" + pid;
         initializeMockNode(path);
 
         final Response response = testObj.deleteLock(createPathList(pid));
 
         verify(mockLockService).releaseLock(mockSession, path);
-        Assert.assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testRDFGenerationForLockToken() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = randomUUID().toString();
         final String path = "/" + pid;
         initializeMockNode(path);
         when(mockLockService.getLock(mockSession, path)).thenReturn(mockLock);

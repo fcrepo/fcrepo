@@ -117,7 +117,7 @@ public class RdfStreamTest {
 
     @Test
     public void testIterator() {
-        assertEquals(testStream, testStream.iterator());
+        assertEquals(testStream, testStream);
     }
 
     @Test
@@ -156,9 +156,8 @@ public class RdfStreamTest {
     @Test
     public void testWithThisContextIterable() {
         testStream.namespace(prefix1, uri1);
-        testStream.topic(NodeFactory.createAnon());
-        final RdfStream testStream2 =
-            testStream.withThisContext((Iterable<Triple>) new RdfStream());
+        testStream.topic(createAnon());
+        final RdfStream testStream2 = testStream.withThisContext(new RdfStream().iterable());
         assertEquals(testStream.namespaces(), testStream2.namespaces());
         assertEquals(testStream.topic(), testStream2.topic());
     }
@@ -237,6 +236,10 @@ public class RdfStreamTest {
         testStream.next();
         testStream.next();
         assertFalse(testStream.hasNext());
+        assertEquals(testStream, testStream.limit(0));
+        setUp();
+        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mockIterator.next()).thenReturn(triple);
         assertEquals(testStream, testStream.limit(-1));
     }
 
@@ -245,7 +248,9 @@ public class RdfStreamTest {
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
         testStream = testStream.skip(3);
         assertFalse(testStream.hasNext());
-        assertEquals(testStream, testStream.skip(-1));
+        setUp();
+        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        assertEquals(testStream, testStream.skip(0));
     }
 
     @Test

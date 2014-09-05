@@ -157,7 +157,6 @@ public class FedoraContentTest {
         verify(mockSession).save();
     }
 
-    @SuppressWarnings("unused")
     @Test
     public void testCreateContent() throws RepositoryException, IOException,
                                                    InvalidChecksumException, URISyntaxException, ParseException {

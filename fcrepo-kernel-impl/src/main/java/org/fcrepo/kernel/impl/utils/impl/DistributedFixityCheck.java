@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.utils.impl;
 
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.impl.utils.FixityInputStream;
 import org.fcrepo.kernel.impl.utils.FixityResultImpl;
@@ -25,7 +26,6 @@ import org.fcrepo.kernel.utils.FixityResult;
 import org.infinispan.Cache;
 import org.infinispan.CacheImpl;
 import org.infinispan.distexec.DistributedCallable;
-
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.CacheLoader;
 
@@ -45,6 +45,8 @@ import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
  */
 public class DistributedFixityCheck implements DistributedCallable<String, byte[], Collection<FixityResult>>,
                                                    Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final String dataKey;
     private final int chunkSize;
     private final long length;
@@ -64,7 +66,7 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
     public Collection<FixityResult> call() throws Exception {
         final ImmutableSet.Builder<FixityResult> fixityResults = new ImmutableSet.Builder<>();
 
-        for (final CacheLoader store : stores()) {
+        for (final CacheLoader<String, byte[]> store : stores()) {
 
             final String digest = ContentDigest.getAlgorithm(new URI("urn:sha1"));
 
@@ -85,7 +87,7 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
         return fixityResults.build();
     }
 
-    private String getExternalIdentifier(final CacheLoader store) {
+    private String getExternalIdentifier(final CacheLoader<String, byte[]> store) {
         final String address;
 
         if (cache.getCacheManager().getAddress() != null) {
@@ -102,8 +104,9 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
         this.cache = cache;
     }
 
+    @SuppressWarnings("rawtypes")
     private Set<CacheLoader> stores() {
-        return ((CacheImpl)cache).getComponentRegistry().getLocalComponent(PersistenceManager.class)
+        return ((CacheImpl<String, byte[]>)cache).getComponentRegistry().getLocalComponent(PersistenceManager.class)
                 .getStores(CacheLoader.class);
     }
 }

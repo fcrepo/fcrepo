@@ -107,8 +107,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         this.skolemizedBnodeMap = new HashMap<>();
         // we knock out managed RDF and non-Fedora RDF
         this.stream =
-            stream.withThisContext(stream.filter(and(not(isManagedTriple),
-                    isFedoraSubjectTriple)).iterator());
+                stream.withThisContext(stream.filter(and(not(isManagedTriple),
+                        isFedoraSubjectTriple)));
         this.session = session;
     }
 

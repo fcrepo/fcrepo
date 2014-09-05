@@ -15,12 +15,14 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.services.TransactionService;
-import org.fcrepo.kernel.services.VersionService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import static java.util.Collections.singleton;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.only;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -35,15 +37,12 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
-import java.util.Collections;
-
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.only;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.services.TransactionService;
+import org.fcrepo.kernel.services.VersionService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * @author Mike Durbin
@@ -247,7 +246,7 @@ public class VersionServiceImplTest {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
         final Version mockVersion1 = mock(Version.class);
-        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(new VersionException());
         final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockVersionIterator.hasNext()).thenReturn(true);
@@ -268,7 +267,7 @@ public class VersionServiceImplTest {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
 
-        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(new VersionException());
         final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockVersionIterator.hasNext()).thenReturn(false);
@@ -333,7 +332,7 @@ public class VersionServiceImplTest {
         final Version mockVersion1 = mock(Version.class);
         final Version mockVersion2 = mock(Version.class);
         when(mockVersion1.getContainingHistory()).thenReturn(mockHistory);
-        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(new VersionException());
         final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockHistory.getVersionLabels(mockVersion1)).thenReturn(versionLabels);
@@ -358,7 +357,7 @@ public class VersionServiceImplTest {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
 
-        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(VersionException.class);
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(new VersionException());
         final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
         when(mockVersionIterator.hasNext()).thenReturn(false);
@@ -370,7 +369,7 @@ public class VersionServiceImplTest {
 
     @Test
     public void testMixinCreationWhenExplicitlyVersioning() throws RepositoryException {
-        testObj.createVersion(mockWorkspace, Collections.singleton(EXAMPLE_UNVERSIONED_PATH));
+        testObj.createVersion(mockWorkspace, singleton(EXAMPLE_UNVERSIONED_PATH));
 
         final Node unversionedNode = s.getNode(EXAMPLE_UNVERSIONED_PATH);
         verify(unversionedNode).isNodeType(VersionServiceImpl.VERSIONABLE);

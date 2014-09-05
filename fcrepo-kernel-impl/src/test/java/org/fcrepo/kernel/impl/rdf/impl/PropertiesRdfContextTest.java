@@ -92,9 +92,6 @@ public class PropertiesRdfContextTest {
         //when(mockNodeType.getName()).thenReturn("not:root");
     }
 
-    private static final String MOCK_EXTERNAL_IDENTIFIER =
-        "info:external-identifier";
-
     private static final Resource mockContentSubject =
         createResource("http://example.com/node/jcr:content");;
 

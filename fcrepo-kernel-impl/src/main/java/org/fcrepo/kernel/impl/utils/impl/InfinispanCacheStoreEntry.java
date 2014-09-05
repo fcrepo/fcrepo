@@ -21,8 +21,19 @@ import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.MISSING_STORED_FIXITY;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.SUCCESS;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.collect.ImmutableSet;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+
 import org.fcrepo.kernel.impl.services.ServiceHelpers;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -33,24 +44,13 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanUtils;
 import org.slf4j.Logger;
 
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import java.net.URI;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
-
-import static org.slf4j.LoggerFactory.getLogger;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * @author cabeer
  */
 public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     private static final Logger LOGGER = getLogger(InfinispanCacheStoreEntry.class);
-    private static final String DATA_SUFFIX = "-data";
 
     /**
      *
@@ -97,10 +97,6 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
             }
         }
         return fixityResults.build();
-    }
-
-    private String dataKeyFor(final BinaryKey key) {
-        return key + DATA_SUFFIX;
     }
 
     private DistributedExecutorService clusterExecutor() {

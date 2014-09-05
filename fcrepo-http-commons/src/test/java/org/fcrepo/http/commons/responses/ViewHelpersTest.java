@@ -111,8 +111,8 @@ public class ViewHelpersTest {
                 createLiteral(later.toString()));
 
         final Iterator<Node> versions = testObj.getOrderedVersions(mem, resource, HAS_VERSION);
-        final Node r1 = versions.next();
-        final Node r2 = versions.next();
+        versions.next();
+        versions.next();
         final Node r3 = versions.next();
         assertEquals("Latest version should be last.", v3, r3);
     }

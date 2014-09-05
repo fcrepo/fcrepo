@@ -26,7 +26,7 @@ public interface ExternalContentService {
     /**
      * Fetch the content body at a given URI
      * @param sourceUri
-     * @return
+     * @return an InputStream of the content body
      * @throws IOException
      */
     InputStream retrieveExternalContent(URI sourceUri) throws IOException;
