@@ -64,7 +64,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         final Node subjectNode) throws RepositoryException {
 
         final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
-        if (!session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
+        if (!sessionHasType(session(), mixinName)) {
             final NodeTypeManager mgr = session().getWorkspace().getNodeTypeManager();
             final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
             type.setName(mixinName);
@@ -94,11 +94,10 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     protected void operateOnProperty(final Statement t, final Node n) throws RepositoryException {
         LOGGER.debug("Adding property from triple: {} to node: {}.", t, n
                 .getPath());
+
         final String propertyName =
             getPropertyNameFromPredicate(n, t.getPredicate());
-        final Value v =
-            createValue(n, t.getObject(), propertiesTools.getPropertyType(n,
-                    propertyName));
+        final Value v = createValue(n, t, propertyName);
         propertiesTools.appendOrReplaceNodeProperty(idTranslator(), n, propertyName, v);
     }
 }

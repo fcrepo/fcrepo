@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isMultipleValuedProperty;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.nodeHasType;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.propertyContains;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.value2string;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
@@ -383,4 +384,35 @@ public class FedoraTypesUtilsTest {
         assertTrue(propertyContains(mockProperty, "some-string"));
         assertFalse(propertyContains(mockProperty, "some-other-string"));
     }
+
+    @Test
+    public void testNodeHasTypeNo() throws RepositoryException {
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWS);
+        when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
+        assertFalse(nodeHasType(mockNode, "mixin"));
+    }
+
+    @Test
+    public void testNodeHasTypeYes() throws RepositoryException {
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWS);
+        when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
+        when(mockNTM.hasNodeType("mixin")).thenReturn(true);
+        assertTrue(nodeHasType(mockNode, "mixin"));
+    }
+
+    @Test
+    public void testNodeHasTypeNullMixin() throws RepositoryException {
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWS);
+        when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
+        assertFalse(nodeHasType(mockNode, null));
+    }
+
+    @Test
+    public void testNodeHasTypeNull() throws RepositoryException {
+        assertFalse(nodeHasType(null, "mixin"));
+    }
+
 }
