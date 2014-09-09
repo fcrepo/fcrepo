@@ -25,6 +25,7 @@ import javax.jcr.RepositoryException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
@@ -68,9 +69,16 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
      */
     private void setBaseURL(final FedoraEvent event) {
         try {
-            final JsonObject json = new JsonParser().parse(event.getUserData()).getAsJsonObject();
-            this.baseURL = json.get("baseURL").getAsString();
-            log.debug("MessageFactory baseURL: {}", baseURL);
+            final String userdata = event.getUserData();
+            if (!StringUtils.isBlank(userdata)) {
+                final JsonObject json = new JsonParser().parse(userdata).getAsJsonObject();
+                this.baseURL = json.get("baseURL").getAsString();
+                log.debug("MessageFactory baseURL: {}", baseURL);
+
+            } else {
+                log.warn("MessageFactory baseURL is empty!");
+            }
+
         } catch ( Exception ex ) {
             log.warn("Error setting baseURL", ex);
         }

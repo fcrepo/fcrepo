@@ -36,6 +36,7 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.command.ActiveMQObjectMessage;
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
 import org.junit.Before;
@@ -66,29 +67,38 @@ public class DefaultMessageFactoryTest {
     }
 
     @Test
-    public void testBuildMessage() throws RepositoryException, IOException,
-                                  JMSException {
+    public void testBuildMessage() throws RepositoryException, IOException, JMSException {
+        doTestBuildMessage("base-url");
+    }
+
+    @Test
+    public void testBuildMessageNullUrl() throws RepositoryException, IOException, JMSException {
+        doTestBuildMessage(null);
+    }
+
+    private void doTestBuildMessage(final String baseUrl) throws RepositoryException, IOException, JMSException {
         final Long testDate = 46647758568747L;
         when(mockEvent.getDate()).thenReturn(testDate);
-        when(mockEvent.getUserData()).thenReturn("{\"baseURL\":\"base-url\"}");
+
+        String url = null;
+        if (!StringUtils.isBlank(baseUrl)) {
+            url = "{\"baseURL\":\"" + baseUrl + "\"}";
+        }
+        when(mockEvent.getUserData()).thenReturn(url);
         final String testPath = "super/calli/fragi/listic";
         when(mockEvent.getPath()).thenReturn(testPath);
         final Set<Integer> testTypes = singleton(NODE_ADDED);
-        final String testReturnType =
-            REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
+        final String testReturnType = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
         when(mockEvent.getTypes()).thenReturn(testTypes);
         final String prop = "test-property";
         when(mockEvent.getProperties()).thenReturn(singleton(prop));
-        final Message testMessage =
-            testDefaultMessageFactory.getMessage(mockEvent, mockSession);
-        assertEquals("Got wrong date in message!", testDate, (Long) testMessage
-                .getLongProperty(TIMESTAMP_HEADER_NAME));
-        assertEquals("Got wrong identifier in message!", testPath, testMessage
-                .getStringProperty(IDENTIFIER_HEADER_NAME));
-        assertEquals("Got wrong type in message!", testReturnType, testMessage
-                .getStringProperty(EVENT_TYPE_HEADER_NAME));
-        assertEquals("Got wrong base-url in message", "base-url", testMessage.getStringProperty(BASE_URL_HEADER_NAME));
-        assertEquals("Got wrong property in message", prop, testMessage.getStringProperty(PROPERTIES_HEADER_NAME));
+
+        final Message msg = testDefaultMessageFactory.getMessage(mockEvent, mockSession);
+        assertEquals("Got wrong date in message!", testDate, (Long) msg.getLongProperty(TIMESTAMP_HEADER_NAME));
+        assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
+        assertEquals("Got wrong type in message!", testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME));
+        assertEquals("Got wrong base-url in message", baseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
+        assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
     }
 
 }
