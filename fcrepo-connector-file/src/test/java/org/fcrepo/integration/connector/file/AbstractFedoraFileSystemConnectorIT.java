@@ -18,6 +18,8 @@ package org.fcrepo.integration.connector.file;
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
+import static java.util.Arrays.asList;
+import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
@@ -42,7 +44,6 @@ import java.util.Iterator;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -53,6 +54,7 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -185,12 +187,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        boolean found = false;
-        for (final NodeType nodeType : mixins) {
-            if (nodeType.getName().equals(FEDORA_OBJECT)) {
-                found = true;
-            }
-        }
+        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_OBJECT);
         assertTrue("Mixin not found: " + FEDORA_OBJECT, found);
 
         session.save();
@@ -208,12 +205,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        boolean found = false;
-        for (final NodeType nodeType : mixins) {
-            if (nodeType.getName().equals(FEDORA_DATASTREAM)) {
-                found = true;
-            }
-        }
+        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_DATASTREAM);
         assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
 
         session.save();
@@ -230,19 +222,12 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        boolean found = false;
-        for (final NodeType nodeType : mixins) {
-            if (nodeType.getName().equals(FEDORA_BINARY)) {
-                found = true;
-            }
-        }
+        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
-
-        final Property size = node.getProperty(CONTENT_SIZE);
 
         final File file = fileForNode(node);
         assertTrue(file.getAbsolutePath(), file.exists());
-        assertEquals(file.length(), size.getLong());
+        assertEquals(file.length(), node.getProperty(CONTENT_SIZE).getLong());
 
         session.save();
         session.logout();
