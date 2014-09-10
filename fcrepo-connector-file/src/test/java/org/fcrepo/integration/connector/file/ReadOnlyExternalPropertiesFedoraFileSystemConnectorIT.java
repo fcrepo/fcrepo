@@ -43,6 +43,10 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
         return getReadOnlyFederationRoot();
     }
 
+    protected String testDirPath() {
+        return "/" + federationName();
+    }
+
     protected String testFilePath() {
         return "/" + federationName() + "/repo.xml";
     }

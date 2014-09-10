@@ -18,9 +18,12 @@ package org.fcrepo.integration.connector.file;
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
+import static java.util.Arrays.asList;
+import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,7 +44,6 @@ import java.util.Iterator;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -50,7 +52,9 @@ import javax.jcr.nodetype.NodeType;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -86,6 +90,12 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
     @Inject
     protected DatastreamService datastreamService;
+
+    /**
+     * Gets the path (relative to the filesystem federation) of a directory
+     * that's expected to be present.
+     */
+    protected abstract String testDirPath();
 
     /**
      * Gets the path (relative to the filesystem federation) of a file
@@ -170,19 +180,32 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedObject() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.getObject(session, testFilePath());
+        final FedoraObject object = objectService.getObject(session, testDirPath());
         assertNotNull(object);
 
         final Node node = object.getNode();
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        boolean found = false;
-        for (final NodeType nodeType : mixins) {
-            if (nodeType.getName().equals(FEDORA_DATASTREAM)) {
-                found = true;
-            }
-        }
+        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_OBJECT);
+        assertTrue("Mixin not found: " + FEDORA_OBJECT, found);
+
+        session.save();
+        session.logout();
+    }
+
+    @Test
+    public void testGetFederatedDatastream() throws RepositoryException {
+        final Session session = repo.login();
+
+        final Datastream datastream = datastreamService.getDatastream(session, testFilePath());
+        assertNotNull(datastream);
+
+        final Node node = datastream.getNode();
+        final NodeType[] mixins = node.getMixinNodeTypes();
+        assertEquals(2, mixins.length);
+
+        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_DATASTREAM);
         assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
 
         session.save();
@@ -199,19 +222,12 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        boolean found = false;
-        for (final NodeType nodeType : mixins) {
-            if (nodeType.getName().equals(FEDORA_BINARY)) {
-                found = true;
-            }
-        }
+        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
-
-        final Property size = node.getProperty(CONTENT_SIZE);
 
         final File file = fileForNode(node);
         assertTrue(file.getAbsolutePath(), file.exists());
-        assertEquals(file.length(), size.getLong());
+        assertEquals(file.length(), node.getProperty(CONTENT_SIZE).getLong());
 
         session.save();
         session.logout();

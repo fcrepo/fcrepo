@@ -59,6 +59,11 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
     }
 
     @Override
+    protected String testDirPath() {
+        return "/" + federationName();
+    }
+
+    @Override
     protected String getFederationRoot() {
         return getReadWriteFederationRoot();
     }
