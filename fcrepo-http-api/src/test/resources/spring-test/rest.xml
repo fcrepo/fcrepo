@@ -18,7 +18,6 @@
 
   <context:annotation-config/>
 
-  <context:component-scan
-    base-package="org.fcrepo.kernel, org.fcrepo.http, org.fcrepo.serialization"/>
+  <context:component-scan base-package="org.fcrepo"/>
 
 </beans>

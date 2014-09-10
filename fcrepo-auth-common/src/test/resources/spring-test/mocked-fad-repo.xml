@@ -11,7 +11,7 @@
 
   <context:annotation-config />
   
-  <context:component-scan base-package="org.fcrepo.kernel" />
+  <context:component-scan base-package="org.fcrepo" />
 
   <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
     depends-on="authenticationProvider" p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>

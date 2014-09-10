@@ -11,7 +11,7 @@
 
     <context:annotation-config />
 
-    <context:component-scan base-package="org.fcrepo.http,org.fcrepo.kernel, org.fcrepo.serialization,org.fcrepo.generator"/>
+    <context:component-scan base-package="org.fcrepo"/>
     
     <bean class="org.fcrepo.http.commons.session.SessionFactory" />
     
