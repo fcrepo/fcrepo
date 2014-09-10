@@ -32,8 +32,6 @@ import org.codehaus.jackson.JsonParseException;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.slf4j.Logger;
 
-import com.hp.hpl.jena.query.QueryParseException;
-
 /**
  * Catch all the exceptions!
  *
@@ -86,10 +84,6 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
         if (e instanceof JsonParseException) {
             return new JsonParseExceptionMapper().toResponse((JsonParseException)e);
-        }
-
-        if (e instanceof QueryParseException) {
-            return new QueryParseExceptionMapper().toResponse((QueryParseException) e);
         }
 
         if ( e.getCause() instanceof RepositoryException) {

@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 
@@ -36,10 +37,11 @@ import com.hp.hpl.jena.query.QueryParseException;
  * @author whikloj
  * @since September 9, 2014
  */
+@Provider
 public class QueryParseExceptionMapper implements
 ExceptionMapper<QueryParseException> {
 
-    private static final Logger LOGGER = getLogger(LockExceptionMapper.class);
+    private static final Logger LOGGER = getLogger(QueryParseExceptionMapper.class);
 
     @Override
     public Response toResponse(final QueryParseException e) {
