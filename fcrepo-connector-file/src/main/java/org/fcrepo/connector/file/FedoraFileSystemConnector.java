@@ -19,6 +19,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
@@ -26,6 +27,7 @@ import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.File;
@@ -139,6 +141,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         // Is Fedora Content?
         } else if (primaryType.equals(NT_RESOURCE)) {
             decorateContentNode(docReader, docWriter, fileFor(id));
+
+        // Is Fedora Object?
+        } else if (primaryType.equals(NT_FOLDER)) {
+            decorateObjectNode(docReader, docWriter);
         }
 
         // Persist new properties (if allowed)
@@ -204,6 +210,13 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     }
 
 
+
+    private static void decorateObjectNode(final DocumentReader docReader, final DocumentWriter docWriter) {
+        if (!docReader.getMixinTypeNames().contains(FEDORA_OBJECT)) {
+            LOGGER.trace("Adding mixin: {}, to {}", FEDORA_OBJECT, docReader.getDocumentId());
+            docWriter.addMixinType(FEDORA_OBJECT);
+        }
+    }
 
     private static void decorateDatastreamNode(final DocumentReader docReader, final DocumentWriter docWriter) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_DATASTREAM)) {
