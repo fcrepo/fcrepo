@@ -16,6 +16,7 @@
 package org.fcrepo.integration.connector.file;
 
 import org.fcrepo.kernel.FedoraResource;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.jcr.Node;
@@ -47,6 +48,7 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
         return "/" + federationName() + "/repo.xml";
     }
 
+    @Ignore
     @Test
     public void verifyThatPropertiesAreExternal() throws RepositoryException {
         final Session session = repo.login();

@@ -138,11 +138,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
             decorateContentNode(docReader, docWriter, fileFor(id));
         }
 
-        // Persist new properties (if allowed)
-        if (shouldCacheProperties()) {
-            saveProperties(docReader);
-        }
-
         return docWriter.document();
     }
 
