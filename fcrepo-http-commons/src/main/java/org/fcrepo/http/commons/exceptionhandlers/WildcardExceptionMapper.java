@@ -27,10 +27,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.codehaus.jackson.JsonParseException;
-
 import org.fcrepo.kernel.exception.TransactionMissingException;
+
+import org.codehaus.jackson.JsonParseException;
 import org.slf4j.Logger;
+
+import com.hp.hpl.jena.query.QueryParseException;
 
 /**
  * Catch all the exceptions!
@@ -44,56 +46,58 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
     Boolean showStackTrace = true;
 
-    private static final Logger LOGGER =
-        getLogger(WildcardExceptionMapper.class);
+    private static final Logger LOGGER = getLogger(WildcardExceptionMapper.class);
 
     @Override
     public Response toResponse(final Exception e) {
 
         if (WebApplicationException.class.isAssignableFrom(e.getClass())) {
-            LOGGER.debug(
-                            "WebApplicationException intercepted by WildcardExceptionMapper: \n",
-                            e);
+            LOGGER.debug("WebApplicationException intercepted by WildcardExceptionMapper: \n", e);
             return ((WebApplicationException) e).getResponse();
         }
 
         if (java.security.AccessControlException.class.isAssignableFrom(e
-                .getClass())) {
+            .getClass())) {
             return new AccessControlExceptionMapper()
-                    .toResponse((java.security.AccessControlException) e);
+            .toResponse((java.security.AccessControlException) e);
         }
 
         if (javax.jcr.AccessDeniedException.class.isAssignableFrom(e.getClass())) {
             return new AccessDeniedExceptionMapper()
-                    .toResponse((javax.jcr.AccessDeniedException) e);
+            .toResponse((javax.jcr.AccessDeniedException) e);
         }
         if (AccessControlException.class.isAssignableFrom(e.getClass())) {
             return new AccessControlExceptionMapper()
-                    .toResponse((AccessControlException) e);
+            .toResponse((AccessControlException) e);
         }
 
         if (e.getCause() instanceof LockException) {
             return new LockExceptionMapper()
-                    .toResponse((LockException) e.getCause());
+            .toResponse((LockException) e.getCause());
         }
 
         if (e.getCause() instanceof TransactionMissingException) {
             return new TransactionMissingExceptionMapper()
-                    .toResponse((TransactionMissingException) e.getCause());
+            .toResponse((TransactionMissingException) e.getCause());
         }
 
         if (e instanceof JsonParseException) {
             return new JsonParseExceptionMapper().toResponse((JsonParseException)e);
         }
 
+        if (e instanceof QueryParseException) {
+            return new QueryParseExceptionMapper()
+            .toResponse((QueryParseException) e);
+        }
+
         if ( e.getCause() instanceof RepositoryException) {
             return new RepositoryExceptionMapper()
-                    .toResponse((RepositoryException)e.getCause());
+            .toResponse((RepositoryException)e.getCause());
         }
 
         LOGGER.info("Exception intercepted by WildcardExceptionMapper: \n", e);
         return serverError().entity(
-                showStackTrace ? getStackTraceAsString(e) : null).build();
+            showStackTrace ? getStackTraceAsString(e) : null).build();
     }
 
     /**
