@@ -110,7 +110,6 @@ import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -1454,9 +1453,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to upload a file to a read/write federated filesystem.
-     * TODO: ignored until read-write filesystem support is reintroduced.
     **/
-    @Ignore
     @Test
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
@@ -1483,9 +1480,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to copy objects from the repository to a federated filesystem.
-     * TODO: ignored until read-write filesystem support is reintroduced.
     **/
-    @Ignore
     @Test
     public void testCopyToProjection() throws IOException {
         // create object in the repository
