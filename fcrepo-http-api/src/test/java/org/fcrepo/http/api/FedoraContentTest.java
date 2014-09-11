@@ -291,7 +291,7 @@ public class FedoraContentTest {
     }
 
     @Test
-    public void testGetContent() throws RepositoryException, IOException {
+    public void testGetContent() throws RepositoryException, IOException, URISyntaxException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String path = "/" + pid + "/" + dsId;

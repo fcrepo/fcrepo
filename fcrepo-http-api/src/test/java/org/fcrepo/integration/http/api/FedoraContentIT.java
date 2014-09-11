@@ -17,6 +17,8 @@ package org.fcrepo.integration.http.api;
 
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -32,6 +34,7 @@ import java.util.Locale;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
@@ -442,8 +445,33 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertTrue( readonlyMeta.exists() );
         assertTrue( readonlyMeta.length() > 0 );
         final String readonlyMetaContent = IOUtils.toString(new FileReader(readonlyMeta));
-        logger.warn("XXX: " + readonlyMetaContent);
         assertTrue( readonlyMetaContent.contains("urn:sha1:18835fd8075c1e1f266366c1bdfd1ac6a357f242") );
+    }
+
+    @Test
+    public void testExternalContent() throws Exception {
+        final String pid = getRandomUniquePid();
+        final String dsURL = serverAddress + pid + "/ds1";
+        final String extPID = getRandomUniquePid();
+        final String extURL = serverAddress + extPID;
+
+        createObject(extPID);
+        createObject(pid);
+        createDatastream(pid, "ds1", "");
+
+        final HttpPatch patch = new HttpPatch(dsURL);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final StringEntity e = new StringEntity(
+            "INSERT { <> <http://fedora.info/definitions/v4/rels-ext#hasExternalContent> "
+            + "<" + extURL + "> } WHERE {}");
+        patch.setEntity(e);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        final HttpGet get = new HttpGet(dsURL + "/fcr:content");
+        final HttpResponse response = client.execute(get);
+        assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+        assertEquals("text/turtle", response.getFirstHeader("Content-Type").getValue());
+        assertTrue( IOUtils.toString(response.getEntity().getContent()).contains(extURL) );
     }
 
 }
