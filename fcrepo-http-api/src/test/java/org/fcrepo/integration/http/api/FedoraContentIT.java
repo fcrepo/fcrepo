@@ -442,7 +442,6 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertTrue( readonlyMeta.exists() );
         assertTrue( readonlyMeta.length() > 0 );
         final String readonlyMetaContent = IOUtils.toString(new FileReader(readonlyMeta));
-        logger.warn("XXX: " + readonlyMetaContent);
         assertTrue( readonlyMetaContent.contains("urn:sha1:18835fd8075c1e1f266366c1bdfd1ac6a357f242") );
     }
 
