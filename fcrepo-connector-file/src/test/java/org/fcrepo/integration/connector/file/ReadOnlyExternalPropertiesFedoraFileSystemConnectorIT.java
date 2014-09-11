@@ -16,17 +16,14 @@
 package org.fcrepo.integration.connector.file;
 
 import org.fcrepo.kernel.FedoraResource;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import java.io.File;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Mike Durbin
@@ -48,7 +45,6 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
         return "/" + federationName() + "/repo.xml";
     }
 
-    @Ignore
     @Test
     public void verifyThatPropertiesAreExternal() throws RepositoryException {
         final Session session = repo.login();
@@ -56,9 +52,6 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
         assertEquals("There should be exactly as many visible nodes as actual files (ie, no hidden sidecar files).",
                 fileForNode(object.getNode()).getParentFile().list().length,
                 getChildCount(object.getNode().getParent()));
-        final File propFile = propertyFileForNode(object.getNode());
-        assertTrue("There should be properties file (" + propFile + ") in the external directory.",
-                propFile.exists());
     }
 
     protected int getChildCount(final Node node) throws RepositoryException {

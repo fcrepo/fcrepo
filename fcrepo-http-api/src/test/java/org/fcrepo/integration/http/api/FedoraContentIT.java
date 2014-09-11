@@ -23,6 +23,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -51,6 +53,8 @@ public class FedoraContentIT extends AbstractResourceIT {
 
     private static final String faulkner1 =
             "The past is never dead. It's not even past.";
+
+    private static final String marblesChecksum = "urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df";
 
     @Test
     public void testAddDatastream() throws Exception {
@@ -252,8 +256,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         logger.debug("Returned from HTTP GET, now checking content...");
         assertTrue("Got the wrong content back!", "marbles for everyone"
                 .equals(EntityUtils.toString(response.getEntity())));
-        assertEquals("urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df",
-                response.getFirstHeader("ETag").getValue().replace("\"", ""));
+        assertEquals(marblesChecksum, response.getFirstHeader("ETag").getValue().replace("\"", ""));
 
         final ContentDisposition contentDisposition =
                 new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
@@ -278,8 +281,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         format.setTimeZone(getTimeZone("GMT"));
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
-        method_test_get.setHeader("If-None-Match",
-                "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
+        method_test_get.setHeader("If-None-Match", "\"" + marblesChecksum + "\"");
         method_test_get.setHeader("If-Modified-Since", format
                 .format(new Date()));
 
@@ -296,8 +298,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         assertEquals(201, getStatus(createDSMethod));
 
         final HttpPut method_test_put = new HttpPut(serverAddress + pid + "/ds1/fcr:content");
-        method_test_put.setHeader("If-Match",
-                "\"urn:sha1:ba6cb22191300aebcfcfb83de9635d6b224677df\"");
+        method_test_put.setHeader("If-Match", "\"" + marblesChecksum + "\"");
         method_test_put.setHeader("If-Unmodified-Since",
                 "Sat, 29 Oct 1994 19:43:31 GMT");
         method_test_put.setEntity(new StringEntity("asdf"));
@@ -425,6 +426,24 @@ public class FedoraContentIT extends AbstractResourceIT {
         repostDSMethod.setEntity(new StringEntity("bar", "UTF-8"));
         repostDSMethod.addHeader("Content-Type", "application/foo");
         assertEquals(409, getStatus(repostDSMethod));
+    }
+
+    @Test
+    public void testFederatedChecksumCaching() throws Exception {
+        final String ds1 = "FileSystem1/ds1";
+        final String readonlyContent = serverAddress + "readonlyfiles/" + ds1 + "/fcr:content";
+
+        // retrieve content
+        final HttpGet get = new HttpGet(readonlyContent);
+        assertEquals(200, getStatus(get));
+
+        // verify that the checksum has been cached
+        final File readonlyMeta = new File("target/test-classes/test-meta/" + ds1 + ".content.modeshape.json");
+        assertTrue( readonlyMeta.exists() );
+        assertTrue( readonlyMeta.length() > 0 );
+        final String readonlyMetaContent = IOUtils.toString(new FileReader(readonlyMeta));
+        logger.warn("XXX: " + readonlyMetaContent);
+        assertTrue( readonlyMetaContent.contains("urn:sha1:18835fd8075c1e1f266366c1bdfd1ac6a357f242") );
     }
 
 }

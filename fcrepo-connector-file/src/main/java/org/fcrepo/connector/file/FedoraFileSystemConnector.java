@@ -114,7 +114,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
 
         final Document doc = super.getDocumentById(id);
-        if ( doc == null ) { return doc; }
+        if ( doc == null ) {
+            LOGGER.debug("Non-existent node, document is null: {}", id);
+            return doc;
+        }
 
         final DocumentReader docReader = readDocument(doc);
         final DocumentWriter docWriter = writeDocument(doc);
