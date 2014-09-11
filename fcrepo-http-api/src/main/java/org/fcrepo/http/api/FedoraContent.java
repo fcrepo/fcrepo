@@ -52,6 +52,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_MOVED_TEMPORARILY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -229,13 +230,21 @@ public class FedoraContent extends ContentExposingResource {
                                @HeaderParam("Range") final String rangeValue,
                                @Context final Request request,
                                @Context final HttpServletResponse servletResponse)
-        throws RepositoryException, IOException {
+        throws RepositoryException, IOException, URISyntaxException {
         try {
             final String path = toPath(pathList);
             LOGGER.info("Attempting get of {}.", path);
 
             final Datastream ds =
                     datastreamService.getDatastream(session, path);
+
+            if ( ds.getNode().hasProperty("fedorarelsext:hasExternalContent") ) {
+                final URI externalURI = new URI(ds.getNode().getProperty("fedorarelsext:hasExternalContent")
+                        .getValues()[0].getString());
+                LOGGER.debug("Redirecting to external content {}", externalURI.toString());
+                return status(SC_MOVED_TEMPORARILY).header("Location",externalURI.toString()).build();
+            }
+
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
