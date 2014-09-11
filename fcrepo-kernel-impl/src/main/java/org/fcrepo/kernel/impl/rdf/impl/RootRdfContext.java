@@ -24,11 +24,12 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
-import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositorySize;
+// see: https://www.pivotaltracker.com/story/show/78647248
+//import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
+//import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
+//import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
+//import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositorySize;
 import static org.slf4j.LoggerFactory.getLogger;
 import org.fcrepo.metrics.RegistryService;
 
@@ -96,10 +97,15 @@ public class RootRdfContext extends NodeRdfContext {
                     createLiteral(nodeType.getName())));
         }
 
+        /*
+            FIXME: removing because performance problems, esp. w/ many files on federated filesystem
+            see: https://www.pivotaltracker.com/story/show/78647248
+
         b.add(create(subject(), HAS_OBJECT_COUNT.asNode(), createLiteral(String
                 .valueOf(getRepositoryCount(repository)))));
         b.add(create(subject(), HAS_OBJECT_SIZE.asNode(), createLiteral(String
                 .valueOf(getRepositorySize(repository)))));
+        */
 
         // Get the cluster configuration, if available
         // this ugly test checks to see whether this is an ordinary JCR

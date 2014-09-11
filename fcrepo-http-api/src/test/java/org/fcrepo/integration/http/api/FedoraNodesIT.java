@@ -1046,6 +1046,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), response.getStatusLine().getStatusCode());
 
     }
+
+    @Ignore("pending https://www.pivotaltracker.com/story/show/78647248")
     @Test
     public void testDescribeSize() throws Exception {
 
@@ -1080,6 +1082,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 Integer.parseInt(oldSize) < Integer.parseInt(newSize));
     }
 
+    @Ignore("pending https://www.pivotaltracker.com/story/show/78647248")
     @Test
     public void testDescribeCount() throws Exception {
         logger.trace("Entering testDescribeCount()...");
