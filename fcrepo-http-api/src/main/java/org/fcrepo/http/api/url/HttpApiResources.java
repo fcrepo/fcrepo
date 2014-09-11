@@ -28,6 +28,9 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
+import static org.fcrepo.kernel.RdfLexicon.IS_IN_FORMAT;
+import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -132,6 +135,14 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                             FedoraExport.class).queryParam("format", key)
                             .buildFromMap(pathMap).toASCIIString());
             model.add(s, HAS_SERIALIZATION, format);
+
+            //RDF the serialization
+            final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
+            model.add(formatRDF, RDFS_LABEL, key);
+            model.add(format, IS_IN_FORMAT, formatRDF);
+            // TODO: Check if there are alternative/better choices to express the
+            // isInFormat relation
+            // see https://www.pivotaltracker.com/s/projects/684825/stories/65221404
         }
     }
 
