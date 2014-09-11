@@ -31,5 +31,4 @@ import com.google.common.base.Function;
  * @since Feb 27, 2014
  */
 public interface InternalExternalEventMapper extends Function<Iterator<Event>, Iterator<FedoraEvent>> {
-
 }

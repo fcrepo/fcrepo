@@ -15,6 +15,7 @@
  */
 package org.modeshape.jcr.value.binary.infinispan;
 
+import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
@@ -22,14 +23,13 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.junit.Test;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.transaction.TransactionMode;
+import org.junit.Test;
 import org.modeshape.jcr.value.BinaryKey;
 
 
@@ -54,7 +54,6 @@ public class InfinispanUtilsTest {
         final InfinispanBinaryStore store = new InfinispanBinaryStore(mgr, false, "foo", "bar" );
         final BinaryKey key = new BinaryKey("foo");
 
-        @SuppressWarnings("unchecked")
         final Cache<Object, Object> cache = mock(Cache.class);
         final Metadata meta = new Metadata(0L, 1024L, 8, 128);
         when(mgr.getCache(anyString())).thenReturn(cache);
@@ -64,7 +63,7 @@ public class InfinispanUtilsTest {
         final TransactionConfiguration txConfig = mock(TransactionConfiguration.class);
 
         when(cacheConfig.transaction()).thenReturn(txConfig);
-        when(txConfig.transactionMode()).thenReturn(TransactionMode.NON_TRANSACTIONAL);
+        when(txConfig.transactionMode()).thenReturn(NON_TRANSACTIONAL);
         final ClusteringConfiguration clConfig = mock(ClusteringConfiguration.class);
         when(cacheConfig.clustering()).thenReturn(clConfig);
         when(clConfig.cacheMode()).thenReturn(CacheMode.LOCAL);

@@ -15,13 +15,14 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
+import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
+
 import java.util.List;
 
 import org.fcrepo.kernel.identifiers.ExternalIdentifierConverter;
 import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.ContextLoader;
 
 
 /**
@@ -34,7 +35,6 @@ public abstract class SpringContextAwareIdentifierTranslator extends ExternalIde
     protected List<InternalIdentifierConverter> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
         if (context != null) {
-            @SuppressWarnings("unchecked")
             final List<InternalIdentifierConverter> tchain =
                     getApplicationContext().getBean("translationChain", List.class);
             return tchain;
@@ -43,7 +43,7 @@ public abstract class SpringContextAwareIdentifierTranslator extends ExternalIde
     }
 
     protected ApplicationContext getApplicationContext() {
-        return ContextLoader.getCurrentWebApplicationContext();
+        return getCurrentWebApplicationContext();
     }
 
 }

@@ -67,7 +67,7 @@ public class FedoraExportTest {
     private FedoraObject mockObject;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraExport();
         mockSession = mockSession(testObj);

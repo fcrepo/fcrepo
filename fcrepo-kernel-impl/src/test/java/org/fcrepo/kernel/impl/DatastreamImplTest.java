@@ -36,6 +36,7 @@ import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -69,24 +70,27 @@ public class DatastreamImplTest implements FedoraJcrTypes {
 
     private static final String testDsId = "testDs";
 
-    Datastream testObj;
+    private Datastream testObj;
 
-    String testObjPath;
-
-    @Mock
-    Session mockSession;
+    private String testObjPath;
 
     @Mock
-    Node mockRootNode;
+    private Session mockSession;
 
     @Mock
-    Node mockDsNode;
+    private Node mockRootNode;
 
     @Mock
-    ValueFactory mockVF;
+    private Node mockDsNode;
 
     @Mock
-    NodeType mockDsNodeType;
+    private InputStream mockStream;
+
+    @Mock
+    private ValueFactory mockVF;
+
+    @Mock
+    private NodeType mockDsNodeType;
 
     @Before
     public void setUp() {
@@ -114,12 +118,14 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         mockDsNode = null;
     }
 
+    @SuppressWarnings("unused")
     @Test (expected = ResourceTypeException.class)
     public void testGetObjectAsDatastreamFromNode() throws ResourceTypeException {
         when(mockDsNodeType.getName()).thenReturn(FEDORA_OBJECT);
         new DatastreamImpl(mockDsNode);
     }
 
+    @SuppressWarnings("unused")
     @Test (expected = ResourceTypeException.class)
     public void testGetObjectAsDatastreamFromPath() throws RepositoryException {
         when(mockDsNodeType.getName()).thenReturn(FEDORA_OBJECT);
@@ -148,7 +154,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetBinaryContent() throws RepositoryException, IOException {
+    public void testGetBinaryContent() throws RepositoryException {
         final Binary mockBinary = mock(Binary.class);
         final Property mockProperty = mock(Property.class);
         final Node mockContent = getContentNodeMock("abc");
@@ -163,7 +169,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
             InvalidChecksumException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
-        final InputStream mockStream = mock(InputStream.class);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.getSession()).thenReturn(mockSession);
@@ -183,7 +188,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
                                             InvalidChecksumException {
         final org.modeshape.jcr.api.Binary mockBin =
             mock(org.modeshape.jcr.api.Binary.class);
-        final InputStream mockStream = mock(InputStream.class);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.getSession()).thenReturn(mockSession);
@@ -205,7 +209,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
             URISyntaxException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
-        final InputStream mockStream = mock(InputStream.class);
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getSession()).thenReturn(mockSession);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);

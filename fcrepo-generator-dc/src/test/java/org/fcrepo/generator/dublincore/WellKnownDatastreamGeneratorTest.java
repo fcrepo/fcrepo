@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 
@@ -48,10 +49,11 @@ public class WellKnownDatastreamGeneratorTest {
     }
 
     @Test
-    public void testGetStreamAbsent() {
+    public void testGetStreamAbsent() throws IOException {
         final Node mockNode = mock(Node.class);
-        final InputStream actual = testObj.getStream(mockNode);
-        assertNull(actual);
+        try (final InputStream actual = testObj.getStream(mockNode)) {
+            assertNull(actual);
+        }
     }
 
     @Test

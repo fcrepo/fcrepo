@@ -125,7 +125,7 @@ public class RdfStreamStreamingOutputTest {
     }
 
     @Test(expected = WebApplicationException.class)
-    public void testWriteWithException() throws IOException {
+    public void testWriteWithException() {
 
         final FutureCallback<Void> callback = new FutureCallback<Void>() {
 

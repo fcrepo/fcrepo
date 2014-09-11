@@ -244,9 +244,8 @@ public class NodePropertiesTools {
 
         if (i < 0) {
             return refPropertyName;
-        } else {
-            return refPropertyName.substring(0, i);
         }
+        return refPropertyName.substring(0, i);
     }
 
     private static String getReferencePropertyName(final Property property) throws RepositoryException {

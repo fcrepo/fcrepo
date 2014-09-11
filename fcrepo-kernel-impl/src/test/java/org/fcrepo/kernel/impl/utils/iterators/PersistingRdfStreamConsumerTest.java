@@ -56,7 +56,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class PersistingRdfStreamConsumerTest {
 
     @Test
-    public void testConsumeAsync() throws Exception {
+    public void testConsumeAsync() {
 
         final RdfStream testStream = new RdfStream(profferedStatements);
 
@@ -72,14 +72,14 @@ public class PersistingRdfStreamConsumerTest {
 
                 @Override
                 protected void operateOnProperty(final Statement s,
-                    final Node subjectNode) throws RepositoryException {
+                    final Node subjectNode) {
                     rejectedStatements.remove(s);
                     acceptedStatements.add(s);
                 }
 
                 @Override
                 protected void operateOnMixin(final Resource mixinResource,
-                        final Node subjectNode) throws RepositoryException {
+                        final Node subjectNode) {
                     rejectedMixins.remove(mixinResource);
                     acceptedMixins.add(mixinResource);
                 }
@@ -129,12 +129,12 @@ public class PersistingRdfStreamConsumerTest {
 
                     @Override
                     protected void operateOnProperty(final Statement s,
-                        final Node subjectNode) throws RepositoryException {
+                        final Node subjectNode) {
                     }
 
                     @Override
                     protected void operateOnMixin(final Resource mixinResource,
-                            final Node subjectNode) throws RepositoryException {
+                            final Node subjectNode) {
                     }
                 };
         // this should blow out when we try to retrieve the result

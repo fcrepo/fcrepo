@@ -73,7 +73,7 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Subscribe
-    public void countMessages(final FedoraEvent e) {
+    public void countMessages(@SuppressWarnings("unused") final FedoraEvent e) {
         eventBusMessageCount++;
     }
 

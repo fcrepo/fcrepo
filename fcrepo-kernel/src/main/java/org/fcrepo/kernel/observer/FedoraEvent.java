@@ -105,9 +105,8 @@ public class FedoraEvent {
             e.getType() == PROPERTY_CHANGED ||
             e.getType() == PROPERTY_REMOVED) {
             return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
-        } else {
-            return e.getPath();
         }
+        return e.getPath();
     }
 
     /**
@@ -127,7 +126,6 @@ public class FedoraEvent {
     /**
      * @return the info map of the underlying JCR {@link Event}s
      */
-    @SuppressWarnings("unchecked")
     public Map<Object, Object> getInfo() throws RepositoryException {
         return new HashMap<>(e.getInfo());
     }

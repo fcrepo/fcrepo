@@ -15,15 +15,18 @@
  */
 package org.fcrepo.http.api;
 
-import com.codahale.metrics.annotation.Timed;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.http.commons.domain.ContentLocation;
-import org.fcrepo.http.commons.session.InjectedSession;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.slf4j.Logger;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_MOVED_TEMPORARILY;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.text.ParseException;
+import java.util.List;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -41,19 +44,18 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.ParseException;
-import java.util.List;
 
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.status;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
-import static org.apache.http.HttpStatus.SC_MOVED_TEMPORARILY;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.domain.ContentLocation;
+import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.annotation.Timed;
+
 
 /**
  * Content controller for adding, reading, and manipulating
@@ -89,7 +91,7 @@ public class FedoraContent extends ContentExposingResource {
             @HeaderParam("Content-Type") final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream,
             @Context final HttpServletResponse servletResponse)
-        throws InvalidChecksumException, RepositoryException, URISyntaxException, ParseException {
+        throws InvalidChecksumException, RepositoryException, ParseException {
         final MediaType contentType = getSimpleContentType(requestContentType);
 
 
@@ -140,7 +142,7 @@ public class FedoraContent extends ContentExposingResource {
             session.save();
             versionService.nodeUpdated(datastream.getNode());
 
-            final ResponseBuilder builder = created(new URI(subjects.getSubject(
+            final ResponseBuilder builder = created(URI.create(subjects.getSubject(
                     datastream.getContentNode().getPath()).getURI()));
 
             addCacheControlHeaders(servletResponse, datastream, session);
@@ -171,7 +173,7 @@ public class FedoraContent extends ContentExposingResource {
                                   @ContentLocation final InputStream requestBodyStream,
                                   @Context final Request request,
                                   @Context final HttpServletResponse servletResponse)
-        throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
+        throws RepositoryException, InvalidChecksumException, ParseException {
 
         try {
             final String path = toPath(pathList);
@@ -203,7 +205,7 @@ public class FedoraContent extends ContentExposingResource {
                         new HttpIdentifierTranslator(session, FedoraNodes.class,
                                 uriInfo);
 
-                builder = created(new URI(subjects.getSubject(
+                builder = created(URI.create(subjects.getSubject(
                         datastream.getContentNode().getPath()).getURI()));
             } else {
                 builder = noContent();
@@ -230,7 +232,7 @@ public class FedoraContent extends ContentExposingResource {
                                @HeaderParam("Range") final String rangeValue,
                                @Context final Request request,
                                @Context final HttpServletResponse servletResponse)
-        throws RepositoryException, IOException, URISyntaxException {
+        throws RepositoryException, IOException {
         try {
             final String path = toPath(pathList);
             LOGGER.info("Attempting get of {}.", path);
@@ -239,7 +241,7 @@ public class FedoraContent extends ContentExposingResource {
                     datastreamService.getDatastream(session, path);
 
             if ( ds.getNode().hasProperty("fedorarelsext:hasExternalContent") ) {
-                final URI externalURI = new URI(ds.getNode().getProperty("fedorarelsext:hasExternalContent")
+                final URI externalURI = URI.create(ds.getNode().getProperty("fedorarelsext:hasExternalContent")
                         .getValues()[0].getString());
                 LOGGER.debug("Redirecting to external content {}", externalURI.toString());
                 return status(SC_MOVED_TEMPORARILY).header("Location",externalURI.toString()).build();

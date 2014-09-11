@@ -19,6 +19,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockRepository;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -31,7 +32,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -73,7 +73,7 @@ public class FedoraRepositoryWorkspacesTest {
     private Repository mockRepository;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         mockUriInfo = getUriInfoImpl();
         workspaces = new FedoraRepositoryWorkspaces();
@@ -94,7 +94,7 @@ public class FedoraRepositoryWorkspacesTest {
         final Model result = workspaces.getWorkspaces().asModel();
 
         assertTrue(result.contains(createResource("http://localhost/fcrepo/"),
-                                      RdfLexicon.HAS_WORKSPACE,
+                                      HAS_WORKSPACE,
                                       createResource("http://localhost/fcrepo/workspace:xxx" )));
 
     }

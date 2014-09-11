@@ -128,7 +128,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
     @DELETE
     @Timed
     public Response deleteLock(@PathParam("path") final List<PathSegment> pathList)
-        throws RepositoryException, URISyntaxException {
+        throws RepositoryException {
         try {
             final String path = toPath(pathList);
             lockService.releaseLock(session, path);

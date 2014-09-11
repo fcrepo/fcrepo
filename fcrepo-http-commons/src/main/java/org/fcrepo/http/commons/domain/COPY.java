@@ -15,19 +15,21 @@
  */
 package org.fcrepo.http.commons.domain;
 
-import javax.ws.rs.HttpMethod;
-import java.lang.annotation.ElementType;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import javax.ws.rs.HttpMethod;
 
 /**
  * COPY HTTP method
  *
  * @author cbeer
  */
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
+@Target({METHOD})
+@Retention(RUNTIME)
 @HttpMethod("COPY")
 public @interface COPY {
 }

@@ -38,7 +38,7 @@ public class UUIDPidMinterTest {
     }
 
     @Test
-    public void testMintPid() throws Exception {
+    public void testMintPid() {
 
         final String pid = testMinter.mintPid();
 

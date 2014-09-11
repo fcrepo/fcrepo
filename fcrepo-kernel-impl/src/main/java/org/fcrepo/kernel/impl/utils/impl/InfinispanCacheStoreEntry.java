@@ -32,7 +32,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import javax.jcr.Property;
-import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.impl.services.ServiceHelpers;
 import org.fcrepo.kernel.utils.ContentDigest;
@@ -62,7 +61,7 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     }
 
     @Override
-    public Collection<FixityResult> checkFixity(final URI checksum, final long size) throws RepositoryException {
+    public Collection<FixityResult> checkFixity(final URI checksum, final long size) {
         final BinaryKey key = binaryKey();
         final ImmutableSet.Builder<FixityResult> fixityResults = new ImmutableSet.Builder<>();
 
@@ -102,7 +101,7 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     private DistributedExecutorService clusterExecutor() {
         return ServiceHelpers.getClusterExecutor((InfinispanBinaryStore)store());
     }
-    private void setFixityStatus(final FixityResult result, final long dsSize, final URI dsChecksum) {
+    private static void setFixityStatus(final FixityResult result, final long dsSize, final URI dsChecksum) {
         if (dsChecksum.equals(ContentDigest.missingChecksum()) || dsSize == -1L) {
             result.getStatus().add(MISSING_STORED_FIXITY);
         }

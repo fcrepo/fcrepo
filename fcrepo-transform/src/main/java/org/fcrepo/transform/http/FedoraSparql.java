@@ -111,17 +111,15 @@ public class FedoraSparql extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraSparql.class);
 
     /**
-     * A stub method to return sparql service description for fcr:sparql GET
+     * A stub method to return SPARQL service description for fcr:sparql GET
      *
-     * @return
-     * @throws IOException
+     * @return SPARQL service description
      */
     @GET
     @Timed
     @Produces({RDF_XML, TURTLE, N3, N3_ALT2, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD})
     public Response sparqlServiceDescription(@Context final Request request,
-                                             @Context final UriInfo uriInfo)
-            throws IOException {
+                                             @Context final UriInfo uriInfo) {
 
         final SparqlServiceDescription sd = new SparqlServiceDescription(session, uriInfo);
         final Variant bestPossibleResponse = request.selectVariant(POSSIBLE_RDF_VARIANTS);
@@ -137,7 +135,7 @@ public class FedoraSparql extends AbstractResource {
         final Lang rdfLang = tmpLang;
         final StreamingOutput stream = new StreamingOutput() {
             @Override
-            public void write(final OutputStream output) throws IOException {
+            public void write(final OutputStream output) {
 
                 LOGGER.debug("Writting sparql service description with jena RdfLanguages name {}.", rdfLang.getName());
                 final Writer outWriter = new OutputStreamWriter(output);
@@ -223,7 +221,6 @@ public class FedoraSparql extends AbstractResource {
      * @param request
      * @param uriInfo
      * @return SPARQL query results
-     * @throws IOException
      * @throws RepositoryException
      */
     @POST
@@ -235,7 +232,7 @@ public class FedoraSparql extends AbstractResource {
     public Response runSparqlQuery(@FormParam("query") final String query,
                                    @Context final Request request,
                                    @Context final UriInfo uriInfo)
-            throws IOException, RepositoryException {
+            throws RepositoryException {
 
         LOGGER.trace("POST SPARQL query with {}: {}", contentTypeHTMLForm, query);
         if (Strings.isNullOrEmpty(query)) {

@@ -30,9 +30,11 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.Query.JCR_SQL2;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_PREFIX;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_URI;
@@ -40,17 +42,15 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator.RESOURCE_NAMESPACE;
+import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
 import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
-import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -105,16 +105,16 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
+import org.fcrepo.kernel.impl.utils.FixityResultImpl;
+import org.fcrepo.kernel.impl.utils.JcrPropertyMock;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.impl.utils.FixityResultImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.modeshape.jcr.api.Namespaced;
 import org.modeshape.jcr.value.BinaryValue;
 import org.slf4j.Logger;
 
@@ -275,8 +275,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     }
 
     @Test
-    public final void shouldExcludeSomeProtectedProperties() throws RepositoryException,
-            IOException {
+    public final void shouldExcludeSomeProtectedProperties() throws RepositoryException {
         when(mockNode.hasProperties()).thenReturn(true);
         when(mockPropertyDefinition.isProtected()).thenReturn(true);
         final Model actual = testObj.getJcrTriples(mockNode).asModel();
@@ -285,8 +284,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     }
 
     @Test
-    public final void shouldAllowSomeProtectedPropertiesForFrozenNodes() throws RepositoryException,
-            IOException {
+    public final void shouldAllowSomeProtectedPropertiesForFrozenNodes() throws RepositoryException {
         when(mockNode.hasProperties()).thenReturn(true);
         when(mockPropertyDefinition.isProtected()).thenReturn(true);
         when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
@@ -571,7 +569,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     }
 
     @Test
-    public final void testIsInternalProperty() throws Exception {
+    public final void testIsInternalProperty() {
         assertTrue(testObj.isInternalProperty(mockNode, createProperty(
                 REPOSITORY_NAMESPACE, "some-property")));
         assertTrue(testObj.isInternalProperty(mockNode, createProperty(
@@ -828,8 +826,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     private NodeType mockPrimaryNodeType;
 
     @Mock
-    private NamespacedProperty mockNamespacedProperty;
-    private static interface NamespacedProperty extends Namespaced, javax.jcr.Property {
+    private JcrPropertyMock mockNamespacedProperty;
 
-    }
 }

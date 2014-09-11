@@ -66,7 +66,7 @@ public class FedoraIdentifiersTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraIdentifiers();
         setField(testObj, "pidMinter", mockPidMinter);

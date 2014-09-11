@@ -52,7 +52,7 @@ public class FedoraFixityTest {
     @Mock
     private DatastreamService mockDatastreams;
 
-    Session mockSession;
+    private Session mockSession;
 
     private UriInfo uriInfo;
 
@@ -63,7 +63,7 @@ public class FedoraFixityTest {
     private Node mockNode;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraFixity();
         setField(testObj, "datastreamService", mockDatastreams);

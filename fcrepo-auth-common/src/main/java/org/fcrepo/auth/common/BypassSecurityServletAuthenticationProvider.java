@@ -103,8 +103,7 @@ public class BypassSecurityServletAuthenticationProvider implements
          */
         @Override
         public void logout() {
+            /*NOOP*/
         }
-
     }
-
 }

@@ -105,7 +105,7 @@ public class GetClusterConfigurationTest {
     }
 
     @Test
-    public void testGood() throws Exception {
+    public void testGood() {
         when(mockCache.getCacheManager()).thenReturn(mockCM);
         final Map<String, String> actual = testObj.apply(mockRepo);
         assertNotNull(actual);

@@ -70,7 +70,7 @@ public class FedoraFieldSearchTest {
     private HttpServletResponse mockResponse;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraFieldSearch();
         mockSession = mockSession(testObj);

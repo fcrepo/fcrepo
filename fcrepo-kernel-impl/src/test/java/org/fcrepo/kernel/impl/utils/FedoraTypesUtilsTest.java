@@ -149,13 +149,13 @@ public class FedoraTypesUtilsTest {
     private Property mockProperty;
 
 
-    // unfortunately, we need to be able to cast to two interfaces to perform
-    // some tests this testing interface allows mocks to do that
     interface PropertyMock extends Property, Namespaced {
+        // we need to be able to cast to two interfaces to perform
+        // some tests this testing interface allows mocks to do that
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
     }
 
@@ -169,6 +169,7 @@ public class FedoraTypesUtilsTest {
             test.apply(null);
             fail("Null values should throw a NullPointerException");
         } catch (final NullPointerException e) {
+            // expected
         }
         boolean actual = test.apply(mockYes);
         assertEquals(true, actual);
@@ -179,7 +180,8 @@ public class FedoraTypesUtilsTest {
             test.apply(mockYes);
             fail("Unexpected completion after RepositoryException!");
         } catch (final RuntimeException e) {
-        } // expected
+            // expected
+        }
     }
 
     @Test
@@ -235,7 +237,8 @@ public class FedoraTypesUtilsTest {
             getPredicateForProperty.apply(mockProp);
             fail("Unexpected completion after RepositoryException!");
         } catch (final RuntimeException e) {
-        } // expected
+            // expected
+        }
     }
 
     @Test
@@ -300,7 +303,8 @@ public class FedoraTypesUtilsTest {
             fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
                  " after RepositoryException!");
         } catch (final RuntimeException e) {
-        } // expected
+            // expected
+        }
     }
 
     @Test
@@ -311,19 +315,22 @@ public class FedoraTypesUtilsTest {
             fail("Unexpected FedoraTypesUtils.isFedoraResource" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {
-        } // expected
+            // expected
+        }
         try {
             isFedoraObject.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraObject" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {
-        } // expected
+            // expected
+        }
         try {
             isFedoraDatastream.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraDatastream" +
                  " completion after RepositoryException!");
         } catch (final RuntimeException e) {
-        } // expected
+            // expected
+        }
     }
 
     @Test
@@ -337,13 +344,15 @@ public class FedoraTypesUtilsTest {
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {
-        } // expected
+            // expected
+        }
         try {
             value2string.apply(null);
             fail("Unexpected FedoraTypesUtils.value2string" +
                     " completion with null argument!");
         } catch (final NullPointerException e) {
-        } // expected
+            // expected
+        }
     }
 
     @Test

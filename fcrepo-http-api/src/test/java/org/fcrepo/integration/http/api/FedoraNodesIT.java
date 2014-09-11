@@ -23,16 +23,9 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.riot.WebContent.contentTypeTurtle;
-import static org.apache.jena.riot.WebContent.contentTypeN3;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
-import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
-import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static java.util.TimeZone.getTimeZone;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
-import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -44,25 +37,32 @@ import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
-import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -82,14 +82,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Iterator;
 import java.util.UUID;
 
 import javax.ws.rs.core.Variant;
 
-import com.hp.hpl.jena.graph.NodeFactory;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
@@ -114,13 +113,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -1145,31 +1144,31 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testDescribeRdfCached() throws IOException {
-        final CloseableHttpClient cachingClient =
-            CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build();
+        try (final CloseableHttpClient cachingClient =
+                CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {
 
-        final HttpResponse createResponse = createObject("");
-        final String location = createResponse.getFirstHeader("Location").getValue();
-        final HttpGet getObjMethod = new HttpGet(location);
+            final HttpResponse createResponse = createObject("");
+            final String location = createResponse.getFirstHeader("Location").getValue();
+            final HttpGet getObjMethod = new HttpGet(location);
 
-        HttpResponse response = cachingClient.execute(getObjMethod);
-        assertEquals("Client didn't return a OK!", OK.getStatusCode(), response
-                .getStatusLine().getStatusCode());
-        logger.debug("Found HTTP headers:\n{}", Joiner.on('\n').join(
-                response.getAllHeaders()));
-        assertTrue("Didn't find Last-Modified header!", response
-                .containsHeader("Last-Modified"));
-        final String lastModed =
-            response.getFirstHeader("Last-Modified").getValue();
-        final String etag = response.getFirstHeader("ETag").getValue();
-        final HttpGet getObjMethod2 = new HttpGet(location);
-        getObjMethod2.setHeader("If-Modified-Since", lastModed);
-        getObjMethod2.setHeader("If-None-Match", etag);
-        response = cachingClient.execute(getObjMethod2);
+            HttpResponse response = cachingClient.execute(getObjMethod);
+            assertEquals("Client didn't return a OK!", OK.getStatusCode(), response
+                    .getStatusLine().getStatusCode());
+            logger.debug("Found HTTP headers:\n{}", Joiner.on('\n').join(
+                    response.getAllHeaders()));
+            assertTrue("Didn't find Last-Modified header!", response
+                    .containsHeader("Last-Modified"));
+            final String lastModed =
+                    response.getFirstHeader("Last-Modified").getValue();
+            final String etag = response.getFirstHeader("ETag").getValue();
+            final HttpGet getObjMethod2 = new HttpGet(location);
+            getObjMethod2.setHeader("If-Modified-Since", lastModed);
+            getObjMethod2.setHeader("If-None-Match", etag);
+            response = cachingClient.execute(getObjMethod2);
 
-        assertEquals("Client didn't return a NOT_MODIFIED!", NOT_MODIFIED
-                .getStatusCode(), response.getStatusLine().getStatusCode());
-
+            assertEquals("Client didn't return a NOT_MODIFIED!", NOT_MODIFIED
+                    .getStatusCode(), response.getStatusLine().getStatusCode());
+        }
     }
 
     @Test
@@ -1342,10 +1341,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     private static List<String> headerValues( final HttpResponse response, final String headerName ) {
-        final List<String> values = new ArrayList<String>();
-        for ( final Header header : response.getHeaders(headerName) ) {
-            for ( final String elem : header.getValue().split(",") ) {
-                values.add( elem.trim() );
+        final List<String> values = new ArrayList<>();
+        for (final Header header : response.getHeaders(headerName)) {
+            for (final String elem : header.getValue().split(",")) {
+                values.add(elem.trim());
             }
         }
         return values;
@@ -1386,7 +1385,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.debug("HTML found to be valid.");
     }
 
-    private void verifyResource(final Model model,
+    private static void verifyResource(final Model model,
                                 final Resource nodeUri,
                                 final Property rdfType,
                                 final String namespace,
@@ -1398,17 +1397,17 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public static class HTMLErrorHandler implements ErrorHandler {
 
         @Override
-        public void warning(final SAXParseException e) throws SAXException {
+        public void warning(final SAXParseException e) {
             fail(e.toString());
         }
 
         @Override
-        public void error(final SAXParseException e) throws SAXException {
+        public void error(final SAXParseException e) {
             fail(e.toString());
         }
 
         @Override
-        public void fatalError(final SAXParseException e) throws SAXException {
+        public void fatalError(final SAXParseException e) {
             fail(e.toString());
         }
     }

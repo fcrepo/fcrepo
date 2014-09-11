@@ -55,7 +55,7 @@ public class FedoraBackupIT extends AbstractResourceIT {
         createDatastream(objName, "testDS", text.toString());
 
         // Verify object exists
-        response = client.execute(new HttpGet(serverAddress + objName));
+        response = execute(new HttpGet(serverAddress + objName));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         // back it up
@@ -64,7 +64,7 @@ public class FedoraBackupIT extends AbstractResourceIT {
         final HttpPost backupMethod =
                 new HttpPost(serverAddress + "fcr:backup");
         backupMethod.setEntity(new StringEntity(dir.getCanonicalPath()));
-        response = client.execute(backupMethod);
+        response = execute(backupMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         final String content = EntityUtils.toString(response.getEntity());
@@ -72,11 +72,11 @@ public class FedoraBackupIT extends AbstractResourceIT {
         logger.debug("Back up directory was {}", content);
 
         // delete it
-        response = client.execute(new HttpDelete(serverAddress + objName));
+        response = execute(new HttpDelete(serverAddress + objName));
         assertEquals(204, response.getStatusLine().getStatusCode());
 
         // Verify object removed
-        response = client.execute(new HttpGet(serverAddress + objName));
+        response = execute(new HttpGet(serverAddress + objName));
         assertEquals(404, response.getStatusLine().getStatusCode());
 
         // try to restore it
@@ -86,7 +86,7 @@ public class FedoraBackupIT extends AbstractResourceIT {
         assertEquals("Couldn't import!", 204, getStatus(restoreMethod));
 
         //check that we made it
-        response = client.execute(new HttpGet(serverAddress + objName));
+        response = execute(new HttpGet(serverAddress + objName));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
     }

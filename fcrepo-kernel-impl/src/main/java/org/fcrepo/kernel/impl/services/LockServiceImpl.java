@@ -67,7 +67,7 @@ public class LockServiceImpl extends AbstractService implements LockService {
 
         private String token;
 
-        public JCRLock(final javax.jcr.lock.Lock lock) throws RepositoryException {
+        public JCRLock(final javax.jcr.lock.Lock lock) {
             isDeep = lock.isDeep();
             token = lock.getLockToken();
         }

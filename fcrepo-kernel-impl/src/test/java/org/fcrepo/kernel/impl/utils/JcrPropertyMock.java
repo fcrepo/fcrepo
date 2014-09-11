@@ -20,13 +20,13 @@ import javax.jcr.Property;
 import org.modeshape.jcr.api.Namespaced;
 
 
-// unfortunately, we need to be able to cast to two interfaces to perform some tests
-// this testing interface allows mocks to do that
+
 /**
  * <p>JcrPropertyMock interface.</p>
  *
  * @author awoods
  */
 public interface JcrPropertyMock extends Property, Namespaced {
-
+    // we need to be able to cast to two interfaces to perform some tests
+    // this testing interface allows mocks to do that
 }

@@ -41,7 +41,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author Mike Durbin
  * @since 2014-02-21
  */
-public abstract class GraphSubjectsTest {
+public abstract class HttpIdentifierTranslatorTestScaffold {
 
     protected String testPath = "/foo/bar";
 

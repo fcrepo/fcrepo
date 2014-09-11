@@ -15,6 +15,7 @@
  */
 package org.fcrepo.auth.common;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -23,8 +24,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -66,7 +65,7 @@ public class ContainerRolesPrincipalProviderTest {
     @Test
     public void testSetRole() {
         when(request.isUserInRole("a")).thenReturn(true);
-        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a"})));
+        provider.setRoleNames(newHashSet("a"));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 
@@ -81,7 +80,7 @@ public class ContainerRolesPrincipalProviderTest {
     public void testSetRoles() {
         when(request.isUserInRole("a")).thenReturn(true);
         when(request.isUserInRole("b")).thenReturn(true);
-        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a", "b"})));
+        provider.setRoleNames(newHashSet("a", "b"));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 
@@ -97,7 +96,7 @@ public class ContainerRolesPrincipalProviderTest {
     public void testTrimSetRoles() {
         when(request.isUserInRole("a")).thenReturn(true);
         when(request.isUserInRole("b")).thenReturn(true);
-        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {" a", "b "})));
+        provider.setRoleNames(newHashSet(" a", "b "));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
 
@@ -121,7 +120,7 @@ public class ContainerRolesPrincipalProviderTest {
     @Test
     public void testNoRequest() {
         when(credentials.getRequest()).thenReturn(null);
-        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a"})));
+        provider.setRoleNames(newHashSet("a"));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
         assertTrue("Empty set expected when no request supplied", principals.isEmpty());
@@ -134,7 +133,7 @@ public class ContainerRolesPrincipalProviderTest {
     @Test
     public void testPrincipalEqualsDifferentClass() {
         when(request.isUserInRole("a")).thenReturn(true);
-        provider.setRoleNames(new HashSet<String>(Arrays.asList(new String[] {"a"})));
+        provider.setRoleNames(newHashSet("a"));
 
         final Set<Principal> principals = provider.getPrincipals(credentials);
         final Principal principal = principals.iterator().next();

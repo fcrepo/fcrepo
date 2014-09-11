@@ -46,16 +46,16 @@ import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
+import org.fcrepo.http.commons.responses.GraphStoreStreamingOutput;
+
 import com.google.common.util.concurrent.AbstractFuture;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
-import org.fcrepo.http.commons.responses.GraphStoreStreamingOutput;
 
 /**
  * Stream the results of a SPARQL Query
@@ -81,10 +81,9 @@ public class ResultSetStreamingOutput extends AbstractFuture<Void> implements St
     /**
      *
      * @param entityStream
-     * @throws IOException
      */
     @Override
-    public void write(final OutputStream entityStream) throws IOException {
+    public void write(final OutputStream entityStream) {
         final ResultsFormat resultsFormat = getResultsFormat(mediaType);
 
         try {

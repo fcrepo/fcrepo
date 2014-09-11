@@ -28,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
@@ -37,7 +36,6 @@ import javax.ws.rs.core.UriInfo;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
@@ -64,7 +62,7 @@ public class RdfProviderTest {
                 new Triple(createURI("test:subject"), primaryTypePredicate,
                         createLiteral("nt:file")));
 
-        final UriInfo info = Mockito.mock(UriInfo.class);
+        final UriInfo info = mock(UriInfo.class);
         setField(rdfProvider, "uriInfo", info);
     }
 
@@ -92,10 +90,9 @@ public class RdfProviderTest {
 
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testWriteTo() throws WebApplicationException,
-                             IllegalArgumentException, IOException {
+                             IllegalArgumentException {
         final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
         rdfProvider.writeTo(testData, Dataset.class, mock(Type.class), null,

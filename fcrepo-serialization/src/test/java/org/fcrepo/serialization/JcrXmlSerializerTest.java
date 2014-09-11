@@ -15,8 +15,8 @@
  */
 package org.fcrepo.serialization;
 
-import org.mockito.Mock;
-
+import static javax.jcr.ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW;
+import static org.fcrepo.serialization.FedoraObjectSerializer.JCR_XML;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -24,16 +24,18 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * <p>JcrXmlSerializerTest class.</p>
@@ -41,16 +43,18 @@ import org.junit.Test;
  * @author lsitu
  */
 public class JcrXmlSerializerTest {
-    @Mock
-    Session mockSession;
 
     @Mock
-    Node mockNode;
+    private Session mockSession;
 
     @Mock
-    FedoraObject mockObject;
+    private Node mockNode;
+
+    @Mock
+    private FedoraObject mockObject;
 
     private String testPath = "/path/to/node";
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -93,19 +97,18 @@ public class JcrXmlSerializerTest {
     }
 
     @Test
-    public void testDeserialize() throws Exception {
+    public void testDeserialize() throws IOException, RepositoryException {
         final Session mockSession = mock(Session.class);
-        final InputStream mockIS = mock(InputStream.class);
-
-        new JcrXmlSerializer().deserialize(mockSession, "/objects", mockIS);
-        verify(mockSession).importXML("/objects", mockIS,
-                ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
-
+        try (final InputStream mockIS = mock(InputStream.class)) {
+            new JcrXmlSerializer().deserialize(mockSession, "/objects", mockIS);
+            verify(mockSession).importXML("/objects", mockIS,
+                    IMPORT_UUID_COLLISION_THROW);
+        }
     }
 
     @Test
     public void testGetKey() {
-        assertEquals(FedoraObjectSerializer.JCR_XML, new JcrXmlSerializer().getKey());
+        assertEquals(JCR_XML, new JcrXmlSerializer().getKey());
     }
 
     @Test

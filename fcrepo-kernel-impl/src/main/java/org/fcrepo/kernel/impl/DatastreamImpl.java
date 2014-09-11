@@ -259,7 +259,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getContentDigest()
      */
     @Override
-    public URI getContentDigest() throws RepositoryException {
+    public URI getContentDigest() {
         try {
             return new URI(getContentNode().getProperty(CONTENT_DIGEST).getString());
         } catch (final RepositoryException | URISyntaxException e) {

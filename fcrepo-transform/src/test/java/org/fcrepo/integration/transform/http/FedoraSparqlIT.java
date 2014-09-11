@@ -233,7 +233,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         return content;
     }
 
-    private HttpPost getFormRequest (final String sparql, final String paramName)
+    private static HttpPost getFormRequest (final String sparql, final String paramName)
             throws UnsupportedEncodingException {
         final HttpPost post = new HttpPost(serverAddress + "/fcr:sparql");
         post.addHeader("Content-Type", contentTypeHTMLForm);

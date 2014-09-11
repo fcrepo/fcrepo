@@ -69,18 +69,12 @@ public class SparqlQueryTransformTest {
                 "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
                 "} ").getBytes());
         testObj = new SparqlQueryTransform(query);
-        final QueryExecution apply = testObj.apply(DatasetFactory.create(model));
 
-        assert(apply != null);
-
-        try {
-
+        try (final QueryExecution apply = testObj.apply(DatasetFactory.create(model))) {
+            assert (apply != null);
             final ResultSet resultSet = apply.execSelect();
             assertTrue(resultSet.hasNext());
             assertEquals("some-title", resultSet.nextSolution().get("title").asLiteral().getValue());
-        } finally {
-            apply.close();
         }
-
     }
 }

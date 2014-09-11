@@ -89,7 +89,7 @@ public class CacheEntryFactory {
         }
     }
 
-    private static BinaryStore binaryStore(final Repository repo) throws RepositoryException {
+    private static BinaryStore binaryStore(final Repository repo) {
         final BinaryStore store = getBinaryStore.apply(repo);
         assert store != null;
         return store;

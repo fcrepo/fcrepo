@@ -127,14 +127,13 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         final Version v = getVersionForLabel(workspace, absPath, label);
         if (v == null) {
             throw new PathNotFoundException("Unknown version \"" + label + "\"!");
-        } else {
-            final VersionManager versionManager = workspace.getVersionManager();
-            versionManager.checkin(absPath);
-            versionManager.restore(v, true);
-            versionManager.checkout(absPath);
-
-            nodeUpdated(workspace.getSession(), absPath);
         }
+        final VersionManager versionManager = workspace.getVersionManager();
+        versionManager.checkin(absPath);
+        versionManager.restore(v, true);
+        versionManager.checkout(absPath);
+
+        nodeUpdated(workspace.getSession(), absPath);
     }
 
     @Override
@@ -159,25 +158,24 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
 
-    private Version getVersionForLabel(final Workspace workspace, final String absPath,
+    private static Version getVersionForLabel(final Workspace workspace, final String absPath,
                                        final String label) throws RepositoryException {
         // first see if there's a version label
         final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);
 
         if (history.hasVersionLabel(label)) {
             return history.getVersionByLabel(label);
-        } else {
-            // there was no version with the given JCR Version Label, check to see if
-            // there's a version whose UUID is equal to the label
-            final VersionIterator versionIt = history.getAllVersions();
-            if (versionIt == null) {
-                return null;
-            }
-            while (versionIt.hasNext()) {
-                final Version v = versionIt.nextVersion();
-                if (v.getFrozenNode().getIdentifier().equals(label)) {
-                    return v;
-                }
+        }
+        // there was no version with the given JCR Version Label, check to see if
+        // there's a version whose UUID is equal to the label
+        final VersionIterator versionIt = history.getAllVersions();
+        if (versionIt == null) {
+            return null;
+        }
+        while (versionIt.hasNext()) {
+            final Version v = versionIt.nextVersion();
+            if (v.getFrozenNode().getIdentifier().equals(label)) {
+                return v;
             }
         }
         return null;
@@ -187,7 +185,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         return n.isNodeType(VERSIONABLE);
     }
 
-    private void enableVersioning(final Node node) throws RepositoryException {
+    private static void enableVersioning(final Node node) throws RepositoryException {
         node.addMixin(VERSIONABLE);
         node.getSession().save();
     }
@@ -210,7 +208,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
     }
 
-    private String checkpoint(final Workspace workspace, final String absPath) throws RepositoryException {
+    private static String checkpoint(final Workspace workspace, final String absPath) throws RepositoryException {
         LOGGER.trace("Setting implicit version checkpoint set for {}", absPath);
         final Version v = workspace.getVersionManager().checkpoint(absPath);
         return ( v == null ) ? null : v.getFrozenNode().getIdentifier();

@@ -88,7 +88,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
         multiPartEntityBuilder.addTextBody("delete[]", "ds_void");
         post.setEntity(multiPartEntityBuilder.build());
 
-        final HttpResponse postResponse = client.execute(post);
+        final HttpResponse postResponse = execute(post);
 
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
@@ -129,7 +129,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
 
         post.setEntity(multiPartEntityBuilder.build());
 
-        final HttpResponse postResponse = client.execute(post);
+        final HttpResponse postResponse = execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
         // TODO: we should actually evaluate the multipart response for the
@@ -137,7 +137,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
         final HttpGet getDSesMethod =
             new HttpGet(serverAddress
                     + pid + "/fcr:batch");
-        final HttpResponse response = client.execute(getDSesMethod);
+        final HttpResponse response = execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
@@ -163,7 +163,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
 
         post.setEntity(multiPartEntityBuilder.build());
 
-        final HttpResponse postResponse = client.execute(post);
+        final HttpResponse postResponse = execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
         // TODO: we should actually evaluate the multipart response for the
@@ -171,7 +171,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
         final HttpGet getDSesMethod =
             new HttpGet(serverAddress
                     + pid + "/fcr:batch?child=ds1");
-        final HttpResponse response = client.execute(getDSesMethod);
+        final HttpResponse response = execute(getDSesMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
@@ -197,13 +197,11 @@ public class FedoraBatchIT extends AbstractResourceIT {
 
         post.setEntity(multiPartEntityBuilder.build());
 
-        final HttpResponse postResponse = client.execute(post);
+        final HttpResponse postResponse = execute(post);
         assertEquals(201, postResponse.getStatusLine().getStatusCode());
 
-        final HttpGet getDSesMethod =
-            new HttpGet(serverAddress
-                    + pid + "/fcr:batch?child=ds3");
-        final HttpResponse response = client.execute(getDSesMethod);
+        final HttpGet getDSesMethod = new HttpGet(serverAddress + pid + "/fcr:batch?child=ds3");
+        final HttpResponse response = execute(getDSesMethod);
         assertEquals(400, response.getStatusLine().getStatusCode());
     }
 
@@ -214,7 +212,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
 
         final HttpGet getDSesMethod = new HttpGet(serverAddress + pid
                 + "/fcr:batch");
-        final HttpResponse response = client.execute(getDSesMethod);
+        final HttpResponse response = execute(getDSesMethod);
         assertEquals(400, response.getStatusLine().getStatusCode());
     }
 
@@ -227,13 +225,10 @@ public class FedoraBatchIT extends AbstractResourceIT {
         createDatastream(pid, "ds2", "foo2");
 
         final HttpDelete dmethod =
-            new HttpDelete(
-                    serverAddress
-                            + pid + "/fcr:batch?child=ds1&child=ds2");
+            new HttpDelete( serverAddress + pid + "/fcr:batch?child=ds1&child=ds2");
         assertEquals(204, getStatus(dmethod));
 
-        final HttpGet method_test_get1 =
-            new HttpGet(serverAddress + pid + "/ds1");
+        final HttpGet method_test_get1 = new HttpGet(serverAddress + pid + "/ds1");
         assertEquals(404, getStatus(method_test_get1));
         final HttpGet method_test_get2 =
             new HttpGet(serverAddress + pid + "/ds2");

@@ -15,8 +15,36 @@
  */
 package org.fcrepo.connector.file;
 
-import org.junit.AfterClass;
+import static java.nio.file.Files.createTempDirectory;
+import static java.nio.file.Files.createTempFile;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+
+import javax.jcr.NamespaceRegistry;
+
 import org.infinispan.schematic.document.Document;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -33,35 +61,6 @@ import org.modeshape.jcr.value.ValueFactories;
 import org.modeshape.jcr.value.basic.BasicName;
 import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 import org.slf4j.Logger;
-
-import javax.jcr.NamespaceRegistry;
-import javax.jcr.RepositoryException;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Path;
-
-import static java.nio.file.Files.createTempDirectory;
-import static java.nio.file.Files.createTempFile;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
-import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author Andrew Woods
@@ -161,7 +160,7 @@ public class FedoraFileSystemConnectorTest {
     }
 
     @Test
-    public void testGetDocumentByIdNull() throws Exception {
+    public void testGetDocumentByIdNull() {
         final Document doc = connector.getDocumentById(null);
         assertNull(doc);
     }
@@ -234,7 +233,7 @@ public class FedoraFileSystemConnectorTest {
     }
 
     @Test
-    public void testRemoveDocument() throws IOException, RepositoryException {
+    public void testRemoveDocument() {
         final String id = "/" + tmpFile2.getName();
         final FedoraFileSystemConnector spy = spy(connector);
         assertTrue("Removing document should return true!", spy.removeDocument(id));
@@ -242,7 +241,7 @@ public class FedoraFileSystemConnectorTest {
     }
 
     @Test
-    public void testStoreDocument() throws IOException, RepositoryException {
+    public void testStoreDocument() {
         final String id = "/" + tmpFile.getName();
         final DocumentReader reader = mock(DocumentReader.class);
         final FedoraFileSystemConnector spy = spy(connector);

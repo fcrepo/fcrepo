@@ -151,6 +151,8 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
         return canonical || getCurrentTransactionId(session) == null;
     }
 
+    @SuppressWarnings("unused")
+    // we declare RepositoryException because subclasses throw it
     @Override
     public Resource getSubject(final String absPath) throws RepositoryException {
         resetTranslationChain();
@@ -177,7 +179,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
     }
 
     @Override
-    public String getPathFromSubject(final Resource subject) throws RepositoryException {
+    public String getPathFromSubject(final Resource subject) {
         resetTranslationChain();
         return doBackward(subject);
     }

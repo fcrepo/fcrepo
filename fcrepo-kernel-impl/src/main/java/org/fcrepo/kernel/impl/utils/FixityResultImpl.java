@@ -99,7 +99,7 @@ public class FixityResultImpl implements FixityResult {
      * @return the store identifier
      */
     @Override
-    public String getStoreIdentifier() throws RepositoryException {
+    public String getStoreIdentifier() {
         return storeIdentifier;
     }
 

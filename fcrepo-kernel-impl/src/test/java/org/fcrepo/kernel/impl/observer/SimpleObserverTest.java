@@ -93,13 +93,13 @@ public class SimpleObserverTest {
     }
 
     @Test
-    public void testOnEvent() throws Exception {
+    public void testOnEvent() {
         testObserver.onEvent(mockEvents);
         verify(mockBus).post(any(FedoraEvent.class));
     }
 
     @Test
-    public void testOnEventAllFiltered() throws Exception {
+    public void testOnEventAllFiltered() {
         setField(testObserver, "eventFilter", new NoPassFilter());
         testObserver.onEvent(mockEvents);
         verify(mockBus, never()).post(any(FedoraEvent.class));

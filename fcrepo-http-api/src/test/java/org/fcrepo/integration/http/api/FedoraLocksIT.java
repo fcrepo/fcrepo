@@ -254,7 +254,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
 
         final HttpPost post = new HttpPost(serverAddress + grandchildPid + "/" + FCR_LOCK);
         addLockToken(post, parentLockToken);
-        final HttpResponse response = client.execute(post);
+        final HttpResponse response = execute(post);
 
         assertEquals("May not take out a lock when grandparent is deep-locked!",
                 CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
@@ -319,7 +319,6 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         final String[] pids = new String[10];
         final StringBuffer path = new StringBuffer();
         for (int i = 0; i < pids.length; i ++) {
-            final String pid = getRandomUniquePid();
             if (path.length() > 0) {
                 path.append('/');
             }
@@ -397,7 +396,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
         assertUnlockWithToken(pid, lockToken);
     }
 
-    private void assertContentType(final HttpResponse response, final String contentType) throws IOException {
+    private static void assertContentType(final HttpResponse response, final String contentType) {
         final Header[] contentTypes = response.getHeaders("Content-Type");
         for (Header ctHeader : contentTypes) {
             if (ctHeader.getValue().startsWith(contentType)) {
@@ -471,7 +470,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
      * Assumes (and asserts) that a request to lock a resource was
      * successful and returns the lock token from the response.
      */
-    private String getLockToken(final HttpResponse response) {
+    private static String getLockToken(final HttpResponse response) {
         final StatusLine status = response.getStatusLine();
         assertEquals(CREATED.getStatusCode(), status.getStatusCode());
         final Header lockToken = response.getFirstHeader("Lock-Token");
@@ -482,26 +481,26 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     /**
      * Attempts to lock an object.
      */
-    private HttpResponse lockObject(final String pid) throws IOException {
+    private static HttpResponse lockObject(final String pid) throws IOException {
         return lockObject(pid, false);
     }
 
     /**
      * Attempts to lock an object with the given deep locking status.
      */
-    private HttpResponse lockObject(final String pid, final boolean deep) throws IOException {
+    private static HttpResponse lockObject(final String pid, final boolean deep) throws IOException {
         final HttpPost post = new HttpPost(serverAddress + pid + "/" + FCR_LOCK
                 + (deep  ? "?deep=true" : "?deep=false"));
-        return client.execute(post);
+        return execute(post);
     }
 
     /**
      * Attempts to unlock lock an object.
      */
-    private HttpResponse unlockObject(final String pid, final String lockToken) throws IOException {
+    private static HttpResponse unlockObject(final String pid, final String lockToken) throws IOException {
         final HttpDelete delete = new HttpDelete(serverAddress + pid + "/" + FCR_LOCK);
         addLockToken(delete, lockToken);
-        return client.execute(delete);
+        return execute(delete);
     }
 
     private GraphStore getLockProperties(final String pid, final String lockToken) throws IOException {
@@ -565,7 +564,7 @@ public class FedoraLocksIT extends AbstractResourceIT implements FedoraJcrTypes 
     /**
      * Adds a "Lock-Token" header to the request if token is not null.
      */
-    private void addLockToken(final HttpRequestBase method, final String token) {
+    private static void addLockToken(final HttpRequestBase method, final String token) {
         if (token != null) {
             method.addHeader("Lock-Token", token);
         }

@@ -77,7 +77,7 @@ public class ModeShapeRepositoryFactoryBean implements
     }
 
     @Override
-    public JcrRepository getObject() throws RepositoryException, IOException {
+    public JcrRepository getObject() {
         return repository;
     }
 

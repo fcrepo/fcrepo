@@ -25,7 +25,7 @@ class NoopListener implements MessageListener {
 
     @Override
     public void onMessage(final Message arg0) {
-
+        /* NOOP */
     }
 
 }

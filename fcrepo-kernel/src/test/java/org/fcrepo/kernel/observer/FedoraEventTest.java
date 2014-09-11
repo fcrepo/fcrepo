@@ -42,13 +42,14 @@ public class FedoraEventTest {
             ImmutableMap.of("1", "2"), "data", 0L));
 
 
+    @SuppressWarnings("unused")
     @Test(expected = java.lang.IllegalArgumentException.class)
-    public void testWrapNullEvent() throws Exception {
+    public void testWrapNullEvent() {
         new FedoraEvent(null);
     }
 
     @Test
-    public void testGetType() throws Exception {
+    public void testGetType() {
         assertEquals(singleton(1), e.getTypes());
     }
 
@@ -71,7 +72,7 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testGetUserID() throws Exception {
+    public void testGetUserID() {
 
         assertEquals("UserId", e.getUserID());
 
@@ -171,7 +172,7 @@ public class FedoraEventTest {
 
 
         @Override
-        public String getPath() throws RepositoryException {
+        public String getPath() {
             return path;
         }
 
@@ -183,25 +184,25 @@ public class FedoraEventTest {
 
 
         @Override
-        public String getIdentifier() throws RepositoryException {
+        public String getIdentifier() {
             return identifier;
         }
 
 
         @Override
-        public Map<String, String> getInfo() throws RepositoryException {
+        public Map<String, String> getInfo() {
             return info;
         }
 
 
         @Override
-        public String getUserData() throws RepositoryException {
+        public String getUserData() {
             return userData;
         }
 
 
         @Override
-        public long getDate() throws RepositoryException {
+        public long getDate() {
             return date;
         }
     }

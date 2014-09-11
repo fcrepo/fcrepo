@@ -19,6 +19,8 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.observation.Event;
 
@@ -26,8 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -53,14 +53,14 @@ public class LogbackAuditorTest {
     private Appender<ILoggingEvent> mockAppender;
 
     @Before
-    public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+    public void setUp() {
+        initMocks(this);
     }
 
     @Test
     public void testEventAuditing() throws Exception {
         final Logger root =
-                (Logger) LoggerFactory.getLogger(LogbackAuditor.class);
+                (Logger) getLogger(LogbackAuditor.class);
 
         when(mockAppender.getName()).thenReturn("MockAppender");
 

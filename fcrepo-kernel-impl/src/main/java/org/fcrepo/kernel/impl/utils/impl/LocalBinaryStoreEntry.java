@@ -68,7 +68,7 @@ public class LocalBinaryStoreEntry extends BasicCacheEntry {
      * @return human-readable identifier for the location of this entry
      */
     @Override
-    public String getExternalIdentifier() throws RepositoryException {
+    public String getExternalIdentifier() {
         try {
             return new URI("info", store.toString(), null) + "/" + binaryKey();
         } catch (URISyntaxException e) {
@@ -104,7 +104,7 @@ public class LocalBinaryStoreEntry extends BasicCacheEntry {
         return property;
     }
 
-    protected BinaryKey binaryKey() throws RepositoryException {
+    protected BinaryKey binaryKey() {
         return getBinaryKey.apply(property);
     }
 

@@ -91,39 +91,38 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.sun.jersey.multipart.FormDataParam;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.sun.jersey.multipart.FormDataParam;
 
 /**
  * CRUD operations on Fedora Nodes
@@ -441,8 +440,7 @@ public class FedoraNodes extends AbstractResource {
             final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream,
             @Context final Request request,
-            @Context final HttpServletResponse servletResponse) throws RepositoryException, ParseException,
-            IOException, InvalidChecksumException, URISyntaxException {
+            @Context final HttpServletResponse servletResponse) throws RepositoryException, URISyntaxException {
         throwIfPathIncludesJcr(pathList, "PUT");
         init(uriInfo);
 
@@ -742,7 +740,7 @@ public class FedoraNodes extends AbstractResource {
             session.save();
             return noContent().build();
         } catch (final WebApplicationException ex) {
-            return (Response)ex.getResponse();
+            return ex.getResponse();
         } finally {
             session.logout();
         }
@@ -858,8 +856,7 @@ public class FedoraNodes extends AbstractResource {
     @OPTIONS
     @Timed
     public Response options(@PathParam("path") final List<PathSegment> pathList,
-                            @Context final HttpServletResponse servletResponse)
-        throws RepositoryException {
+                            @Context final HttpServletResponse servletResponse) {
         throwIfPathIncludesJcr(pathList, "OPTIONS");
 
         addOptionsHttpHeaders(servletResponse);
@@ -884,11 +881,11 @@ public class FedoraNodes extends AbstractResource {
     }
 
     /*
-     * Return the statement's predicate and it's literal value if there's any
+     * Return the statement's predicate and its literal value if there's any
      * @param stmt
      * @return
      */
-    private String getMessage(final Statement stmt) {
+    private static String getMessage(final Statement stmt) {
         final Literal literal = stmt.getLiteral();
         if (literal != null) {
             return stmt.getPredicate().getURI() + ": " + literal.getString();

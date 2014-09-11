@@ -97,12 +97,12 @@ public class JQLResultSetTest {
     }
 
     @Test( expected = java.lang.UnsupportedOperationException.class)
-    public void testRemove() throws Exception {
+    public void testRemove() {
         testObj.remove();
     }
 
     @Test
-    public void testHasNext() throws Exception {
+    public void testHasNext() {
         when(mockRows.hasNext()).thenReturn(true);
         assertTrue(testObj.hasNext());
         verify(mockRows).hasNext();
@@ -199,7 +199,7 @@ public class JQLResultSetTest {
     }
 
     @Test
-    public void testSolutionVars() throws Exception {
+    public void testSolutionVars() {
         final QuerySolution solution = testObj.nextSolution();
         final List<String> vars = ImmutableList.copyOf(solution.varNames());
 
@@ -218,19 +218,19 @@ public class JQLResultSetTest {
     }
 
     @Test
-    public void testBindingSize() throws Exception {
+    public void testBindingSize() {
         final Binding binding = testObj.nextBinding();
         assertEquals(2, binding.size());
     }
 
     @Test
-    public void testBindingEmpty() throws Exception {
+    public void testBindingEmpty() {
         final Binding binding = testObj.nextBinding();
         assertFalse(binding.isEmpty());
     }
 
     @Test
-    public void testBindingVars() throws Exception {
+    public void testBindingVars() {
         final Binding binding = testObj.nextBinding();
         final List<String> vars = ImmutableList.copyOf(Iterators.transform(binding.vars(), new Function<Var, String>() {
             @Override
@@ -253,12 +253,12 @@ public class JQLResultSetTest {
     }
 
     @Test
-    public void testGetRowNumber() throws Exception {
+    public void testGetRowNumber() {
         assertEquals(0, testObj.getRowNumber());
     }
 
     @Test
-    public void testGetRowNumberAfterGettingNext() throws Exception {
+    public void testGetRowNumberAfterGettingNext() {
         testObj.next();
         testObj.next();
         testObj.next();
@@ -268,12 +268,12 @@ public class JQLResultSetTest {
     }
 
     @Test
-    public void testGetResultVars() throws Exception {
+    public void testGetResultVars() {
         assertArrayEquals(columnNames, testObj.getResultVars().toArray());
     }
 
     @Test
-    public void testGetResourceModel() throws Exception {
+    public void testGetResourceModel() {
         assertNull(testObj.getResourceModel());
     }
 }

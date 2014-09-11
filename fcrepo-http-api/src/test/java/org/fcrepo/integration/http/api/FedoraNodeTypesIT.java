@@ -67,7 +67,7 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
                         + "<special = 'info:local#'>\n"
                         + "[special:object] > fedora:object mixin").getBytes()));
         httpPost.setEntity(entity);
-        final HttpResponse response = client.execute(httpPost);
+        final HttpResponse response = execute(httpPost);
 
         assertEquals(204, response.getStatusLine().getStatusCode());
 

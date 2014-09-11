@@ -29,7 +29,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.setCachingHeaders;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -67,7 +66,7 @@ public class RdfProvider implements MessageBodyWriter<Dataset> {
             final Type genericType, final Annotation[] annotations,
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) throws IOException {
+            final OutputStream entityStream) {
 
         LOGGER.debug("Writing a response for: {} with MIMEtype: {}", rdf,
                         mediaType);

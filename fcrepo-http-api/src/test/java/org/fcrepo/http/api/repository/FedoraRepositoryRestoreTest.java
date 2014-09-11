@@ -54,7 +54,7 @@ public class FedoraRepositoryRestoreTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
 
         repoRestore = new FedoraRepositoryRestore();

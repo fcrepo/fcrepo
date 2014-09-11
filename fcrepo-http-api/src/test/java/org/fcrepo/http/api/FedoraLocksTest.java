@@ -17,7 +17,6 @@ package org.fcrepo.http.api;
 
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
-import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
@@ -34,7 +33,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.Lock;
 import org.fcrepo.kernel.services.LockService;
@@ -50,7 +48,7 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class FedoraLocksTest {
 
-    FedoraLocks testObj;
+    private FedoraLocks testObj;
 
     @Mock
     private LockService mockLockService;
@@ -64,16 +62,13 @@ public class FedoraLocksTest {
     @Mock
     private NodeType mockNodeType;
 
-    Session mockSession;
-
-    private UriInfo mockUriInfo;
+    private Session mockSession;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraLocks();
         setField(testObj, "lockService", mockLockService);
-        this.mockUriInfo = getUriInfoImpl();
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
         when(mockLock.getLockToken()).thenReturn("token");
@@ -105,7 +100,7 @@ public class FedoraLocksTest {
     }
 
     @Test
-    public void testDeleteLock() throws RepositoryException, URISyntaxException {
+    public void testDeleteLock() throws RepositoryException {
         final String pid = randomUUID().toString();
         final String path = "/" + pid;
         initializeMockNode(path);

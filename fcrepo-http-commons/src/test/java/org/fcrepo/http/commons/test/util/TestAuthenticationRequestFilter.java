@@ -47,9 +47,6 @@ public class TestAuthenticationRequestFilter implements Filter {
 
     private static final Logger log = getLogger(TestAuthenticationRequestFilter.class);
 
-    // @Context
-    // UriInfo uriInfo;
-
     private static final String FEDORA_ADMIN_USER = "fedoraAdmin";
 
     /*
@@ -112,7 +109,7 @@ public class TestAuthenticationRequestFilter implements Filter {
         return result;
     }
 
-    private String getUsername(final HttpServletRequest request) {
+    private static String getUsername(final HttpServletRequest request) {
         // Extract authentication credentials
         String authentication = request.getHeader(AUTHORIZATION);
         if (authentication == null) {
@@ -141,7 +138,7 @@ public class TestAuthenticationRequestFilter implements Filter {
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
      */
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
+    public void init(final FilterConfig filterConfig) {
     }
 
     /*

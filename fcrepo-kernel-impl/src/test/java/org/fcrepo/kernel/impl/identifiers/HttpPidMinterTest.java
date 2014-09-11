@@ -72,7 +72,7 @@ public class HttpPidMinterTest {
     }
 
     @Test
-    public void testHttpClient() throws Exception {
+    public void testHttpClient() {
         final HttpPidMinter testMinter = new HttpPidMinter(
             "http://localhost/minter","POST", "user", "pass", "", "");
         final HttpClient client = testMinter.buildClient();

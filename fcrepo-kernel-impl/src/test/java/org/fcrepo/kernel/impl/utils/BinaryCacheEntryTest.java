@@ -62,9 +62,10 @@ public class BinaryCacheEntryTest {
     @Test
     public void testGetInputStream() throws Exception {
         when(mockBinary.getStream()).thenReturn(mockInputStream);
-        final InputStream actual = testObj.getInputStream();
-        assertEquals(mockInputStream, actual);
-        verify(mockBinary).getStream();
+        try (final InputStream actual = testObj.getInputStream()) {
+            assertEquals(mockInputStream, actual);
+            verify(mockBinary).getStream();
+        }
     }
 
     @Test

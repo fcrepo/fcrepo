@@ -328,13 +328,13 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertTrue("Should have fedora:isDeep property.", lockPage.asText().contains("isDeep"));
     }
 
-    private void checkForHeaderSearch(final HtmlPage page) {
+    private static void checkForHeaderSearch(final HtmlPage page) {
         final HtmlForm form = page.getFirstByXPath("//form[@role='search']");
         assertNotNull(form);
         assertEquals(serverAddress + "fcr:search", form.getActionAttribute());
     }
 
-    private void checkForHeaderBranding(final HtmlPage page) {
+    private static void checkForHeaderBranding(final HtmlPage page) {
         assertNotNull(
                 page.getFirstByXPath("//nav[@role='navigation']/div[@class='navbar-header']/a[@class='navbar-brand']"));
     }

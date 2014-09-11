@@ -15,6 +15,7 @@
  */
 package org.fcrepo.connector.file;
 
+import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.infinispan.schematic.document.Document;
 import org.modeshape.connector.filesystem.ExternalJsonSidecarExtraPropertyStore;
 import org.modeshape.connector.filesystem.FileSystemConnector;
@@ -163,9 +165,8 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         final String cachedSha1 = getCachedSha1(file);
         if (cachedSha1 == null) {
             return computeAndCacheSha1(file);
-        } else {
-            return cachedSha1;
         }
+        return cachedSha1;
     }
 
 
@@ -192,7 +193,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         LOGGER.trace("Computing sha1 for {}.", id);
         final String sha1 = super.sha1(file);
         if (shouldCacheProperties()) {
-            final Map<Name, Property> updateMap = new HashMap<Name, Property>();
+            final Map<Name, Property> updateMap = new HashMap<>();
             final Property digestProperty = new BasicSingleValueProperty(nameFrom(CONTENT_DIGEST),
                     asURI("SHA-1", sha1));
             final Property digestDateProperty = new BasicSingleValueProperty(nameFrom(JCR_CREATED),
@@ -251,16 +252,14 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         if (lastModified == null) {
             LOGGER.trace("Hash for {} has not been computed yet.", file.getName());
             return true;
-        } else {
-            final DateTime datetime = (DateTime) lastModified.getFirstValue();
-            if (datetime.toDate().equals(new Date(file.lastModified()))) {
-                return false;
-            } else {
-                LOGGER.trace("{} has been modified ({}) since hash was last computed ({}).", file.getName(),
-                        new Date(file.lastModified()), datetime.toDate());
-                return true;
-            }
         }
+        final DateTime datetime = (DateTime) lastModified.getFirstValue();
+        if (datetime.toDate().equals(new Date(file.lastModified()))) {
+            return false;
+        }
+        LOGGER.trace("{} has been modified ({}) since hash was last computed ({}).", file.getName(),
+                new Date(file.lastModified()), datetime.toDate());
+        return true;
     }
 
     private static BinaryValue getBinaryValue(final DocumentReader docReader) {
@@ -304,10 +303,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
      * timestamp will be used for populating the Last-Modified header.
     **/
     protected void touchParent( final String id ) {
-        if ( !isRoot(id) ) {
+        if (!isRoot(id)) {
             final File file = fileFor(id);
             final File parent = file.getParentFile();
-            parent.setLastModified( System.currentTimeMillis() );
+            parent.setLastModified(currentTimeMillis());
         }
     }
 

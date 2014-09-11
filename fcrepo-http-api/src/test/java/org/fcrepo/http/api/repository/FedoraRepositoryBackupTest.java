@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api.repository;
 
+import static java.lang.System.getProperty;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
@@ -51,7 +52,7 @@ public class FedoraRepositoryBackupTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
 
         repoBackup = new FedoraRepositoryBackup();
@@ -80,7 +81,7 @@ public class FedoraRepositoryBackupTest {
                                         any(File.class))).thenReturn(
                 mockProblems);
 
-        final String tmpDir = System.getProperty("java.io.tmpdir");
+        final String tmpDir = getProperty("java.io.tmpdir");
         final String tmpDirPath = new File(tmpDir).getCanonicalPath();
         final InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
 

@@ -16,7 +16,7 @@
 package org.fcrepo.http.api.versioning;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.http.commons.api.rdf.GraphSubjectsTest;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslatorTestScaffold;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +43,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
  * @author Mike Durbin
  * @since 2014-02-21
  */
-public class VersionAwareHttpGraphSubjectsTest extends GraphSubjectsTest {
+public class VersionAwareHttpGraphSubjectsTest extends HttpIdentifierTranslatorTestScaffold {
 
     @Mock
     protected VersionManager mockVersionManager;

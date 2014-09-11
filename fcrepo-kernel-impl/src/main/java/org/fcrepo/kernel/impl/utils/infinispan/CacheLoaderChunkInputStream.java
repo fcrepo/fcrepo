@@ -193,8 +193,7 @@ public class CacheLoaderChunkInputStream extends InputStream {
         LOGGER.debug("Read chunk {0}", chunkKey);
         if (blobCache.contains(chunkKey)) {
             return blobCache.load(chunkKey).getValue();
-        } else {
-            return null;
         }
+        return null;
     }
 }

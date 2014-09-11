@@ -17,6 +17,7 @@ package org.fcrepo.integration.http.api;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -30,6 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
 import com.hp.hpl.jena.update.GraphStore;
+
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -49,13 +51,11 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
-
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -72,7 +72,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
 
-    protected Logger logger;
+    protected static Logger logger;
 
     @Before
     public void setLogger() {
@@ -142,14 +142,14 @@ public abstract class AbstractResourceIT {
         return put;
     }
 
-    protected static HttpGet getDSMethod(final String pid, final String ds) throws UnsupportedEncodingException {
+    protected static HttpGet getDSMethod(final String pid, final String ds) {
             final HttpGet get =
                     new HttpGet(serverAddress + pid + "/" + ds +
                             "/fcr:content");
             return get;
         }
 
-    protected HttpResponse execute(final HttpUriRequest method)
+    protected static HttpResponse execute(final HttpUriRequest method)
         throws ClientProtocolException, IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                          method.getURI());
@@ -176,8 +176,9 @@ public abstract class AbstractResourceIT {
         final HttpClientContext localContext = HttpClientContext.create();
         localContext.setAuthCache(authCache);
 
-        final CloseableHttpResponse response = httpclient.execute(request, localContext);
-        return response;
+        try (final CloseableHttpResponse response = httpclient.execute(request, localContext)) {
+            return response;
+        }
     }
 
 
@@ -313,14 +314,14 @@ public abstract class AbstractResourceIT {
      * Gets a random (but valid) property name for use in testing.
      */
     protected static String getRandomPropertyName() {
-        return UUID.randomUUID().toString();
+        return randomUUID().toString();
     }
 
     /**
      * Gets a random (but valid) property value for use in testing.
      */
     protected static String getRandomPropertyValue() {
-        return UUID.randomUUID().toString();
+        return randomUUID().toString();
     }
 
 }

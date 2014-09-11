@@ -83,9 +83,8 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
                 throw new WebApplicationException(e, BAD_REQUEST);
             }
 
-        } else {
-            return entityStream;
         }
+        return entityStream;
     }
 
     @VisibleForTesting

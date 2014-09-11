@@ -15,6 +15,18 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.apache.http.impl.client.HttpClients.createMinimal;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,20 +36,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 
 /**
@@ -75,15 +76,16 @@ public class ExternalContentServiceImplTest {
         testObj.setConnManager(mockClientPool);
 
         mockStatic(HttpClients.class);
-        when(HttpClients.createMinimal(mockClientPool)).thenReturn(mockClient);
-        when(mockClient.execute(Mockito.any(HttpGet.class))).thenReturn(mockResponse);
+        when(createMinimal(mockClientPool)).thenReturn(mockClient);
+        when(mockClient.execute(any(HttpGet.class))).thenReturn(mockResponse);
         when(mockResponse.getEntity()).thenReturn(mockEntity);
         when(mockEntity.getContent()).thenReturn(mockInputStream);
     }
 
     @Test
     public void testRetrieveExternalContent() throws Exception {
-        final InputStream xyz = testObj.retrieveExternalContent(sourceUri);
-        assertEquals(mockInputStream, xyz);
+        try (final InputStream xyz = testObj.retrieveExternalContent(sourceUri)) {
+            assertEquals(mockInputStream, xyz);
+        }
     }
 }

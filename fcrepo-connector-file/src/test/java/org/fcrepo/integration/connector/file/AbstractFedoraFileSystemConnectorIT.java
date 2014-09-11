@@ -226,6 +226,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
         final File file = fileForNode(node);
+
         assertTrue(file.getAbsolutePath(), file.exists());
         assertEquals(file.length(), node.getProperty(CONTENT_SIZE).getLong());
 
@@ -251,7 +252,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final String originalFixity = checkFixity(node);
 
-        final File file = fileForNode(node);
+        final File file = fileForNode(null);
         appendToFile(file, " ");
 
         final String newFixity = checkFixity(node);
@@ -262,19 +263,16 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         session.logout();
     }
 
-    private void appendToFile(final File f, final String data) throws IOException {
-        final FileOutputStream fos = new FileOutputStream(f, true);
-        try {
+    private static void appendToFile(final File f, final String data) throws IOException {
+        try (final FileOutputStream fos = new FileOutputStream(f, true)) {
             fos.write(data.getBytes("UTF-8"));
-        } finally {
-            fos.close();
         }
     }
 
     private String checkFixity(final Node node) throws IOException, NoSuchAlgorithmException, RepositoryException {
         assertNotNull(node);
 
-        final File file = fileForNode(node);
+        final File file = fileForNode(null);
         final byte[] hash = getHash(SHA_1, file);
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
@@ -292,7 +290,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         return calculatedChecksum.toString();
     }
 
-    protected File fileForNode(final Node node) {
+    protected File fileForNode(@SuppressWarnings("unused") final Node node) {
         return new File(getFederationRoot(), testFilePath().replace(federationName(), ""));
     }
 

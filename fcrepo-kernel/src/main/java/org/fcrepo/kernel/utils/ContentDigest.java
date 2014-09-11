@@ -81,11 +81,10 @@ public abstract class ContentDigest {
     public static String getAlgorithm(final URI digestUri) {
         if (digestUri == null) {
             return DEFAULT_ALGORITHM;
-        } else {
-            return schemeToAlgorithm
-            .get(digestUri.getScheme() + ":" +
-                 digestUri.getSchemeSpecificPart().split(":", 2)[0]);
         }
+        return schemeToAlgorithm
+        .get(digestUri.getScheme() + ":" +
+             digestUri.getSchemeSpecificPart().split(":", 2)[0]);
     }
 
     private static String asString(final byte[] data) {

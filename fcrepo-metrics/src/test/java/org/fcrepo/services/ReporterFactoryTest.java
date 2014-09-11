@@ -15,32 +15,28 @@
  */
 package org.fcrepo.services;
 
-import java.lang.management.ManagementFactory;
-
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
-
-import javax.jcr.RepositoryException;
-import javax.management.MBeanServer;
-
+import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.junit.runner.RunWith;
-
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
+import java.lang.management.ManagementFactory;
+
+import javax.management.MBeanServer;
+
+import org.fcrepo.metrics.ReporterFactory;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import org.fcrepo.metrics.ReporterFactory;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 
 /**
  * ReporterFactoryTest class.
@@ -57,28 +53,27 @@ public class ReporterFactoryTest {
     @Mock
     private MBeanServer mockMBeanServer;
 
+    @Mock
+    private Graphite mockGraphite;
+
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
-
         mockStatic(ManagementFactory.class);
-        final ManagementFactory mockManagementFactory = mock(ManagementFactory.class);
-        when(mockManagementFactory.getPlatformMBeanServer()).thenReturn(mockMBeanServer);
-
+        when(getPlatformMBeanServer()).thenReturn(mockMBeanServer);
         factory = new ReporterFactory();
     }
 
     @Test
     public void testGetJmxReporter() {
         final JmxReporter reporter = factory.getJmxReporter("not-used");
-        Assert.assertNotNull(reporter);
+        assertNotNull(reporter);
     }
 
     @Test
     public void testGetGraphiteReporter() {
-        final Graphite graphite = mock(Graphite.class);
-        final GraphiteReporter reporter = factory.getGraphiteReporter("some-prefix", graphite);
-        Assert.assertNotNull(reporter);
+        final GraphiteReporter reporter = factory.getGraphiteReporter("some-prefix", mockGraphite);
+        assertNotNull(reporter);
     }
 
 }

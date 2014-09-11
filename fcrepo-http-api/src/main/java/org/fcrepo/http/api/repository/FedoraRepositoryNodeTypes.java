@@ -101,9 +101,8 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
             if ( ex.getMessage().indexOf("Reading the node definitions from the"
                     + " supplied stream resulted in problems(s)") != -1 ) {
                 return status(SC_BAD_REQUEST).entity(ex.getMessage()).build();
-            } else {
-                throw ex;
             }
+            throw ex;
         } finally {
             session.logout();
         }
