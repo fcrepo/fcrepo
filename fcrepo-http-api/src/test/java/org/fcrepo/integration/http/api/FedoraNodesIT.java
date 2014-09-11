@@ -110,7 +110,6 @@ import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -1454,9 +1453,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to upload a file to a read/write federated filesystem.
-     * TODO: ignored until read-write filesystem support is reintroduced.
     **/
-    @Ignore
     @Test
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
@@ -1483,9 +1480,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to copy objects from the repository to a federated filesystem.
-     * TODO: ignored until read-write filesystem support is reintroduced.
     **/
-    @Ignore
     @Test
     public void testCopyToProjection() throws IOException {
         // create object in the repository
@@ -1561,6 +1556,47 @@ public class FedoraNodesIT extends AbstractResourceIT {
         e.setContent(new ByteArrayInputStream(sparql.getBytes()));
         patch.setEntity(e);
         assertEquals("Couldn't link to external datastream!", 204, getStatus(patch));
+    }
+
+    /**
+     * I should be able to move a node within a federated filesystem with
+     * properties preserved.
+    **/
+    @Test
+    public void testFederatedMoveWithProperties() throws Exception {
+        // create object on federation
+        final String pid = getRandomUniquePid();
+        final String source = serverAddress + "files/" + pid + "/src";
+        createObject("files/" + pid + "/src");
+
+        // add properties
+        final HttpPatch patch = new HttpPatch(source);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        final String sparql = "insert { <> <http://purl.org/dc/elements/1.1/identifier> \"identifier.123\" . "
+            + "<> <http://purl.org/dc/elements/1.1/title> \"title.123\" } where {}";
+        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
+        final HttpResponse response = client.execute(patch);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        // move object
+        final String destination = serverAddress + "files/" + pid + "/dst";
+        final HttpMove request = new HttpMove(source);
+        request.addHeader("Destination", destination);
+        final HttpResponse moveRequest = client.execute(request);
+        assertEquals(CREATED.getStatusCode(), moveRequest.getStatusLine().getStatusCode());
+
+        // check properties
+        final HttpGet get =  new HttpGet(destination);
+        get.addHeader("Accept", "application/n-triples");
+        final GraphStore graphStore = getGraphStore(get);
+        assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(destination),
+                                                 NodeFactory.createURI("http://purl.org/dc/elements/1.1/identifier"),
+                                                 NodeFactory.createLiteral("identifier.123")));
+        assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(destination),
+                                                 NodeFactory.createURI("http://purl.org/dc/elements/1.1/title"),
+                                                 NodeFactory.createLiteral("title.123")));
     }
 
     @Test
