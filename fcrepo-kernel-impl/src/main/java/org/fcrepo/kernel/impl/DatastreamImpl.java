@@ -231,15 +231,6 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#setContent(java.io.InputStream)
-     */
-    @Override
-    public void setContent(final InputStream content) throws InvalidChecksumException, RepositoryException {
-        setContent(content, null, null, null, null);
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.fcrepo.kernel.Datastream#getContentSize()
      */
     @Override

@@ -180,7 +180,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
-        testObj.setContent(mockStream);
+        testObj.setContent(mockStream, null, null, null, null);
     }
 
     @Test

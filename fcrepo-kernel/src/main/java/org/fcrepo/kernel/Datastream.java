@@ -66,15 +66,6 @@ public interface Datastream extends FedoraResource {
         throws RepositoryException, InvalidChecksumException;
 
     /**
-     * Set the content of this datastream
-     * @param content Binary content to be stored
-     * @throws InvalidChecksumException
-     * @throws RepositoryException
-     */
-    void setContent(InputStream content) throws InvalidChecksumException,
-            RepositoryException;
-
-    /**
      * @return The size in bytes of content associated with this datastream.
      */
     long getContentSize();
