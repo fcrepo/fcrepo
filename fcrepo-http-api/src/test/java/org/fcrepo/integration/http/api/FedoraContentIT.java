@@ -453,7 +453,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final String pid = getRandomUniquePid();
         final String dsURL = serverAddress + pid + "/ds1";
         final String extPID = getRandomUniquePid();
-        final String extURL = serverAddress + extPID;
+        final String extURL = serverAddress + "files/FileSystem1/ds1/fcr:content";
 
         createObject(extPID);
         createObject(pid);
@@ -470,8 +470,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet get = new HttpGet(dsURL + "/fcr:content");
         final HttpResponse response = client.execute(get);
         assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-        assertEquals("text/turtle", response.getFirstHeader("Content-Type").getValue());
-        assertTrue( IOUtils.toString(response.getEntity().getContent()).contains(extURL) );
+        assertEquals( "This is a test datastream", IOUtils.toString(response.getEntity().getContent()) );
     }
 
 }
