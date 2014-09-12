@@ -81,7 +81,7 @@ public class TiffStoragePolicyStorageIT {
         repo = new JcrRepositoryFactory().getRepository(params);
 
         pdp = new StoragePolicyDecisionPointImpl();
-        pdp.addPolicy(new MimeTypeStoragePolicy("image/tiff", "tiff-store"));
+        pdp.add(new MimeTypeStoragePolicy("image/tiff", "tiff-store"));
 
         datastreamService = new DatastreamServiceImpl();
         datastreamService.setRepository(repo);

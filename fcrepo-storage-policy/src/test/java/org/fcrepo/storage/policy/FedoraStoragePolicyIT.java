@@ -15,8 +15,16 @@
  */
 package org.fcrepo.storage.policy;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.fcrepo.storage.policy.FedoraStoragePolicy.POLICY_RESOURCE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -29,14 +37,6 @@ import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 // Runs integration test for restful interface for storage policies
 
@@ -72,7 +72,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
                                               "UTF-8");
         input.setContentType(APPLICATION_FORM_URLENCODED);
         objMethod.setEntity(input);
-        final HttpResponse response = client.execute(objMethod);
+        final HttpResponse response = execute(objMethod);
 
         final String body = IOUtils.toString(response.getEntity().getContent());
         assertEquals(body, 201, response.getStatusLine().getStatusCode());
@@ -92,7 +92,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
     public void testGetStoragePolicy() throws Exception {
         // Test no policy
         final HttpGet getMethod0 = HttpGetObjMethod(MIME_KEY);
-        final HttpResponse response0 = client.execute(getMethod0);
+        final HttpResponse response0 = execute(getMethod0);
         assertNotNull(response0);
         assertEquals(IOUtils.toString(response0.getEntity().getContent()),
                      404,
@@ -103,7 +103,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
 
         // Test Get Storage Policy
         final HttpGet getMethod1 = HttpGetObjMethod(MIME_KEY);
-        final HttpResponse response1 = client.execute(getMethod1);
+        final HttpResponse response1 = execute(getMethod1);
         assertNotNull(response1);
 
         final String body = IOUtils.toString(response1.getEntity().getContent());
@@ -118,14 +118,14 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
 
         // Test Get Storage Policy
         final HttpGet getMethod1 = HttpGetObjMethod(POLICY_RESOURCE);
-        final HttpResponse response1 = client.execute(getMethod1);
+        final HttpResponse response1 = execute(getMethod1);
         assertNotNull(response1);
 
         final String body = IOUtils.toString(response1.getEntity().getContent());
         assertEquals(body, 200, response1.getStatusLine().getStatusCode());
 
         final StoragePolicy policy = new MimeTypeStoragePolicy(MIME, STORE);
-        assertEquals("policies=[" + policy.toString() + "]", body);
+        assertTrue("Didn't find our policy in policies!", body.contains(policy.toString()));
     }
 
     @Test
@@ -135,7 +135,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
                                               "UTF-8");
         input.setContentType(APPLICATION_FORM_URLENCODED);
         objMethod.setEntity(input);
-        final HttpResponse response = client.execute(objMethod);
+        final HttpResponse response = execute(objMethod);
         assertEquals(response.getStatusLine().getStatusCode(), 500);
     }
 
@@ -147,7 +147,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
         assertEquals(204, response.getStatusLine().getStatusCode());
 
         final HttpGet objGetMethod = HttpGetObjMethod(POLICY_RESOURCE);
-        final HttpResponse getResponse = client.execute(objGetMethod);
+        final HttpResponse getResponse = execute(objGetMethod);
         assertEquals("No Policies Found",
                      IOUtils.toString(getResponse.getEntity().getContent())
         );
@@ -156,7 +156,7 @@ public class FedoraStoragePolicyIT extends AbstractResourceIT {
     private HttpResponse deletePolicy(final String policyKey) {
         final HttpDelete objMethod = HttpDeleteObjMethod(policyKey);
         try {
-            return client.execute(objMethod);
+            return execute(objMethod);
 
         } catch (IOException e) {
             fail(e.getMessage());
