@@ -20,8 +20,6 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
-import javax.jcr.RepositoryException;
-
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -53,7 +51,7 @@ public class DefaultIdentifierTranslator implements IdentifierTranslator {
     }
 
     @Override
-    public Resource getSubject(final String absPath) throws RepositoryException {
+    public Resource getSubject(final String absPath) {
         if (absPath.endsWith(JCR_CONTENT)) {
             return createResource(RESOURCE_NAMESPACE + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
         }
@@ -66,7 +64,7 @@ public class DefaultIdentifierTranslator implements IdentifierTranslator {
     }
 
     @Override
-    public String getPathFromSubject(final Resource subject) throws RepositoryException {
+    public String getPathFromSubject(final Resource subject) {
         if (!isFedoraGraphSubject(subject)) {
             return null;
         }

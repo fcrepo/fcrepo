@@ -15,9 +15,16 @@
  */
 package org.fcrepo.kernel.impl.utils.impl;
 
-import com.google.common.collect.ImmutableSet;
+import static org.apache.commons.io.IOUtils.copy;
+import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
 
-import org.apache.commons.io.IOUtils;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.util.Collection;
+import java.util.Set;
+
 import org.fcrepo.kernel.impl.utils.FixityInputStream;
 import org.fcrepo.kernel.impl.utils.FixityResultImpl;
 import org.fcrepo.kernel.impl.utils.infinispan.CacheLoaderChunkInputStream;
@@ -29,14 +36,7 @@ import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.CacheLoader;
 
-import java.io.InputStream;
-import java.io.Serializable;
-import java.net.URI;
-import java.security.MessageDigest;
-import java.util.Collection;
-import java.util.Set;
-
-import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Infinispan DistributedCallable for checking the fixity of a binary key in every cache loader
@@ -70,18 +70,20 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
 
             final String digest = ContentDigest.getAlgorithm(new URI("urn:sha1"));
 
-            final InputStream cacheLoaderChunkInputStream = new CacheLoaderChunkInputStream(
+            try (final InputStream cacheLoaderChunkInputStream = new CacheLoaderChunkInputStream(
                     store, dataKey, chunkSize, length);
 
-            final FixityInputStream fixityInputStream = new FixityInputStream(
-                    cacheLoaderChunkInputStream, MessageDigest.getInstance(digest));
+                    final FixityInputStream fixityInputStream = new FixityInputStream(
+                            cacheLoaderChunkInputStream, MessageDigest.getInstance(digest))) {
 
-            IOUtils.copy(fixityInputStream, NULL_OUTPUT_STREAM);
+                copy(fixityInputStream, NULL_OUTPUT_STREAM);
 
-            final URI calculatedChecksum = ContentDigest.asURI(digest, fixityInputStream.getMessageDigest().digest());
-            fixityResults.add(
-                new FixityResultImpl(getExternalIdentifier(store), fixityInputStream.getByteCount(), calculatedChecksum)
-            );
+                final URI calculatedChecksum =
+                        ContentDigest.asURI(digest, fixityInputStream.getMessageDigest().digest());
+                fixityResults.add(
+                        new FixityResultImpl(getExternalIdentifier(store), fixityInputStream.getByteCount(),
+                                calculatedChecksum));
+            }
         }
 
         return fixityResults.build();

@@ -19,7 +19,6 @@ import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.impl.rdf.SerializationUtils.unifyDatasetModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 import javax.ws.rs.core.MediaType;
@@ -86,7 +85,7 @@ public class GraphStoreStreamingOutput implements StreamingOutput {
     }
 
     @Override
-    public void write(final OutputStream out) throws IOException {
+    public void write(final OutputStream out) {
         LOGGER.debug("Serializing graph  as {}", format);
         LOGGER.debug("Serializing default model");
         final Model model = unifyDatasetModel(dataset);

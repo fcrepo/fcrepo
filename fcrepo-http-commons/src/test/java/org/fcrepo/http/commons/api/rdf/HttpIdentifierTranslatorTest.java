@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.api.rdf;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -27,7 +28,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
-import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -37,14 +37,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-
 import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Test;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 
 /**
@@ -52,7 +51,7 @@ import com.sun.jersey.api.uri.UriBuilderImpl;
  *
  * @author ajs6f
  */
-public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
+public class HttpIdentifierTranslatorTest extends HttpIdentifierTranslatorTestScaffold {
 
     @Override
     protected HttpIdentifierTranslator getTestObj() {
@@ -157,7 +156,7 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
 
     @Test
     public void testIsFedoraGraphSubjectWithTx() throws RepositoryException {
-        final String txId = UUID.randomUUID().toString();
+        final String txId = randomUUID().toString();
         final String testPathTx = "/" + txId + "/hello";
 
         when(mockSessionTx.getValueFactory()).thenReturn(mockValueFactory);
@@ -179,12 +178,12 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
     @Test
     public void testGetPathFromGraphSubject() throws RepositoryException {
         assertEquals("/abc", testObj.getPathFromSubject(
-                ResourceFactory.createResource("http://localhost:8080/fcrepo/rest/abc")));
+                createResource("http://localhost:8080/fcrepo/rest/abc")));
     }
 
     @Test
     public void testGetPathFromGraphSubjectForNonJcrUrl() throws RepositoryException {
-        assertNull(testObj.getPathFromSubject(ResourceFactory.createResource("who-knows-what-this-is")));
+        assertNull(testObj.getPathFromSubject(createResource("who-knows-what-this-is")));
     }
 
     @Test
@@ -194,7 +193,7 @@ public class HttpIdentifierTranslatorTest extends GraphSubjectsTest {
 
     @Test
     public void testIsNotCanonicalWithinATx() {
-        final String txId = UUID.randomUUID().toString();
+        final String txId = randomUUID().toString();
 
         final HttpIdentifierTranslator testObjTx = getTestObjTx("/");
         when(mockSessionTx.getTxId()).thenReturn(txId);

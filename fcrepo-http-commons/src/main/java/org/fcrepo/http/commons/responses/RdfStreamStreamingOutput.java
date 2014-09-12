@@ -20,7 +20,6 @@ import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
 
@@ -93,7 +92,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     }
 
     @Override
-    public void write(final OutputStream output) throws IOException {
+    public void write(final OutputStream output) {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
             Rio.write(asStatements(), output, format);

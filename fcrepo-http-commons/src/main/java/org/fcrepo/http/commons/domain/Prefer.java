@@ -58,14 +58,14 @@ public class Prefer {
 
         if (aReturn.isPresent()) {
             return aReturn.get();
-        } else {
-            return new PreferTag("");
         }
+        return new PreferTag("");
     }
 
 
     private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
         new HttpHeaderReader.ListElementCreator<PreferTag>() {
+            @Override
             public PreferTag create(final HttpHeaderReader reader) throws ParseException {
                 return new PreferTag(reader);
             }

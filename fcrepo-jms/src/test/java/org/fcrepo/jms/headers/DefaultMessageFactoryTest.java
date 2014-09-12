@@ -27,7 +27,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.io.IOException;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -67,16 +66,16 @@ public class DefaultMessageFactoryTest {
     }
 
     @Test
-    public void testBuildMessage() throws RepositoryException, IOException, JMSException {
+    public void testBuildMessage() throws RepositoryException, JMSException {
         doTestBuildMessage("base-url");
     }
 
     @Test
-    public void testBuildMessageNullUrl() throws RepositoryException, IOException, JMSException {
+    public void testBuildMessageNullUrl() throws RepositoryException, JMSException {
         doTestBuildMessage(null);
     }
 
-    private void doTestBuildMessage(final String baseUrl) throws RepositoryException, IOException, JMSException {
+    private void doTestBuildMessage(final String baseUrl) throws RepositoryException, JMSException {
         final Long testDate = 46647758568747L;
         when(mockEvent.getDate()).thenReturn(testDate);
 

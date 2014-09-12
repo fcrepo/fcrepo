@@ -15,20 +15,19 @@
  */
 package org.fcrepo.http.commons.domain;
 
-import com.sun.jersey.core.header.InBoundHeaders;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import java.io.InputStream;
+import java.net.URI;
+
 import org.fcrepo.kernel.services.ExternalContentService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import com.sun.jersey.core.header.InBoundHeaders;
 
 /**
  * @author cabeer
@@ -45,7 +44,7 @@ public class ContentLocationMessageBodyReaderTest {
     private ExternalContentService mockContentService;
 
     @Before
-    public void setUp() throws URISyntaxException, IOException {
+    public void setUp() {
         initMocks(this);
         testObj = new ContentLocationMessageBodyReader();
         testObj.setContentService(mockContentService);
@@ -57,16 +56,19 @@ public class ContentLocationMessageBodyReaderTest {
         headers.putSingle("Content-Location", "http://localhost:8080/xyz");
         when(mockContentService.retrieveExternalContent(new URI("http://localhost:8080/xyz")))
             .thenReturn(mockInputStream);
-        final InputStream actual = testObj.readFrom(InputStream.class, null, null, null, headers, null);
-        assertEquals(mockInputStream, actual);
+        try (final InputStream actual = testObj.readFrom(InputStream.class, null, null, null, headers, null)) {
+            assertEquals(mockInputStream, actual);
+        }
     }
 
     @Test
     public void testReadFromRequestBody() throws Exception {
 
         final InBoundHeaders headers = new InBoundHeaders();
-        final InputStream actual = testObj.readFrom(InputStream.class, null, null, null, headers, mockInputStream);
-        assertEquals(mockInputStream, actual);
+        try (final InputStream actual =
+                testObj.readFrom(InputStream.class, null, null, null, headers, mockInputStream)) {
+            assertEquals(mockInputStream, actual);
+        }
 
     }
 }

@@ -16,6 +16,8 @@
 package org.fcrepo.kernel.impl.utils;
 
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
+import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
+import static org.apache.tika.io.IOUtils.copy;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -33,21 +35,14 @@ import org.junit.Test;
 public class FixityInputStreamTest {
 
     @Test
-    public void SimpleFixityInputStreamTest() throws NoSuchAlgorithmException {
-        final FixityInputStream is =
+    public void SimpleFixityInputStreamTest() throws NoSuchAlgorithmException, IOException {
+        try (final FixityInputStream is =
                 new FixityInputStream(new ByteArrayInputStream("0123456789"
-                        .getBytes()), MessageDigest.getInstance("SHA-1"));
-
-        try {
-            while (is.read() != -1) {
-                ;
-            }
-        } catch (final IOException e) {
-
+                        .getBytes()), MessageDigest.getInstance("SHA-1"))) {
+            copy(is, NULL_OUTPUT_STREAM);
+            assertEquals(10, is.getByteCount());
+            assertEquals("87acec17cd9dcd20a716cc2cf67417b71c8a7016",
+                    encodeHexString(is.getMessageDigest().digest()));
         }
-
-        assertEquals(10, is.getByteCount());
-        assertEquals("87acec17cd9dcd20a716cc2cf67417b71c8a7016",
-                encodeHexString(is.getMessageDigest().digest()));
     }
 }

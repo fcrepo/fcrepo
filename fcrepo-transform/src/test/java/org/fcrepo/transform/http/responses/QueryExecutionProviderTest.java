@@ -26,15 +26,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
@@ -51,6 +53,9 @@ import com.hp.hpl.jena.sparql.core.DatasetImpl;
  */
 public class QueryExecutionProviderTest {
 
+    @Mock
+    private MultivaluedMap<String, Object> mockMultivaluedMap;
+
     final QueryExecutionProvider testObj = new QueryExecutionProvider();
 
     Dataset testData = new DatasetImpl(createDefaultModel());
@@ -66,26 +71,31 @@ public class QueryExecutionProviderTest {
 
     }
 
-    @SuppressWarnings("unchecked")
+    @Before
+    public void setUp() {
+        initMocks(this);
+    }
+
     @Test
     public void testWriteTo() throws WebApplicationException,
-                             IllegalArgumentException, IOException {
+                             IllegalArgumentException {
 
         final Query sparqlQuery =
             QueryFactory.create("SELECT ?x WHERE { ?x ?y ?z }");
 
-        final QueryExecution testResult =
-            QueryExecutionFactory.create(sparqlQuery, testData);
+        try (final QueryExecution testResult =
+                QueryExecutionFactory.create(sparqlQuery, testData)) {
 
-        final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+            final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 
-        testObj.writeTo(testResult, QueryExecution.class, mock(Type.class),
-                null, valueOf(contentTypeResultsXML),
-                mock(MultivaluedMap.class), outStream);
-        final byte[] results = outStream.toByteArray();
-        assertTrue("Got no output from serialization!", results.length > 0);
-        assertTrue("Couldn't find test RDF-object mentioned!", new String(
-                results).contains("test:subject"));
+            testObj.writeTo(testResult, QueryExecution.class, mock(Type.class),
+                    null, valueOf(contentTypeResultsXML),
+                    mockMultivaluedMap, outStream);
+            final byte[] results = outStream.toByteArray();
+            assertTrue("Got no output from serialization!", results.length > 0);
+            assertTrue("Couldn't find test RDF-object mentioned!", new String(
+                    results).contains("test:subject"));
+        }
     }
 
     @Test

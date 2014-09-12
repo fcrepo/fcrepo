@@ -31,7 +31,6 @@ import static org.openrdf.rio.RDFFormat.NO_CONTEXTS;
 import static org.openrdf.rio.RDFFormat.NO_NAMESPACES;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -101,7 +100,7 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
         final Type genericType, final Annotation[] annotations,
         final MediaType mediaType,
         final MultivaluedMap<String, Object> httpHeaders,
-        final OutputStream entityStream) throws IOException {
+        final OutputStream entityStream) {
 
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
         try {

@@ -77,9 +77,8 @@ public class TxAwareSession implements InvocationHandler {
             }
             if (name.equals("impersonate")) {
                 return newInstance((Session) invocationResult, txId);
-            } else {
-                return invocationResult;
             }
+            return invocationResult;
         }
     }
 }

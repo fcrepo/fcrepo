@@ -319,9 +319,6 @@ public class HierarchyRdfContextTest {
 
     private static final String testBinaryKey = "testBinaryKey";
 
-    private static final String testExternalIdentifier =
-        "testExternalIdentifier";
-
     @Mock
     private Session mockSession;
 

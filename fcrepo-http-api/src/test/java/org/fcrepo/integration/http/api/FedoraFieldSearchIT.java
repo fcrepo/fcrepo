@@ -19,13 +19,15 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.nil;
+import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
@@ -36,10 +38,8 @@ import static org.fcrepo.kernel.RdfLexicon.SEARCH_OFFSET;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 import java.net.URI;
-import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -56,8 +56,8 @@ import com.hp.hpl.jena.update.GraphStore;
  */
 public class FedoraFieldSearchIT extends AbstractResourceIT {
 
-    private final String testObj = UUID.randomUUID().toString();
-    private final String testObj2 = UUID.randomUUID().toString();
+    private final String testObj = randomUUID().toString();
+    private final String testObj2 = randomUUID().toString();
 
     @Test
     public void testSearchHtml() throws Exception {

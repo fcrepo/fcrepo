@@ -113,7 +113,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @param dsPath the absolute path to put the datastream
      * @param contentType the mime-type for the requestBodyStream
      * @param originalFileName the original file name for the input stream
-     * @param requestBodyStream binary payload for the datastream
+     * @param content binary payload for the datastream
      * @param checksum the digest for the binary payload (as urn:sha1:xyz)   @return
      * @throws RepositoryException
      * @throws InvalidChecksumException
@@ -121,12 +121,12 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     @Override
     public Datastream createDatastream(final Session session,
                                      final String dsPath, final String contentType,
-                                     final String originalFileName, final InputStream requestBodyStream,
+                                     final String originalFileName, final InputStream content,
                                      final URI checksum)
         throws RepositoryException, InvalidChecksumException {
 
         final Datastream ds = createDatastream(session, dsPath);
-        ds.setContent(requestBodyStream, contentType, checksum,
+        ds.setContent(content, contentType, checksum,
                          originalFileName, getStoragePolicyDecisionPoint());
         return ds;
     }

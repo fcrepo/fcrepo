@@ -35,12 +35,12 @@ public class DefaultPropertiesLoaderTest {
     private static final String HOME_PROP = "fcrepo.home";
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         loader = new DefaultPropertiesLoader();
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         clearProps();
     }
 
@@ -51,7 +51,7 @@ public class DefaultPropertiesLoaderTest {
     }
 
     @Test
-    public void testLoadSystemProperties() throws Exception {
+    public void testLoadSystemProperties() {
         System.setProperty(PROP_FLAG, "true");
 
         loader.loadSystemProperties();
@@ -60,7 +60,7 @@ public class DefaultPropertiesLoaderTest {
     }
 
     @Test
-    public void testLoadSystemPropertiesProduction() throws Exception {
+    public void testLoadSystemPropertiesProduction() {
         loader.loadSystemProperties();
         Assert.assertNull(System.getProperty(PROP_FLAG));
         Assert.assertNotNull(System.getProperty(PROP_TEST));

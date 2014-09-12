@@ -39,7 +39,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -134,164 +133,169 @@ public class FedoraContentTest {
 
     @Test
     public void testPutContent()
-            throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
+            throws RepositoryException, InvalidChecksumException, ParseException, IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
-        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockDatastream.isNew()).thenReturn(true);
-        when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
-        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
-        when(
-                mockDatastreams.createDatastream(any(Session.class),
-                        eq(dsPath), anyString(), eq("xyz"), any(InputStream.class), eq((URI)null)))
-                .thenReturn(mockDatastream);
-        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
-        final Response actual =
-            testObj.modifyContent(createPathList(pid, dsId), null, "inline; filename=\"xyz\"", null,
-                    dsContentStream, null, mockResponse);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(any(Session.class),
-                eq(dsPath), anyString(), eq("xyz"), any(InputStream.class), eq((URI)null));
-        verify(mockSession).save();
+        try (final InputStream dsContentStream = IOUtils.toInputStream(dsContent)) {
+            when(mockDatastream.isNew()).thenReturn(true);
+            when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
+            when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
+            when(
+                    mockDatastreams.createDatastream(any(Session.class),
+                            eq(dsPath), anyString(), eq("xyz"), any(InputStream.class), eq((URI) null)))
+                    .thenReturn(mockDatastream);
+            when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+            final Response actual =
+                    testObj.modifyContent(createPathList(pid, dsId), null, "inline; filename=\"xyz\"", null,
+                            dsContentStream, null, mockResponse);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockDatastreams).createDatastream(any(Session.class),
+                    eq(dsPath), anyString(), eq("xyz"), any(InputStream.class), eq((URI) null));
+            verify(mockSession).save();
+        }
     }
 
     @Test
     public void testCreateContent() throws RepositoryException, IOException,
-                                                   InvalidChecksumException, URISyntaxException, ParseException {
+                                                   InvalidChecksumException, ParseException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "xyz";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
-        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockNode.isNew()).thenReturn(true);
-        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
-        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
-        when(
-                mockDatastreams.createDatastream(any(Session.class),
-                                                    eq(dsPath), anyString(), eq((String) null), any(InputStream.class),
-                                                    eq((URI) null))).thenReturn(mockDatastream);
-        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
-        final Response actual =
-            testObj.create(createPathList(pid, dsId), null, null, null, TEXT_PLAIN_TYPE,
-                    dsContentStream, mockResponse);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(mockSession, dsPath,
-                                                    "text/plain", null, dsContentStream, null);
-        verify(mockSession).save();
+        try (final InputStream dsContentStream = IOUtils.toInputStream(dsContent)) {
+            when(mockNode.isNew()).thenReturn(true);
+            when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
+            when(mockContentNode.getPath()).thenReturn(dsPath + "/jcr:content");
+            when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
+            when(
+                    mockDatastreams.createDatastream(any(Session.class),
+                            eq(dsPath), anyString(), eq((String) null), any(InputStream.class),
+                            eq((URI) null))).thenReturn(mockDatastream);
+            when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+            final Response actual =
+                    testObj.create(createPathList(pid, dsId), null, null, null, TEXT_PLAIN_TYPE,
+                            dsContentStream, mockResponse);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockDatastreams).createDatastream(mockSession, dsPath,
+                    "text/plain", null, dsContentStream, null);
+            verify(mockSession).save();
+        }
     }
 
     @Test
     public void testCreateContentAtMintedPath() throws RepositoryException, InvalidChecksumException,
-                                               URISyntaxException, ParseException {
+            ParseException, IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid;
-        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
-        when(mockMinter.mintPid()).thenReturn("xyz");
-        setField(testObj, "pidMinter", mockMinter);
-        when(mockNode.isNew()).thenReturn(true);
-        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getPath()).thenReturn(dsPath + "xyz/jcr:content");
-        when(
-                mockDatastreams.createDatastream(any(Session.class),
-                                                 eq("/" + pid + "/xyz"),
-                                                 anyString(),
-                                                 eq((String) null),
-                                                 any(InputStream.class),
-                                                 eq((URI) null))).thenReturn(mockDatastream);
-        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
-        final FedoraResource mockResource = mock(FedoraResource.class);
-        when(mockNodeService.getObject(mockSession,dsPath)).thenReturn(mockResource);
-        when(mockResource.hasContent()).thenReturn(false);
+        try (final InputStream dsContentStream = IOUtils.toInputStream(dsContent)) {
+            when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
+            when(mockMinter.mintPid()).thenReturn("xyz");
+            setField(testObj, "pidMinter", mockMinter);
+            when(mockNode.isNew()).thenReturn(true);
+            when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
+            when(mockContentNode.getPath()).thenReturn(dsPath + "xyz/jcr:content");
+            when(
+                    mockDatastreams.createDatastream(any(Session.class),
+                            eq("/" + pid + "/xyz"),
+                            anyString(),
+                            eq((String) null),
+                            any(InputStream.class),
+                            eq((URI) null))).thenReturn(mockDatastream);
+            when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+            final FedoraResource mockResource = mock(FedoraResource.class);
+            when(mockNodeService.getObject(mockSession, dsPath)).thenReturn(mockResource);
+            when(mockResource.hasContent()).thenReturn(false);
 
-        final Response actual =
-            testObj.create(createPathList(pid), null, null, null, TEXT_PLAIN_TYPE,
-                    dsContentStream, mockResponse);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(mockSession,
-                                                    "/" + pid + "/xyz", "text/plain", null, dsContentStream, null);
-        verify(mockSession).save();
+            final Response actual =
+                    testObj.create(createPathList(pid), null, null, null, TEXT_PLAIN_TYPE,
+                            dsContentStream, mockResponse);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockDatastreams).createDatastream(mockSession,
+                    "/" + pid + "/xyz", "text/plain", null, dsContentStream, null);
+            verify(mockSession).save();
+        }
     }
 
 
     @Test
     public void testCreateContentWithSlug() throws RepositoryException, InvalidChecksumException,
-                                           URISyntaxException, ParseException {
+                                           ParseException, IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsid = "slug";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid;
-        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
-        setField(testObj, "pidMinter", mockMinter);
-        when(mockNode.isNew()).thenReturn(true);
-        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
-        when(mockContentNode.getPath()).thenReturn(dsPath + "slug/jcr:content");
-        when(mockDatastreams.createDatastream(any(Session.class),
-                                              eq("/" + pid + "/slug"),
-                                              anyString(),
-                                              eq((String) null),
-                                              any(InputStream.class),
-                                              eq((URI) null))).thenReturn(mockDatastream);
-        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
-        final FedoraResource mockResource = mock(FedoraResource.class);
-        when(mockNodeService.getObject(mockSession,dsPath)).thenReturn(mockResource);
-        when(mockResource.hasContent()).thenReturn(false);
-        final Response actual =
-            testObj.create(createPathList(pid), dsid, null, null, TEXT_PLAIN_TYPE,
-                              dsContentStream, mockResponse);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(mockSession,
-                                                    "/" + pid + "/slug", "text/plain", null, dsContentStream, null);
-        verify(mockSession).save();
+        try (final InputStream dsContentStream = IOUtils.toInputStream(dsContent)) {
+            when(mockNodeService.exists(mockSession, dsPath)).thenReturn(true);
+            setField(testObj, "pidMinter", mockMinter);
+            when(mockNode.isNew()).thenReturn(true);
+            when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
+            when(mockContentNode.getPath()).thenReturn(dsPath + "slug/jcr:content");
+            when(mockDatastreams.createDatastream(any(Session.class),
+                    eq("/" + pid + "/slug"),
+                    anyString(),
+                    eq((String) null),
+                    any(InputStream.class),
+                    eq((URI) null))).thenReturn(mockDatastream);
+            when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+            final FedoraResource mockResource = mock(FedoraResource.class);
+            when(mockNodeService.getObject(mockSession, dsPath)).thenReturn(mockResource);
+            when(mockResource.hasContent()).thenReturn(false);
+            final Response actual =
+                    testObj.create(createPathList(pid), dsid, null, null, TEXT_PLAIN_TYPE,
+                            dsContentStream, mockResponse);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockDatastreams).createDatastream(mockSession,
+                    "/" + pid + "/slug", "text/plain", null, dsContentStream, null);
+            verify(mockSession).save();
+        }
     }
 
     @Test
     public void testModifyContent()
-            throws RepositoryException, InvalidChecksumException, URISyntaxException, ParseException {
+            throws RepositoryException, InvalidChecksumException, ParseException, IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String dsContent = "asdf";
         final String dsPath = "/" + pid + "/" + dsId;
-        final URI checksum = new URI("urn:sha1:some-checksum");
-        final InputStream dsContentStream = IOUtils.toInputStream(dsContent);
-        when(mockNode.isNew()).thenReturn(false);
-        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
-        when(mockDatastreams.asDatastream(mockNode)).thenReturn(mockDs);
-        when(mockDatastreams.getDatastream(mockSession, dsPath)).thenReturn(
-                mockDs);
-        final Request mockRequest = mock(Request.class);
-        when(
-                mockRequest.evaluatePreconditions(any(Date.class),
-                        any(EntityTag.class))).thenReturn(null);
-        when(
-                mockDatastreams.createDatastream(any(Session.class),
-                                                 eq(dsPath),
-                                                 anyString(),
-                                                 eq((String) null),
-                                                 any(InputStream.class),
-                                                 eq(checksum)))
-                .thenReturn(mockDatastream);
-        when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
-        final Response actual =
-            testObj.modifyContent(createPathList(pid, dsId), "urn:sha1:some-checksum", null, null,
-                    dsContentStream, mockRequest, mockResponse);
-        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(any(Session.class),
-                                                 eq(dsPath),
-                                                 anyString(),
-                                                 eq((String) null),
-                                                 any(InputStream.class),
-                                                 eq(checksum));
-        verify(mockSession).save();
+        final URI checksum = URI.create("urn:sha1:some-checksum");
+        try (final InputStream dsContentStream = IOUtils.toInputStream(dsContent)) {
+            when(mockNode.isNew()).thenReturn(false);
+            final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
+            when(mockDatastreams.asDatastream(mockNode)).thenReturn(mockDs);
+            when(mockDatastreams.getDatastream(mockSession, dsPath)).thenReturn(
+                    mockDs);
+            final Request mockRequest = mock(Request.class);
+            when(
+                    mockRequest.evaluatePreconditions(any(Date.class),
+                            any(EntityTag.class))).thenReturn(null);
+            when(
+                    mockDatastreams.createDatastream(any(Session.class),
+                            eq(dsPath),
+                            anyString(),
+                            eq((String) null),
+                            any(InputStream.class),
+                            eq(checksum)))
+                    .thenReturn(mockDatastream);
+            when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
+            final Response actual =
+                    testObj.modifyContent(createPathList(pid, dsId), "urn:sha1:some-checksum", null, null,
+                            dsContentStream, mockRequest, mockResponse);
+            assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
+            verify(mockDatastreams).createDatastream(any(Session.class),
+                    eq(dsPath),
+                    anyString(),
+                    eq((String) null),
+                    any(InputStream.class),
+                    eq(checksum));
+            verify(mockSession).save();
+        }
     }
 
     @Test
-    public void testGetContent() throws RepositoryException, IOException, URISyntaxException {
+    public void testGetContent() throws RepositoryException, IOException {
         final String pid = "FedoraDatastreamsTest1";
         final String dsId = "testDS";
         final String path = "/" + pid + "/" + dsId;

@@ -15,10 +15,14 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.http.api.ContentExposingResource.setMaxBufferSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -27,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -39,11 +44,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.http.api.ContentExposingResource;
 import org.junit.Test;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.sun.jersey.core.header.ContentDisposition;
 
@@ -82,13 +84,12 @@ public class FedoraContentIT extends AbstractResourceIT {
 
     @Test
     public void testAddDatastreamByContentLocation() throws Exception {
-        final String pid = getRandomUniquePid();
+        final String pid = "testAddDatastreamByContentLocation-" + getRandomUniquePid();
         createObject(pid);
 
         final HttpPost httpPost = postDSMethod(pid, "zxc", "");
         httpPost.addHeader("Content-Location", serverAddress);
-        final HttpResponse response =
-            client.execute(httpPost);
+        final HttpResponse response = execute(httpPost);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
@@ -101,19 +102,18 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet httpGet = new HttpGet(location);
 
-        final HttpResponse contentResponse = client.execute(httpGet);
+        final HttpResponse contentResponse = execute(httpGet);
 
-        final String body = IOUtils.toString(contentResponse.getEntity().getContent());
+        final String body = EntityUtils.toString(contentResponse.getEntity());
 
         assertTrue(body.contains(pid));
-
 
     }
     @Test
     public void testAddDeepDatastream() throws Exception {
         final String uuid = getRandomUniquePid();
         final HttpPost method = postDSMethod(uuid + "/does/not/exist/yet", "zxc", "foo");
-        final HttpResponse response = client.execute(method);
+        final HttpResponse response = execute(method);
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(201, response.getStatusLine().getStatusCode());
         assertEquals("Got wrong URI in Location header for datastream creation!", serverAddress + uuid +
@@ -127,7 +127,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         createObject(pid);
         final HttpPut method =
                 putDSMethod(pid, "zxc", "foo");
-        final HttpResponse response = client.execute(method);
+        final HttpResponse response = execute(method);
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
         assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
 
@@ -151,7 +151,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpPut put = new HttpPut(serverAddress + pid + "/fcr:content");
         put.setEntity(new StringEntity(content));
-        final HttpResponse response = client.execute(put);
+        final HttpResponse response = execute(put);
         assertEquals("Expected 400 response code when PUTing content on an object (as opposed to a datastream).",
                 400, response.getStatusLine().getStatusCode());
     }
@@ -199,13 +199,13 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet getObjMethod = new HttpGet(serverAddress + pid + "/zxc");
         final GraphStore results = getGraphStore(getObjMethod);
         assertTrue("Didn't find original name!",
-                   results.contains(Node.ANY,
-                                    NodeFactory.createURI(location),
-                                    NodeFactory.createURI("http://www.loc.gov/premis/rdf/v1#hasOriginalName"),
-                                    NodeFactory.createLiteral("some-name")));
+                   results.contains(ANY,
+                                    createURI(location),
+                                    createURI("http://www.loc.gov/premis/rdf/v1#hasOriginalName"),
+                                    createLiteral("some-name")));
 
         final HttpGet getContentMethod = new HttpGet(location);
-        final HttpResponse contentResponse = client.execute(getContentMethod);
+        final HttpResponse contentResponse = execute(getContentMethod);
 
         final ContentDisposition contentDisposition =
                 new ContentDisposition(contentResponse.getFirstHeader("Content-Disposition").getValue());
@@ -226,7 +226,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpPut mutateDataStreamMethod = putDSMethod(pid, "ds1", "bar");
         mutateDataStreamMethod.setEntity(new StringEntity(faulkner1, "UTF-8"));
 
-        final HttpResponse response = client.execute(mutateDataStreamMethod);
+        final HttpResponse response = execute(mutateDataStreamMethod);
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
         assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
 
@@ -240,7 +240,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
         final HttpGet retrieveMutatedDataStreamMethod = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         assertTrue("Datastream didn't accept mutation!", faulkner1
-                .equals(EntityUtils.toString(client.execute(
+                .equals(EntityUtils.toString(execute(
                         retrieveMutatedDataStreamMethod).getEntity())));
     }
 
@@ -254,7 +254,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         assertEquals(200, getStatus(method_test_get));
 
-        final HttpResponse response = client.execute(method_test_get);
+        final HttpResponse response = execute(method_test_get);
 
         logger.debug("Returned from HTTP GET, now checking content...");
         assertTrue("Got the wrong content back!", "marbles for everyone"
@@ -331,7 +331,7 @@ public class FedoraContentIT extends AbstractResourceIT {
 
     @Test
     public void testRangeRequestWithSkipBytes() throws Exception {
-        ContentExposingResource.setMaxBufferSize(10);
+        setMaxBufferSize(10);
         final String pid = getRandomUniquePid();
         createObject(pid);
         final HttpPost createDSMethod = postDSMethod(pid, "ds1", "large marbles for everyone");
@@ -340,7 +340,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=1-21");
 
-        final HttpResponse response = client.execute(method_test_get);
+        final HttpResponse response = execute(method_test_get);
         assertEquals(206, response.getStatusLine().getStatusCode());
         logger.debug("Returned from HTTP GET, now checking content...");
         assertEquals("Got the wrong content back!", "arge marbles for ever",
@@ -360,7 +360,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=50-100");
 
-        final HttpResponse response = client.execute(method_test_get);
+        final HttpResponse response = execute(method_test_get);
         assertEquals(416, response.getStatusLine().getStatusCode());
         assertEquals("bytes 50-100/20", response.getFirstHeader("Content-Range").getValue());
 
@@ -377,7 +377,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=2-");
 
-        final HttpResponse response = client.execute(method_test_get);
+        final HttpResponse response = execute(method_test_get);
         assertEquals(206, response.getStatusLine().getStatusCode());
         logger.debug("Returned from HTTP GET, now checking content...");
         assertEquals("Got the wrong content back!", "rbles for everyone",
@@ -396,7 +396,7 @@ public class FedoraContentIT extends AbstractResourceIT {
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/fcr:content");
         method_test_get.setHeader("Range", "bytes=-2");
 
-        final HttpResponse response = client.execute(method_test_get);
+        final HttpResponse response = execute(method_test_get);
         assertEquals(206, response.getStatusLine().getStatusCode());
         logger.debug("Returned from HTTP GET, now checking content...");
         assertEquals("Got the wrong content back!", "mar",
@@ -444,8 +444,11 @@ public class FedoraContentIT extends AbstractResourceIT {
         final File readonlyMeta = new File("target/test-classes/test-meta/" + ds1 + ".content.modeshape.json");
         assertTrue( readonlyMeta.exists() );
         assertTrue( readonlyMeta.length() > 0 );
-        final String readonlyMetaContent = IOUtils.toString(new FileReader(readonlyMeta));
-        assertTrue( readonlyMetaContent.contains("urn:sha1:18835fd8075c1e1f266366c1bdfd1ac6a357f242") );
+        try (final Reader reader = new FileReader(readonlyMeta)) {
+            final String readonlyMetaContent = IOUtils.toString(reader);
+            logger.warn("XXX: " + readonlyMetaContent);
+            assertTrue(readonlyMetaContent.contains("urn:sha1:18835fd8075c1e1f266366c1bdfd1ac6a357f242"));
+        }
     }
 
     @Test

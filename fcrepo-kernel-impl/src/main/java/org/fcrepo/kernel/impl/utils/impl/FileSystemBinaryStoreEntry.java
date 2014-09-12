@@ -15,12 +15,12 @@
  */
 package org.fcrepo.kernel.impl.utils.impl;
 
-import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
-
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import javax.jcr.Property;
+
+import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
 
 /**
  * @author cabeer
@@ -37,7 +37,7 @@ public class FileSystemBinaryStoreEntry extends LocalBinaryStoreEntry {
     }
 
     @Override
-    public String getExternalIdentifier() throws RepositoryException {
+    public String getExternalIdentifier() {
         try {
             final FileSystemBinaryStore store = (FileSystemBinaryStore)store();
             return new URI("info",

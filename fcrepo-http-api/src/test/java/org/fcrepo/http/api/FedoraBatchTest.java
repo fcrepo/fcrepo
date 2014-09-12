@@ -342,11 +342,12 @@ public class FedoraBatchTest {
         verify(mockDs).getContent();
         verify(mockSession, never()).save();
         assertEquals(1, multipart.getBodyParts().size());
-        final InputStream actualContent =
-            (InputStream) multipart.getBodyParts().get(0).getEntity();
-        assertEquals("/FedoraDatastreamsTest1/testDS", multipart.getBodyParts()
-                .get(0).getContentDisposition().getFileName());
-        assertEquals("asdf", IOUtils.toString(actualContent, "UTF-8"));
+        try (final InputStream actualContent =
+                (InputStream) multipart.getBodyParts().get(0).getEntity()) {
+            assertEquals("/FedoraDatastreamsTest1/testDS", multipart.getBodyParts()
+                    .get(0).getContentDisposition().getFileName());
+            assertEquals("asdf", IOUtils.toString(actualContent, "UTF-8"));
+        }
     }
 
     @Test

@@ -23,8 +23,10 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.codahale.metrics.annotation.Timed;
+
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -95,7 +97,10 @@ public class FedoraStoragePolicy extends AbstractResource {
         Session internalSession = null;
         try {
             internalSession = sessions.getInternalSession();
-            new FedoraResourceImpl(internalSession, FEDORA_STORAGE_POLICY_PATH, NT_FOLDER);
+            // we create a FedoraResource to initialize the storage of policies
+            @SuppressWarnings("unused")
+            final FedoraResource initializer =
+                    new FedoraResourceImpl(internalSession, FEDORA_STORAGE_POLICY_PATH, NT_FOLDER);
             internalSession.save();
             LOGGER.debug("Created configuration node");
         } finally {
@@ -294,7 +299,7 @@ public class FedoraStoragePolicy extends AbstractResource {
      * @return false
      * @throws StoragePolicyTypeException
      */
-    private boolean isValidConfigurationProperty(final String property) {
+    private boolean isValidConfigurationProperty(@SuppressWarnings("unused") final String property) {
         // TODO (for now) returns false. For future, need to represent & eval.
         // non node type props
         return false;

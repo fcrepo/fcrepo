@@ -31,7 +31,7 @@ public class UUIDPathMinterTest {
             "[a-f0-9]{3}/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
 
     @Test
-    public void testMintPid() throws Exception {
+    public void testMintPid() {
 
         final String pid = new UUIDPathMinter(3, 1).mintPid();
 

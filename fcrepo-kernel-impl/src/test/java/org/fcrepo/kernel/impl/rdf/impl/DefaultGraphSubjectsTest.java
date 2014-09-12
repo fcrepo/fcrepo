@@ -100,7 +100,7 @@ public class DefaultGraphSubjectsTest {
     }
 
     @Test
-    public void testGetPathFromGraphSubject() throws RepositoryException {
+    public void testGetPathFromGraphSubject() {
         final String expected = "/foo/bar";
         // test a good subject
         when(mockSubject.getURI())

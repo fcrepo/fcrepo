@@ -52,9 +52,7 @@ public class TransformationFactory {
      * @param inputStream
      * @return a Transformation
      */
-    @SuppressWarnings("unchecked")
-    // this suppression is in place representing the condition that the generator
-    // map actually maps the mimetypes proffered to legitimate Transformations for those mimetype
+
     public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {
         final String mimeType = contentType.toString();
         if (mimeToTransform.containsKey(mimeType)) {

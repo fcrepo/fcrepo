@@ -42,14 +42,14 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + objName + "/fcr:export");
-        HttpResponse response = client.execute(getObjMethod);
+        HttpResponse response = execute(getObjMethod);
         assertEquals("application/xml", response.getEntity().getContentType()
                 .getValue());
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -58,9 +58,8 @@ public class FedoraExportIT extends AbstractResourceIT {
         logger.debug("Found exported object: " + content);
 
         // delete it
-        client.execute(new HttpDelete(serverAddress + objName));
-        response =
-            client.execute(new HttpGet(serverAddress + objName));
+        execute(new HttpDelete(serverAddress + objName));
+        response = execute(new HttpGet(serverAddress + objName));
         assertEquals(404, response.getStatusLine().getStatusCode());
 
         // try to import it
@@ -69,8 +68,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         assertEquals("Couldn't import!", 201, getStatus(importMethod));
 
         // check that we made it
-        response =
-            client.execute(new HttpGet(serverAddress + objName));
+        response = execute(new HttpGet(serverAddress + objName));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
     }
@@ -83,23 +81,22 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + objName + "/fcr:export");
-        HttpResponse response = client.execute(getObjMethod);
+        HttpResponse response = execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         logger.debug("Successfully exported: " + objName);
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Found exported object: " + content);
 
         // delete it
-        client.execute(new HttpDelete(serverAddress + objName));
-        response =
-            client.execute(new HttpGet(serverAddress + objName));
+        execute(new HttpDelete(serverAddress + objName));
+        response = execute(new HttpGet(serverAddress + objName));
         assertEquals(404, response.getStatusLine().getStatusCode());
 
         // try to import it
@@ -108,8 +105,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         assertEquals("Couldn't import!", 201, getStatus(importMethod));
 
         // check that we made it
-        response =
-            client.execute(new HttpGet(serverAddress + objName));
+        response = execute(new HttpGet(serverAddress + objName));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
     }
@@ -119,14 +115,14 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + objName + "/fcr:export?skipBinary=false&recurse=true");
-        final HttpResponse response = client.execute(getObjMethod);
+        final HttpResponse response = execute(getObjMethod);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
 
@@ -141,8 +137,8 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
 
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", "stuff"));
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
@@ -161,14 +157,14 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniquePid();
         final String binaryValue = "stuff";
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, "testDS", binaryValue));
+        createObject(objName);
+        createDatastream(objName, "testDS", binaryValue);
 
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + objName + "/fcr:export?recurse=true");
-        HttpResponse response = client.execute(getObjMethod);
+        HttpResponse response = execute(getObjMethod);
         assertEquals("application/xml", response.getEntity().getContentType()
                 .getValue());
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -181,7 +177,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         // Contains the binary value otherwise
         final HttpGet getObjWithBinaryMethod = new HttpGet(
                 serverAddress + objName + "/fcr:export?recurse=true&skipBinary=false");
-        response = client.execute(getObjWithBinaryMethod);
+        response = execute(getObjWithBinaryMethod);
         assertEquals("application/xml", response.getEntity().getContentType()
                 .getValue());
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -194,13 +190,13 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String childName = "testDS";
         final String binaryValue = "stuff";
         // set up the object
-        client.execute(postObjMethod(objName));
-        client.execute(postDSMethod(objName, childName, binaryValue));
+        createObject(objName);
+        createDatastream(objName, childName, binaryValue);
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
             new HttpGet(serverAddress + objName + "/fcr:export");
-        HttpResponse response = client.execute(getObjMethod);
+        HttpResponse response = execute(getObjMethod);
         assertEquals("application/xml", response.getEntity().getContentType()
                 .getValue());
         assertEquals(200, response.getStatusLine().getStatusCode());
@@ -211,7 +207,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
         // Contains the child node otherwise
         final HttpGet getObjWithBinaryMethod = new HttpGet(serverAddress + objName + "/fcr:export?recurse=true");
-        response = client.execute(getObjWithBinaryMethod);
+        response = execute(getObjWithBinaryMethod);
         assertEquals("application/xml", response.getEntity().getContentType()
                 .getValue());
         assertEquals(200, response.getStatusLine().getStatusCode());

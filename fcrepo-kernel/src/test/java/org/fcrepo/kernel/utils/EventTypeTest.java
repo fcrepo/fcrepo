@@ -29,7 +29,7 @@ import org.junit.Test;
 public class EventTypeTest {
 
     @Test
-    public void testGetEventName() throws Exception {
+    public void testGetEventName() {
         assertEquals("node added", valueOf(NODE_ADDED).getName());
     }
 

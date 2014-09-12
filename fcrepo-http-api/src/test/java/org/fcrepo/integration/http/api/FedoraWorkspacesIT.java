@@ -70,7 +70,7 @@ public class FedoraWorkspacesIT extends AbstractResourceIT {
         if (pid.length() > 0) {
             httpPost.addHeader("Slug", pid);
         }
-        final HttpResponse response = client.execute(httpPost);
+        final HttpResponse response = execute(httpPost);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
         final HttpGet httpGet =

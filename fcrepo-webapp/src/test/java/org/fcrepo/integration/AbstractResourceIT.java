@@ -143,18 +143,19 @@ public abstract class AbstractResourceIT {
         credsProvider.setCredentials(
                 new AuthScope(target.getHostName(), target.getPort()),
                 new UsernamePasswordCredentials(username, password));
-        final CloseableHttpClient httpclient = HttpClients.custom()
-                .setDefaultCredentialsProvider(credsProvider).build();
+        try (final CloseableHttpClient httpclient = HttpClients.custom()
+                .setDefaultCredentialsProvider(credsProvider).build()) {
 
-        final AuthCache authCache = new BasicAuthCache();
-        final BasicScheme basicAuth = new BasicScheme();
-        authCache.put(target, basicAuth);
+            final AuthCache authCache = new BasicAuthCache();
+            final BasicScheme basicAuth = new BasicScheme();
+            authCache.put(target, basicAuth);
 
-        final HttpClientContext localContext = HttpClientContext.create();
-        localContext.setAuthCache(authCache);
+            final HttpClientContext localContext = HttpClientContext.create();
+            localContext.setAuthCache(authCache);
 
-        final CloseableHttpResponse response = httpclient.execute(request, localContext);
-        return response;
+            final CloseableHttpResponse response = httpclient.execute(request, localContext);
+            return response;
+        }
     }
 
 

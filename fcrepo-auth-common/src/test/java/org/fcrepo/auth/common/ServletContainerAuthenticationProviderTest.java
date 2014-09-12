@@ -16,6 +16,10 @@
 package org.fcrepo.auth.common;
 
 import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS;
+import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.EVERYONE;
+import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.FEDORA_ADMIN_ROLE;
+import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.getInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -84,13 +88,11 @@ public class ServletContainerAuthenticationProviderTest {
 
     @Test
     public void testGetInstance() {
-        final AuthenticationProvider provider =
-                ServletContainerAuthenticationProvider.getInstance();
+        final AuthenticationProvider provider = getInstance();
 
         assertNotNull(provider);
 
-        final AuthenticationProvider secondProvider =
-                ServletContainerAuthenticationProvider.getInstance();
+        final AuthenticationProvider secondProvider = getInstance();
 
         assertTrue(
                 "Provider instance retrieved on second call should be the same object",
@@ -99,8 +101,7 @@ public class ServletContainerAuthenticationProviderTest {
 
     @Test
     public void testInvalidCredentialsObject() {
-        final AuthenticationProvider provider =
-                ServletContainerAuthenticationProvider.getInstance();
+        final AuthenticationProvider provider = getInstance();
 
         ExecutionContext result =
                 provider.authenticate(null, "repo", "workspace", context,
@@ -118,9 +119,7 @@ public class ServletContainerAuthenticationProviderTest {
         final AuthenticationProvider provider =
                 ServletContainerAuthenticationProvider.getInstance();
 
-        when(
-                request.isUserInRole(ServletContainerAuthenticationProvider.FEDORA_ADMIN_ROLE))
-                .thenReturn(true);
+        when(request.isUserInRole(FEDORA_ADMIN_ROLE)).thenReturn(true);
 
         when(principal.getName()).thenReturn("adminName");
 
@@ -141,9 +140,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         provider.setFad(fad);
 
-        when(
-                request.isUserInRole(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE))
-                .thenReturn(true);
+        when(request.isUserInRole(FEDORA_USER_ROLE)).thenReturn(true);
 
         when(principal.getName()).thenReturn("userName");
 
@@ -165,12 +162,11 @@ public class ServletContainerAuthenticationProviderTest {
 
         verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
-        @SuppressWarnings("unchecked")
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(2, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
-                .contains(ServletContainerAuthenticationProvider.EVERYONE));
+                .contains(EVERYONE));
         assertTrue("User principal must be present", resultPrincipals
                 .contains(principal));
 
@@ -188,7 +184,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         provider.setFad(fad);
 
-        when(request.isUserInRole(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE)).thenReturn(true);
+        when(request.isUserInRole(FEDORA_USER_ROLE)).thenReturn(true);
 
         final Set<Principal> groupPrincipals = new HashSet<>();
         final Principal groupPrincipal = mock(Principal.class);
@@ -212,12 +208,11 @@ public class ServletContainerAuthenticationProviderTest {
 
         verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
-        @SuppressWarnings("unchecked")
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(3, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
-                .contains(ServletContainerAuthenticationProvider.EVERYONE));
+                .contains(EVERYONE));
         assertTrue("User principal must be present", resultPrincipals.contains(principal));
         assertTrue("Group Principal from factory must be present", resultPrincipals.contains(groupPrincipal));
 
@@ -264,12 +259,10 @@ public class ServletContainerAuthenticationProviderTest {
 
         verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
-        @SuppressWarnings("unchecked")
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(expected, resultPrincipals.size());
-        assertTrue("EVERYONE principal must be present", resultPrincipals
-                .contains(ServletContainerAuthenticationProvider.EVERYONE));
+        assertTrue("EVERYONE principal must be present", resultPrincipals.contains(EVERYONE));
 
         final Iterator<Principal> iterator = resultPrincipals.iterator();
         boolean succeeds = false;
@@ -277,11 +270,11 @@ public class ServletContainerAuthenticationProviderTest {
         while (iterator.hasNext()) {
             final String name = iterator.next().getName();
 
-            if (name != null && name.equals(ServletContainerAuthenticationProvider.EVERYONE.getName())) {
+            if (name != null && name.equals(EVERYONE.getName())) {
                 succeeds = true;
             }
         }
 
-        assertTrue("Expected to find: " + ServletContainerAuthenticationProvider.EVERYONE.getName(), succeeds);
+        assertTrue("Expected to find: " + EVERYONE.getName(), succeeds);
     }
 }

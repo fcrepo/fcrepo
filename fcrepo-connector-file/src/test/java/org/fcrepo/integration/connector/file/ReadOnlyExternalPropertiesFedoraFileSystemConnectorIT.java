@@ -41,10 +41,12 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
         return getReadOnlyFederationRoot();
     }
 
+    @Override
     protected String testDirPath() {
         return "/" + federationName();
     }
 
+    @Override
     protected String testFilePath() {
         return "/" + federationName() + "/repo.xml";
     }
@@ -54,7 +56,7 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
         final Session session = repo.login();
         final FedoraResource object = nodeService.getObject(session, testFilePath());
         assertEquals("There should be exactly as many visible nodes as actual files (ie, no hidden sidecar files).",
-                fileForNode(object.getNode()).getParentFile().list().length,
+                fileForNode(null).getParentFile().list().length,
                 getChildCount(object.getNode().getParent()));
     }
 

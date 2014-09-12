@@ -17,7 +17,6 @@ package org.fcrepo.integration.http.api;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
@@ -34,9 +33,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         final HttpGet method = new HttpGet(serverAddress);
         method.addHeader("Accept", "text/html");
-        final HttpResponse response = client.execute(method);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
+        assertEquals(200, getStatus(method));
     }
 
     @Test
@@ -47,9 +44,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         final HttpGet method = new HttpGet(serverAddress + pid);
         method.addHeader("Accept", "text/html");
-        final HttpResponse response = client.execute(method);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
+        assertEquals(200, getStatus(method));
     }
 
     @Test
@@ -65,10 +60,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
             new HttpGet(serverAddress + pid + "/ds1");
 
         method.addHeader("Accept", "text/html");
-
-        final HttpResponse response = client.execute(method);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
+        assertEquals(200, getStatus(method));
     }
 
     @Test
@@ -76,8 +68,6 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         final HttpGet method = new HttpGet(serverAddress + "fcr:namespaces");
         method.addHeader("Accept", "text/html");
-        final HttpResponse response = client.execute(method);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
+        assertEquals(200, getStatus(method));
     }
 }

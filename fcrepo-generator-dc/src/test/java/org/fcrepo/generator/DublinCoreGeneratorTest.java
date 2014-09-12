@@ -16,6 +16,7 @@
 package org.fcrepo.generator;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
@@ -23,18 +24,21 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.InputStream;
+
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.generator.dublincore.DCGenerator;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * <p>DublinCoreGeneratorTest class.</p>
@@ -43,30 +47,31 @@ import org.junit.Test;
  */
 public class DublinCoreGeneratorTest {
 
-    DublinCoreGenerator testObj;
+    private DublinCoreGenerator testObj;
 
-    NodeService mockNodeService;
+    @Mock
+    private NodeService mockNodeService;
 
-    DCGenerator mockGenerator;
+    @Mock
+    private DCGenerator mockGenerator;
 
-    Session mockSession;
+    private Session mockSession;
+
+    @Mock
+    private InputStream mockIS;
 
     @Before
     public void setUp() {
-        mockNodeService = mock(NodeService.class);
+        initMocks(this);
         testObj = new DublinCoreGenerator();
         setField(testObj, "nodeService", mockNodeService);
-
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
-        mockGenerator = mock(DCGenerator.class);
         testObj.dcgenerators = asList(mockGenerator);
     }
 
     @Test
     public void testGetObjectAsDublinCore() throws RepositoryException {
-        testObj.dcgenerators = asList(mockGenerator);
-        final InputStream mockIS = mock(InputStream.class);
         final FedoraResourceImpl mockResource = mock(FedoraResourceImpl.class);
         when(mockResource.getNode()).thenReturn(mock(Node.class));
         when(mockNodeService.getObject(mockSession, "/objects/foo"))
@@ -78,7 +83,7 @@ public class DublinCoreGeneratorTest {
 
     @Test
     public void testNoGenerators() {
-        testObj.dcgenerators = asList(new DCGenerator[0]);
+        testObj.dcgenerators = emptyList();
         try {
             testObj.getObjectAsDublinCore(createPathList("objects", "foo"));
             fail("Should have failed without a generator configured!");

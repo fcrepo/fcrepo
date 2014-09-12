@@ -58,7 +58,7 @@ public class JQLConverterIT {
 
     @Test
     public void testSimpleQuery() {
-
+        // TODO make an actual test here
     }
 
     @Test

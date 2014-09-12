@@ -50,14 +50,6 @@ public interface Datastream extends FedoraResource {
     Node getContentNode() throws RepositoryException;
 
     /**
-     * Check if the datastream has a content node
-     *
-     * @return boolean
-     * @throws RepositoryException
-     */
-    boolean hasContent() throws RepositoryException;
-
-    /**
      * Sets the content of this Datastream.
      *
      * @param content  InputStream of binary content to be stored

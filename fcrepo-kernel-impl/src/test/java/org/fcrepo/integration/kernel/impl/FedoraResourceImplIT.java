@@ -127,7 +127,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.logout();
     }
 
-    private Node createGraphSubjectNode(final String absPath) throws RepositoryException {
+    private Node createGraphSubjectNode(final String absPath) {
         return subjects.getSubject(absPath).asNode();
     }
 

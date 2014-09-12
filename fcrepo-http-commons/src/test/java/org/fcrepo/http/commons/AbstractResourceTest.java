@@ -67,23 +67,23 @@ public class AbstractResourceTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new AbstractResource() {};
+        testObj = new AbstractResource() {/**/};
     }
 
     @Test
-    public void testSetPidMinter() throws Exception {
+    public void testSetPidMinter() {
         setField(testObj, "pidMinter", mockPids);
         assertEquals(mockPids, testObj.pidMinter);
     }
 
     @Test
-    public void testSetNodeService() throws Exception {
+    public void testSetNodeService() {
         setField(testObj, "nodeService", mockNodes);
         assertEquals(mockNodes, testObj.nodeService);
     }
 
     @Test
-    public void testSetUriInfo() throws Exception {
+    public void testSetUriInfo() {
         setField(testObj, "uriInfo", mockUris);
         assertEquals(mockUris, testObj.uriInfo);
     }

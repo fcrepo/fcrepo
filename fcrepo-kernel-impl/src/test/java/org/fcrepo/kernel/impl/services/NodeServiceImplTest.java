@@ -160,9 +160,10 @@ public class NodeServiceImplTest {
 
     @Test
     public void testRegisterNodeTypes() throws Exception {
-        final InputStream mockInputStream = mock(InputStream.class);
-        testObj.registerNodeTypes(mockSession, mockInputStream);
+        try (final InputStream mockInputStream = mock(InputStream.class)) {
+            testObj.registerNodeTypes(mockSession, mockInputStream);
 
-        verify(mockNodeTypeManager).registerNodeTypes(mockInputStream, true);
+            verify(mockNodeTypeManager).registerNodeTypes(mockInputStream, true);
+        }
     }
 }

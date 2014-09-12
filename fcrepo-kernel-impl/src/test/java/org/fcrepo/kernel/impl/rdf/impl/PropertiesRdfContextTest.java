@@ -93,7 +93,7 @@ public class PropertiesRdfContextTest {
     }
 
     private static final Resource mockContentSubject =
-        createResource("http://example.com/node/jcr:content");;
+        createResource("http://example.com/node/jcr:content");
 
     private static final Resource mockSubject =
         createResource("http://example.com/node");

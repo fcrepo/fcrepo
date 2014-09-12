@@ -22,7 +22,6 @@ import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -40,7 +39,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.sun.jersey.core.header.ContentDisposition;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResource;
@@ -59,6 +57,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.eventbus.EventBus;
+import com.sun.jersey.core.header.ContentDisposition;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -310,9 +309,9 @@ public abstract class AbstractResource {
     /**
      * Create a checksum URI object.
     **/
-    protected static URI checksumURI( final String checksum ) throws URISyntaxException {
+    protected static URI checksumURI( final String checksum ) {
         if (!isBlank(checksum)) {
-            return new URI(checksum);
+            return URI.create(checksum);
         }
         return null;
     }

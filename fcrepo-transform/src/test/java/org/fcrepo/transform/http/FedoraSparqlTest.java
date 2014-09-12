@@ -118,7 +118,7 @@ public class FedoraSparqlTest {
 
     @Test
     @Ignore
-    public void testRunSparqlQuery() throws Exception {
+    public void testRunSparqlQuery() {
         //  final JQLResultSet resultSet = (JQLResultSet)testObj.runSparqlQuery(IOUtils.toInputStream("SELECT ?pid
         // WHERE { ?pid <info:x> \"a\" }"), uriInfo);
 

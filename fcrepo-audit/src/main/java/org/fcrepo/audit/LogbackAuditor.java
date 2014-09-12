@@ -15,6 +15,8 @@
  */
 package org.fcrepo.audit;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -22,7 +24,6 @@ import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.utils.EventType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -37,7 +38,7 @@ public class LogbackAuditor implements Auditor {
     /**
      * Logger for this class.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(LogbackAuditor.class);
+    private static final Logger LOGGER = getLogger(LogbackAuditor.class);
 
     @Inject
     private EventBus eventBus;

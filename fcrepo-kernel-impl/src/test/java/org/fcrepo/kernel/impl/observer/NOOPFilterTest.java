@@ -35,12 +35,12 @@ public class NOOPFilterTest {
     Event mockEvent;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
     }
 
     @Test
-    public void testApply() throws Exception {
+    public void testApply() {
         assertTrue("Failed to pass an event through a NO-OP filter!",
                    new NOOPFilter().getFilter(null).apply(mockEvent));
     }

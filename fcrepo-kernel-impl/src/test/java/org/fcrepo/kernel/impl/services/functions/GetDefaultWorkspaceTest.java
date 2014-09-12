@@ -46,7 +46,7 @@ public class GetDefaultWorkspaceTest {
     private RepositoryConfiguration mockRepositoryConfig;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         when(mockModeshapeRepository.getConfiguration()).thenReturn(mockRepositoryConfig);
         testObj = new GetDefaultWorkspace();

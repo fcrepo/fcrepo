@@ -46,7 +46,7 @@ public class FedoraRepositorySitemapTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraRepositorySitemap();
         setField(testObj, "repositoryService", mockService);
@@ -56,7 +56,7 @@ public class FedoraRepositorySitemapTest {
     }
 
     @Test
-    public void testGetSitemapIndex() throws Exception {
+    public void testGetSitemapIndex() {
         when(mockService.getRepositoryObjectCount()).thenReturn(49999L);
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();
 
@@ -64,7 +64,7 @@ public class FedoraRepositorySitemapTest {
     }
 
     @Test
-    public void testGetSitemapIndexMultiplePages() throws Exception {
+    public void testGetSitemapIndexMultiplePages() {
         when(mockService.getRepositoryObjectCount()).thenReturn(50001L);
         final SitemapIndex sitemapIndex = testObj.getSitemapIndex();
 

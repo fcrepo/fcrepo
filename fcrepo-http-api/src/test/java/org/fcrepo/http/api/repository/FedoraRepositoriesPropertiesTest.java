@@ -61,7 +61,7 @@ public class FedoraRepositoriesPropertiesTest {
     private Session mockSession;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new FedoraRepositoriesProperties();
         setField(testObj, "session", mockSession);

@@ -56,6 +56,7 @@ public class FedoraUserSecurityContextTest {
         when(request.getUserPrincipal()).thenReturn(principal);
     }
 
+    @SuppressWarnings("unused")
     @Test(expected = IllegalArgumentException.class)
     public void testNoFAD() {
         new FedoraUserSecurityContext(principal, null);

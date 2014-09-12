@@ -81,23 +81,19 @@ public class ResultSetStreamingOutputTest {
         final Query sparqlQuery =
             QueryFactory.create("SELECT ?x WHERE { ?x ?y ?z }");
 
-        final QueryExecution testResult =
-            QueryExecutionFactory.create(sparqlQuery, testData);
-
-        try {
+        try (final QueryExecution testResult =
+                QueryExecutionFactory.create(sparqlQuery, testData)) {
             final ResultSet resultSet = testResult.execSelect();
 
             testObj =
-                new ResultSetStreamingOutput(resultSet, MediaType
-                        .valueOf(contentTypeTextTSV));
+                    new ResultSetStreamingOutput(resultSet, MediaType
+                            .valueOf(contentTypeTextTSV));
 
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 testObj.write(out);
                 final String serialized = out.toString();
                 assertTrue(serialized.contains("test:subject"));
             }
-        } finally {
-            testResult.close();
         }
     }
 
@@ -107,23 +103,19 @@ public class ResultSetStreamingOutputTest {
         final Query sparqlQuery =
             QueryFactory.create("SELECT ?x WHERE { ?x ?y ?z }");
 
-        final QueryExecution testResult =
-            QueryExecutionFactory.create(sparqlQuery, testData);
-
-        try {
+        try (final QueryExecution testResult =
+                QueryExecutionFactory.create(sparqlQuery, testData)) {
             final ResultSet resultSet = testResult.execSelect();
 
             testObj =
-                new ResultSetStreamingOutput(resultSet, MediaType
-                        .valueOf(contentTypeRDFXML));
+                    new ResultSetStreamingOutput(resultSet, MediaType
+                            .valueOf(contentTypeRDFXML));
 
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 testObj.write(out);
                 final String serialized = out.toString();
                 assertTrue(serialized.contains("rs:ResultSet"));
             }
-        } finally {
-            testResult.close();
         }
     }
 

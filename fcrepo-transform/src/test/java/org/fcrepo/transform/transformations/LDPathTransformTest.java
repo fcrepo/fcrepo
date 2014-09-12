@@ -15,27 +15,7 @@
  */
 package org.fcrepo.transform.transformations;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.sparql.util.Symbol;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-import javax.ws.rs.WebApplicationException;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.Map;
-
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.transform.transformations.LDPathTransform.CONFIGURATION_FOLDER;
 import static org.fcrepo.transform.transformations.LDPathTransform.getNodeTypeTransform;
 import static org.junit.Assert.assertEquals;
@@ -45,6 +25,27 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Map;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.WebApplicationException;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.util.Symbol;
+
 /**
  * <p>LDPathTransformTest class.</p>
  *
@@ -53,12 +54,18 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class LDPathTransformTest {
 
     @Mock
-    Node mockNode;
+    private Node mockNode;
 
     @Mock
-    Session mockSession;
+    private Session mockSession;
 
-    LDPathTransform testObj;
+    @Mock
+    private InputStream mockInputStream;
+
+    @Mock
+    private NodeType mockNodeType;
+
+    private LDPathTransform testObj;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -73,7 +80,6 @@ public class LDPathTransformTest {
         when(mockSession.getNode(CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
 
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-        final NodeType mockNodeType = mock(NodeType.class);
         final NodeType mockNtBase = mock(NodeType.class);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] { mockNtBase });
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -86,7 +92,6 @@ public class LDPathTransformTest {
         final Node mockTypeConfigNode = mock(Node.class, RETURNS_DEEP_STUBS);
         when(mockSession.getNode(CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
 
-        final NodeType mockNodeType = mock(NodeType.class);
         final NodeType mockNtBase = mock(NodeType.class);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] { mockNtBase });
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -94,7 +99,6 @@ public class LDPathTransformTest {
         when(mockNodeType.toString()).thenReturn("custom:type");
         when(mockConfigNode.hasNode("custom:type")).thenReturn(true);
         when(mockConfigNode.getNode("custom:type")).thenReturn(mockTypeConfigNode);
-        final InputStream mockInputStream = mock(InputStream.class);
         when(mockTypeConfigNode.getNode("jcr:content").getProperty("jcr:data").getBinary().getStream()).thenReturn(
                 mockInputStream);
         final LDPathTransform nodeTypeSpecificLdpathProgramStream = getNodeTypeTransform(mockNode, "some-program");
@@ -108,7 +112,6 @@ public class LDPathTransformTest {
         final Node mockTypeConfigNode = mock(Node.class, Mockito.RETURNS_DEEP_STUBS);
         when(mockSession.getNode(LDPathTransform.CONFIGURATION_FOLDER + "some-program")).thenReturn(mockConfigNode);
 
-        final NodeType mockNodeType = mock(NodeType.class);
         final NodeType mockNtBase = mock(NodeType.class);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] { mockNtBase });
         when(mockNodeType.toString()).thenReturn("custom:type");
@@ -119,13 +122,11 @@ public class LDPathTransformTest {
 
         when(mockConfigNode.hasNode("nt:base")).thenReturn(true);
         when(mockConfigNode.getNode("nt:base")).thenReturn(mockTypeConfigNode);
-
-        final InputStream mockInputStream = mock(InputStream.class);
         when(mockTypeConfigNode.getNode("jcr:content").getProperty("jcr:data").getBinary().getStream()).thenReturn(
                 mockInputStream);
 
         final LDPathTransform nodeTypeSpecificLdpathProgramStream =
-                LDPathTransform.getNodeTypeTransform(mockNode, "some-program");
+                getNodeTypeTransform(mockNode, "some-program");
 
         assertEquals(new LDPathTransform(mockInputStream), nodeTypeSpecificLdpathProgramStream);
     }
@@ -133,7 +134,7 @@ public class LDPathTransformTest {
     @Test
     public void testProgramQuery() {
 
-        final Model model = ModelFactory.createDefaultModel();
+        final Model model = createDefaultModel();
         model.add(model.createResource("abc"),
                   model.createProperty("http://purl.org/dc/elements/1.1/title"),
                   model.createLiteral("some-title"));

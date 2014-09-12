@@ -15,6 +15,7 @@
  */
 package org.fcrepo.generator.dublincore;
 
+import static javax.xml.bind.JAXBContext.newInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
@@ -42,16 +43,17 @@ public class WorstCaseGeneratorTest {
     @Before
     public void setUp() throws JAXBException {
         testObj = new WorstCaseGenerator();
-        context = JAXBContext.newInstance(OaiDublinCore.class);
+        context = newInstance(OaiDublinCore.class);
 
     }
 
     @Test
     public void testGetStream() throws Exception {
         final Node mockNode = mock(Node.class);
-        final InputStream out = testObj.getStream(mockNode);
-        final OaiDublinCore actual =
-                (OaiDublinCore) context.createUnmarshaller().unmarshal(out);
-        assertNotNull(actual);
+        try (final InputStream out = testObj.getStream(mockNode)) {
+            final OaiDublinCore actual =
+                    (OaiDublinCore) context.createUnmarshaller().unmarshal(out);
+            assertNotNull(actual);
+        }
     }
 }

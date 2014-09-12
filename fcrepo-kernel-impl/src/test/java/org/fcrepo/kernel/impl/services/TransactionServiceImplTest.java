@@ -72,7 +72,6 @@ public class TransactionServiceImplTest {
         final Field txsField =
                 TransactionServiceImpl.class.getDeclaredField("transactions");
         txsField.setAccessible(true);
-        @SuppressWarnings("unchecked")
         final Map<String, Transaction> txs =
                 (Map<String, Transaction>) txsField
                         .get(TransactionService.class);
@@ -148,7 +147,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testExists() throws Exception {
+    public void testExists() {
         assertTrue(service.exists(IS_A_TX));
         assertFalse(service.exists(NOT_A_TX));
     }

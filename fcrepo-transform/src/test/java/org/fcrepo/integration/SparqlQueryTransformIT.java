@@ -16,27 +16,27 @@
 package org.fcrepo.integration;
 
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertTrue;
 
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.ResultSet;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.transform.transformations.SparqlQueryTransform;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 
-import static org.junit.Assert.assertTrue;
+import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.transform.transformations.SparqlQueryTransform;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.ResultSet;
 
 
 /**
@@ -55,11 +55,6 @@ public class SparqlQueryTransformIT {
     ObjectService objectService;
     private SparqlQueryTransform testObj;
 
-    @Before
-    public void setUp() {
-
-    }
-
     @Test
     public void shouldDoStuff() throws RepositoryException {
         final Session session = repo.login();
@@ -72,17 +67,12 @@ public class SparqlQueryTransformIT {
 
         testObj = new SparqlQueryTransform(stringReader);
 
-        final QueryExecution qexec = testObj.apply(object.getPropertiesDataset(new DefaultIdentifierTranslator()));
-
-        assert(qexec != null);
-
-        try {
+        try (final QueryExecution qexec =
+                testObj.apply(object.getPropertiesDataset(new DefaultIdentifierTranslator()))) {
+            assert (qexec != null);
             final ResultSet results = qexec.execSelect();
-
-            assert(results != null);
+            assert (results != null);
             assertTrue(results.hasNext());
-        } finally {
-            qexec.close();
         }
     }
 }

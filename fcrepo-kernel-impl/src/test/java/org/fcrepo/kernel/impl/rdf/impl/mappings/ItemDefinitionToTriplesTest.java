@@ -111,9 +111,11 @@ public class ItemDefinitionToTriplesTest {
 
     private static interface NamespacedItemDefinition extends Namespaced,
             ItemDefinition {
+        // for mocking purposes
     }
 
     private static interface NamespacedNodeType extends Namespaced, NodeType {
+        // for mocking purposes
     }
 
     private static final Logger LOGGER =

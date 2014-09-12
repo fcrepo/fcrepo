@@ -127,6 +127,7 @@ public class FedoraResourceImplTest {
         assertEquals(mockNode, testObj.getNode());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testPathConstructor() throws RepositoryException {
         when(mockSession.getRootNode()).thenReturn(mockRoot);

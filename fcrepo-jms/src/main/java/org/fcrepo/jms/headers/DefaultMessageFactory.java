@@ -18,7 +18,6 @@ package org.fcrepo.jms.headers;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -87,7 +86,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     @Override
     public Message getMessage(final FedoraEvent jcrEvent,
         final javax.jms.Session jmsSession) throws RepositoryException,
-        IOException, JMSException {
+        JMSException {
 
         if ( baseURL == null ) {
             setBaseURL(jcrEvent);
