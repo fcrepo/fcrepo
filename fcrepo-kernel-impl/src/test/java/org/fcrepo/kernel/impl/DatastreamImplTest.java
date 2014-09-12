@@ -245,12 +245,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetDsId() throws RepositoryException {
-        final String actual = testObj.getDsId();
-        assertEquals(testDsId, actual);
-    }
-
-    @Test
     public void testGetObject() throws RepositoryException {
         final Node mockObjectNode = mock(Node.class);
         final NodeType mockNodeType = mock(NodeType.class);

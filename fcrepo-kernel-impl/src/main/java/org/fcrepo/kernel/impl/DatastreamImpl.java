@@ -262,15 +262,6 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getDsId()
-     */
-    @Override
-    public String getDsId() throws RepositoryException {
-        return node.getName();
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.fcrepo.kernel.Datastream#getObject()
      */
     @Override
@@ -307,7 +298,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         if (hasContent() && getContentNode().hasProperty(PREMIS_FILE_NAME)) {
             return getContentNode().getProperty(PREMIS_FILE_NAME).getString();
         }
-        return getDsId();
+        return node.getName();
     }
 
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {

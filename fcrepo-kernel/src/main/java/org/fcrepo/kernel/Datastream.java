@@ -78,13 +78,6 @@ public interface Datastream extends FedoraResource {
     URI getContentDigest() throws RepositoryException;
 
     /**
-     * @return The ID of this datastream, unique within an object. Normally just
-     *         the name of the backing JCR node.
-     * @throws RepositoryException
-     */
-    String getDsId() throws RepositoryException;
-
-    /**
      * @return the FedoraObject to which this datastream belongs.
      * @throws RepositoryException
      */
