@@ -18,21 +18,17 @@ package org.fcrepo.kernel.impl;
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.ValueFactory;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
@@ -47,13 +43,10 @@ import java.util.Date;
 import static org.fcrepo.kernel.impl.DatastreamImpl.hasMixin;
 import static org.fcrepo.kernel.impl.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.impl.utils.TestHelpers.getContentNodeMock;
-import static org.fcrepo.kernel.impl.utils.TestHelpers.getPropertyIterator;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -180,7 +173,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
-        testObj.setContent(mockStream);
+        testObj.setContent(mockStream, null, null, null, null);
     }
 
     @Test
@@ -245,28 +238,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetDsId() throws RepositoryException {
-        final String actual = testObj.getDsId();
-        assertEquals(testDsId, actual);
-    }
-
-    @Test
-    public void testGetObject() throws RepositoryException {
-        final Node mockObjectNode = mock(Node.class);
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
-        when(mockObjectNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockNodeType});
-        final NodeType mockPrimaryNodeType = mock(NodeType.class);
-        when(mockPrimaryNodeType.getName()).thenReturn("nt:file");
-        when(mockObjectNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(mockDsNode.getParent()).thenReturn(mockObjectNode);
-        final FedoraObject actual = testObj.getObject();
-        assertNotNull(actual);
-        assertEquals(mockObjectNode, actual.getNode());
-    }
-
-    @Test
     public void testGetMimeType() throws RepositoryException {
         final Node mockContent = getContentNodeMock(8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
@@ -319,26 +290,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         when(mockDsNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(expected.getTime(), actual.getTime());
-    }
-
-    @Test
-    public void testGetSize() throws RepositoryException {
-        final int expectedProps = 1;
-        final int expectedContentLength = 2;
-        final Node mockContent = getContentNodeMock(expectedContentLength);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockDsNode.getProperties()).thenAnswer(
-                new Answer<PropertyIterator>() {
-
-                    @Override
-                    public PropertyIterator answer(
-                            final InvocationOnMock invocation) {
-                        return getPropertyIterator(1, expectedProps);
-                    }
-                });
-        final long actual = testObj.getSize();
-        verify(mockDsNode, times(1)).getProperties();
-        assertEquals(3, actual);
     }
 
     @Test

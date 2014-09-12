@@ -561,7 +561,7 @@ public class FedoraNodes extends AbstractResource {
 
         final FedoraResource object = nodeService.getObject(session, path);
 
-        if (object.getModels().contains(FEDORA_DATASTREAM)) {
+        if (object.hasType(FEDORA_DATASTREAM)) {
             throw new WebApplicationException(conflict().entity("Object cannot have child nodes").build());
         }
 

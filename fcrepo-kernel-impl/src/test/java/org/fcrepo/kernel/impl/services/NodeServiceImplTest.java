@@ -23,10 +23,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.InputStream;
-import java.util.Set;
 
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -86,24 +84,6 @@ public class NodeServiceImplTest {
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.getAllNodeTypes()).thenReturn(mockNTI);
         when(mockEmptyIterator.hasNext()).thenReturn(false);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testGetObjectNames() throws RepositoryException {
-        final String objPath = "";
-        when(mockObjNode.getName()).thenReturn("foo");
-        when(mockObjNode.isNodeType("nt:folder")).thenReturn(true);
-        final NodeIterator mockIter = mock(NodeIterator.class);
-        when(mockIter.hasNext()).thenReturn(true, false);
-        when(mockIter.nextNode()).thenReturn(mockObjNode).thenThrow(
-                IndexOutOfBoundsException.class);
-        when(mockRoot.getNodes()).thenReturn(mockIter);
-        when(mockSession.getNode(objPath)).thenReturn(mockRoot);
-        final Set<String> actual = testObj.getObjectNames(mockSession, "");
-        verify(mockSession).getNode(objPath);
-        assertEquals(1, actual.size());
-        assertEquals("foo", actual.iterator().next());
     }
 
     @Test

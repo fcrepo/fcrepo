@@ -135,7 +135,7 @@ public class DatastreamImplIT extends AbstractIT {
             datastreamService.getDatastream(session,
                     "/testDatastreamObject/testDatastreamNode3");
 
-        ds.setContent(new ByteArrayInputStream("0123456789".getBytes()));
+        ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
 
         assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds
                 .getContentDigest().toString());

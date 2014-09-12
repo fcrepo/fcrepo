@@ -15,18 +15,10 @@
  */
 package org.fcrepo.kernel;
 
-import javax.jcr.RepositoryException;
-
 /**
  * @author bbpennel
  * @since Feb 18, 2014
  */
 public interface FedoraObject extends FedoraResource {
-
-    /**
-     * @return The JCR name of the node that backs this object.
-     * @throws RepositoryException
-     */
-    String getName() throws RepositoryException;
 
 }

@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.fcrepo.kernel.impl.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -36,7 +35,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -231,15 +229,6 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#setContent(java.io.InputStream)
-     */
-    @Override
-    public void setContent(final InputStream content) throws InvalidChecksumException, RepositoryException {
-        setContent(content, null, null, null, null);
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.fcrepo.kernel.Datastream#getContentSize()
      */
     @Override
@@ -271,40 +260,12 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getDsId()
-     */
-    @Override
-    public String getDsId() throws RepositoryException {
-        return node.getName();
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getObject()
-     */
-    @Override
-    public FedoraObject getObject() throws RepositoryException {
-        return new FedoraObjectImpl(node.getParent());
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.fcrepo.kernel.Datastream#getMimeType()
      */
     @Override
     public String getMimeType() throws RepositoryException {
         return hasContent() && getContentNode().hasProperty(JCR_MIME_TYPE) ? node.getNode(
                 JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString() : "application/octet-stream";
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getSize()
-     */
-    @Override
-    public Long getSize() throws RepositoryException {
-        return getNodePropertySize(node) + getContentSize();
-
     }
 
     /*
@@ -316,7 +277,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         if (hasContent() && getContentNode().hasProperty(PREMIS_FILE_NAME)) {
             return getContentNode().getProperty(PREMIS_FILE_NAME).getString();
         }
-        return getDsId();
+        return node.getName();
     }
 
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {

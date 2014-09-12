@@ -25,7 +25,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 
 /**
@@ -66,17 +65,6 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
             initializeNewObjectProperties();
         }
     }
-    /**
-     * Create or find a FedoraDatastream at the given path
-     * @param session the JCR session to use to retrieve the object
-     * @param path the absolute path to the object
-     * @throws RepositoryException
-     */
-    public FedoraObjectImpl(final Session session, final String path)
-        throws RepositoryException {
-        this(session, path, JcrConstants.NT_FOLDER);
-    }
-
 
     private void initializeNewObjectProperties() {
         try {
@@ -89,14 +77,6 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
             LOGGER.warn("Could not decorate {} with {} properties: {} ",
                            JCR_CONTENT, FEDORA_OBJECT, e);
         }
-    }
-
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraObject#getName()
-     */
-    @Override
-    public String getName() throws RepositoryException {
-        return node.getName();
     }
 
     /**

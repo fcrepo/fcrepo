@@ -76,15 +76,6 @@ public interface DatastreamService extends Service {
             InputStream requestBodyStream, URI checksum) throws RepositoryException, InvalidChecksumException;
 
     /**
-     * Retrieve the JCR node for a Datastream by pid and dsid
-     *
-     * @param path
-     * @return retrieved jcr node
-     * @throws RepositoryException
-     */
-    Node getDatastreamNode(Session session, String path) throws RepositoryException;
-
-    /**
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param path jcr path to the datastream

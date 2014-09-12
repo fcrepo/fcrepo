@@ -66,15 +66,6 @@ public interface Datastream extends FedoraResource {
         throws RepositoryException, InvalidChecksumException;
 
     /**
-     * Set the content of this datastream
-     * @param content Binary content to be stored
-     * @throws InvalidChecksumException
-     * @throws RepositoryException
-     */
-    void setContent(InputStream content) throws InvalidChecksumException,
-            RepositoryException;
-
-    /**
      * @return The size in bytes of content associated with this datastream.
      */
     long getContentSize();
@@ -87,31 +78,10 @@ public interface Datastream extends FedoraResource {
     URI getContentDigest() throws RepositoryException;
 
     /**
-     * @return The ID of this datastream, unique within an object. Normally just
-     *         the name of the backing JCR node.
-     * @throws RepositoryException
-     */
-    String getDsId() throws RepositoryException;
-
-    /**
-     * @return the FedoraObject to which this datastream belongs.
-     * @throws RepositoryException
-     */
-    FedoraObject getObject() throws RepositoryException;
-
-    /**
      * @return The MimeType of content associated with this datastream.
      * @throws RepositoryException
      */
     String getMimeType() throws RepositoryException;
-
-    /**
-     * Return the calculated size of the DS node
-     * @return combined size of the properties and binary content
-     * @throws RepositoryException
-     */
-    @Override
-    Long getSize() throws RepositoryException;
 
     /**
      * Return the file name for the binary content

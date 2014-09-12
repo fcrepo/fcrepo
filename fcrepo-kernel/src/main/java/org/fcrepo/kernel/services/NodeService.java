@@ -17,7 +17,6 @@ package org.fcrepo.kernel.services;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -63,23 +62,6 @@ public interface NodeService extends Service {
      * @throws RepositoryException
      */
     FedoraResource getObject(Session session, String path, String versionId) throws RepositoryException;
-
-    /**
-     * @return A Set of object names (identifiers)
-     * @throws RepositoryException
-     */
-    Set<String> getObjectNames(Session session, String path) throws RepositoryException;
-
-    /**
-     * Get the list of children at the given path filtered by the given mixin
-     *
-     * @param session
-     * @param path
-     * @param mixin
-     * @return list of matching children
-     * @throws RepositoryException
-     */
-    Set<String> getObjectNames(Session session, String path, String mixin) throws RepositoryException;
 
     /**
      * Delete an existing object from the repository at the given path

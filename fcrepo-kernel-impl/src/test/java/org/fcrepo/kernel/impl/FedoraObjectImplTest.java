@@ -15,18 +15,15 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.fcrepo.kernel.impl.services.ServiceHelpers.getObjectSize;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.Calendar;
-import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -100,6 +97,7 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
 
             mockNodetypes = new NodeType[2];
             mockNodetypes[0] = mock(NodeType.class);
+            when(mockNodetypes[0].getName()).thenReturn("some:type");
             mockNodetypes[1] = mock(NodeType.class);
 
             when(mockObjNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
@@ -118,11 +116,6 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
         mockSession = null;
         mockRootNode = null;
         mockObjNode = null;
-    }
-
-    @Test
-    public void testGetName() throws RepositoryException {
-        assertEquals(testFedoraObject.getName(), testPid);
     }
 
     @Test
@@ -149,18 +142,8 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetSize() throws RepositoryException {
-        mockStatic(ServiceHelpers.class);
-        // obviously not a real value
-        when(getObjectSize(mockObjNode)).thenReturn(-8L);
-        final long actual = testFedoraObject.getSize();
-        assertEquals(-8, actual);
-    }
-
-    @Test
-    public void testGetModels() throws RepositoryException {
-        final Collection<String> actual = testFedoraObject.getModels();
-        assertNotNull(actual);
+    public void testHasType() throws RepositoryException {
+        assertTrue(testFedoraObject.hasType("some:type"));
     }
 
 }

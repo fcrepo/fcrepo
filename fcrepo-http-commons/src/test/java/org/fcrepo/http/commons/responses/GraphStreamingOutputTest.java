@@ -55,7 +55,7 @@ public class GraphStreamingOutputTest {
                 createURI("test:predicate"), createURI("test:object")));
         graphStore.setDefaultGraph(g);
         final GraphStoreStreamingOutput test =
-                new GraphStoreStreamingOutput(graphStore, NTRIPLES_TYPE);
+                new GraphStoreStreamingOutput(graphStore.toDataset(), NTRIPLES_TYPE);
         try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             test.write(out);
             final String serialized = out.toString();
