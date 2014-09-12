@@ -53,12 +53,12 @@ public class StoragePolicyDecisionPointTest {
         final StoragePolicy policy =
                 new MimeTypeStoragePolicy("image/x-dummy-type", dummyHint);
 
-        pt.addPolicy(policy);
+        pt.add(policy);
 
         tiffHint = "tiff-store-id";
         final StoragePolicy tiffPolicy = new MimeTypeStoragePolicy("image/tiff", tiffHint);
 
-        pt.addPolicy(tiffPolicy);
+        pt.add(tiffPolicy);
     }
 
     @Test

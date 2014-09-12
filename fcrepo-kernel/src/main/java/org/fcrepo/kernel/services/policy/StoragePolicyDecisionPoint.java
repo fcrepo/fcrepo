@@ -25,14 +25,7 @@ import javax.jcr.Node;
  * @since Aug 14, 2013
  *
  */
-public interface StoragePolicyDecisionPoint {
-
-    /**
-     * Add a new storage policy
-     *
-     * @param p org.fcrepo.kernel.services.policy object
-     */
-    void addPolicy(final StoragePolicy p);
+public interface StoragePolicyDecisionPoint extends List<StoragePolicy> {
 
     /**
      * Given a JCR node (likely a jcr:content node), determine which storage
@@ -44,36 +37,10 @@ public interface StoragePolicyDecisionPoint {
     String evaluatePolicies(final Node n);
 
     /**
-     * Remove a storage policy
-     *
-     * @param p org.fcrepo.kernel.services.policy object
-     */
-    void removePolicy(final StoragePolicy p);
-
-    /**
      * Explicitly set the policies this PDP should use
      *
      * @param policies
      */
     void setPolicies(final List<StoragePolicy> policies);
 
-    /**
-     * @param policy
-     */
-    boolean contains(final StoragePolicy policy);
-
-    /**
-     * clear all policies
-     */
-    void removeAll();
-
-    /**
-     * @return policies size
-     */
-    int size();
-
-    /**
-     * @return policies size
-     */
-    boolean isEmpty();
 }
