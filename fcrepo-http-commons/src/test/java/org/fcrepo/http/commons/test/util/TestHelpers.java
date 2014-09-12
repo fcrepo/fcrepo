@@ -219,7 +219,6 @@ public abstract class TestHelpers {
         final Datastream mockDs = mock(Datastream.class);
         final FedoraObject mockObj = mock(FedoraObject.class);
         try {
-            when(mockObj.getName()).thenReturn(pid);
             when(mockDs.getPath()).thenReturn("/" + pid + "/" + dsId);
             when(mockDs.getObject()).thenReturn(mockObj);
             when(mockDs.getDsId()).thenReturn(dsId);

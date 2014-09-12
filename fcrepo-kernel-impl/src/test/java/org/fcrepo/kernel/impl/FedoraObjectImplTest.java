@@ -121,11 +121,6 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetName() throws RepositoryException {
-        assertEquals(testFedoraObject.getName(), testPid);
-    }
-
-    @Test
     public void testGetNode() {
         assertEquals(testFedoraObject.getNode(), mockObjNode);
     }

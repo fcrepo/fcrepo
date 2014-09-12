@@ -91,14 +91,6 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraObject#getName()
-     */
-    @Override
-    public String getName() throws RepositoryException {
-        return node.getName();
-    }
-
     /**
      * Check if the node has a fedora:object mixin
      * @param node
