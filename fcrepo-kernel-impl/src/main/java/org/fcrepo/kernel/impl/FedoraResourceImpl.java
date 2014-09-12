@@ -27,17 +27,16 @@ import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.map;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.nodetype2name;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.property2values;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
+
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -51,6 +50,7 @@ import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
@@ -191,17 +191,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return getObjectSize(node);
     }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getModels()
-     */
     @Override
-    public Collection<String> getModels() throws RepositoryException {
+    public boolean hasType(final String type) throws RepositoryException {
         if (isFrozen.apply(node)) {
-            return newArrayList(
-                Iterators.transform(
-                    property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string));
+            final List<String> types = newArrayList(
+                Iterators.transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
+            );
+            return types.contains(type);
+        } else {
+            return new AnyTypesPredicate(type).apply(node);
         }
-        return map(node.getMixinNodeTypes(), nodetype2name);
     }
 
     /* (non-Javadoc)

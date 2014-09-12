@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel;
 
-import java.util.Collection;
 import java.util.Date;
 
 import javax.jcr.Node;
@@ -77,12 +76,11 @@ public interface FedoraResource {
     Long getSize() throws RepositoryException;
 
     /**
-     * Get the mixins this object uses
+     * Check if this object uses a given mixin
      * @return a collection of mixin names
      * @throws javax.jcr.RepositoryException
      */
-    Collection<String> getModels() throws RepositoryException;
-
+    boolean hasType(final String type) throws RepositoryException;
     /**
      * Update the properties Dataset with a SPARQL Update query. The updated
      * properties may be serialized to the JCR store.
