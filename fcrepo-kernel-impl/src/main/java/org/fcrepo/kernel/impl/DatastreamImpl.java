@@ -36,7 +36,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -258,15 +257,6 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         }
 
         return ContentDigest.missingChecksum();
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getObject()
-     */
-    @Override
-    public FedoraObject getObject() throws RepositoryException {
-        return new FedoraObjectImpl(node.getParent());
     }
 
     /*

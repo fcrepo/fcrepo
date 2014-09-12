@@ -18,7 +18,6 @@ package org.fcrepo.kernel.impl;
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.junit.After;
@@ -49,7 +48,6 @@ import static org.fcrepo.kernel.impl.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.impl.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.impl.utils.TestHelpers.getPropertyIterator;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -242,22 +240,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         final URI actual = testObj.getContentDigest();
         assertEquals(expected, actual);
         verify(mockContent).getProperty(CONTENT_DIGEST);
-    }
-
-    @Test
-    public void testGetObject() throws RepositoryException {
-        final Node mockObjectNode = mock(Node.class);
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
-        when(mockObjectNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockNodeType});
-        final NodeType mockPrimaryNodeType = mock(NodeType.class);
-        when(mockPrimaryNodeType.getName()).thenReturn("nt:file");
-        when(mockObjectNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(mockDsNode.getParent()).thenReturn(mockObjectNode);
-        final FedoraObject actual = testObj.getObject();
-        assertNotNull(actual);
-        assertEquals(mockObjectNode, actual.getNode());
     }
 
     @Test

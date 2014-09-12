@@ -78,12 +78,6 @@ public interface Datastream extends FedoraResource {
     URI getContentDigest() throws RepositoryException;
 
     /**
-     * @return the FedoraObject to which this datastream belongs.
-     * @throws RepositoryException
-     */
-    FedoraObject getObject() throws RepositoryException;
-
-    /**
      * @return The MimeType of content associated with this datastream.
      * @throws RepositoryException
      */
