@@ -159,21 +159,6 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetDatastreamNode() throws Exception {
-        final String testPath = "/foo/bar";
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
-        when(mockNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockNodeType});
-
-        when(mockSession.getNode(testPath)).thenReturn(mockNode);
-        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
-        final DatastreamService testObj = new DatastreamServiceImpl();
-        testObj.getDatastreamNode(mockSession, testPath);
-        verify(mockRoot).getNode(testPath.substring(1));
-    }
-
-    @Test
     public void testGetDatastream() throws Exception {
         final String testPath = "/foo/bar";
         final NodeType mockNodeType = mock(NodeType.class);
