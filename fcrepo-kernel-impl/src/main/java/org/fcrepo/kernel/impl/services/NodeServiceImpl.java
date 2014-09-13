@@ -15,16 +15,13 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static com.google.common.collect.ImmutableSet.builder;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getVersionHistory;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
 
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -41,8 +38,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Service for managing access to Fedora 'nodes' (either datastreams or objects,
@@ -107,43 +102,6 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
 
         final Version version = versionHistory.getVersionByLabel(versionId);
         return new FedoraResourceImpl(version.getFrozenNode());
-    }
-
-    /**
-     * @return A Set of object names (identifiers)
-     * @throws RepositoryException
-     */
-    @Override
-    public Set<String> getObjectNames(final Session session, final String path) throws RepositoryException {
-        return getObjectNames(session, path, null);
-    }
-
-    /**
-     * Get the list of child nodes at the given path filtered by the given mixin
-     *
-     * @param session
-     * @param path
-     * @param mixin
-     * @return the list of child nodes at the given path filtered by the given mixin
-     * @throws RepositoryException
-     */
-    @Override
-    public Set<String> getObjectNames(final Session session, final String path, final String mixin)
-        throws RepositoryException {
-
-        final Node objects = session.getNode(path);
-        final ImmutableSet.Builder<String> b = builder();
-        final NodeIterator i = objects.getNodes();
-
-        while (i.hasNext()) {
-            final Node n = i.nextNode();
-            LOGGER.trace("Child of type {} is named {} at {}", n.getPrimaryNodeType(), n.getName(), n.getPath());
-            if (mixin == null || n.isNodeType(mixin)) {
-                b.add(n.getName());
-            }
-        }
-
-        return b.build();
     }
 
     /**
