@@ -132,22 +132,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     }
 
     /**
-     * Retrieve the JCR node for a Datastream by pid and dsid
-     *
-     * @param path
-     * @return datastream node
-     * @throws RepositoryException
-     */
-    @Override
-    public Node getDatastreamNode(final Session session, final String path)
-        throws RepositoryException {
-        LOGGER.trace("Executing getDatastreamNode() with path: {}", path);
-        final Node dsNode = getDatastream(session, path).getNode();
-        LOGGER.trace("Retrieved datastream node: {}", dsNode.getName());
-        return dsNode;
-    }
-
-    /**
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param path jcr path to the datastream
