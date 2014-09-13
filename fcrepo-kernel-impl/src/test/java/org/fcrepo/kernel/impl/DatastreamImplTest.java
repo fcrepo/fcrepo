@@ -298,26 +298,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetSize() throws RepositoryException {
-        final int expectedProps = 1;
-        final int expectedContentLength = 2;
-        final Node mockContent = getContentNodeMock(expectedContentLength);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockDsNode.getProperties()).thenAnswer(
-                new Answer<PropertyIterator>() {
-
-                    @Override
-                    public PropertyIterator answer(
-                            final InvocationOnMock invocation) {
-                        return getPropertyIterator(1, expectedProps);
-                    }
-                });
-        final long actual = testObj.getSize();
-        verify(mockDsNode, times(1)).getProperties();
-        assertEquals(3, actual);
-    }
-
-    @Test
     public void testHasMixin() throws RepositoryException {
         final NodeType mockYes = mock(NodeType.class);
         when(mockYes.getName()).thenReturn(FEDORA_DATASTREAM);

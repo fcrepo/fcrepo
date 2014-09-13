@@ -69,13 +69,6 @@ public interface FedoraResource {
     Date getLastModifiedDate() throws RepositoryException;
 
     /**
-     * Get the total size of this object and its datastreams
-     * @return size in bytes
-     * @throws RepositoryException
-     */
-    Long getSize() throws RepositoryException;
-
-    /**
      * Check if this object uses a given mixin
      * @return a collection of mixin names
      * @throws javax.jcr.RepositoryException

@@ -65,23 +65,6 @@ public class FedoraObjectImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetSizeWhenInATree() throws Exception {
-
-        final Session session = repo.login();
-        final FedoraObject object =
-            objectService.createObject(session, "/parentObject");
-        final long originalSize = object.getSize();
-        objectService.createObject(session, "/parentObject/testChildObject");
-
-        session.save();
-
-        assertTrue(objectService
-                   .getObject(session, "/parentObject")
-                   .getSize() > originalSize);
-
-    }
-
-    @Test
     public void testObjectGraph() throws Exception {
         final Session session = repo.login();
         final FedoraObject object =

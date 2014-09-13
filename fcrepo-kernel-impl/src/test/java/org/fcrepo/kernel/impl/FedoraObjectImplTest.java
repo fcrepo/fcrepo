@@ -144,15 +144,6 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testGetSize() throws RepositoryException {
-        mockStatic(ServiceHelpers.class);
-        // obviously not a real value
-        when(getObjectSize(mockObjNode)).thenReturn(-8L);
-        final long actual = testFedoraObject.getSize();
-        assertEquals(-8, actual);
-    }
-
-    @Test
     public void testHasType() throws RepositoryException {
         assertTrue(testFedoraObject.hasType("some:type"));
     }

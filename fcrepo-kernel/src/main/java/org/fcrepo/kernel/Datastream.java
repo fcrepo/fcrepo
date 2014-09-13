@@ -84,14 +84,6 @@ public interface Datastream extends FedoraResource {
     String getMimeType() throws RepositoryException;
 
     /**
-     * Return the calculated size of the DS node
-     * @return combined size of the properties and binary content
-     * @throws RepositoryException
-     */
-    @Override
-    Long getSize() throws RepositoryException;
-
-    /**
      * Return the file name for the binary content
      * @return original file name for the binary content, or the object's id.
      * @throws RepositoryException
