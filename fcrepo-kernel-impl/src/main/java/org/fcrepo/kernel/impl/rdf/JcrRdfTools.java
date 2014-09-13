@@ -129,16 +129,6 @@ public class JcrRdfTools {
     /**
      * Factory method to create a new JcrRdfTools instance
      *
-     * @param graphSubjects
-     * @return new JcrRdfTools instance
-     */
-    public static JcrRdfTools withContext(final IdentifierTranslator graphSubjects) {
-        return new JcrRdfTools(graphSubjects);
-    }
-
-    /**
-     * Factory method to create a new JcrRdfTools instance
-     *
      * @param idTranslator
      * @param session
      * @return new JcrRdfTools instance
@@ -186,17 +176,6 @@ public class JcrRdfTools {
      */
     public static Model getProblemsModel() {
         return createDefaultModel();
-    }
-
-    /**
-     * Using the same graph subjects, create a new JcrRdfTools with the given
-     * session
-     *
-     * @param session
-     * @return a new JcrRdfTools instance with the given session
-     */
-    public JcrRdfTools withSession(final Session session) {
-        return new JcrRdfTools(graphSubjects, session);
     }
 
     /**
@@ -370,16 +349,6 @@ public class JcrRdfTools {
         final ValueFactory valueFactory = node.getSession().getValueFactory();
         return createValue(valueFactory, data, type);
 
-    }
-
-    /**
-     * Create a JCR value (with an undefined type) from a RDFNode
-     * @param data
-     * @return created JCR value
-     * @throws RepositoryException
-     */
-    public Value createValue(final RDFNode data) throws RepositoryException {
-        return createValue(data, UNDEFINED);
     }
 
     /**
