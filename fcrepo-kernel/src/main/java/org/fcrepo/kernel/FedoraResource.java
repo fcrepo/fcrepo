@@ -33,7 +33,7 @@ public interface FedoraResource extends Container<Node> {
      * @return has content
      * @throws RepositoryException
      */
-    boolean hasContent() throws RepositoryException;
+    boolean hasContent();
 
     /**
      * Tag the current version of the Node with a version label that

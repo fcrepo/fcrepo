@@ -49,7 +49,7 @@ public interface NodeService extends Service {
      * @return FedoraResource at the given path
      * @throws RepositoryException
      */
-    FedoraResource getObject(Session session, String path) throws RepositoryException;
+    FedoraResource getObject(Session session, String path);
 
     /**
      * Get an existing Fedora resource at the given path with the given version

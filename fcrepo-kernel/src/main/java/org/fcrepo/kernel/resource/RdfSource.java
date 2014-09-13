@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2014 DuraSpace, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +66,7 @@ public interface RdfSource<T> extends Resource<T> {
      * @throws RepositoryException
      */
     Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
-                                 final int offset, final int limit) throws RepositoryException;
+                                 final int offset, final int limit);
 
     /**
      * Return the JCR properties of this object as a Jena {@link Dataset}
@@ -83,7 +83,7 @@ public interface RdfSource<T> extends Resource<T> {
      * @return triples
      * @throws RepositoryException
      */
-    RdfStream getTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
+    RdfStream getTriples(final IdentifierTranslator graphSubjects);
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
@@ -92,8 +92,7 @@ public interface RdfSource<T> extends Resource<T> {
      * @throws RepositoryException
      */
     RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
-                                  final HierarchyRdfContextOptions serializationOptions)
-            throws RepositoryException;
+                                  final HierarchyRdfContextOptions serializationOptions);
 
     /**
      * Serialize the JCR versions information as an RDF dataset
@@ -110,6 +109,6 @@ public interface RdfSource<T> extends Resource<T> {
      * @return triples
      * @throws RepositoryException
      */
-    RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
+    RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects);
 
 }

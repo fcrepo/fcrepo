@@ -44,6 +44,7 @@ import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.serialization.SerializerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,24 +70,27 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-        final UriInfo uriInfo, final IdentifierTranslator graphSubjects)
-        throws RepositoryException {
+        final UriInfo uriInfo, final IdentifierTranslator graphSubjects) {
+        try {
 
-        final Model model = createDefaultModel();
+            final Model model = createDefaultModel();
 
-        final Resource s = graphSubjects.getSubject(resource.getNode().getPath());
+            final Resource s = graphSubjects.getSubject(resource.getPath());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
-            addRepositoryStatements(uriInfo, model, s);
-        } else {
-            addNodeStatements(resource, uriInfo, model, s);
+            if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
+                addRepositoryStatements(uriInfo, model, s);
+            } else {
+                addNodeStatements(resource, uriInfo, model, s);
+            }
+
+            if (resource.hasContent()) {
+                addContentStatements(resource, uriInfo, model, s);
+            }
+            return model;
+
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-
-        if (resource.hasContent()) {
-            addContentStatements(resource, uriInfo, model, s);
-        }
-
-        return model;
     }
 
     private static void addContentStatements(final FedoraResource resource, final UriInfo uriInfo,

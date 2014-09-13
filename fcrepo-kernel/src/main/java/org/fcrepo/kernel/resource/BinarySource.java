@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2014 DuraSpace, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,7 @@ import java.net.URI;
  * @author cabeer
  * @since 9/13/14
  */
-public interface BinarySource<T, V> extends Resource<T>{
+public interface BinarySource<T, V> extends Resource<T> {
 
     /**
      * @return The InputStream of content associated with this datastream.

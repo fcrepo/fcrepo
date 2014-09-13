@@ -30,6 +30,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.impl.rdf.impl.NodeTypeRdfContext;
 import org.fcrepo.kernel.services.NodeService;
@@ -73,8 +74,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public FedoraResource getObject(final Session session, final String path) throws RepositoryException {
-        return new FedoraResourceImpl(session.getNode(path));
+    public FedoraResource getObject(final Session session, final String path) {
+        try {
+            return new FedoraResourceImpl(session.getNode(path));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**

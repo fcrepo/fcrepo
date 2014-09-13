@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -45,6 +44,7 @@ import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -124,8 +124,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @see org.fcrepo.kernel.FedoraResource#hasContent()
      */
     @Override
-    public boolean hasContent() throws RepositoryException {
-        return node.hasNode(JCR_CONTENT);
+    public boolean hasContent() {
+        try {
+            return node.hasNode(JCR_CONTENT);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -140,18 +144,26 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @see org.fcrepo.kernel.FedoraResource#getPath()
      */
     @Override
-    public String getPath() throws RepositoryException {
-        return node.getPath();
+    public String getPath() {
+        try {
+            return node.getPath();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#getCreatedDate()
      */
     @Override
-    public Date getCreatedDate() throws RepositoryException {
-        if (node.hasProperty(JCR_CREATED)) {
-            return new Date(node.getProperty(JCR_CREATED).getDate()
-                            .getTimeInMillis());
+    public Date getCreatedDate() {
+        try {
+            if (node.hasProperty(JCR_CREATED)) {
+                return new Date(node.getProperty(JCR_CREATED).getDate()
+                        .getTimeInMillis());
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
         LOGGER.debug("Node {} does not have a createdDate", node);
         return null;
@@ -161,22 +173,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @see org.fcrepo.kernel.FedoraResource#getLastModifiedDate()
      */
     @Override
-    public Date getLastModifiedDate() throws RepositoryException {
-        final Date createdDate = getCreatedDate();
+    public Date getLastModifiedDate() {
+        try {
+            final Date createdDate = getCreatedDate();
 
-        if (node.hasProperty(JCR_LASTMODIFIED)) {
-            return new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
-        }
-        LOGGER.debug(
-                    "Could not get last modified date property for node {}",
-                    node);
+            if (node.hasProperty(JCR_LASTMODIFIED)) {
+                return new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+            }
 
-
-        if (createdDate != null) {
-            LOGGER.trace(
-                        "Using created date for last modified date for node {}",
+            LOGGER.debug(
+                        "Could not get last modified date property for node {}",
                         node);
-            return createdDate;
+
+
+            if (createdDate != null) {
+                LOGGER.trace(
+                            "Using created date for last modified date for node {}",
+                            node);
+                return createdDate;
+            }
+
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
 
         return null;
@@ -184,14 +202,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
 
     @Override
-    public boolean hasType(final String type) throws RepositoryException {
-        if (isFrozen.apply(node)) {
-            final List<String> types = newArrayList(
-                Iterators.transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
-            );
-            return types.contains(type);
-        } else {
-            return new AnyTypesPredicate(type).apply(node);
+    public boolean hasType(final String type) {
+        try {
+            if (isFrozen.apply(node)) {
+                final List<String> types = newArrayList(
+                    Iterators.transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
+                );
+                return types.contains(type);
+            } else {
+                return new AnyTypesPredicate(type).apply(node);
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 
@@ -216,35 +238,38 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
-        final int offset, final int limit)
-        throws RepositoryException {
+        final int offset, final int limit) {
 
-        final JcrRdfTools jcrRdfTools =
-            JcrRdfTools.withContext(graphSubjects, getNode().getSession());
+        try {
+            final JcrRdfTools jcrRdfTools =
+                    JcrRdfTools.withContext(graphSubjects, getNode().getSession());
 
-        final RdfStream propertiesStream =
-            jcrRdfTools.getJcrTriples(getNode());
+            final RdfStream propertiesStream =
+                    jcrRdfTools.getJcrTriples(getNode());
 
-        final HierarchyRdfContextOptions serializationOptions = new HierarchyRdfContextOptions(limit, offset);
+            final HierarchyRdfContextOptions serializationOptions = new HierarchyRdfContextOptions(limit, offset);
 
-        propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode(), serializationOptions));
+            propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode(), serializationOptions));
 
-        final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
+            final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
 
-        final Model problemsModel = createDefaultModel();
+            final Model problemsModel = createDefaultModel();
 
-        final JcrPropertyStatementListener listener =
-            JcrPropertyStatementListener.getListener(graphSubjects, node
-                    .getSession(), problemsModel);
+            final JcrPropertyStatementListener listener =
+                    JcrPropertyStatementListener.getListener(graphSubjects, node
+                            .getSession(), problemsModel);
 
-        dataset.getDefaultModel().register(listener);
+            dataset.getDefaultModel().register(listener);
 
-        dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
+            dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
 
-        dataset.getContext().set(URI_SYMBOL, graphSubjects.getSubject(getNode().getPath()));
+            dataset.getContext().set(URI_SYMBOL, graphSubjects.getSubject(getNode().getPath()));
 
 
-        return dataset;
+            return dataset;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -260,13 +285,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @see org.fcrepo.kernel.FedoraResource#getTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
-    public RdfStream getTriples(final IdentifierTranslator graphSubjects)
-        throws RepositoryException {
+    public RdfStream getTriples(final IdentifierTranslator graphSubjects) {
 
-        final JcrRdfTools jcrRdfTools =
-                JcrRdfTools.withContext(graphSubjects, getNode().getSession());
+        try {
+            final JcrRdfTools jcrRdfTools =
+                    JcrRdfTools.withContext(graphSubjects, getNode().getSession());
 
-        return jcrRdfTools.getJcrTriples(getNode());
+            return jcrRdfTools.getJcrTriples(getNode());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -274,13 +302,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
-                                         final HierarchyRdfContextOptions serializationOptions)
-        throws RepositoryException {
+                                         final HierarchyRdfContextOptions serializationOptions) {
 
-        final JcrRdfTools jcrRdfTools =
-                JcrRdfTools.withContext(graphSubjects, getNode().getSession());
+        try {
+            final JcrRdfTools jcrRdfTools =
+                    JcrRdfTools.withContext(graphSubjects, getNode().getSession());
 
-        return jcrRdfTools.getTreeTriples(getNode(), serializationOptions);
+            return jcrRdfTools.getTreeTriples(getNode(), serializationOptions);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -294,8 +325,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     @Override
-    public RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) throws RepositoryException {
-        return JcrRdfTools.withContext(graphSubjects, node.getSession()).getReferencesTriples(node);
+    public RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) {
+        try {
+            return JcrRdfTools.withContext(graphSubjects, node.getSession()).getReferencesTriples(node);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /* (non-Javadoc)
@@ -366,11 +401,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @see org.fcrepo.kernel.FedoraResource#getEtagValue()
      */
     @Override
-    public String getEtagValue() throws RepositoryException {
-        final Date lastModifiedDate = getLastModifiedDate();
+    public String getEtagValue() {
+        try {
+            final Date lastModifiedDate = getLastModifiedDate();
 
-        if (lastModifiedDate != null) {
-            return shaHex(node.getPath() + lastModifiedDate.getTime());
+            if (lastModifiedDate != null) {
+                return shaHex(node.getPath() + lastModifiedDate.getTime());
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
         return "";
     }

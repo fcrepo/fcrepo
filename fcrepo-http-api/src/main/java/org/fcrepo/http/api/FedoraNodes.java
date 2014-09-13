@@ -106,6 +106,7 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -216,7 +217,7 @@ public class FedoraNodes extends AbstractResource {
             @HeaderParam("Prefer") final Prefer prefer,
             @Context final Request request,
             @Context final HttpServletResponse servletResponse,
-            @Context final UriInfo uriInfo) throws RepositoryException {
+            @Context final UriInfo uriInfo) {
         throwIfPathIncludesJcr(pathList, "MOVE");
 
         final String path = toPath(pathList);
@@ -231,7 +232,7 @@ public class FedoraNodes extends AbstractResource {
 
         final RdfStream rdfStream =
             resource.getTriples(subjects).session(session)
-                    .topic(subjects.getSubject(resource.getNode().getPath())
+                    .topic(subjects.getSubject(resource.getPath())
                             .asNode());
 
         final PreferTag returnPreference;
@@ -264,13 +265,17 @@ public class FedoraNodes extends AbstractResource {
                 rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
                 servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
 
-                if ( resource.getNode().getNodes().getSize() > (offset + limit) ) {
-                    final Node nextPage =
-                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
-                                  .replaceQueryParam("limit", limit).build()
-                                  .toString().replace("&", "&amp;"));
-                    rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
-                    servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
+                try {
+                    if (resource.getNode().getNodes().getSize() > (offset + limit)) {
+                        final Node nextPage =
+                                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
+                                        .replaceQueryParam("limit", limit).build()
+                                        .toString().replace("&", "&amp;"));
+                        rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
+                        servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
+                    }
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
                 }
             }
 
@@ -315,11 +320,15 @@ public class FedoraNodes extends AbstractResource {
 
     private void addResourceHttpHeaders(final HttpServletResponse servletResponse,
                                         final FedoraResource resource,
-                                        final HttpIdentifierTranslator subjects) throws RepositoryException {
+                                        final HttpIdentifierTranslator subjects) {
 
         if (resource.hasContent()) {
-            servletResponse.addHeader("Link", "<" + subjects.getSubject(
-                resource.getNode().getNode(JCR_CONTENT).getPath()) + ">;rel=\"describes\"");
+            try {
+                servletResponse.addHeader("Link", "<" + subjects.getSubject(
+                        resource.getNode().getNode(JCR_CONTENT).getPath()) + ">;rel=\"describes\"");
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
         }
 
         if (!subjects.isCanonical()) {

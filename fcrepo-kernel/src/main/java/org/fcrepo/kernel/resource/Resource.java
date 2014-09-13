@@ -16,7 +16,6 @@
 
 package org.fcrepo.kernel.resource;
 
-import javax.jcr.RepositoryException;
 import java.util.Date;
 
 /**
@@ -33,16 +32,15 @@ public interface Resource<T> {
     /**
      * Get the path to the JCR node
      * @return path
-     * @throws javax.jcr.RepositoryException
      */
-    String getPath() throws RepositoryException;
+    String getPath();
 
     /**
      * Check if this object uses a given mixin
      * @return a collection of mixin names
      * @throws javax.jcr.RepositoryException
      */
-    boolean hasType(final String type) throws RepositoryException;
+    boolean hasType(final String type);
 
     /**
      * Check if a resource was created in this session
@@ -53,16 +51,14 @@ public interface Resource<T> {
     /**
      * Get the date this datastream was created
      * @return created date
-     * @throws RepositoryException
      */
-    Date getCreatedDate() throws RepositoryException;
+    Date getCreatedDate();
 
     /**
      * Get the date this datastream was last modified
      * @return last modified date
-     * @throws RepositoryException
      */
-    Date getLastModifiedDate() throws RepositoryException;
+    Date getLastModifiedDate();
 
     /**
      * Construct an ETag value from the last modified date and path. JCR has a
@@ -71,8 +67,7 @@ public interface Resource<T> {
      * value on object modify
      *
      * @return constructed etag value
-     * @throws RepositoryException
      */
-    String getEtagValue() throws RepositoryException;
+    String getEtagValue();
 
 }

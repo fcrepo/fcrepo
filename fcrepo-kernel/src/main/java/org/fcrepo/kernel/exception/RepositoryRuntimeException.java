@@ -27,10 +27,10 @@ public class RepositoryRuntimeException extends RuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param msg
+     * @param rootCause
      */
-    public RepositoryRuntimeException(final String msg) {
-        super(msg);
+    public RepositoryRuntimeException(final Throwable rootCause) {
+        super(rootCause);
     }
 
 
