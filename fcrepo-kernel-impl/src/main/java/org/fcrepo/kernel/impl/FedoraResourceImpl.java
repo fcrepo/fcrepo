@@ -24,7 +24,6 @@ import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
-import static org.fcrepo.kernel.impl.services.ServiceHelpers.getObjectSize;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.property2values;

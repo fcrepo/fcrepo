@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.fcrepo.kernel.impl.services.ServiceHelpers.getNodePropertySize;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;

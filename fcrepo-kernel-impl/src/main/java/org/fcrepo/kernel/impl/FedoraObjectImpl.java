@@ -25,7 +25,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 
 /**

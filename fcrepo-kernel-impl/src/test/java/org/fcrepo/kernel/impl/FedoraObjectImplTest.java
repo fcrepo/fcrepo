@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.fcrepo.kernel.impl.services.ServiceHelpers.getObjectSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -23,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.Calendar;
 
