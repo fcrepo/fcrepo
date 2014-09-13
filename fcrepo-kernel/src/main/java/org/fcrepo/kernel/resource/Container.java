@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 DuraSpace, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel;
 
-import javax.jcr.Binary;
-import javax.jcr.Node;
-
-import org.fcrepo.kernel.resource.BinarySource;
+package org.fcrepo.kernel.resource;
 
 /**
- * @author bbpennel
- * @since Feb 18, 2014
+ * @author cabeer
+ * @since 9/13/14
  */
-public interface Datastream extends FedoraResource, BinarySource<Node, Binary> {
-
-
+public interface Container<T> extends RdfSource<T> {
 }
