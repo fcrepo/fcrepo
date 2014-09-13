@@ -66,17 +66,6 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
             initializeNewObjectProperties();
         }
     }
-    /**
-     * Create or find a FedoraDatastream at the given path
-     * @param session the JCR session to use to retrieve the object
-     * @param path the absolute path to the object
-     * @throws RepositoryException
-     */
-    public FedoraObjectImpl(final Session session, final String path)
-        throws RepositoryException {
-        this(session, path, JcrConstants.NT_FOLDER);
-    }
-
 
     private void initializeNewObjectProperties() {
         try {
