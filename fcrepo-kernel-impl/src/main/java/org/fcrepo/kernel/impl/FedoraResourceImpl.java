@@ -183,13 +183,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getSize()
-     */
-    @Override
-    public Long getSize() throws RepositoryException {
-        return getObjectSize(node);
-    }
 
     @Override
     public boolean hasType(final String type) throws RepositoryException {
