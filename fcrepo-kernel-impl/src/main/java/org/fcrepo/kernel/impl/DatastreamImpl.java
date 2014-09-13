@@ -271,16 +271,6 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getSize()
-     */
-    @Override
-    public Long getSize() throws RepositoryException {
-        return getNodePropertySize(node) + getContentSize();
-
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.fcrepo.kernel.Datastream#getFilename()
      */
     @Override
