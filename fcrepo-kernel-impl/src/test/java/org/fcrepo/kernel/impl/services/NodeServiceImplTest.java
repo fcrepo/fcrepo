@@ -24,6 +24,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.InputStream;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -74,6 +75,13 @@ public class NodeServiceImplTest {
 
     private NodeService testObj;
 
+    @Mock
+    private NamespaceRegistry mockNameReg;
+
+    final private static String MOCK_PREFIX = "valid_ns";
+
+    final private static String MOCK_URI = "http://example.org";
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -84,6 +92,11 @@ public class NodeServiceImplTest {
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.getAllNodeTypes()).thenReturn(mockNTI);
         when(mockEmptyIterator.hasNext()).thenReturn(false);
+        final String[] mockPrefixes = { MOCK_PREFIX };
+        mockNameReg = mock(NamespaceRegistry.class);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
+        when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
+        when(mockNameReg.getURI(MOCK_PREFIX)).thenReturn(MOCK_URI);
     }
 
     @Test

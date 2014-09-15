@@ -15,14 +15,20 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import javax.inject.Inject;
+import javax.jcr.NamespaceException;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.services.Service;
+
 import org.modeshape.jcr.api.JcrTools;
 
 
@@ -51,9 +57,37 @@ public abstract class AbstractService extends JcrTools implements FedoraJcrTypes
     @Override
     public boolean exists(final Session session, final String path) {
         try {
+            validatePath(session, path);
             return session.nodeExists(path);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.services.Service#validatePath(javax.jcr.Session, java.lang.String)
+     */
+    @Override
+    public void validatePath(final Session session, final String path) throws RepositoryException {
+
+        final NamespaceRegistry namespaceRegistry =
+            session.getWorkspace().getNamespaceRegistry();
+        checkNotNull(namespaceRegistry,
+            "Couldn't find namespace registry in repository!");
+
+        final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
+        final String[] pathSegments = relPath.split("/");
+        for (final String segment : pathSegments) {
+            if (segment.length() > 0 && segment.contains(":") && !segment.matches("^fedora:.*")) {
+                final String prefix = segment.substring(0, segment.indexOf(":"));
+                try {
+                    namespaceRegistry.getURI(prefix);
+                } catch (final NamespaceException e) {
+                    throw new FedoraInvalidNamespaceException(
+                        String.format("The namespace prefix (%s) has not been registered", prefix), e);
+                }
+            }
         }
     }
 }
