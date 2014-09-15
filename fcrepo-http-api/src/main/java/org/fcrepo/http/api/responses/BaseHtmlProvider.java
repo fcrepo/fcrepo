@@ -62,6 +62,7 @@ import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -112,7 +113,7 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
             "/velocity.properties";
 
     @PostConstruct
-    void init() throws IOException, RepositoryException {
+    void init() throws IOException {
 
         LOGGER.trace("Velocity engine initializing...");
         final Properties properties = new Properties();
@@ -170,6 +171,8 @@ public class BaseHtmlProvider implements MessageBodyWriter<Dataset> {
 
             templatesMap = templatesMapBuilder.build();
 
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }

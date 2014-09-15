@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.exception;
 
 /**
- * A transaction was not found in the transaction registry
- *
- * @author awoods
+ * @author cabeer
+ * @since 9/15/14
  */
-public class TransactionMissingException extends RepositoryRuntimeException {
-
-    private static final long serialVersionUID = 2139084821001303830L;
-
+public class PathNotFoundRuntimeException extends RepositoryRuntimeException {
     /**
-     *
-     * @param s the exception message
+     * Wrap a PathNotFoundException in a runtime exception
+     * @param rootCause
      */
-    public TransactionMissingException(final String s) {
-        super(s);
+    public PathNotFoundRuntimeException(final Throwable rootCause) {
+        super(rootCause);
     }
 }

@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.FedoraResource;
@@ -40,9 +39,7 @@ public interface UriAwareResourceModelFactory {
      * @param uriInfo
      * @param graphSubjects
      * @return model containing triples for the given resource
-     * @throws RepositoryException
      */
     Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, final IdentifierTranslator graphSubjects)
-        throws RepositoryException;
+            final UriInfo uriInfo, final IdentifierTranslator graphSubjects);
 }

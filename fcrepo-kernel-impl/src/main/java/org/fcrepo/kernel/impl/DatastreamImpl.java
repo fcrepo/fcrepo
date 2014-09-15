@@ -23,6 +23,9 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
@@ -30,6 +33,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -65,7 +69,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @param n an existing {@link Node}
      * @throws ResourceTypeException if the node existed prior to this call but is not a datastream.
      */
-    public DatastreamImpl(final Node n) throws ResourceTypeException {
+    public DatastreamImpl(final Node n) {
         super(n);
 
         if (node.isNew()) {
@@ -81,10 +85,8 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @param session the JCR session to use to retrieve the object
      * @param path the absolute path to the object
      * @param nodeType primary type to assign to node
-     * @throws RepositoryException in the event of an exception accessing the repository, or specifically a
-     *         ResourceTypeException if a node exists at the path but is not a datastream.
      */
-    public DatastreamImpl(final Session session, final String path, final String nodeType) throws RepositoryException {
+    public DatastreamImpl(final Session session, final String path, final String nodeType) {
         super(session, path, nodeType);
         if (node.isNew()) {
             initializeNewDatastreamProperties();
@@ -100,7 +102,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @param path the absolute path to the object
      * @throws RepositoryException
      */
-    public DatastreamImpl(final Session session, final String path) throws RepositoryException {
+    public DatastreamImpl(final Session session, final String path) {
         this(session, path, JcrConstants.NT_FILE);
     }
 
@@ -126,8 +128,12 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getContent()
      */
     @Override
-    public InputStream getContent() throws RepositoryException {
-        return getContentNode().getProperty(JCR_DATA).getBinary().getStream();
+    public InputStream getContent() {
+        try {
+            return getBinaryContent().getStream();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*
@@ -135,8 +141,14 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getBinaryContent()
      */
     @Override
-    public javax.jcr.Binary getBinaryContent() throws RepositoryException {
-        return getContentNode().getProperty(JCR_DATA).getBinary();
+    public javax.jcr.Binary getBinaryContent() {
+        try {
+            return getContentNode().getProperty(JCR_DATA).getBinary();
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*
@@ -144,9 +156,13 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getContent()
      */
     @Override
-    public Node getContentNode() throws RepositoryException {
+    public Node getContentNode() {
         LOGGER.trace("Retrieved datastream content node.");
-        return node.getNode(JCR_CONTENT);
+        try {
+            return node.getNode(JCR_CONTENT);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*
@@ -154,8 +170,12 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getContent()
      */
     @Override
-    public boolean hasContent() throws RepositoryException {
-        return node.hasNode(JCR_CONTENT);
+    public boolean hasContent() {
+        try {
+            return node.hasNode(JCR_CONTENT);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*
@@ -168,33 +188,33 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
     public void setContent(final InputStream content, final String contentType,
             final URI checksum, final String originalFileName,
             final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-        throws RepositoryException, InvalidChecksumException {
+        throws InvalidChecksumException {
 
-        final Node contentNode =
-                findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+        try {
+            final Node contentNode = findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
-        if (contentNode.canAddMixin(FEDORA_BINARY)) {
-            contentNode.addMixin(FEDORA_BINARY);
-        }
+            if (contentNode.canAddMixin(FEDORA_BINARY)) {
+                contentNode.addMixin(FEDORA_BINARY);
+            }
 
-        if (contentType != null) {
-            contentNode.setProperty(JCR_MIME_TYPE, contentType);
-        }
+            if (contentType != null) {
+                contentNode.setProperty(JCR_MIME_TYPE, contentType);
+            }
 
-        if (originalFileName != null) {
-            contentNode.setProperty(PREMIS_FILE_NAME, originalFileName);
-        }
+            if (originalFileName != null) {
+                contentNode.setProperty(PREMIS_FILE_NAME, originalFileName);
+            }
 
-        LOGGER.debug("Created content node at path: {}", contentNode.getPath());
+            LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
-        String hint = null;
+            String hint = null;
 
-        if (storagePolicyDecisionPoint != null) {
-            hint = storagePolicyDecisionPoint.evaluatePolicies(node);
-        }
-        final ValueFactory modevf =
-                (ValueFactory) node.getSession().getValueFactory();
-        final Binary binary = modevf.createBinary(content, hint);
+            if (storagePolicyDecisionPoint != null) {
+                hint = storagePolicyDecisionPoint.evaluatePolicies(node);
+            }
+            final ValueFactory modevf =
+                    (ValueFactory) node.getSession().getValueFactory();
+            final Binary binary = modevf.createBinary(content, hint);
 
         /*
          * This next line of code deserves explanation. If we chose for the
@@ -209,22 +229,24 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
          * may still be useful to us for an asynchronous method that we develop
          * later.
          */
-        final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
+            final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
-        final String dsChecksum = binary.getHexHash();
-        final URI uriChecksumString = ContentDigest.asURI("SHA-1", dsChecksum);
-        if (checksum != null &&
-                !checksum.equals(uriChecksumString)) {
-            LOGGER.debug("Failed checksum test");
-            throw new InvalidChecksumException("Checksum Mismatch of " +
-                    uriChecksumString + " and " + checksum);
+            final String dsChecksum = binary.getHexHash();
+            final URI uriChecksumString = ContentDigest.asURI("SHA-1", dsChecksum);
+            if (checksum != null &&
+                    !checksum.equals(uriChecksumString)) {
+                LOGGER.debug("Failed checksum test");
+                throw new InvalidChecksumException("Checksum Mismatch of " +
+                        uriChecksumString + " and " + checksum);
+            }
+
+            decorateContentNode(contentNode);
+
+            LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
+
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-
-        decorateContentNode(contentNode);
-
-        LOGGER.debug("Created data property at path: {}",
-                dataProperty.getPath());
-
     }
 
     /*
@@ -263,9 +285,16 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getMimeType()
      */
     @Override
-    public String getMimeType() throws RepositoryException {
-        return hasContent() && getContentNode().hasProperty(JCR_MIME_TYPE) ? node.getNode(
-                JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString() : "application/octet-stream";
+    public String getMimeType() {
+        try {
+            if (hasContent() && getContentNode().hasProperty(JCR_MIME_TYPE)) {
+                return getContentNode().getProperty(JCR_MIME_TYPE).getString();
+            } else {
+                return "application/octet-stream";
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*
@@ -273,11 +302,15 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getFilename()
      */
     @Override
-    public String getFilename() throws RepositoryException {
-        if (hasContent() && getContentNode().hasProperty(PREMIS_FILE_NAME)) {
-            return getContentNode().getProperty(PREMIS_FILE_NAME).getString();
+    public String getFilename() {
+        try {
+            if (hasContent() && getContentNode().hasProperty(PREMIS_FILE_NAME)) {
+                return getContentNode().getProperty(PREMIS_FILE_NAME).getString();
+            }
+            return node.getName();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return node.getName();
     }
 
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {

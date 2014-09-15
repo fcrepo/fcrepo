@@ -18,7 +18,6 @@ package org.fcrepo.kernel.services;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeIterator;
 
@@ -37,9 +36,8 @@ public interface NodeService extends Service {
      * @param session
      * @param path
      * @return FedoraResource for the given path
-     * @throws RepositoryException
      */
-    FedoraResource findOrCreateObject(Session session, String path) throws RepositoryException;
+    FedoraResource findOrCreateObject(Session session, String path);
 
     /**
      * Retrieve an existing Fedora resource at the given path
@@ -47,9 +45,8 @@ public interface NodeService extends Service {
      * @param session
      * @param path
      * @return FedoraResource at the given path
-     * @throws RepositoryException
      */
-    FedoraResource getObject(Session session, String path) throws RepositoryException;
+    FedoraResource getObject(Session session, String path);
 
     /**
      * Get an existing Fedora resource at the given path with the given version
@@ -59,60 +56,52 @@ public interface NodeService extends Service {
      * @param path
      * @param versionId a version label
      * @return FedoraResource with version label
-     * @throws RepositoryException
      */
-    FedoraResource getObject(Session session, String path, String versionId) throws RepositoryException;
+    FedoraResource getObject(Session session, String path, String versionId);
 
     /**
      * Delete an existing object from the repository at the given path
      *
      * @param session
      * @param path
-     * @throws RepositoryException
      */
-    void deleteObject(Session session, String path) throws RepositoryException;
+    void deleteObject(Session session, String path);
 
     /**
      * Copy an existing object from the source path to the destination path
      * @param session
      * @param source
      * @param destination
-     * @throws RepositoryException
      */
-    void copyObject(Session session, String source, String destination) throws RepositoryException;
+    void copyObject(Session session, String source, String destination);
 
     /**
      * Move an existing object from the source path to the destination path
      * @param session
      * @param source
      * @param destination
-     * @throws RepositoryException
      */
-    void moveObject(Session session, String source, String destination) throws RepositoryException;
+    void moveObject(Session session, String source, String destination);
 
     /**
      * Get the full list of node types in the repository
      *
      * @param session
      * @return node type iterator
-     * @throws RepositoryException
      */
-    NodeTypeIterator getAllNodeTypes(final Session session) throws RepositoryException;
+    NodeTypeIterator getAllNodeTypes(final Session session);
 
     /**
      * @param session
      * @return RDFStream of node types
-     * @throws RepositoryException
      */
-    RdfStream getNodeTypes(final Session session) throws RepositoryException;
+    RdfStream getNodeTypes(final Session session);
 
     /**
      * @param session
      * @param cndStream
-     * @throws RepositoryException
      * @throws IOException
      */
-    void registerNodeTypes(final Session session, final InputStream cndStream) throws RepositoryException,
-        IOException;
+    void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException;
 
 }

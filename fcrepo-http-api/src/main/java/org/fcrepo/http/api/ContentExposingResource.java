@@ -199,7 +199,7 @@ public abstract class ContentExposingResource extends AbstractResource {
      */
     protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
                                                  final Datastream resource,
-                                                 final Session session) throws RepositoryException {
+                                                 final Session session) {
 
         // Do not add caching headers if in a transaction
         final String txId = TransactionServiceImpl.getCurrentTransactionId(session);

@@ -106,6 +106,7 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -176,7 +177,7 @@ public class FedoraNodes extends AbstractResource {
     public Response head(@PathParam("path") final List<PathSegment> pathList,
                      @Context final Request request,
                      @Context final HttpServletResponse servletResponse,
-                     @Context final UriInfo uriInfo) throws RepositoryException {
+                     @Context final UriInfo uriInfo) {
         throwIfPathIncludesJcr(pathList, "HEAD");
 
         final String path = toPath(pathList);
@@ -216,7 +217,7 @@ public class FedoraNodes extends AbstractResource {
             @HeaderParam("Prefer") final Prefer prefer,
             @Context final Request request,
             @Context final HttpServletResponse servletResponse,
-            @Context final UriInfo uriInfo) throws RepositoryException {
+            @Context final UriInfo uriInfo) {
         throwIfPathIncludesJcr(pathList, "MOVE");
 
         final String path = toPath(pathList);
@@ -231,8 +232,7 @@ public class FedoraNodes extends AbstractResource {
 
         final RdfStream rdfStream =
             resource.getTriples(subjects).session(session)
-                    .topic(subjects.getSubject(resource.getNode().getPath())
-                            .asNode());
+                    .topic(subjects.getSubject(resource.getPath()).asNode());
 
         final PreferTag returnPreference;
 
@@ -257,20 +257,24 @@ public class FedoraNodes extends AbstractResource {
             final String[] omits = omit.split(" ");
 
             if (limit >= 0) {
-                final Node firstPage =
-                    createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
-                                  .replaceQueryParam("limit", limit).build()
-                                  .toString().replace("&", "&amp;"));
-                rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
-                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
+                try {
+                    final Node firstPage =
+                            createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
+                                    .replaceQueryParam("limit", limit).build()
+                                    .toString().replace("&", "&amp;"));
+                    rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
+                    servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
 
-                if ( resource.getNode().getNodes().getSize() > (offset + limit) ) {
-                    final Node nextPage =
-                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
-                                  .replaceQueryParam("limit", limit).build()
-                                  .toString().replace("&", "&amp;"));
-                    rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
-                    servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
+                    if (resource.getNode().getNodes().getSize() > (offset + limit)) {
+                        final Node nextPage =
+                                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
+                                        .replaceQueryParam("limit", limit).build()
+                                        .toString().replace("&", "&amp;"));
+                        rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
+                        servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
+                    }
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
                 }
             }
 
@@ -315,18 +319,26 @@ public class FedoraNodes extends AbstractResource {
 
     private void addResourceHttpHeaders(final HttpServletResponse servletResponse,
                                         final FedoraResource resource,
-                                        final HttpIdentifierTranslator subjects) throws RepositoryException {
+                                        final HttpIdentifierTranslator subjects) {
 
         if (resource.hasContent()) {
-            servletResponse.addHeader("Link", "<" + subjects.getSubject(
-                resource.getNode().getNode(JCR_CONTENT).getPath()) + ">;rel=\"describes\"");
+            try {
+                servletResponse.addHeader("Link", "<" + subjects.getSubject(
+                        resource.getNode().getNode(JCR_CONTENT).getPath()) + ">;rel=\"describes\"");
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
         }
 
         if (!subjects.isCanonical()) {
             final IdentifierTranslator subjectsCanonical = subjects.getCanonical(true);
 
-            servletResponse.addHeader("Link",
-                "<" + subjectsCanonical.getSubject(resource.getPath()) + ">;rel=\"canonical\"");
+            try {
+                servletResponse.addHeader("Link",
+                        "<" + subjectsCanonical.getSubject(resource.getPath()) + ">;rel=\"canonical\"");
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
         }
 
         addOptionsHttpHeaders(servletResponse);
@@ -361,7 +373,7 @@ public class FedoraNodes extends AbstractResource {
             final UriInfo uriInfo,
             @ContentLocation final InputStream requestBodyStream,
             @Context final Request request, @Context final HttpServletResponse servletResponse)
-        throws RepositoryException, IOException {
+        throws IOException {
         throwIfPathIncludesJcr(pathList, "PATCH");
 
         init(uriInfo);
@@ -403,8 +415,12 @@ public class FedoraNodes extends AbstractResource {
                         .build();
             }
 
-            session.save();
-            versionService.nodeUpdated(resource.getNode());
+            try {
+                session.save();
+                versionService.nodeUpdated(resource.getNode());
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
 
             addCacheControlHeaders(servletResponse, resource, session);
 
@@ -440,7 +456,7 @@ public class FedoraNodes extends AbstractResource {
             final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream,
             @Context final Request request,
-            @Context final HttpServletResponse servletResponse) throws RepositoryException, URISyntaxException {
+            @Context final HttpServletResponse servletResponse) throws URISyntaxException {
         throwIfPathIncludesJcr(pathList, "PUT");
         init(uriInfo);
 
@@ -466,7 +482,7 @@ public class FedoraNodes extends AbstractResource {
                 final HttpIdentifierTranslator idTranslator =
                     new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-                final URI location = new URI(idTranslator.getSubject(resource.getNode().getPath()).getURI());
+                final URI location = new URI(idTranslator.getSubject(resource.getPath()).getURI());
 
                 response = created(location).entity(location.toString());
                 preexisting = false;
@@ -482,7 +498,7 @@ public class FedoraNodes extends AbstractResource {
 
                 final Model inputModel = createDefaultModel()
                                              .read(requestBodyStream,
-                                                      graphSubjects.getSubject(resource.getNode().getPath()).toString(),
+                                                      graphSubjects.getSubject(resource.getPath()).toString(),
                                                       format);
 
                 resource.replaceProperties(graphSubjects, inputModel);
@@ -491,9 +507,14 @@ public class FedoraNodes extends AbstractResource {
                 return status(SC_CONFLICT).entity("No RDF provided and the resource already exists!").build();
             }
 
-            session.save();
+            try {
+                session.save();
+                versionService.nodeUpdated(resource.getNode());
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
             addCacheControlHeaders(servletResponse, resource, session);
-            versionService.nodeUpdated(resource.getNode());
 
             return response.build();
         } finally {
@@ -524,7 +545,7 @@ public class FedoraNodes extends AbstractResource {
             @Context
             final UriInfo uriInfo,
             @ContentLocation final InputStream requestBodyStream)
-        throws RepositoryException, ParseException, IOException,
+        throws ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
         throwIfPathIncludesJcr(pathList, "POST");
         init(uriInfo);
@@ -576,7 +597,7 @@ public class FedoraNodes extends AbstractResource {
                                                                   newObjectPath);
 
             final Response.ResponseBuilder response;
-            final URI location = new URI(idTranslator.getSubject(result.getNode().getPath()).getURI());
+            final URI location = new URI(idTranslator.getSubject(result.getPath()).getURI());
 
             if (requestBodyStream == null || requestContentType == null) {
                 LOGGER.trace("No request body detected");
@@ -601,7 +622,7 @@ public class FedoraNodes extends AbstractResource {
 
                     final Model inputModel =
                         createDefaultModel().read(requestBodyStream,
-                                idTranslator.getSubject(result.getNode().getPath()).toString(), format);
+                                idTranslator.getSubject(result.getPath()).toString(), format);
 
                     result.replaceProperties(idTranslator, inputModel);
                     response = created(location).entity(location.toString());
@@ -613,8 +634,16 @@ public class FedoraNodes extends AbstractResource {
 
                     datastreamService.createDatastream(session,
                             newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);
-                    final URI contentLocation =
-                        new URI(idTranslator.getSubject(((Datastream) result).getContentNode().getPath()).getURI());
+                    final URI contentLocation;
+
+                    try {
+                        contentLocation = new URI(
+                                idTranslator.getSubject(((Datastream) result).getContentNode().getPath()).getURI()
+                        );
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+
                     response = created(contentLocation).entity(contentLocation.toString());
 
                 } else {
@@ -622,8 +651,12 @@ public class FedoraNodes extends AbstractResource {
                 }
             }
 
-            session.save();
-            versionService.nodeUpdated(result.getNode());
+            try {
+                session.save();
+                versionService.nodeUpdated(result.getNode());
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
 
             LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
 
@@ -638,7 +671,7 @@ public class FedoraNodes extends AbstractResource {
 
     private FedoraResource createFedoraResource(final String requestMixin,
                                                 final MediaType requestContentType,
-                                                final String path) throws RepositoryException {
+                                                final String path) {
         final String objectType = getRequestedObjectType(requestMixin, requestContentType);
 
         final FedoraResource result;
@@ -657,13 +690,13 @@ public class FedoraNodes extends AbstractResource {
         return result;
     }
 
-    private void assertPathMissing(final String path) throws RepositoryException {
+    private void assertPathMissing(final String path) {
         if (nodeService.exists(session, path)) {
             throw new WebApplicationException(conflict().entity(path + " is an existing resource!").build());
         }
     }
 
-    private void assertPathExists(final String path) throws RepositoryException {
+    private void assertPathExists(final String path) {
         if (!nodeService.exists(session, path)) {
             throw new WebApplicationException(notFound().build());
         }
@@ -704,7 +737,7 @@ public class FedoraNodes extends AbstractResource {
                                                 @Context final HttpServletResponse servletResponse,
                                                 @Context final UriInfo uriInfo,
                                                 @FormDataParam("file") final InputStream file
-    ) throws RepositoryException, URISyntaxException, InvalidChecksumException, ParseException, IOException {
+    ) throws URISyntaxException, InvalidChecksumException, ParseException, IOException {
         throwIfPathIncludesJcr(pathList, "POST with multipart attachment");
         init(uriInfo);
 
@@ -724,7 +757,7 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response deleteObject(@PathParam("path") final List<PathSegment> pathList,
                                  @Context final Request request,
-                                 @Context final HttpServletResponse servletResponse) throws RepositoryException {
+                                 @Context final HttpServletResponse servletResponse) {
         throwIfPathIncludesJcr(pathList, "DELETE");
         init(uriInfo);
 
@@ -737,7 +770,13 @@ public class FedoraNodes extends AbstractResource {
             evaluateRequestPreconditions(request, servletResponse, resource, session);
 
             nodeService.deleteObject(session, path);
-            session.save();
+
+            try {
+                session.save();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
             return noContent().build();
         } catch (final WebApplicationException ex) {
             return ex.getResponse();
@@ -753,7 +792,7 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response copyObject(@PathParam("path") final List<PathSegment> path,
                                @HeaderParam("Destination") final String destinationUri)
-        throws RepositoryException, URISyntaxException {
+        throws URISyntaxException {
         throwIfPathIncludesJcr(path, "COPY");
         init(uriInfo);
 
@@ -777,16 +816,29 @@ public class FedoraNodes extends AbstractResource {
 
 
             nodeService.copyObject(session, toPath(path), destination);
+
             session.save();
             versionService.nodeUpdated(session, destination);
+
             return created(new URI(destinationUri)).build();
-        } catch (final ItemExistsException e) {
-            throw new WebApplicationException(e,
-                status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
-        } catch (final PathNotFoundException e) {
-            throw new WebApplicationException(e, status(SC_CONFLICT).entity(
-                    "There is no node that will serve as the parent of the copied item")
-                    .build());
+        } catch (final RepositoryRuntimeException e) {
+            final Throwable cause = e.getCause();
+
+            if (cause instanceof ItemExistsException) {
+
+                throw new WebApplicationException(e,
+                        status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
+
+            } else if (cause instanceof PathNotFoundException) {
+
+                throw new WebApplicationException(e, status(SC_CONFLICT).entity(
+                        "There is no node that will serve as the parent of the copied item")
+                        .build());
+            } else {
+                throw e;
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }
@@ -802,7 +854,7 @@ public class FedoraNodes extends AbstractResource {
                                @HeaderParam("Destination") final String destinationUri,
                                @Context final Request request,
                                @Context final HttpServletResponse servletResponse)
-        throws RepositoryException, URISyntaxException {
+        throws URISyntaxException {
         throwIfPathIncludesJcr(pathList, "MOVE");
         init(uriInfo);
 
@@ -837,13 +889,24 @@ public class FedoraNodes extends AbstractResource {
             session.save();
             versionService.nodeUpdated(session, destination);
             return created(new URI(destinationUri)).build();
-        } catch (final ItemExistsException e) {
-            throw new WebApplicationException(e,
-                status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
-        } catch (final PathNotFoundException e) {
-            throw new WebApplicationException(e, status(SC_CONFLICT).entity(
-                    "There is no node that will serve as the parent of the moved item")
-                    .build());
+        } catch (final RepositoryRuntimeException e) {
+            final Throwable cause = e.getCause();
+
+            if (cause instanceof ItemExistsException) {
+
+                throw new WebApplicationException(e,
+                        status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
+
+            } else if (cause instanceof PathNotFoundException) {
+
+                throw new WebApplicationException(e, status(SC_CONFLICT).entity(
+                        "There is no node that will serve as the parent of the moved item")
+                        .build());
+            } else {
+                throw e;
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }

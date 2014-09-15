@@ -34,7 +34,7 @@ public interface IdentifierTranslator {
      * @return path
      * @throws RepositoryException
      */
-    String getPathFromSubject(final Resource subject) throws RepositoryException;
+    String getPathFromSubject(final Resource subject);
 
     /**
      * Predicate for determining whether this {@link Resource} is a Fedora object.
