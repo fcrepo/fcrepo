@@ -107,7 +107,7 @@ public class FedoraVersionsTest {
         setField(testObj, "versionService", mockVersions);
         setField(testObj, "sessionFactory", mockSessionFactory);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
-        when(mockNode.getPath()).thenReturn("/test/path");
+        when(mockResource.getPath()).thenReturn("/test/path");
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);

@@ -198,6 +198,7 @@ public class HttpApiResourcesTest {
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.isNodeType(ROOT)).thenReturn(false);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn("not-frozen");
 
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockNode.getPath()).thenReturn("/some/path/to/object");

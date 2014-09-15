@@ -42,6 +42,7 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,8 +85,7 @@ public class FedoraImport extends AbstractResource {
     public Response importObject(@PathParam("path") final List<PathSegment> pathList,
         @QueryParam("format") @DefaultValue("jcr/xml") final String format,
         @ContentLocation final InputStream requestBodyStream)
-        throws IOException, RepositoryException, InvalidChecksumException,
-        URISyntaxException {
+        throws IOException, InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(pathList);
         LOGGER.debug("Deserializing at {}", path);
@@ -100,6 +100,8 @@ public class FedoraImport extends AbstractResource {
             return created(new URI(subjects.getSubject(path).getURI())).build();
         } catch ( ItemExistsException ex ) {
             return status(CONFLICT).entity("Item already exists").build();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }

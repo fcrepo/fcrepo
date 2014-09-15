@@ -79,7 +79,7 @@ public interface Transaction {
      * @param vService a versionService
      * @throws RepositoryException
      */
-    void commit(VersionService vService) throws RepositoryException;
+    void commit(VersionService vService);
 
     /**
      * End the session, and mark for reaping
@@ -99,7 +99,7 @@ public interface Transaction {
      * Discard all unpersisted changes and expire
      * @throws RepositoryException
      */
-    void rollback() throws RepositoryException;
+    void rollback();
 
     /**
      * Roll forward the expiration date for recent activity

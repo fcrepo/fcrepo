@@ -21,6 +21,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.Service;
 import org.modeshape.jcr.api.JcrTools;
 
@@ -48,7 +49,11 @@ public abstract class AbstractService extends JcrTools implements FedoraJcrTypes
      * @see org.fcrepo.kernel.services.Service#exists(javax.jcr.Session, java.lang.String)
      */
     @Override
-    public boolean exists(final Session session, final String path) throws RepositoryException {
-        return session.nodeExists(path);
+    public boolean exists(final Session session, final String path) {
+        try {
+            return session.nodeExists(path);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 }

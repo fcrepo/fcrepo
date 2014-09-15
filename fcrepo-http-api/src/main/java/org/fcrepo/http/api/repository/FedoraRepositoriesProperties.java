@@ -39,6 +39,7 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -75,7 +76,7 @@ public class FedoraRepositoriesProperties extends AbstractResource {
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(final InputStream requestBodyStream)
-        throws RepositoryException, IOException {
+        throws IOException {
 
         try {
             if (requestBodyStream != null) {
@@ -96,7 +97,11 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                             .build();
                 }
 
-                session.save();
+                try {
+                    session.save();
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
 
                 return status(SC_NO_CONTENT).build();
             }

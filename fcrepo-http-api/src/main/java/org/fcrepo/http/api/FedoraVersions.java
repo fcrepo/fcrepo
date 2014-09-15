@@ -24,6 +24,8 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -34,7 +36,6 @@ import org.springframework.stereotype.Component;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.version.VersionException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
@@ -106,19 +107,16 @@ public class FedoraVersions extends ContentExposingResource {
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream getVersionList(@PathParam("path") final List<PathSegment> pathList,
             @Context final Request request,
-            @Context final UriInfo uriInfo) throws RepositoryException {
+            @Context final UriInfo uriInfo) {
         final String path = toPath(pathList);
 
         LOGGER.trace("Getting versions list for: {}", path);
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        try {
-            return resource.getVersionTriples(nodeTranslator()).session(session).topic(
-                    nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
-        } catch ( UnsupportedRepositoryOperationException ex ) {
-            throw new WebApplicationException( status(NOT_FOUND).entity("This resource is not versioned").build() );
-        }
+        return resource.getVersionTriples(nodeTranslator())
+                .session(session)
+                .topic(nodeTranslator().getSubject(resource.getPath()).asNode());
     }
 
     /**
@@ -264,7 +262,7 @@ public class FedoraVersions extends ContentExposingResource {
                                        final String rangeValue, @Context
                                        final Request request,
                                        @Context final HttpServletResponse servletResponse
-    ) throws RepositoryException, IOException {
+    ) throws IOException, ResourceTypeException {
         try {
             LOGGER.info("Attempting get of {}.", uriInfo.getRequestUri());
             final Node frozenNode = nodeTranslator().getNodeFromGraphSubjectForVersionNode(
@@ -276,6 +274,8 @@ public class FedoraVersions extends ContentExposingResource {
                             uriInfo);
             return getDatastreamContentResponse(ds, rangeValue, request, servletResponse, subjects, session);
 
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }
@@ -284,7 +284,7 @@ public class FedoraVersions extends ContentExposingResource {
     /**
      * A translator suitable for subjects that represent nodes.
      */
-    protected VersionAwareHttpIdentifierTranslator nodeTranslator() throws RepositoryException {
+    protected VersionAwareHttpIdentifierTranslator nodeTranslator() {
         return new VersionAwareHttpIdentifierTranslator(session,
                 sessionFactory.getInternalSession(), FedoraNodes.class,
                 uriInfo);

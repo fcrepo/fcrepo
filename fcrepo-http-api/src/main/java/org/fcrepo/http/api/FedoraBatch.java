@@ -71,6 +71,8 @@ import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.value.PathFactory;
@@ -148,7 +150,7 @@ public class FedoraBatch extends AbstractResource {
     @Timed
     public Response batchModify(@PathParam("path") final List<PathSegment> pathList,
                                 final MultiPart multipart)
-        throws RepositoryException, InvalidChecksumException, IOException, URISyntaxException {
+        throws InvalidChecksumException, IOException, URISyntaxException {
 
         final String path = toPath(pathList);
 
@@ -247,7 +249,7 @@ public class FedoraBatch extends AbstractResource {
 
                             final Model inputModel =
                                 createDefaultModel().read(src,
-                                        subjects.getSubject(resource.getNode().getPath()).toString(), format);
+                                        subjects.getSubject(resource.getPath()).toString(), format);
 
                             resource.replaceProperties(subjects, inputModel);
                         } else {
@@ -287,10 +289,14 @@ public class FedoraBatch extends AbstractResource {
                 }
             }
 
-            session.save();
-            versionService.nodeUpdated(session, path);
-            for (final FedoraResource resource : resourcesChanged) {
-                versionService.nodeUpdated(resource.getNode());
+            try {
+                session.save();
+                versionService.nodeUpdated(session, path);
+                for (final FedoraResource resource : resourcesChanged) {
+                    versionService.nodeUpdated(resource.getNode());
+                }
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
 
             final HttpIdentifierTranslator subjects =
@@ -347,7 +353,7 @@ public class FedoraBatch extends AbstractResource {
     public Response getBinaryContents(
         @PathParam("path") final List<PathSegment> pathList,
         @QueryParam("child") final List<String> requestedChildren,
-        @Context final Request request) throws RepositoryException, NoSuchAlgorithmException {
+        @Context final Request request) throws RepositoryException, NoSuchAlgorithmException, ResourceTypeException {
 
         final List<Datastream> datastreams = new ArrayList<>();
 
