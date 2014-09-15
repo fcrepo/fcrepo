@@ -45,6 +45,7 @@ import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapUrlSet;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -113,8 +114,7 @@ public class FedoraRepositorySitemap extends AbstractResource {
     @Path("/{page}")
     @Timed
     @Produces(TEXT_XML)
-    public SitemapUrlSet getSitemap(@PathParam("page") final String page)
-        throws RepositoryException {
+    public SitemapUrlSet getSitemap(@PathParam("page") final String page) {
         try {
             final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
 
@@ -133,41 +133,47 @@ public class FedoraRepositorySitemap extends AbstractResource {
         }
     }
 
-    private RowIterator getSitemapEntries(final Session session, final long pg)
-        throws RepositoryException {
+    private RowIterator getSitemapEntries(final Session session, final long pg) {
 
-        final QueryManager queryManager =
-            session.getWorkspace().getQueryManager();
+        try {
+            final QueryManager queryManager =
+                    session.getWorkspace().getQueryManager();
 
-        // TODO expand to more fields
-        final String sqlExpression =
-            "SELECT [" + JCR_NAME + "],[" + JCR_LASTMODIFIED + "] FROM ["
-                    + FEDORA_OBJECT + "]";
-        final Query query = queryManager.createQuery(sqlExpression, JCR_SQL2);
+            // TODO expand to more fields
+            final String sqlExpression =
+                    "SELECT [" + JCR_NAME + "],[" + JCR_LASTMODIFIED + "] FROM ["
+                            + FEDORA_OBJECT + "]";
+            final Query query = queryManager.createQuery(sqlExpression, JCR_SQL2);
 
-        query.setOffset(pg * entriesPerPage);
-        query.setLimit(entriesPerPage);
+            query.setOffset(pg * entriesPerPage);
+            query.setLimit(entriesPerPage);
 
-        final QueryResult queryResults = query.execute();
+            final QueryResult queryResults = query.execute();
 
-        final RowIterator rows = queryResults.getRows();
+            final RowIterator rows = queryResults.getRows();
 
-        return rows;
+            return rows;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
-    private SitemapEntry getSitemapEntry(final Row r)
-        throws RepositoryException {
+    private SitemapEntry getSitemapEntry(final Row r) {
+        try {
 
-        Value lkDateValue = r.getValue(JCR_LASTMODIFIED);
-        final String path = r.getNode().getPath();
+            Value lkDateValue = r.getValue(JCR_LASTMODIFIED);
+            final String path = r.getNode().getPath();
 
-        if (lkDateValue == null) {
-            LOGGER.warn("no value for {} on {}", JCR_LASTMODIFIED, path);
-            lkDateValue = r.getValue(JCR_CREATED);
+            if (lkDateValue == null) {
+                LOGGER.warn("no value for {} on {}", JCR_LASTMODIFIED, path);
+                lkDateValue = r.getValue(JCR_CREATED);
+            }
+            final Calendar lastKnownDate =
+                    (lkDateValue != null) ? lkDateValue.getDate() : null;
+            return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
+                    FedoraNodes.class).build(path.substring(1)), lastKnownDate);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        final Calendar lastKnownDate =
-            (lkDateValue != null) ? lkDateValue.getDate() : null;
-        return new SitemapEntry(uriInfo.getBaseUriBuilder().path(
-                FedoraNodes.class).build(path.substring(1)), lastKnownDate);
     }
 }

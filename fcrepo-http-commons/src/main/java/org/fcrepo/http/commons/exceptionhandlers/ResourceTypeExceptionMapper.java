@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.exception;
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import org.fcrepo.kernel.exception.ResourceTypeException;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.status;
 
 /**
- * An extension of RepositoryException that may be thrown when attempting a
- * operation (or instantiation) of one fedora resource type (Object, Datastream)
- * on a different (and incompatible) type.
- *
- * @author Mike Durbin
+ * @author cabeer
+ * @since 9/15/14
  */
-public class ResourceTypeException extends RuntimeException {
+@Provider
+public class ResourceTypeExceptionMapper implements ExceptionMapper<ResourceTypeException> {
 
-    private static final long serialVersionUID = 1L;
+    @Override
+    public Response toResponse(final ResourceTypeException e) {
 
-    /**
-     * Default constructor.
-     */
-    public ResourceTypeException(final String message) {
-        super(message);
+        return status(BAD_REQUEST).entity(null).build();
     }
-
 }

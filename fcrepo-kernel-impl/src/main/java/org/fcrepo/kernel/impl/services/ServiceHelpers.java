@@ -36,6 +36,7 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
@@ -118,19 +119,24 @@ public abstract class ServiceHelpers {
      * @return size of the binary content property
      * @throws RepositoryException
      */
-    public static Long getContentSize(final Node ds) throws RepositoryException {
-        long size = 0L;
-        if (ds.hasNode(JCR_CONTENT)) {
-            final Node contentNode = ds.getNode(JCR_CONTENT);
+    public static Long getContentSize(final Node ds) {
+        try {
+            long size = 0L;
+            if (ds.hasNode(JCR_CONTENT)) {
+                final Node contentNode = ds.getNode(JCR_CONTENT);
 
-            if (contentNode.hasProperty(JCR_DATA)) {
-                size =
-                        ds.getNode(JCR_CONTENT).getProperty(JCR_DATA)
-                                .getBinary().getSize();
+                if (contentNode.hasProperty(JCR_DATA)) {
+                    size =
+                            ds.getNode(JCR_CONTENT).getProperty(JCR_DATA)
+                                    .getBinary().getSize();
+                }
             }
-        }
 
-        return size;
+            return size;
+
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -168,7 +174,6 @@ public abstract class ServiceHelpers {
 
             return queryResults.getRows().getSize();
         } finally {
-
             session.logout();
         }
     }
@@ -180,25 +185,26 @@ public abstract class ServiceHelpers {
     public static long getRepositorySize(final Repository repository)
         throws RepositoryException {
         final Session session = repository.login();
-        long sum = 0;
-        final QueryManager queryManager =
-            session.getWorkspace().getQueryManager();
+        try {
+            long sum = 0;
+            final QueryManager queryManager =
+                    session.getWorkspace().getQueryManager();
 
-        final String querystring =
-                "SELECT [" + CONTENT_SIZE + "] FROM [" +
-                        FEDORA_BINARY + "]";
+            final String querystring =
+                    "SELECT [" + CONTENT_SIZE + "] FROM [" +
+                            FEDORA_BINARY + "]";
 
-        final QueryResult queryResults =
-            queryManager.createQuery(querystring, JCR_SQL2).execute();
+            final QueryResult queryResults =
+                    queryManager.createQuery(querystring, JCR_SQL2).execute();
 
-        for (final RowIterator rows = queryResults.getRows(); rows.hasNext();) {
-            final Value value =
-                    rows.nextRow().getValue(CONTENT_SIZE);
-            sum += value.getLong();
+            for (final RowIterator rows = queryResults.getRows(); rows.hasNext(); ) {
+                final Value value =
+                        rows.nextRow().getValue(CONTENT_SIZE);
+                sum += value.getLong();
+            }
+            return sum;
+        } finally {
+            session.logout();
         }
-
-        session.logout();
-
-        return sum;
     }
 }

@@ -74,6 +74,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
@@ -181,6 +182,7 @@ public class FedoraNodesTest {
         when(mockDate.getTime()).thenReturn(0L);
         when(mockNode.getPath()).thenReturn("/test/path");
         when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockObject.getPath()).thenReturn("/test/path");
         when(mockObject.getEtagValue()).thenReturn("XYZ");
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -204,7 +206,7 @@ public class FedoraNodesTest {
         when(mockPidMinter.mintPid()).thenReturn("a");
         when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn(path);
+        when(mockObject.getPath()).thenReturn(path);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
         when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
@@ -291,6 +293,7 @@ public class FedoraNodesTest {
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
         when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
         when(mockResource.hasContent()).thenReturn(true);
+        when(mockDatastream.getPath()).thenReturn(path);
         when(mockDatastream.getEtagValue()).thenReturn("");
 
         final InputStream mockStream =
@@ -313,11 +316,11 @@ public class FedoraNodesTest {
         when(mockNodes.exists(mockSession, "/" + pid)).thenReturn(true);
         when(mockObjects.createObject(mockSession, path)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn(path);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
         when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
         when(mockResource.hasContent()).thenReturn(false);
+        when(mockObject.getPath()).thenReturn(path);
 
         final Response actual =
             testObj.createObject(createPathList(pid), FEDORA_OBJECT, null, null,
@@ -498,6 +501,7 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
+        when(mockObject.getPath()).thenReturn("/foo");
 
         final String pid = "foo";
 
@@ -538,7 +542,8 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
-        doThrow(new ItemExistsException()).when(mockNodes).copyObject(mockSession, "/foo", "/baz");
+        doThrow(new RepositoryRuntimeException(new ItemExistsException()))
+                .when(mockNodes).copyObject(mockSession, "/foo", "/baz");
 
         final String pid = "foo";
 
@@ -553,6 +558,7 @@ public class FedoraNodesTest {
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
+        when(mockObject.getPath()).thenReturn("/foo");
 
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, "/foo")).thenReturn(true);
@@ -589,7 +595,8 @@ public class FedoraNodesTest {
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
-        doThrow(new ItemExistsException()).when(mockNodes).moveObject(mockSession, "/foo", "/baz");
+        doThrow(new RepositoryRuntimeException(new ItemExistsException()))
+                .when(mockNodes).moveObject(mockSession, "/foo", "/baz");
 
         final String pid = "foo";
 

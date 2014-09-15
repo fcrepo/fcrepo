@@ -24,6 +24,7 @@ import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Lock;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -87,12 +88,16 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
     @HtmlTemplate(value = "fcr:lock")
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
-    public RdfStream getLock(@PathParam("path") final List<PathSegment> pathList) throws RepositoryException {
+    public RdfStream getLock(@PathParam("path") final List<PathSegment> pathList) {
 
         final String path = toPath(pathList);
-        final Node node = session.getNode(path);
-        final Lock lock = lockService.getLock(session, path);
-        return getLockRdfStream(node, lock);
+        try {
+            final Node node = session.getNode(path);
+            final Lock lock = lockService.getLock(session, path);
+            return getLockRdfStream(node, lock);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -106,7 +111,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
     @Timed
     public Response createLock(@PathParam("path") final List<PathSegment> pathList,
                                @QueryParam("deep") @DefaultValue("false") final boolean isDeep)
-        throws RepositoryException, URISyntaxException {
+        throws URISyntaxException {
         try {
             final String path = toPath(pathList);
             final Node node = session.getNode(path);
@@ -115,6 +120,8 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
             final String location = getTranslator().getSubject(node.getPath()).getURI();
             LOGGER.debug("Locked {} with lock token {}.", path, lock.getLockToken());
             return created(new URI(location)).entity(location).header("Lock-Token", lock.getLockToken()).build();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }
@@ -127,14 +134,15 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
      */
     @DELETE
     @Timed
-    public Response deleteLock(@PathParam("path") final List<PathSegment> pathList)
-        throws RepositoryException {
+    public Response deleteLock(@PathParam("path") final List<PathSegment> pathList) {
         try {
             final String path = toPath(pathList);
             lockService.releaseLock(session, path);
             session.save();
             LOGGER.debug("Unlocked {}.", path);
             return noContent().build();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }
@@ -144,25 +152,29 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         return new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
     }
 
-    private RdfStream getLockRdfStream(final Node node, final Lock lock) throws RepositoryException {
-        final HttpIdentifierTranslator translator = getTranslator();
-        final com.hp.hpl.jena.graph.Node nodeSubject = translator.getSubject(node.getPath()).asNode();
-        final com.hp.hpl.jena.graph.Node lockSubject = createURI(nodeSubject.getURI() + "/" + FCR_LOCK);
+    private RdfStream getLockRdfStream(final Node node, final Lock lock) {
+        try {
+            final HttpIdentifierTranslator translator = getTranslator();
+            final com.hp.hpl.jena.graph.Node nodeSubject = translator.getSubject(node.getPath()).asNode();
+            final com.hp.hpl.jena.graph.Node lockSubject = createURI(nodeSubject.getURI() + "/" + FCR_LOCK);
 
-        final Triple[] lockTriples;
-        final Triple locksT = create(lockSubject, LOCKS.asNode(), nodeSubject);
-        final Triple isDeepT = create(lockSubject, IS_DEEP.asNode(),
-                createLiteral(String.valueOf(lock.isDeep()), "", XSDDatatype.XSDboolean));
-        if (lock.getLockToken() != null) {
-            lockTriples = new Triple[] {
-                locksT,
-                isDeepT,
-                create(lockSubject, HAS_LOCK_TOKEN.asNode(), createLiteral(lock.getLockToken()))};
-        } else {
-            lockTriples = new Triple[] {
-                locksT, isDeepT };
+            final Triple[] lockTriples;
+            final Triple locksT = create(lockSubject, LOCKS.asNode(), nodeSubject);
+            final Triple isDeepT = create(lockSubject, IS_DEEP.asNode(),
+                    createLiteral(String.valueOf(lock.isDeep()), "", XSDDatatype.XSDboolean));
+            if (lock.getLockToken() != null) {
+                lockTriples = new Triple[]{
+                        locksT,
+                        isDeepT,
+                        create(lockSubject, HAS_LOCK_TOKEN.asNode(), createLiteral(lock.getLockToken()))};
+            } else {
+                lockTriples = new Triple[]{
+                        locksT, isDeepT};
+            }
+            return new RdfStream(lockTriples).topic(lockSubject).session(session);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return new RdfStream(lockTriples).topic(lockSubject).session(session);
     }
 
 }

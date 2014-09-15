@@ -30,6 +30,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.impl.rdf.impl.NodeTypeRdfContext;
 import org.fcrepo.kernel.services.NodeService;
@@ -60,8 +61,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public FedoraResource findOrCreateObject(final Session session, final String path) throws RepositoryException {
-        return new FedoraResourceImpl(findOrCreateNode(session, path));
+    public FedoraResource findOrCreateObject(final Session session, final String path) {
+        try {
+            return new FedoraResourceImpl(findOrCreateNode(session, path));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -73,8 +78,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public FedoraResource getObject(final Session session, final String path) throws RepositoryException {
-        return new FedoraResourceImpl(session.getNode(path));
+    public FedoraResource getObject(final Session session, final String path) {
+        try {
+            return new FedoraResourceImpl(session.getNode(path));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -88,20 +97,23 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public FedoraResource getObject(final Session session, final String path, final String versionId)
-        throws RepositoryException {
-        final VersionHistory versionHistory = getVersionHistory(session, path);
+    public FedoraResource getObject(final Session session, final String path, final String versionId) {
+        try {
+            final VersionHistory versionHistory = getVersionHistory(session, path);
 
-        if (versionHistory == null) {
-            return null;
+            if (versionHistory == null) {
+                return null;
+            }
+
+            if (!versionHistory.hasVersionLabel(versionId)) {
+                return null;
+            }
+
+            final Version version = versionHistory.getVersionByLabel(versionId);
+            return new FedoraResourceImpl(version.getFrozenNode());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-
-        if (!versionHistory.hasVersionLabel(versionId)) {
-            return null;
-        }
-
-        final Version version = versionHistory.getVersionByLabel(versionId);
-        return new FedoraResourceImpl(version.getFrozenNode());
     }
 
     /**
@@ -112,15 +124,19 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public void deleteObject(final Session session, final String path) throws RepositoryException {
-        final Node obj = session.getNode(path);
-        final PropertyIterator inboundProperties = new PropertyIterator(obj.getReferences());
+    public void deleteObject(final Session session, final String path) {
+        try {
+            final Node obj = session.getNode(path);
+            final PropertyIterator inboundProperties = new PropertyIterator(obj.getReferences());
 
-        for (final Property inboundProperty : inboundProperties) {
-            inboundProperty.remove();
+            for (final Property inboundProperty : inboundProperties) {
+                inboundProperty.remove();
+            }
+
+            obj.remove();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-
-        obj.remove();
     }
 
     /**
@@ -132,9 +148,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public void copyObject(final Session session, final String source, final String destination)
-        throws RepositoryException {
-        session.getWorkspace().copy(source, destination);
+    public void copyObject(final Session session, final String source, final String destination) {
+        try {
+            session.getWorkspace().copy(source, destination);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -146,9 +165,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public void moveObject(final Session session, final String source, final String destination)
-        throws RepositoryException {
-        session.getWorkspace().move(source, destination);
+    public void moveObject(final Session session, final String source, final String destination) {
+        try {
+            session.getWorkspace().move(source, destination);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -159,9 +181,13 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public NodeTypeIterator getAllNodeTypes(final Session session) throws RepositoryException {
-        final NodeTypeManager ntmanager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
-        return ntmanager.getAllNodeTypes();
+    public NodeTypeIterator getAllNodeTypes(final Session session) {
+        try {
+            final NodeTypeManager ntmanager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
+            return ntmanager.getAllNodeTypes();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -170,8 +196,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public RdfStream getNodeTypes(final Session session) throws RepositoryException {
-        return new NodeTypeRdfContext(session.getWorkspace().getNodeTypeManager());
+    public RdfStream getNodeTypes(final Session session) {
+        try {
+            return new NodeTypeRdfContext(session.getWorkspace().getNodeTypeManager());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -181,9 +211,12 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws IOException
      */
     @Override
-    public void registerNodeTypes(final Session session, final InputStream cndStream) throws RepositoryException,
-        IOException {
-        final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
-        nodeTypeManager.registerNodeTypes(cndStream, true);
+    public void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException {
+        try {
+            final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
+            nodeTypeManager.registerNodeTypes(cndStream, true);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 }

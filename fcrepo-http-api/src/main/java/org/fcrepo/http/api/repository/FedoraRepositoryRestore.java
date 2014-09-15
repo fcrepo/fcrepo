@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -60,12 +59,10 @@ public class FedoraRepositoryRestore extends AbstractResource {
      * This method runs a repository restore.
      *
      * @return response
-     * @throws RepositoryException
      * @throws IOException
      */
     @POST
-    public Response runRestore(final InputStream bodyStream) throws RepositoryException,
-        IOException {
+    public Response runRestore(final InputStream bodyStream) throws IOException {
 
         if (null == bodyStream) {
             throw new WebApplicationException(serverError().entity(

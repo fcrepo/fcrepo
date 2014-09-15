@@ -15,14 +15,12 @@
  */
 package org.fcrepo.kernel.exception;
 
-import javax.jcr.RepositoryException;
-
 /**
  * A transaction was not found in the transaction registry
  *
  * @author awoods
  */
-public class TransactionMissingException extends RepositoryException {
+public class TransactionMissingException extends RuntimeException {
 
     private static final long serialVersionUID = 2139084821001303830L;
 

@@ -32,6 +32,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.VersionService;
 
 /**
@@ -136,18 +137,22 @@ public class TransactionImpl implements Transaction {
      * @see org.fcrepo.kernel.Transaction#commit(org.fcrepo.kernel.services.VersionService)
      */
     @Override
-    public void commit(final VersionService vService) throws RepositoryException {
+    public void commit(final VersionService vService) {
 
-        this.session.save();
-        if (this.versionedPaths != null) {
-            if (vService == null) {
-                throw new IllegalStateException("Versioned Paths were added," +
-                        " but no VersionService was provided!");
+        try {
+            this.session.save();
+            if (this.versionedPaths != null) {
+                if (vService == null) {
+                    throw new IllegalStateException("Versioned Paths were added," +
+                            " but no VersionService was provided!");
+                }
+                vService.createVersion(session.getWorkspace(), versionedPaths);
             }
-            vService.createVersion(session.getWorkspace(), versionedPaths);
+            this.state = COMMITED;
+            this.expire();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        this.state = COMMITED;
-        this.expire();
     }
 
     /* (non-Javadoc)
@@ -179,9 +184,13 @@ public class TransactionImpl implements Transaction {
      * @see org.fcrepo.kernel.Transaction#rollback()
      */
     @Override
-    public void rollback() throws RepositoryException {
+    public void rollback() {
         this.state = ROLLED_BACK;
-        this.session.refresh(false);
+        try {
+            this.session.refresh(false);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
         this.expire();
     }
 

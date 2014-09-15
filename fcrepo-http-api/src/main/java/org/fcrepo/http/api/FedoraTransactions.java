@@ -73,7 +73,7 @@ public class FedoraTransactions extends AbstractResource {
      */
     @POST
     public Response createTransaction(@PathParam("path") final List<PathSegment> pathList,
-                                      @Context final HttpServletRequest req) throws RepositoryException {
+                                      @Context final HttpServletRequest req) {
 
         if (session instanceof TxSession) {
             final Transaction t = txService.getTransaction(session);
@@ -113,7 +113,7 @@ public class FedoraTransactions extends AbstractResource {
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path")
-        final List<PathSegment> pathList) throws RepositoryException {
+        final List<PathSegment> pathList) {
 
         return finalizeTransaction(pathList, true);
 
@@ -132,8 +132,7 @@ public class FedoraTransactions extends AbstractResource {
     }
 
     private Response finalizeTransaction(@PathParam("path")
-        final List<PathSegment> pathList, final boolean commit)
-        throws RepositoryException {
+        final List<PathSegment> pathList, final boolean commit) {
 
         final String path = toPath(pathList);
         if (!path.equals("/")) {

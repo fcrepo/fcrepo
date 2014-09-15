@@ -64,8 +64,7 @@ public interface RepositoryService extends Service {
      * @return JCR namespace information as an RDF Dataset
      * @throws RepositoryException
      */
-    Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator)
-        throws RepositoryException;
+    Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator);
 
     /**
      * Serialize the JCR namespace information as an {@link RdfStream}
@@ -74,8 +73,7 @@ public interface RepositoryService extends Service {
      * @return JCR namespace information as an {@link RdfStream}
      * @throws RepositoryException
      */
-    RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator)
-        throws RepositoryException;
+    RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator);
 
     /**
      * Perform a full-text search on the whole repository and return the
@@ -91,7 +89,7 @@ public interface RepositoryService extends Service {
      * @throws RepositoryException
      */
     Dataset searchRepository(IdentifierTranslator subjectFactory, Resource searchSubject, Session session, String terms,
-            int limit, long offset) throws RepositoryException;
+            int limit, long offset);
 
     /**
      * This method backups up a running repository
@@ -101,7 +99,7 @@ public interface RepositoryService extends Service {
      * @return problems
      * @throws RepositoryException
      */
-    Problems backupRepository(Session session, File backupDirectory) throws RepositoryException;
+    Problems backupRepository(Session session, File backupDirectory);
 
     /**
      * This methods restores the repository from a backup
@@ -111,6 +109,6 @@ public interface RepositoryService extends Service {
      * @return problems
      * @throws RepositoryException
      */
-    Problems restoreRepository(Session session, File backupDirectory) throws RepositoryException;
+    Problems restoreRepository(Session session, File backupDirectory);
 
 }

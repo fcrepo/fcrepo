@@ -55,6 +55,7 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -87,14 +88,16 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     @HtmlTemplate("jcr:workspaces")
-    public RdfStream getWorkspaces()
-        throws RepositoryException {
+    public RdfStream getWorkspaces() {
+        try {
 
-        final IdentifierTranslator idTranslator =
-            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+            final IdentifierTranslator idTranslator =
+                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-        return JcrRdfTools.withContext(idTranslator, session).getWorkspaceTriples(idTranslator).session(session);
-
+            return JcrRdfTools.withContext(idTranslator, session).getWorkspaceTriples(idTranslator).session(session);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -109,7 +112,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     @Path("{path}")
     public Response createWorkspace(@PathParam("path") final String path,
             @Context final UriInfo uriInfo)
-        throws RepositoryException, URISyntaxException {
+        throws URISyntaxException {
 
         try {
             final Workspace workspace = session.getWorkspace();
@@ -133,6 +136,8 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
 
 
             return created(new URI(subjects.getSubject("/").getURI())).build();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }
@@ -146,7 +151,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
      */
     @DELETE
     @Path("{path}")
-    public Response deleteWorkspace(@PathParam("path") final String path) throws RepositoryException {
+    public Response deleteWorkspace(@PathParam("path") final String path) {
         try {
             final Workspace workspace = session.getWorkspace();
 
@@ -157,6 +162,8 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
             workspace.deleteWorkspace(path);
 
             return noContent().build();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         } finally {
             session.logout();
         }
