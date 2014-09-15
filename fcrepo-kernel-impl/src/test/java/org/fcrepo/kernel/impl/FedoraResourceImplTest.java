@@ -38,6 +38,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -52,7 +53,12 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.rdf.model.ResIterator;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -276,17 +282,37 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetVersionDataset() throws Exception {
 
-        mockStatic(JcrRdfTools.class);
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
+        final FedoraResource spy = spy(testObj);
 
-        when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
         when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream versionsStream = new RdfStream();
-        when(mockJcrRdfTools.getVersionTriples(any(Node.class)))
-                .thenReturn(versionsStream);
-        final RdfStream result = testObj.getVersionTriples(mockSubjects);
+        doReturn(versionsStream).when(spy).getTriples(mockSubjects, VersionsRdfContext.class);
+        final RdfStream result = spy.getVersionTriples(mockSubjects);
         assertEquals(versionsStream, result);
+    }
+
+    @Test
+    public void testGetTriples() throws Exception {
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
+
+        final RdfStream triples = testObj.getTriples(mockSubjects, TestTriplesContext.class);
+
+        final Model model = triples.asModel();
+
+        final ResIterator resIterator = model.listSubjects();
+
+        final ImmutableSet<String> resources = ImmutableSet.copyOf(
+                Iterators.transform(resIterator,
+                        new Function<Resource, String>() {
+                            @Override
+                            public String apply(final Resource resource) {
+                                return resource.getURI();
+                            }
+                        }));
+
+        assertTrue(resources.contains("MockTriplesContextClass"));
     }
 
     @Test

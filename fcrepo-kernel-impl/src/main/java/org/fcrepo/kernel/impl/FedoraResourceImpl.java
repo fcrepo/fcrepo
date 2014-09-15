@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl;
 
 
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -32,6 +33,8 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +44,6 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -49,7 +51,9 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -282,19 +286,44 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return getPropertiesDataset(subjects, 0, -1);
     }
 
+    @SafeVarargs
+    @Override
+    public final RdfStream getTriples(final IdentifierTranslator graphSubjects,
+                                      final Class<? extends RdfStream>... contexts) {
+        final RdfStream stream = new RdfStream();
+
+        for (final Class<? extends RdfStream> context : contexts) {
+            try {
+                final Constructor<? extends RdfStream> declaredConstructor
+                        = context.getDeclaredConstructor(Node.class, IdentifierTranslator.class);
+
+                final RdfStream rdfStream = declaredConstructor.newInstance(node, graphSubjects);
+
+                stream.concat(rdfStream);
+            } catch (final NoSuchMethodException |
+                    InstantiationException |
+                    IllegalAccessException e) {
+                // Shouldn't happen.
+                propagate(e);
+            } catch (final InvocationTargetException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof RepositoryException) {
+                    throw new RepositoryRuntimeException(cause);
+                } else {
+                    propagate(cause);
+                }
+            }
+        }
+
+        return stream;
+    }
+
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#getPropertiesTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
     public RdfStream getPropertiesTriples(final IdentifierTranslator graphSubjects) {
-        try {
-            final JcrRdfTools jcrRdfTools =
-                    JcrRdfTools.withContext(graphSubjects, getSession());
-
-            return jcrRdfTools.getJcrTriples(getNode());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getTriples(graphSubjects, PropertiesRdfContext.class);
     }
 
     /* (non-Javadoc)
@@ -318,22 +347,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public RdfStream getVersionTriples(final IdentifierTranslator graphSubjects) {
-        try {
-            return JcrRdfTools.withContext(graphSubjects, getSession()).getVersionTriples(node);
-        } catch (final UnsupportedRepositoryOperationException e ) {
-            throw new RepositoryVersionRuntimeException(e);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getTriples(graphSubjects, VersionsRdfContext.class);
     }
 
     @Override
     public RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) {
-        try {
-            return JcrRdfTools.withContext(graphSubjects, getSession()).getReferencesTriples(node);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getTriples(graphSubjects, ReferencesRdfContext.class);
     }
 
     /* (non-Javadoc)

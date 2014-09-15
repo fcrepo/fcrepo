@@ -100,6 +100,15 @@ public interface FedoraResource {
      */
     Dataset getPropertiesDataset(final IdentifierTranslator subjects);
 
+
+    /**
+     * Return the RDF properties of this object using the provided contexts
+     * @param graphSubjects
+     * @param contexts
+     * @return
+     */
+    RdfStream getTriples(final IdentifierTranslator graphSubjects, final Class<? extends RdfStream> ... contexts);
+
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
      * @param graphSubjects
