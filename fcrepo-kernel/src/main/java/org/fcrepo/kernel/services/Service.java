@@ -42,4 +42,13 @@ public interface Service {
      */
     public boolean exists(final Session session, final String path) throws RepositoryException;
 
+    /**
+     * Validate resource path for unregistered namespace prefixes
+     *
+     * @param session the JCR session to use
+     * @param path the absolute path to the object
+     * @throws RepositoryException
+     */
+    public void validatePath(final Session session, final String path) throws RepositoryException;
+
 }
