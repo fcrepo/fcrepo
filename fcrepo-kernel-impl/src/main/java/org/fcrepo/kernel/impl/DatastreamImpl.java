@@ -23,6 +23,8 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
@@ -154,8 +156,12 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @see org.fcrepo.kernel.Datastream#getContent()
      */
     @Override
-    public boolean hasContent() throws RepositoryException {
-        return node.hasNode(JCR_CONTENT);
+    public boolean hasContent() {
+        try {
+            return node.hasNode(JCR_CONTENT);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*

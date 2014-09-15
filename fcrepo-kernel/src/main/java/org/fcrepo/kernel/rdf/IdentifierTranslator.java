@@ -50,7 +50,7 @@ public interface IdentifierTranslator {
      * @return an RDF URI resource
      * @throws RepositoryException
      */
-    Resource getSubject(final String absPath) throws RepositoryException;
+    Resource getSubject(final String absPath);
 
     /**
      * Get a context resource

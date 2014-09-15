@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ContiguousSet.create;
 import static com.google.common.collect.DiscreteDomain.integers;
@@ -37,7 +36,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import java.util.Collection;
 import java.util.List;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
@@ -129,14 +127,10 @@ public class FedoraIdentifiers extends AbstractResource {
             @Override
             public Triple apply(final String identifier) {
 
-                try {
                     final Node s =
                         subjects.getSubject(identifier).asNode();
                     return Triple.create(pidsResult, HAS_MEMBER_OF_RESULT
                             .asNode(), s);
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
             }
         };
     }

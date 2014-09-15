@@ -355,12 +355,13 @@ public class FedoraNodesTest {
         when(mockDataset.getContext()).thenReturn(mockContext);
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
         when(mockObject.getEtagValue()).thenReturn("");
-        when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
+        when(mockObject.getPropertiesTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
-                                               any(HierarchyRdfContextOptions.class))).thenReturn(
+                any(HierarchyRdfContextOptions.class))).thenReturn(
                 mockRdfStream2);
         when(mockObject.getReferencesTriples(any(IdentifierTranslator.class))).thenReturn(mockRdfStream3);
+        when(mockObject.getPath()).thenReturn(path);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
@@ -384,11 +385,12 @@ public class FedoraNodesTest {
 
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
-        when(mockObject.getTriples(any(IdentifierTranslator.class))).thenReturn(
+        when(mockObject.getPropertiesTriples(any(IdentifierTranslator.class))).thenReturn(
                 mockRdfStream);
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
                                                any(HierarchyRdfContextOptions.class))).thenReturn(mockRdfStream2);
         when(mockObject.getReferencesTriples(any(IdentifierTranslator.class))).thenReturn(mockRdfStream3);
+        when(mockObject.getPath()).thenReturn(path);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);

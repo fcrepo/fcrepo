@@ -17,6 +17,7 @@ package org.fcrepo.http.api.versioning;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
 import javax.jcr.ItemNotFoundException;
@@ -97,17 +98,21 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
     }
 
     @Override
-    public Resource getSubject(final String absPath) throws RepositoryException {
-        if (absPath.contains("jcr:versionStorage")) {
-            final Node probableFrozenNode = internalSession.getNode(absPath);
-            if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
-                final URI result = uriBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
-                LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
-                return createResource(result.toString());
+    public Resource getSubject(final String absPath) {
+        try {
+            if (absPath.contains("jcr:versionStorage")) {
+                final Node probableFrozenNode = internalSession.getNode(absPath);
+                if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
+                    final URI result = uriBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
+                    LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
+                    return createResource(result.toString());
+                }
+                LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
             }
-            LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
+            return super.getSubject(absPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return super.getSubject(absPath);
     }
 
     /**

@@ -15,135 +15,25 @@
  */
 package org.fcrepo.kernel;
 
-import java.util.Date;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.fcrepo.kernel.resource.Container;
 
 /**
  * @author ajs6f
  * @since Jan 10, 2014
  */
-public interface FedoraResource {
+public interface FedoraResource extends Container<Node> {
 
     /**
      * Does the resource have a jcr:content child node?
      * @return has content
      * @throws RepositoryException
      */
-    boolean hasContent() throws RepositoryException;
-
-    /**
-     * @return The JCR node that backs this object.
-     */
-    Node getNode();
-
-    /**
-     * Get the path to the JCR node
-     * @return path
-     * @throws RepositoryException
-     */
-    String getPath() throws RepositoryException;
-
-    /**
-     * Get the date this datastream was created
-     * @return created date
-     * @throws RepositoryException
-     */
-    Date getCreatedDate() throws RepositoryException;
-
-    /**
-     * Get the date this datastream was last modified
-     * @return last modified date
-     * @throws RepositoryException
-     */
-    Date getLastModifiedDate() throws RepositoryException;
-
-    /**
-     * Check if this object uses a given mixin
-     * @return a collection of mixin names
-     * @throws javax.jcr.RepositoryException
-     */
-    boolean hasType(final String type) throws RepositoryException;
-    /**
-     * Update the properties Dataset with a SPARQL Update query. The updated
-     * properties may be serialized to the JCR store.
-     *
-     * After applying the statement, clients SHOULD check the result
-     * of #getDatasetProblems, which may include problems when attempting to
-     * serialize the data to JCR.
-     *
-     * @param subjects
-     * @param sparqlUpdateStatement
-     * @throws RepositoryException
-     */
-    Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
-            final String sparqlUpdateStatement) throws RepositoryException;
-
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     *
-     * @param graphSubjects
-     * @param offset
-     * @param limit
-     * @return properties
-     * @throws RepositoryException
-     */
-    Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
-       final int offset, final int limit) throws RepositoryException;
-
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     * @param subjects
-     * @return properties
-     * @throws RepositoryException
-     */
-    Dataset getPropertiesDataset(final IdentifierTranslator subjects)
-        throws RepositoryException;
-
-    /**
-     * Return the JCR properties of this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return triples
-     * @throws RepositoryException
-     */
-    RdfStream getTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
-
-    /**
-     * Return the JCR properties of this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return triples
-     * @throws RepositoryException
-     */
-    RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
-                                  final HierarchyRdfContextOptions serializationOptions)
-        throws RepositoryException;
-
-    /**
-     * Serialize the JCR versions information as an RDF dataset
-     * @param graphSubjects
-     * @return triples
-     * @throws RepositoryException
-     */
-    RdfStream getVersionTriples(final IdentifierTranslator graphSubjects)
-        throws RepositoryException;
-
-    /**
-     * Serialize inbound References to this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return triples
-     * @throws RepositoryException
-     */
-    RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
+    boolean hasContent();
 
     /**
      * Tag the current version of the Node with a version label that
@@ -169,34 +59,5 @@ public interface FedoraResource {
      * @throws RepositoryException
      */
     public VersionHistory getVersionHistory() throws RepositoryException;
-
-    /**
-     * Check if a resource was created in this session
-     * @return if resource created in this session
-     */
-    Boolean isNew();
-
-    /**
-     * Replace the properties of this object with the properties from the given
-     * model
-     *
-     * @param graphSubjects
-     * @param inputModel
-     * @return RDFStream
-     * @throws RepositoryException
-     */
-    RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
-        final Model inputModel) throws RepositoryException;
-
-    /**
-     * Construct an ETag value from the last modified date and path. JCR has a
-     * mix:etag type, but it only takes into account binary properties. We
-     * actually want whole-object etag data. TODO : construct and store an ETag
-     * value on object modify
-     *
-     * @return constructed etag value
-     * @throws RepositoryException
-     */
-    String getEtagValue() throws RepositoryException;
 
 }

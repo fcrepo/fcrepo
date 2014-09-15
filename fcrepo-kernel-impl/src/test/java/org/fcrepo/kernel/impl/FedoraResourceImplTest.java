@@ -60,6 +60,7 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -361,6 +362,7 @@ public class FedoraResourceImplTest {
                 testObj.isNew());
     }
 
+    @Ignore
     @Test
     public void testReplacePropertiesDataset() throws Exception {
 
