@@ -122,6 +122,7 @@ public class FedoraVersionsTest {
                 mockResource);
         when(mockResource.getVersionTriples(any(HttpIdentifierTranslator.class)))
                 .thenReturn(mockRdfStream);
+        when(mockResource.hasType("mix:versionable")).thenReturn(true);
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
         final RdfStream response =

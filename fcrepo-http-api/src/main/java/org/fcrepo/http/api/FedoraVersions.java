@@ -25,6 +25,7 @@ import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -112,6 +113,10 @@ public class FedoraVersions extends ContentExposingResource {
         LOGGER.trace("Getting versions list for: {}", path);
 
         final FedoraResource resource = nodeService.getObject(session, path);
+
+        if (!resource.hasType("mix:versionable")) {
+            throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
+        }
 
         return resource.getVersionTriples(nodeTranslator())
                 .session(session)
