@@ -69,12 +69,17 @@ public abstract class AbstractService extends JcrTools implements FedoraJcrTypes
      * @see org.fcrepo.kernel.services.Service#validatePath(javax.jcr.Session, java.lang.String)
      */
     @Override
-    public void validatePath(final Session session, final String path) throws RepositoryException {
+    public void validatePath(final Session session, final String path) {
 
-        final NamespaceRegistry namespaceRegistry =
-            session.getWorkspace().getNamespaceRegistry();
-        checkNotNull(namespaceRegistry,
-            "Couldn't find namespace registry in repository!");
+        final NamespaceRegistry namespaceRegistry;
+        try {
+            namespaceRegistry =
+                session.getWorkspace().getNamespaceRegistry();
+            checkNotNull(namespaceRegistry,
+                "Couldn't find namespace registry in repository!");
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
 
         final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
         final String[] pathSegments = relPath.split("/");
@@ -86,6 +91,8 @@ public abstract class AbstractService extends JcrTools implements FedoraJcrTypes
                 } catch (final NamespaceException e) {
                     throw new FedoraInvalidNamespaceException(
                         String.format("The namespace prefix (%s) has not been registered", prefix), e);
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
                 }
             }
         }
