@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.services;
 
 import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 /**
@@ -38,8 +37,7 @@ public interface Service {
      *
      * @param path
      * @return whether a datastream or object exists at the given path
-     * @throws RepositoryException
      */
-    public boolean exists(final Session session, final String path) throws RepositoryException;
+    public boolean exists(final Session session, final String path);
 
 }

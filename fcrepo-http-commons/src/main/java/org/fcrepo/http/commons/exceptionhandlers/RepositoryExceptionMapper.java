@@ -27,7 +27,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.slf4j.Logger;
 
 /**
@@ -41,21 +40,16 @@ public class RepositoryExceptionMapper implements
 
     private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
 
-    Boolean showStackTrace = true;
-
     @Override
     public Response toResponse(final RepositoryException e) {
 
         LOGGER.warn("Caught repository exception: {}", e.getMessage() );
-        if (e instanceof ResourceTypeException) {
-            return status(BAD_REQUEST).entity(null).build();
-        } else if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
+        if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
             return status(BAD_REQUEST).entity(e.getMessage()).build();
         } else if ( e instanceof ValueFormatException ) {
             return status(BAD_REQUEST).entity(e.getMessage()).build();
         }
 
-        return serverError().entity(
-                showStackTrace ? getStackTraceAsString(e) : null).build();
+        return serverError().entity(getStackTraceAsString(e)).build();
     }
 }

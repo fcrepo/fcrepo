@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.exception;
+
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import org.fcrepo.kernel.exception.ResourceTypeException;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.status;
 
 /**
- * A transaction was not found in the transaction registry
- *
- * @author awoods
+ * @author cabeer
+ * @since 9/15/14
  */
-public class TransactionMissingException extends RepositoryRuntimeException {
+@Provider
+public class ResourceTypeExceptionMapper implements ExceptionMapper<ResourceTypeException> {
 
-    private static final long serialVersionUID = 2139084821001303830L;
+    @Override
+    public Response toResponse(final ResourceTypeException e) {
 
-    /**
-     *
-     * @param s the exception message
-     */
-    public TransactionMissingException(final String s) {
-        super(s);
+        return status(BAD_REQUEST).entity(null).build();
     }
 }

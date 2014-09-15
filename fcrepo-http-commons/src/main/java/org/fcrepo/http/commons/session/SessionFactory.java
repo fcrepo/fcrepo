@@ -27,6 +27,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.LockReleasingSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
@@ -99,8 +100,12 @@ public class SessionFactory {
      * @return an internal session
      * @throws RepositoryException
      */
-    public Session getInternalSession() throws RepositoryException {
-        return repo.login();
+    public Session getInternalSession() {
+        try {
+            return repo.login();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**

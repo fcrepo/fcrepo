@@ -46,8 +46,7 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
      * @throws RepositoryException
      */
     @Override
-    public FedoraObject createObject(final Session session, final String path)
-        throws RepositoryException {
+    public FedoraObject createObject(final Session session, final String path) {
         return new FedoraObjectImpl(session, path, NT_FOLDER);
     }
 

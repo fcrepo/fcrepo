@@ -47,6 +47,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -96,7 +97,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
             nodeService.registerNodeTypes(session, requestBodyStream);
 
             return status(SC_NO_CONTENT).build();
-        } catch ( RepositoryException ex ) {
+        } catch ( RepositoryRuntimeException ex ) {
             // this may be brittle, but the returned exception isn't an InvalideNodeTypeDefinitionException...
             if ( ex.getMessage().indexOf("Reading the node definitions from the"
                     + " supplied stream resulted in problems(s)") != -1 ) {

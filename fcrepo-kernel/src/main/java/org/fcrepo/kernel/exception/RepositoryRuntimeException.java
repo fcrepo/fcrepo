@@ -23,7 +23,6 @@ package org.fcrepo.kernel.exception;
 public class RepositoryRuntimeException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
-
     /**
      * Ordinary constructor.
      *
@@ -31,6 +30,15 @@ public class RepositoryRuntimeException extends RuntimeException {
      */
     public RepositoryRuntimeException(final String msg) {
         super(msg);
+    }
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param rootCause
+     */
+    public RepositoryRuntimeException(final Throwable rootCause) {
+        super(rootCause);
     }
 
 

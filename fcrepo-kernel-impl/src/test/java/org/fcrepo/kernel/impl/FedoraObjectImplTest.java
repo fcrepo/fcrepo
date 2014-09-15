@@ -99,6 +99,7 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
             mockNodetypes[0] = mock(NodeType.class);
             when(mockNodetypes[0].getName()).thenReturn("some:type");
             mockNodetypes[1] = mock(NodeType.class);
+            when(mockObjNode.isNodeType("some:type")).thenReturn(true);
 
             when(mockObjNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
 

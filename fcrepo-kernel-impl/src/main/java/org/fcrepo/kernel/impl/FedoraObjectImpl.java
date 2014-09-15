@@ -58,7 +58,7 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
      * @throws RepositoryException
      */
     public FedoraObjectImpl(final Session session, final String path,
-                        final String nodeType) throws RepositoryException {
+                        final String nodeType) {
         super(session, path, nodeType);
 
         if (node.isNew()) {

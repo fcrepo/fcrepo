@@ -154,7 +154,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
     @SuppressWarnings("unused")
     // we declare RepositoryException because subclasses throw it
     @Override
-    public Resource getSubject(final String absPath) throws RepositoryException {
+    public Resource getSubject(final String absPath) {
         resetTranslationChain();
         try {
             LOGGER.debug("Creating RDF subject from identifier: {}", decode(absPath, "UTF-8"));
