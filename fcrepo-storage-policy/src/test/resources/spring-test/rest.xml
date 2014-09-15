@@ -10,7 +10,7 @@
   <!-- Mints PIDs-->
   <bean class="org.fcrepo.kernel.impl.identifiers.UUIDPidMinter"/>
   
-  <bean class="org.fcrepo.storage.policy.StoragePolicyDecisionPointImpl"/>
+  <bean name="storagePolicyDecisionPoint" class="org.fcrepo.storage.policy.StoragePolicyDecisionPointImpl"/>
   
   <context:component-scan base-package="org.fcrepo"  />
 </beans>

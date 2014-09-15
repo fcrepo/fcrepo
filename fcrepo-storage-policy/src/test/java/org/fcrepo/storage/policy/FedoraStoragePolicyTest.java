@@ -127,14 +127,14 @@ public class FedoraStoragePolicyTest {
         final StoragePolicy p2 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
         final StoragePolicy p3 = new MimeTypeStoragePolicy("image/tiff", "tiff-store");
         if (!obj.contains(p3)) {
-            obj.addPolicy(p1);
+            obj.add(p1);
         }
         if (!obj.contains(p3)) {
-            obj.addPolicy(p2);
+            obj.add(p2);
         }
         assertEquals(obj.contains(p1), true);
         assertEquals(obj.contains(p2), true);
-        obj.removePolicy(p1);
+        obj.remove(p1);
         assertEquals(obj.contains(p1), false);
         assertEquals(obj.contains(p2), false);
     }
