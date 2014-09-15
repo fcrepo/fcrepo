@@ -492,7 +492,7 @@ public class FedoraNodesTest {
                                          mockStream,
                                          mockRequest,
                                          mockResponse);
-        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class));
+        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), any(Model.class), any(RdfStream.class));
     }
 
     @Test

@@ -68,6 +68,7 @@ import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
 
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -202,7 +203,7 @@ public class FedoraBatchTest {
 
         testObj.batchModify(createPathList(pid), multipart);
         final ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
-        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), captor.capture());
+        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), captor.capture(), any(RdfStream.class));
         final Model capturedModel = captor.getValue();
         assertTrue(capturedModel.contains(capturedModel.createResource("http://localhost/fcrepo/" + pid),
                                              capturedModel.createProperty("info:a"),

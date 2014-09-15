@@ -165,7 +165,9 @@ public interface FedoraResource {
      * @param inputModel
      * @return RDFStream
      */
-    RdfStream replaceProperties(final IdentifierTranslator graphSubjects, final Model inputModel);
+    RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
+                                final Model inputModel,
+                                final RdfStream originalTriples);
 
     /**
      * Construct an ETag value from the last modified date and path. JCR has a

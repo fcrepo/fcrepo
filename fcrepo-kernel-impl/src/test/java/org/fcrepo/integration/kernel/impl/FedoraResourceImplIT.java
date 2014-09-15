@@ -577,7 +577,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         model.add(subject, predicate, resource);
         model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
 
-        object.replaceProperties(subjects, model);
+        object.replaceProperties(subjects, model, object.getPropertiesTriples(subjects));
 
         final PropertyIterator properties = new PropertyIterator(object.getNode().getProperties());
 

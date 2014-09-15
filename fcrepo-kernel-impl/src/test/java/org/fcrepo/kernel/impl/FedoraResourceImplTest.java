@@ -364,11 +364,10 @@ public class FedoraResourceImplTest {
     @Test
     public void testReplacePropertiesDataset() throws Exception {
 
-        mockStatic(JcrRdfTools.class);
         final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator();
-        when(JcrRdfTools.withContext(defaultGraphSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
         when(mockNode.getPath()).thenReturn("/xyz");
+        when(mockSession.getNode("/xyz")).thenReturn(mockNode);
 
         final Model propertiesModel = createDefaultModel();
         propertiesModel.add(propertiesModel.createResource("a"),
@@ -384,12 +383,6 @@ public class FedoraResourceImplTest {
                                propertiesModel.createProperty("y"),
                                "z");
         final RdfStream propertiesStream = RdfStream.fromModel(propertiesModel);
-        when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
-
-        final RdfStream treeStream = new RdfStream();
-        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(treeStream);
-        final Model problemsModel = createDefaultModel();
-        when(getProblemsModel()).thenReturn(problemsModel);
 
         final Model replacementModel = createDefaultModel();
 
@@ -402,13 +395,11 @@ public class FedoraResourceImplTest {
                                 replacementModel.createProperty("j"),
                                "k");
 
-        final Model replacements = testObj.replaceProperties(defaultGraphSubjects, replacementModel).asModel();
+        final Model replacements = testObj.replaceProperties(defaultGraphSubjects,
+                replacementModel,
+                propertiesStream).asModel();
 
         assertTrue(replacements.containsAll(replacementModel));
-
-        assertFalse(problemsModel.contains(propertiesModel.createResource("x"),
-                                              propertiesModel.createProperty("y"),
-                                              "z"));
     }
     @Test
     public void shouldGetEtagForAnObject() throws RepositoryException {

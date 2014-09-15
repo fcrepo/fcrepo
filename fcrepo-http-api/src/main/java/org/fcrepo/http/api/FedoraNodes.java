@@ -501,7 +501,7 @@ public class FedoraNodes extends AbstractResource {
                                                       graphSubjects.getSubject(resource.getPath()).toString(),
                                                       format);
 
-                resource.replaceProperties(graphSubjects, inputModel);
+                resource.replaceProperties(graphSubjects, inputModel, resource.getPropertiesTriples(graphSubjects));
 
             } else if (preexisting) {
                 return status(SC_CONFLICT).entity("No RDF provided and the resource already exists!").build();
@@ -624,7 +624,7 @@ public class FedoraNodes extends AbstractResource {
                         createDefaultModel().read(requestBodyStream,
                                 idTranslator.getSubject(result.getPath()).toString(), format);
 
-                    result.replaceProperties(idTranslator, inputModel);
+                    result.replaceProperties(idTranslator, inputModel, result.getPropertiesTriples(idTranslator));
                     response = created(location).entity(location.toString());
                 } else if (result instanceof Datastream) {
                     LOGGER.trace("Created a datastream and have a binary payload.");

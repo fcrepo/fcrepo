@@ -389,8 +389,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
-        final Model inputModel) {
-        final RdfStream originalTriples = getPropertiesTriples(graphSubjects);
+        final Model inputModel, final RdfStream originalTriples) {
 
         final RdfStream replacementStream = RdfStream.fromModel(inputModel);
 
