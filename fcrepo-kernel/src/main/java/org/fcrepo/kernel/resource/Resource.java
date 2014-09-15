@@ -16,6 +16,9 @@
 
 package org.fcrepo.kernel.resource;
 
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import java.util.Date;
 
 /**
@@ -70,4 +73,10 @@ public interface Resource<T> {
      */
     String getEtagValue();
 
+    /**
+     * Generate triples for this rdf source
+     * @param generators
+     * @return
+     */
+    RdfStream getTriples(final IdentifierTranslator subjects, final Class<? extends RdfStream> ... generators);
 }
