@@ -13,31 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.services;
 
-import javax.jcr.Repository;
-import javax.jcr.Session;
+package org.fcrepo.kernel.exception;
 
 /**
- * @author bbpennel
- * @since Feb 21, 2014
+ * @author cabeer
+ * @since 9/15/14
  */
-public interface Service {
+public class RepositoryVersionRuntimeException extends RuntimeException {
 
     /**
-     * Set the repository to back this RepositoryService
-     *
-     * @param repository
+     * Wrap a RepositoryVersionException in a runtime exception
+     * @param rootCause
      */
-    void setRepository(Repository repository);
-
-    /**
-     * Test whether a datastream or object exists at the given path in the
-     * repository
-     *
-     * @param path
-     * @return whether a datastream or object exists at the given path
-     */
-    public boolean exists(final Session session, final String path);
-
+    public RepositoryVersionRuntimeException(final Throwable rootCause) {
+        super(rootCause);
+    }
 }

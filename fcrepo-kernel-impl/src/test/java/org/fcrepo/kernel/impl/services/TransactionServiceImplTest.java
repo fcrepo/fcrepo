@@ -36,6 +36,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Before;
@@ -89,7 +90,7 @@ public class TransactionServiceImplTest {
     @Test
     public void testExpirationThrowsRepositoryException() throws Exception {
         final Date fiveSecondsAgo = new Date(currentTimeMillis() - 5000);
-        doThrow(new RepositoryException("")).when(mockTx).rollback();
+        doThrow(new RepositoryRuntimeException("")).when(mockTx).rollback();
         when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
         service.removeAndRollbackExpired();
     }
@@ -159,7 +160,7 @@ public class TransactionServiceImplTest {
         verify(mockTx).commit(null);
     }
 
-    @Test(expected = RepositoryException.class)
+    @Test(expected = TransactionMissingException.class)
     public void testCommitRemovedTransaction() throws Exception {
         final Transaction tx = service.commit(IS_A_TX);
         service.getTransaction(tx.getId(), null);
@@ -172,18 +173,18 @@ public class TransactionServiceImplTest {
         verify(mockTx).rollback();
     }
 
-    @Test(expected = RepositoryException.class)
+    @Test(expected = TransactionMissingException.class)
     public void testRollbackRemovedTransaction() throws Exception {
         final Transaction tx = service.rollback(IS_A_TX);
         service.getTransaction(tx.getId(), null);
     }
 
-    @Test(expected = RepositoryException.class)
+    @Test(expected = TransactionMissingException.class)
     public void testRollbackWithNonTx() throws RepositoryException {
         service.rollback(NOT_A_TX);
     }
 
-    @Test(expected = RepositoryException.class)
+    @Test(expected = TransactionMissingException.class)
     public void testCommitWithNonTx() throws RepositoryException {
         service.commit(NOT_A_TX);
     }

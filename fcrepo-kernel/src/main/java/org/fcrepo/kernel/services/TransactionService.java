@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.services;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
@@ -38,7 +37,7 @@ public interface TransactionService extends Service {
      * @param sess The session to use for this Transaction
      * @return the {@link Transaction}
      */
-    Transaction beginTransaction(Session sess, String userName) throws RepositoryException;
+    Transaction beginTransaction(Session sess, String userName);
 
     /**
      * Recieve an open {@link Transaction} for a given user
@@ -72,18 +71,16 @@ public interface TransactionService extends Service {
      * Commit a {@link Transaction} with the given id
      *
      * @param txid the id of the {@link Transaction}
-     * @throws RepositoryException
      */
-    Transaction commit(String txid) throws RepositoryException;
+    Transaction commit(String txid);
 
     /**
      * Roll a {@link Transaction} back
      *
      * @param txid the id of the {@link Transaction}
      * @return the {@link Transaction} object
-     * @throws RepositoryException if the {@link Transaction} could not be found
      */
-    Transaction rollback(String txid) throws RepositoryException;
+    Transaction rollback(String txid);
 
     /**
      * @param versionService the versionService to set

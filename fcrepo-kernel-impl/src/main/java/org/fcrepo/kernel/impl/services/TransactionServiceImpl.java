@@ -31,6 +31,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.TransactionImpl;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.TransactionMissingException;
@@ -91,7 +92,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
                 if (tx.getExpires().getTime() <= currentTimeMillis()) {
                     try {
                         tx.rollback();
-                    } catch (final RepositoryException e) {
+                    } catch (final RepositoryRuntimeException e) {
                         LOGGER.error(
                                 "Got exception rolling back expired" +
                                         " transaction {}: {}",
@@ -110,12 +111,15 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * @return the {@link Transaction}
      */
     @Override
-    public Transaction beginTransaction(final Session sess, final String userName)
-        throws RepositoryException {
+    public Transaction beginTransaction(final Session sess, final String userName) {
         final Transaction tx = new TransactionImpl(sess, userName);
         final String txId = tx.getId();
         transactions.put(txId, tx);
-        sess.setNamespacePrefix(FCREPO4_TX_ID, txId);
+        try {
+            sess.setNamespacePrefix(FCREPO4_TX_ID, txId);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
         return tx;
     }
 
@@ -197,13 +201,12 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * Commit a {@link Transaction} with the given id
      *
      * @param txid the id of the {@link Transaction}
-     * @throws RepositoryException
      */
     @Override
-    public Transaction commit(final String txid) throws RepositoryException {
+    public Transaction commit(final String txid) {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
-            throw new RepositoryException("Transaction with id " + txid +
+            throw new TransactionMissingException("Transaction with id " + txid +
                     " is not available");
         }
         tx.commit(versionService);
@@ -215,13 +218,12 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      *
      * @param txid the id of the {@link Transaction}
      * @return the {@link Transaction} object
-     * @throws RepositoryException if the {@link Transaction} could not be found
      */
     @Override
-    public Transaction rollback(final String txid) throws RepositoryException {
+    public Transaction rollback(final String txid) {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
-            throw new RepositoryException("Transaction with id " + txid +
+            throw new TransactionMissingException("Transaction with id " + txid +
                     " is not available");
         }
         tx.rollback();

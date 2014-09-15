@@ -29,7 +29,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 
 import java.util.List;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -73,7 +72,6 @@ public class FedoraFixity extends AbstractResource {
      * @param request
      * @param uriInfo
      * @return datastream fixity in the given format
-     * @throws RepositoryException
      */
     @GET
     @Timed
@@ -84,7 +82,7 @@ public class FedoraFixity extends AbstractResource {
         @Context
         final Request request,
         @Context
-        final UriInfo uriInfo) throws RepositoryException {
+        final UriInfo uriInfo) {
 
         final String path = toPath(pathList);
 

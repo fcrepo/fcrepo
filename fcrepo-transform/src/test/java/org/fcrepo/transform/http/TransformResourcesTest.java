@@ -66,7 +66,8 @@ public class TransformResourcesTest {
         throws RepositoryException {
 
         final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.isNodeType(FedoraJcrTypes.ROOT)).thenReturn(true);
+        when(mockNode.isNodeType(FedoraJcrTypes.ROOT)).thenReturn(true);
+        when(mockNodeType.getName()).thenReturn("not-frozen");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 

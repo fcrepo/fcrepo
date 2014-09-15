@@ -91,7 +91,7 @@ public class HttpTripleUtil implements ApplicationContextAware {
      */
     public void addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
             final FedoraResource resource, final UriInfo uriInfo,
-            final IdentifierTranslator graphSubjects) throws RepositoryException {
+            final IdentifierTranslator graphSubjects) {
 
         LOGGER.debug("Adding additional HTTP context triples to dataset");
         for (final Map.Entry<String, UriAwareResourceModelFactory> e : getUriAwareTripleFactories()

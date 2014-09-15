@@ -44,6 +44,7 @@ import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.serialization.SerializerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,28 +70,31 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-        final UriInfo uriInfo, final IdentifierTranslator graphSubjects)
-        throws RepositoryException {
+        final UriInfo uriInfo, final IdentifierTranslator graphSubjects) {
 
         final Model model = createDefaultModel();
+        try {
 
-        final Resource s = graphSubjects.getSubject(resource.getNode().getPath());
+            final Resource s = graphSubjects.getSubject(resource.getPath());
 
-        if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
-            addRepositoryStatements(uriInfo, model, s);
-        } else {
-            addNodeStatements(resource, uriInfo, model, s);
-        }
+            if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
+                addRepositoryStatements(uriInfo, model, s);
+            } else {
+                addNodeStatements(resource, uriInfo, model, s);
+            }
 
-        if (resource.hasContent()) {
-            addContentStatements(resource, uriInfo, model, s);
+            if (resource.hasContent()) {
+                addContentStatements(resource, uriInfo, model, s);
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
 
         return model;
     }
 
     private static void addContentStatements(final FedoraResource resource, final UriInfo uriInfo,
-        final Model model, final Resource s) throws RepositoryException {
+        final Model model, final Resource s) {
         // fcr:fixity
         final Map<String, String> pathMap =
             singletonMap("path", resource.getPath().substring(1));
@@ -100,26 +104,30 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
     }
 
     private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
-        final Model model, final Resource s) throws RepositoryException {
+        final Model model, final Resource s) {
 
         final Map<String, String> pathMap =
                 singletonMap("path", resource.getPath().substring(1));
 
-        // hasLock
-        if (resource.getNode().isLocked()) {
-            final String path = resource.getNode().getPath();
-            final Node lockHoldingNode
-                = resource.getNode().getSession().getWorkspace()
-                    .getLockManager().getLock(path).getNode();
-            final Map<String, String> lockedNodePathMap =
-                    singletonMap("path", lockHoldingNode.getPath().substring(1));
-            model.add(s, HAS_LOCK, createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraLocks.class).buildFromMap(
-                        lockedNodePathMap).toASCIIString()));
+        try {
+            // hasLock
+            if (resource.getNode().isLocked()) {
+                final String path = resource.getPath();
+                final Node lockHoldingNode
+                        = resource.getNode().getSession().getWorkspace()
+                        .getLockManager().getLock(path).getNode();
+                final Map<String, String> lockedNodePathMap =
+                        singletonMap("path", lockHoldingNode.getPath().substring(1));
+                model.add(s, HAS_LOCK, createResource(uriInfo
+                        .getBaseUriBuilder().path(FedoraLocks.class).buildFromMap(
+                                lockedNodePathMap).toASCIIString()));
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
 
         // fcr:versions
-        if (resource.getNode().isNodeType(NodeType.MIX_VERSIONABLE)) {
+        if (resource.hasType(NodeType.MIX_VERSIONABLE)) {
             model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
                     .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
                             pathMap).toASCIIString()));
