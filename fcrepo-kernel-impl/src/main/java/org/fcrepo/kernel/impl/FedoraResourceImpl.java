@@ -283,10 +283,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
+     * @see org.fcrepo.kernel.FedoraResource#getPropertiesTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
      */
     @Override
-    public RdfStream getTriples(final IdentifierTranslator graphSubjects) {
+    public RdfStream getPropertiesTriples(final IdentifierTranslator graphSubjects) {
         try {
             final JcrRdfTools jcrRdfTools =
                     JcrRdfTools.withContext(graphSubjects, getSession());
@@ -390,7 +390,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
         final Model inputModel) {
-        final RdfStream originalTriples = getTriples(graphSubjects);
+        final RdfStream originalTriples = getPropertiesTriples(graphSubjects);
 
         final RdfStream replacementStream = RdfStream.fromModel(inputModel);
 

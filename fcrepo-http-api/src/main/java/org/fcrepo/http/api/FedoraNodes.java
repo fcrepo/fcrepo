@@ -231,7 +231,7 @@ public class FedoraNodes extends AbstractResource {
             new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
         final RdfStream rdfStream =
-            resource.getTriples(subjects).session(session)
+            resource.getPropertiesTriples(subjects).session(session)
                     .topic(subjects.getSubject(resource.getPath()).asNode());
 
         final PreferTag returnPreference;
