@@ -83,7 +83,7 @@ public interface RdfSource<T> extends Resource<T> {
      * @return triples
      * @throws RepositoryException
      */
-    RdfStream getTriples(final IdentifierTranslator graphSubjects);
+    RdfStream getPropertiesTriples(final IdentifierTranslator graphSubjects);
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}

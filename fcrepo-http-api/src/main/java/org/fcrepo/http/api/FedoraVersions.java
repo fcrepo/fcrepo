@@ -245,7 +245,7 @@ public class FedoraVersions extends ContentExposingResource {
         }
         final FedoraResource resource = new FedoraResourceImpl(node);
         checkCacheControlHeaders(request, servletResponse, resource, session);
-        return resource.getTriples(nodeTranslator()).session(session).topic(
+        return resource.getPropertiesTriples(nodeTranslator()).session(session).topic(
                 nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
 
