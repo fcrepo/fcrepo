@@ -19,7 +19,6 @@ import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.query.qom.QueryObjectModelFactory;
 import org.modeshape.jcr.api.query.qom.SelectQuery;
@@ -36,13 +35,22 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.query.qom.Column;
 import javax.jcr.query.qom.QueryObjectModel;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.MediaType;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
+import org.mockito.Mock;
+
+import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.transform.sparql.JQLConverter;
+import static org.junit.Assert.assertNotNull;
+import com.hp.hpl.jena.query.ResultSet;
 
 /**
  * <p>FedoraSparqlTest class.</p>
@@ -86,6 +94,9 @@ public class FedoraSparqlTest {
     @Mock
     private QueryResult mockResults;
 
+    @Mock
+    private HttpIdentifierTranslator identifierTranslator;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -124,4 +135,17 @@ public class FedoraSparqlTest {
 
         //  assertEquals(mockResults, resultSet.getQueryResult());
     }
+
+    @Test
+    public void testRexecSparql() throws Exception {
+        final JQLConverter mockConverter = mock(JQLConverter.class);
+        TestHelpers.setField(mockConverter, "session",mockSession);
+        TestHelpers.setField(mockConverter, "subjects",identifierTranslator);
+        TestHelpers.setField(mockConverter, "query","SELECT ?pid WHERE { ?pid <info:x> \"a\" }");
+        final ResultSet  mockResultSet = mockConverter.execute();
+        when(mockConverter.execute()).thenReturn(mockResultSet);
+        final ResultSetStreamingOutput stream = new ResultSetStreamingOutput(mockResultSet,
+                              new MediaType("PLAIN_TYPE", "PLAIN_TYPE"));
+        assertNotNull(stream);
+   }
 }

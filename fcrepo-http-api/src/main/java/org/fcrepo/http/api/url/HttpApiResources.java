@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
+import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -140,6 +141,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                             FedoraExport.class).queryParam("format", key)
                             .buildFromMap(pathMap).toASCIIString());
             model.add(s, HAS_SERIALIZATION, format);
+            model.add(format, RDFS_LABEL, key);
         }
     }
 
