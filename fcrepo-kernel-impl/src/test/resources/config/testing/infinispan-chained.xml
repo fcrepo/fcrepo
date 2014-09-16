@@ -29,62 +29,20 @@
  
           We can have multiple cache loaders, which get chained. But we'll define just one.
        -->
-      
-      <loaders passivation="false" shared="false" preload="false">
 
-         <!-- 
-            The 'fetchPersistentState' attribute applies when this cache joins the cluster; the value doesn't 
-            really matter to us in this case. See the documentation for more options.
-          -->
-         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-            purgeOnStartup="false">
-            <!-- See the documentation for more configuration examples and flags. -->
-            <properties>
-               <!-- We have to set the location where we want to store the data. -->
-               <property name="location" value="${fcrepo.ispn.CacheDirPath:target/FedoraRepository/storage}"/>
-
-                <property name="fsyncMode" value="perWrite"/>
-            </properties>
-            <!-- This repository isn't clustered, so we could set up the SingletonStore.
-             singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-             -->
-            <!-- 
-               We could use "write-behind", which actually writes to the file system asynchronously,
-               which can improve performance as seen by the JCR client.
-               Plus changes are coalesced, meaning that if multiple changes are enqueued for the
-               same node, only the last one is written. (This is good much of the time, but not
-               always.)
-             <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
-             -->
-         </loader>
+     <persistence passivation="false">
+       <singleFile shared="false"
+                   preload="false"
+                   fetchPersistentState="true"
+                   purgeOnStartup="false"
+                   location="${fcrepo.ispn.CacheDirPath:target/FedoraRepository/storage}" />
+     </persistence>
 
         <!--
    The 'fetchPersistentState' attribute applies when this cache joins the cluster; the value doesn't
    really matter to us in this case. See the documentation for more options.
  -->
-        <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="false"
-                purgeOnStartup="false">
-          <!-- See the documentation for more configuration examples and flags. -->
-          <properties>
-            <!-- We have to set the location where we want to store the data. -->
-            <property name="location" value="${fcrepo.ispn.alternative.CacheDirPath:target/FedoraRepository/storage-alt}"/>
 
-            <property name="fsyncMode" value="perWrite"/>
-          </properties>
-          <!-- This repository isn't clustered, so we could set up the SingletonStore.
-           singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-           -->
-          <!--
-             We could use "write-behind", which actually writes to the file system asynchronously,
-             which can improve performance as seen by the JCR client.
-             Plus changes are coalesced, meaning that if multiple changes are enqueued for the
-             same node, only the last one is written. (This is good much of the time, but not
-             always.)
-                        -->
-           <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
-
-        </loader>
-      </loaders>
    </namedCache>
 
   <namedCache name="FedoraRepositoryBinaryData">
@@ -108,60 +66,18 @@
         We can have multiple cache loaders, which get chained. But we'll define just one.
      -->
 
-    <loaders passivation="false" shared="false" preload="false">
-
-      <!--
-         The 'fetchPersistentState' attribute applies when this cache joins the cluster; the value doesn't
-         really matter to us in this case. See the documentation for more options.
-       -->
-      <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-              purgeOnStartup="false">
-        <!-- See the documentation for more configuration examples and flags. -->
-        <properties>
-          <!-- We have to set the location where we want to store the data. -->
-          <property name="location" value="${fcrepo.ispn.binary.CacheDirPath:target/FedoraRepositoryBinaryData/storage}"/>
-
-          <property name="fsyncMode" value="perWrite"/>
-        </properties>
-        <!-- This repository isn't clustered, so we could set up the SingletonStore.
-         singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-         -->
-        <!--
-           We could use "write-behind", which actually writes to the file system asynchronously,
-           which can improve performance as seen by the JCR client.
-           Plus changes are coalesced, meaning that if multiple changes are enqueued for the
-           same node, only the last one is written. (This is good much of the time, but not
-           always.)
-         <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
-         -->
-      </loader>
+    <persistence passivation="false">
+      <singleFile shared="false"
+                  preload="false"
+                  fetchPersistentState="true"
+                  purgeOnStartup="false"
+                  location="${fcrepo.ispn.binary.CacheDirPath:target/FedoraRepositoryBinaryData/storage}" />
+    </persistence>
 
       <!--
  The 'fetchPersistentState' attribute applies when this cache joins the cluster; the value doesn't
  really matter to us in this case. See the documentation for more options.
 -->
-      <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="false"
-              purgeOnStartup="false">
-        <!-- See the documentation for more configuration examples and flags. -->
-        <properties>
-          <!-- We have to set the location where we want to store the data. -->
-          <property name="location" value="${fcrepo.ispn.binary.alternative.CacheDirPath:target/FedoraRepositoryBinaryData/storage}"/>
 
-          <property name="fsyncMode" value="perWrite"/>
-        </properties>
-        <!-- This repository isn't clustered, so we could set up the SingletonStore.
-         singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-         -->
-        <!--
-           We could use "write-behind", which actually writes to the file system asynchronously,
-           which can improve performance as seen by the JCR client.
-           Plus changes are coalesced, meaning that if multiple changes are enqueued for the
-           same node, only the last one is written. (This is good much of the time, but not
-           always.)
-                      -->
-        <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
-
-      </loader>
-    </loaders>
   </namedCache>
 </infinispan>
