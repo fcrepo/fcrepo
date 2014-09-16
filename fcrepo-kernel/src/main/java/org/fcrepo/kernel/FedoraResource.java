@@ -16,12 +16,12 @@
 package org.fcrepo.kernel;
 
 import java.util.Date;
+import java.util.Iterator;
 
 import javax.jcr.Node;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -50,6 +50,12 @@ public interface FedoraResource {
      * @return path
      */
     String getPath();
+
+    /**
+     * Get the children of this resource
+     * @return iterator
+     */
+    Iterator<FedoraResource> getChildren();
 
     /**
      * Get the date this datastream was created
@@ -102,20 +108,20 @@ public interface FedoraResource {
 
 
     /**
+     * Return the RDF properties of this object using the provided context
+     * @param graphSubjects
+     * @param context
+     * @return
+     */
+    RdfStream getTriples(final IdentifierTranslator graphSubjects, final Class<? extends RdfStream> context);
+
+    /**
      * Return the RDF properties of this object using the provided contexts
      * @param graphSubjects
      * @param contexts
      * @return
      */
-    RdfStream getTriples(final IdentifierTranslator graphSubjects, final Class<? extends RdfStream> ... contexts);
-
-    /**
-     * Return the JCR properties of this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return triples
-     */
-    RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
-                                  final HierarchyRdfContextOptions serializationOptions);
+    RdfStream getTriples(IdentifierTranslator graphSubjects, Iterable<? extends Class<? extends RdfStream>> contexts);
 
     /**
      * Tag the current version of the Node with a version label that

@@ -657,6 +657,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore
     public void testGetObjectOmitContainment() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
@@ -1603,6 +1604,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore
     public void testPaging() throws Exception {
         // create a node with 4 children
         final String pid = getRandomUniquePid();
