@@ -62,6 +62,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.jcr.ItemExistsException;
@@ -107,9 +108,11 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -293,14 +296,28 @@ public class FedoraNodes extends AbstractResource {
 
             final boolean references = !contains(omits, INBOUND_REFERENCES.toString());
 
-            final HierarchyRdfContextOptions hierarchyRdfContextOptions
-                = new HierarchyRdfContextOptions(limit, offset, membership, containment);
-
             if (references) {
                 rdfStream.concat(resource.getTriples(subjects, ReferencesRdfContext.class));
             }
 
-            rdfStream.concat(resource.getHierarchyTriples(subjects, hierarchyRdfContextOptions));
+            rdfStream.concat(resource.getTriples(subjects, ParentRdfContext.class));
+
+            if (membership || containment) {
+                rdfStream.concat(resource.getTriples(subjects, ChildrenRdfContext.class));
+            }
+
+            if (containment) {
+
+                final Iterator<FedoraResource> children = resource.getChildren();
+
+                while (children.hasNext()) {
+                    final FedoraResource child = children.next();
+                    rdfStream.concat(child.getTriples(subjects, PropertiesRdfContext.class));
+                }
+
+            }
+
+            rdfStream.concat(resource.getTriples(subjects, ContainerRdfContext.class));
 
             servletResponse.addHeader("Preference-Applied", "return=representation");
 
@@ -503,7 +520,8 @@ public class FedoraNodes extends AbstractResource {
                                                       graphSubjects.getSubject(resource.getPath()).toString(),
                                                       format);
 
-                resource.replaceProperties(graphSubjects, inputModel, resource.getTriples(graphSubjects, PropertiesRdfContext.class));
+                resource.replaceProperties(graphSubjects, inputModel,
+                        resource.getTriples(graphSubjects, PropertiesRdfContext.class));
 
             } else if (preexisting) {
                 return status(SC_CONFLICT).entity("No RDF provided and the resource already exists!").build();
@@ -626,7 +644,8 @@ public class FedoraNodes extends AbstractResource {
                         createDefaultModel().read(requestBodyStream,
                                 idTranslator.getSubject(result.getPath()).toString(), format);
 
-                    result.replaceProperties(idTranslator, inputModel, result.getTriples(idTranslator, PropertiesRdfContext.class));
+                    result.replaceProperties(idTranslator, inputModel,
+                            result.getTriples(idTranslator, PropertiesRdfContext.class));
                     response = created(location).entity(location.toString());
                 } else if (result instanceof Datastream) {
                     LOGGER.trace("Created a datastream and have a binary payload.");

@@ -52,14 +52,10 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.HierarchyRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.WorkspaceRdfContext;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -202,31 +198,6 @@ public class JcrRdfTools {
     }
 
     /**
-     * Get an {@link RdfStream} for a node that includes all its own JCR properties,
-     * as well as the properties of its immediate children. TODO add triples for
-     * root node, ala addRepositoryMetricsToModel()
-     *
-     * @param node
-     * @return RdfStream including all its own JCR properties and properties from immediate children
-     * @throws RepositoryException
-     */
-    public RdfStream getJcrTriples(final Node node) throws RepositoryException {
-        return new PropertiesRdfContext(node, graphSubjects);
-    }
-
-    /**
-     * Get an {@link RdfStream} for the JCR version history information for a node
-     *
-     * @param node
-     * @return RdfStream for the JCR version history information for the given node
-     * @throws RepositoryException
-     */
-    public RdfStream getVersionTriples(final Node node)
-        throws RepositoryException {
-        return new VersionsRdfContext(node, graphSubjects);
-    }
-
-    /**
      * Serialize the JCR fixity information in an {@link RdfStream}
      *
      * @param node
@@ -257,40 +228,6 @@ public class JcrRdfTools {
      */
     public RdfStream getWorkspaceTriples(final IdentifierTranslator subjects) throws RepositoryException {
         return new WorkspaceRdfContext(session, subjects);
-    }
-
-    /**
-     * Add the properties of a Node's parent and immediate children (as well as
-     * the jcr:content of children) to the given {@link RdfStream}
-     *
-     * @param node
-     * @throws RepositoryException
-     */
-    public RdfStream getTreeTriples(final Node node,
-                                    final HierarchyRdfContextOptions options) throws RepositoryException {
-        return new HierarchyRdfContext(node, graphSubjects, options);
-    }
-
-    /**
-     * Add the properties of a Node's parent and immediate children using the default
-     * serialization options
-     * @param node
-     * @return RdfStream of properties for the node's parent and immediate children
-     * @throws RepositoryException
-     */
-    public RdfStream getTreeTriples(final Node node) throws RepositoryException {
-        return getTreeTriples(node, HierarchyRdfContextOptions.DEFAULT);
-    }
-
-
-    /**
-     * Add the properties for inbound references to this node
-     * @param node
-     * @return RdfStream containing propeties for inbound references to the given node
-     * @throws RepositoryException
-     */
-    public RdfStream getReferencesTriples(final Node node) throws RepositoryException {
-        return new ReferencesRdfContext(node, graphSubjects);
     }
 
     /**

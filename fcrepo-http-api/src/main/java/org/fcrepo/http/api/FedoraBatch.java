@@ -251,7 +251,8 @@ public class FedoraBatch extends AbstractResource {
                                 createDefaultModel().read(src,
                                         subjects.getSubject(resource.getPath()).toString(), format);
 
-                            resource.replaceProperties(subjects, inputModel, resource.getTriples(subjects, PropertiesRdfContext.class));
+                            resource.replaceProperties(subjects, inputModel,
+                                    resource.getTriples(subjects, PropertiesRdfContext.class));
                         } else {
                             throw new WebApplicationException(notAcceptable()
                                 .entity("Invalid Content Type " + contentTypeString).build());

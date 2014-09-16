@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -121,7 +122,7 @@ public class FedoraVersionsTest {
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
-        when(mockResource.getTriples(any(HttpIdentifierTranslator.class), VersionsRdfContext.class))
+        when(mockResource.getTriples(any(HttpIdentifierTranslator.class), eq(VersionsRdfContext.class)))
                 .thenReturn(mockRdfStream);
         when(mockResource.hasType("mix:versionable")).thenReturn(true);
         when(mockVariant.getMediaType()).thenReturn(
