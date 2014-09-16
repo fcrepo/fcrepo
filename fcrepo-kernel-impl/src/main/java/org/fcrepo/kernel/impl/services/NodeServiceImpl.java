@@ -66,6 +66,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      */
     @Override
     public FedoraResource findOrCreateObject(final Session session, final String path) throws RepositoryException {
+        validatePath(session, path);
         return new FedoraResourceImpl(findOrCreateNode(session, path));
     }
 

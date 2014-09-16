@@ -80,6 +80,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      */
     @Override
     public Datastream createDatastream(final Session session, final String dsPath) throws RepositoryException {
+        validatePath(session, dsPath);
         return new DatastreamImpl(session, dsPath);
     }
     /**

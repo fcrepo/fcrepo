@@ -27,17 +27,21 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import java.io.InputStream;
 import java.net.URI;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
 import com.google.common.collect.ImmutableSet;
+
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -114,6 +118,16 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     @Mock
     private CacheEntry mockCacheEntry;
 
+    @Mock
+    private NamespaceRegistry mockNameReg;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    private String MOCK_PREFIX = "valid_ns";
+
+    private String MOCK_URI = "http://example.org";
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -124,6 +138,13 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:file");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        final String[] mockPrefixes = { MOCK_PREFIX };
+        mockWorkspace = mock(Workspace.class);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        mockNameReg = mock(NamespaceRegistry.class);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
+        when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
+        when(mockNameReg.getURI(MOCK_PREFIX)).thenReturn(MOCK_URI);
     }
 
     @Test
@@ -184,6 +205,13 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         testObj.getDatastream(mockSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
+    }
+
+    @Test(expected = FedoraInvalidNamespaceException.class)
+    public void testCreateDatastreamWithInvalidNS() throws RepositoryException {
+        final String badPath = "/foo/bad_ns:bar";
+        when(mockNameReg.getURI("bad_ns")).thenThrow(new FedoraInvalidNamespaceException("Invalid namespace (bad_ns)"));
+        testObj.exists(mockSession, badPath);
     }
 
     @Test

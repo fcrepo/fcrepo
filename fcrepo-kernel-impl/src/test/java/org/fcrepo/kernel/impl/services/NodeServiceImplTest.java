@@ -34,7 +34,9 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeIterator;
 
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.services.NodeService;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -153,6 +155,13 @@ public class NodeServiceImplTest {
         when(mockSession.nodeExists(existsPath)).thenReturn(true);
         assertEquals(true, testObj.exists(mockSession, existsPath));
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
+    }
+
+    @Test(expected = FedoraInvalidNamespaceException.class)
+    public void testInvalidPath() throws RepositoryException {
+        final String badPath = "/foo/bad_ns:bar";
+        when(mockNameReg.getURI("bad_ns")).thenThrow(new FedoraInvalidNamespaceException("Invalid namespace (bad_ns)"));
+        testObj.exists(mockSession, badPath);
     }
 
     @Test
