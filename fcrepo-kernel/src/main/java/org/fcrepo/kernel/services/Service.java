@@ -47,6 +47,6 @@ public interface Service {
      * @param path the absolute path to the object
      * @throws RepositoryException
      */
-    public void validatePath(final Session session, final String path) throws RepositoryException;
+    public void validatePath(final Session session, final String path);
 
 }
