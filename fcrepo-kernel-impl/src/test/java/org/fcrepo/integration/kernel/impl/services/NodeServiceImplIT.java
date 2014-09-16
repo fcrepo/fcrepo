@@ -17,8 +17,10 @@ package org.fcrepo.integration.kernel.impl.services;
 
 import org.fcrepo.integration.kernel.impl.AbstractIT;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -80,6 +82,16 @@ public class NodeServiceImplIT extends AbstractIT {
         session.save();
 
         assertFalse(session.nodeExists("/" + pid + "/b"));
+
+    }
+
+    @Test(expected = FedoraInvalidNamespaceException.class)
+    public void testCreateObjectWithInvalidNS() throws RepositoryException {
+
+        final Session session = repository.login();
+        final String pid = getRandomPid();
+
+        nodeService.findOrCreateObject(session, "/bad_ns:" + pid);
 
     }
 }
