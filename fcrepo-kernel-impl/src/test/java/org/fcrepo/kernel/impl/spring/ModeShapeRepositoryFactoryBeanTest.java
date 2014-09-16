@@ -31,6 +31,8 @@ import org.modeshape.jcr.RepositoryConfiguration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
+import java.util.ArrayList;
+
 /**
  * <p>ModeShapeRepositoryFactoryBeanTest class.</p>
  *
@@ -59,6 +61,7 @@ public class ModeShapeRepositoryFactoryBeanTest {
     public void setUp() throws Exception {
         initMocks(this);
         when(mockRepo.getStartupProblems()).thenReturn(mockProblems);
+        when(mockProblems.iterator()).thenReturn(new ArrayList<org.modeshape.common.collection.Problem>().iterator());
         when(mockRepo.login()).thenReturn(mockSession);
         testObj = new ModeShapeRepositoryFactoryBean();
         testObj.setRepositoryConfiguration(config);
@@ -67,7 +70,7 @@ public class ModeShapeRepositoryFactoryBeanTest {
         setField(testObj, "modeShapeEngine", mockModeShapeEngine);
     }
 
-    // @Test
+    @Test
     public void testFactory() throws Exception {
         testObj.buildRepository();
         assertEquals(mockRepo, testObj.getObject());

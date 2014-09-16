@@ -46,7 +46,7 @@
       <property name="principalProviders" ref="principalProviderSet"/>
     </bean>
 
-    <bean class="org.modeshape.jcr.JcrRepositoryFactory"/>
+    <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
     <!-- For the time being, load annotation config here too -->
     <bean class="org.fcrepo.metrics.MetricsConfig"/>
