@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.exception;
+package org.fcrepo.kernel.resources;
+
+import java.util.Collection;
 
 /**
- * Exception thrown when the calculated digest does not match the stored digest
- * @author ajs6f
- * @since Mar 10, 2013
+ * @author cabeer
+ * @since 9/16/14
  */
-public class InvalidChecksumException extends RuntimeException {
+public interface Container<T> extends RdfSource<T>, Collection<Resource> {
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Exception with message
-     * @param message
-     */
-    public InvalidChecksumException(final String message) {
-        super(message);
-    }
 }

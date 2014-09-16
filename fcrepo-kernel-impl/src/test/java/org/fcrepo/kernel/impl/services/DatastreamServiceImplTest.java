@@ -137,6 +137,7 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         when(mockDsNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
         when(mockData.getBinary()).thenReturn(mockBinary);
 
+        when(mockContent.getSession()).thenReturn(mockSession);
         when(mockContent.setProperty(JCR_DATA, mockBinary))
                 .thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);

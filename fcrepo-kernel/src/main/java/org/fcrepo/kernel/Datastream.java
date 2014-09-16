@@ -15,71 +15,21 @@
  */
 package org.fcrepo.kernel;
 
-import java.io.InputStream;
-import java.net.URI;
-
 import javax.jcr.Binary;
 import javax.jcr.Node;
 
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.resources.BinarySource;
 
 /**
  * @author bbpennel
  * @since Feb 18, 2014
  */
-public interface Datastream extends FedoraResource {
+public interface Datastream extends FedoraResource, BinarySource<Node,Binary> {
 
-    /**
-     * @return The InputStream of content associated with this datastream.
-     */
-    InputStream getContent();
-
-    /**
-     * @return The Binary content associated with this datastream.
-     */
-    Binary getBinaryContent();
 
     /**
      * @return The Node of content associated with this datastream.
      */
     Node getContentNode();
-
-    /**
-     * Sets the content of this Datastream.
-     *
-     * @param content  InputStream of binary content to be stored
-     * @param contentType MIME type of content (optional)
-     * @param checksum Checksum URI of the content (optional)
-     * @param originalFileName Original file name of the content (optional)
-     * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
-     * @throws InvalidChecksumException
-     */
-    void setContent(InputStream content, String contentType, URI checksum,
-            String originalFileName,
-            StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-        throws InvalidChecksumException;
-
-    /**
-     * @return The size in bytes of content associated with this datastream.
-     */
-    long getContentSize();
-
-    /**
-     * Get the pre-calculated content digest for the binary payload
-     * @return a URI with the format algorithm:value
-     */
-    URI getContentDigest();
-
-    /**
-     * @return The MimeType of content associated with this datastream.
-     */
-    String getMimeType();
-
-    /**
-     * Return the file name for the binary content
-     * @return original file name for the binary content, or the object's id.
-     */
-    String getFilename();
 
 }
