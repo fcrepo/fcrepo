@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.IS_IN_FORMAT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.text.SimpleDateFormat;
@@ -225,12 +226,6 @@ public class ViewHelpers {
         }
 
         if (subject.isURI()) {
-            // FIXME: The following hack should be removed/resolved with:
-            //  https://www.pivotaltracker.com/story/show/65221404
-            //
-            // For /fcr:export endpoints, there should be a way to look up the serialization format and find the
-            //  appropriate label to return here.
-            // This method is used (among other places?) in "fcrepo-http-api/common-node-actions.vsl#95"
             final String uri = subject.getURI();
             final String target = "fcr:export?format=";
             if (uri.contains(target)) {
@@ -245,6 +240,21 @@ public class ViewHelpers {
             return subject.toString();
         }
 
+    }
+
+    /**
+     * Take a HAS_SERIALIZATION node and find the RDFS_LABEL for the format it is associated with
+     *
+     * @param dataset
+     * @param subject
+     * @return the label for the serialization format
+     */
+    public String getSerializationTitle(final DatasetGraph dataset, final Node subject) {
+        final Iterator<Quad> formatRDFs = getObjects(dataset, subject, IS_IN_FORMAT);
+        if (formatRDFs.hasNext()) {
+            return getObjectTitle(dataset, formatRDFs.next().getObject());
+        }
+        return getObjectTitle(dataset, subject);
     }
 
     /**

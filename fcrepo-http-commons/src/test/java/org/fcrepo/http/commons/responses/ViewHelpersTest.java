@@ -29,9 +29,12 @@ import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.IS_IN_FORMAT;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -297,11 +300,15 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldGetSerializationFormat() {
-        final Node subject = createURI("subject/fcr:export?format=jcr/xml");
+        final String serialKey = "jcr/xml";
+        final Node formatRDF = createLiteral(REPOSITORY_NAMESPACE + serialKey);
+        final Node subject = createLiteral("xyz");
         final DatasetGraph mem = createMem();
 
-        mem.add(createAnon(), subject, createLiteral("predicate"),createLiteral("abc"));
-        assertEquals("jcr/xml", testObj.getObjectTitle(mem, subject));
+        mem.add(createAnon(), formatRDF, createURI(RDFS_LABEL.toString()), createLiteral(serialKey));
+        mem.add(createAnon(), subject, createURI(IS_IN_FORMAT.toString()), formatRDF);
+
+        assertEquals("jcr/xml", testObj.getSerializationTitle(mem, subject));
     }
 
     @Test

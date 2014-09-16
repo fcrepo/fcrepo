@@ -99,7 +99,7 @@ WHERE { }
 
         <ul class="dropdown-menu">
         #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-          <li><a href="$quad.getObject().getURI()">$helpers.getObjectTitle($rdf, $quad.getObject())</a></li>
+          <li><a href="$quad.getObject().getURI()">$helpers.getSerializationTitle($rdf, $quad.getObject())</a></li>
         #end
         </ul>
     </div>
