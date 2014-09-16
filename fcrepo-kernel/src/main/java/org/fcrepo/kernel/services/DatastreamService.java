@@ -43,7 +43,7 @@ public interface DatastreamService extends Service {
      * @return created datastream
      * @throws RepositoryException
      */
-    Datastream createDatastream(Session session, String dsPath) throws RepositoryException;
+    Datastream createDatastream(Session session, String dsPath);
 
     /**
      * Create a new Datastream node in the repository
@@ -73,7 +73,7 @@ public interface DatastreamService extends Service {
      * @throws InvalidChecksumException
      */
     Datastream createDatastream(Session session, String dsPath, String contentType, String originalFileName,
-            InputStream requestBodyStream, URI checksum) throws RepositoryException, InvalidChecksumException;
+            InputStream requestBodyStream, URI checksum) throws InvalidChecksumException;
 
     /**
      * Retrieve a Datastream instance by pid and dsid
@@ -82,7 +82,7 @@ public interface DatastreamService extends Service {
      * @return retrieved Datastream
      * @throws RepositoryException
      */
-    Datastream getDatastream(Session session, String path) throws RepositoryException;
+    Datastream getDatastream(Session session, String path);
 
     /**
      * Retrieve a Datastream instance by pid and dsid
@@ -90,7 +90,7 @@ public interface DatastreamService extends Service {
      * @param node datastream node
      * @return node as a Datastream
      */
-    Datastream asDatastream(Node node) throws ResourceTypeException, RepositoryException;
+    Datastream asDatastream(Node node) throws ResourceTypeException;
 
     /**
      * Get the fixity results for the datastream as a RDF Dataset
@@ -100,7 +100,7 @@ public interface DatastreamService extends Service {
      * @return fixity results for datastream
      * @throws RepositoryException
      */
-    RdfStream getFixityResultsModel(IdentifierTranslator subjects, Datastream datastream) throws RepositoryException;
+    RdfStream getFixityResultsModel(IdentifierTranslator subjects, Datastream datastream);
 
     /**
      * Run the fixity check on the datastream and attempt to automatically

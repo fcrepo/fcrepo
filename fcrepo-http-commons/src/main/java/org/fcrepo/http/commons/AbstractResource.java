@@ -26,7 +26,6 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
@@ -186,7 +185,7 @@ public abstract class AbstractResource {
     protected static void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
                                                    final FedoraResource resource,
-                                                   final Session session) throws RepositoryException {
+                                                   final Session session) {
         evaluateRequestPreconditions(request, servletResponse, resource, session, true);
         addCacheControlHeaders(servletResponse, resource, session);
     }
@@ -195,11 +194,10 @@ public abstract class AbstractResource {
      * Add ETag and Last-Modified cache control headers to the response
      * @param servletResponse
      * @param resource
-     * @throws RepositoryException
      */
     protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
                                                  final FedoraResource resource,
-                                                 final Session session) throws RepositoryException {
+                                                 final Session session) {
 
         final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
         if (txId != null) {
@@ -227,7 +225,7 @@ public abstract class AbstractResource {
     protected static void evaluateRequestPreconditions(final Request request,
                                                        final HttpServletResponse servletResponse,
                                                        final FedoraResource resource,
-                                                       final Session session) throws RepositoryException {
+                                                       final Session session) {
         evaluateRequestPreconditions(request, servletResponse, resource, session, false);
     }
 
@@ -242,8 +240,7 @@ public abstract class AbstractResource {
 
     protected void addResponseInformationToStream(
             final FedoraResource resource, final RdfStream dataset,
-            final UriInfo uriInfo, final IdentifierTranslator subjects)
-        throws RepositoryException {
+            final UriInfo uriInfo, final IdentifierTranslator subjects) {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
                     uriInfo, subjects);
@@ -254,7 +251,7 @@ public abstract class AbstractResource {
                                                      final HttpServletResponse servletResponse,
                                                      final FedoraResource resource,
                                                      final Session session,
-                                                     final boolean cacheControl) throws RepositoryException {
+                                                     final boolean cacheControl) {
 
         final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
         if (txId != null) {

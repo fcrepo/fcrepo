@@ -16,8 +16,6 @@
 
 package org.fcrepo.kernel.exception;
 
-import javax.jcr.RepositoryException;
-
 /**
  * An extension of RepositoryException that may be thrown when attempting a
  * operation (or instantiation) of one fedora resource type (Object, Datastream)
@@ -25,7 +23,7 @@ import javax.jcr.RepositoryException;
  *
  * @author Mike Durbin
  */
-public class ResourceTypeException extends RepositoryException {
+public class ResourceTypeException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 

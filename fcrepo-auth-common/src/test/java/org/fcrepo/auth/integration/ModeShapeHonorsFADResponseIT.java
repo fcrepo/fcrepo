@@ -24,6 +24,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
 import org.junit.Assert;
@@ -106,7 +107,7 @@ public class ModeShapeHonorsFADResponseIT {
     }
 
     @Test(expected = AccessDeniedException.class)
-    public void testRestrictiveFAD() throws RepositoryException {
+    public void testRestrictiveFAD() throws Throwable {
         when(request.getRemoteUser()).thenReturn("fred");
         when(request.getUserPrincipal()).thenReturn(
                 new BasicUserPrincipal("fred"));
@@ -122,7 +123,11 @@ public class ModeShapeHonorsFADResponseIT {
         final ServletCredentials credentials = new ServletCredentials(request);
         final Session session = repo.login(credentials);
         final ObjectService os = new ObjectServiceImpl();
-        os.createObject(session, "/myobject");
+        try {
+            os.createObject(session, "/myobject");
+        } catch (final RepositoryRuntimeException e) {
+            throw e.getCause();
+        }
         verify(fad, times(5)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 }

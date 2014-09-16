@@ -18,7 +18,6 @@ package org.fcrepo.kernel;
 import java.util.Date;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -38,9 +37,8 @@ public interface FedoraResource {
     /**
      * Does the resource have a jcr:content child node?
      * @return has content
-     * @throws RepositoryException
      */
-    boolean hasContent() throws RepositoryException;
+    boolean hasContent();
 
     /**
      * @return The JCR node that backs this object.
@@ -50,30 +48,26 @@ public interface FedoraResource {
     /**
      * Get the path to the JCR node
      * @return path
-     * @throws RepositoryException
      */
-    String getPath() throws RepositoryException;
+    String getPath();
 
     /**
      * Get the date this datastream was created
      * @return created date
-     * @throws RepositoryException
      */
-    Date getCreatedDate() throws RepositoryException;
+    Date getCreatedDate();
 
     /**
      * Get the date this datastream was last modified
      * @return last modified date
-     * @throws RepositoryException
      */
-    Date getLastModifiedDate() throws RepositoryException;
+    Date getLastModifiedDate();
 
     /**
      * Check if this object uses a given mixin
      * @return a collection of mixin names
-     * @throws javax.jcr.RepositoryException
      */
-    boolean hasType(final String type) throws RepositoryException;
+    boolean hasType(final String type);
     /**
      * Update the properties Dataset with a SPARQL Update query. The updated
      * properties may be serialized to the JCR store.
@@ -84,10 +78,9 @@ public interface FedoraResource {
      *
      * @param subjects
      * @param sparqlUpdateStatement
-     * @throws RepositoryException
      */
     Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
-            final String sparqlUpdateStatement) throws RepositoryException;
+            final String sparqlUpdateStatement);
 
     /**
      * Return the JCR properties of this object as a Jena {@link Dataset}
@@ -96,79 +89,67 @@ public interface FedoraResource {
      * @param offset
      * @param limit
      * @return properties
-     * @throws RepositoryException
      */
     Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
-       final int offset, final int limit) throws RepositoryException;
+       final int offset, final int limit);
 
     /**
      * Return the JCR properties of this object as a Jena {@link Dataset}
      * @param subjects
      * @return properties
-     * @throws RepositoryException
      */
-    Dataset getPropertiesDataset(final IdentifierTranslator subjects)
-        throws RepositoryException;
+    Dataset getPropertiesDataset(final IdentifierTranslator subjects);
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
      * @param graphSubjects
      * @return triples
-     * @throws RepositoryException
      */
-    RdfStream getTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
+    RdfStream getTriples(final IdentifierTranslator graphSubjects);
 
     /**
      * Return the JCR properties of this object as an {@link RdfStream}
      * @param graphSubjects
      * @return triples
-     * @throws RepositoryException
      */
     RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
-                                  final HierarchyRdfContextOptions serializationOptions)
-        throws RepositoryException;
+                                  final HierarchyRdfContextOptions serializationOptions);
 
     /**
      * Serialize the JCR versions information as an RDF dataset
      * @param graphSubjects
      * @return triples
-     * @throws RepositoryException
      */
-    RdfStream getVersionTriples(final IdentifierTranslator graphSubjects)
-        throws RepositoryException;
+    RdfStream getVersionTriples(final IdentifierTranslator graphSubjects);
 
     /**
      * Serialize inbound References to this object as an {@link RdfStream}
      * @param graphSubjects
      * @return triples
-     * @throws RepositoryException
      */
-    RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) throws RepositoryException;
+    RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects);
 
     /**
      * Tag the current version of the Node with a version label that
      * can be retrieved by name later.
      *
      * @param label
-     * @throws RepositoryException
      */
-    void addVersionLabel(final String label) throws RepositoryException;
+    void addVersionLabel(final String label);
 
     /**
      * Get the JCR Base version for the node
      * 
      * @return base version
-     * @throws RepositoryException
      */
-    public Version getBaseVersion() throws RepositoryException;
+    public Version getBaseVersion();
 
     /**
      * Get JCR VersionHistory for the node.
      *
      * @return version history
-     * @throws RepositoryException
      */
-    public VersionHistory getVersionHistory() throws RepositoryException;
+    public VersionHistory getVersionHistory();
 
     /**
      * Check if a resource was created in this session
@@ -183,10 +164,8 @@ public interface FedoraResource {
      * @param graphSubjects
      * @param inputModel
      * @return RDFStream
-     * @throws RepositoryException
      */
-    RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
-        final Model inputModel) throws RepositoryException;
+    RdfStream replaceProperties(final IdentifierTranslator graphSubjects, final Model inputModel);
 
     /**
      * Construct an ETag value from the last modified date and path. JCR has a
@@ -195,8 +174,7 @@ public interface FedoraResource {
      * value on object modify
      *
      * @return constructed etag value
-     * @throws RepositoryException
      */
-    String getEtagValue() throws RepositoryException;
+    String getEtagValue();
 
 }

@@ -26,6 +26,8 @@ import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
@@ -146,17 +148,20 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * (javax.jcr.Session)
      */
     @Override
-    public Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator)
-        throws RepositoryException {
+    public Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator) {
 
-        final Model model =
-            JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples().asModel();
 
-        model.register(new NamespaceChangedStatementListener(session));
+        final Model model;
 
-        final Dataset dataset = create(model);
+        try {
+            model = getNamespaceRegistryStream(session, idTranslator).asModel();
 
-        return dataset;
+            model.register(new NamespaceChangedStatementListener(session));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+        return create(model);
 
     }
 
@@ -167,10 +172,13 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * (javax.jcr.Session)
      */
     @Override
-    public RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator)
-        throws RepositoryException {
+    public RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator) {
 
-        return JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples();
+        try {
+            return JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
 
     }
 
@@ -184,57 +192,60 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
     @Override
     public Dataset searchRepository(final IdentifierTranslator subjectFactory,
             final Resource searchSubject, final Session session,
-            final String terms, final int limit, final long offset)
-        throws RepositoryException {
+            final String terms, final int limit, final long offset) {
 
         final Model model;
 
-        if (terms != null && terms.trim().length() != 0) {
-            final QueryManager queryManager =
-                    session.getWorkspace().getQueryManager();
+        try {
+            if (terms != null && terms.trim().length() != 0) {
+                final QueryManager queryManager =
+                        session.getWorkspace().getQueryManager();
 
-            final QueryObjectModelFactory factory =
-                    queryManager.getQOMFactory();
+                final QueryObjectModelFactory factory =
+                        queryManager.getQOMFactory();
 
-            final Source selector =
-                    factory.selector(FEDORA_RESOURCE, "resourcesSelector");
-            final Constraint constraints =
-                    factory.fullTextSearch("resourcesSelector", null, factory
-                            .literal(session.getValueFactory().createValue(
-                                    terms)));
+                final Source selector =
+                        factory.selector(FEDORA_RESOURCE, "resourcesSelector");
+                final Constraint constraints =
+                        factory.fullTextSearch("resourcesSelector", null, factory
+                                .literal(session.getValueFactory().createValue(
+                                        terms)));
 
-            final Query query =
-                    factory.createQuery(selector, constraints, null, null);
+                final Query query =
+                        factory.createQuery(selector, constraints, null, null);
 
-            // include an extra document to determine if additional pagination
-            // is
-            // necessary
-            query.setLimit(limit + 1);
-            query.setOffset(offset);
+                // include an extra document to determine if additional pagination
+                // is
+                // necessary
+                query.setLimit(limit + 1);
+                query.setOffset(offset);
 
-            final QueryResult queryResult = query.execute();
+                final QueryResult queryResult = query.execute();
 
-            final NodeIterator nodeIterator = queryResult.getNodes();
-            final long size = nodeIterator.getSize();
+                final NodeIterator nodeIterator = queryResult.getNodes();
+                final long size = nodeIterator.getSize();
 
-            // remove that extra document from the nodes we'll iterate over
-            final Iterator<Node> limitedIterator =
-                    limit(new org.fcrepo.kernel.utils.iterators.NodeIterator(nodeIterator),
-                            limit);
+                // remove that extra document from the nodes we'll iterate over
+                final Iterator<Node> limitedIterator =
+                        limit(new org.fcrepo.kernel.utils.iterators.NodeIterator(nodeIterator),
+                                limit);
 
-            model =
-                JcrRdfTools.withContext(subjectFactory, session)
-                        .getJcrPropertiesModel(limitedIterator, searchSubject)
-                        .asModel();
+                model =
+                        JcrRdfTools.withContext(subjectFactory, session)
+                                .getJcrPropertiesModel(limitedIterator, searchSubject)
+                                .asModel();
 
             /* add the result description to the RDF model */
 
-            model.add(searchSubject, SEARCH_HAS_TOTAL_RESULTS, model
-                    .createTypedLiteral(size));
-            model.add(searchSubject, SEARCH_HAS_MORE, model
-                    .createTypedLiteral(nodeIterator.hasNext()));
-        } else {
-            model = createDefaultModel();
+                model.add(searchSubject, SEARCH_HAS_TOTAL_RESULTS, model
+                        .createTypedLiteral(size));
+                model.add(searchSubject, SEARCH_HAS_MORE, model
+                        .createTypedLiteral(nodeIterator.hasNext()));
+            } else {
+                model = createDefaultModel();
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
 
         final Dataset dataset = DatasetFactory.create(model);
@@ -257,14 +268,16 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      */
     @Override
     public Problems backupRepository(final Session session,
-                                     final File backupDirectory) throws RepositoryException {
-        final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
-                .getWorkspace()
-                .getRepositoryManager();
+                                     final File backupDirectory) {
+        try {
+            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+                    .getWorkspace()
+                    .getRepositoryManager();
 
-        final Problems problems = repoMgr.backupRepository(backupDirectory);
-
-        return problems;
+            return repoMgr.backupRepository(backupDirectory);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*
@@ -275,14 +288,16 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      */
     @Override
     public Problems restoreRepository(final Session session,
-                                      final File backupDirectory) throws RepositoryException {
-        final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
-                .getWorkspace()
-                .getRepositoryManager();
+                                      final File backupDirectory) {
+        try {
+            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+                    .getWorkspace()
+                    .getRepositoryManager();
 
-        final Problems problems = repoMgr.restoreRepository(backupDirectory);
-
-        return problems;
+            return repoMgr.restoreRepository(backupDirectory);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
 }

@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -56,11 +55,10 @@ public class FedoraRepositoryBackup extends AbstractResource {
      * This method runs a repository backup.
      *
      * @return path to the backup
-     * @throws RepositoryException
      * @throws IOException
      */
     @POST
-    public String runBackup(final InputStream bodyStream) throws RepositoryException, IOException {
+    public String runBackup(final InputStream bodyStream) throws IOException {
 
         File backupDirectory;
         if (null != bodyStream) {

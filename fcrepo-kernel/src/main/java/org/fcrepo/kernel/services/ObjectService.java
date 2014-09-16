@@ -35,7 +35,7 @@ public interface ObjectService extends Service {
      * @return The created object
      * @throws RepositoryException
      */
-    FedoraObject createObject(Session session, String path) throws RepositoryException;
+    FedoraObject createObject(Session session, String path);
 
     /**
      * @param path

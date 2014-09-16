@@ -113,7 +113,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                                     final int limit,
                                     @Context final HttpServletResponse servletResponse,
                                     @Context
-                                    final UriInfo uriInfo) throws RepositoryException {
+                                    final UriInfo uriInfo) {
         return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);
     }
 
@@ -153,8 +153,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                                      final long offset,
                                      final int limit,
                                      final HttpServletResponse servletResponse,
-                                     final UriInfo uriInfo)
-        throws RepositoryException {
+                                     final UriInfo uriInfo) {
 
         try {
             LOGGER.debug(
@@ -176,8 +175,7 @@ public class FedoraFieldSearch extends AbstractResource implements
 
             final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-            final Dataset dataset =
-                    repositoryService.searchRepository(subjects, searchResult,
+            final Dataset dataset = repositoryService.searchRepository(subjects, searchResult,
                             session, terms, limit, offset);
 
             final Model searchModel = createDefaultModel();

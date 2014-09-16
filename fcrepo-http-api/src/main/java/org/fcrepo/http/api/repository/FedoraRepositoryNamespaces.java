@@ -48,6 +48,7 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.session.InjectedSession;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -83,7 +84,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     @Timed
     @Consumes({contentTypeSPARQLUpdate})
     public Response updateNamespaces(final InputStream requestBodyStream)
-        throws RepositoryException, IOException {
+        throws IOException {
 
         try {
             final HttpIdentifierTranslator idTranslator = new HttpIdentifierTranslator(session,
@@ -91,7 +92,11 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
             final Dataset dataset =
                 repositoryService.getNamespaceRegistryDataset(session, idTranslator);
             parseExecute(IOUtils.toString(requestBodyStream), dataset);
-            session.save();
+            try {
+                session.save();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
             return status(SC_NO_CONTENT).build();
         } catch ( JenaException ex ) {
             return status(SC_BAD_REQUEST).entity(ex.getMessage()).build();
@@ -109,7 +114,7 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     @HtmlTemplate("jcr:namespaces")
-    public RdfStream getNamespaces() throws RepositoryException {
+    public RdfStream getNamespaces() {
         final HttpIdentifierTranslator idTranslator = new HttpIdentifierTranslator(session,
                 FedoraRepositoryNamespaces.class, uriInfo);
         return repositoryService.getNamespaceRegistryStream(session, idTranslator).session(session);

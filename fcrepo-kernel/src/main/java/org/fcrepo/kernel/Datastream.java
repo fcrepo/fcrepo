@@ -20,7 +20,6 @@ import java.net.URI;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -33,21 +32,18 @@ public interface Datastream extends FedoraResource {
 
     /**
      * @return The InputStream of content associated with this datastream.
-     * @throws RepositoryException
      */
-    InputStream getContent() throws RepositoryException;
+    InputStream getContent();
 
     /**
      * @return The Binary content associated with this datastream.
-     * @throws RepositoryException
      */
-    Binary getBinaryContent() throws RepositoryException;
+    Binary getBinaryContent();
 
     /**
      * @return The Node of content associated with this datastream.
-     * @throws RepositoryException
      */
-    Node getContentNode() throws RepositoryException;
+    Node getContentNode();
 
     /**
      * Sets the content of this Datastream.
@@ -57,13 +53,12 @@ public interface Datastream extends FedoraResource {
      * @param checksum Checksum URI of the content (optional)
      * @param originalFileName Original file name of the content (optional)
      * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
-     * @throws RepositoryException
      * @throws InvalidChecksumException
      */
     void setContent(InputStream content, String contentType, URI checksum,
             String originalFileName,
             StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-        throws RepositoryException, InvalidChecksumException;
+        throws InvalidChecksumException;
 
     /**
      * @return The size in bytes of content associated with this datastream.
@@ -73,21 +68,18 @@ public interface Datastream extends FedoraResource {
     /**
      * Get the pre-calculated content digest for the binary payload
      * @return a URI with the format algorithm:value
-     * @throws RepositoryException
      */
-    URI getContentDigest() throws RepositoryException;
+    URI getContentDigest();
 
     /**
      * @return The MimeType of content associated with this datastream.
-     * @throws RepositoryException
      */
-    String getMimeType() throws RepositoryException;
+    String getMimeType();
 
     /**
      * Return the file name for the binary content
      * @return original file name for the binary content, or the object's id.
-     * @throws RepositoryException
      */
-    String getFilename() throws RepositoryException;
+    String getFilename();
 
 }

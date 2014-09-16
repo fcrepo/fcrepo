@@ -17,6 +17,7 @@ package org.fcrepo.http.api.versioning;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
 import javax.jcr.ItemNotFoundException;
@@ -97,17 +98,21 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
     }
 
     @Override
-    public Resource getSubject(final String absPath) throws RepositoryException {
-        if (absPath.contains("jcr:versionStorage")) {
-            final Node probableFrozenNode = internalSession.getNode(absPath);
-            if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
-                final URI result = uriBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
-                LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
-                return createResource(result.toString());
+    public Resource getSubject(final String absPath) {
+        try {
+            if (absPath.contains("jcr:versionStorage")) {
+                final Node probableFrozenNode = internalSession.getNode(absPath);
+                if (probableFrozenNode.getPrimaryNodeType().getName().equals("nt:frozenNode")) {
+                    final URI result = uriBuilder.buildFromMap(getPathMapForVersionNode(probableFrozenNode));
+                    LOGGER.debug("Translated path {} into RDF subject {}", absPath, result);
+                    return createResource(result.toString());
+                }
+                LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
             }
-            LOGGER.debug("{} was not a frozen node... no version-specific translation required", absPath);
+            return super.getSubject(absPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return super.getSubject(absPath);
     }
 
     /**
@@ -121,34 +126,41 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
      *         equal to the fedora path for the version node.
      * @throws NullPointerException if session is null
      */
-    private Map<String,String> getPathMapForVersionNode(final Node frozenNode)
-        throws RepositoryException {
-        Node versionableFrozenNode = frozenNode;
-        Node versionableNode = internalSession.getNodeByIdentifier(
-                versionableFrozenNode.getProperty("jcr:frozenUuid").getString());
-        String pathWithinVersionable = "";
-        while (!versionableNode.isNodeType("mix:versionable")) {
-            LOGGER.debug("node {} is not versionable, checking parent...", versionableNode.getIdentifier());
-            pathWithinVersionable = "/" + getRelativePath(versionableNode,
-                    versionableNode.getParent()) + pathWithinVersionable;
-            versionableFrozenNode = versionableFrozenNode.getParent();
-            versionableNode = internalSession.getNodeByIdentifier(
+    private Map<String,String> getPathMapForVersionNode(final Node frozenNode) {
+        try {
+            Node versionableFrozenNode = frozenNode;
+            Node versionableNode = internalSession.getNodeByIdentifier(
                     versionableFrozenNode.getProperty("jcr:frozenUuid").getString());
-        }
+            String pathWithinVersionable = "";
+            while (!versionableNode.isNodeType("mix:versionable")) {
+                LOGGER.debug("node {} is not versionable, checking parent...", versionableNode.getIdentifier());
+                pathWithinVersionable = "/" + getRelativePath(versionableNode,
+                        versionableNode.getParent()) + pathWithinVersionable;
+                versionableFrozenNode = versionableFrozenNode.getParent();
+                versionableNode = internalSession.getNodeByIdentifier(
+                        versionableFrozenNode.getProperty("jcr:frozenUuid").getString());
+            }
 
-        pathWithinVersionable = versionableFrozenNode.getIdentifier()
-                + (pathWithinVersionable.length() > 0 ? pathWithinVersionable : "");
-        final String pathToVersionable = versionableNode.getPath();
-        LOGGER.debug("frozen node found with id {}.", versionableFrozenNode.getIdentifier());
-        String path =  pathToVersionable + "/" + FCR_VERSIONS + "/" + pathWithinVersionable;
-        if (path.endsWith(JCR_CONTENT)) {
-            path = path.replace(JCR_CONTENT, FCR_CONTENT);
+            pathWithinVersionable = versionableFrozenNode.getIdentifier()
+                    + (pathWithinVersionable.length() > 0 ? pathWithinVersionable : "");
+            final String pathToVersionable = versionableNode.getPath();
+            LOGGER.debug("frozen node found with id {}.", versionableFrozenNode.getIdentifier());
+            String path = pathToVersionable + "/" + FCR_VERSIONS + "/" + pathWithinVersionable;
+            if (path.endsWith(JCR_CONTENT)) {
+                path = path.replace(JCR_CONTENT, FCR_CONTENT);
+            }
+            return singletonMap("path", path.startsWith("/") ? path.substring(1) : path);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return singletonMap("path", path.startsWith("/") ? path.substring(1) : path);
     }
 
-    private static String getRelativePath(final Node node, final Node ancestor) throws RepositoryException {
-        return node.getPath().substring(ancestor.getPath().length() + 1);
+    private static String getRelativePath(final Node node, final Node ancestor) {
+        try {
+            return node.getPath().substring(ancestor.getPath().length() + 1);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
@@ -160,41 +172,44 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
      * @throws RepositoryException
      * @throws NullPointerException if session is null
      */
-    public Node getNodeFromGraphSubjectForVersionNode(final String subjectUri)
-        throws RepositoryException {
+    public Node getNodeFromGraphSubjectForVersionNode(final String subjectUri) {
 
+        try {
         /*
          * Get the part of the URI after fcr:versions/ that represents the label
          * optionally followed by a path into the versioned subgraph).
          */
-        final String labelAndPath
-            = subjectUri.substring(subjectUri.indexOf(FCR_VERSIONS + "/") + FCR_VERSIONS.length() + 1);
+            final String labelAndPath
+                    = subjectUri.substring(subjectUri.indexOf(FCR_VERSIONS + "/") + FCR_VERSIONS.length() + 1);
 
-        if (labelAndPath.contains("/")) {
+            if (labelAndPath.contains("/")) {
             /*
              * The subjectUri references a node within a version snapshot
              * (identified by label) of a subgraph.
              */
-            final int firstSlash = labelAndPath.indexOf('/');
-            final String label = labelAndPath.substring(0, firstSlash);
-            final String pathIntoVersionedGraph = labelAndPath.substring(firstSlash + 1);
-            LOGGER.trace("subjectUri={}, label={}, pathIntoVersionedGraph={}", subjectUri, label,
-                    pathIntoVersionedGraph);
-            final Node versionedFrozenNode = getFrozenNodeByLabel(subjectUri, label);
-            if (versionedFrozenNode == null) {
-                // there is no version with the given label!
-                return null;
+                final int firstSlash = labelAndPath.indexOf('/');
+                final String label = labelAndPath.substring(0, firstSlash);
+                final String pathIntoVersionedGraph = labelAndPath.substring(firstSlash + 1);
+                LOGGER.trace("subjectUri={}, label={}, pathIntoVersionedGraph={}", subjectUri, label,
+                        pathIntoVersionedGraph);
+                final Node versionedFrozenNode = getFrozenNodeByLabel(subjectUri, label);
+                if (versionedFrozenNode == null) {
+                    // there is no version with the given label!
+                    return null;
+                }
+                return internalSession.getNode(versionedFrozenNode.getPath() + "/"
+                        + pathIntoVersionedGraph.replace(FCR_CONTENT, JCR_CONTENT));
             }
-            return internalSession.getNode(versionedFrozenNode.getPath() + "/"
-                    + pathIntoVersionedGraph.replace(FCR_CONTENT, JCR_CONTENT));
+            /**
+             * The subjectUri references a version of a verisonable node identified
+             * by label (the root of the versioned subgraph).
+             */
+            final String label = labelAndPath;
+            LOGGER.trace("subjectUri={}, label={}", subjectUri, label);
+            return getFrozenNodeByLabel(subjectUri, label);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        /**
-         * The subjectUri references a version of a verisonable node identified
-         * by label (the root of the versioned subgraph).
-         */
-        final String label = labelAndPath;
-        LOGGER.trace("subjectUri={}, label={}", subjectUri, label);
-        return getFrozenNodeByLabel(subjectUri, label);
     }
 
     /**
@@ -204,43 +219,47 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
      * was used for versions created without a label.  The current implementation
      * uses the JCR UUID for the frozen node as the system-assigned label.
      */
-    private Node getFrozenNodeByLabel(final String subjectUri, final String label) throws RepositoryException {
-        final String baseResourcePath
-            = getPathFromGraphSubject(subjectUri.substring(0, subjectUri.indexOf("/" + FCR_VERSIONS)));
+    private Node getFrozenNodeByLabel(final String subjectUri, final String label) {
         try {
-            final Node frozenNode = internalSession.getNodeByIdentifier(label);
+            final String baseResourcePath
+                    = getPathFromGraphSubject(subjectUri.substring(0, subjectUri.indexOf("/" + FCR_VERSIONS)));
+            try {
+                final Node frozenNode = internalSession.getNodeByIdentifier(label);
 
             /*
              * We found a node whose identifier is the "label" for the version.  Now
              * we must do due dilligence to make sure it's a frozen node representing
              * a version of the subject node.
              */
-            final Property p = frozenNode.getProperty("jcr:frozenUuid");
-            if (p != null) {
-                final Node subjectNode = internalSession.getNode(baseResourcePath);
-                if (p.getString().equals(subjectNode.getIdentifier())) {
-                    return frozenNode;
+                final Property p = frozenNode.getProperty("jcr:frozenUuid");
+                if (p != null) {
+                    final Node subjectNode = internalSession.getNode(baseResourcePath);
+                    if (p.getString().equals(subjectNode.getIdentifier())) {
+                        return frozenNode;
+                    }
                 }
-            }
             /*
              * Though a node with an id of the label was found, it wasn't the
              * node we were looking for, so fall through and look for a labeled
              * node.
              */
-        } catch (final ItemNotFoundException ex) {
+            } catch (final ItemNotFoundException ex) {
             /*
              * the label wasn't a uuid of a frozen node but
              * instead possibly a version label.
              */
-        }
+            }
 
-        final VersionHistory hist =
-            internalSession.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
-        if (hist.hasVersionLabel(label)) {
-            LOGGER.debug("Found version for {} by label {}.",  subjectUri, label);
-            return hist.getVersionByLabel(label).getFrozenNode();
+            final VersionHistory hist =
+                    internalSession.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
+            if (hist.hasVersionLabel(label)) {
+                LOGGER.debug("Found version for {} by label {}.", subjectUri, label);
+                return hist.getVersionByLabel(label).getFrozenNode();
+            }
+            LOGGER.warn("Unknown version {} with label or uuid {}!", subjectUri, label);
+            return null;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        LOGGER.warn("Unknown version {} with label or uuid {}!", subjectUri, label);
-        return null;
     }
 }
