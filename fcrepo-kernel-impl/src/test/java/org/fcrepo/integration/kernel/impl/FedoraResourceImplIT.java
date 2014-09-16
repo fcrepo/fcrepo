@@ -62,6 +62,7 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
@@ -556,7 +557,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        final Model model = object.getReferencesTriples(subjects).asModel();
+        final Model model = object.getTriples(subjects, ReferencesRdfContext.class).asModel();
 
         assertTrue(
             model.contains(subjects.getSubject(subject.getPath()),

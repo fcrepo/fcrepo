@@ -78,6 +78,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -364,7 +365,8 @@ public class FedoraNodesTest {
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
                                                any(HierarchyRdfContextOptions.class))).thenReturn(
                 mockRdfStream2);
-        when(mockObject.getReferencesTriples(any(IdentifierTranslator.class))).thenReturn(mockRdfStream3);
+        when(mockObject.getTriples(any(IdentifierTranslator.class),
+                ReferencesRdfContext.class)).thenReturn(mockRdfStream3);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
                 .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);
@@ -392,7 +394,8 @@ public class FedoraNodesTest {
                 mockRdfStream);
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
                                                any(HierarchyRdfContextOptions.class))).thenReturn(mockRdfStream2);
-        when(mockObject.getReferencesTriples(any(IdentifierTranslator.class))).thenReturn(mockRdfStream3);
+        when(mockObject.getTriples(any(IdentifierTranslator.class),
+                ReferencesRdfContext.class)).thenReturn(mockRdfStream3);
         when(mockNodes.getObject(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         final Request mockRequest = mock(Request.class);

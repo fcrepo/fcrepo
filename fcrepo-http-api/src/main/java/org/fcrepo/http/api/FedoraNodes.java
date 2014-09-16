@@ -108,6 +108,7 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -296,7 +297,7 @@ public class FedoraNodes extends AbstractResource {
                 = new HierarchyRdfContextOptions(limit, offset, membership, containment);
 
             if (references) {
-                rdfStream.concat(resource.getReferencesTriples(subjects));
+                rdfStream.concat(resource.getTriples(subjects, ReferencesRdfContext.class));
             }
 
             rdfStream.concat(resource.getHierarchyTriples(subjects, hierarchyRdfContextOptions));

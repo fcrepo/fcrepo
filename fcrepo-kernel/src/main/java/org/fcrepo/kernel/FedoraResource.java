@@ -118,13 +118,6 @@ public interface FedoraResource {
                                   final HierarchyRdfContextOptions serializationOptions);
 
     /**
-     * Serialize inbound References to this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return triples
-     */
-    RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects);
-
-    /**
      * Tag the current version of the Node with a version label that
      * can be retrieved by name later.
      *
