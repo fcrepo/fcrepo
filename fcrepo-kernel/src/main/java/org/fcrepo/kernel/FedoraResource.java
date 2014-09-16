@@ -118,13 +118,6 @@ public interface FedoraResource {
                                   final HierarchyRdfContextOptions serializationOptions);
 
     /**
-     * Serialize the JCR versions information as an RDF dataset
-     * @param graphSubjects
-     * @return triples
-     */
-    RdfStream getVersionTriples(final IdentifierTranslator graphSubjects);
-
-    /**
      * Serialize inbound References to this object as an {@link RdfStream}
      * @param graphSubjects
      * @return triples

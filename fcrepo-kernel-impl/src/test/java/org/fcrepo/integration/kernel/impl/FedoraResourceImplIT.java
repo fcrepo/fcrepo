@@ -62,6 +62,7 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -468,7 +469,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        final Model graphStore = object.getVersionTriples(subjects).asModel();
+        final Model graphStore = object.getTriples(subjects, VersionsRdfContext.class).asModel();
 
         logger.debug(graphStore.toString());
 

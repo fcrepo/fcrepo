@@ -28,6 +28,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,7 +120,7 @@ public class FedoraVersions extends ContentExposingResource {
             throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
         }
 
-        return resource.getVersionTriples(nodeTranslator())
+        return resource.getTriples(nodeTranslator(), VersionsRdfContext.class)
                 .session(session)
                 .topic(nodeTranslator().getSubject(resource.getPath()).asNode());
     }

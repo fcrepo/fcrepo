@@ -38,7 +38,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -277,20 +276,6 @@ public class FedoraResourceImplTest {
         assertTrue(dataset.getDefaultModel().containsAll(
                 propertiesStream.asModel()));
         assertEquals(mockResource, dataset.getContext().get(Symbol.create("uri")));
-    }
-
-    @Test
-    public void testGetVersionDataset() throws Exception {
-
-        final FedoraResource spy = spy(testObj);
-
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
-        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
-
-        final RdfStream versionsStream = new RdfStream();
-        doReturn(versionsStream).when(spy).getTriples(mockSubjects, VersionsRdfContext.class);
-        final RdfStream result = spy.getVersionTriples(mockSubjects);
-        assertEquals(versionsStream, result);
     }
 
     @Test

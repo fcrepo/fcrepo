@@ -46,6 +46,7 @@ import javax.ws.rs.core.Variant;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -120,7 +121,7 @@ public class FedoraVersionsTest {
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
-        when(mockResource.getVersionTriples(any(HttpIdentifierTranslator.class)))
+        when(mockResource.getTriples(any(HttpIdentifierTranslator.class), VersionsRdfContext.class))
                 .thenReturn(mockRdfStream);
         when(mockResource.hasType("mix:versionable")).thenReturn(true);
         when(mockVariant.getMediaType()).thenReturn(
