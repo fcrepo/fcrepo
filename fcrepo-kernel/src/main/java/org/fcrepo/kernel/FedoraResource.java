@@ -114,13 +114,6 @@ public interface FedoraResource {
      * @param graphSubjects
      * @return triples
      */
-    RdfStream getPropertiesTriples(final IdentifierTranslator graphSubjects);
-
-    /**
-     * Return the JCR properties of this object as an {@link RdfStream}
-     * @param graphSubjects
-     * @return triples
-     */
     RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
                                   final HierarchyRdfContextOptions serializationOptions);
 

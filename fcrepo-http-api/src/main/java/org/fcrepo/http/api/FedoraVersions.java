@@ -27,6 +27,7 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -247,7 +248,7 @@ public class FedoraVersions extends ContentExposingResource {
         }
         final FedoraResource resource = new FedoraResourceImpl(node);
         checkCacheControlHeaders(request, servletResponse, resource, session);
-        return resource.getPropertiesTriples(nodeTranslator()).session(session).topic(
+        return resource.getTriples(nodeTranslator(), PropertiesRdfContext.class).session(session).topic(
                 nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
 

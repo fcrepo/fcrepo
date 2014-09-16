@@ -77,6 +77,7 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -358,7 +359,7 @@ public class FedoraNodesTest {
         when(mockDataset.getContext()).thenReturn(mockContext);
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
         when(mockObject.getEtagValue()).thenReturn("");
-        when(mockObject.getPropertiesTriples(any(IdentifierTranslator.class))).thenReturn(
+        when(mockObject.getTriples(any(IdentifierTranslator.class), PropertiesRdfContext.class)).thenReturn(
                 mockRdfStream);
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
                                                any(HierarchyRdfContextOptions.class))).thenReturn(
@@ -387,7 +388,7 @@ public class FedoraNodesTest {
 
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockObject.getLastModifiedDate()).thenReturn(mockDate);
-        when(mockObject.getPropertiesTriples(any(IdentifierTranslator.class))).thenReturn(
+        when(mockObject.getTriples(any(IdentifierTranslator.class), PropertiesRdfContext.class)).thenReturn(
                 mockRdfStream);
         when(mockObject.getHierarchyTriples(any(IdentifierTranslator.class),
                                                any(HierarchyRdfContextOptions.class))).thenReturn(mockRdfStream2);

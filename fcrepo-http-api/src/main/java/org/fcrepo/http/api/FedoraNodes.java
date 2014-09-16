@@ -107,6 +107,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -231,7 +232,7 @@ public class FedoraNodes extends AbstractResource {
             new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
 
         final RdfStream rdfStream =
-            resource.getPropertiesTriples(subjects).session(session)
+            resource.getTriples(subjects, PropertiesRdfContext.class).session(session)
                     .topic(subjects.getSubject(resource.getPath()).asNode());
 
         final PreferTag returnPreference;
@@ -501,7 +502,7 @@ public class FedoraNodes extends AbstractResource {
                                                       graphSubjects.getSubject(resource.getPath()).toString(),
                                                       format);
 
-                resource.replaceProperties(graphSubjects, inputModel, resource.getPropertiesTriples(graphSubjects));
+                resource.replaceProperties(graphSubjects, inputModel, resource.getTriples(graphSubjects, PropertiesRdfContext.class));
 
             } else if (preexisting) {
                 return status(SC_CONFLICT).entity("No RDF provided and the resource already exists!").build();
@@ -624,7 +625,7 @@ public class FedoraNodes extends AbstractResource {
                         createDefaultModel().read(requestBodyStream,
                                 idTranslator.getSubject(result.getPath()).toString(), format);
 
-                    result.replaceProperties(idTranslator, inputModel, result.getPropertiesTriples(idTranslator));
+                    result.replaceProperties(idTranslator, inputModel, result.getTriples(idTranslator, PropertiesRdfContext.class));
                     response = created(location).entity(location.toString());
                 } else if (result instanceof Datastream) {
                     LOGGER.trace("Created a datastream and have a binary payload.");

@@ -51,7 +51,6 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
@@ -316,14 +315,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
 
         return stream;
-    }
-
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
-     */
-    @Override
-    public RdfStream getPropertiesTriples(final IdentifierTranslator graphSubjects) {
-        return getTriples(graphSubjects, PropertiesRdfContext.class);
     }
 
     /* (non-Javadoc)

@@ -61,6 +61,7 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -577,7 +578,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         model.add(subject, predicate, resource);
         model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
 
-        object.replaceProperties(subjects, model, object.getPropertiesTriples(subjects));
+        object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class));
 
         final PropertyIterator properties = new PropertyIterator(object.getNode().getProperties());
 
