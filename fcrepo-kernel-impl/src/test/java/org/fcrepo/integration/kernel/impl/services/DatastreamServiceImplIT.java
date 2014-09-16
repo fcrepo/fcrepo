@@ -40,7 +40,6 @@ import org.apache.tika.io.IOUtils;
 import org.fcrepo.integration.kernel.impl.AbstractIT;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -204,21 +203,5 @@ public class DatastreamServiceImplIT extends AbstractIT {
             assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
                     fixityResult.getComputedChecksum().toString());
         }
-    }
-
-    @Test(expected = FedoraInvalidNamespaceException.class)
-    public void testCreateDatastreamNodeWithInvalidNS() throws Exception {
-        Session session = repository.login();
-        datastreamService.createDatastream(session, "/bad_ns:testDatastreamNode",
-                "application/octet-stream", null, new ByteArrayInputStream("asdf"
-                        .getBytes()));
-        session.save();
-        session.logout();
-        session = repository.login();
-
-        assertTrue(session.getRootNode().hasNode("testDatastreamNode"));
-        assertEquals("asdf", session.getNode("/testDatastreamNode").getNode(
-                JCR_CONTENT).getProperty(JCR_DATA).getString());
-        session.logout();
     }
 }
