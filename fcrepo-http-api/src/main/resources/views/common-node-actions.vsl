@@ -99,7 +99,7 @@ WHERE { }
 
         <ul class="dropdown-menu">
         #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-          <li><a href="$quad.getObject().getURI()">$helpers.getObjectTitle($rdf, $quad.getObject())</a></li>
+          <li><a href="$quad.getObject().getURI()">$helpers.getSerializationTitle($rdf, $quad.getObject())</a></li>
         #end
         </ul>
     </div>
@@ -125,7 +125,7 @@ WHERE { }
     <label class="control-label">Format</label>
     <select id="import_format" name="format" class="form-control">
         #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-            <option>$helpers.getObjectTitle($rdf, $quad.getObject())</option>
+            <option>$helpers.getSerializationTitle($rdf, $quad.getObject())</option>
         #end
     </select>
         </div>

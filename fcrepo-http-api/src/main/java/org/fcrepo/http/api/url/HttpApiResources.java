@@ -17,6 +17,7 @@ package org.fcrepo.http.api.url;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
@@ -28,8 +29,12 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
+import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.api.FedoraExport;
@@ -47,6 +52,7 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.serialization.SerializerUtil;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -133,6 +139,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                             pathMap).toASCIIString()));
         }
 
+        final Property dcFormat = createProperty(DC_NAMESPACE + "format");
         // fcr:exports?format=xyz
         for (final String key : serializers.keySet()) {
             final Resource format =
@@ -140,6 +147,12 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                             FedoraExport.class).queryParam("format", key)
                             .buildFromMap(pathMap).toASCIIString());
             model.add(s, HAS_SERIALIZATION, format);
+
+            //RDF the serialization
+            final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
+
+            model.add(formatRDF, RDFS_LABEL, key);
+            model.add(format, dcFormat, formatRDF);
         }
     }
 
@@ -169,11 +182,17 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                 .getBaseUriBuilder().path(FedoraRepositoryWorkspaces.class)
                 .build().toASCIIString()));
 
+        final Property dcFormat = createProperty(DC_NAMESPACE + "format");
         // fcr:export?format=xyz
         for (final String key : serializers.keySet()) {
-            model.add(s, HAS_SERIALIZATION, createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraRepositoryExport.class)
-                    .queryParam("format", key).build().toASCIIString()));
+            final Resource format = createResource(uriInfo
+                .getBaseUriBuilder().path(FedoraRepositoryExport.class)
+                .queryParam("format", key).build().toASCIIString());
+            model.add(s, HAS_SERIALIZATION, format);
+            final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
+
+            model.add(formatRDF, RDFS_LABEL, key);
+            model.add(format, dcFormat, formatRDF);
         }
     }
 
