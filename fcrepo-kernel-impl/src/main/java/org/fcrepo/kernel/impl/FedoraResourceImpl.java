@@ -61,6 +61,7 @@ import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.resources.RdfSource;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
@@ -83,7 +84,7 @@ import com.hp.hpl.jena.update.UpdateRequest;
  *
  * @author ajs6f
  */
-public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, FedoraResource {
+public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, FedoraResource, RdfSource<Node> {
 
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 

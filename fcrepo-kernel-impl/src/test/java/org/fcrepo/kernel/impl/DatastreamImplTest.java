@@ -163,6 +163,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         final Node mockContent = getContentNodeMock(8);
+        when(mockContent.getSession()).thenReturn(mockSession);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
@@ -191,6 +192,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
+        when(mockContent.getSession()).thenReturn(mockSession);
         when(mockData.getBinary()).thenReturn(mockBin);
         testObj.setContent(mockStream, null, null, "xyz", null);
         verify(mockContent).setProperty(PREMIS_FILE_NAME, "xyz");
@@ -212,6 +214,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
+        when(mockContent.getSession()).thenReturn(mockSession);
         when(mockData.getBinary()).thenReturn(mockBin);
         testObj.setContent(mockStream, null, new URI("urn:sha1:xyz"), null, null);
     }
@@ -220,6 +223,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
         final Node mockContent = getContentNodeMock(expectedContentLength);
+        when(mockContent.getSession()).thenReturn(mockSession);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
         verify(mockContent).getProperty(CONTENT_SIZE);
@@ -248,12 +252,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         when(mockContent.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
         when(mockProperty.getString()).thenReturn("application/x-mime-type");
         assertEquals("application/x-mime-type", testObj.getMimeType());
-    }
-
-    @Test
-    public void testGetMimeTypeWithNoContent() throws RepositoryException {
-        when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(false);
-        assertEquals("application/octet-stream", testObj.getMimeType());
     }
 
     @Test
