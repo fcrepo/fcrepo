@@ -238,9 +238,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     Iterators.transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
                 );
                 return types.contains(type);
-            } else {
-                return node.isNodeType(type);
             }
+            return node.isNodeType(type);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {

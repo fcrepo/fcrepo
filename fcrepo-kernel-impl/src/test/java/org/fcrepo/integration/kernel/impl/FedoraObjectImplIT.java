@@ -54,25 +54,27 @@ public class FedoraObjectImplIT extends AbstractIT {
 
     @Test
     public void testCreatedObject() throws RepositoryException {
+        final String testObjId = getTestObjIdentifier();
         Session session = repo.login();
-        objectService.createObject(session, "/testObject");
+        objectService.createObject(session, "/" + testObjId);
         session.save();
         session.logout();
         session = repo.login();
         final FedoraObject obj =
-            objectService.getObject(session, "/testObject");
+            objectService.getObject(session, "/" + testObjId);
         assertNotNull("Couldn't find object!", obj);
     }
 
     @Test
     public void testObjectGraph() throws Exception {
+        final String testObjId = getTestObjIdentifier();
         final Session session = repo.login();
         final FedoraObject object =
-            objectService.createObject(session, "/graphObject");
+            objectService.createObject(session, "/" + testObjId);
         final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
-        final String graphSubject = subjects.getSubject("/graphObject").getURI();
+        final String graphSubject = subjects.getSubject("/" + testObjId).getURI();
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(graphStore.toString()).find());
@@ -94,10 +96,8 @@ public class FedoraObjectImplIT extends AbstractIT {
         final Value[] values = object.getNode().getProperty("dc:title").getValues();
         assertTrue(values.length > 0);
 
-        assertTrue(values[0]
-                       .getString(),
-                      values[0]
-                          .getString().equals("This is an example title"));
+        assertTrue(values[0].getString(),
+                      values[0].getString().equals("This is an example title"));
 
 
         parseExecute("PREFIX myurn: <info:myurn/>\n" +
@@ -146,11 +146,13 @@ public class FedoraObjectImplIT extends AbstractIT {
 
     @Test
     public void testObjectGraphWithUriProperty() throws RepositoryException {
+        final String testObjId = getTestObjIdentifier();
+
         final Session session = repo.login();
         final FedoraObject object =
-            objectService.createObject(session, "/graphObject");
+            objectService.createObject(session, "/" + testObjId);
         final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
-        final String graphSubject = subjects.getSubject("/graphObject").getURI();
+        final String graphSubject = subjects.getSubject("/" + testObjId).getURI();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
         parseExecute("PREFIX some: <info:some#>\n" +

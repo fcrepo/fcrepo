@@ -293,9 +293,8 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         try {
             if (hasContent() && getContentNode().hasProperty(JCR_MIME_TYPE)) {
                 return getContentNode().getProperty(JCR_MIME_TYPE).getString();
-            } else {
-                return "application/octet-stream";
             }
+            return "application/octet-stream";
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

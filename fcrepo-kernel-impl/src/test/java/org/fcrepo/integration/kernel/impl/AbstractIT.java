@@ -38,8 +38,27 @@ public abstract class AbstractIT {
         logger = getLogger(this.getClass());
     }
 
-    public String getRandomPid() {
-        return currentThread().getStackTrace()[2].getMethodName() + "-" + randomUUID();
+    public String getGeneratedIdentifier(final String suffix) {
+        final Thread currentThread = currentThread();
+        final String threadName = currentThread.getName();
+        final String methodName = currentThread.getStackTrace()[2].getMethodName();
+        return methodName + "-" + threadName + "-" + randomUUID() + "-" + suffix;
+    }
+
+    public String getTestObjIdentifier() {
+        return getGeneratedIdentifier("-object");
+    }
+
+    public String getTestDsIdentifier() {
+        return getGeneratedIdentifier("-datastream");
+    }
+
+    public String getTestObjIdentifier(final String suffix) {
+        return getGeneratedIdentifier("-object" + suffix);
+    }
+
+    public String getTestDsIdentifier(final String suffix) {
+        return getGeneratedIdentifier("-datastream" + suffix);
     }
 
 }

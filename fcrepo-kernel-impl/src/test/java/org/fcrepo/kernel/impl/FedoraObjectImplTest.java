@@ -143,7 +143,7 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testHasType() throws RepositoryException {
+    public void testHasType() {
         assertTrue(testFedoraObject.hasType("some:type"));
     }
 

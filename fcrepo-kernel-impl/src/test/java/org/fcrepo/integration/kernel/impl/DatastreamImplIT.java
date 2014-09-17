@@ -67,8 +67,8 @@ public class DatastreamImplIT extends AbstractIT {
 
     @Test
     public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
-        final String objPid = getRandomPid() + "-object";
-        final String dsid = getRandomPid() + "-datastream";
+        final String objPid = getTestObjIdentifier();
+        final String dsid = getTestDsIdentifier();
 
         Session session = repo.login();
         objectService.createObject(session, "/" + objPid);
@@ -90,8 +90,8 @@ public class DatastreamImplIT extends AbstractIT {
     public void testDatastreamContent() throws IOException,
                                        RepositoryException,
                                        InvalidChecksumException {
-        final String objPid = getRandomPid() + "-object";
-        final String dsid = getRandomPid() + "-datastream";
+        final String objPid = getTestObjIdentifier();
+        final String dsid = getTestDsIdentifier();
 
         final Session session = repo.login();
         objectService.createObject(session, "/" + objPid);
@@ -115,8 +115,8 @@ public class DatastreamImplIT extends AbstractIT {
     public void testDatastreamContentDigestAndLength() throws IOException,
                                                       RepositoryException,
                                                       InvalidChecksumException {
-        final String objPid = getRandomPid() + "-object";
-        final String dsid = getRandomPid() + "-datastream";
+        final String objPid = getTestObjIdentifier();
+        final String dsid = getTestDsIdentifier();
 
         final Session session = repo.login();
         objectService.createObject(session, "/" + objPid);
@@ -144,8 +144,8 @@ public class DatastreamImplIT extends AbstractIT {
             testModifyDatastreamContentDigestAndLength() throws IOException,
                                                         RepositoryException,
                                                         InvalidChecksumException {
-        final String objPid = getRandomPid() + "-object";
-        final String dsid = getRandomPid() + "-datastream";
+        final String objPid = getTestObjIdentifier();
+        final String dsid = getTestDsIdentifier();
 
         final Session session = repo.login();
         objectService.createObject(session, "/" + objPid);
@@ -173,8 +173,8 @@ public class DatastreamImplIT extends AbstractIT {
     public void testDatastreamContentWithChecksum() throws IOException,
                                                    RepositoryException,
                                                    InvalidChecksumException {
-        final String objPid = getRandomPid() + "-object";
-        final String dsid = getRandomPid() + "-datastream";
+        final String objPid = getTestObjIdentifier();
+        final String dsid = getTestDsIdentifier();
 
         final Session session = repo.login();
         objectService.createObject(session, "/" + objPid);
@@ -199,8 +199,8 @@ public class DatastreamImplIT extends AbstractIT {
 
     @Test
     public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
-        final String objPid = getRandomPid() + "-object";
-        final String dsid = getRandomPid() + "-datastream";
+        final String objPid = getTestObjIdentifier();
+        final String dsid = getTestDsIdentifier();
 
         final Session session = repo.login();
         objectService.createObject(session, "/" + objPid);

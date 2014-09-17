@@ -65,7 +65,7 @@ public class VersionServiceImplIT extends AbstractIT {
     @Test
     public void testCreateVersion() throws RepositoryException {
         final Session session = repository.login();
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final FedoraResource resource = nodeService.findOrCreateObject(session, "/" + pid);
         session.save();
 
@@ -78,7 +78,7 @@ public class VersionServiceImplIT extends AbstractIT {
     @Test
     public void testRemoveVersion() throws RepositoryException {
         final Session session = repository.login();
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final FedoraResource resource = nodeService.findOrCreateObject(session, "/" + pid);
         session.save();
 
@@ -101,7 +101,7 @@ public class VersionServiceImplIT extends AbstractIT {
     @Test
     public void testRevertToVersion() throws RepositoryException {
         final Session session = repository.login();
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final FedoraResource resource = nodeService.findOrCreateObject(session, "/" + pid);
         session.save();
 
@@ -124,7 +124,7 @@ public class VersionServiceImplIT extends AbstractIT {
     @Test( expected = PathNotFoundException.class )
     public void testRevertToInvalidVersion() throws RepositoryException {
         final Session session = repository.login();
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final FedoraResource resource = nodeService.findOrCreateObject(session, "/" + pid);
         session.save();
 
@@ -141,7 +141,7 @@ public class VersionServiceImplIT extends AbstractIT {
     @Test( expected = PathNotFoundException.class )
     public void testRemoveInvalidVersion() throws RepositoryException {
         final Session session = repository.login();
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final FedoraResource resource = nodeService.findOrCreateObject(session, "/" + pid);
         session.save();
 

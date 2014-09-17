@@ -135,7 +135,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testRandomNodeGraph() throws RepositoryException {
+    public void testRandomNodeGraph() {
         final FedoraResource object =
             nodeService.findOrCreateObject(session, "/testNodeGraph");
 
@@ -162,7 +162,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testRepositoryRootGraph() throws RepositoryException {
+    public void testRepositoryRootGraph() {
 
         final FedoraResource object = nodeService.getObject(session, "/");
 
@@ -404,7 +404,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraph() throws RepositoryException {
+    public void testUpdatingObjectGraph() {
 
         final FedoraResource object =
             objectService.createObject(session, "/testObjectGraphUpdates");

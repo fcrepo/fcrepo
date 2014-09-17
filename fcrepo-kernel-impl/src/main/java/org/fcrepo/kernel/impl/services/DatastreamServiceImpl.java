@@ -78,15 +78,13 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @param originalFileName the original file name for the input stream
      * @param requestBodyStream binary payload for the datastream
      * @return created datastream
-     * @throws RepositoryException
      * @throws InvalidChecksumException
      */
     @Override
     public Datastream createDatastream(final Session session,
             final String dsPath, final String contentType,
             final String originalFileName,
-            final InputStream requestBodyStream) throws RepositoryException,
-            InvalidChecksumException {
+            final InputStream requestBodyStream) throws InvalidChecksumException {
 
         return createDatastream(session, dsPath, contentType,
                                        originalFileName, requestBodyStream, null);
