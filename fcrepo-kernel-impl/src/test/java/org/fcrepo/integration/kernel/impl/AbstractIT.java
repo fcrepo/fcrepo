@@ -15,14 +15,14 @@
  */
 package org.fcrepo.integration.kernel.impl;
 
+import static java.lang.Thread.currentThread;
+import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import java.util.UUID;
 
 /**
  * @author ajs6f
@@ -39,7 +39,7 @@ public abstract class AbstractIT {
     }
 
     public String getRandomPid() {
-        return UUID.randomUUID().toString();
+        return currentThread().getStackTrace()[2].getMethodName() + "-" + randomUUID();
     }
 
 }
