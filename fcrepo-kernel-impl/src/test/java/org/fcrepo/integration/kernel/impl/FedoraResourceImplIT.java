@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl;
 
+import static com.google.common.collect.Iterators.filter;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -40,23 +41,17 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
-import java.util.UUID;
 
 import javax.inject.Inject;
-import javax.jcr.Value;
-import javax.jcr.nodetype.NodeTypeDefinition;
-import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.nodetype.NodeTypeDefinition;
 import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.NodeTypeTemplate;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -74,6 +69,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -82,6 +79,7 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.sparql.core.DatasetGraph;
 import com.hp.hpl.jena.sparql.util.Symbol;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
@@ -136,12 +134,14 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testRandomNodeGraph() {
+        final String testObjId = getTestObjIdentifier();
+
         final FedoraResource object =
-            nodeService.findOrCreateObject(session, "/testNodeGraph");
+            nodeService.findOrCreateObject(session, "/" + testObjId);
 
         logger.debug(object.getPropertiesDataset(
                 new DefaultIdentifierTranslator()).toString());
-        final Node s = createGraphSubjectNode("/testNodeGraph");
+        final Node s = createGraphSubjectNode("/" + testObjId);
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         final Node o = createLiteral("nt:unstructured");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -150,7 +150,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testLastModified() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getTestObjIdentifier();
         objectService.createObject(session, "/" + pid);
 
         session.save();
@@ -190,13 +190,15 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testObjectGraph() throws RepositoryException {
 
+        final String testObjId = getTestObjIdentifier();
+
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectGraph");
+            objectService.createObject(session, "/" + testObjId);
 
         logger.debug(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
-        final Node s = createGraphSubjectNode("/testObjectGraph");
+        final Node s = createGraphSubjectNode("/" + testObjId);
         Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -218,8 +220,10 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testObjectGraphWithCustomProperty() throws RepositoryException {
 
+        final String testObjId = getTestObjIdentifier();
+
         FedoraResource object =
-            objectService.createObject(session, "/testObjectGraph");
+            objectService.createObject(session, "/" + testObjId);
 
         final javax.jcr.Node node = object.getNode();
         node.setProperty("dc:title", "this-is-some-title");
@@ -231,13 +235,13 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session = repo.login();
 
-        object = objectService.getObject(session, "/testObjectGraph");
+        object = objectService.getObject(session, "/" + testObjId);
 
 
         logger.debug(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
-        final Node s = createGraphSubjectNode("/testObjectGraph");
+        final Node s = createGraphSubjectNode("/" + testObjId);
         Node p = DC_TITLE.asNode();
         Node o = createLiteral("this-is-some-title");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -248,17 +252,15 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
                        .contains(ANY, s, p, o));
 
-        p = Node.ANY;
         o = createLiteral("jcr-data-should-be-ignored");
         assertFalse(object.getPropertiesDataset(subjects).asDatasetGraph()
-                        .contains(ANY, s, p, o));
-
-
+                        .contains(ANY, s, ANY, o));
     }
 
     @Test
     public void testRdfTypeInheritance() throws RepositoryException {
-        logger.info("in testRdfTypeInheritance...");
+        final String testObjId = getTestObjIdentifier();
+
         final NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
         //create supertype mixin
         final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
@@ -276,7 +278,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         mgr.registerNodeTypes(nodeTypes2, true);
 
         //create object with inheriting type
-        FedoraResource object = objectService.createObject(session, "/testNTTnheritanceObject");
+        FedoraResource object = objectService.createObject(session, "/" + testObjId);
         final javax.jcr.Node node = object.getNode();
         node.addMixin("test:testInher");
 
@@ -284,10 +286,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.logout();
         session = repo.login();
 
-        object = objectService.createObject(session, "/testNTTnheritanceObject");
+        object = objectService.createObject(session, "/" + testObjId);
 
         //test that supertype has been inherited as rdf:type
-        final Node s = createGraphSubjectNode("/testNTTnheritanceObject");
+        final Node s = createGraphSubjectNode("/" + testObjId);
         final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
         final Node o = createProperty("info:fedora/test/aSupertype").asNode();
         assertTrue("supertype test:aSupertype not found inherited in test:testInher!",
@@ -297,17 +299,21 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException {
 
-        objectService.createObject(session, "/testDatastreamGraphParent");
+        final String testObjId = getTestObjIdentifier();
 
-        datastreamService.createDatastream(session, "/testDatastreamGraph",
+        final String testDsId = getTestDsIdentifier();
+
+        objectService.createObject(session, "/" + testObjId);
+
+        datastreamService.createDatastream(session, "/" + testDsId,
                 "text/plain", null, new ByteArrayInputStream("123456789test123456789"
                         .getBytes()));
 
         final FedoraResource object =
-            nodeService.getObject(session, "/testDatastreamGraph");
+            nodeService.getObject(session, "/" + testDsId);
 
         object.getNode().setProperty("fedorarelsext:isPartOf",
-                session.getNode("/testDatastreamGraphParent"));
+                session.getNode("/" + testObjId));
 
         final Dataset propertiesDataset = object.getPropertiesDataset(subjects);
 
@@ -317,7 +323,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(propertiesDataset.toString());
 
         // jcr property
-        Node s = createGraphSubjectNode("/testDatastreamGraph");
+        Node s = createGraphSubjectNode("/" + testDsId);
         Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
@@ -342,15 +348,15 @@ public class FedoraResourceImplIT extends AbstractIT {
         //assertTrue(datasetGraph.contains(ANY, s, p, o));
         // relations
         p = createURI(RELATIONS_NAMESPACE + "isPartOf");
-        o = createGraphSubjectNode("/testDatastreamGraphParent");
+        o = createGraphSubjectNode("/" + testObjId);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
         p = createURI(REPOSITORY_NAMESPACE + "hasContent");
-        o = createGraphSubjectNode("/testDatastreamGraph/fcr:content");
+        o = createGraphSubjectNode("/" + testDsId + "/fcr:content");
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
         // content properties
-        s = createGraphSubjectNode("/testDatastreamGraph/fcr:content");
+        s = createGraphSubjectNode("/" + testDsId + "/fcr:content");
         p = createURI(REPOSITORY_NAMESPACE + "mimeType");
         o = createLiteral("text/plain");
         assertTrue(datasetGraph.contains(ANY, s, p, o));
@@ -364,12 +370,18 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Ignore("Skipping until we restablish paging behavior for RDF")
     public void testObjectGraphWindow() throws RepositoryException {
 
-        final FedoraResource object =
-            objectService.createObject(session, "/testObjectGraphWindow");
+        final String testObjId = getTestObjIdentifier();
 
-        objectService.createObject(session, "/testObjectGraphWindow/a");
-        objectService.createObject(session, "/testObjectGraphWindow/b");
-        objectService.createObject(session, "/testObjectGraphWindow/c");
+        final String testObjAId = testObjId + "/" + getTestObjIdentifier();
+        final String testObjBId = testObjId + "/" + getTestObjIdentifier();
+        final String testObjCId = testObjId + "/" + getTestObjIdentifier();
+
+        final FedoraResource object =
+            objectService.createObject(session, "/" + testObjId);
+
+        objectService.createObject(session, "/" + testObjAId);
+        objectService.createObject(session, "/" + testObjBId);
+        objectService.createObject(session, "/" + testObjCId);
 
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 1, 1);
@@ -379,26 +391,26 @@ public class FedoraResourceImplIT extends AbstractIT {
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
 
         // jcr property
-        Node s = createGraphSubjectNode("/testObjectGraphWindow");
+        Node s = createGraphSubjectNode("/" + testObjId);
         Node p = HAS_PRIMARY_IDENTIFIER.asNode();
         Node o = createLiteral(object.getNode().getIdentifier());
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
         p = HAS_CHILD.asNode();
-        o = createGraphSubjectNode("/testObjectGraphWindow/a");
+        o = createGraphSubjectNode("/" + testObjAId);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
-        o = createGraphSubjectNode("/testObjectGraphWindow/b");
+        o = createGraphSubjectNode("/" + testObjBId);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
-        o = createGraphSubjectNode("/testObjectGraphWindow/c");
+        o = createGraphSubjectNode("/" + testObjCId);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
-        s = createGraphSubjectNode("/testObjectGraphWindow/b");
+        s = createGraphSubjectNode("/" + testObjBId);
         p = HAS_PRIMARY_IDENTIFIER.asNode();
         assertTrue(datasetGraph.contains(ANY, s, p, ANY));
 
-        s = createGraphSubjectNode("/testObjectGraphWindow/c");
+        s = createGraphSubjectNode("/" + testObjCId);
         assertFalse(datasetGraph.contains(ANY, s, p, ANY));
 
     }
@@ -406,26 +418,30 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testUpdatingObjectGraph() {
 
+        final String testObjId = "/" + getTestObjIdentifier();
+
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectGraphUpdates");
+            objectService.createObject(session, testObjId);
 
         object.updatePropertiesDataset(subjects, "INSERT { " + "<"
-                + subjects.getSubject("/testObjectGraphUpdates").getURI() + "> "
+                + subjects.getSubject(testObjId).getURI() + "> "
                 + "<info:fcrepo/zyx> \"a\" } WHERE {} ");
 
         // jcr property
-        final Resource s = subjects.getSubject("/testObjectGraphUpdates");
+        final Resource s = subjects.getSubject(testObjId);
         final Property p = createProperty("info:fcrepo/zyx");
         Literal o = createPlainLiteral("a");
         assertTrue(object.getPropertiesDataset(subjects).getDefaultModel()
                 .contains(s, p, o));
 
+        final String testObjIdSubjUri = createGraphSubjectNode(testObjId).getURI();
+
         object.updatePropertiesDataset(subjects, "DELETE { " + "<"
-                + createGraphSubjectNode("/testObjectGraphUpdates").getURI() + "> "
+                + testObjIdSubjUri + "> "
                 + "<info:fcrepo/zyx> ?o }\n" + "INSERT { " + "<"
-                + createGraphSubjectNode("/testObjectGraphUpdates").getURI() + "> "
+                + testObjIdSubjUri + "> "
                 + "<info:fcrepo/zyx> \"b\" } " + "WHERE { " + "<"
-                + createGraphSubjectNode("/testObjectGraphUpdates").getURI() + "> "
+                + testObjIdSubjUri + "> "
                 + "<info:fcrepo/zyx> ?o } ");
 
         assertFalse("found value we should have removed", object
@@ -440,8 +456,10 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testAddVersionLabel() throws RepositoryException {
 
+        final String testObjId = getTestObjIdentifier();
+
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectVersionLabel");
+            objectService.createObject(session, "/" + testObjId);
 
         object.getNode().addMixin("mix:versionable");
 
@@ -459,8 +477,10 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetObjectVersionGraph() throws RepositoryException {
 
+        final String testObjId = getTestObjIdentifier();
+
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectVersionGraph");
+            objectService.createObject(session, "/" + testObjId);
 
         object.getNode().addMixin("mix:versionable");
 
@@ -475,7 +495,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(graphStore.toString());
 
         // go querying for the version URI
-        Resource s = subjects.getSubject("/testObjectVersionGraph");
+        Resource s = subjects.getSubject("/" + testObjId);
         Property p = createProperty(REPOSITORY_NAMESPACE + "hasVersion");
         final ExtendedIterator<Statement> triples = graphStore.listStatements(s, p, (RDFNode)null);
 
@@ -493,8 +513,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testUpdatingRdfTypedValues() throws RepositoryException {
+        final String testObjId = getTestObjIdentifier();
+
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectRdfType");
+            objectService.createObject(session, "/" + testObjId);
 
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 0, -2);
@@ -506,7 +528,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 "PREFIX example: <http://example.org/>\n"
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
                         + "INSERT { <"
-                        + createGraphSubjectNode("/testObjectRdfType").getURI()
+                        + createGraphSubjectNode("/" + testObjId).getURI()
                         + "> example:int-property \"0\"^^xsd:long } "
                         + "WHERE { }");
         assertEquals(LONG, object.getNode().getProperty("example:int-property")
@@ -517,8 +539,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testUpdatingRdfType() throws RepositoryException {
+        final String testObjId = getTestObjIdentifier();
+
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectRdfType");
+            objectService.createObject(session, "/" + testObjId);
 
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 0, -2);
@@ -526,7 +550,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(propertiesDataset.toString());
 
         object.updatePropertiesDataset(subjects, "INSERT { <"
-                + createGraphSubjectNode("/testObjectRdfType").getURI() + "> <" + RDF.type
+                + createGraphSubjectNode("/" + testObjId).getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }");
         assertEquals(PropertyType.URI, object.getNode().getProperty("rdf:type")
                 .getType());
@@ -536,8 +560,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testEtagValue() throws RepositoryException {
+        final String testObjId = getTestObjIdentifier();
+
         final FedoraResource object =
-            objectService.createObject(session, "/testEtagObject");
+            objectService.createObject(session, "/" + testObjId);
 
         session.save();
 
@@ -548,10 +574,11 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testGetReferences() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
-        objectService.createObject(session, pid);
-        final FedoraObject subject = objectService.createObject(session, pid + "/a");
-        final FedoraObject object = objectService.createObject(session, pid + "/b");
+        final String testObjId = getTestObjIdentifier();
+
+        objectService.createObject(session, testObjId);
+        final FedoraObject subject = objectService.createObject(session, testObjId + "/a");
+        final FedoraObject object = objectService.createObject(session, testObjId + "/b");
         final Value value = session.getValueFactory().createValue(object.getNode());
         subject.getNode().setProperty("fedorarelsext:isPartOf", new Value[] { value });
 
@@ -561,15 +588,15 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         assertTrue(
             model.contains(subjects.getSubject(subject.getPath()),
-                              ResourceFactory.createProperty("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
+                              createProperty("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
                               subjects.getSubject(object.getPath()))
         );
     }
 
     @Test
     public void testReplaceProperties() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
-        final FedoraObject object = objectService.createObject(session, pid);
+        final String testObjId = getTestObjIdentifier();
+        final FedoraObject object = objectService.createObject(session, testObjId);
 
         final StmtIterator stmtIterator = object.getPropertiesDataset(subjects).getDefaultModel().listStatements();
         final Model model = createDefaultModel().add(stmtIterator);
@@ -585,7 +612,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final PropertyIterator properties = new PropertyIterator(object.getNode().getProperties());
 
         final UnmodifiableIterator<javax.jcr.Property> relation
-            = Iterators.filter(properties, new Predicate<javax.jcr.Property>() {
+            = filter(properties, new Predicate<javax.jcr.Property>() {
                 @Override
                 public boolean apply(final javax.jcr.Property property) {
                     try {
