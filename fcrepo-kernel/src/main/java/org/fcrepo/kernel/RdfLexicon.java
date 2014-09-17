@@ -270,6 +270,8 @@ public final class RdfLexicon {
 
 
     // CONTENT
+    public static final Property IS_IN_FORMAT =
+            createProperty(REPOSITORY_NAMESPACE + "isInFormat");
     public static final Property HAS_CONTENT =
             createProperty(REPOSITORY_NAMESPACE + "hasContent");
     public static final Property IS_CONTENT_OF =
