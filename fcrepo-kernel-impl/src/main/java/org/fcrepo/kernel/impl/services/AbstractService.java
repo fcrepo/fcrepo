@@ -64,13 +64,15 @@ public abstract class AbstractService extends JcrTools implements FedoraJcrTypes
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.services.Service#validatePath(javax.jcr.Session, java.lang.String)
+    /**
+     * Validate resource path for unregistered namespace prefixes
+     *
+     * @param session the JCR session to use
+     * @param path the absolute path to the object
+     * @throws RepositoryException
      */
-    @Override
-    public void validatePath(final Session session, final String path) {
 
+    private void validatePath(final Session session, final String path) {
         final NamespaceRegistry namespaceRegistry;
         try {
             namespaceRegistry =
