@@ -63,6 +63,10 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     @Override
     public FedoraResource findOrCreateObject(final Session session, final String path) {
         try {
+            /*
+             * Invalid namespace prefixes in the path will cause this to fail,
+             * test with AbstractService.validatePath().
+             */
             return new FedoraResourceImpl(findOrCreateNode(session, path));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);

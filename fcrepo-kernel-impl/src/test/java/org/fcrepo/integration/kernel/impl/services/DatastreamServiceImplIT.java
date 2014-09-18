@@ -36,12 +36,14 @@ import javax.jcr.Repository;
 import javax.jcr.Session;
 
 import org.apache.tika.io.IOUtils;
+
 import org.fcrepo.integration.kernel.impl.AbstractIT;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.FixityResult;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
