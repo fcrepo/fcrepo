@@ -30,6 +30,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.impl.services.DatastreamServiceImpl;
 import org.fcrepo.kernel.services.ObjectService;
@@ -138,7 +139,9 @@ public class TiffStoragePolicyStorageIT {
 
         logger.info("tiff key: {}", tiffKey);
 
-        Collection<FixityResult> fixity = datastreamService.getFixity(node.getNode(JcrConstants.JCR_CONTENT), null, 0L);
+        final Datastream datastream = datastreamService.asDatastream(node);
+
+        Collection<FixityResult> fixity = datastream.getFixity(repo, null, 0L);
 
         assertNotEquals(0, fixity.size());
 
@@ -146,8 +149,9 @@ public class TiffStoragePolicyStorageIT {
 
         assertThat(e.getStoreIdentifier(), containsString(key.toString()));
 
+        final Datastream tiffDatastream = datastreamService.asDatastream(tiffNode);
 
-        fixity = datastreamService.getFixity(tiffNode.getNode(JcrConstants.JCR_CONTENT), null, 0L);
+        fixity = tiffDatastream.getFixity(repo, null, 0L);
 
         assertNotEquals(0, fixity.size());
 

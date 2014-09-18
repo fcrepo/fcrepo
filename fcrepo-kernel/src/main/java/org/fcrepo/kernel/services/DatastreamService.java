@@ -103,16 +103,4 @@ public interface DatastreamService extends Service {
      */
     Collection<FixityResult> runFixityAndFixProblems(Datastream datastream) throws RepositoryException;
 
-    /**
-     * Get the fixity results for this datastream's bitstream, and compare it
-     * against the given checksum and size.
-     *
-     * @param resource
-     * @param dsChecksum -the checksum and algorithm represented as a URI
-     * @param dsSize
-     * @return fixity results for datastream's bitstream
-     * @throws RepositoryException
-     */
-    Collection<FixityResult> getFixity(Node resource, URI dsChecksum, long dsSize) throws RepositoryException;
-
 }

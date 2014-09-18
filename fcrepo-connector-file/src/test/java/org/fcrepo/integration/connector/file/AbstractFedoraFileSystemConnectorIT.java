@@ -238,7 +238,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(nodeService.getObject(session, testFilePath() + "/jcr:content").getNode());
+        checkFixity(datastreamService.getDatastream(session, testFilePath()));
 
         session.save();
         session.logout();
@@ -248,14 +248,14 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final Node node = nodeService.getObject(session, testFilePath() + "/jcr:content").getNode();
+        final Datastream ds = datastreamService.getDatastream(session, testFilePath());
 
-        final String originalFixity = checkFixity(node);
+        final String originalFixity = checkFixity(ds);
 
         final File file = fileForNode(null);
         appendToFile(file, " ");
 
-        final String newFixity = checkFixity(node);
+        final String newFixity = checkFixity(ds);
 
         assertNotEquals("Checksum is expected to have changed!", originalFixity, newFixity);
 
@@ -269,15 +269,15 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         }
     }
 
-    private String checkFixity(final Node node) throws IOException, NoSuchAlgorithmException, RepositoryException {
-        assertNotNull(node);
+    private String checkFixity(final Datastream ds) throws IOException, NoSuchAlgorithmException, RepositoryException {
+        assertNotNull(ds);
 
         final File file = fileForNode(null);
         final byte[] hash = getHash(SHA_1, file);
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results = datastreamService.getFixity(node, calculatedChecksum, file.length());
+        final Collection<FixityResult> results = ds.getFixity(repo, calculatedChecksum, file.length());
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());

@@ -17,12 +17,15 @@ package org.fcrepo.kernel;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
+import javax.jcr.Repository;
 
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.FixityResult;
 
 /**
  * @author bbpennel
@@ -82,4 +85,7 @@ public interface Datastream extends FedoraResource {
      */
     String getFilename();
 
+    Collection<FixityResult> getFixity(Repository repo,
+                                       URI dsChecksum,
+                                       long dsSize);
 }

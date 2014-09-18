@@ -18,7 +18,6 @@ package org.fcrepo.kernel.impl.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -41,7 +40,6 @@ import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,7 +187,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
         try {
             fixityResults =
-                    copyOf(getFixity(datastream.getContentNode(), digestUri, size));
+                    copyOf(datastream.getFixity(repo, digestUri, size));
 
             goodEntries =
                     copyOf(filter(fixityResults, new Predicate<FixityResult>() {
@@ -211,30 +209,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         }
 
         return fixityResults;
-    }
-
-    /**
-     * Get the fixity results for this datastream's bitstream, and compare it
-     * against the given checksum and size.
-     *
-     * @param resource
-     * @param dsChecksum -the checksum and algorithm represented as a URI
-     * @param dsSize
-     * @return fixity results
-     * @throws RepositoryException
-     */
-    @Override
-    public Collection<FixityResult> getFixity(final Node resource,
-                                              final URI dsChecksum,
-                                              final long dsSize) {
-        try {
-            LOGGER.debug("Checking resource: " + resource.getPath());
-
-            return CacheEntryFactory.forProperty(repo, resource.getProperty(JCR_DATA)).checkFixity(dsChecksum, dsSize);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
     }
 
     /**
