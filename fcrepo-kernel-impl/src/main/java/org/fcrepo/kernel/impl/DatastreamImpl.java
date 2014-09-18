@@ -322,19 +322,17 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * against the given checksum and size.
      *
      * @param repo
-     * @param dsChecksum -the checksum and algorithm represented as a URI
-     * @param dsSize
+     * @param algorithm the algorithm to use
      * @return fixity results
      * @throws RepositoryException
      */
     @Override
     public Collection<FixityResult> getFixity(final Repository repo,
-                                              final URI dsChecksum,
-                                              final long dsSize) {
+                                              final String algorithm) {
         try {
             LOGGER.debug("Checking resource: " + getPath());
 
-            return CacheEntryFactory.forProperty(repo, getContentNode().getProperty(JCR_DATA)).checkFixity(dsChecksum, dsSize);
+            return CacheEntryFactory.forProperty(repo, getContentNode().getProperty(JCR_DATA)).checkFixity(algorithm);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

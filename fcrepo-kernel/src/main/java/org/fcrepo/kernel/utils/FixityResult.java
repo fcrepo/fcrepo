@@ -29,7 +29,7 @@ public interface FixityResult {
      * The possible fixity states (which may be ORed together later)
      */
     public static enum FixityState {
-        SUCCESS, REPAIRED, BAD_CHECKSUM, BAD_SIZE, MISSING_STORED_FIXITY
+        SUCCESS, BAD_CHECKSUM, BAD_SIZE
     }
 
     /**
@@ -64,20 +64,9 @@ public interface FixityResult {
     boolean matches(long size, URI checksum);
 
     /**
-     * Was the fixity declared a success
-     * @return boolean
-     */
-    boolean isSuccess();
-
-    /**
-     * Mark the fixity result as been automatically repaired
-     */
-    void setRepaired();
-
-    /**
      * @return the status
      */
-    Set<FixityState> getStatus();
+    Set<FixityState> getStatus(long size, URI checksum);
 
     /**
      * @return the computed size

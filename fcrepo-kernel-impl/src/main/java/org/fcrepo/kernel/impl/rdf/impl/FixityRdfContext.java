@@ -31,6 +31,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION_VALUE;
 
+import java.net.URI;
 import java.util.Calendar;
 import java.util.Iterator;
 import javax.jcr.Node;
@@ -63,7 +64,7 @@ public class FixityRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
     public FixityRdfContext(final Node node, final IdentifierTranslator graphSubjects,
-            final Iterable<FixityResult> blobs) throws RepositoryException {
+            final Iterable<FixityResult> blobs, final URI digest, final long size) throws RepositoryException {
         super(node, graphSubjects);
 
         concat(Iterators.concat(Iterators.transform(blobs.iterator(),
@@ -89,7 +90,7 @@ public class FixityRdfContext extends NodeRdfContext {
                                             HAS_CONTENT_LOCATION_VALUE.asNode(),
                                             createLiteral(storeIdentifier)));
 
-                            for (final FixityResult.FixityState state : blob.getStatus()) {
+                            for (final FixityResult.FixityState state : blob.getStatus(size, digest)) {
                                 b.add(create(resultSubject, HAS_FIXITY_STATE
                                         .asNode(), createLiteral(state
                                         .toString())));

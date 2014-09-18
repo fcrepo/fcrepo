@@ -16,11 +16,11 @@
 package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
@@ -47,7 +47,6 @@ import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import com.google.common.base.Predicate;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -154,10 +153,15 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     public RdfStream getFixityResultsModel(final IdentifierTranslator subjects,
             final Datastream datastream) {
         try {
-            final Collection<FixityResult> blobs = runFixityAndFixProblems(datastream);
+
+            final URI digestUri = datastream.getContentDigest();
+            final long size = datastream.getContentSize();
+            final String algorithm = ContentDigest.getAlgorithm(digestUri);
+
+            final Collection<FixityResult> blobs = runFixity(datastream, algorithm);
 
             return JcrRdfTools.withContext(subjects,datastream.getNode().getSession())
-                    .getJcrTriples(datastream.getNode(), blobs)
+                    .getJcrTriples(datastream.getNode(), blobs, digestUri, size)
                     .topic(subjects.getSubject(datastream.getPath())
                             .asNode());
         } catch (final RepositoryException e) {
@@ -173,13 +177,9 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @return results
      * @throws RepositoryException
      */
-    @Override
-    public Collection<FixityResult> runFixityAndFixProblems(final Datastream datastream) {
+    private Collection<FixityResult> runFixity(final Datastream datastream, final String algorithm) {
 
         Set<FixityResult> fixityResults;
-        Set<FixityResult> goodEntries;
-        final URI digestUri = datastream.getContentDigest();
-        final long size = datastream.getContentSize();
 
         fixityCheckCounter.inc();
 
@@ -187,25 +187,10 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
         try {
             fixityResults =
-                    copyOf(datastream.getFixity(repo, digestUri, size));
-
-            goodEntries =
-                    copyOf(filter(fixityResults, new Predicate<FixityResult>() {
-
-                        @Override
-                        public boolean apply(
-                                final FixityResult input) {
-                            return input.matches(size, digestUri);
-                        }
-                    }));
+                    copyOf(datastream.getFixity(repo, algorithm));
 
         } finally {
             context.stop();
-        }
-
-        if (goodEntries.isEmpty()) {
-            LOGGER.error("ALL COPIES OF " + datastream.getPath() +
-                             " HAVE FAILED FIXITY CHECKS.");
         }
 
         return fixityResults;

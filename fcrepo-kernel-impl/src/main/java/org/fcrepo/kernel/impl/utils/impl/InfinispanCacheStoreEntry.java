@@ -17,13 +17,8 @@ package org.fcrepo.kernel.impl.utils.impl;
 
 import static com.google.common.base.Throwables.propagate;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.MISSING_STORED_FIXITY;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.SUCCESS;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -34,7 +29,6 @@ import java.util.concurrent.TimeoutException;
 import javax.jcr.Property;
 
 import org.fcrepo.kernel.impl.services.ServiceHelpers;
-import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.BinaryKey;
@@ -61,7 +55,7 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     }
 
     @Override
-    public Collection<FixityResult> checkFixity(final URI checksum, final long size) {
+    public Collection<FixityResult> checkFixity(final String algorithm) {
         final BinaryKey key = binaryKey();
         final ImmutableSet.Builder<FixityResult> fixityResults = new ImmutableSet.Builder<>();
 
@@ -69,7 +63,7 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
             final String dataKey = InfinispanUtils.dataKeyFrom((InfinispanBinaryStore)store(), key);
             final ChunkBinaryMetadata metadata = InfinispanUtils.getMetadata((InfinispanBinaryStore)store(), key);
 
-            final DistributedFixityCheck task = new DistributedFixityCheck(dataKey, metadata.getChunkSize(),
+            final DistributedFixityCheck task = new DistributedFixityCheck(dataKey, algorithm, metadata.getChunkSize(),
                     metadata.getLength());
 
             final List<Future<Collection<FixityResult>>> futures
@@ -82,9 +76,6 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
                     try {
                         final Collection<FixityResult> result = future.get(100, MILLISECONDS);
                         iterator.remove();
-                        for (final FixityResult fixityResult : result) {
-                            setFixityStatus(fixityResult, size, checksum);
-                        }
 
                         fixityResults.addAll(result);
                     } catch (final TimeoutException e) {
@@ -100,22 +91,5 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
 
     private DistributedExecutorService clusterExecutor() {
         return ServiceHelpers.getClusterExecutor((InfinispanBinaryStore)store());
-    }
-    private static void setFixityStatus(final FixityResult result, final long dsSize, final URI dsChecksum) {
-        if (dsChecksum.equals(ContentDigest.missingChecksum()) || dsSize == -1L) {
-            result.getStatus().add(MISSING_STORED_FIXITY);
-        }
-
-        if (!result.matches(dsChecksum)) {
-            result.getStatus().add(BAD_CHECKSUM);
-        }
-
-        if (!result.matches(dsSize)) {
-            result.getStatus().add(BAD_SIZE);
-        }
-
-        if (result.matches(dsSize, dsChecksum)) {
-            result.getStatus().add(SUCCESS);
-        }
     }
 }

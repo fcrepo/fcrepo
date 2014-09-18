@@ -48,6 +48,7 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
     private static final long serialVersionUID = 1L;
 
     private final String dataKey;
+    private final String digest;
     private final int chunkSize;
     private final long length;
     private Cache<String, byte[]> cache;
@@ -56,8 +57,9 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
      *
      * @param dataKey
      */
-    public DistributedFixityCheck(final String dataKey, final int chunkSize, final long length) {
+    public DistributedFixityCheck(final String dataKey, final String digest, final int chunkSize, final long length) {
         this.dataKey = dataKey;
+        this.digest = digest;
         this.chunkSize = chunkSize;
         this.length = length;
     }
@@ -67,8 +69,6 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
         final ImmutableSet.Builder<FixityResult> fixityResults = new ImmutableSet.Builder<>();
 
         for (final CacheLoader<String, byte[]> store : stores()) {
-
-            final String digest = ContentDigest.getAlgorithm(new URI("urn:sha1"));
 
             try (final InputStream cacheLoaderChunkInputStream = new CacheLoaderChunkInputStream(
                     store, dataKey, chunkSize, length);

@@ -16,7 +16,6 @@
 package org.fcrepo.integration.kernel.impl;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.jgroups.util.Util.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -222,7 +221,9 @@ public class DatastreamImplIT extends AbstractIT {
                 datastreamService.getDatastream(session, "/testLLObject/"
                         + "testRepositoryContent");
 
-        final Collection<FixityResult> fixityResults = ds.getFixity(repo, ds.getContentDigest(), ds.getContentSize());
+
+        final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
+        final Collection<FixityResult> fixityResults = ds.getFixity(repo, algorithm);
 
         assertNotEquals(0, fixityResults.size());
 
@@ -249,8 +250,9 @@ public class DatastreamImplIT extends AbstractIT {
                 datastreamService.getDatastream(session, "/testLLObject/"
                         + "testMemoryContent");
 
-        final Collection<FixityResult> fixityResults = ds.getFixity(repo, ds.getContentDigest(), ds.getContentSize());
 
+        final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
+        final Collection<FixityResult> fixityResults = ds.getFixity(repo, algorithm);
         assertNotEquals(0, fixityResults.size());
 
         for (final FixityResult fixityResult : fixityResults) {
@@ -277,14 +279,13 @@ public class DatastreamImplIT extends AbstractIT {
         final Datastream ds =
                 datastreamService.getDatastream(session, "/testLLObject/testRandomContent");
 
-        final Collection<FixityResult> fixityResults = ds.getFixity(repo, ds.getContentDigest(), ds.getContentSize());
+        final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
+        final Collection<FixityResult> fixityResults = ds.getFixity(repo, algorithm);
 
         assertNotEquals(0, fixityResults.size());
 
         for (final FixityResult fixityResult : fixityResults) {
-            assertFalse(fixityResult.isSuccess());
-            assertTrue(fixityResult.getStatus().contains(
-                    FixityResult.FixityState.MISSING_STORED_FIXITY));
+            assertFalse(fixityResult.matches(ds.getContentSize(), ds.getContentDigest()));
             Util.assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
                     fixityResult.getComputedChecksum().toString());
         }

@@ -85,7 +85,12 @@ public interface Datastream extends FedoraResource {
      */
     String getFilename();
 
+    /**
+     * Get the fixity of this datastream in a given repository's binary store.
+     * @param repo
+     * @param algorithm the algorithm to use to calculate the checksum
+     * @return
+     */
     Collection<FixityResult> getFixity(Repository repo,
-                                       URI dsChecksum,
-                                       long dsSize);
+                                       String algorithm);
 }

@@ -17,7 +17,6 @@ package org.fcrepo.kernel.services;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -27,7 +26,6 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 /**
@@ -92,15 +90,5 @@ public interface DatastreamService extends Service {
      * @throws RepositoryException
      */
     RdfStream getFixityResultsModel(IdentifierTranslator subjects, Datastream datastream);
-
-    /**
-     * Run the fixity check on the datastream and attempt to automatically
-     * correct failures if additional copies of the bitstream are available
-     *
-     * @param datastream
-     * @return results
-     * @throws RepositoryException
-     */
-    Collection<FixityResult> runFixityAndFixProblems(Datastream datastream) throws RepositoryException;
 
 }

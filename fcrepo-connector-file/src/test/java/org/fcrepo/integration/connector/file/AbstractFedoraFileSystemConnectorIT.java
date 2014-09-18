@@ -277,7 +277,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results = ds.getFixity(repo, calculatedChecksum, file.length());
+        final Collection<FixityResult> results = ds.getFixity(repo, SHA_1.toString());
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());
@@ -285,7 +285,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final Iterator<FixityResult> resultIterator = results.iterator();
         while (resultIterator.hasNext()) {
             final FixityResult result = resultIterator.next();
-            assertTrue(result.isSuccess());
+            assertTrue(result.matches(file.length(), calculatedChecksum));
         }
         return calculatedChecksum.toString();
     }

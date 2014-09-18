@@ -37,6 +37,7 @@ import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyOriginalName;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -206,8 +207,8 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public RdfStream getJcrTriples(final Node node,
-            final Iterable<FixityResult> blobs) throws RepositoryException {
-        return new FixityRdfContext(node, graphSubjects, blobs);
+            final Iterable<FixityResult> blobs, final URI digest, final long size) throws RepositoryException {
+        return new FixityRdfContext(node, graphSubjects, blobs, digest, size);
     }
 
     /**

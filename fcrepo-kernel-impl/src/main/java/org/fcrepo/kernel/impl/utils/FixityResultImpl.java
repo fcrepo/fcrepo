@@ -35,20 +35,6 @@ import java.util.Set;
 public class FixityResultImpl implements FixityResult {
 
     /**
-     * This is a little weird here, and is vestigal from when
-     * this was a JAX-B model as well.
-     *
-     * The "state" of the fixity object is one of:
-     * - SUCCESS: the fixity check was declared successful
-     * - BAD_CHECKSUM and/or BAD_SIZE: either the checksum or the size of the
-     *       bitstream didn't match the stored size
-     * - REPAIRED and BAD_*: the checksum or size failed to match, but it
-     *       was automatically recovered from a different copy
-     */
-    private final Set<FixityState> status = EnumSet.noneOf(FixityState.class);
-
-
-    /**
      * the size computed by the fixity check
      * @todo make this private
      */
@@ -160,27 +146,26 @@ public class FixityResultImpl implements FixityResult {
     }
 
     /**
-     * Was the fixity declared a success
-     * @return true if the fixity check was successful
-     */
-    @Override
-    public boolean isSuccess() {
-        return status.contains(FixityState.SUCCESS);
-    }
-
-    /**
-     * Mark the fixity result as been automatically repaired
-     */
-    @Override
-    public void setRepaired() {
-        status.add(FixityState.REPAIRED);
-    }
-
-    /**
      * @return the status
      */
     @Override
-    public Set<FixityState> getStatus() {
+    public Set<FixityState> getStatus(final long size, final URI checksum) {
+
+        final Set<FixityState> status = EnumSet.noneOf(FixityState.class);
+
+
+        if (matches(size, checksum)) {
+            status.add(FixityState.SUCCESS);
+        } else {
+            if (!matches(size)) {
+                status.add(FixityState.BAD_SIZE);
+            }
+
+            if (!matches(checksum)) {
+                status.add(FixityState.BAD_CHECKSUM);
+            }
+        }
+
         return status;
     }
 

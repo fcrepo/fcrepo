@@ -40,8 +40,6 @@ import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator.RESOURCE_NAMESPACE;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyName;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -313,13 +311,11 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         final String testFixityUri = "http://abc";
         final FixityResult mockResult =
             new FixityResultImpl(mockCacheEntry, 123, new URI(testFixityUri));
-        mockResult.getStatus().add(BAD_CHECKSUM);
-        mockResult.getStatus().add(BAD_SIZE);
 
         final List<FixityResult> mockBlobs = asList(mockResult);
 
         final Model fixityResultsModel =
-            testObj.getJcrTriples(mockNode, mockBlobs).asModel();
+            testObj.getJcrTriples(mockNode, mockBlobs, new URI(testFixityUri), 0L).asModel();
 
         logRDF(fixityResultsModel);
         assertTrue(fixityResultsModel.contains(createResource(RESOURCE_NAMESPACE + "test/jcr"),

@@ -19,6 +19,7 @@ import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
+import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
 
 import java.io.ByteArrayInputStream;
 import java.net.URL;
@@ -141,7 +142,7 @@ public class TiffStoragePolicyStorageIT {
 
         final Datastream datastream = datastreamService.asDatastream(node);
 
-        Collection<FixityResult> fixity = datastream.getFixity(repo, null, 0L);
+        Collection<FixityResult> fixity = datastream.getFixity(repo, SHA_1.toString());
 
         assertNotEquals(0, fixity.size());
 
@@ -151,7 +152,7 @@ public class TiffStoragePolicyStorageIT {
 
         final Datastream tiffDatastream = datastreamService.asDatastream(tiffNode);
 
-        fixity = tiffDatastream.getFixity(repo, null, 0L);
+        fixity = tiffDatastream.getFixity(repo, SHA_1.toString());
 
         assertNotEquals(0, fixity.size());
 
