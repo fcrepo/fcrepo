@@ -22,6 +22,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.sparql.core.DatasetGraphFactory.createMem;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
@@ -29,7 +30,7 @@ import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.RdfLexicon.IS_IN_FORMAT;
+import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
@@ -304,9 +305,10 @@ public class ViewHelpersTest {
         final Node formatRDF = createLiteral(REPOSITORY_NAMESPACE + serialKey);
         final Node subject = createLiteral("xyz");
         final DatasetGraph mem = createMem();
+        final Property dcFormat = createProperty(DC_NAMESPACE + "format");
 
-        mem.add(createAnon(), formatRDF, createURI(RDFS_LABEL.toString()), createLiteral(serialKey));
-        mem.add(createAnon(), subject, createURI(IS_IN_FORMAT.toString()), formatRDF);
+        mem.add(createAnon(), formatRDF, RDFS_LABEL.asNode(), createLiteral(serialKey));
+        mem.add(createAnon(), subject, dcFormat.asNode(), formatRDF);
 
         assertEquals("jcr/xml", testObj.getSerializationTitle(mem, subject));
     }

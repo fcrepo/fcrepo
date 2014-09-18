@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.responses;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
@@ -26,7 +27,7 @@ import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.IS_IN_FORMAT;
+import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.text.SimpleDateFormat;
@@ -226,13 +227,6 @@ public class ViewHelpers {
         }
 
         if (subject.isURI()) {
-            final String uri = subject.getURI();
-            final String target = "fcr:export?format=";
-            if (uri.contains(target)) {
-                // Return the value of the query param "format".
-                return uri.substring(uri.indexOf(target) + target.length());
-            }
-
             return subject.getURI();
         } else if (subject.isBlank()) {
             return subject.getBlankNodeLabel();
@@ -250,11 +244,12 @@ public class ViewHelpers {
      * @return the label for the serialization format
      */
     public String getSerializationTitle(final DatasetGraph dataset, final Node subject) {
-        final Iterator<Quad> formatRDFs = getObjects(dataset, subject, IS_IN_FORMAT);
+        final Property dcFormat = createProperty(DC_NAMESPACE + "format");
+        final Iterator<Quad> formatRDFs = getObjects(dataset, subject, dcFormat);
         if (formatRDFs.hasNext()) {
             return getObjectTitle(dataset, formatRDFs.next().getObject());
         }
-        return getObjectTitle(dataset, subject);
+        return "";
     }
 
     /**
