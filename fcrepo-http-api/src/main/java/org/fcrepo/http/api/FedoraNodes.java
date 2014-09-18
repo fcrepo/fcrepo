@@ -702,7 +702,7 @@ public class FedoraNodes extends AbstractResource {
                 result = objectService.createObject(session, path);
                 break;
             case FEDORA_DATASTREAM:
-                result = datastreamService.createDatastream(session, path);
+                result = datastreamService.getDatastream(session, path);
                 break;
             default:
                 throw new WebApplicationException(clientError().entity(

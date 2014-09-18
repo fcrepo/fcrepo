@@ -290,7 +290,7 @@ public class FedoraNodesTest {
         when(mockPidMinter.mintPid()).thenReturn("a");
         final Node contentNode = mock(Node.class);
         final Datastream mockDatastream = mock(Datastream.class);
-        when(mockDatastreams.createDatastream(mockSession, path)).thenReturn(mockDatastream);
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDatastream);
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         when(mockDatastream.getContentNode()).thenReturn(contentNode);
@@ -309,7 +309,7 @@ public class FedoraNodesTest {
                 MediaType.valueOf("image/tiff"), null, mockResponse, getUriInfoImpl(), mockStream);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(mockSession, path);
+        verify(mockDatastreams).getDatastream(mockSession, path);
         verify(mockSession).save();
     }
 

@@ -37,15 +37,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 public interface DatastreamService extends Service {
 
     /**
-     * Create a stub datastream without content
-     * @param session
-     * @param dsPath
-     * @return created datastream
-     * @throws RepositoryException
-     */
-    Datastream createDatastream(Session session, String dsPath);
-
-    /**
      * Create a new Datastream node in the repository
      * 
      * @param session

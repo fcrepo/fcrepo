@@ -73,17 +73,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     private static final Logger LOGGER = getLogger(DatastreamService.class);
 
     /**
-     * Create a stub datastream without content
-     * @param session
-     * @param dsPath
-     * @return created datastream
-     * @throws RepositoryException
-     */
-    @Override
-    public Datastream createDatastream(final Session session, final String dsPath) {
-        return new DatastreamImpl(session, dsPath);
-    }
-    /**
      * Create a new Datastream node in the JCR store
      *
      * @param session the jcr session to use
@@ -126,7 +115,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
                                      final URI checksum)
         throws InvalidChecksumException {
 
-        final Datastream ds = createDatastream(session, dsPath);
+        final Datastream ds = getDatastream(session, dsPath);
         ds.setContent(content, contentType, checksum,
                          originalFileName, getStoragePolicyDecisionPoint());
         return ds;
