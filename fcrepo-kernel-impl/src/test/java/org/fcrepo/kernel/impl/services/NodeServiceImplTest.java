@@ -24,6 +24,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.InputStream;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
@@ -31,7 +32,9 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeIterator;
 
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.services.NodeService;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,6 +77,13 @@ public class NodeServiceImplTest {
 
     private NodeService testObj;
 
+    @Mock
+    private NamespaceRegistry mockNameReg;
+
+    final private static String MOCK_PREFIX = "valid_ns";
+
+    final private static String MOCK_URI = "http://example.org";
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -84,6 +94,12 @@ public class NodeServiceImplTest {
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.getAllNodeTypes()).thenReturn(mockNTI);
         when(mockEmptyIterator.hasNext()).thenReturn(false);
+        final String[] mockPrefixes = { MOCK_PREFIX };
+        mockNameReg = mock(NamespaceRegistry.class);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
+        when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
+        when(mockNameReg.getURI(MOCK_PREFIX)).thenReturn(MOCK_URI);
+
     }
 
     @Test
@@ -120,6 +136,13 @@ public class NodeServiceImplTest {
         when(mockSession.nodeExists(existsPath)).thenReturn(true);
         assertEquals(true, testObj.exists(mockSession, existsPath));
         assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
+    }
+
+    @Test(expected = FedoraInvalidNamespaceException.class)
+    public void testInvalidPath() throws RepositoryException {
+        final String badPath = "/foo/bad_ns:bar";
+        when(mockNameReg.getURI("bad_ns")).thenThrow(new FedoraInvalidNamespaceException("Invalid namespace (bad_ns)"));
+        testObj.exists(mockSession, badPath);
     }
 
     @Test
