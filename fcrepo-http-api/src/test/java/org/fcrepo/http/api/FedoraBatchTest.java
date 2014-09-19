@@ -62,12 +62,14 @@ import javax.ws.rs.core.Response;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
 
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -223,22 +225,25 @@ public class FedoraBatchTest {
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
                 mockNode);
 
-        when(mockDatastreams.createDatastream(any(Session.class),
-                                                    eq("/{}" + pid + "/{}" + dsId1), anyString(), eq("testDs1.txt"),
-                                                    any(InputStream.class), eq((URI)null))).thenReturn(mockDatastream);
+        when(mockDatastreams.getDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId1)))
+                .thenReturn(mockDatastream);
+        final Datastream mockDatastream2 = mock(Datastream.class);
+        when(mockDatastreams.getDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId2)))
+                .thenReturn(mockDatastream2);
 
-        when(mockDatastreams.createDatastream(any(Session.class),
-                                                 eq("/{}" + pid + "/{}" + dsId2), anyString(), eq("testDs2.txt"),
-                                                 any(InputStream.class), eq((URI) null))).thenReturn(mockDatastream);
+        final FedoraBinary mockBinary1 = mock(FedoraBinary.class);
+        final FedoraBinary mockBinary2 = mock(FedoraBinary.class);
+        when(mockDatastream.getBinary()).thenReturn(mockBinary1);
+        when(mockDatastream2.getBinary()).thenReturn(mockBinary2);
+
         final Response actual =
             testObj.batchModify(createPathList(pid), multipart);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(any(Session.class),
-                                                    eq("/{}" + pid + "/{}" + dsId1), anyString(), eq("testDs1.txt"),
-                                                    any(InputStream.class), eq((URI) null));
-        verify(mockDatastreams).createDatastream(any(Session.class),
-                                                    eq("/{}" + pid + "/{}" + dsId2), anyString(), eq("testDs2.txt"),
-                                                    any(InputStream.class), eq((URI) null));
+        verify(mockBinary1).setContent(any(InputStream.class), anyString(), eq((URI)null), eq("testDs1.txt"),
+                any(StoragePolicyDecisionPoint.class));
+        verify(mockBinary2).setContent(any(InputStream.class), anyString(), eq((URI)null), eq("testDs2.txt"),
+                any(StoragePolicyDecisionPoint.class));
+
         verify(mockSession).save();
     }
 
@@ -263,18 +268,18 @@ public class FedoraBatchTest {
 
         multipart.bodyPart(part);
 
-        when(mockDatastreams.createDatastream(any(Session.class),
-                                                    eq("/{}" + pid + "/{}xyz"), anyString(), eq("filename.txt"),
-                                                    any(InputStream.class), eq((URI) null))).thenReturn(mockDatastream);
+        when(mockDatastreams.getDatastream(any(Session.class), eq("/{}" + pid + "/{}xyz"))).thenReturn(mockDatastream);
+
+        final FedoraBinary mockBinary = mock(FedoraBinary.class);
+        when(mockDatastream.getBinary()).thenReturn(mockBinary);
 
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(mockNode);
         final Response actual =
             testObj.batchModify(createPathList(pid), multipart);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).createDatastream(any(Session.class),
-                                                    eq("/{}" + pid + "/{}xyz"), anyString(), eq("filename.txt"),
-                                                    any(InputStream.class), eq((URI) null));
+        verify(mockBinary).setContent(any(InputStream.class), eq("text/turtle"), eq((URI) null), eq("filename.txt"),
+                any(StoragePolicyDecisionPoint.class));
         verify(mockSession).save();
     }
 
@@ -341,7 +346,7 @@ public class FedoraBatchTest {
                                          mockRequest);
         final MultiPart multipart = (MultiPart) resp.getEntity();
 
-        verify(mockDs).getContent();
+        verify(mockDs.getBinary()).getContent();
         verify(mockSession, never()).save();
         assertEquals(1, multipart.getBodyParts().size());
         try (final InputStream actualContent =
@@ -374,7 +379,7 @@ public class FedoraBatchTest {
         final Response resp =
             testObj.getBinaryContents(createPathList(pid), asList(dsId),
                                          mockRequest);
-        verify(mockDs, never()).getContent();
+        verify(mockDs.getBinary(), never()).getContent();
         verify(mockSession, never()).save();
         assertEquals(NOT_MODIFIED.getStatusCode(), resp.getStatus());
     }

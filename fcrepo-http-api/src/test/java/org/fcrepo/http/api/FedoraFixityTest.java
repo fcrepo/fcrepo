@@ -20,9 +20,8 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -33,6 +32,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -75,19 +75,22 @@ public class FedoraFixityTest {
 
     @Test
     public void testGetDatastreamFixity() throws RepositoryException {
+        final RdfStream expected = new RdfStream();
+
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/objects/" + pid + "/testDS";
         final String dsId = "testDS";
         final Datastream mockDs = mockDatastream(pid, dsId, null);
+
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockDs.getNode()).thenReturn(mockNode);
-        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(
-                mockDs);
-        when(mockDatastreams.getFixityResultsModel(any(IdentifierTranslator.class),
-                eq(mockDs))).thenReturn(new RdfStream());
-        testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"),
+        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
+        when(mockDatastreams.getFixityResultsModel(any(IdentifierTranslator.class), any(FedoraBinary.class)))
+                .thenReturn(expected);
+
+        final RdfStream actual = testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"),
                 mockRequest, uriInfo);
-        verify(mockDatastreams).getFixityResultsModel(any(IdentifierTranslator.class),
-                eq(mockDs));
+
+        assertEquals(expected, actual);
     }
 }

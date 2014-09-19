@@ -21,7 +21,7 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
 
 import javax.jcr.Binary;
@@ -36,6 +36,7 @@ import javax.ws.rs.core.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Date;
 
 import static javax.ws.rs.core.Response.ok;
@@ -61,7 +62,7 @@ public abstract class ContentExposingResource extends AbstractResource {
      * A helper method that does most of the work associated with processing a request
      * for content (or a range of the content) into a Response
      */
-    protected Response getDatastreamContentResponse(final Datastream ds,
+    protected Response getDatastreamContentResponse(final FedoraBinary binary,
                                                     final String rangeValue,
                                                     final Request request,
                                                     final HttpServletResponse servletResponse,
@@ -73,7 +74,7 @@ public abstract class ContentExposingResource extends AbstractResource {
         // the jcr:content node digest. The etag is only included if we are not within a transaction.
         final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
         if (txId == null) {
-            checkCacheControlHeaders(request, servletResponse, ds, session);
+            checkCacheControlHeaders(request, servletResponse, binary, session);
         }
         final CacheControl cc = new CacheControl();
         cc.setMaxAge(0);
@@ -84,7 +85,7 @@ public abstract class ContentExposingResource extends AbstractResource {
 
             final Range range = Range.convert(rangeValue);
 
-            final long contentSize = ds.getContentSize();
+            final long contentSize = binary.getContentSize();
 
             final String endAsString;
 
@@ -113,7 +114,7 @@ public abstract class ContentExposingResource extends AbstractResource {
                     // Small size range content retrieval use javax.jcr.Binary to improve performance
                     final byte[] buf = new byte[(int) bufSize];
 
-                    final Binary binaryContent = ds.getBinaryContent();
+                    final Binary binaryContent = binary.getBinaryContent();
                     binaryContent.read(buf, rangeStart);
                     binaryContent.dispose();
 
@@ -122,7 +123,7 @@ public abstract class ContentExposingResource extends AbstractResource {
                 } else {
                     // For large range content retrieval, go with the InputStream class to balance
                     // the memory usage, though this is a rare case in range content retrieval.
-                    final InputStream content = ds.getContent();
+                    final InputStream content = binary.getContent();
                     final RangeRequestInputStream rangeInputStream =
                             new RangeRequestInputStream(content, range.start(), range.size());
 
@@ -132,19 +133,19 @@ public abstract class ContentExposingResource extends AbstractResource {
             }
 
         } else {
-            final InputStream content = ds.getContent();
+            final InputStream content = binary.getContent();
             builder = ok(content);
         }
 
         final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
-                .fileName(ds.getFilename())
-                .creationDate(ds.getCreatedDate())
-                .modificationDate(ds.getLastModifiedDate())
-                .size(ds.getContentSize())
+                .fileName(binary.getFilename())
+                .creationDate(binary.getCreatedDate())
+                .modificationDate(binary.getLastModifiedDate())
+                .size(binary.getContentSize())
                 .build();
 
-        return builder.type(ds.getMimeType())
-                .header("Link", "<" + subjects.getSubject(ds.getNode().getPath()) + ">;rel=\"describedby\"")
+        return builder.type(binary.getMimeType())
+                .header("Link", "<" + subjects.getSubject(binary.getDescription().getPath()) + ">;rel=\"describedby\"")
                 .header("Link", "<" + NON_RDF_SOURCE + ">;rel=\"type\"")
                 .header("Accept-Ranges", "bytes")
                 .header("Content-Disposition", contentDisposition)
@@ -164,7 +165,7 @@ public abstract class ContentExposingResource extends AbstractResource {
      */
     protected static void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
-                                                   final Datastream resource,
+                                                   final FedoraBinary resource,
                                                    final Session session) throws RepositoryException {
 
         final EntityTag etag = new EntityTag(resource.getContentDigest().toString());
@@ -198,7 +199,7 @@ public abstract class ContentExposingResource extends AbstractResource {
      * @throws RepositoryException
      */
     protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
-                                                 final Datastream resource,
+                                                 final FedoraBinary resource,
                                                  final Session session) {
 
         // Do not add caching headers if in a transaction
@@ -207,11 +208,14 @@ public abstract class ContentExposingResource extends AbstractResource {
             return;
         }
 
-        final EntityTag etag = new EntityTag(resource.getContentDigest().toString());
         final Date date = resource.getLastModifiedDate();
 
-        if (!etag.getValue().isEmpty()) {
-            servletResponse.addHeader("ETag", etag.toString());
+        final URI contentDigest = resource.getContentDigest();
+        if (contentDigest != null) {
+            final EntityTag etag = new EntityTag(contentDigest.toString());
+            if (!etag.getValue().isEmpty()) {
+                servletResponse.addHeader("ETag", etag.toString());
+            }
         }
 
         if (date != null) {

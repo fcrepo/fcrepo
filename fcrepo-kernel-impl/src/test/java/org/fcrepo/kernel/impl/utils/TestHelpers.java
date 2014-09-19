@@ -51,16 +51,15 @@ public abstract class TestHelpers {
     private static final SecureRandom GARBAGE_GENERATOR = new SecureRandom(
             "G4RbAG3".getBytes());
 
-    public static Node getContentNodeMock(final int size) {
-        return getContentNodeMock(randomData(size));
+    public static Node getContentNodeMock(final Node mock, final int size) {
+        return getContentNodeMock(mock, randomData(size));
     }
 
-    public static Node getContentNodeMock(final String content) {
-        return getContentNodeMock(content.getBytes());
+    public static Node getContentNodeMock(final Node mock, final String content) {
+        return getContentNodeMock(mock, content.getBytes());
     }
 
-    public static Node getContentNodeMock(final byte[] content) {
-        final Node mock = mock(Node.class);
+    public static Node getContentNodeMock(final Node mock, final byte[] content) {
         final long size = content.length;
         final String digest = checksumString(content);
         final String digestType = "SHA-1";

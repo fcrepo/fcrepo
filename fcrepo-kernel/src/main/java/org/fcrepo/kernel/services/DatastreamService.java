@@ -15,17 +15,14 @@
  */
 package org.fcrepo.kernel.services;
 
-import java.io.InputStream;
-import java.net.URI;
-
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 /**
@@ -35,43 +32,20 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 public interface DatastreamService extends Service {
 
     /**
-     * Create a new Datastream node in the repository
-     * 
-     * @param session
-     * @param dsPath the absolute path to put the datastream
-     * @param contentType the mime-type for the requestBodyStream
-     * @param originalFileName the original file name for the input stream
-     * @param requestBodyStream binary payload for the datastream
-     * @return created datastream
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     */
-    Datastream createDatastream(Session session, String dsPath, String contentType, String originalFileName,
-            InputStream requestBodyStream) throws RepositoryException, InvalidChecksumException;
-
-    /**
-     * Create a new Datastream node in the repository
-     *
-     * @param session
-     * @param dsPath the absolute path to put the datastream
-     * @param contentType the mime-type for the requestBodyStream
-     * @param originalFileName the original file name for the input stream
-     * @param requestBodyStream binary payload for the datastream
-     * @param checksum the digest for the binary payload (as urn:sha1:xyz) @return
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     */
-    Datastream createDatastream(Session session, String dsPath, String contentType, String originalFileName,
-            InputStream requestBodyStream, URI checksum) throws InvalidChecksumException;
-
-    /**
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param path jcr path to the datastream
      * @return retrieved Datastream
-     * @throws RepositoryException
      */
     Datastream getDatastream(Session session, String path);
+
+    /**
+     * Retrieve a Binary instance by path
+     * @param session
+     * @param path
+     * @return
+     */
+    FedoraBinary getBinary(Session session, String path);
 
     /**
      * Retrieve a Datastream instance by pid and dsid
@@ -82,13 +56,28 @@ public interface DatastreamService extends Service {
     Datastream asDatastream(Node node) throws ResourceTypeException;
 
     /**
+     * Retrieve a Binary instance from a node
+     *
+     * @param node datastream node
+     * @return node as a Datastream
+     */
+    FedoraBinary asBinary(Node node);
+
+
+    /**
      * Get the fixity results for the datastream as a RDF Dataset
      *
      * @param subjects
      * @param datastream
      * @return fixity results for datastream
-     * @throws RepositoryException
      */
-    RdfStream getFixityResultsModel(IdentifierTranslator subjects, Datastream datastream);
+    RdfStream getFixityResultsModel(IdentifierTranslator subjects, FedoraBinary datastream);
+
+    /**
+     * Get the active storage policy decision point
+     * TODO: this should move to a different service?
+     * @return
+     */
+    StoragePolicyDecisionPoint getStoragePolicyDecisionPoint();
 
 }

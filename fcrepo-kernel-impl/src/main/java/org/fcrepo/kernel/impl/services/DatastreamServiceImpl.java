@@ -18,7 +18,6 @@ package org.fcrepo.kernel.impl.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.ImmutableSet.copyOf;
 
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
@@ -28,9 +27,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.DatastreamImpl;
+import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -65,53 +65,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
             name(Datastream.class, "fixity-check-time"));
 
     /**
-     * Create a new Datastream node in the JCR store
-     *
-     * @param session the jcr session to use
-     * @param dsPath the absolute path to put the datastream
-     * @param contentType the mime-type for the requestBodyStream
-     * @param originalFileName the original file name for the input stream
-     * @param requestBodyStream binary payload for the datastream
-     * @return created datastream
-     * @throws InvalidChecksumException
-     */
-    @Override
-    public Datastream createDatastream(final Session session,
-            final String dsPath, final String contentType,
-            final String originalFileName,
-            final InputStream requestBodyStream) throws InvalidChecksumException {
-
-        return createDatastream(session, dsPath, contentType,
-                                       originalFileName, requestBodyStream, null);
-    }
-
-    /**
-     * Create a new Datastream node in the JCR store
-     *
-     *
-     * @param session the jcr session to use
-     * @param dsPath the absolute path to put the datastream
-     * @param contentType the mime-type for the requestBodyStream
-     * @param originalFileName the original file name for the input stream
-     * @param content binary payload for the datastream
-     * @param checksum the digest for the binary payload (as urn:sha1:xyz)   @return
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     */
-    @Override
-    public Datastream createDatastream(final Session session,
-                                     final String dsPath, final String contentType,
-                                     final String originalFileName, final InputStream content,
-                                     final URI checksum)
-        throws InvalidChecksumException {
-
-        final Datastream ds = getDatastream(session, dsPath);
-        ds.setContent(content, contentType, checksum,
-                         originalFileName, getStoragePolicyDecisionPoint());
-        return ds;
-    }
-
-    /**
      * Retrieve a Datastream instance by pid and dsid
      *
      * @param path jcr path to the datastream
@@ -121,6 +74,17 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     @Override
     public Datastream getDatastream(final Session session, final String path) {
         return new DatastreamImpl(session, path);
+    }
+
+    /**
+     * Get the resource at the given path as a binary
+     * @param session
+     * @param path
+     * @return
+     */
+    @Override
+    public FedoraBinary getBinary(final Session session, final String path) {
+        return getDatastream(session, path).getBinary();
     }
 
     /**
@@ -135,27 +99,39 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     }
 
     /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param node datastream node
+     * @return node as datastream
+     */
+    @Override
+    public FedoraBinary asBinary(final Node node) {
+        return new FedoraBinaryImpl(node);
+    }
+
+
+    /**
      * Get the fixity results for the datastream as a RDF Dataset
      *
      * @param subjects
-     * @param datastream
+     * @param binary
      * @return fixity results
      * @throws RepositoryException
      */
     @Override
     public RdfStream getFixityResultsModel(final IdentifierTranslator subjects,
-            final Datastream datastream) {
+            final FedoraBinary binary) {
         try {
 
-            final URI digestUri = datastream.getContentDigest();
-            final long size = datastream.getContentSize();
+            final URI digestUri = binary.getContentDigest();
+            final long size = binary.getContentSize();
             final String algorithm = ContentDigest.getAlgorithm(digestUri);
 
-            final Collection<FixityResult> blobs = runFixity(datastream, algorithm);
+            final Collection<FixityResult> blobs = runFixity(binary, algorithm);
 
-            return JcrRdfTools.withContext(subjects,datastream.getNode().getSession())
-                    .getJcrTriples(datastream.getNode(), blobs, digestUri, size)
-                    .topic(subjects.getSubject(datastream.getPath())
+            return JcrRdfTools.withContext(subjects,binary.getNode().getSession())
+                    .getJcrTriples(binary.getNode(), blobs, digestUri, size)
+                    .topic(subjects.getSubject(binary.getPath())
                             .asNode());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -166,11 +142,11 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * Run the fixity check on the datastream and attempt to automatically
      * correct failures if additional copies of the bitstream are available
      *
-     * @param datastream
+     * @param binary
      * @return results
      * @throws RepositoryException
      */
-    private Collection<FixityResult> runFixity(final Datastream datastream, final String algorithm) {
+    private Collection<FixityResult> runFixity(final FedoraBinary binary, final String algorithm) {
 
         Set<FixityResult> fixityResults;
 
@@ -180,7 +156,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
         try {
             fixityResults =
-                    copyOf(datastream.getFixity(repo, algorithm));
+                    copyOf(binary.getFixity(repo, algorithm));
 
         } finally {
             context.stop();
@@ -204,7 +180,8 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      *
      * @return a PolicyDecisionPoint
      */
-    private StoragePolicyDecisionPoint getStoragePolicyDecisionPoint() {
+    @Override
+    public StoragePolicyDecisionPoint getStoragePolicyDecisionPoint() {
 
         return storagePolicyDecisionPoint;
     }

@@ -36,11 +36,10 @@ import javax.jcr.nodetype.NodeType;
 
 import com.google.common.collect.ImmutableSet;
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.DatastreamService;
-import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
@@ -49,7 +48,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.ValueFactory;
 import org.modeshape.jcr.value.binary.StoredBinaryValue;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -127,38 +125,6 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testCreateDatastreamNode() throws Exception {
-        final String testPath = "/foo/bar";
-        final Property mockData = mock(Property.class);
-        final Binary mockBinary = mock(Binary.class);
-        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
-        when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { mockDsNodeType });
-        when(mockDsNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
-        when(mockData.getBinary()).thenReturn(mockBinary);
-
-        when(mockContent.setProperty(JCR_DATA, mockBinary))
-                .thenReturn(mockData);
-        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
-        final StoragePolicyDecisionPoint pdp = mock(StoragePolicyDecisionPoint.class);
-        when(pdp.evaluatePolicies(mockNode)).thenReturn(null);
-        ((DatastreamServiceImpl) testObj).setStoragePolicyDecisionPoint(pdp);
-        when(mockNode.getSession().getValueFactory()).thenReturn(
-                mockValueFactory);
-        when(
-                mockValueFactory.createBinary(any(InputStream.class),
-                        any(String.class))).thenReturn(mockBinary);
-
-        final Datastream actual =
-                testObj.createDatastream(mockSession, testPath,
-                        MOCK_CONTENT_TYPE, "xyz.jpg", mockIS);
-        assertEquals(mockNode, actual.getNode());
-
-        verify(mockContent).setProperty(JCR_DATA, mockBinary);
-        verify(mockContent).setProperty(PREMIS_FILE_NAME, "xyz.jpg");
-    }
-
-    @Test
     public void testGetDatastream() throws Exception {
         final String testPath = "/foo/bar";
         final NodeType mockNodeType = mock(NodeType.class);
@@ -183,22 +149,21 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         when(fixityResult.matches(any(Long.class), any(URI.class))).thenReturn(true);
         final ImmutableSet<FixityResult> fixityResults = ImmutableSet.of(fixityResult);
 
-        final Datastream mockDatastream = mock(Datastream.class);
+        final FedoraBinary mockFedoraBinary = mock(FedoraBinary.class);
 
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProperty);
         when(mockProperty.getBinary()).thenReturn(mockBinary);
 
-        when(mockDatastream.getContentNode()).thenReturn(mockContent);
-        when(mockDatastream.getNode()).thenReturn(mockNode);
-        when(mockDatastream.getContentDigest()).thenReturn(
+        when(mockFedoraBinary.getNode()).thenReturn(mockNode);
+        when(mockFedoraBinary.getContentDigest()).thenReturn(
                 new URI("urn:sha1:abc"));
 
         when(CacheEntryFactory.forProperty(mockRepository, mockProperty)).thenReturn(mockCacheEntry);
 
         when(mockCacheEntry.checkFixity(any(String.class))).thenReturn(fixityResults);
 
-        final RdfStream actual = testObj.getFixityResultsModel(mockSubjects, mockDatastream);
+        final RdfStream actual = testObj.getFixityResultsModel(mockSubjects, mockFedoraBinary);
 
         assertEquals("Got wrong topic of fixity results!", createResource("abc").asNode(), actual.topic());
     }

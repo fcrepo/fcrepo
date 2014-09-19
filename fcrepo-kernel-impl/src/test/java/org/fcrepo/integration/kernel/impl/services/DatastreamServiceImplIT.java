@@ -30,7 +30,7 @@ import javax.jcr.Session;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.integration.kernel.impl.AbstractIT;
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
@@ -56,9 +56,15 @@ public class DatastreamServiceImplIT extends AbstractIT {
     @Test
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
-        datastreamService.createDatastream(session, "/testDatastreamNode",
-                "application/octet-stream", null, new ByteArrayInputStream("asdf"
-                        .getBytes()));
+
+        datastreamService.getBinary(session, "/testDatastreamNode").setContent(
+                new ByteArrayInputStream("asdf".getBytes()),
+                "application/octet-stream",
+                null,
+                null,
+                null
+        );
+
         session.save();
         session.logout();
         session = repository.login();
@@ -72,10 +78,14 @@ public class DatastreamServiceImplIT extends AbstractIT {
     @Test
     public void testCreateDatastreamNodeWithfilename() throws Exception {
         Session session = repository.login();
-        datastreamService.createDatastream(session, "/testDatastreamNode",
-                                           "application/octet-stream",
-                                           "xyz.jpg",
-                                           new ByteArrayInputStream("asdf".getBytes()));
+        datastreamService.getBinary(session, "/testDatastreamNode").setContent(
+                new ByteArrayInputStream("asdf".getBytes()),
+                "application/octet-stream",
+                null,
+                "xyz.jpg",
+                null
+        );
+
         session.save();
         session.logout();
         session = repository.login();
@@ -91,17 +101,23 @@ public class DatastreamServiceImplIT extends AbstractIT {
         Session session = repository.login();
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
         objectService.createObject(session, "/testDatastreamServiceObject");
-        datastreamService.createDatastream(session,
-                "/testDatastreamServiceObject/" + "testDatastreamNode",
-                "application/octet-stream", null, is);
+
+        datastreamService.getBinary(session, "/testDatastreamServiceObject/" + "testDatastreamNode")
+                .setContent(
+                        is,
+                        "application/octet-stream",
+                        null,
+                        null,
+                        null
+                );
 
         session.save();
         session.logout();
         session = repository.login();
-        final Datastream ds =
-            datastreamService.getDatastream(session,
+        final FedoraBinary binary =
+            datastreamService.getBinary(session,
                     "/testDatastreamServiceObject/" + "testDatastreamNode");
-        assertEquals("asdf", IOUtils.toString(ds.getContent(), "UTF-8"));
+        assertEquals("asdf", IOUtils.toString(binary.getContent(), "UTF-8"));
         session.logout();
     }
 

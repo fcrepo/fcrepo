@@ -69,9 +69,15 @@ public class RepositoryServiceImplIT extends AbstractIT {
 
         final double originalSize = repositoryService.getRepositorySize();
 
-        datastreamService.createDatastream(session,
-                "testObjectServiceNode", "application/octet-stream",
-                null, new ByteArrayInputStream("asdf".getBytes()));
+
+        datastreamService.getBinary(session, "/testObjectServiceNode").setContent(
+                new ByteArrayInputStream("asdf".getBytes()),
+                "application/octet-stream",
+                null,
+                null,
+                null
+        );
+
         session.save();
         session.logout();
 
@@ -124,8 +130,14 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testBackupRepository() throws Exception {
         final Session session = repository.login();
 
-        datastreamService.createDatastream(session, "testObjectServiceNode0", "application/octet-stream", null,
-                new ByteArrayInputStream("asdfx".getBytes()));
+        datastreamService.getBinary(session, "/testObjectServiceNode0").setContent(
+                new ByteArrayInputStream("asdfx".getBytes()),
+                "application/octet-stream",
+                null,
+                null,
+                null
+        );
+
         session.save();
 
         final File backupDirectory = createTempDir();
@@ -140,8 +152,15 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testRestoreRepository() throws Exception {
         final Session session = repository.login();
 
-        datastreamService.createDatastream(session, "testObjectServiceNode1", "application/octet-stream", null,
-                new ByteArrayInputStream("asdfy".getBytes()));
+
+        datastreamService.getBinary(session, "/testObjectServiceNode1").setContent(
+                new ByteArrayInputStream("asdfy".getBytes()),
+                "application/octet-stream",
+                null,
+                null,
+                null
+        );
+
         session.save();
 
         final File backupDirectory = createTempDir();

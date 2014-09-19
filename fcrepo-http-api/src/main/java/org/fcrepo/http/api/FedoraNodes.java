@@ -105,6 +105,7 @@ import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -653,17 +654,16 @@ public class FedoraNodes extends AbstractResource {
                     final URI checksumURI = checksumURI(checksum);
                     final String originalFileName = originalFileName(contentDisposition);
 
-                    datastreamService.createDatastream(session,
-                            newObjectPath, contentTypeString, originalFileName, requestBodyStream, checksumURI);
-                    final URI contentLocation;
+                    final Datastream datastream = datastreamService.getDatastream(session, newObjectPath);
 
-                    try {
-                        contentLocation = new URI(
-                                idTranslator.getSubject(((Datastream) result).getContentNode().getPath()).getURI()
-                        );
-                    } catch (final RepositoryException e) {
-                        throw new RepositoryRuntimeException(e);
-                    }
+                    final FedoraBinary binary = datastream.getBinary();
+                    binary.setContent(requestBodyStream,
+                            contentTypeString,
+                            checksumURI,
+                            originalFileName,
+                            datastreamService.getStoragePolicyDecisionPoint());
+
+                    final URI contentLocation = new URI(idTranslator.getSubject(binary.getPath()).getURI());
 
                     response = created(contentLocation).entity(contentLocation.toString());
 

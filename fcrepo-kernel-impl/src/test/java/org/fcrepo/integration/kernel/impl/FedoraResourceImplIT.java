@@ -299,9 +299,13 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         objectService.createObject(session, "/testDatastreamGraphParent");
 
-        datastreamService.createDatastream(session, "/testDatastreamGraph",
-                "text/plain", null, new ByteArrayInputStream("123456789test123456789"
-                        .getBytes()));
+        datastreamService.getBinary(session, "/testDatastreamGraph").setContent(
+                new ByteArrayInputStream("123456789test123456789".getBytes()),
+                "text/plain",
+                null,
+                null,
+                null
+        );
 
         final FedoraResource object =
             nodeService.getObject(session, "/testDatastreamGraph");

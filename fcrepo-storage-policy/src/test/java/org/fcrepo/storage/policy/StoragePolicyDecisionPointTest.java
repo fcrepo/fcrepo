@@ -20,12 +20,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.Session;
 
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.services.policy.StoragePolicy;
@@ -64,18 +62,13 @@ public class StoragePolicyDecisionPointTest {
     @Test
     public void testDummyNode() throws Exception {
 
-        final Session mockSession = mock(Session.class);
-        final Node mockDsNode = mock(Node.class);
-
-        when(mockDsNode.getSession()).thenReturn(mockSession);
         final Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-dummy-type");
         final Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
                 mockProperty);
 
-        final String receivedHint = pt.evaluatePolicies(mockDsNode);
+        final String receivedHint = pt.evaluatePolicies(mockContentNode);
         assertThat("Received hint didn't match dummy hint!", receivedHint,
                 is(dummyHint));
     }
@@ -83,36 +76,26 @@ public class StoragePolicyDecisionPointTest {
     @Test
     public void testTiffNode() throws Exception {
 
-        final Session mockSession = mock(Session.class);
-        final Node mockDsNode = mock(Node.class);
-
-        when(mockDsNode.getSession()).thenReturn(mockSession);
         final Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/tiff");
         final Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
                 mockProperty);
 
-        final String receivedHint = pt.evaluatePolicies(mockDsNode);
+        final String receivedHint = pt.evaluatePolicies(mockContentNode);
         assertThat(receivedHint, is(tiffHint));
     }
 
     @Test
     public void testOtherNode() throws Exception {
 
-        final Session mockSession = mock(Session.class);
-        final Node mockDsNode = mock(Node.class);
-
-        when(mockDsNode.getSession()).thenReturn(mockSession);
         final Property mockProperty = mock(Property.class);
         when(mockProperty.getString()).thenReturn("image/x-other");
         final Node mockContentNode = mock(Node.class);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
         when(mockContentNode.getProperty(JCR_MIME_TYPE)).thenReturn(
                 mockProperty);
 
-        final String receivedHint = pt.evaluatePolicies(mockDsNode);
+        final String receivedHint = pt.evaluatePolicies(mockContentNode);
         assertNull(receivedHint);
     }
 

@@ -47,6 +47,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Calendar;
@@ -74,6 +75,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -291,10 +293,12 @@ public class FedoraNodesTest {
         final Node contentNode = mock(Node.class);
         final Datastream mockDatastream = mock(Datastream.class);
         when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDatastream);
+        final FedoraBinary mockBinary = mock(FedoraBinary.class);
+        when(mockDatastream.getBinary()).thenReturn(mockBinary);
+        when(mockBinary.getPath()).thenReturn(path + "/jcr:content");
         when(mockDatastream.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         when(mockDatastream.getContentNode()).thenReturn(contentNode);
-        when(contentNode.getPath()).thenReturn(path + "/fcr:content");
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockValueFactory.createValue("a", PATH)).thenReturn(mockValue);
         when(mockNodes.getObject(mockSession, "/" + pid)).thenReturn(mockResource);
@@ -309,7 +313,11 @@ public class FedoraNodesTest {
                 MediaType.valueOf("image/tiff"), null, mockResponse, getUriInfoImpl(), mockStream);
         assertNotNull(actual);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockDatastreams).getDatastream(mockSession, path);
+        verify(mockBinary).setContent(mockStream,
+                "image/tiff",
+                new URI("urn:sha1:ebd0438cfbab7365669a7f8a64379e93c8112490"),
+                "foo.tiff",
+                mockDatastreams.getStoragePolicyDecisionPoint());
         verify(mockSession).save();
     }
 

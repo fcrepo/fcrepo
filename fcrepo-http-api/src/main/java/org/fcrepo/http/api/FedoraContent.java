@@ -49,6 +49,7 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -131,10 +132,17 @@ public class FedoraContent extends ContentExposingResource {
             final URI checksumURI = checksumURI(checksum);
             final String originalFileName = originalFileName(contentDisposition);
 
-            final Datastream datastream =
-                    datastreamService.createDatastream(session, newDatastreamPath,
-                            contentType.toString(), originalFileName, requestBodyStream,
-                            checksumURI);
+
+            final Datastream datastream = datastreamService.getDatastream(session, newDatastreamPath);
+
+            final FedoraBinary binary = datastream.getBinary();
+
+            binary.setContent(requestBodyStream,
+                    contentType.toString(),
+                    checksumURI,
+                    originalFileName,
+                    datastreamService.getStoragePolicyDecisionPoint());
+
 
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
@@ -145,12 +153,12 @@ public class FedoraContent extends ContentExposingResource {
                 versionService.nodeUpdated(datastream.getNode());
 
                 builder = created(URI.create(subjects.getSubject(
-                        datastream.getContentNode().getPath()).getURI()));
+                        binary.getPath()).getURI()));
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
 
-            addCacheControlHeaders(servletResponse, datastream, session);
+            addCacheControlHeaders(servletResponse, binary, session);
 
             return builder.build();
 
@@ -196,11 +204,18 @@ public class FedoraContent extends ContentExposingResource {
             final URI checksumURI = checksumURI(checksum);
             final String originalFileName = originalFileName(contentDisposition);
 
-            final Datastream datastream =
-                datastreamService.createDatastream(session, path,
-                    contentType.toString(), originalFileName, requestBodyStream, checksumURI);
+            final Datastream datastream = datastreamService.getDatastream(session, path);
+
+            final FedoraBinary binary = datastream.getBinary();
+
+            binary.setContent(requestBodyStream,
+                    contentType.toString(),
+                    checksumURI,
+                    originalFileName,
+                    datastreamService.getStoragePolicyDecisionPoint());
 
             final boolean isNew = datastream.isNew();
+
             try {
                 session.save();
                 versionService.nodeUpdated(datastream.getNode());
@@ -208,23 +223,19 @@ public class FedoraContent extends ContentExposingResource {
                 throw new RepositoryRuntimeException(e);
             }
 
-            ResponseBuilder builder;
-            try {
-                if (isNew) {
-                    final HttpIdentifierTranslator subjects =
-                            new HttpIdentifierTranslator(session, FedoraNodes.class,
-                                    uriInfo);
+            final ResponseBuilder builder;
+            if (isNew) {
+                final HttpIdentifierTranslator subjects =
+                        new HttpIdentifierTranslator(session, FedoraNodes.class,
+                                uriInfo);
 
-                    builder = created(URI.create(subjects.getSubject(
-                            datastream.getContentNode().getPath()).getURI()));
-                } else {
-                    builder = noContent();
-                }
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
+                builder = created(URI.create(subjects.getSubject(
+                        binary.getPath()).getURI()));
+            } else {
+                builder = noContent();
             }
 
-            addCacheControlHeaders(servletResponse, datastream, session);
+            addCacheControlHeaders(servletResponse, binary, session);
 
             return builder.build();
         } finally {
@@ -263,7 +274,8 @@ public class FedoraContent extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
-            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
+
+            return getDatastreamContentResponse(ds.getBinary(), rangeValue, request, servletResponse,
                     subjects, session);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
