@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Lists.newArrayList;
@@ -25,12 +24,10 @@ import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.property2values;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.Constructor;
@@ -90,49 +87,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     protected Node node;
 
     /**
-     * Construct a FedoraObject without a backing JCR Node
-     */
-    public FedoraResourceImpl() {
-        super(false);
-        node = null;
-    }
-
-    /**
      * Construct a FedoraObject from an existing JCR Node
      * @param node an existing JCR node to treat as an fcrepo object
      */
     public FedoraResourceImpl(final Node node) {
-        this();
         this.node = node;
-    }
-
-    /**
-     * Create or find a FedoraObject at the given path
-     * @param session the JCR session to use to retrieve the object
-     * @param path the absolute path to the object
-     */
-    public FedoraResourceImpl(final Session session, final String path,
-        final String nodeType) {
-        this();
-        initializeNewResourceProperties(session, path, nodeType);
-    }
-
-    private void initializeNewResourceProperties(final Session session,
-                                                 final String path,
-                                                 final String nodeType) {
-        try {
-            this.node = findOrCreateNode(
-                    session, path, NT_FOLDER, nodeType);
-
-            if (node.isNew()) {
-
-                if (!isFedoraResource.apply(node) && !isFrozen.apply(node)) {
-                    node.addMixin(FEDORA_RESOURCE);
-                }
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     /* (non-Javadoc)

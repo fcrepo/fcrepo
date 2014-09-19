@@ -17,6 +17,11 @@ package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.util.Collection;
@@ -28,7 +33,9 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -39,6 +46,7 @@ import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.metrics.RegistryService;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -64,6 +72,9 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     static final Timer timer = registryService.getMetrics().timer(
             name(Datastream.class, "fixity-check-time"));
 
+
+    private static final Logger LOGGER = getLogger(DatastreamServiceImpl.class);
+
     /**
      * Retrieve a Datastream instance by pid and dsid
      *
@@ -72,8 +83,40 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @throws RepositoryException
      */
     @Override
-    public Datastream getDatastream(final Session session, final String path) {
-        return new DatastreamImpl(session, path);
+    public Datastream findOrCreateDatastream(final Session session, final String path) {
+        try {
+            final Node node = findOrCreateNode(session, path, NT_FOLDER, NT_FILE);
+
+            if (node.isNew()) {
+                initializeNewDatastreamProperties(node);
+            }
+
+            return asDatastream(node);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private void initializeNewDatastreamProperties(final Node node) {
+        try {
+
+            if (node.canAddMixin(FEDORA_RESOURCE)) {
+                node.addMixin(FEDORA_RESOURCE);
+            }
+
+            if (node.canAddMixin(FEDORA_DATASTREAM)) {
+                node.addMixin(FEDORA_DATASTREAM);
+            }
+
+            final Node contentNode = findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+
+            if (contentNode.canAddMixin(FEDORA_BINARY)) {
+                contentNode.addMixin(FEDORA_BINARY);
+            }
+        } catch (final RepositoryException e) {
+            LOGGER.warn("Could not decorate {} with datastream properties: {}", node, e);
+        }
+
     }
 
     /**
@@ -84,7 +127,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      */
     @Override
     public FedoraBinary getBinary(final Session session, final String path) {
-        return getDatastream(session, path).getBinary();
+        return findOrCreateDatastream(session, path).getBinary();
     }
 
     /**
@@ -95,7 +138,9 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      */
     @Override
     public Datastream asDatastream(final Node node) {
-        return new DatastreamImpl(node);
+        final DatastreamImpl datastream = new DatastreamImpl(node);
+        assertIsType(datastream, FEDORA_DATASTREAM);
+        return datastream;
     }
 
     /**
@@ -109,6 +154,11 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         return new FedoraBinaryImpl(node);
     }
 
+    private void assertIsType(final FedoraResource resource, final String type) {
+        if (!resource.hasType(type)) {
+            throw new ResourceTypeException(resource + " can not be used as a " + type);
+        }
+    }
 
     /**
      * Get the fixity results for the datastream as a RDF Dataset

@@ -654,7 +654,7 @@ public class FedoraNodes extends AbstractResource {
                     final URI checksumURI = checksumURI(checksum);
                     final String originalFileName = originalFileName(contentDisposition);
 
-                    final Datastream datastream = datastreamService.getDatastream(session, newObjectPath);
+                    final Datastream datastream = datastreamService.findOrCreateDatastream(session, newObjectPath);
 
                     final FedoraBinary binary = datastream.getBinary();
                     binary.setContent(requestBodyStream,
@@ -699,10 +699,10 @@ public class FedoraNodes extends AbstractResource {
 
         switch (objectType) {
             case FEDORA_OBJECT:
-                result = objectService.createObject(session, path);
+                result = objectService.findOrCreateObject(session, path);
                 break;
             case FEDORA_DATASTREAM:
-                result = datastreamService.getDatastream(session, path);
+                result = datastreamService.findOrCreateDatastream(session, path);
                 break;
             default:
                 throw new WebApplicationException(clientError().entity(

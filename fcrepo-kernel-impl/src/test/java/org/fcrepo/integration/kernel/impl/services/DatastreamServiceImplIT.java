@@ -100,7 +100,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
-        objectService.createObject(session, "/testDatastreamServiceObject");
+        objectService.findOrCreateObject(session, "/testDatastreamServiceObject");
 
         datastreamService.getBinary(session, "/testDatastreamServiceObject/" + "testDatastreamNode")
                 .setContent(

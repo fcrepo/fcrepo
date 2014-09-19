@@ -16,9 +16,7 @@
 package org.fcrepo.kernel.impl;
 
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.FedoraBinary;
@@ -26,11 +24,8 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.exception.ResourceTypeException;
-import org.modeshape.jcr.api.JcrConstants;
 import org.slf4j.Logger;
 
 
@@ -48,58 +43,9 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * The JCR node for this datastream
      *
      * @param n an existing {@link Node}
-     * @throws ResourceTypeException if the node existed prior to this call but is not a datastream.
      */
     public DatastreamImpl(final Node n) {
         super(n);
-
-        if (node.isNew()) {
-            initializeNewDatastreamProperties();
-        } else if (!hasMixin(node) && !isFrozen.apply(n)) {
-            throw new ResourceTypeException("Attempting to perform a datastream operation on non-datastream resource!");
-        }
-    }
-
-    /**
-     * Create or find a FedoraDatastream at the given path
-     *
-     * @param session the JCR session to use to retrieve the object
-     * @param path the absolute path to the object
-     * @param nodeType primary type to assign to node
-     */
-    public DatastreamImpl(final Session session, final String path, final String nodeType) {
-        super(session, path, nodeType);
-        if (node.isNew()) {
-            initializeNewDatastreamProperties();
-        } else if (!hasMixin(node) && !isFrozen.apply(node)) {
-            throw new ResourceTypeException("Attempting to perform a datastream operation on non-datastream resource!");
-        }
-    }
-
-    /**
-     * Create or find a FedoraDatastream at the given path
-     *
-     * @param session the JCR session to use to retrieve the object
-     * @param path the absolute path to the object
-     * @throws RepositoryException
-     */
-    public DatastreamImpl(final Session session, final String path) {
-        this(session, path, JcrConstants.NT_FILE);
-    }
-
-    private void initializeNewDatastreamProperties() {
-        try {
-            if (node.isNew() || !hasMixin(node)) {
-                LOGGER.debug("Setting {} properties on a {} node...",
-                        FEDORA_DATASTREAM, JcrConstants.NT_FILE);
-                node.addMixin(FEDORA_DATASTREAM);
-
-                new FedoraBinaryImpl(findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE));
-            }
-        } catch (final RepositoryException ex) {
-            LOGGER.warn("Could not decorate {} with {} properties: {}",
-                    JCR_CONTENT, FEDORA_DATASTREAM, ex);
-        }
     }
 
     @Override

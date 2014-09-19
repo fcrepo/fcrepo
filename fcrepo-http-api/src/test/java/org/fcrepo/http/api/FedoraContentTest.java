@@ -143,7 +143,7 @@ public class FedoraContentTest {
         final String dsPath = "/" + pid + "/" + dsId;
         try (final InputStream dsContentStream = IOUtils.toInputStream(dsContent)) {
             when(mockDatastream.isNew()).thenReturn(true);
-            when(mockDatastreams.getDatastream(any(Session.class), eq(dsPath))).thenReturn(mockDatastream);
+            when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq(dsPath))).thenReturn(mockDatastream);
             when(mockDatastream.getBinary()).thenReturn(mockBinary);
             when(mockBinary.getPath()).thenReturn(dsPath + "/jcr:content");
             when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
@@ -168,7 +168,7 @@ public class FedoraContentTest {
         try (final InputStream dsContentStream = IOUtils.toInputStream(dsContent)) {
             when(mockNode.isNew()).thenReturn(true);
             when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
-            when(mockDatastreams.getDatastream(any(Session.class), eq(dsPath))).thenReturn(mockDatastream);
+            when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq(dsPath))).thenReturn(mockDatastream);
             when(mockDatastream.getBinary()).thenReturn(mockBinary);
             when(mockBinary.getPath()).thenReturn(dsPath + "/jcr:content");
             when(mockNodeService.exists(mockSession, dsPath)).thenReturn(false);
@@ -194,7 +194,8 @@ public class FedoraContentTest {
             setField(testObj, "pidMinter", mockMinter);
             when(mockNode.isNew()).thenReturn(true);
 
-            when(mockDatastreams.getDatastream(any(Session.class), eq(dsPath + "/xyz"))).thenReturn(mockDatastream);
+            when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq(dsPath + "/xyz")))
+                    .thenReturn(mockDatastream);
             when(mockDatastream.getBinary()).thenReturn(mockBinary);
             when(mockBinary.getPath()).thenReturn(dsPath + "/jcr:content");
 
@@ -225,7 +226,8 @@ public class FedoraContentTest {
             setField(testObj, "pidMinter", mockMinter);
             when(mockNode.isNew()).thenReturn(true);
             when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
-            when(mockDatastreams.getDatastream(any(Session.class), eq(dsPath + "/slug"))).thenReturn(mockDatastream);
+            when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq(dsPath + "/slug")))
+                    .thenReturn(mockDatastream);
             when(mockDatastream.getBinary()).thenReturn(mockBinary);
             when(mockBinary.getPath()).thenReturn(dsPath + "/jcr:content");
             when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
@@ -254,7 +256,7 @@ public class FedoraContentTest {
             final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
             when(mockDatastreams.asDatastream(mockNode)).thenReturn(mockDs);
 
-            when(mockDatastreams.getDatastream(mockSession, dsPath)).thenReturn(
+            when(mockDatastreams.findOrCreateDatastream(mockSession, dsPath)).thenReturn(
                     mockDs);
             when(mockDs.getBinary()).thenReturn(mockBinary);
             when(mockBinary.getPath()).thenReturn(dsPath + "/jcr:content");
@@ -280,7 +282,7 @@ public class FedoraContentTest {
         final String path = "/" + pid + "/" + dsId;
         final String dsContent = "asdf";
         final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
-        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(
+        when(mockDatastreams.findOrCreateDatastream(mockSession, path)).thenReturn(
                 mockDs);
         when(mockDs.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);

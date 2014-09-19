@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,26 +95,6 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         mockSession = null;
         mockRootNode = null;
         mockDsNode = null;
-    }
-
-    @SuppressWarnings("unused")
-    @Test (expected = ResourceTypeException.class)
-    public void testGetObjectAsDatastreamFromNode() throws ResourceTypeException {
-        when(mockDsNodeType.getName()).thenReturn(FEDORA_OBJECT);
-        new DatastreamImpl(mockDsNode);
-    }
-
-    @SuppressWarnings("unused")
-    @Test (expected = ResourceTypeException.class)
-    public void testGetObjectAsDatastreamFromPath() throws RepositoryException {
-        when(mockDsNodeType.getName()).thenReturn(FEDORA_OBJECT);
-
-        // Mock the current implementation of JcrTools.findOrCreateNode()
-        testObjPath = "/test";
-        when(mockSession.getRootNode()).thenReturn(mockRootNode);
-        when(mockRootNode.getNode("test")).thenReturn(mockDsNode);
-
-        new DatastreamImpl(mockSession, testObjPath, FEDORA_DATASTREAM);
     }
 
     @Test

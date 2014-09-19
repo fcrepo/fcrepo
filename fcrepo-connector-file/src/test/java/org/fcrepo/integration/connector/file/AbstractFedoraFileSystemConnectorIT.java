@@ -181,7 +181,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedObject() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.getObject(session, testDirPath());
+        final FedoraObject object = objectService.findOrCreateObject(session, testDirPath());
         assertNotNull(object);
 
         final Node node = object.getNode();
@@ -199,7 +199,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedDatastream() throws RepositoryException {
         final Session session = repo.login();
 
-        final Datastream datastream = datastreamService.getDatastream(session, testFilePath());
+        final Datastream datastream = datastreamService.findOrCreateDatastream(session, testFilePath());
         assertNotNull(datastream);
 
         final Node node = datastream.getNode();
@@ -239,7 +239,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(datastreamService.getDatastream(session, testFilePath()).getBinary());
+        checkFixity(datastreamService.findOrCreateDatastream(session, testFilePath()).getBinary());
 
         session.save();
         session.logout();
@@ -249,7 +249,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final Datastream ds = datastreamService.getDatastream(session, testFilePath());
+        final Datastream ds = datastreamService.findOrCreateDatastream(session, testFilePath());
 
         final String originalFixity = checkFixity(ds.getBinary());
 

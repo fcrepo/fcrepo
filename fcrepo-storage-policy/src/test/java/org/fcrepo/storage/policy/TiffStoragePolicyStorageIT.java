@@ -96,7 +96,7 @@ public class TiffStoragePolicyStorageIT {
         ByteArrayInputStream data;
         final Session session = repo.login();
 
-        objectService.createObject(session, "/testCompositeObject");
+        objectService.findOrCreateObject(session, "/testCompositeObject");
 
         data = new ByteArrayInputStream(
                 ("987654321987654321098765432109876543210987654321098765432109876543210987654" +

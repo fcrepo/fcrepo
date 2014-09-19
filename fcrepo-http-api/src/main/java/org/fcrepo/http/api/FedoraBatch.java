@@ -238,7 +238,7 @@ public class FedoraBatch extends AbstractResource {
                         if (nodeService.exists(session, objPath)) {
                             resource = nodeService.findOrCreateObject(session, objPath);
                         } else {
-                            resource = objectService.createObject(session, objPath);
+                            resource = objectService.findOrCreateObject(session, objPath);
                         }
 
                         if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
@@ -275,7 +275,7 @@ public class FedoraBatch extends AbstractResource {
                             checksumURI = null;
                         }
 
-                        final Datastream datastream = datastreamService.getDatastream(session, objPath);
+                        final Datastream datastream = datastreamService.findOrCreateDatastream(session, objPath);
 
                         datastream.getBinary().setContent(src,
                                 part.getMediaType().toString(),

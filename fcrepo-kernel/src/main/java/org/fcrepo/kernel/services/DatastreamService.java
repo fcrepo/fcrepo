@@ -37,7 +37,7 @@ public interface DatastreamService extends Service {
      * @param path jcr path to the datastream
      * @return retrieved Datastream
      */
-    Datastream getDatastream(Session session, String path);
+    Datastream findOrCreateDatastream(Session session, String path);
 
     /**
      * Retrieve a Binary instance by path

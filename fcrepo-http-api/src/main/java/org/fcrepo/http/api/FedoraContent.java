@@ -133,7 +133,7 @@ public class FedoraContent extends ContentExposingResource {
             final String originalFileName = originalFileName(contentDisposition);
 
 
-            final Datastream datastream = datastreamService.getDatastream(session, newDatastreamPath);
+            final Datastream datastream = datastreamService.findOrCreateDatastream(session, newDatastreamPath);
 
             final FedoraBinary binary = datastream.getBinary();
 
@@ -195,7 +195,7 @@ public class FedoraContent extends ContentExposingResource {
             if (nodeService.exists(session, path)) {
 
                 final Datastream ds =
-                        datastreamService.getDatastream(session, path);
+                        datastreamService.findOrCreateDatastream(session, path);
                 evaluateRequestPreconditions(request, servletResponse, ds, session);
             }
 
@@ -204,7 +204,7 @@ public class FedoraContent extends ContentExposingResource {
             final URI checksumURI = checksumURI(checksum);
             final String originalFileName = originalFileName(contentDisposition);
 
-            final Datastream datastream = datastreamService.getDatastream(session, path);
+            final Datastream datastream = datastreamService.findOrCreateDatastream(session, path);
 
             final FedoraBinary binary = datastream.getBinary();
 
@@ -262,7 +262,7 @@ public class FedoraContent extends ContentExposingResource {
             LOGGER.info("Attempting get of {}.", path);
 
             final Datastream ds =
-                    datastreamService.getDatastream(session, path);
+                    datastreamService.findOrCreateDatastream(session, path);
 
             if (ds.getNode().hasProperty("fedorarelsext:hasExternalContent")) {
                 final URI externalURI = URI.create(ds.getNode().getProperty("fedorarelsext:hasExternalContent")

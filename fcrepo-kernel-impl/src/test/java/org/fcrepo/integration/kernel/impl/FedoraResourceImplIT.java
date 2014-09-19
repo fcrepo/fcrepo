@@ -151,13 +151,13 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testLastModified() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
-        objectService.createObject(session, "/" + pid);
+        objectService.findOrCreateObject(session, "/" + pid);
 
         session.save();
         session.logout();
         session = repo.login();
 
-        final FedoraObject obj2 = objectService.getObject(session, "/" + pid);
+        final FedoraObject obj2 = objectService.findOrCreateObject(session, "/" + pid);
         assertFalse( obj2.getLastModifiedDate().before(obj2.getCreatedDate()) );
     }
 
@@ -190,13 +190,14 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testObjectGraph() throws RepositoryException {
 
+        final String pid = "/" + getRandomPid();
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectGraph");
+            objectService.findOrCreateObject(session, pid);
 
         logger.debug(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
-        final Node s = createGraphSubjectNode("/testObjectGraph");
+        final Node s = createGraphSubjectNode(pid);
         Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -219,7 +220,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testObjectGraphWithCustomProperty() throws RepositoryException {
 
         FedoraResource object =
-            objectService.createObject(session, "/testObjectGraph");
+            objectService.findOrCreateObject(session, "/testObjectGraph");
 
         final javax.jcr.Node node = object.getNode();
         node.setProperty("dc:title", "this-is-some-title");
@@ -231,7 +232,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session = repo.login();
 
-        object = objectService.getObject(session, "/testObjectGraph");
+        object = objectService.findOrCreateObject(session, "/testObjectGraph");
 
 
         logger.debug(object.getPropertiesDataset(subjects).toString());
@@ -276,7 +277,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         mgr.registerNodeTypes(nodeTypes2, true);
 
         //create object with inheriting type
-        FedoraResource object = objectService.createObject(session, "/testNTTnheritanceObject");
+        FedoraResource object = objectService.findOrCreateObject(session, "/testNTTnheritanceObject");
         final javax.jcr.Node node = object.getNode();
         node.addMixin("test:testInher");
 
@@ -284,7 +285,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.logout();
         session = repo.login();
 
-        object = objectService.createObject(session, "/testNTTnheritanceObject");
+        object = objectService.findOrCreateObject(session, "/testNTTnheritanceObject");
 
         //test that supertype has been inherited as rdf:type
         final Node s = createGraphSubjectNode("/testNTTnheritanceObject");
@@ -297,7 +298,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException {
 
-        objectService.createObject(session, "/testDatastreamGraphParent");
+        objectService.findOrCreateObject(session, "/testDatastreamGraphParent");
 
         datastreamService.getBinary(session, "/testDatastreamGraph").setContent(
                 new ByteArrayInputStream("123456789test123456789".getBytes()),
@@ -369,11 +370,11 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testObjectGraphWindow() throws RepositoryException {
 
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectGraphWindow");
+            objectService.findOrCreateObject(session, "/testObjectGraphWindow");
 
-        objectService.createObject(session, "/testObjectGraphWindow/a");
-        objectService.createObject(session, "/testObjectGraphWindow/b");
-        objectService.createObject(session, "/testObjectGraphWindow/c");
+        objectService.findOrCreateObject(session, "/testObjectGraphWindow/a");
+        objectService.findOrCreateObject(session, "/testObjectGraphWindow/b");
+        objectService.findOrCreateObject(session, "/testObjectGraphWindow/c");
 
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 1, 1);
@@ -411,7 +412,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testUpdatingObjectGraph() {
 
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectGraphUpdates");
+            objectService.findOrCreateObject(session, "/testObjectGraphUpdates");
 
         object.updatePropertiesDataset(subjects, "INSERT { " + "<"
                 + subjects.getSubject("/testObjectGraphUpdates").getURI() + "> "
@@ -445,7 +446,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testAddVersionLabel() throws RepositoryException {
 
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectVersionLabel");
+            objectService.findOrCreateObject(session, "/testObjectVersionLabel");
 
         object.getNode().addMixin("mix:versionable");
 
@@ -464,7 +465,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testGetObjectVersionGraph() throws RepositoryException {
 
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectVersionGraph");
+            objectService.findOrCreateObject(session, "/testObjectVersionGraph");
 
         object.getNode().addMixin("mix:versionable");
 
@@ -498,7 +499,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testUpdatingRdfTypedValues() throws RepositoryException {
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectRdfType");
+            objectService.findOrCreateObject(session, "/testObjectRdfType");
 
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 0, -2);
@@ -522,7 +523,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testUpdatingRdfType() throws RepositoryException {
         final FedoraResource object =
-            objectService.createObject(session, "/testObjectRdfType");
+            objectService.findOrCreateObject(session, "/testObjectRdfType");
 
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 0, -2);
@@ -541,7 +542,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testEtagValue() throws RepositoryException {
         final FedoraResource object =
-            objectService.createObject(session, "/testEtagObject");
+            objectService.findOrCreateObject(session, "/testEtagObject");
 
         session.save();
 
@@ -553,9 +554,9 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetReferences() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
-        objectService.createObject(session, pid);
-        final FedoraObject subject = objectService.createObject(session, pid + "/a");
-        final FedoraObject object = objectService.createObject(session, pid + "/b");
+        objectService.findOrCreateObject(session, pid);
+        final FedoraObject subject = objectService.findOrCreateObject(session, pid + "/a");
+        final FedoraObject object = objectService.findOrCreateObject(session, pid + "/b");
         final Value value = session.getValueFactory().createValue(object.getNode());
         subject.getNode().setProperty("fedorarelsext:isPartOf", new Value[] { value });
 
@@ -573,7 +574,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testReplaceProperties() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
-        final FedoraObject object = objectService.createObject(session, pid);
+        final FedoraObject object = objectService.findOrCreateObject(session, pid);
 
         final StmtIterator stmtIterator = object.getPropertiesDataset(subjects).getDefaultModel().listStatements();
         final Model model = createDefaultModel().add(stmtIterator);

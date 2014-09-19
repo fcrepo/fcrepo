@@ -84,7 +84,7 @@ public class FedoraFixityTest {
 
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockDs.getNode()).thenReturn(mockNode);
-        when(mockDatastreams.getDatastream(mockSession, path)).thenReturn(mockDs);
+        when(mockDatastreams.findOrCreateDatastream(mockSession, path)).thenReturn(mockDs);
         when(mockDatastreams.getFixityResultsModel(any(IdentifierTranslator.class), any(FedoraBinary.class)))
                 .thenReturn(expected);
 

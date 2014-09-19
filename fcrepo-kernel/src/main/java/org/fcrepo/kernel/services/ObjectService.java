@@ -15,8 +15,6 @@
  */
 package org.fcrepo.kernel.services;
 
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
@@ -30,26 +28,10 @@ import org.fcrepo.kernel.FedoraObject;
 public interface ObjectService extends Service {
 
     /**
-     * @param session
-     * @param path The path to use to create the object
-     * @return The created object
-     * @throws RepositoryException
-     */
-    FedoraObject createObject(Session session, String path);
-
-    /**
-     * @param path
-     * @return The node behind the FedoraObject with the proffered PID
-     * @throws RepositoryException
-     */
-    Node getObjectNode(Session session, String path) throws RepositoryException;
-
-    /**
      * @param path
      * @param session
      * @return A FedoraObject with the proffered PID
-     * @throws RepositoryException
      */
-    FedoraObject getObject(Session session, String path) throws RepositoryException;
+    FedoraObject findOrCreateObject(Session session, String path);
 
 }

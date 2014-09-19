@@ -225,10 +225,10 @@ public class FedoraBatchTest {
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
                 mockNode);
 
-        when(mockDatastreams.getDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId1)))
+        when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId1)))
                 .thenReturn(mockDatastream);
         final Datastream mockDatastream2 = mock(Datastream.class);
-        when(mockDatastreams.getDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId2)))
+        when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId2)))
                 .thenReturn(mockDatastream2);
 
         final FedoraBinary mockBinary1 = mock(FedoraBinary.class);
@@ -268,7 +268,8 @@ public class FedoraBatchTest {
 
         multipart.bodyPart(part);
 
-        when(mockDatastreams.getDatastream(any(Session.class), eq("/{}" + pid + "/{}xyz"))).thenReturn(mockDatastream);
+        when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq("/{}" + pid + "/{}xyz")))
+                .thenReturn(mockDatastream);
 
         final FedoraBinary mockBinary = mock(FedoraBinary.class);
         when(mockDatastream.getBinary()).thenReturn(mockBinary);

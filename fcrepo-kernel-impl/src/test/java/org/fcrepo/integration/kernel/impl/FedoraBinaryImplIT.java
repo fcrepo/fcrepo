@@ -68,7 +68,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Test
     public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
         Session session = repo.login();
-        objectService.createObject(session, "/testDatastreamObject");
+        objectService.findOrCreateObject(session, "/testDatastreamObject");
 
         datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode1").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -93,7 +93,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObject(session, "/testDatastreamObject");
+        objectService.findOrCreateObject(session, "/testDatastreamObject");
 
         datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode1").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -119,7 +119,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObject(session, "/testDatastreamObject");
+        objectService.findOrCreateObject(session, "/testDatastreamObject");
 
         datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode2").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -149,7 +149,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObject(session, "/testDatastreamObject");
+        objectService.findOrCreateObject(session, "/testDatastreamObject");
 
         datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode3").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -181,7 +181,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObject(session, "/testDatastreamObject");
+        objectService.findOrCreateObject(session, "/testDatastreamObject");
 
         datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode4").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -207,7 +207,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Test
     public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        objectService.createObject(session, "/testDatastreamObject");
+        objectService.findOrCreateObject(session, "/testDatastreamObject");
 
         datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode5").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -232,7 +232,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     public void testChecksumBlobs() throws Exception {
 
         final Session session = repo.login();
-        objectService.createObject(session, "/testLLObject");
+        objectService.findOrCreateObject(session, "/testLLObject");
 
         datastreamService.getBinary(session, "/testLLObject/testRepositoryContent").setContent(
                 new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
@@ -264,7 +264,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     public void testChecksumBlobsForInMemoryValues() throws Exception {
 
         final Session session = repo.login();
-        objectService.createObject(session, "/testLLObject");
+        objectService.findOrCreateObject(session, "/testLLObject");
         datastreamService.getBinary(session, "/testLLObject/testMemoryContent").setContent(
                 new ByteArrayInputStream("0123456789".getBytes()),
                 "application/octet-stream",
@@ -294,7 +294,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         final Session session = repo.login();
         final javax.jcr.ValueFactory factory = session.getValueFactory();
-        final FedoraObject object = objectService.createObject(session, "/testLLObject");
+        final FedoraObject object = objectService.findOrCreateObject(session, "/testLLObject");
 
         final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
         testRandomContentNode.addMixin(FEDORA_DATASTREAM);

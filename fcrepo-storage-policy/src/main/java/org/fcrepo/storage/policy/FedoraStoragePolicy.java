@@ -24,7 +24,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang.StringUtils.split;
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;
@@ -51,7 +50,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.modeshape.jcr.api.JcrTools;
@@ -86,6 +85,9 @@ public class FedoraStoragePolicy extends AbstractResource {
     @Resource
     protected StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
+    @Resource
+    protected ObjectService objectService;
+
     private JcrTools jcrTools;
 
     public static final String POLICY_RESOURCE = "policies";
@@ -104,8 +106,8 @@ public class FedoraStoragePolicy extends AbstractResource {
             internalSession = sessions.getInternalSession();
             // we create a FedoraResource to initialize the storage of policies
             @SuppressWarnings("unused")
-            final FedoraResource initializer =
-                    new FedoraResourceImpl(internalSession, FEDORA_STORAGE_POLICY_PATH, NT_FOLDER);
+            final FedoraResource initializer
+                    = objectService.findOrCreateObject(internalSession, FEDORA_STORAGE_POLICY_PATH);
             internalSession.save();
             LOGGER.debug("Created configuration node");
         } finally {

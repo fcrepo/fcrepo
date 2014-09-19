@@ -68,8 +68,8 @@ public class NodeServiceImplIT extends AbstractIT {
 
         final Session session = repository.login();
         final String pid = getRandomPid();
-        final FedoraResource resourceA = objectService.createObject(session, "/" + pid + "/a");
-        final FedoraResource resourceB = objectService.createObject(session, "/" + pid + "/b");
+        final FedoraResource resourceA = objectService.findOrCreateObject(session, "/" + pid + "/a");
+        final FedoraResource resourceB = objectService.findOrCreateObject(session, "/" + pid + "/b");
 
         final Value value = session.getValueFactory().createValue(resourceB.getNode());
         resourceA.getNode().setProperty("fedorarelsext:hasMember", new Value[] { value });
