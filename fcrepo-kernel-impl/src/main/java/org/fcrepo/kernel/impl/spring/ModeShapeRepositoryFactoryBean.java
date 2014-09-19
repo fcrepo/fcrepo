@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl.spring;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -58,11 +57,10 @@ public class ModeShapeRepositoryFactoryBean implements
     /**
      * Generate a JCR repository from the given configuration
      *
-     * @throws RepositoryException
-     * @throws IOException
+     * @throws Exception
      */
     @PostConstruct
-    public void buildRepository() throws Exception, IOException {
+    public void buildRepository() throws Exception {
         LOGGER.info("Using repo config (classpath): {}", repositoryConfiguration.getURL());
 
         getPropertiesLoader().loadSystemProperties();
@@ -93,7 +91,7 @@ public class ModeShapeRepositoryFactoryBean implements
         try {
             final Future<Boolean> futureUndeployRepo =
                     modeShapeEngine.undeploy(repoName);
-            final Boolean success = futureUndeployRepo.get();
+            futureUndeployRepo.get();
             LOGGER.info("Repository {} undeployed.", repoName);
         } catch (final NoSuchRepositoryException e) {
             LOGGER.error("Repository {} unknown, cannot undeploy.", repoName, e);

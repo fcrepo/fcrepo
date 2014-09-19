@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationContextAware;
  * Retrieves the application context in which it is configured, for testing
  * purposes only.
  *
+ * @since September 19, 2014
  * @author Gregory Jansen
  */
 public class SpringContextSingleton implements ApplicationContextAware {

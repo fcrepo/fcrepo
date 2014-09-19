@@ -31,6 +31,7 @@ import org.springframework.test.context.ContextConfiguration;
 import javax.jcr.RepositoryException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.UUID;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
@@ -46,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 public class FedoraTransformIT extends AbstractResourceIT {
 
-    protected HttpResponse createObject(final String pid) throws IOException {
+    private HttpResponse createObject(final String pid) throws IOException {
         final HttpPost httpPost =  new HttpPost(serverAddress + "/");
         if (pid.length() > 0) {
             httpPost.addHeader("Slug", pid);
@@ -59,9 +60,10 @@ public class FedoraTransformIT extends AbstractResourceIT {
     @Test
     public void testLdpathWithConfiguredProgram() throws RepositoryException, IOException {
 
-        createObject("ldpathConfigTestObject");
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
         final HttpGet postLdpathProgramRequest
-                = new HttpGet(serverAddress + "/ldpathConfigTestObject/fcr:transform/default");
+                = new HttpGet(serverAddress + "/" + pid + "/fcr:transform/default");
         final HttpResponse response = client.execute(postLdpathProgramRequest);
         assertEquals(200, response.getStatusLine().getStatusCode());
         final String content = EntityUtils.toString(response.getEntity());
@@ -69,7 +71,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
 
         final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createJsonParser(content));
 
-        assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/ldpathConfigTestObject",
+        assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/" + pid,
                 rootNode.get("id").getElements().next().asText());
 
     }
@@ -77,9 +79,10 @@ public class FedoraTransformIT extends AbstractResourceIT {
     @Test
     public void testLdpathWithProgramBody() throws Exception {
 
-        createObject("ldpathTestObject");
+        final String pid = UUID.randomUUID().toString();
+        createObject(pid);
 
-        final HttpPost postLdpathProgramRequest = new HttpPost(serverAddress + "/ldpathTestObject/fcr:transform");
+        final HttpPost postLdpathProgramRequest = new HttpPost(serverAddress + "/" + pid + "/fcr:transform");
         final BasicHttpEntity e = new BasicHttpEntity();
 
         final String s = "id = . :: xsd:string ;\n";
@@ -95,7 +98,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
 
         final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createJsonParser(content));
 
-        assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/ldpathTestObject", rootNode
+        assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/" + pid, rootNode
                 .get("id").getElements().next().asText());
 
     }
