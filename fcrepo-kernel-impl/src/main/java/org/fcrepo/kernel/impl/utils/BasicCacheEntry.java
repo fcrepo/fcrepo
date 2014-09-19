@@ -31,10 +31,6 @@ import java.util.Collection;
 
 import static com.google.common.base.Throwables.propagate;
 import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.MISSING_STORED_FIXITY;
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.SUCCESS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -51,16 +47,12 @@ public abstract class BasicCacheEntry implements CacheEntry {
      * Calculate the fixity of a CacheEntry by piping it through
      * a simple fixity-calculating InputStream
      *
-     * @param checksum the checksum previously generated for the entry
-     * @param size the size of the entry
      * @return the fixity of this cache entry
      * @throws RepositoryException
      */
     @Override
-    public Collection<FixityResult> checkFixity(final URI checksum, final long size)
+    public Collection<FixityResult> checkFixity(final String digest)
         throws RepositoryException {
-
-        final String digest = ContentDigest.getAlgorithm(checksum);
 
         try (FixityInputStream fixityInputStream = new FixityInputStream(this.getInputStream(),
                 MessageDigest.getInstance(digest))) {
@@ -73,22 +65,6 @@ public abstract class BasicCacheEntry implements CacheEntry {
                 new FixityResultImpl(this,
                                     fixityInputStream.getByteCount(),
                                     calculatedChecksum);
-
-            if (checksum == null || checksum.equals(ContentDigest.missingChecksum()) || size == -1L) {
-                result.getStatus().add(MISSING_STORED_FIXITY);
-            }
-
-            if (!result.matches(checksum)) {
-                result.getStatus().add(BAD_CHECKSUM);
-            }
-
-            if (!result.matches(size)) {
-                result.getStatus().add(BAD_SIZE);
-            }
-
-            if (result.matches(size, checksum)) {
-                result.getStatus().add(SUCCESS);
-            }
 
             LOGGER.debug("Got {}", result.toString());
 

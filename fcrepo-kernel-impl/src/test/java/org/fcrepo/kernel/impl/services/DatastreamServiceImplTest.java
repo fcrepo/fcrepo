@@ -196,7 +196,7 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
         when(CacheEntryFactory.forProperty(mockRepository, mockProperty)).thenReturn(mockCacheEntry);
 
-        when(mockCacheEntry.checkFixity(any(URI.class), any(Long.class))).thenReturn(fixityResults);
+        when(mockCacheEntry.checkFixity(any(String.class))).thenReturn(fixityResults);
 
         final RdfStream actual = testObj.getFixityResultsModel(mockSubjects, mockDatastream);
 

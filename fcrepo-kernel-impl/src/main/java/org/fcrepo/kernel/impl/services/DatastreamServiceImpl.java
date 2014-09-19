@@ -16,12 +16,11 @@
 package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
@@ -41,7 +40,6 @@ import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +47,6 @@ import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import com.google.common.base.Predicate;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -72,17 +69,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
     private static final Logger LOGGER = getLogger(DatastreamService.class);
 
-    /**
-     * Create a stub datastream without content
-     * @param session
-     * @param dsPath
-     * @return created datastream
-     * @throws RepositoryException
-     */
-    @Override
-    public Datastream createDatastream(final Session session, final String dsPath) {
-        return new DatastreamImpl(session, dsPath);
-    }
     /**
      * Create a new Datastream node in the JCR store
      *
@@ -126,7 +112,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
                                      final URI checksum)
         throws InvalidChecksumException {
 
-        final Datastream ds = createDatastream(session, dsPath);
+        final Datastream ds = getDatastream(session, dsPath);
         ds.setContent(content, contentType, checksum,
                          originalFileName, getStoragePolicyDecisionPoint());
         return ds;
@@ -167,10 +153,15 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     public RdfStream getFixityResultsModel(final IdentifierTranslator subjects,
             final Datastream datastream) {
         try {
-            final Collection<FixityResult> blobs = runFixityAndFixProblems(datastream);
+
+            final URI digestUri = datastream.getContentDigest();
+            final long size = datastream.getContentSize();
+            final String algorithm = ContentDigest.getAlgorithm(digestUri);
+
+            final Collection<FixityResult> blobs = runFixity(datastream, algorithm);
 
             return JcrRdfTools.withContext(subjects,datastream.getNode().getSession())
-                    .getJcrTriples(datastream.getNode(), blobs)
+                    .getJcrTriples(datastream.getNode(), blobs, digestUri, size)
                     .topic(subjects.getSubject(datastream.getPath())
                             .asNode());
         } catch (final RepositoryException e) {
@@ -186,13 +177,9 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @return results
      * @throws RepositoryException
      */
-    @Override
-    public Collection<FixityResult> runFixityAndFixProblems(final Datastream datastream) {
+    private Collection<FixityResult> runFixity(final Datastream datastream, final String algorithm) {
 
         Set<FixityResult> fixityResults;
-        Set<FixityResult> goodEntries;
-        final URI digestUri = datastream.getContentDigest();
-        final long size = datastream.getContentSize();
 
         fixityCheckCounter.inc();
 
@@ -200,52 +187,13 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
         try {
             fixityResults =
-                    copyOf(getFixity(datastream.getContentNode(), digestUri, size));
-
-            goodEntries =
-                    copyOf(filter(fixityResults, new Predicate<FixityResult>() {
-
-                        @Override
-                        public boolean apply(
-                                final FixityResult input) {
-                            return input.matches(size, digestUri);
-                        }
-                    }));
+                    copyOf(datastream.getFixity(repo, algorithm));
 
         } finally {
             context.stop();
         }
 
-        if (goodEntries.isEmpty()) {
-            LOGGER.error("ALL COPIES OF " + datastream.getPath() +
-                             " HAVE FAILED FIXITY CHECKS.");
-        }
-
         return fixityResults;
-    }
-
-    /**
-     * Get the fixity results for this datastream's bitstream, and compare it
-     * against the given checksum and size.
-     *
-     * @param resource
-     * @param dsChecksum -the checksum and algorithm represented as a URI
-     * @param dsSize
-     * @return fixity results
-     * @throws RepositoryException
-     */
-    @Override
-    public Collection<FixityResult> getFixity(final Node resource,
-                                              final URI dsChecksum,
-                                              final long dsSize) {
-        try {
-            LOGGER.debug("Checking resource: " + resource.getPath());
-
-            return CacheEntryFactory.forProperty(repo, resource.getProperty(JCR_DATA)).checkFixity(dsChecksum, dsSize);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
     }
 
     /**

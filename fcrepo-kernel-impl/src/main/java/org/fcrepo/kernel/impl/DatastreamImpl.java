@@ -26,15 +26,19 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
+import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -311,6 +315,28 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * Get the fixity results for this datastream's bitstream, and compare it
+     * against the given checksum and size.
+     *
+     * @param repo
+     * @param algorithm the algorithm to use
+     * @return fixity results
+     * @throws RepositoryException
+     */
+    @Override
+    public Collection<FixityResult> getFixity(final Repository repo,
+                                              final String algorithm) {
+        try {
+            LOGGER.debug("Checking resource: " + getPath());
+
+            return CacheEntryFactory.forProperty(repo, getContentNode().getProperty(JCR_DATA)).checkFixity(algorithm);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
     }
 
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {

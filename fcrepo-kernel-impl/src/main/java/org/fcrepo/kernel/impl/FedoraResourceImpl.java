@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl;
 
 
+import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -32,7 +33,11 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -41,22 +46,25 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.UnsupportedRepositoryOperationException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
+import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
+import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -160,6 +168,24 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getChildren()
+     */
+    @Override
+    public Iterator<FedoraResource> getChildren() {
+        try {
+           return Iterators.transform(new NodeIterator(node.getNodes()), new Function<Node, FedoraResource>() {
+
+               @Override
+               public FedoraResource apply(final Node node) {
+                   return new FedoraResourceImpl(node);
+               }
+           });
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#getCreatedDate()
      */
     @Override
@@ -245,14 +271,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
         final int offset, final int limit) {
         try {
-            final JcrRdfTools jcrRdfTools =
-                    JcrRdfTools.withContext(graphSubjects, getSession());
 
-            final RdfStream propertiesStream = jcrRdfTools.getJcrTriples(getNode());
-
-            final HierarchyRdfContextOptions serializationOptions = new HierarchyRdfContextOptions(limit, offset);
-
-            propertiesStream.concat(jcrRdfTools.getTreeTriples(getNode(), serializationOptions));
+            final RdfStream propertiesStream = getTriples(graphSubjects, ImmutableSet.of(
+                    PropertiesRdfContext.class,
+                    ParentRdfContext.class,
+                    ChildrenRdfContext.class,
+                    ContainerRdfContext.class));
 
             final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
 
@@ -282,58 +306,42 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return getPropertiesDataset(subjects, 0, -1);
     }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
-     */
+
     @Override
-    public RdfStream getTriples(final IdentifierTranslator graphSubjects) {
-        try {
-            final JcrRdfTools jcrRdfTools =
-                    JcrRdfTools.withContext(graphSubjects, getSession());
-
-            return jcrRdfTools.getJcrTriples(getNode());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getHierarchyTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
-     */
-    @Override
-    public RdfStream getHierarchyTriples(final IdentifierTranslator graphSubjects,
-                                         final HierarchyRdfContextOptions serializationOptions) {
-        try {
-            final JcrRdfTools jcrRdfTools =
-                    JcrRdfTools.withContext(graphSubjects, getSession());
-
-            return jcrRdfTools.getTreeTriples(getNode(), serializationOptions);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getVersionTriples(org.fcrepo.kernel.rdf.IdentifierTranslator)
-     */
-    @Override
-    public RdfStream getVersionTriples(final IdentifierTranslator graphSubjects) {
-        try {
-            return JcrRdfTools.withContext(graphSubjects, getSession()).getVersionTriples(node);
-        } catch (final UnsupportedRepositoryOperationException e ) {
-            throw new RepositoryVersionRuntimeException(e);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+    public RdfStream getTriples(final IdentifierTranslator graphSubjects,
+                                final Class<? extends RdfStream> context) {
+        return getTriples(graphSubjects, Collections.singleton(context));
     }
 
     @Override
-    public RdfStream getReferencesTriples(final IdentifierTranslator graphSubjects) {
-        try {
-            return JcrRdfTools.withContext(graphSubjects, getSession()).getReferencesTriples(node);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+    public RdfStream getTriples(final IdentifierTranslator graphSubjects,
+                                final Iterable<? extends Class<? extends RdfStream>> contexts) {
+        final RdfStream stream = new RdfStream();
+
+        for (final Class<? extends RdfStream> context : contexts) {
+            try {
+                final Constructor<? extends RdfStream> declaredConstructor
+                        = context.getDeclaredConstructor(Node.class, IdentifierTranslator.class);
+
+                final RdfStream rdfStream = declaredConstructor.newInstance(node, graphSubjects);
+
+                stream.concat(rdfStream);
+            } catch (final NoSuchMethodException |
+                    InstantiationException |
+                    IllegalAccessException e) {
+                // Shouldn't happen.
+                propagate(e);
+            } catch (final InvocationTargetException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof RepositoryException) {
+                    throw new RepositoryRuntimeException(cause);
+                } else {
+                    propagate(cause);
+                }
+            }
         }
+
+        return stream;
     }
 
     /* (non-Javadoc)
@@ -389,8 +397,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
-        final Model inputModel) {
-        final RdfStream originalTriples = getTriples(graphSubjects);
+        final Model inputModel, final RdfStream originalTriples) {
 
         final RdfStream replacementStream = RdfStream.fromModel(inputModel);
 

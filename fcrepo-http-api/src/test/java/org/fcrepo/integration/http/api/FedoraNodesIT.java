@@ -681,9 +681,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         assertFalse("Didn't expect contained member resources",
                        compile(
-                                  "<"
+                                  "^<"
                                       + serverAddress
-                                      + pid + "> <" + CONTAINS + ">",
+                                      + pid + "/a>",
                                   DOTALL).matcher(content).find());
 
     }
@@ -1603,6 +1603,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("https://www.pivotaltracker.com/story/show/59240160")
     public void testPaging() throws Exception {
         // create a node with 4 children
         final String pid = getRandomUniquePid();

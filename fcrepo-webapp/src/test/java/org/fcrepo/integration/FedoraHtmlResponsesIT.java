@@ -128,7 +128,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         button.click();
 
         final HtmlPage page1 = webClient.getPage(serverAddress);
-        assertTrue("Didn't see new information in page!", page1.asText().length() > page.asText().length());
+        assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
     }
 
     @Test

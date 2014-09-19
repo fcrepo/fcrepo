@@ -25,7 +25,10 @@ import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +116,11 @@ public class FedoraVersions extends ContentExposingResource {
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        return resource.getVersionTriples(nodeTranslator())
+        if (!resource.hasType("mix:versionable")) {
+            throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
+        }
+
+        return resource.getTriples(nodeTranslator(), VersionsRdfContext.class)
                 .session(session)
                 .topic(nodeTranslator().getSubject(resource.getPath()).asNode());
     }
@@ -242,7 +249,7 @@ public class FedoraVersions extends ContentExposingResource {
         }
         final FedoraResource resource = new FedoraResourceImpl(node);
         checkCacheControlHeaders(request, servletResponse, resource, session);
-        return resource.getTriples(nodeTranslator()).session(session).topic(
+        return resource.getTriples(nodeTranslator(), PropertiesRdfContext.class).session(session).topic(
                 nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
     }
 

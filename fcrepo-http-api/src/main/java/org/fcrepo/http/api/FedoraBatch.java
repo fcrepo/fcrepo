@@ -72,6 +72,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.value.PathFactory;
@@ -250,7 +251,8 @@ public class FedoraBatch extends AbstractResource {
                                 createDefaultModel().read(src,
                                         subjects.getSubject(resource.getPath()).toString(), format);
 
-                            resource.replaceProperties(subjects, inputModel);
+                            resource.replaceProperties(subjects, inputModel,
+                                    resource.getTriples(subjects, PropertiesRdfContext.class));
                         } else {
                             throw new WebApplicationException(notAcceptable()
                                 .entity("Invalid Content Type " + contentTypeString).build());

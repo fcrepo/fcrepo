@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static org.fcrepo.kernel.utils.FixityResult.FixityState.SUCCESS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -63,16 +62,6 @@ public class FixityResultImplTest {
 
         assertNotEquals(new FixityResultImpl(99L, new URI("urn:321")).hashCode(),
                 new FixityResultImpl(100L, new URI("urn:123")).hashCode());
-    }
-
-    @Test
-    public void testIsSuccess() throws Exception {
-        FixityResult result = new FixityResultImpl(100L, new URI("urn:123"));
-        result.getStatus().add(SUCCESS);
-        assertTrue("expected fixity to be a success", result.isSuccess());
-
-        result = new FixityResultImpl(100L, new URI("urn:123"));
-        assertFalse("expected fixity to not be a success", result.isSuccess());
     }
 
     @Test

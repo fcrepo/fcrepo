@@ -17,7 +17,6 @@ package org.fcrepo.kernel.services;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -27,7 +26,6 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 /**
@@ -35,15 +33,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
  * @since Feb 20, 2014
  */
 public interface DatastreamService extends Service {
-
-    /**
-     * Create a stub datastream without content
-     * @param session
-     * @param dsPath
-     * @return created datastream
-     * @throws RepositoryException
-     */
-    Datastream createDatastream(Session session, String dsPath);
 
     /**
      * Create a new Datastream node in the repository
@@ -101,27 +90,5 @@ public interface DatastreamService extends Service {
      * @throws RepositoryException
      */
     RdfStream getFixityResultsModel(IdentifierTranslator subjects, Datastream datastream);
-
-    /**
-     * Run the fixity check on the datastream and attempt to automatically
-     * correct failures if additional copies of the bitstream are available
-     *
-     * @param datastream
-     * @return results
-     * @throws RepositoryException
-     */
-    Collection<FixityResult> runFixityAndFixProblems(Datastream datastream) throws RepositoryException;
-
-    /**
-     * Get the fixity results for this datastream's bitstream, and compare it
-     * against the given checksum and size.
-     *
-     * @param resource
-     * @param dsChecksum -the checksum and algorithm represented as a URI
-     * @param dsSize
-     * @return fixity results for datastream's bitstream
-     * @throws RepositoryException
-     */
-    Collection<FixityResult> getFixity(Node resource, URI dsChecksum, long dsSize) throws RepositoryException;
 
 }

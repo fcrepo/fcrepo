@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.utils;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.util.Collection;
 
 import javax.jcr.RepositoryException;
@@ -30,12 +29,10 @@ public interface CacheEntry {
 
     /**
      * Check the fixity of a {@link CacheEntry}
-     * @param checksum the checksum previously generated for the entry
-     * @param size the size of the entry
      * @return a {@link FixityResult} containing the relevant data
      * @throws RepositoryException
      */
-    Collection<FixityResult> checkFixity(URI checksum, long size)
+    Collection<FixityResult> checkFixity(final String algorithm)
         throws RepositoryException;
 
     /**

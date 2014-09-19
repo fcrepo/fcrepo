@@ -23,21 +23,20 @@ import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
-import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getProblemsModel;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -52,20 +51,19 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.rdf.model.ResIterator;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.HierarchyRdfContextOptions;
+import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
@@ -78,20 +76,6 @@ import com.hp.hpl.jena.sparql.util.Symbol;
  *
  * @author ajs6f
  */
-@RunWith(PowerMockRunner.class)
-//PowerMock needs to ignore some packages to prevent class-cast errors
-//PowerMock needs to ignore unnecessary packages to keep from running out of heap
-@PowerMockIgnore({
-  "org.slf4j.*",
-  "org.apache.xerces.*",
-  "javax.xml.*",
-  "org.xml.sax.*",
-  "javax.management.*",
-  "com.google.common.*",
-  "com.hp.hpl.jena.*",
-  "com.codahale.metrics.*"
-  })
-@PrepareForTest({JcrRdfTools.class, FedoraTypesUtils.class})
 public class FedoraResourceImplTest {
 
     private FedoraResource testObj;
@@ -222,23 +206,16 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetPropertiesDataset() throws Exception {
 
-        mockStatic(JcrRdfTools.class);
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
+        final FedoraResource spy = spy(testObj);
 
-        when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
+        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
         when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
 
         final RdfStream propertiesStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(
-                propertiesStream);
-        final RdfStream treeStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getTreeTriples(eq(mockNode),
-                                               any(HierarchyRdfContextOptions.class))).thenReturn(treeStream);
-        final Model problemsModel = new RdfStream().asModel();
-        when(getProblemsModel()).thenReturn(problemsModel);
-        final Dataset dataset =
-                testObj.getPropertiesDataset(mockSubjects, 0, -1);
+
+        when(spy.getTriples(eq(mockSubjects), anyCollection())).thenReturn(propertiesStream);
+        final Dataset dataset = spy.getPropertiesDataset(mockSubjects, 0, -1);
 
         assertTrue(dataset.getDefaultModel().containsAll(
                 propertiesStream.asModel()));
@@ -249,44 +226,25 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetPropertiesDatasetDefaultLimits()
-        throws Exception {
-
-        mockStatic(JcrRdfTools.class);
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
-        when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
-
-        final RdfStream propertiesStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
-        final RdfStream treeStream = new RdfStream(mockTriple);
-        when(mockJcrRdfTools.getTreeTriples(eq(mockNode),
-                                               any(HierarchyRdfContextOptions.class))).thenReturn(treeStream);
-        final Model problemsModel = createDefaultModel();
-        when(getProblemsModel()).thenReturn(problemsModel);
-        final Dataset dataset = testObj.getPropertiesDataset(mockSubjects);
-
-        assertTrue(dataset.getDefaultModel().containsAll(treeStream.asModel()));
-
-        assertTrue(dataset.getDefaultModel().containsAll(
-                propertiesStream.asModel()));
-        assertEquals(mockResource, dataset.getContext().get(Symbol.create("uri")));
-    }
-
-    @Test
-    public void testGetVersionDataset() throws Exception {
-
-        mockStatic(JcrRdfTools.class);
+    public void testGetTriples() throws Exception {
         final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
-        when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
-        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
+        final RdfStream triples = testObj.getTriples(mockSubjects, TestTriplesContext.class);
 
-        final RdfStream versionsStream = new RdfStream();
-        when(mockJcrRdfTools.getVersionTriples(any(Node.class)))
-                .thenReturn(versionsStream);
-        final RdfStream result = testObj.getVersionTriples(mockSubjects);
-        assertEquals(versionsStream, result);
+        final Model model = triples.asModel();
+
+        final ResIterator resIterator = model.listSubjects();
+
+        final ImmutableSet<String> resources = ImmutableSet.copyOf(
+                Iterators.transform(resIterator,
+                        new Function<Resource, String>() {
+                            @Override
+                            public String apply(final Resource resource) {
+                                return resource.getURI();
+                            }
+                        }));
+
+        assertTrue(resources.contains("MockTriplesContextClass"));
     }
 
     @Test
@@ -364,11 +322,10 @@ public class FedoraResourceImplTest {
     @Test
     public void testReplacePropertiesDataset() throws Exception {
 
-        mockStatic(JcrRdfTools.class);
         final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator();
-        when(JcrRdfTools.withContext(defaultGraphSubjects, mockSession)).thenReturn(mockJcrRdfTools);
 
         when(mockNode.getPath()).thenReturn("/xyz");
+        when(mockSession.getNode("/xyz")).thenReturn(mockNode);
 
         final Model propertiesModel = createDefaultModel();
         propertiesModel.add(propertiesModel.createResource("a"),
@@ -384,12 +341,6 @@ public class FedoraResourceImplTest {
                                propertiesModel.createProperty("y"),
                                "z");
         final RdfStream propertiesStream = RdfStream.fromModel(propertiesModel);
-        when(mockJcrRdfTools.getJcrTriples(mockNode)).thenReturn(propertiesStream);
-
-        final RdfStream treeStream = new RdfStream();
-        when(mockJcrRdfTools.getTreeTriples(mockNode)).thenReturn(treeStream);
-        final Model problemsModel = createDefaultModel();
-        when(getProblemsModel()).thenReturn(problemsModel);
 
         final Model replacementModel = createDefaultModel();
 
@@ -402,13 +353,11 @@ public class FedoraResourceImplTest {
                                 replacementModel.createProperty("j"),
                                "k");
 
-        final Model replacements = testObj.replaceProperties(defaultGraphSubjects, replacementModel).asModel();
+        final Model replacements = testObj.replaceProperties(defaultGraphSubjects,
+                replacementModel,
+                propertiesStream).asModel();
 
         assertTrue(replacements.containsAll(replacementModel));
-
-        assertFalse(problemsModel.contains(propertiesModel.createResource("x"),
-                                              propertiesModel.createProperty("y"),
-                                              "z"));
     }
     @Test
     public void shouldGetEtagForAnObject() throws RepositoryException {

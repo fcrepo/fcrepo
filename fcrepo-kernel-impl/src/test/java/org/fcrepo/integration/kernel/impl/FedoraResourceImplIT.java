@@ -61,6 +61,9 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -467,7 +470,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        final Model graphStore = object.getVersionTriples(subjects).asModel();
+        final Model graphStore = object.getTriples(subjects, VersionsRdfContext.class).asModel();
 
         logger.debug(graphStore.toString());
 
@@ -554,7 +557,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        final Model model = object.getReferencesTriples(subjects).asModel();
+        final Model model = object.getTriples(subjects, ReferencesRdfContext.class).asModel();
 
         assertTrue(
             model.contains(subjects.getSubject(subject.getPath()),
@@ -577,7 +580,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         model.add(subject, predicate, resource);
         model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
 
-        object.replaceProperties(subjects, model);
+        object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class));
 
         final PropertyIterator properties = new PropertyIterator(object.getNode().getProperties());
 
