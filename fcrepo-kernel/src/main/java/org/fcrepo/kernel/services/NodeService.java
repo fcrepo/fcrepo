@@ -31,15 +31,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 public interface NodeService extends Service {
 
     /**
-     * Find or create a new Fedora resource at the given path
-     *
-     * @param session
-     * @param path
-     * @return FedoraResource for the given path
-     */
-    FedoraResource findOrCreateObject(Session session, String path);
-
-    /**
      * Retrieve an existing Fedora resource at the given path
      *
      * @param session

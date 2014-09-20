@@ -137,13 +137,13 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testRandomNodeGraph() {
         final FedoraResource object =
-            nodeService.findOrCreateObject(session, "/testNodeGraph");
+            objectService.findOrCreateObject(session, "/testNodeGraph");
 
         logger.debug(object.getPropertiesDataset(
                 new DefaultIdentifierTranslator()).toString());
         final Node s = createGraphSubjectNode("/testNodeGraph");
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
-        final Node o = createLiteral("nt:unstructured");
+        final Node o = createLiteral("nt:folder");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
                 .contains(ANY, s, p, o));
     }

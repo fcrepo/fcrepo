@@ -233,13 +233,7 @@ public class FedoraBatch extends AbstractResource {
                         final HttpIdentifierTranslator subjects =
                             new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-                        final FedoraResource resource;
-
-                        if (nodeService.exists(session, objPath)) {
-                            resource = nodeService.findOrCreateObject(session, objPath);
-                        } else {
-                            resource = objectService.findOrCreateObject(session, objPath);
-                        }
+                        final FedoraResource resource = objectService.findOrCreateObject(session, objPath);
 
                         if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                             resource.updatePropertiesDataset(subjects, IOUtils.toString(src));

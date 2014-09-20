@@ -63,10 +63,11 @@ import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
 
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -100,13 +101,16 @@ public class FedoraBatchTest {
     private VersionService mockVersions;
 
     @Mock
+    private ObjectService mockObjects;
+
+    @Mock
     private Node mockDsNode;
 
     @Mock
     private NodeType mockDsNodeType;
 
     @Mock
-    private FedoraResourceImpl mockObject;
+    private FedoraObject mockObject;
 
     @Mock
     private NodeIterator mockIterator;
@@ -126,6 +130,7 @@ public class FedoraBatchTest {
     public void setUp() throws Exception {
         initMocks(this);
         testObj = new FedoraBatch();
+        setField(testObj, "objectService", mockObjects);
         setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
@@ -147,8 +152,7 @@ public class FedoraBatchTest {
         final String pid = "FedoraDatastreamsTest1";
 
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
-        when(mockNodes.exists(mockSession, "/{}FedoraDatastreamsTest1")).thenReturn(true);
-        when(mockNodes.findOrCreateObject(mockSession, "/{}FedoraDatastreamsTest1")).thenReturn(mockObject);
+        when(mockObjects.findOrCreateObject(mockSession, "/{}FedoraDatastreamsTest1")).thenReturn(mockObject);
         when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
                                                                            mockNode);
 
@@ -180,8 +184,7 @@ public class FedoraBatchTest {
 
         final String path = "/FedoraDatastreamsTest1";
         when(mockNode.getPath()).thenReturn(path);
-        when(mockNodes.exists(mockSession, "/{}FedoraDatastreamsTest1")).thenReturn(true);
-        when(mockNodes.findOrCreateObject(mockSession, "/{}FedoraDatastreamsTest1")).thenReturn(mockObject);
+        when(mockObjects.findOrCreateObject(mockSession, "/{}FedoraDatastreamsTest1")).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockObject.getPath()).thenReturn(path);
         when(mockSession.getNode(path)).thenReturn(mockNode);

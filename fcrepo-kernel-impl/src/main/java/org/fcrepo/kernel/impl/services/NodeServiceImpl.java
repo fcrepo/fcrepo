@@ -53,23 +53,6 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     private static final Logger LOGGER = getLogger(NodeServiceImpl.class);
 
     /**
-     * Find or create a new Fedora resource at the given path
-     *
-     * @param session a JCR session
-     * @param path a JCR path
-     * @return FedoraResource
-     * @throws RepositoryException
-     */
-    @Override
-    public FedoraResource findOrCreateObject(final Session session, final String path) {
-        try {
-            return new FedoraResourceImpl(findOrCreateNode(session, path));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
      * Retrieve an existing Fedora resource at the given path
      *
      * @param session a JCR session

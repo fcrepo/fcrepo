@@ -54,7 +54,7 @@ public class NodeServiceImplIT extends AbstractIT {
     public void testDeleteObject() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();
-        nodeService.findOrCreateObject(session, "/" + pid);
+        objectService.findOrCreateObject(session, "/" + pid);
         session.save();
 
         nodeService.deleteObject(session, "/" + pid);
