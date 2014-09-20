@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getVersionHistory;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -25,9 +24,6 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeTypeIterator;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -64,36 +60,6 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public FedoraResource getObject(final Session session, final String path) {
         try {
             return new FedoraResourceImpl(session.getNode(path));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
-     * Get an existing Fedora resource at the given path with the given version
-     * label
-     *
-     * @param session a JCR session
-     * @param path a JCR path
-     * @param versionId a JCR version label
-     * @return Fedora resource at the given path with the given version label
-     * @throws RepositoryException
-     */
-    @Override
-    public FedoraResource getObject(final Session session, final String path, final String versionId) {
-        try {
-            final VersionHistory versionHistory = getVersionHistory(session, path);
-
-            if (versionHistory == null) {
-                return null;
-            }
-
-            if (!versionHistory.hasVersionLabel(versionId)) {
-                return null;
-            }
-
-            final Version version = versionHistory.getVersionByLabel(versionId);
-            return new FedoraResourceImpl(version.getFrozenNode());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -151,23 +117,6 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public void moveObject(final Session session, final String source, final String destination) {
         try {
             session.getWorkspace().move(source, destination);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
-     * Get the full list of node types in the repository
-     *
-     * @param session
-     * @return full list of node types in the repository
-     * @throws RepositoryException
-     */
-    @Override
-    public NodeTypeIterator getAllNodeTypes(final Session session) {
-        try {
-            final NodeTypeManager ntmanager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
-            return ntmanager.getAllNodeTypes();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

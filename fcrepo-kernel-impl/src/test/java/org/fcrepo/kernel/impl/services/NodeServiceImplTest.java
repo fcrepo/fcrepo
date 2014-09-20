@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.InputStream;
 
@@ -37,21 +36,14 @@ import org.fcrepo.kernel.services.NodeService;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * <p>NodeServiceImplTest class.</p>
  *
  * @author ksclarke
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
-@PrepareForTest({ServiceHelpers.class})
 public class NodeServiceImplTest {
 
     @Mock
@@ -110,7 +102,6 @@ public class NodeServiceImplTest {
         when(mockRoot.getNode("objects")).thenReturn(mockObjectsNode);
         when(mockSession.getNode(objPath)).thenReturn(mockObjNode);
         when(mockObjNode.getReferences()).thenReturn(mockEmptyIterator);
-        mockStatic(ServiceHelpers.class);
         testObj.deleteObject(mockSession, "foo");
         verify(mockSession).getNode(objPath);
         verify(mockObjNode).remove();
@@ -143,12 +134,6 @@ public class NodeServiceImplTest {
         final String badPath = "/foo/bad_ns:bar";
         when(mockNameReg.getURI("bad_ns")).thenThrow(new FedoraInvalidNamespaceException("Invalid namespace (bad_ns)"));
         testObj.exists(mockSession, badPath);
-    }
-
-    @Test
-    public void testGetAllNodeTypes() {
-        final NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
-        assertEquals(mockNTI, actual);
     }
 
     @Test
