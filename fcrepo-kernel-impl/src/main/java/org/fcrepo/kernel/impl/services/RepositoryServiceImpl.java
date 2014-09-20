@@ -18,8 +18,6 @@ package org.fcrepo.kernel.impl.services;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.limit;
-import static com.google.common.collect.Maps.asMap;
-import static com.google.common.collect.Sets.newHashSet;
 import static com.hp.hpl.jena.query.DatasetFactory.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
@@ -32,9 +30,7 @@ import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
 import java.util.Iterator;
-import java.util.Map;
 
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -58,7 +54,6 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Timer;
-import com.google.common.base.Function;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -116,29 +111,6 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.services.RepositoryService#getRepositoryNamespaces(
-     * javax.jcr.Session)
-     */
-    @Override
-    public Map<String, String> getRepositoryNamespaces(final Session session) throws RepositoryException {
-
-        final NamespaceRegistry reg = session.getWorkspace().getNamespaceRegistry();
-        return asMap(newHashSet(reg.getPrefixes()), new Function<String, String>() {
-
-            @Override
-            public String apply(final String p) {
-                try {
-                    return reg.getURI(p);
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        });
     }
 
     /*

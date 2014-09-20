@@ -16,9 +16,7 @@
 package org.fcrepo.kernel.services;
 
 import java.io.File;
-import java.util.Map;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
@@ -49,20 +47,10 @@ public interface RepositoryService extends Service {
     Long getRepositoryObjectCount();
 
     /**
-     * Get a map of JCR prefixes to their URI namespaces
-     *
-     * @param session
-     * @return map of JCR prefixes to their URI namespaces
-     * @throws RepositoryException
-     */
-    Map<String, String> getRepositoryNamespaces(final Session session) throws RepositoryException;
-
-    /**
      * Serialize the JCR namespace information as an RDF Dataset
      *
      * @param session
      * @return JCR namespace information as an RDF Dataset
-     * @throws RepositoryException
      */
     Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator);
 
@@ -71,7 +59,6 @@ public interface RepositoryService extends Service {
      *
      * @param session
      * @return JCR namespace information as an {@link RdfStream}
-     * @throws RepositoryException
      */
     RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator);
 
@@ -86,7 +73,6 @@ public interface RepositoryService extends Service {
      * @param limit
      * @param offset
      * @return full text search results as an RDF Dataset
-     * @throws RepositoryException
      */
     Dataset searchRepository(IdentifierTranslator subjectFactory, Resource searchSubject, Session session, String terms,
             int limit, long offset);
@@ -97,7 +83,6 @@ public interface RepositoryService extends Service {
      * @param session
      * @param backupDirectory
      * @return problems
-     * @throws RepositoryException
      */
     Problems backupRepository(Session session, File backupDirectory);
 
@@ -107,7 +92,6 @@ public interface RepositoryService extends Service {
      * @param session
      * @param backupDirectory
      * @return problems
-     * @throws RepositoryException
      */
     Problems restoreRepository(Session session, File backupDirectory);
 

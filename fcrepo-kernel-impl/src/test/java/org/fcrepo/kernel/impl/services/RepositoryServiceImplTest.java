@@ -210,12 +210,6 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
         assertEquals(EXPECTED_COUNT, actual);
     }
 
-    @Test
-    public void testGetRepositoryNamespaces() throws RepositoryException {
-        final Map<String, String> actual = testObj.getRepositoryNamespaces(mockSession);
-        assertEquals(expectedNS, actual);
-    }
-
     private void setupSearchRepository() throws RepositoryException {
         mockStatic(JcrRdfTools.class);
         final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
