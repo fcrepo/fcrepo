@@ -189,14 +189,17 @@ public class FedoraNodes extends AbstractResource {
 
         final FedoraResource resource = nodeService.getObject(session, path);
 
-        final HttpIdentifierTranslator subjects =
-            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
+        final HttpIdentifierTranslator subjects = getIdentifierTranslator();
 
         checkCacheControlHeaders(request, servletResponse, resource, session);
 
         addResourceHttpHeaders(servletResponse, resource, subjects);
 
         return status(OK).build();
+    }
+
+    private HttpIdentifierTranslator getIdentifierTranslator() {
+        return new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
     }
 
     /**
@@ -226,8 +229,7 @@ public class FedoraNodes extends AbstractResource {
 
         checkCacheControlHeaders(request, servletResponse, resource, session);
 
-        final HttpIdentifierTranslator subjects =
-            new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
+        final HttpIdentifierTranslator subjects = getIdentifierTranslator();
 
         final RdfStream rdfStream =
             resource.getTriples(subjects, PropertiesRdfContext.class).session(session)
@@ -404,8 +406,7 @@ public class FedoraNodes extends AbstractResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource, session);
 
-            final Dataset properties = resource.updatePropertiesDataset(new HttpIdentifierTranslator(
-                    session, FedoraNodes.class, uriInfo), requestBody);
+            final Dataset properties = resource.updatePropertiesDataset(getIdentifierTranslator(), requestBody);
 
             final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
             if (!problems.isEmpty()) {
@@ -484,8 +485,7 @@ public class FedoraNodes extends AbstractResource {
                 final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
                 resource = createFedoraResource(null, effectiveContentType, path);
-                final HttpIdentifierTranslator idTranslator =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+                final HttpIdentifierTranslator idTranslator = getIdentifierTranslator();
 
                 final URI location = new URI(idTranslator.getSubject(resource.getPath()).getURI());
 
@@ -552,8 +552,7 @@ public class FedoraNodes extends AbstractResource {
         final String newObjectPath;
         final String path = toPath(pathList);
 
-        final HttpIdentifierTranslator idTranslator =
-            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final HttpIdentifierTranslator idTranslator = getIdentifierTranslator();
 
         final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -791,8 +790,7 @@ public class FedoraNodes extends AbstractResource {
 
         try {
 
-            final IdentifierTranslator subjects =
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+            final IdentifierTranslator subjects = getIdentifierTranslator();
 
             if (!nodeService.exists(session, toPath(path))) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
@@ -864,8 +862,7 @@ public class FedoraNodes extends AbstractResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource, session);
 
-            final IdentifierTranslator subjects =
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+            final IdentifierTranslator subjects = getIdentifierTranslator();
 
             final String destination =
                 subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
