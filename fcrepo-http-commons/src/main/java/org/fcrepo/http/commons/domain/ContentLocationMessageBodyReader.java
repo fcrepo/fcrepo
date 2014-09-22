@@ -20,7 +20,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.fcrepo.kernel.services.ExternalContentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -42,7 +41,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
  * @author cabeer
  */
 @Provider
-@Component
 public class ContentLocationMessageBodyReader implements MessageBodyReader<InputStream> {
 
     private static final Predicate<Annotation> HAS_CONTENT_LOCATION_PREDICATE = new Predicate<Annotation>() {

@@ -16,11 +16,11 @@
 package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.sun.jersey.api.Responses.notAcceptable;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status;
@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
@@ -67,7 +68,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
@@ -75,17 +75,16 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.utils.ContentDigest;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.BodyPartEntity;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.glassfish.jersey.media.multipart.MultiPart;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.value.PathFactory;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
-import com.sun.jersey.core.header.ContentDisposition;
-import com.sun.jersey.multipart.BodyPart;
-import com.sun.jersey.multipart.BodyPartEntity;
-import com.sun.jersey.multipart.MultiPart;
 
 /**
  * Controller for manipulating binary streams in larger batches
@@ -93,7 +92,6 @@ import com.sun.jersey.multipart.MultiPart;
  *
  * @author cbeer
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:batch")
 public class FedoraBatch extends AbstractResource {
@@ -102,7 +100,7 @@ public class FedoraBatch extends AbstractResource {
     public static final String INLINE = "inline";
     public static final String DELETE = "delete";
     public static final String FORM_DATA_DELETE_PART_NAME = "delete[]";
-    @InjectedSession
+    @Inject
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraBatch.class);
@@ -249,7 +247,7 @@ public class FedoraBatch extends AbstractResource {
                             resource.replaceProperties(subjects, inputModel,
                                     resource.getTriples(subjects, PropertiesRdfContext.class));
                         } else {
-                            throw new WebApplicationException(notAcceptable()
+                            throw new WebApplicationException(notAcceptable(null)
                                 .entity("Invalid Content Type " + contentTypeString).build());
                         }
 

@@ -33,6 +33,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
@@ -46,11 +47,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
@@ -58,12 +57,11 @@ import com.codahale.metrics.annotation.Timed;
  * Expose node types at a REST endpoint
  * @author cbeer
  */
-@Component
 @Scope("prototype")
 @Path("/fcr:nodetypes")
 public class FedoraRepositoryNodeTypes extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     /**
@@ -99,7 +97,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
             return status(SC_NO_CONTENT).build();
         } catch ( RepositoryRuntimeException ex ) {
             // this may be brittle, but the returned exception isn't an InvalideNodeTypeDefinitionException...
-            if ( ex.getMessage().indexOf("Reading the node definitions from the"
+            if ( ex.getCause().getMessage().indexOf("Reading the node definitions from the"
                     + " supplied stream resulted in problems(s)") != -1 ) {
                 return status(SC_BAD_REQUEST).entity(ex.getMessage()).build();
             }

@@ -44,10 +44,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Test;
 
 import com.hp.hpl.jena.update.GraphStore;
-import com.sun.jersey.core.header.ContentDisposition;
 
 /**
  * <p>FedoraContentIT class.</p>

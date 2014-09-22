@@ -293,7 +293,7 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
      */
     @Override
     protected Resource doRdfForward(final String inputId) {
-        final URI result = uriBuilder.buildFromMap(getPathMap(inputId));
+        final URI result = uriBuilder.buildFromMap(getPathMap(inputId), false);
         return createResource(result.toString());
     }
 

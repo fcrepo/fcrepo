@@ -17,7 +17,11 @@
     
     <!-- Mints PIDs-->
     <bean class="org.fcrepo.kernel.impl.identifiers.UUIDPidMinter"/>
-    
+
+    <bean class="org.fcrepo.generator.dublincore.DublinCoreGenerators">
+      <constructor-arg ref="dcgenerators"/>
+    </bean>
+
     <util:list id="dcgenerators" value-type="org.fcrepo.generator.dublincore.DCGenerator">
         <bean class="org.fcrepo.generator.dublincore.WellKnownDatastreamGenerator"
             p:wellKnownDsid="DC"/>

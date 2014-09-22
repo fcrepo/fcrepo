@@ -15,14 +15,14 @@
  */
 package org.fcrepo.integration;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
@@ -69,10 +69,10 @@ public class FedoraTransformIT extends AbstractResourceIT {
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved ldpath feed:\n" + content);
 
-        final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createJsonParser(content));
+        final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createParser(content));
 
         assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/" + pid,
-                rootNode.get("id").getElements().next().asText());
+                rootNode.get("id").elements().next().asText());
 
     }
 
@@ -96,10 +96,10 @@ public class FedoraTransformIT extends AbstractResourceIT {
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Retrieved LDPath result:\n" + content);
 
-        final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createJsonParser(content));
+        final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createParser(content));
 
         assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/" + pid, rootNode
-                .get("id").getElements().next().asText());
+                .get("id").elements().next().asText());
 
     }
 }

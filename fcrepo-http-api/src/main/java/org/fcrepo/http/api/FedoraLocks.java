@@ -21,15 +21,14 @@ import com.hp.hpl.jena.graph.Triple;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Lock;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -71,14 +70,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * @author Mike Durbin
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:lock")
 public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(FedoraLocks.class);
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     /**

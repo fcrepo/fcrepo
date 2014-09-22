@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.metrics;
+package org.fcrepo.generator.dublincore;
 
-import com.codahale.metrics.jersey.InstrumentedResourceMethodDispatchAdapter;
-
-import javax.ws.rs.ext.Provider;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
- * Provide a metrics registry for Jersey instrumenting
- *
- * @author eddies
+ * @author cabeer
+ * @since 9/23/14
  */
-@Provider
-public class MetricsProvider extends InstrumentedResourceMethodDispatchAdapter {
-
+public class DublinCoreGenerators extends ArrayList<DCGenerator> implements List<DCGenerator> {
     /**
-     * Default constructor that provides a MetricsRegistry
+     * Provides a list of generators
+     * @param c
      */
-    public MetricsProvider() {
-        super(RegistryService.getInstance().getMetrics());
+    public DublinCoreGenerators(final Collection<? extends DCGenerator> c) {
+        super(c);
     }
 }

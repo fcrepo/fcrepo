@@ -16,12 +16,11 @@
 package org.fcrepo.auth.integration;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -45,12 +44,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author awoods
  * @since 2014-06-26
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}")
 public class RootTestResource extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     private static final Logger LOGGER = getLogger(RootTestResource.class);

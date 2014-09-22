@@ -40,6 +40,7 @@ import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
@@ -55,7 +56,6 @@ import org.mockito.stubbing.Answer;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 /**
  * <p>BaseHtmlProviderTest class.</p>
@@ -124,7 +124,7 @@ public class BaseHtmlProviderTest {
                 mockTemplate));
         baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
                 new Annotation[] {}, MediaType.valueOf("text/html"),
-                (MultivaluedMap) new MultivaluedMapImpl(), outStream);
+                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 
@@ -153,7 +153,7 @@ public class BaseHtmlProviderTest {
         baseHtmlProvider.writeTo(testData, Dataset.class, mock(Type.class),
                 new Annotation[] {mockAnnotation}, MediaType
                         .valueOf("text/html"),
-                (MultivaluedMap) new MultivaluedMapImpl(), outStream);
+                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 

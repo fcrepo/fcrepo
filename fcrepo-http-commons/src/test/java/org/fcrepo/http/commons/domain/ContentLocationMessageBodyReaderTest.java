@@ -27,7 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.sun.jersey.core.header.InBoundHeaders;
+import javax.ws.rs.core.MultivaluedHashMap;
 
 /**
  * @author cabeer
@@ -52,7 +52,7 @@ public class ContentLocationMessageBodyReaderTest {
 
     @Test
     public void testReadFromURI() throws Exception {
-        final InBoundHeaders headers = new InBoundHeaders();
+        final MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
         headers.putSingle("Content-Location", "http://localhost:8080/xyz");
         when(mockContentService.retrieveExternalContent(new URI("http://localhost:8080/xyz")))
             .thenReturn(mockInputStream);
@@ -63,8 +63,7 @@ public class ContentLocationMessageBodyReaderTest {
 
     @Test
     public void testReadFromRequestBody() throws Exception {
-
-        final InBoundHeaders headers = new InBoundHeaders();
+        final MultivaluedHashMap<String, String> headers = new MultivaluedHashMap<>();
         try (final InputStream actual =
                 testObj.readFrom(InputStream.class, null, null, null, headers, mockInputStream)) {
             assertEquals(mockInputStream, actual);

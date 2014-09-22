@@ -17,18 +17,14 @@ package org.fcrepo.http.commons.session;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
 
+import org.glassfish.hk2.api.Factory;
+import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.sun.jersey.api.core.InjectParam;
-import com.sun.jersey.core.spi.component.ComponentContext;
-import com.sun.jersey.spi.inject.Injectable;
-import com.sun.jersey.spi.inject.PerRequestTypeInjectableProvider;
 
 /**
  * Provide a JCR session within the current request context
@@ -36,29 +32,33 @@ import com.sun.jersey.spi.inject.PerRequestTypeInjectableProvider;
  * @author awoods
  */
 @Provider
-public class SessionProvider extends
-        PerRequestTypeInjectableProvider<InjectedSession, Session> {
+@RequestScoped
+public class SessionProvider implements Factory<Session> {
 
-    @Autowired
-    @InjectParam
+    @Inject
     SessionFactory sessionFactory;
 
-    @Context
     private HttpServletRequest request;
+
+    /**
+     * Create a new session provider for a request
+     * @param request
+     */
+    @Inject
+    public SessionProvider(final HttpServletRequest request) {
+        this.request = request;
+    }
 
     private static final Logger LOGGER = getLogger(SessionProvider.class);
 
-    /**
-     * Yes, this provider really provides sessions
-     */
-    public SessionProvider() {
-        super(Session.class);
+    @Override
+    public Session provide() {
+        return sessionFactory.getSession(request);
     }
 
     @Override
-    public Injectable<Session> getInjectable(final ComponentContext ic,
-            final InjectedSession a) {
-        LOGGER.trace("Returning new InjectableSession...");
-        return new InjectableSession(sessionFactory, request);
+    public void dispose(final Session session) {
+        // no-op
+
     }
 }

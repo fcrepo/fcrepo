@@ -17,6 +17,11 @@ package org.fcrepo.http.api.responses;
 
 import org.springframework.stereotype.Component;
 
+import javax.ws.rs.Produces;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+
 /**
  * JAX-RS provider for taking a dataset graph and returning some nice looking
  * HTML
@@ -24,5 +29,6 @@ import org.springframework.stereotype.Component;
  * @author awoods
  */
 @Component
+@Produces({TEXT_HTML, APPLICATION_XHTML_XML})
 public class HtmlProvider extends BaseHtmlProvider {
 }

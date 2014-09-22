@@ -209,6 +209,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     private String getResponseContent(final String sparql) throws IOException {
         final HttpPost sparqlRequest = new HttpPost(serverAddress + "/fcr:sparql");
         final BasicHttpEntity entity =  new BasicHttpEntity();
+        entity.setContentType("text/plain");
         entity.setContent(IOUtils.toInputStream(sparql));
         sparqlRequest.setEntity(entity);
         final HttpResponse response = client.execute(sparqlRequest);

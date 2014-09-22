@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
@@ -47,7 +48,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
 import com.hp.hpl.jena.sparql.util.Context;
 import com.hp.hpl.jena.sparql.util.Symbol;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 /**
  * <p>RdfSerializationUtilsTest class.</p>
@@ -87,7 +87,7 @@ public class RdfSerializationUtilsTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testSetCachingHeaders() {
-        final MultivaluedMap<?, ?> headers = new MultivaluedMapImpl();
+        final MultivaluedMap<?, ?> headers = new MultivaluedHashMap<>();
         Mockito.when(segment.getPath()).thenReturn("/fedora");
         setCachingHeaders((MultivaluedMap<String, Object>) headers, testData, info);
         final List<?> cacheControlHeaders = headers.get("Cache-Control");
@@ -99,7 +99,7 @@ public class RdfSerializationUtilsTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testSetNoLastModifiedHeaderWithinTransaction() {
-        final MultivaluedMap<?, ?> headers = new MultivaluedMapImpl();
+        final MultivaluedMap<?, ?> headers = new MultivaluedHashMap<>();
 
         final Model m = createDefaultModel();
         final Calendar c = Calendar.getInstance();
@@ -118,7 +118,7 @@ public class RdfSerializationUtilsTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testSetCachingHeadersWithLastModified() {
-        final MultivaluedMap<?, ?> headers = new MultivaluedMapImpl();
+        final MultivaluedMap<?, ?> headers = new MultivaluedHashMap<>();
 
         final Model m = createDefaultModel();
 

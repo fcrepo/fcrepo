@@ -15,21 +15,26 @@
  */
 package org.fcrepo.http.api.responses;
 
+import static com.google.common.collect.ImmutableMap.of;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static javax.ws.rs.core.MediaType.valueOf;
+import static java.util.Collections.singletonMap;
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
@@ -38,25 +43,35 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 
-import com.google.common.collect.ImmutableMap;
-import com.hp.hpl.jena.query.Dataset;
+import org.apache.velocity.Template;
+import org.apache.velocity.context.Context;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Dataset;
 
 /**
- * <p>StreamingBaseHtmlProviderTest class.</p>
+ * <p>BaseHtmlProviderTest class.</p>
  *
- * @author cbeer
+ * @author awoods
  */
 public class StreamingBaseHtmlProviderTest {
 
-    private StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();
+    private final StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();
+
+    private final RdfStream testData = new RdfStream();
 
     @Mock
     private Session mockSession;
@@ -67,56 +82,102 @@ public class StreamingBaseHtmlProviderTest {
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;
 
-    @Mock
-    private BaseHtmlProvider mockBaseHtmlProvider;
-
     @Before
-    public void setUp() throws RepositoryException {
+    public void setup() throws RepositoryException {
         initMocks(this);
+
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getNamespaceRegistry()).thenReturn(
-                                                                 mockNamespaceRegistry);
-        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{ "pr"});
-        when(mockNamespaceRegistry.getURI("pr")).thenReturn("nsuri");
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{ });
 
-        setField(testProvider, "delegate", mockBaseHtmlProvider);
-    }
 
-    @Test
-    public void testGetSize() {
-        assertEquals(-1, testProvider.getSize(null, null, null, null, null));
+        testData.session(mockSession);
+        testData.concat(
+        new Triple(createURI("test:subject"),
+                        createURI("test:predicate"),
+                        createLiteral("test:object")));
+        testData.concat(
+                new Triple(createURI("test:subject"), primaryTypePredicate,
+                        createLiteral("nt:file")));
+
+        final UriInfo info = Mockito.mock(UriInfo.class);
+        setField(testProvider, "uriInfo", info);
     }
 
     @Test
     public void testIsWriteable() {
-        when(mockBaseHtmlProvider.isWriteable(Dataset.class, null, null, valueOf("text/something-like-html")))
-                .thenReturn(true);
-        assertTrue(testProvider.isWriteable(RdfStream.class, null, null, valueOf("text/something-like-html")));
+        assertTrue(
+                "Gave false response to HtmlProvider.isWriteable() that contained legitimate combination of parameters",
+                testProvider.isWriteable(RdfStream.class, RdfStream.class,
+                        null, TEXT_HTML_TYPE));
+        assertFalse(
+                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than Dataset!",
+                testProvider.isWriteable(BaseHtmlProvider.class,
+                        BaseHtmlProvider.class, null, TEXT_HTML_TYPE));
+        assertFalse(
+                "HtmlProvider.isWriteable() should return false to text/plain!",
+                testProvider.isWriteable(RdfStream.class, RdfStream.class,
+                        null, TEXT_PLAIN_TYPE));
     }
 
     @Test
-    public void testWriteTo() throws WebApplicationException,
-                                         IllegalArgumentException, IOException {
-        final Triple t =
-            create(createURI("info:test"), createURI("property:test"),
-                      createURI("info:test"));
-        final RdfStream rdfStream = new RdfStream(t).session(mockSession);
-        try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream()) {
-            testProvider.writeTo(rdfStream, RdfStream.class, null, null,
-                                    valueOf("text/html"), null,
-                                    entityStream);
-        }
+    public void testGetSize() {
+        assertEquals("Returned wrong size from HtmlProvider!", testProvider
+                .getSize(null, null, null, null, null), -1);
 
-        // check that the BaseHtmlProvider gets a dataset with namespace prefixes set
-        final ArgumentCaptor<Dataset> argument = ArgumentCaptor.forClass(Dataset.class);
-        verify(mockBaseHtmlProvider).writeTo(argument.capture(),
-                                                eq(RdfStream.class),
-                                                eq((Type)null),
-                                                eq((Annotation[])null),
-                                                eq(valueOf("text/html")),
-                                                eq((MultivaluedMap<String, Object>)null),
-                                                any(OutputStream.class));
-        assertEquals(ImmutableMap.of("pr", "nsuri"), argument.getValue().getDefaultModel().getNsPrefixMap());
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    public void testWriteTo() throws WebApplicationException,
+            IllegalArgumentException, IOException {
+        final Template mockTemplate = mock(Template.class);
+        final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+
+        doAnswer(new Answer<Object>() {
+
+            @Override
+            public Object answer(final InvocationOnMock invocation) {
+                outStream.write("abcdefighijk".getBytes(), 0, 10);
+                return "I am pretending to merge a template for you.";
+            }
+        }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
+        setField(testProvider, "templatesMap", singletonMap("nt:file",
+                mockTemplate));
+        testProvider.writeTo(testData, Dataset.class, mock(Type.class),
+                new Annotation[]{}, MediaType.valueOf("text/html"),
+                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
+        final byte[] results = outStream.toByteArray();
+        assertTrue("Got no output from serialization!", results.length > 0);
+
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    public void testWriteToWithAnnotation() throws WebApplicationException,
+            IllegalArgumentException, IOException {
+        final Template mockTemplate = mock(Template.class);
+        final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+
+        doAnswer(new Answer<Object>() {
+
+            @Override
+            public Object answer(final InvocationOnMock invocation) {
+                outStream.write("abcdefighijk".getBytes(), 0, 10);
+                return "I am pretending to merge a template for you.";
+            }
+        }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
+
+        setField(testProvider, "templatesMap",
+                of("some:file", mockTemplate));
+        final HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
+        when(mockAnnotation.value()).thenReturn("some:file");
+        testProvider.writeTo(testData, Dataset.class, mock(Type.class),
+                new Annotation[]{mockAnnotation}, MediaType
+                        .valueOf("text/html"),
+                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
+        final byte[] results = outStream.toByteArray();
+        assertTrue("Got no output from serialization!", results.length > 0);
+
+    }
 }

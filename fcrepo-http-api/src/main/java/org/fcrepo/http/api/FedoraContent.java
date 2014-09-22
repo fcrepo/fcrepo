@@ -28,6 +28,7 @@ import java.net.URI;
 import java.text.ParseException;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
@@ -48,14 +49,12 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.ContentLocation;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
@@ -67,12 +66,11 @@ import com.codahale.metrics.annotation.Timed;
  * @author awoods
  * @author gregjan
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:content")
 public class FedoraContent extends ContentExposingResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     @Context protected Request request;

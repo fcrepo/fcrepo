@@ -15,7 +15,6 @@
  */
 package org.fcrepo.storage.policy;
 
-import static com.sun.jersey.api.Responses.methodNotAllowed;
 import static java.util.Collections.singletonMap;
 import static javax.jcr.nodetype.NodeType.MIX_MIMETYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
@@ -27,7 +26,7 @@ import static org.apache.commons.lang.StringUtils.split;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -39,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -48,15 +48,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.policy.StoragePolicy;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
@@ -68,25 +65,20 @@ import com.google.common.annotations.VisibleForTesting;
  * @author osmandin
  * @since Aug 14, 2013
  */
-
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:storagepolicy")
 public class FedoraStoragePolicy extends AbstractResource {
 
     public static final String FEDORA_STORAGE_POLICY_PATH = "/fedora:system/fedora:storage_policy";
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     @Context
     protected HttpServletRequest request;
 
-    @Resource
+    @Inject
     protected StoragePolicyDecisionPoint storagePolicyDecisionPoint;
-
-    @Resource
-    protected ObjectService objectService;
 
     private JcrTools jcrTools;
 
@@ -134,10 +126,9 @@ public class FedoraStoragePolicy extends AbstractResource {
         final Response.ResponseBuilder response;
 
         if (!path.equalsIgnoreCase(POLICY_RESOURCE)) {
-            return methodNotAllowed().entity(
+            throw new NotAllowedException(
                     "POST method not allowed on " + getUriInfo().getAbsolutePath() +
-                            ", try /policies/fcr:storagepolicy")
-                    .build();
+                            ", try /policies/fcr:storagepolicy");
         }
 
         final String[] str = split(request); // simple split for now

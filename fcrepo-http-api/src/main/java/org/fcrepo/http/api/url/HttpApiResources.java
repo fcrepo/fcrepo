@@ -106,7 +106,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
             singletonMap("path", resource.getPath().substring(1));
         model.add(s, HAS_FIXITY_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(
-                        pathMap).toASCIIString()));
+                        pathMap, false).toASCIIString()));
     }
 
     private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
@@ -126,7 +126,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                         singletonMap("path", lockHoldingNode.getPath().substring(1));
                 model.add(s, HAS_LOCK, createResource(uriInfo
                         .getBaseUriBuilder().path(FedoraLocks.class).buildFromMap(
-                                lockedNodePathMap).toASCIIString()));
+                                lockedNodePathMap, false).toASCIIString()));
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -136,7 +136,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         if (resource.hasType(NodeType.MIX_VERSIONABLE)) {
             model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
                     .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
-                            pathMap).toASCIIString()));
+                            pathMap, false).toASCIIString()));
         }
 
         final Property dcFormat = createProperty(DC_NAMESPACE + "format");
@@ -145,7 +145,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
             final Resource format =
                     createResource(uriInfo.getBaseUriBuilder().path(
                             FedoraExport.class).queryParam("format", key)
-                            .buildFromMap(pathMap).toASCIIString());
+                            .buildFromMap(pathMap, false).toASCIIString());
             model.add(s, HAS_SERIALIZATION, format);
 
             //RDF the serialization

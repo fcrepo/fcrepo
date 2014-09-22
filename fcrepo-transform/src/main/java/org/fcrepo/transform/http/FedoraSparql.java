@@ -28,7 +28,6 @@ import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.impl.utils.LogoutCallback;
@@ -37,7 +36,8 @@ import org.fcrepo.transform.sparql.JQLConverter;
 import org.fcrepo.transform.sparql.SparqlServiceDescription;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
@@ -100,12 +100,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author cabeer
  * @author lsitu
  */
-@Component
 @Scope("prototype")
 @Path("/fcr:sparql")
 public class FedoraSparql extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraSparql.class);
@@ -117,7 +116,7 @@ public class FedoraSparql extends AbstractResource {
      */
     @GET
     @Timed
-    @Produces({RDF_XML, TURTLE, N3, N3_ALT2, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD})
+    @Produces({RDF_XML + ";qs=20", TURTLE, N3, N3_ALT2, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD})
     public Response sparqlServiceDescription(@Context final Request request,
                                              @Context final UriInfo uriInfo) {
 
@@ -197,6 +196,7 @@ public class FedoraSparql extends AbstractResource {
      * @throws RepositoryException
      */
     @POST
+    @Consumes
     @Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeSSE,
             contentTypeTextPlain, contentTypeResultsJSON,
             contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
