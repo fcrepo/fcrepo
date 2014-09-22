@@ -15,16 +15,16 @@
  */
 package org.fcrepo.http.commons.test.util;
 
-import static com.sun.jersey.api.uri.UriComponent.Type.PATH_SEGMENT;
+import org.glassfish.jersey.uri.UriComponent;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 
-import com.sun.jersey.api.uri.UriComponent;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import static org.glassfish.jersey.uri.UriComponent.Type.PATH_SEGMENT;
 
 /**
  * <p>PathSegmentImpl class.</p>
@@ -40,7 +40,7 @@ public class PathSegmentImpl implements PathSegment {
     private final MultivaluedMap<String, String> matrixParameters;
 
     PathSegmentImpl(final String path, final boolean decode) {
-        this(path, decode, new MultivaluedMapImpl());
+        this(path, decode, new MultivaluedHashMap<String,String>());
     }
 
     PathSegmentImpl(final String path, final boolean decode,

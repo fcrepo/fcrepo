@@ -16,7 +16,7 @@
 package org.fcrepo.http.commons.session;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
+import static javax.ws.rs.core.Response.Status.GONE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.Principal;
@@ -26,8 +26,11 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.impl.LockReleasingSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
@@ -129,26 +132,31 @@ public class SessionFactory {
      * @throws RuntimeException if the transaction could not be found
      */
     public Session getSession(final HttpServletRequest servletRequest) {
-        try {
-            final Session session;
-            final String txId = getEmbeddedId(servletRequest, Prefix.TX);
+        final Session session;
+        final String txId = getEmbeddedId(servletRequest, Prefix.TX);
 
+        try {
             if (txId == null) {
                 session = createSession(servletRequest);
             } else {
                 session = getSessionFromTransaction(servletRequest, txId);
             }
+        } catch (final TransactionMissingException e) {
+            throw new ClientErrorException(GONE, e);
+        } catch (final RepositoryException e) {
+            throw new BadRequestException(e);
+        }
 
+        try {
             final String lockToken = servletRequest.getHeader("Lock-Token");
             if (lockToken != null) {
                 session.getWorkspace().getLockManager().addLockToken(lockToken);
             }
-
-            return LockReleasingSession.newInstance(session);
-
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new BadRequestException(e);
         }
+
+        return LockReleasingSession.newInstance(session);
     }
 
     /**
@@ -216,7 +224,7 @@ public class SessionFactory {
      */
     protected String getEmbeddedId(
             final HttpServletRequest servletRequest, final Prefix prefix) {
-        final String requestPath = servletRequest.getPathInfo();
+        final String requestPath = servletRequest.getRequestURI();
 
         String id = null;
         if (requestPath != null) {

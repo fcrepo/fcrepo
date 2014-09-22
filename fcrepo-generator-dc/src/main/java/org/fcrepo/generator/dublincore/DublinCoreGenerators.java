@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.http.commons.session;
+package org.fcrepo.generator.dublincore;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
- * The runtime-injected JCR Session
- *
- * @author awoods
+ * @author cabeer
+ * @since 9/23/14
  */
-@Target({FIELD, PARAMETER, METHOD})
-@Retention(RUNTIME)
-@Documented
-public @interface InjectedSession {
+public class DublinCoreGenerators extends ArrayList<DCGenerator> implements List<DCGenerator> {
+    /**
+     * Provides a list of generators
+     * @param c
+     */
+    public DublinCoreGenerators(final Collection<? extends DCGenerator> c) {
+        super(c);
+    }
 }

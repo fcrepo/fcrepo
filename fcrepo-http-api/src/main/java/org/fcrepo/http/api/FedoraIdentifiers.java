@@ -37,6 +37,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import java.util.Collection;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
@@ -51,13 +52,10 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
-import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -68,12 +66,11 @@ import com.hp.hpl.jena.graph.Triple;
  * @author ajs6f
  * @author cbeer
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:identifier")
 public class FedoraIdentifiers extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     /**
@@ -85,7 +82,6 @@ public class FedoraIdentifiers extends AbstractResource {
      * @return HTTP 200 with block of PIDs
      */
     @POST
-    @Timed
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream getNextPid(@PathParam("path")

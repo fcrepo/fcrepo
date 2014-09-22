@@ -18,7 +18,7 @@ package org.fcrepo.http.commons.domain;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import com.sun.jersey.core.header.reader.HttpHeaderReader;
+import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
 import java.text.ParseException;
 import java.util.List;

@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -57,13 +58,11 @@ import javax.ws.rs.core.PathSegment;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.transform.TransformationFactory;
+import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.query.Dataset;
@@ -74,17 +73,17 @@ import com.hp.hpl.jena.query.Dataset;
  *
  * @author cbeer
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:transform")
 public class FedoraTransform extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraTransform.class);
 
-    @Autowired(required = false)
+    @Inject
+    @Optional
     private TransformationFactory transformationFactory;
 
     /**
@@ -96,10 +95,6 @@ public class FedoraTransform extends AbstractResource {
      */
     @PostConstruct
     public void setUpRepositoryConfiguration() throws RepositoryException, IOException {
-
-        if (transformationFactory == null) {
-            transformationFactory = new TransformationFactory();
-        }
 
         final Session internalSession = sessions.getInternalSession();
         try {
@@ -173,6 +168,10 @@ public class FedoraTransform extends AbstractResource {
         final List<PathSegment> pathList, @HeaderParam("Content-Type")
         final MediaType contentType, final InputStream requestBodyStream)
         throws RepositoryException {
+
+        if (transformationFactory == null) {
+            transformationFactory = new TransformationFactory();
+        }
 
         try {
             final String path = toPath(pathList);

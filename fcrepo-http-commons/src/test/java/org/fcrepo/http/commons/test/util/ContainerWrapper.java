@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.test.util;
 
-import static com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory.createHttpServer;
+import static org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory.createHttpServer;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -34,10 +34,7 @@ import org.fcrepo.http.commons.webxml.bind.InitParam;
 import org.fcrepo.http.commons.webxml.bind.Listener;
 import org.fcrepo.http.commons.webxml.bind.Servlet;
 import org.fcrepo.http.commons.webxml.bind.ServletMapping;
-import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.servlet.FilterRegistration;
 import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
@@ -82,14 +79,7 @@ public class ContainerWrapper implements ApplicationContextAware {
 
         final URI uri = URI.create("http://localhost:" + port);
 
-        server = createHttpServer(uri, new HttpHandler() {
-
-            @Override
-            public void service(final Request req, final Response res) throws Exception {
-                res.setStatus(404, "Not found");
-                res.getWriter().write("404: not found");
-            }
-        });
+        server = createHttpServer(uri);
 
         // create a "root" web application
         appContext = new WebappContext(o.displayName(), "/");

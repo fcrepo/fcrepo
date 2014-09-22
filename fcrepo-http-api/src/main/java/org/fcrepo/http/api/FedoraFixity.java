@@ -29,6 +29,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,11 +42,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
@@ -55,12 +54,11 @@ import com.codahale.metrics.annotation.Timed;
  * @author ajs6f
  * @since Jun 12, 2013
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:fixity")
 public class FedoraFixity extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     /**

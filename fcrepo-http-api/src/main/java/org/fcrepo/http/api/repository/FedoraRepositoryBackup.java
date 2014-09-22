@@ -23,32 +23,30 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.modeshape.jcr.api.Problem;
 import org.modeshape.jcr.api.Problems;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 /**
  * Repository-wide backup endpoint
  *
  * @author cbeer
  */
-@Component
 @Scope("prototype")
 @Path("/fcr:backup")
 public class FedoraRepositoryBackup extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraRepositoryBackup.class);
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     /**

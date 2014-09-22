@@ -52,7 +52,6 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFWriterRegistry;
 import org.openrdf.rio.ntriples.NTriplesWriterFactory;
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
 
 /**
  * Provides serialization for streaming RDF results.
@@ -61,7 +60,6 @@ import org.springframework.stereotype.Component;
  * @since Nov 19, 2013
  */
 @Provider
-@Component
 @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X, JSON_LD})
 public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
 

@@ -73,15 +73,15 @@ import org.fcrepo.kernel.services.VersionService;
 
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import com.google.common.collect.ImmutableMap;
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.MultiPart;
-import com.sun.jersey.multipart.file.StreamDataBodyPart;
 
 /**
  * <p>FedoraBatchTest class.</p>

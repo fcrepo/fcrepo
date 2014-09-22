@@ -26,6 +26,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
@@ -51,12 +52,13 @@ import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.jvnet.hk2.annotations.Optional;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.eventbus.EventBus;
-import com.sun.jersey.core.header.ContentDisposition;
 
 /**
  * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
@@ -113,10 +115,12 @@ public abstract class AbstractResource {
     @Autowired
     protected LockService lockService;
 
-    @Autowired(required = false)
+    @Inject
+    @Optional
     private HttpTripleUtil httpTripleUtil;
 
-    @Autowired(required = false)
+    @Inject
+    @Optional
     protected EventBus eventBus;
 
     /**

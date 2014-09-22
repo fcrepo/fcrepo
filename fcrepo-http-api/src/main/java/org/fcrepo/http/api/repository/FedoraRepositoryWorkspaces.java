@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api.repository;
 
-import static com.sun.jersey.api.Responses.clientError;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -23,6 +22,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -34,11 +34,14 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -49,18 +52,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.common.collect.ImmutableSet;
-import com.sun.jersey.api.NotFoundException;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 /**
  * This class exposes the JCR workspace functionality. It may be
@@ -70,12 +70,11 @@ import org.springframework.stereotype.Component;
  * @author cbeer
  * @author ajs6f
  */
-@Component
 @Scope("prototype")
 @Path("/fcr:workspaces")
 public class FedoraRepositoryWorkspaces extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     /**
@@ -118,9 +117,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
             final Workspace workspace = session.getWorkspace();
 
             if (!workspace.getName().equals("default")) {
-                throw new WebApplicationException(
-                    clientError().entity("Unable to create workspace from non-default workspace")
-                        .build());
+                throw new ClientErrorException("Unable to create workspace from non-default workspace", BAD_REQUEST);
             }
 
             final String[] workspaceNames = workspace.getAccessibleWorkspaceNames();

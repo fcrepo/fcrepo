@@ -15,13 +15,12 @@
  */
 package org.fcrepo.http.api.repository;
 
+import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.ws.rs.Path;
 
 import org.fcrepo.http.api.FedoraImport;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 /**
  * This stub is a hack to mount the functionality of FedoraImport at the root of
@@ -30,12 +29,11 @@ import org.springframework.stereotype.Component;
  *
  * @author cbeer
  */
-@Component
 @Scope("prototype")
 @Path("/fcr:import")
 public class FedoraRepositoryImport extends FedoraImport {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
 }
