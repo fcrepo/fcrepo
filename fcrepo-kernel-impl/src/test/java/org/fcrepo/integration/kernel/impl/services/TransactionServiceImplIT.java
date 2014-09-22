@@ -82,7 +82,7 @@ public class TransactionServiceImplIT extends AbstractIT {
     public void testTransactionExpire() throws RepositoryException {
         final Session session = repository.login();
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
         objectService.createObject(txSession, "/" + pid );
 
@@ -98,7 +98,7 @@ public class TransactionServiceImplIT extends AbstractIT {
     public void testRollback() throws RepositoryException {
         final Session session = repository.login();
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
         objectService.createObject(txSession, "/" + pid );
 
@@ -114,7 +114,7 @@ public class TransactionServiceImplIT extends AbstractIT {
     public void testCommit() throws RepositoryException {
         final Session session = repository.login();
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
         objectService.createObject(txSession, "/" + pid );
 

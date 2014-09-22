@@ -10,6 +10,9 @@
   <logger name="org.fcrepo.kernel" additivity="false" level="${log.fcrepo.kernel:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
+  <logger name="org.fcrepo.integration.kernel" additivity="false" level="${log.fcrepo.integration.kernel:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
   <logger name="org.fcrepo" additivity="false" level="${log.fcrepo:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>

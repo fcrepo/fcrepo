@@ -177,7 +177,7 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetLastModifiedDate() throws RepositoryException {
+    public void testGetLastModifiedDate() {
         // test existing JCR_LASTMODIFIED
         final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);

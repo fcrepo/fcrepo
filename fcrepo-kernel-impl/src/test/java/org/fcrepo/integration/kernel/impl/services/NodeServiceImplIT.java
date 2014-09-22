@@ -53,7 +53,7 @@ public class NodeServiceImplIT extends AbstractIT {
     @Test
     public void testDeleteObject() throws RepositoryException {
         final Session session = repository.login();
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         nodeService.findOrCreateObject(session, "/" + pid);
         session.save();
 
@@ -67,7 +67,7 @@ public class NodeServiceImplIT extends AbstractIT {
     public void testDeleteObjectWithInboundReferences() throws RepositoryException {
 
         final Session session = repository.login();
-        final String pid = getRandomPid();
+        final String pid = getTestObjIdentifier();
         final FedoraResource resourceA = objectService.createObject(session, "/" + pid + "/a");
         final FedoraResource resourceB = objectService.createObject(session, "/" + pid + "/b");
 
