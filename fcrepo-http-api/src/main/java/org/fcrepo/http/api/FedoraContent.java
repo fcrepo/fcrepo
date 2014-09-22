@@ -44,11 +44,13 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -73,6 +75,10 @@ public class FedoraContent extends ContentExposingResource {
     @InjectedSession
     protected Session session;
 
+    @Context protected Request request;
+    @Context protected HttpServletResponse servletResponse;
+    @Context protected UriInfo uriInfo;
+
     private static final Logger LOGGER = getLogger(FedoraContent.class);
 
     /**
@@ -84,14 +90,12 @@ public class FedoraContent extends ContentExposingResource {
      */
     @POST
     @Timed
-    public Response create(@PathParam("path")
-            final List<PathSegment> pathList,
-            @HeaderParam("Slug") final String slug,
-            @HeaderParam("Content-Disposition") final String contentDisposition,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            @ContentLocation final InputStream requestBodyStream,
-            @Context final HttpServletResponse servletResponse)
+    public Response create(@PathParam("path") final List<PathSegment> pathList,
+                           @HeaderParam("Slug") final String slug,
+                           @HeaderParam("Content-Disposition") final String contentDisposition,
+                           @QueryParam("checksum") final String checksum,
+                           @HeaderParam("Content-Type") final MediaType requestContentType,
+                           @ContentLocation final InputStream requestBodyStream)
         throws InvalidChecksumException, ParseException {
         final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -131,10 +135,17 @@ public class FedoraContent extends ContentExposingResource {
             final URI checksumURI = checksumURI(checksum);
             final String originalFileName = originalFileName(contentDisposition);
 
-            final Datastream datastream =
-                    datastreamService.createDatastream(session, newDatastreamPath,
-                            contentType.toString(), originalFileName, requestBodyStream,
-                            checksumURI);
+
+            final Datastream datastream = datastreamService.findOrCreateDatastream(session, newDatastreamPath);
+
+            final FedoraBinary binary = datastream.getBinary();
+
+            binary.setContent(requestBodyStream,
+                    contentType.toString(),
+                    checksumURI,
+                    originalFileName,
+                    datastreamService.getStoragePolicyDecisionPoint());
+
 
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
@@ -145,12 +156,12 @@ public class FedoraContent extends ContentExposingResource {
                 versionService.nodeUpdated(datastream.getNode());
 
                 builder = created(URI.create(subjects.getSubject(
-                        datastream.getContentNode().getPath()).getURI()));
+                        binary.getPath()).getURI()));
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
 
-            addCacheControlHeaders(servletResponse, datastream, session);
+            addCacheControlHeaders(servletResponse, binary, session);
 
             return builder.build();
 
@@ -175,9 +186,7 @@ public class FedoraContent extends ContentExposingResource {
                                   @QueryParam("checksum") final String checksum,
                                   @HeaderParam("Content-Disposition") final String contentDisposition,
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
-                                  @ContentLocation final InputStream requestBodyStream,
-                                  @Context final Request request,
-                                  @Context final HttpServletResponse servletResponse)
+                                  @ContentLocation final InputStream requestBodyStream)
         throws InvalidChecksumException, ParseException {
 
         try {
@@ -187,7 +196,7 @@ public class FedoraContent extends ContentExposingResource {
             if (nodeService.exists(session, path)) {
 
                 final Datastream ds =
-                        datastreamService.getDatastream(session, path);
+                        datastreamService.findOrCreateDatastream(session, path);
                 evaluateRequestPreconditions(request, servletResponse, ds, session);
             }
 
@@ -196,11 +205,18 @@ public class FedoraContent extends ContentExposingResource {
             final URI checksumURI = checksumURI(checksum);
             final String originalFileName = originalFileName(contentDisposition);
 
-            final Datastream datastream =
-                datastreamService.createDatastream(session, path,
-                    contentType.toString(), originalFileName, requestBodyStream, checksumURI);
+            final Datastream datastream = datastreamService.findOrCreateDatastream(session, path);
+
+            final FedoraBinary binary = datastream.getBinary();
+
+            binary.setContent(requestBodyStream,
+                    contentType.toString(),
+                    checksumURI,
+                    originalFileName,
+                    datastreamService.getStoragePolicyDecisionPoint());
 
             final boolean isNew = datastream.isNew();
+
             try {
                 session.save();
                 versionService.nodeUpdated(datastream.getNode());
@@ -208,23 +224,19 @@ public class FedoraContent extends ContentExposingResource {
                 throw new RepositoryRuntimeException(e);
             }
 
-            ResponseBuilder builder;
-            try {
-                if (isNew) {
-                    final HttpIdentifierTranslator subjects =
-                            new HttpIdentifierTranslator(session, FedoraNodes.class,
-                                    uriInfo);
+            final ResponseBuilder builder;
+            if (isNew) {
+                final HttpIdentifierTranslator subjects =
+                        new HttpIdentifierTranslator(session, FedoraNodes.class,
+                                uriInfo);
 
-                    builder = created(URI.create(subjects.getSubject(
-                            datastream.getContentNode().getPath()).getURI()));
-                } else {
-                    builder = noContent();
-                }
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
+                builder = created(URI.create(subjects.getSubject(
+                        binary.getPath()).getURI()));
+            } else {
+                builder = noContent();
             }
 
-            addCacheControlHeaders(servletResponse, datastream, session);
+            addCacheControlHeaders(servletResponse, binary, session);
 
             return builder.build();
         } finally {
@@ -242,16 +254,14 @@ public class FedoraContent extends ContentExposingResource {
     @GET
     @Timed
     public Response getContent(@PathParam("path") final List<PathSegment> pathList,
-                               @HeaderParam("Range") final String rangeValue,
-                               @Context final Request request,
-                               @Context final HttpServletResponse servletResponse)
+                               @HeaderParam("Range") final String rangeValue)
         throws IOException {
         try {
             final String path = toPath(pathList);
             LOGGER.info("Attempting get of {}.", path);
 
             final Datastream ds =
-                    datastreamService.getDatastream(session, path);
+                    datastreamService.findOrCreateDatastream(session, path);
 
             if (ds.getNode().hasProperty("fedorarelsext:hasExternalContent")) {
                 final URI externalURI = URI.create(ds.getNode().getProperty("fedorarelsext:hasExternalContent")
@@ -263,7 +273,8 @@ public class FedoraContent extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
-            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse,
+
+            return getDatastreamContentResponse(ds.getBinary(), rangeValue, request, servletResponse,
                     subjects, session);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);

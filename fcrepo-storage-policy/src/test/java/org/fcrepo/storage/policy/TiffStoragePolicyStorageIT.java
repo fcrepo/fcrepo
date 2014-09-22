@@ -31,7 +31,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.impl.services.DatastreamServiceImpl;
 import org.fcrepo.kernel.services.ObjectService;
@@ -45,7 +45,6 @@ import org.modeshape.jcr.api.JcrConstants;
 import org.modeshape.jcr.value.BinaryKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * <p>TiffStoragePolicyStorageIT class.</p>
@@ -93,56 +92,54 @@ public class TiffStoragePolicyStorageIT {
     }
 
     @Test
-    //@Ignore
     public void testPolicyDrivenStorage() throws Exception {
         ByteArrayInputStream data;
         final Session session = repo.login();
 
-        objectService.createObject(session, "/testCompositeObject");
+        objectService.findOrCreateObject(session, "/testCompositeObject");
 
         data = new ByteArrayInputStream(
                 ("987654321987654321098765432109876543210987654321098765432109876543210987654" +
                         "3210987654321009876543210").getBytes());
-        datastreamService.createDatastream(session,
-                                           "/testCompositeObject/content",
-                                           "application/octet-stream",
-                                           null,
-                                           data);
+
+        final FedoraBinary binary = datastreamService.getBinary(session,
+                "/testCompositeObject/content");
+
+        binary.setContent(data, "application/octet-stream", null, null,
+                datastreamService.getStoragePolicyDecisionPoint());
+
         data = new ByteArrayInputStream(
                 ("87acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a70" +
                         "1687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf674" +
                         "17b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a7" +
                         "16cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a7016")
                         .getBytes());
-        datastreamService
-            .createDatastream(session,
-                                  "/testCompositeObject/tiffContent",
-                                  "image/tiff",
-                                  null,
-                                  data);
+        final FedoraBinary datastream1 = datastreamService.getBinary(session,
+                "/testCompositeObject/tiffContent");
+
+        datastream1.setContent(data, "image/tiff", null, null,
+                datastreamService.getStoragePolicyDecisionPoint());
 
         session.save();
 
-        final Node node = session.getNode("/testCompositeObject/content");
+        final Node node = session.getNode("/testCompositeObject/content").getNode(JcrConstants.JCR_CONTENT);
 
         final BinaryKey key =
-            getBinaryKey.apply(node.getNode(JcrConstants.JCR_CONTENT)
-                               .getProperty(JcrConstants.JCR_DATA));
+            getBinaryKey.apply(node.getProperty(JcrConstants.JCR_DATA));
 
         logger.info("content key: {}", key);
 
         final Node tiffNode =
-            session.getNode("/testCompositeObject/tiffContent");
+            session.getNode("/testCompositeObject/tiffContent").getNode(JcrConstants.JCR_CONTENT);
 
         final BinaryKey tiffKey =
-            getBinaryKey.apply(tiffNode.getNode(JcrConstants.JCR_CONTENT)
-                               .getProperty(JcrConstants.JCR_DATA));
+            getBinaryKey.apply(tiffNode.getProperty(JcrConstants.JCR_DATA));
 
         logger.info("tiff key: {}", tiffKey);
 
-        final Datastream datastream = datastreamService.asDatastream(node);
+        final FedoraBinary normalBinary = datastreamService.asBinary(node);
 
-        Collection<FixityResult> fixity = datastream.getFixity(repo, SHA_1.toString());
+        Collection<FixityResult> fixity = normalBinary.getFixity(repo, SHA_1.toString());
 
         assertNotEquals(0, fixity.size());
 
@@ -150,9 +147,9 @@ public class TiffStoragePolicyStorageIT {
 
         assertThat(e.getStoreIdentifier(), containsString(key.toString()));
 
-        final Datastream tiffDatastream = datastreamService.asDatastream(tiffNode);
+        final FedoraBinary tiffBinary = datastreamService.asBinary(tiffNode);
 
-        fixity = tiffDatastream.getFixity(repo, SHA_1.toString());
+        fixity = tiffBinary.getFixity(repo, SHA_1.toString());
 
         assertNotEquals(0, fixity.size());
 

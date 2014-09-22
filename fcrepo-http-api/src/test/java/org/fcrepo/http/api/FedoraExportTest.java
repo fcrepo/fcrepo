@@ -81,7 +81,7 @@ public class FedoraExportTest {
 
     @Test
     public void testExportObject() throws Exception {
-        when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(
+        when(mockObjects.findOrCreateObject(mockSession, "/test/object")).thenReturn(
                 mockObject);
         ((StreamingOutput) testObj.exportObject(
                 createPathList("test", "object"), "fake-format",
@@ -96,7 +96,7 @@ public class FedoraExportTest {
         final String skipBinary = "true";
         when(mockSerializers.getSerializer(FedoraObjectSerializer.JCR_XML)).thenReturn(
                 mockJcrXmlSerializer);
-        when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(
+        when(mockObjects.findOrCreateObject(mockSession, "/test/object")).thenReturn(
                 mockObject);
         ((StreamingOutput) testObj.exportObject(
                 createPathList("test", "object"), FedoraObjectSerializer.JCR_XML,
@@ -110,7 +110,7 @@ public class FedoraExportTest {
         final String noRecurse = "true";
         when(mockSerializers.getSerializer(FedoraObjectSerializer.JCR_XML)).thenReturn(
                 mockJcrXmlSerializer);
-        when(mockObjects.getObject(mockSession, "/test/object")).thenReturn(
+        when(mockObjects.findOrCreateObject(mockSession, "/test/object")).thenReturn(
                 mockObject);
         ((StreamingOutput) testObj.exportObject(
                 createPathList("test", "object"), FedoraObjectSerializer.JCR_XML,

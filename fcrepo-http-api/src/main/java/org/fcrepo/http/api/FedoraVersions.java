@@ -278,7 +278,8 @@ public class FedoraVersions extends ContentExposingResource {
             final HttpIdentifierTranslator subjects =
                     new HttpIdentifierTranslator(session, FedoraNodes.class,
                             uriInfo);
-            return getDatastreamContentResponse(ds, rangeValue, request, servletResponse, subjects, session);
+            return getDatastreamContentResponse(ds.getBinary(),
+                    rangeValue, request, servletResponse, subjects, session);
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);

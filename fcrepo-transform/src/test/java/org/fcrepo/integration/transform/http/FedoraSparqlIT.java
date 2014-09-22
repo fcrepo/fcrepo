@@ -29,11 +29,11 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.RDFLanguages;
 import org.fcrepo.integration.AbstractResourceIT;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.JcrConstants;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -67,10 +67,11 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
     public void setUpTestData() throws RepositoryException {
         session = repo.login();
         session.setNamespacePrefix("zz", "http://zz.com/");
+        final ObjectServiceImpl objectService = new ObjectServiceImpl();
         final ValueFactory valueFactory = session.getValueFactory();
-        final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(session, "/abc", JcrConstants.NT_FOLDER);
-        final FedoraResourceImpl fedoraResource2 = new FedoraResourceImpl(session, "/xyz", JcrConstants.NT_FOLDER);
-        final FedoraResourceImpl fedoraResource3 = new FedoraResourceImpl(session, "/anobject", JcrConstants.NT_FOLDER);
+        final FedoraResource fedoraResource = objectService.findOrCreateObject(session, "/abc");
+        final FedoraResource fedoraResource2 = objectService.findOrCreateObject(session, "/xyz");
+        final FedoraResource fedoraResource3 = objectService.findOrCreateObject(session, "/anobject");
 
         fedoraResource.getNode().setProperty("dc:title", new Value[] { valueFactory.createValue("xyz") });
         fedoraResource.getNode().setProperty("fedorarelsext:hasPart",

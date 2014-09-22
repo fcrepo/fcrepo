@@ -86,10 +86,10 @@ public class FedoraFixity extends AbstractResource {
 
         final String path = toPath(pathList);
 
-        final Datastream ds = datastreamService.getDatastream(session, path);
+        final Datastream ds = datastreamService.findOrCreateDatastream(session, path);
 
         return datastreamService.getFixityResultsModel(
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo), ds)
+                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo), ds.getBinary())
                 .session(session);
 
     }

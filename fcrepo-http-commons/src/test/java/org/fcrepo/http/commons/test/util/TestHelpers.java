@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,7 +58,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.impl.identifiers.UUIDPidMinter;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -215,26 +216,50 @@ public abstract class TestHelpers {
     }
 
     public static Datastream mockDatastream(final String pid,
-            final String dsId, final String content) {
+                                            final String dsId, final String content) {
+        final FedoraBinary mockBinary = mockBinary(pid, dsId, content);
         final Datastream mockDs = mock(Datastream.class);
-        final FedoraObject mockObj = mock(FedoraObject.class);
-        try {
-            when(mockDs.getPath()).thenReturn("/" + pid + "/" + dsId);
-            when(mockDs.getMimeType()).thenReturn("application/octet-stream");
-            when(mockDs.getCreatedDate()).thenReturn(new Date());
-            when(mockDs.getLastModifiedDate()).thenReturn(new Date());
-            if (content != null) {
-                final MessageDigest md = MessageDigest.getInstance("SHA-1");
-                final byte[] digest = md.digest(content.getBytes());
-                final URI cd = asURI("SHA-1", digest);
-                when(mockDs.getContent()).thenReturn(
-                        IOUtils.toInputStream(content));
-                when(mockDs.getContentDigest()).thenReturn(cd);
-                when(mockDs.getEtagValue()).thenReturn(cd.toString());
+        when(mockDs.getBinary()).thenReturn(mockBinary);
+        when(mockDs.getBinary().getDescription()).thenReturn(mockDs);
+        when(mockDs.getPath()).thenReturn("/" + pid + "/" + dsId);
+        when(mockDs.getCreatedDate()).thenReturn(new Date());
+        when(mockDs.getLastModifiedDate()).thenReturn(new Date());
+        if (content != null) {
+            final MessageDigest md;
+            try {
+                md = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
             }
-        } catch (final Throwable t) {
+            final byte[] digest = md.digest(content.getBytes());
+            final URI cd = asURI("SHA-1", digest);
+            when(mockDs.getEtagValue()).thenReturn(cd.toString());
         }
         return mockDs;
+    }
+
+    public static FedoraBinary mockBinary(final String pid,
+                                          final String dsId, final String content) {
+        final FedoraBinary mockBinary = mock(FedoraBinary.class);
+        when(mockBinary.getPath()).thenReturn("/" + pid + "/" + dsId + "/jcr:content");
+        when(mockBinary.getMimeType()).thenReturn("application/octet-stream");
+        when(mockBinary.getCreatedDate()).thenReturn(new Date());
+        when(mockBinary.getLastModifiedDate()).thenReturn(new Date());
+        if (content != null) {
+            final MessageDigest md;
+            try {
+                md = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+            final byte[] digest = md.digest(content.getBytes());
+            final URI cd = asURI("SHA-1", digest);
+            when(mockBinary.getContent()).thenReturn(
+                    IOUtils.toInputStream(content));
+            when(mockBinary.getContentDigest()).thenReturn(cd);
+            when(mockBinary.getEtagValue()).thenReturn(cd.toString());
+        }
+        return mockBinary;
     }
 
     private static String getRdfSerialization(final HttpEntity entity) {

@@ -53,6 +53,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -180,7 +181,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedObject() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.getObject(session, testDirPath());
+        final FedoraObject object = objectService.findOrCreateObject(session, testDirPath());
         assertNotNull(object);
 
         final Node node = object.getNode();
@@ -198,7 +199,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedDatastream() throws RepositoryException {
         final Session session = repo.login();
 
-        final Datastream datastream = datastreamService.getDatastream(session, testFilePath());
+        final Datastream datastream = datastreamService.findOrCreateDatastream(session, testFilePath());
         assertNotNull(datastream);
 
         final Node node = datastream.getNode();
@@ -238,7 +239,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(datastreamService.getDatastream(session, testFilePath()));
+        checkFixity(datastreamService.findOrCreateDatastream(session, testFilePath()).getBinary());
 
         session.save();
         session.logout();
@@ -248,14 +249,14 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final Datastream ds = datastreamService.getDatastream(session, testFilePath());
+        final Datastream ds = datastreamService.findOrCreateDatastream(session, testFilePath());
 
-        final String originalFixity = checkFixity(ds);
+        final String originalFixity = checkFixity(ds.getBinary());
 
         final File file = fileForNode(null);
         appendToFile(file, " ");
 
-        final String newFixity = checkFixity(ds);
+        final String newFixity = checkFixity(ds.getBinary());
 
         assertNotEquals("Checksum is expected to have changed!", originalFixity, newFixity);
 
@@ -269,15 +270,15 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         }
     }
 
-    private String checkFixity(final Datastream ds) throws IOException, NoSuchAlgorithmException, RepositoryException {
-        assertNotNull(ds);
+    private String checkFixity(final FedoraBinary binary) throws IOException, NoSuchAlgorithmException {
+        assertNotNull(binary);
 
         final File file = fileForNode(null);
         final byte[] hash = getHash(SHA_1, file);
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results = ds.getFixity(repo, SHA_1.toString());
+        final Collection<FixityResult> results = binary.getFixity(repo, SHA_1.toString());
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());

@@ -69,6 +69,7 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -232,13 +233,7 @@ public class FedoraBatch extends AbstractResource {
                         final HttpIdentifierTranslator subjects =
                             new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
 
-                        final FedoraResource resource;
-
-                        if (nodeService.exists(session, objPath)) {
-                            resource = nodeService.findOrCreateObject(session, objPath);
-                        } else {
-                            resource = objectService.createObject(session, objPath);
-                        }
+                        final FedoraResource resource = objectService.findOrCreateObject(session, objPath);
 
                         if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                             resource.updatePropertiesDataset(subjects, IOUtils.toString(src));
@@ -274,14 +269,19 @@ public class FedoraBatch extends AbstractResource {
                             checksumURI = null;
                         }
 
-                        resourcesChanged.add(datastreamService.createDatastream(session, objPath,
-                                                                  part.getMediaType().toString(),
-                                                                  contentDisposition.getFileName(),
-                                                                  src, checksumURI));
+                        final Datastream datastream = datastreamService.findOrCreateDatastream(session, objPath);
+
+                        datastream.getBinary().setContent(src,
+                                part.getMediaType().toString(),
+                                checksumURI,
+                                contentDisposition.getFileName(),
+                                datastreamService.getStoragePolicyDecisionPoint());
+
+                        resourcesChanged.add(datastream);
                         break;
 
                     case DELETE:
-                        nodeService.deleteObject(session, objPath);
+                        nodeService.getObject(session, objPath).delete();
                         break;
 
                     default:
@@ -327,7 +327,7 @@ public class FedoraBatch extends AbstractResource {
             for (final String dsid : childList) {
                 final String dsPath = path + "/" + dsid;
                 LOGGER.debug("purging node {}", dsPath);
-                nodeService.deleteObject(session, dsPath);
+                nodeService.getObject(session, dsPath).delete();
             }
             session.save();
             versionService.nodeUpdated(session, path);
@@ -394,11 +394,13 @@ public class FedoraBatch extends AbstractResource {
                     continue;
                 }
 
-                digest.update(ds.getContentDigest().toString().getBytes(
+                final FedoraBinary binary = ds.getBinary();
+
+                digest.update(binary.getContentDigest().toString().getBytes(
                         UTF_8));
 
-                if (ds.getLastModifiedDate().after(date)) {
-                    date = ds.getLastModifiedDate();
+                if (binary.getLastModifiedDate().after(date)) {
+                    date = binary.getLastModifiedDate();
                 }
 
                 datastreams.add(ds);
@@ -422,13 +424,16 @@ public class FedoraBatch extends AbstractResource {
                 final MultiPart multipart = new MultiPart();
 
                 for (final Datastream ds : datastreams) {
+                    final FedoraBinary binary = ds.getBinary();
                     final BodyPart bodyPart =
-                            new BodyPart(ds.getContent(), MediaType.valueOf(ds
-                                    .getMimeType()));
-                    bodyPart.setContentDisposition(ContentDisposition.type(
-                            ATTACHMENT).fileName(ds.getPath()).creationDate(
-                            ds.getCreatedDate()).modificationDate(
-                            ds.getLastModifiedDate()).size(ds.getContentSize())
+                            new BodyPart(binary.getContent(),
+                                    MediaType.valueOf(binary.getMimeType()));
+                    bodyPart.setContentDisposition(
+                            ContentDisposition.type(ATTACHMENT)
+                                    .fileName(ds.getPath())
+                                    .creationDate(binary.getCreatedDate())
+                                    .modificationDate(binary.getLastModifiedDate())
+                                    .size(binary.getContentSize())
                             .build());
                     multipart.bodyPart(bodyPart);
                 }

@@ -55,12 +55,12 @@ public class FedoraObjectImplIT extends AbstractIT {
     @Test
     public void testCreatedObject() throws RepositoryException {
         Session session = repo.login();
-        objectService.createObject(session, "/testObject");
+        objectService.findOrCreateObject(session, "/testObject");
         session.save();
         session.logout();
         session = repo.login();
         final FedoraObject obj =
-            objectService.getObject(session, "/testObject");
+            objectService.findOrCreateObject(session, "/testObject");
         assertNotNull("Couldn't find object!", obj);
     }
 
@@ -68,7 +68,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     public void testObjectGraph() throws Exception {
         final Session session = repo.login();
         final FedoraObject object =
-            objectService.createObject(session, "/graphObject");
+            objectService.findOrCreateObject(session, "/graphObject");
         final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
@@ -148,7 +148,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     public void testObjectGraphWithUriProperty() throws RepositoryException {
         final Session session = repo.login();
         final FedoraObject object =
-            objectService.createObject(session, "/graphObject");
+            objectService.findOrCreateObject(session, "/graphObject");
         final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
         final String graphSubject = subjects.getSubject("/graphObject").getURI();
         final Dataset graphStore = object.getPropertiesDataset(subjects);

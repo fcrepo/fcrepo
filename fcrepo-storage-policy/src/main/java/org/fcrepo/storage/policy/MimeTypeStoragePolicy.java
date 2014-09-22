@@ -15,7 +15,6 @@
  */
 package org.fcrepo.storage.policy;
 
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -62,7 +61,7 @@ public class MimeTypeStoragePolicy implements StoragePolicy {
             hint, n);
         try {
             final String nodeMimeType =
-                n.getNode(JCR_CONTENT).getProperty(JCR_MIME_TYPE).getString();
+                n.getProperty(JCR_MIME_TYPE).getString();
 
             LOGGER.trace("Found mime type {}", nodeMimeType);
 

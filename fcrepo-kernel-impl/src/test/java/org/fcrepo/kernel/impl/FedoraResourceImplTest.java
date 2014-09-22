@@ -111,16 +111,6 @@ public class FedoraResourceImplTest {
         assertEquals(mockNode, testObj.getNode());
     }
 
-    @SuppressWarnings("unused")
-    @Test
-    public void testPathConstructor() throws RepositoryException {
-        when(mockSession.getRootNode()).thenReturn(mockRoot);
-        when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
-        when(mockNode.isNew()).thenReturn(true);
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
-        new FedoraResourceImpl(mockSession, "/foo/bar", null);
-    }
-
     @Test
     public void testHasMixin() throws RepositoryException {
         boolean actual;

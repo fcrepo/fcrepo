@@ -96,7 +96,7 @@ public class FedoraExport extends AbstractResource {
                         try {
                             LOGGER.debug("Selecting from serializer map: {}", serializers);
                             LOGGER.debug("Retrieved serializer for format: {}", format);
-                            serializer.serialize(objectService.getObject(session, path),
+                            serializer.serialize(objectService.findOrCreateObject(session, path),
                                                  out,
                                                  parseBoolean(skipBinary),
                                                  parseBoolean(recurse));

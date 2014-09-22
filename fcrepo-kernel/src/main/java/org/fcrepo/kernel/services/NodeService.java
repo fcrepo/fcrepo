@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeTypeIterator;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -31,15 +30,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 public interface NodeService extends Service {
 
     /**
-     * Find or create a new Fedora resource at the given path
-     *
-     * @param session
-     * @param path
-     * @return FedoraResource for the given path
-     */
-    FedoraResource findOrCreateObject(Session session, String path);
-
-    /**
      * Retrieve an existing Fedora resource at the given path
      *
      * @param session
@@ -47,25 +37,6 @@ public interface NodeService extends Service {
      * @return FedoraResource at the given path
      */
     FedoraResource getObject(Session session, String path);
-
-    /**
-     * Get an existing Fedora resource at the given path with the given version
-     * label
-     *
-     * @param session
-     * @param path
-     * @param versionId a version label
-     * @return FedoraResource with version label
-     */
-    FedoraResource getObject(Session session, String path, String versionId);
-
-    /**
-     * Delete an existing object from the repository at the given path
-     *
-     * @param session
-     * @param path
-     */
-    void deleteObject(Session session, String path);
 
     /**
      * Copy an existing object from the source path to the destination path
@@ -82,14 +53,6 @@ public interface NodeService extends Service {
      * @param destination
      */
     void moveObject(Session session, String source, String destination);
-
-    /**
-     * Get the full list of node types in the repository
-     *
-     * @param session
-     * @return node type iterator
-     */
-    NodeTypeIterator getAllNodeTypes(final Session session);
 
     /**
      * @param session

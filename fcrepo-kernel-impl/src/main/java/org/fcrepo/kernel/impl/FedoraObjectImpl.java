@@ -16,13 +16,9 @@
 package org.fcrepo.kernel.impl;
 
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
 import org.slf4j.Logger;
@@ -44,39 +40,6 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
      */
     public FedoraObjectImpl(final Node node) {
         super(node);
-
-        if (node.isNew()) {
-            initializeNewObjectProperties();
-        }
-    }
-
-    /**
-     * Create or find a FedoraObject at the given path
-     * @param session the JCR session to use to retrieve the object
-     * @param path the absolute path to the object
-     * @param nodeType primary type to assign to created object
-     * @throws RepositoryException
-     */
-    public FedoraObjectImpl(final Session session, final String path,
-                        final String nodeType) {
-        super(session, path, nodeType);
-
-        if (node.isNew()) {
-            initializeNewObjectProperties();
-        }
-    }
-
-    private void initializeNewObjectProperties() {
-        try {
-            if (node.isNew() || !hasMixin(node)) {
-                LOGGER.debug("Setting {} properties on a {} node {}...",
-                                FEDORA_OBJECT, NT_FOLDER, node.getPath());
-                node.addMixin(FEDORA_OBJECT);
-            }
-        } catch (final RepositoryException e) {
-            LOGGER.warn("Could not decorate {} with {} properties: {} ",
-                           JCR_CONTENT, FEDORA_OBJECT, e);
-        }
     }
 
     /**
