@@ -104,6 +104,9 @@ public class FedoraContentTest {
     private PidMinter mockMinter;
 
     @Mock
+    private Request mockRequest;
+
+    @Mock
     private HttpServletResponse mockResponse;
 
     @Mock
@@ -116,9 +119,12 @@ public class FedoraContentTest {
     public void setUp() throws Exception {
         initMocks(this);
         testObj = new FedoraContent();
+
+        setField(testObj, "request", mockRequest);
+        setField(testObj, "servletResponse", mockResponse);
+        setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodeService);
-        setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "versionService", mockVersions);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
@@ -151,7 +157,7 @@ public class FedoraContentTest {
             when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
             final Response actual =
                     testObj.modifyContent(createPathList(pid, dsId), null, "inline; filename=\"xyz\"", null,
-                            dsContentStream, null, mockResponse);
+                            dsContentStream);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(dsContentStream, "application/octet-stream", null, "xyz", null);
             verify(mockSession).save();
@@ -175,7 +181,7 @@ public class FedoraContentTest {
             when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
             final Response actual =
                     testObj.create(createPathList(pid, dsId), null, null, null, TEXT_PLAIN_TYPE,
-                            dsContentStream, mockResponse);
+                            dsContentStream);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(dsContentStream, "text/plain", null, null, null);
             verify(mockSession).save();
@@ -206,7 +212,7 @@ public class FedoraContentTest {
 
             final Response actual =
                     testObj.create(createPathList(pid), null, null, null, TEXT_PLAIN_TYPE,
-                            dsContentStream, mockResponse);
+                            dsContentStream);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(dsContentStream, "text/plain", null, null, null);
             verify(mockSession).save();
@@ -236,7 +242,7 @@ public class FedoraContentTest {
             when(mockResource.hasContent()).thenReturn(false);
             final Response actual =
                     testObj.create(createPathList(pid), dsid, null, null, TEXT_PLAIN_TYPE,
-                            dsContentStream, mockResponse);
+                            dsContentStream);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(dsContentStream, "text/plain", null, null, null);
             verify(mockSession).save();
@@ -261,14 +267,13 @@ public class FedoraContentTest {
             when(mockDs.getBinary()).thenReturn(mockBinary);
             when(mockBinary.getPath()).thenReturn(dsPath + "/jcr:content");
 
-            final Request mockRequest = mock(Request.class);
             when(
                     mockRequest.evaluatePreconditions(any(Date.class),
                             any(EntityTag.class))).thenReturn(null);
             when(mockDatastreams.exists(mockSession, dsPath)).thenReturn(true);
             final Response actual =
                     testObj.modifyContent(createPathList(pid, dsId), "urn:sha1:some-checksum", null, null,
-                            dsContentStream, mockRequest, mockResponse);
+                            dsContentStream);
             assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(dsContentStream, "application/octet-stream", checksum, null, null);
             verify(mockSession).save();
@@ -287,9 +292,8 @@ public class FedoraContentTest {
         when(mockDs.getNode()).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(path);
         when(mockDs.getBinary().getDescription()).thenReturn(mockDs);
-        final Request mockRequest = mock(Request.class);
         final Response actual =
-            testObj.getContent(createPathList(pid, dsId), null, mockRequest, mockResponse);
+            testObj.getContent(createPathList(pid, dsId), null);
         verify(mockDs.getBinary()).getContent();
         verify(mockSession, never()).save();
         final String actualContent =

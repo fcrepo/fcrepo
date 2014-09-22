@@ -44,6 +44,7 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.ContentLocation;
@@ -74,6 +75,10 @@ public class FedoraContent extends ContentExposingResource {
     @InjectedSession
     protected Session session;
 
+    @Context protected Request request;
+    @Context protected HttpServletResponse servletResponse;
+    @Context protected UriInfo uriInfo;
+
     private static final Logger LOGGER = getLogger(FedoraContent.class);
 
     /**
@@ -85,14 +90,12 @@ public class FedoraContent extends ContentExposingResource {
      */
     @POST
     @Timed
-    public Response create(@PathParam("path")
-            final List<PathSegment> pathList,
-            @HeaderParam("Slug") final String slug,
-            @HeaderParam("Content-Disposition") final String contentDisposition,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            @ContentLocation final InputStream requestBodyStream,
-            @Context final HttpServletResponse servletResponse)
+    public Response create(@PathParam("path") final List<PathSegment> pathList,
+                           @HeaderParam("Slug") final String slug,
+                           @HeaderParam("Content-Disposition") final String contentDisposition,
+                           @QueryParam("checksum") final String checksum,
+                           @HeaderParam("Content-Type") final MediaType requestContentType,
+                           @ContentLocation final InputStream requestBodyStream)
         throws InvalidChecksumException, ParseException {
         final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -183,9 +186,7 @@ public class FedoraContent extends ContentExposingResource {
                                   @QueryParam("checksum") final String checksum,
                                   @HeaderParam("Content-Disposition") final String contentDisposition,
                                   @HeaderParam("Content-Type") final MediaType requestContentType,
-                                  @ContentLocation final InputStream requestBodyStream,
-                                  @Context final Request request,
-                                  @Context final HttpServletResponse servletResponse)
+                                  @ContentLocation final InputStream requestBodyStream)
         throws InvalidChecksumException, ParseException {
 
         try {
@@ -253,9 +254,7 @@ public class FedoraContent extends ContentExposingResource {
     @GET
     @Timed
     public Response getContent(@PathParam("path") final List<PathSegment> pathList,
-                               @HeaderParam("Range") final String rangeValue,
-                               @Context final Request request,
-                               @Context final HttpServletResponse servletResponse)
+                               @HeaderParam("Range") final String rangeValue)
         throws IOException {
         try {
             final String path = toPath(pathList);
