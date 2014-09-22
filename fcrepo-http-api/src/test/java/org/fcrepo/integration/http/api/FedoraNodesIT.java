@@ -658,7 +658,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectOmitContainment() throws Exception {
-        final String pid = getRandomUniquePid();
+        final String pid = "testGetObjectOmitContainment-" + getRandomUniquePid();
         createObject(pid);
         createObject(pid + "/a");
         final HttpGet getObjMethod =
@@ -673,11 +673,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         logger.trace("Retrieved object graph:\n" + content);
 
         assertTrue("Didn't find member resources",
-                      compile(
-                                 "<"
-                                     + serverAddress
-                                     + pid + "> <" + HAS_CHILD + ">",
-                                 DOTALL).matcher(content).find());
+                compile("<" + serverAddress + pid + "> <" + HAS_CHILD + ">",
+                        DOTALL).matcher(content).find());
 
         assertFalse("Didn't expect contained member resources",
                        compile(

@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.api;
 
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -31,7 +33,6 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang.ArrayUtils.contains;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -50,7 +51,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
-import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
@@ -103,6 +103,7 @@ import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.http.commons.domain.PreferTag;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
@@ -122,6 +123,7 @@ import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -233,6 +235,28 @@ public class FedoraNodes extends AbstractResource {
             resource.getTriples(subjects, PropertiesRdfContext.class).session(session)
                     .topic(subjects.getSubject(resource.getPath()).asNode());
 
+        if (limit >= 0) {
+            try {
+                final Node firstPage =
+                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
+                                .replaceQueryParam("limit", limit).build()
+                                .toString().replace("&", "&amp;"));
+                rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
+                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
+
+                if (resource.getNode().getNodes().getSize() > (offset + limit)) {
+                    final Node nextPage =
+                            createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
+                                    .replaceQueryParam("limit", limit).build()
+                                    .toString().replace("&", "&amp;"));
+                    rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
+                    servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
+                }
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        }
+
         final PreferTag returnPreference;
 
         if (prefer != null && prefer.hasReturn()) {
@@ -242,72 +266,31 @@ public class FedoraNodes extends AbstractResource {
         }
 
         if (!returnPreference.getValue().equals("minimal")) {
-            String include = returnPreference.getParams().get("include");
-            if (include == null) {
-                include = "";
-            }
 
-            String omit = returnPreference.getParams().get("omit");
-            if (omit == null) {
-                omit = "";
-            }
+            final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
 
-            final String[] includes = include.split(" ");
-            final String[] omits = omit.split(" ");
-
-            if (limit >= 0) {
-                try {
-                    final Node firstPage =
-                            createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
-                                    .replaceQueryParam("limit", limit).build()
-                                    .toString().replace("&", "&amp;"));
-                    rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
-                    servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
-
-                    if (resource.getNode().getNodes().getSize() > (offset + limit)) {
-                        final Node nextPage =
-                                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
-                                        .replaceQueryParam("limit", limit).build()
-                                        .toString().replace("&", "&amp;"));
-                        rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
-                        servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
-                    }
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-            }
-
-            final boolean membership =
-                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
-                     contains(includes, LDP_NAMESPACE + "PreferMembership"))
-                    && !contains(omits, LDP_NAMESPACE + "PreferMembership");
-
-            final boolean containment =
-                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
-                     contains(includes, LDP_NAMESPACE + "PreferContainment"))
-                    && !contains(omits, LDP_NAMESPACE + "PreferContainment");
-
-
-            final boolean references = !contains(omits, INBOUND_REFERENCES.toString());
-
-            if (references) {
+            if (ldpPreferences.prefersReferences()) {
                 rdfStream.concat(resource.getTriples(subjects, ReferencesRdfContext.class));
             }
 
             rdfStream.concat(resource.getTriples(subjects, ParentRdfContext.class));
 
-            if (membership || containment) {
+            if (ldpPreferences.prefersContainment() || ldpPreferences.prefersMembership()) {
                 rdfStream.concat(resource.getTriples(subjects, ChildrenRdfContext.class));
             }
 
-            if (containment) {
+            if (ldpPreferences.prefersContainment()) {
 
                 final Iterator<FedoraResource> children = resource.getChildren();
 
-                while (children.hasNext()) {
-                    final FedoraResource child = children.next();
-                    rdfStream.concat(child.getTriples(subjects, PropertiesRdfContext.class));
-                }
+                rdfStream.concat(concat(transform(children,
+                        new Function<FedoraResource, RdfStream>() {
+
+                            @Override
+                            public RdfStream apply(final FedoraResource child) {
+                                return child.getTriples(subjects, PropertiesRdfContext.class);
+                            }
+                        })));
 
             }
 
@@ -330,7 +313,7 @@ public class FedoraNodes extends AbstractResource {
 
     }
 
-    private void addResourceHttpHeaders(final HttpServletResponse servletResponse,
+    private static void addResourceHttpHeaders(final HttpServletResponse servletResponse,
                                         final FedoraResource resource,
                                         final HttpIdentifierTranslator subjects) {
 
@@ -359,7 +342,7 @@ public class FedoraNodes extends AbstractResource {
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
     }
 
-    private void addOptionsHttpHeaders(final HttpServletResponse servletResponse) {
+    private static void addOptionsHttpHeaders(final HttpServletResponse servletResponse) {
         servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
         servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");
@@ -700,7 +683,7 @@ public class FedoraNodes extends AbstractResource {
         }
     }
 
-    private String getRequestedObjectType(final String mixin, final MediaType requestContentType) {
+    private static String getRequestedObjectType(final String mixin, final MediaType requestContentType) {
         String objectType = FEDORA_OBJECT;
 
         if (mixin != null) {
