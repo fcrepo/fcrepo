@@ -140,10 +140,10 @@ public class FedoraNodesTest {
     @Mock
     private Dataset mockDataset;
 
-    private RdfStream mockRdfStream = new RdfStream().topic(createAnon());
+    private final RdfStream mockRdfStream = new RdfStream().topic(createAnon());
 
-    private RdfStream mockRdfStream2 = new RdfStream().topic(createAnon());
-    private RdfStream mockRdfStream3 = new RdfStream().topic(createAnon());
+    private final RdfStream mockRdfStream2 = new RdfStream().topic(createAnon());
+    private final RdfStream mockRdfStream3 = new RdfStream().topic(createAnon());
 
     @Mock
     private Model mockModel;
@@ -356,7 +356,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testDescribeObject() throws RepositoryException {
+    public void testDescribeObject() {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
 
@@ -389,7 +389,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testDescribeObjectNoInlining() throws RepositoryException, ParseException {
+    public void testDescribeObjectNoInlining() throws ParseException {
         final String pid = "FedoraObjectsRdfTest1";
         final String path = "/" + pid;
 
@@ -444,7 +444,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testSparqlUpdateNull() throws IOException, RepositoryException {
+    public void testSparqlUpdateNull() throws IOException {
         final String pid = "test-pid";
 
         final Response result = testObj.updateSparql(createPathList(pid),
@@ -457,7 +457,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testSparqlUpdateEmpty() throws IOException, RepositoryException {
+    public void testSparqlUpdateEmpty() throws IOException {
         final String pid = "test-pid";
         final InputStream mockStream = new ByteArrayInputStream("".getBytes());
 
@@ -471,7 +471,7 @@ public class FedoraNodesTest {
     }
 
     @Test
-    public void testSparqlUpdateError() throws IOException, RepositoryException {
+    public void testSparqlUpdateError() throws IOException {
         final String pid = "test-pid";
         final String path = "/" + pid;
         final InputStream mockStream = new ByteArrayInputStream("my-sparql-statement".getBytes());
