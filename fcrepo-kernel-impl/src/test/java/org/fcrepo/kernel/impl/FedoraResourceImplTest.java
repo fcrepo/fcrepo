@@ -89,12 +89,12 @@ public class FedoraResourceImplTest {
     @Mock
     private Session mockSession;
 
-    private Resource mockResource = createResource();
+    private final Resource mockResource = createResource();
 
     @Mock
     private Property mockProp;
 
-    private Triple mockTriple =
+    private final Triple mockTriple =
         create(createAnon(), createAnon(), createAnon());
 
     @Mock
@@ -177,7 +177,7 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetLastModifiedDate() throws RepositoryException {
+    public void testGetLastModifiedDate() {
         // test existing JCR_LASTMODIFIED
         final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);
@@ -226,7 +226,7 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetTriples() throws Exception {
+    public void testGetTriples() {
         final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
 
         final RdfStream triples = testObj.getTriples(mockSubjects, TestTriplesContext.class);
