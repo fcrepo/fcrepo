@@ -17,11 +17,6 @@ package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.ImmutableSet.copyOf;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.utils.ContentDigest;
-import org.fcrepo.metrics.RegistryService;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -33,15 +28,17 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.slf4j.Logger;
+import org.fcrepo.metrics.RegistryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -67,8 +64,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     static final Timer timer = registryService.getMetrics().timer(
             name(Datastream.class, "fixity-check-time"));
 
-    private static final Logger LOGGER = getLogger(DatastreamService.class);
-
     /**
      * Create a new Datastream node in the JCR store
      *
@@ -78,15 +73,13 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @param originalFileName the original file name for the input stream
      * @param requestBodyStream binary payload for the datastream
      * @return created datastream
-     * @throws RepositoryException
      * @throws InvalidChecksumException
      */
     @Override
     public Datastream createDatastream(final Session session,
             final String dsPath, final String contentType,
             final String originalFileName,
-            final InputStream requestBodyStream) throws RepositoryException,
-            InvalidChecksumException {
+            final InputStream requestBodyStream) throws InvalidChecksumException {
 
         return createDatastream(session, dsPath, contentType,
                                        originalFileName, requestBodyStream, null);

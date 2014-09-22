@@ -146,7 +146,7 @@ public class NodeServiceImplTest {
     }
 
     @Test
-    public void testGetAllNodeTypes() throws RepositoryException {
+    public void testGetAllNodeTypes() {
         final NodeTypeIterator actual = testObj.getAllNodeTypes(mockSession);
         assertEquals(mockNTI, actual);
     }

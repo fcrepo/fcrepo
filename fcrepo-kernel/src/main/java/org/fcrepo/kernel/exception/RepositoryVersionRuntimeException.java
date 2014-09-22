@@ -22,6 +22,8 @@ package org.fcrepo.kernel.exception;
  */
 public class RepositoryVersionRuntimeException extends RepositoryRuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Wrap a RepositoryVersionException in a runtime exception
      * @param rootCause

@@ -80,7 +80,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testExpiration() throws Exception {
+    public void testExpiration() {
         final Date fiveSecondsAgo = new Date(currentTimeMillis() - 5000);
         when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
         service.removeAndRollbackExpired();
@@ -88,7 +88,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testExpirationThrowsRepositoryException() throws Exception {
+    public void testExpirationThrowsRepositoryException() {
         final Date fiveSecondsAgo = new Date(currentTimeMillis() - 5000);
         doThrow(new RepositoryRuntimeException("")).when(mockTx).rollback();
         when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
@@ -112,19 +112,19 @@ public class TransactionServiceImplTest {
     }
 
     @Test(expected = TransactionMissingException.class)
-    public void testHijackingNotPossible() throws RepositoryException {
+    public void testHijackingNotPossible() {
         final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
         service.getTransaction(tx.getId(), ANOTHER_USER_NAME);
     }
 
     @Test(expected = TransactionMissingException.class)
-    public void testHijackingNotPossibleWithAnonUser() throws RepositoryException {
+    public void testHijackingNotPossibleWithAnonUser() {
         final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
         service.getTransaction(tx.getId(), null);
     }
 
     @Test(expected = TransactionMissingException.class)
-    public void testHijackingNotPossibleWhenStartedAnonUser() throws RepositoryException {
+    public void testHijackingNotPossibleWhenStartedAnonUser() {
         final Transaction tx = service.beginTransaction(mockSession, null);
         service.getTransaction(tx.getId(), USER_NAME);
     }
@@ -154,7 +154,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testCommitTx() throws Exception {
+    public void testCommitTx() {
         final Transaction tx = service.commit(IS_A_TX);
         assertNotNull(tx);
         verify(mockTx).commit(null);
@@ -167,7 +167,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testRollbackTx() throws Exception {
+    public void testRollbackTx() {
         final Transaction tx = service.rollback(IS_A_TX);
         assertNotNull(tx);
         verify(mockTx).rollback();
@@ -180,12 +180,12 @@ public class TransactionServiceImplTest {
     }
 
     @Test(expected = TransactionMissingException.class)
-    public void testRollbackWithNonTx() throws RepositoryException {
+    public void testRollbackWithNonTx() {
         service.rollback(NOT_A_TX);
     }
 
     @Test(expected = TransactionMissingException.class)
-    public void testCommitWithNonTx() throws RepositoryException {
+    public void testCommitWithNonTx() {
         service.commit(NOT_A_TX);
     }
 }

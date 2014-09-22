@@ -21,6 +21,9 @@ package org.fcrepo.kernel.exception;
  * @since 9/15/14
  */
 public class PathNotFoundRuntimeException extends RepositoryRuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
     /**
      * Wrap a PathNotFoundException in a runtime exception
      * @param rootCause
