@@ -147,6 +147,10 @@ public class FedoraNodes extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
     private static boolean baseURLSet = false;
 
+    @Context protected Request request;
+    @Context protected HttpServletResponse servletResponse;
+    @Context protected UriInfo uriInfo;
+
     /**
      * Set the baseURL for JMS events.
     **/
@@ -172,18 +176,12 @@ public class FedoraNodes extends AbstractResource {
     /**
      * Retrieve the node headers
      * @param pathList
-     * @param request
-     * @param servletResponse
-     * @param uriInfo
      * @return response
      * @throws RepositoryException
      */
     @HEAD
     @Timed
-    public Response head(@PathParam("path") final List<PathSegment> pathList,
-                     @Context final Request request,
-                     @Context final HttpServletResponse servletResponse,
-                     @Context final UriInfo uriInfo) {
+    public Response head(@PathParam("path") final List<PathSegment> pathList) {
         throwIfPathIncludesJcr(pathList, "HEAD");
 
         final String path = toPath(pathList);
@@ -209,8 +207,6 @@ public class FedoraNodes extends AbstractResource {
      *        child nodes
      * @param limit with offset, control the pagination window of details for
      *        child nodes
-     * @param request
-     * @param uriInfo
      * @return triples for the specified node
      * @throws RepositoryException
      */
@@ -220,10 +216,7 @@ public class FedoraNodes extends AbstractResource {
     public RdfStream describe(@PathParam("path") final List<PathSegment> pathList,
             @QueryParam("offset") @DefaultValue("0") final int offset,
             @QueryParam("limit")  @DefaultValue("-1") final int limit,
-            @HeaderParam("Prefer") final Prefer prefer,
-            @Context final Request request,
-            @Context final HttpServletResponse servletResponse,
-            @Context final UriInfo uriInfo) {
+            @HeaderParam("Prefer") final Prefer prefer) {
         throwIfPathIncludesJcr(pathList, "MOVE");
 
         final String path = toPath(pathList);
@@ -387,12 +380,8 @@ public class FedoraNodes extends AbstractResource {
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(@PathParam("path")
-            final List<PathSegment> pathList,
-            @Context
-            final UriInfo uriInfo,
-            @ContentLocation final InputStream requestBodyStream,
-            @Context final Request request, @Context final HttpServletResponse servletResponse)
+    public Response updateSparql(@PathParam("path") final List<PathSegment> pathList,
+            @ContentLocation final InputStream requestBodyStream)
         throws IOException {
         throwIfPathIncludesJcr(pathList, "PATCH");
 
@@ -461,7 +450,6 @@ public class FedoraNodes extends AbstractResource {
     /**
      * Create a resource at a specified path, or replace triples with provided RDF.
      * @param pathList
-     * @param uriInfo
      * @param requestContentType
      * @param requestBodyStream
      * @return 204
@@ -471,12 +459,9 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response createOrReplaceObjectRdf(
             @PathParam("path") final List<PathSegment> pathList,
-            @Context final UriInfo uriInfo,
             @HeaderParam("Content-Type")
             final MediaType requestContentType,
-            @ContentLocation final InputStream requestBodyStream,
-            @Context final Request request,
-            @Context final HttpServletResponse servletResponse) throws URISyntaxException {
+            @ContentLocation final InputStream requestBodyStream) throws URISyntaxException {
         throwIfPathIncludesJcr(pathList, "PUT");
         init(uriInfo);
 
@@ -551,20 +536,12 @@ public class FedoraNodes extends AbstractResource {
      */
     @POST
     @Timed
-    public Response createObject(@PathParam("path")
-            final List<PathSegment> pathList,
-            @QueryParam("mixin")
-            final String mixin,
-            @QueryParam("checksum")
-            final String checksum,
+    public Response createObject(@PathParam("path") final List<PathSegment> pathList,
+            @QueryParam("mixin") final String mixin,
+            @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final String contentDisposition,
-            @HeaderParam("Content-Type")
-            final MediaType requestContentType,
-            @HeaderParam("Slug")
-            final String slug,
-            @Context final HttpServletResponse servletResponse,
-            @Context
-            final UriInfo uriInfo,
+            @HeaderParam("Content-Type") final MediaType requestContentType,
+            @HeaderParam("Slug") final String slug,
             @ContentLocation final InputStream requestBodyStream)
         throws ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
@@ -744,7 +721,6 @@ public class FedoraNodes extends AbstractResource {
      * @param pathList
      * @param mixin
      * @param slug
-     * @param uriInfo
      * @param file
      * @return response
      */
@@ -755,15 +731,13 @@ public class FedoraNodes extends AbstractResource {
                                                 @PathParam("path") final List<PathSegment> pathList,
                                                 @FormDataParam("mixin") final String mixin,
                                                 @FormDataParam("slug") final String slug,
-                                                @Context final HttpServletResponse servletResponse,
-                                                @Context final UriInfo uriInfo,
                                                 @FormDataParam("file") final InputStream file
     ) throws URISyntaxException, InvalidChecksumException, ParseException, IOException {
         throwIfPathIncludesJcr(pathList, "POST with multipart attachment");
         init(uriInfo);
 
         final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
-        return createObject(pathList, mixin, null, null, effectiveContentType, slug, servletResponse, uriInfo, file);
+        return createObject(pathList, mixin, null, null, effectiveContentType, slug, file);
 
     }
 
@@ -776,9 +750,7 @@ public class FedoraNodes extends AbstractResource {
      */
     @DELETE
     @Timed
-    public Response deleteObject(@PathParam("path") final List<PathSegment> pathList,
-                                 @Context final Request request,
-                                 @Context final HttpServletResponse servletResponse) {
+    public Response deleteObject(@PathParam("path") final List<PathSegment> pathList) {
         throwIfPathIncludesJcr(pathList, "DELETE");
         init(uriInfo);
 
@@ -872,9 +844,7 @@ public class FedoraNodes extends AbstractResource {
     @MOVE
     @Timed
     public Response moveObject(@PathParam("path") final List<PathSegment> pathList,
-                               @HeaderParam("Destination") final String destinationUri,
-                               @Context final Request request,
-                               @Context final HttpServletResponse servletResponse)
+                               @HeaderParam("Destination") final String destinationUri)
         throws URISyntaxException {
         throwIfPathIncludesJcr(pathList, "MOVE");
         init(uriInfo);
@@ -939,8 +909,7 @@ public class FedoraNodes extends AbstractResource {
      */
     @OPTIONS
     @Timed
-    public Response options(@PathParam("path") final List<PathSegment> pathList,
-                            @Context final HttpServletResponse servletResponse) {
+    public Response options(@PathParam("path") final List<PathSegment> pathList) {
         throwIfPathIncludesJcr(pathList, "OPTIONS");
 
         addOptionsHttpHeaders(servletResponse);
