@@ -790,7 +790,7 @@ public class FedoraNodes extends AbstractResource {
                 nodeService.getObject(session, path);
             evaluateRequestPreconditions(request, servletResponse, resource, session);
 
-            nodeService.deleteObject(session, path);
+            resource.delete();
 
             try {
                 session.save();

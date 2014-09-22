@@ -58,6 +58,11 @@ public interface FedoraResource {
     Iterator<FedoraResource> getChildren();
 
     /**
+     * Delete this resource, and any inbound references to it
+     */
+    void delete();
+
+    /**
      * Get the date this datastream was created
      * @return created date
      */

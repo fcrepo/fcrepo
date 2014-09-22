@@ -20,8 +20,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -30,7 +28,6 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.impl.rdf.impl.NodeTypeRdfContext;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
@@ -60,29 +57,6 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public FedoraResource getObject(final Session session, final String path) {
         try {
             return new FedoraResourceImpl(session.getNode(path));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
-     * Delete an existing object from the repository at the given path
-     *
-     * @param session
-     * @param path
-     * @throws RepositoryException
-     */
-    @Override
-    public void deleteObject(final Session session, final String path) {
-        try {
-            final Node obj = session.getNode(path);
-            final PropertyIterator inboundProperties = new PropertyIterator(obj.getReferences());
-
-            for (final Property inboundProperty : inboundProperties) {
-                inboundProperty.remove();
-            }
-
-            obj.remove();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

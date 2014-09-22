@@ -351,15 +351,14 @@ public class FedoraNodesTest {
     public void testDeleteObject() throws RepositoryException {
         final String pid = "testObject";
         final String path = "/" + pid;
-        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
-            .thenReturn(mockObject);
+        when(mockNodes.getObject(isA(Session.class), eq(path))).thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
 
         final Response actual = testObj.deleteObject(createPathList(pid), mockRequest, mockResponse);
 
         assertNotNull(actual);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockNodes).deleteObject(mockSession, path);
+        verify(mockObject).delete();
         verify(mockSession).save();
     }
 

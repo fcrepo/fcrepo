@@ -614,4 +614,39 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     }
 
+
+    @Test
+    public void testDeleteObject() throws RepositoryException {
+        final String pid = getRandomPid();
+        objectService.findOrCreateObject(session, "/" + pid);
+        session.save();
+
+        objectService.findOrCreateObject(session, "/" + pid).delete();
+
+        session.save();
+
+        assertFalse(session.nodeExists("/" + pid));
+    }
+
+    @Test
+    public void testDeleteObjectWithInboundReferences() throws RepositoryException {
+
+        final String pid = getRandomPid();
+        final FedoraResource resourceA = objectService.findOrCreateObject(session, "/" + pid + "/a");
+        final FedoraResource resourceB = objectService.findOrCreateObject(session, "/" + pid + "/b");
+
+        final Value value = session.getValueFactory().createValue(resourceB.getNode());
+        resourceA.getNode().setProperty("fedorarelsext:hasMember", new Value[] { value });
+
+        session.save();
+        objectService.findOrCreateObject(session, "/" + pid + "/a").delete();
+
+        session.save();
+        objectService.findOrCreateObject(session, "/" + pid + "/b").delete();
+
+        session.save();
+
+        assertFalse(session.nodeExists("/" + pid + "/b"));
+
+    }
 }

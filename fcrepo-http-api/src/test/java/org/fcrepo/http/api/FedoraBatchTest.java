@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -292,8 +293,9 @@ public class FedoraBatchTest {
         final String pid = "FedoraDatastreamsTest1";
 
         when(mockNode.getPath()).thenReturn("/FedoraDatastreamsTest1");
-        when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(
-                                                                           mockNode);
+        when(mockSession.getNode("/FedoraDatastreamsTest1")).thenReturn(mockNode);
+
+        when(mockNodes.getObject(isA(Session.class), eq("/{}FedoraDatastreamsTest1/{}xyz"))).thenReturn(mockObject);
 
         final MultiPart multipart = new MultiPart();
 
@@ -310,7 +312,7 @@ public class FedoraBatchTest {
         multipart.bodyPart(part);
 
         testObj.batchModify(createPathList(pid), multipart);
-        verify(mockNodes).deleteObject(mockSession, "/{}FedoraDatastreamsTest1/{}xyz");
+        verify(mockObject).delete();
         verify(mockSession).save();
     }
 
@@ -319,11 +321,16 @@ public class FedoraBatchTest {
         final String pid = "FedoraDatastreamsTest1";
         final String path = "/" + pid;
         final List<String> dsidList = asList("ds1", "ds2");
+
+        when(mockNodes.getObject(isA(Session.class), eq("/FedoraDatastreamsTest1/ds1"))).thenReturn(mockObject);
+        when(mockNodes.getObject(isA(Session.class), eq("/FedoraDatastreamsTest1/ds2"))).thenReturn(mockDatastream);
+
         final Response actual =
             testObj.batchDelete(createPathList(pid), dsidList);
+
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockNodes).deleteObject(mockSession, path + "/" + "ds1");
-        verify(mockNodes).deleteObject(mockSession, path + "/" + "ds2");
+        verify(mockObject).delete();
+        verify(mockDatastream).delete();
         verify(mockSession).save();
     }
 

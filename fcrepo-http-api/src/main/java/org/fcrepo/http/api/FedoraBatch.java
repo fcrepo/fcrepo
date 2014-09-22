@@ -281,7 +281,7 @@ public class FedoraBatch extends AbstractResource {
                         break;
 
                     case DELETE:
-                        nodeService.deleteObject(session, objPath);
+                        nodeService.getObject(session, objPath).delete();
                         break;
 
                     default:
@@ -327,7 +327,7 @@ public class FedoraBatch extends AbstractResource {
             for (final String dsid : childList) {
                 final String dsPath = path + "/" + dsid;
                 LOGGER.debug("purging node {}", dsPath);
-                nodeService.deleteObject(session, dsPath);
+                nodeService.getObject(session, dsPath).delete();
             }
             session.save();
             versionService.nodeUpdated(session, path);

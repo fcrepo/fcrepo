@@ -41,6 +41,7 @@ import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.Version;
@@ -62,6 +63,7 @@ import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
+import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -139,6 +141,21 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                    return new FedoraResourceImpl(node);
                }
            });
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void delete() {
+        try {
+            final PropertyIterator inboundProperties = new PropertyIterator(node.getReferences());
+
+            for (final Property inboundProperty : inboundProperties) {
+                inboundProperty.remove();
+            }
+
+            node.remove();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

@@ -39,14 +39,6 @@ public interface NodeService extends Service {
     FedoraResource getObject(Session session, String path);
 
     /**
-     * Delete an existing object from the repository at the given path
-     *
-     * @param session
-     * @param path
-     */
-    void deleteObject(Session session, String path);
-
-    /**
      * Copy an existing object from the source path to the destination path
      * @param session
      * @param source

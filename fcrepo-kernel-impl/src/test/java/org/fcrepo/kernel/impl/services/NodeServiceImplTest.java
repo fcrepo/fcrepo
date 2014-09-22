@@ -95,19 +95,6 @@ public class NodeServiceImplTest {
     }
 
     @Test
-    public void testDeleteObject() throws RepositoryException {
-        final String objPath = "foo";
-        final Node mockObjectsNode = mock(Node.class);
-        when(mockSession.getRootNode()).thenReturn(mockRoot);
-        when(mockRoot.getNode("objects")).thenReturn(mockObjectsNode);
-        when(mockSession.getNode(objPath)).thenReturn(mockObjNode);
-        when(mockObjNode.getReferences()).thenReturn(mockEmptyIterator);
-        testObj.deleteObject(mockSession, "foo");
-        verify(mockSession).getNode(objPath);
-        verify(mockObjNode).remove();
-    }
-
-    @Test
     public void testCopyObject() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         testObj.copyObject(mockSession, "foo", "bar");
