@@ -31,8 +31,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -73,10 +71,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
@@ -88,6 +88,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -478,7 +479,7 @@ public class FedoraNodes extends AbstractResource {
                         getTriples(resource, PropertiesRdfContext.class));
 
             } else if (preexisting) {
-                return status(SC_CONFLICT).entity("No RDF provided and the resource already exists!").build();
+                throw new ClientErrorException("No RDF provided and the resource already exists!", SC_CONFLICT);
             }
 
             try {
@@ -542,35 +543,20 @@ public class FedoraNodes extends AbstractResource {
         LOGGER.debug("Attempting to update path: {}", path);
 
         if (null == requestBodyStream) {
-            return status(SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content!").build();
+            throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream);
             if (isBlank(requestBody)) {
-                return status(SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content!").build();
+                throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
             final Dataset properties = resource().updatePropertiesDataset(translator(), requestBody);
 
-            final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
-            if (!problems.isEmpty()) {
-                LOGGER.info(
-                        "Found these problems updating the properties for {}: {}",
-                        path, problems);
-                final StringBuilder error = new StringBuilder();
-                final StmtIterator sit = problems.listStatements();
-                while (sit.hasNext()) {
-                    final String message = getMessage(sit.next());
-                    if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
-                        error.append(message + " \n");
-                    }
-                }
-                return status(FORBIDDEN).entity(error.length() > 0 ? error.toString() : problems.toString())
-                        .build();
-            }
+            handleProblems(properties);
 
             try {
                 session.save();
@@ -587,14 +573,13 @@ public class FedoraNodes extends AbstractResource {
             final Throwable cause = ex.getCause();
             if ( cause != null && cause instanceof PathNotFoundException ) {
                 // the sparql update referred to a repository resource that doesn't exist
-                return status(SC_BAD_REQUEST).entity(cause.getMessage()).build();
+                throw new BadRequestException(cause.getMessage());
             }
             throw ex;
         } finally {
             session.logout();
         }
     }
-
 
     /**
      * Copies an object from one path to another
@@ -608,16 +593,15 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             if (!nodeService.exists(session, path)) {
-                return status(SC_CONFLICT).entity("The source path does not exist").build();
+                throw new ClientErrorException("The source path does not exist", SC_CONFLICT);
             }
 
-            final String destination =
-                    getPath(destinationUri);
+            final String destination = getPath(destinationUri);
 
             if (destination == null) {
-                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
+                throw new ServerErrorException("Destination was not a valid resource path", SC_BAD_GATEWAY);
             } else if (nodeService.exists(session, destination)) {
-                return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
+                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED);
             }
 
             nodeService.copyObject(session, path, destination);
@@ -631,14 +615,12 @@ public class FedoraNodes extends AbstractResource {
 
             if (cause instanceof ItemExistsException) {
 
-                throw new WebApplicationException(e,
-                        status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
+                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED, e);
 
             } else if (cause instanceof PathNotFoundException) {
 
-                throw new WebApplicationException(e, status(SC_CONFLICT).entity(
-                        "There is no node that will serve as the parent of the copied item")
-                        .build());
+                throw new ClientErrorException("There is no node that will serve as the parent of the copied item",
+                        SC_CONFLICT, e);
             } else {
                 throw e;
             }
@@ -662,7 +644,7 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             if (!nodeService.exists(session, path)) {
-                return status(SC_CONFLICT).entity("The source path does not exist").build();
+                throw new ClientErrorException("The source path does not exist", SC_CONFLICT);
             }
 
 
@@ -671,9 +653,9 @@ public class FedoraNodes extends AbstractResource {
             final String destination = getPath(destinationUri);
 
             if (destination == null) {
-                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
+                throw new ServerErrorException("Destination was not a valid resource path", SC_BAD_GATEWAY);
             } else if (nodeService.exists(session, destination)) {
-                return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
+                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED);
             }
 
             nodeService.moveObject(session, path, destination);
@@ -684,15 +666,10 @@ public class FedoraNodes extends AbstractResource {
             final Throwable cause = e.getCause();
 
             if (cause instanceof ItemExistsException) {
-
-                throw new WebApplicationException(e,
-                        status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
-
+                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED, e);
             } else if (cause instanceof PathNotFoundException) {
-
-                throw new WebApplicationException(e, status(SC_CONFLICT).entity(
-                        "There is no node that will serve as the parent of the moved item")
-                        .build());
+                throw new ClientErrorException("There is no node that will serve as the parent of the moved item",
+                        SC_CONFLICT, e);
             } else {
                 throw e;
             }
@@ -789,7 +766,7 @@ public class FedoraNodes extends AbstractResource {
                 + "," + contentTypeSPARQLUpdate);
     }
 
-    private void addPaginationInformation(int offset, int limit, RdfStream rdfStream) {
+    private void addPaginationInformation(final int offset, final int limit, final RdfStream rdfStream) {
         if (limit >= 0) {
             try {
                 final Node firstPage =
@@ -886,14 +863,34 @@ public class FedoraNodes extends AbstractResource {
         return objectType;
     }
 
-    private URI getUri(FedoraResource resource) throws URISyntaxException {
+    private URI getUri(final FedoraResource resource) throws URISyntaxException {
         return new URI(translator().getSubject(resource.getPath()).getURI());
     }
 
-    private String getPath(String uri) {
+    private String getPath(final String uri) {
         return translator().getPathFromSubject(ResourceFactory.createResource(uri));
     }
 
+    private void handleProblems(final Dataset properties) {
+
+        final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
+
+        if (!problems.isEmpty()) {
+            LOGGER.info(
+                    "Found these problems updating the properties for {}: {}",
+                    path, problems);
+            final StringBuilder error = new StringBuilder();
+            final StmtIterator sit = problems.listStatements();
+            while (sit.hasNext()) {
+                final String message = getMessage(sit.next());
+                if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
+                    error.append(message + " \n");
+                }
+            }
+
+            throw new ForbiddenException(error.length() > 0 ? error.toString() : problems.toString());
+        }
+    }
 
     /**
      * Method to check for any jcr namespace element in the path
