@@ -150,6 +150,33 @@ public class FedoraNodes extends AbstractResource {
     @Context protected HttpServletResponse servletResponse;
     @Context protected UriInfo uriInfo;
 
+    @PathParam("path") protected List<PathSegment> pathList;
+
+    protected String path;
+
+    @javax.annotation.PostConstruct
+    private void postConstruct() {
+        throwIfPathIncludesJcr(pathList);
+        this.path = toPath(pathList);
+    }
+
+    /**
+     * Default JAX-RS entry point
+     */
+    @Inject
+    public FedoraNodes() {
+        super();
+    }
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param path
+     */
+    @VisibleForTesting
+    public FedoraNodes(final String path) {
+        this.path = path;
+    }
+
     /**
      * Set the baseURL for JMS events.
     **/
@@ -174,16 +201,12 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Retrieve the node headers
-     * @param pathList
      * @return response
      * @throws RepositoryException
      */
     @HEAD
     @Timed
-    public Response head(@PathParam("path") final List<PathSegment> pathList) {
-        throwIfPathIncludesJcr(pathList, "HEAD");
-
-        final String path = toPath(pathList);
+    public Response head() {
         LOGGER.trace("Getting head for: {}", path);
 
         final FedoraResource resource = nodeService.getObject(session, path);
@@ -204,7 +227,6 @@ public class FedoraNodes extends AbstractResource {
     /**
      * Retrieve the node profile
      *
-     * @param pathList
      * @param offset with limit, control the pagination window of details for
      *        child nodes
      * @param limit with offset, control the pagination window of details for
@@ -216,13 +238,9 @@ public class FedoraNodes extends AbstractResource {
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML})
-    public RdfStream describe(@PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("offset") @DefaultValue("0") final int offset,
+    public RdfStream describe(@QueryParam("offset") @DefaultValue("0") final int offset,
             @QueryParam("limit")  @DefaultValue("-1") final int limit,
             @HeaderParam("Prefer") final Prefer prefer) {
-        throwIfPathIncludesJcr(pathList, "MOVE");
-
-        final String path = toPath(pathList);
         LOGGER.trace("Getting profile for: {}", path);
 
         final FedoraResource resource = nodeService.getObject(session, path);
@@ -374,7 +392,6 @@ public class FedoraNodes extends AbstractResource {
     /**
      * Update an object using SPARQL-UPDATE
      *
-     * @param pathList
      * @return 201
      * @throws RepositoryException
      * @throws IOException
@@ -382,13 +399,10 @@ public class FedoraNodes extends AbstractResource {
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(@PathParam("path") final List<PathSegment> pathList,
-            @ContentLocation final InputStream requestBodyStream)
+    public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
         throws IOException {
-        throwIfPathIncludesJcr(pathList, "PATCH");
 
         init(uriInfo);
-        final String path = toPath(pathList);
         LOGGER.debug("Attempting to update path: {}", path);
 
         if (null == requestBodyStream) {
@@ -450,7 +464,6 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Create a resource at a specified path, or replace triples with provided RDF.
-     * @param pathList
      * @param requestContentType
      * @param requestBodyStream
      * @return 204
@@ -458,15 +471,11 @@ public class FedoraNodes extends AbstractResource {
     @PUT
     @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES, JSON_LD})
     @Timed
-    public Response createOrReplaceObjectRdf(
-            @PathParam("path") final List<PathSegment> pathList,
-            @HeaderParam("Content-Type")
+    public Response createOrReplaceObjectRdf(@HeaderParam("Content-Type")
             final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream) throws URISyntaxException {
-        throwIfPathIncludesJcr(pathList, "PUT");
         init(uriInfo);
 
-        final String path = toPath(pathList);
         LOGGER.debug("Attempting to replace path: {}", path);
         try {
 
@@ -534,14 +543,12 @@ public class FedoraNodes extends AbstractResource {
      * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
      * requests without a Content-Type get routed here.
      *
-     * @param pathList
      * @return 201
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
     @Timed
-    public Response createObject(@PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("mixin") final String mixin,
+    public Response createObject(@QueryParam("mixin") final String mixin,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final String contentDisposition,
             @HeaderParam("Content-Type") final MediaType requestContentType,
@@ -549,12 +556,10 @@ public class FedoraNodes extends AbstractResource {
             @ContentLocation final InputStream requestBodyStream)
         throws ParseException, IOException,
                    InvalidChecksumException, URISyntaxException {
-        throwIfPathIncludesJcr(pathList, "POST");
         init(uriInfo);
 
         String pid;
         final String newObjectPath;
-        final String path = toPath(pathList);
 
         final HttpIdentifierTranslator idTranslator = getIdentifierTranslator();
 
@@ -720,7 +725,6 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Create a new object from a multipart/form-data POST request
-     * @param pathList
      * @param mixin
      * @param slug
      * @param file
@@ -729,36 +733,29 @@ public class FedoraNodes extends AbstractResource {
     @POST
     @Consumes({MediaType.MULTIPART_FORM_DATA})
     @Timed
-    public Response createObjectFromFormPost(
-                                                @PathParam("path") final List<PathSegment> pathList,
-                                                @FormDataParam("mixin") final String mixin,
+    public Response createObjectFromFormPost(@FormDataParam("mixin") final String mixin,
                                                 @FormDataParam("slug") final String slug,
                                                 @FormDataParam("file") final InputStream file
     ) throws URISyntaxException, InvalidChecksumException, ParseException, IOException {
-        throwIfPathIncludesJcr(pathList, "POST with multipart attachment");
         init(uriInfo);
 
         final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
-        return createObject(pathList, mixin, null, null, effectiveContentType, slug, file);
+        return createObject(mixin, null, null, effectiveContentType, slug, file);
 
     }
 
     /**
      * Deletes an object.
      *
-     * @param pathList
      * @return response
      * @throws RepositoryException
      */
     @DELETE
     @Timed
-    public Response deleteObject(@PathParam("path") final List<PathSegment> pathList) {
-        throwIfPathIncludesJcr(pathList, "DELETE");
+    public Response deleteObject() {
         init(uriInfo);
 
         try {
-
-            final String path = toPath(pathList);
 
             final FedoraResource resource =
                 nodeService.getObject(session, path);
@@ -783,17 +780,15 @@ public class FedoraNodes extends AbstractResource {
      */
     @COPY
     @Timed
-    public Response copyObject(@PathParam("path") final List<PathSegment> path,
-                               @HeaderParam("Destination") final String destinationUri)
+    public Response copyObject(@HeaderParam("Destination") final String destinationUri)
         throws URISyntaxException {
-        throwIfPathIncludesJcr(path, "COPY");
         init(uriInfo);
 
         try {
 
             final IdentifierTranslator subjects = getIdentifierTranslator();
 
-            if (!nodeService.exists(session, toPath(path))) {
+            if (!nodeService.exists(session, path)) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
             }
 
@@ -807,7 +802,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
 
-            nodeService.copyObject(session, toPath(path), destination);
+            nodeService.copyObject(session, path, destination);
 
             session.save();
             versionService.nodeUpdated(session, destination);
@@ -842,15 +837,11 @@ public class FedoraNodes extends AbstractResource {
      */
     @MOVE
     @Timed
-    public Response moveObject(@PathParam("path") final List<PathSegment> pathList,
-                               @HeaderParam("Destination") final String destinationUri)
+    public Response moveObject(@HeaderParam("Destination") final String destinationUri)
         throws URISyntaxException {
-        throwIfPathIncludesJcr(pathList, "MOVE");
         init(uriInfo);
 
         try {
-
-            final String path = toPath(pathList);
 
             if (!nodeService.exists(session, path)) {
                 return status(SC_CONFLICT).entity("The source path does not exist").build();
@@ -907,9 +898,7 @@ public class FedoraNodes extends AbstractResource {
      */
     @OPTIONS
     @Timed
-    public Response options(@PathParam("path") final List<PathSegment> pathList) {
-        throwIfPathIncludesJcr(pathList, "OPTIONS");
-
+    public Response options() {
         addOptionsHttpHeaders(servletResponse);
         return status(OK).build();
     }
@@ -918,7 +907,7 @@ public class FedoraNodes extends AbstractResource {
      * Method to check for any jcr namespace element in the path
      */
     @VisibleForTesting
-    protected void throwIfPathIncludesJcr(final List<PathSegment> pathList, final String msg) {
+    protected void throwIfPathIncludesJcr(final List<PathSegment> pathList) {
         if (pathList == null || pathList.size() == 0) {
             return;
         }
@@ -926,7 +915,7 @@ public class FedoraNodes extends AbstractResource {
         final String[] tokens = pathSegment.getPath().split(":");
         if (tokens.length == 2 && tokens[0].equalsIgnoreCase("jcr")) {
             final String requestPath = uriInfo.getPath();
-            LOGGER.trace("{} request with jcr namespace is not allowed: {} ", msg, requestPath);
+            LOGGER.trace("Request with jcr namespace is not allowed: {} ", requestPath);
             throw new NotFoundException();
         }
     }
