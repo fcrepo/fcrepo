@@ -25,15 +25,14 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
-import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -474,7 +473,7 @@ public class FedoraNodes extends AbstractResource {
                         getTriples(resource, PropertiesRdfContext.class));
 
             } else if (preexisting) {
-                throw new ClientErrorException("No RDF provided and the resource already exists!", SC_CONFLICT);
+                throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
             }
 
             try {
@@ -588,15 +587,15 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             if (!nodeService.exists(session, path)) {
-                throw new ClientErrorException("The source path does not exist", SC_CONFLICT);
+                throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
             final String destination = getPath(destinationUri);
 
             if (destination == null) {
-                throw new ServerErrorException("Destination was not a valid resource path", SC_BAD_GATEWAY);
+                throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
             } else if (nodeService.exists(session, destination)) {
-                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED);
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
             nodeService.copyObject(session, path, destination);
@@ -610,12 +609,12 @@ public class FedoraNodes extends AbstractResource {
 
             if (cause instanceof ItemExistsException) {
 
-                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED, e);
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED, e);
 
             } else if (cause instanceof PathNotFoundException) {
 
                 throw new ClientErrorException("There is no node that will serve as the parent of the copied item",
-                        SC_CONFLICT, e);
+                        CONFLICT, e);
             } else {
                 throw e;
             }
@@ -639,7 +638,7 @@ public class FedoraNodes extends AbstractResource {
         try {
 
             if (!nodeService.exists(session, path)) {
-                throw new ClientErrorException("The source path does not exist", SC_CONFLICT);
+                throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
 
@@ -648,9 +647,9 @@ public class FedoraNodes extends AbstractResource {
             final String destination = getPath(destinationUri);
 
             if (destination == null) {
-                throw new ServerErrorException("Destination was not a valid resource path", SC_BAD_GATEWAY);
+                throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
             } else if (nodeService.exists(session, destination)) {
-                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED);
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
             nodeService.moveObject(session, path, destination);
@@ -661,10 +660,10 @@ public class FedoraNodes extends AbstractResource {
             final Throwable cause = e.getCause();
 
             if (cause instanceof ItemExistsException) {
-                throw new ClientErrorException("Destination resource already exists", SC_PRECONDITION_FAILED, e);
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED, e);
             } else if (cause instanceof PathNotFoundException) {
                 throw new ClientErrorException("There is no node that will serve as the parent of the moved item",
-                        SC_CONFLICT, e);
+                        CONFLICT, e);
             } else {
                 throw e;
             }
