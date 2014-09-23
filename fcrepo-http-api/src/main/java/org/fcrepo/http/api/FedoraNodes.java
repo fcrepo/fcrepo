@@ -29,6 +29,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -205,14 +206,6 @@ public class FedoraNodes extends AbstractResource {
         }
     }
 
-    private FedoraResource resource() {
-        if (resource == null) {
-            resource = nodeService.getObject(session, path);
-        }
-
-        return resource;
-    }
-
     /**
      * Retrieve the node headers
      * @return response
@@ -227,7 +220,7 @@ public class FedoraNodes extends AbstractResource {
 
         addResourceHttpHeaders(servletResponse, resource(), translator());
 
-        return status(OK).build();
+        return ok().build();
     }
 
     /**
@@ -237,7 +230,7 @@ public class FedoraNodes extends AbstractResource {
     @Timed
     public Response options() {
         addOptionsHttpHeaders(servletResponse);
-        return status(OK).build();
+        return ok().build();
     }
 
 
@@ -265,27 +258,7 @@ public class FedoraNodes extends AbstractResource {
         final RdfStream rdfStream = getTriples(PropertiesRdfContext.class).session(session)
                 .topic(translator().getSubject(resource().getPath()).asNode());
 
-        if (limit >= 0) {
-            try {
-                final Node firstPage =
-                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
-                                .replaceQueryParam("limit", limit).build()
-                                .toString().replace("&", "&amp;"));
-                rdfStream.concat(create(translator().getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
-                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
-
-                if (resource().getNode().getNodes().getSize() > (offset + limit)) {
-                    final Node nextPage =
-                            createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
-                                    .replaceQueryParam("limit", limit).build()
-                                    .toString().replace("&", "&amp;"));
-                    rdfStream.concat(create(translator().getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
-                    servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
-                }
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
+        addPaginationInformation(offset, limit, rdfStream);
 
         final PreferTag returnPreference;
 
@@ -342,7 +315,6 @@ public class FedoraNodes extends AbstractResource {
 
     }
 
-
     /**
      * Creates a new object.
      *
@@ -364,35 +336,15 @@ public class FedoraNodes extends AbstractResource {
             InvalidChecksumException, URISyntaxException {
         init(uriInfo);
 
-        String pid;
-        final String newObjectPath;
+        if (resource().hasType(FEDORA_DATASTREAM)) {
+            throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
+        }
 
         final MediaType contentType = getSimpleContentType(requestContentType);
 
         final String contentTypeString = contentType.toString();
 
-        assertPathExists(path);
-
-        if (slug != null && !slug.isEmpty()) {
-            pid = slug;
-        } else {
-            pid = pidMinter.mintPid();
-        }
-        // reverse translate the proffered or created identifier
-        LOGGER.trace("Using external identifier {} to create new resource.", pid);
-        LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
-                + pid);
-        pid = translator().getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
-        // remove leading slash left over from translation
-        pid = pid.substring(1, pid.length());
-        LOGGER.trace("Using internal identifier {} to create new resource.", pid);
-        newObjectPath = path + "/" + pid;
-
-        assertPathMissing(newObjectPath);
-
-        if (resource().hasType(FEDORA_DATASTREAM)) {
-            throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
-        }
+        final String newObjectPath = mintNewPid(path, slug);
 
         LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
 
@@ -405,7 +357,7 @@ public class FedoraNodes extends AbstractResource {
                     newObjectPath);
 
             final Response.ResponseBuilder response;
-            final URI location = new URI(translator().getSubject(result.getPath()).getURI());
+            final URI location = getUri(result);
 
             if (requestBodyStream == null || requestContentType == null) {
                 LOGGER.trace("No request body detected");
@@ -429,8 +381,7 @@ public class FedoraNodes extends AbstractResource {
                     final String format = lang.getName().toUpperCase();
 
                     final Model inputModel =
-                            createDefaultModel().read(requestBodyStream,
-                                    translator().getSubject(result.getPath()).toString(), format);
+                            createDefaultModel().read(requestBodyStream, getUri(result).toString(), format);
 
                     result.replaceProperties(translator(), inputModel,
                             getTriples(result, PropertiesRdfContext.class));
@@ -450,7 +401,7 @@ public class FedoraNodes extends AbstractResource {
                             originalFileName,
                             datastreamService.getStoragePolicyDecisionPoint());
 
-                    final URI contentLocation = new URI(translator().getSubject(binary.getPath()).getURI());
+                    final URI contentLocation = getUri(binary);
 
                     response = created(contentLocation).entity(contentLocation.toString());
 
@@ -476,7 +427,6 @@ public class FedoraNodes extends AbstractResource {
             session.logout();
         }
     }
-
 
     /**
      * Create a resource at a specified path, or replace triples with provided RDF.
@@ -510,7 +460,7 @@ public class FedoraNodes extends AbstractResource {
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
                 resource = createFedoraResource(null, effectiveContentType, path);
 
-                final URI location = new URI(translator().getSubject(resource.getPath()).getURI());
+                final URI location = getUri(resource);
 
                 response = created(location).entity(location.toString());
                 preexisting = false;
@@ -522,9 +472,7 @@ public class FedoraNodes extends AbstractResource {
                 final String format = contentTypeToLang(contentType.toString()).getName().toUpperCase();
 
                 final Model inputModel = createDefaultModel()
-                        .read(requestBodyStream,
-                                translator().getSubject(resource.getPath()).toString(),
-                                format);
+                        .read(requestBodyStream, getUri(resource).toString(), format);
 
                 resource.replaceProperties(translator(), inputModel,
                         getTriples(resource, PropertiesRdfContext.class));
@@ -547,7 +495,6 @@ public class FedoraNodes extends AbstractResource {
             session.logout();
         }
     }
-
 
     /**
      * Deletes an object.
@@ -665,7 +612,7 @@ public class FedoraNodes extends AbstractResource {
             }
 
             final String destination =
-                    translator().getPathFromSubject(ResourceFactory.createResource(destinationUri));
+                    getPath(destinationUri);
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
@@ -721,8 +668,7 @@ public class FedoraNodes extends AbstractResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
-            final String destination =
-                    translator().getPathFromSubject(ResourceFactory.createResource(destinationUri));
+            final String destination = getPath(destinationUri);
 
             if (destination == null) {
                 return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
@@ -777,6 +723,14 @@ public class FedoraNodes extends AbstractResource {
         final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
         return createObject(mixin, null, null, effectiveContentType, slug, file);
 
+    }
+
+    private FedoraResource resource() {
+        if (resource == null) {
+            resource = nodeService.getObject(session, path);
+        }
+
+        return resource;
     }
 
     private HttpIdentifierTranslator translator() {
@@ -835,6 +789,55 @@ public class FedoraNodes extends AbstractResource {
                 + "," + contentTypeSPARQLUpdate);
     }
 
+    private void addPaginationInformation(int offset, int limit, RdfStream rdfStream) {
+        if (limit >= 0) {
+            try {
+                final Node firstPage =
+                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
+                                .replaceQueryParam("limit", limit).build()
+                                .toString().replace("&", "&amp;"));
+                rdfStream.concat(create(translator().getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
+                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
+
+                if (resource().getNode().getNodes().getSize() > (offset + limit)) {
+                    final Node nextPage =
+                            createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
+                                    .replaceQueryParam("limit", limit).build()
+                                    .toString().replace("&", "&amp;"));
+                    rdfStream.concat(create(translator().getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
+                    servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
+                }
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        }
+    }
+
+    private String mintNewPid(final String base, final String slug) {
+        String pid;
+        final String newObjectPath;
+
+        assertPathExists(base);
+
+        if (slug != null && !slug.isEmpty()) {
+            pid = slug;
+        } else {
+            pid = pidMinter.mintPid();
+        }
+        // reverse translate the proffered or created identifier
+        LOGGER.trace("Using external identifier {} to create new resource.", pid);
+        LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
+                + pid);
+        pid = translator().getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
+        // remove leading slash left over from translation
+        pid = pid.substring(1, pid.length());
+        LOGGER.trace("Using internal identifier {} to create new resource.", pid);
+        newObjectPath = base + "/" + pid;
+
+        assertPathMissing(newObjectPath);
+        return newObjectPath;
+    }
+
     private FedoraResource createFedoraResource(final String requestMixin,
                                                 final MediaType requestContentType,
                                                 final String path) {
@@ -882,6 +885,15 @@ public class FedoraNodes extends AbstractResource {
         }
         return objectType;
     }
+
+    private URI getUri(FedoraResource resource) throws URISyntaxException {
+        return new URI(translator().getSubject(resource.getPath()).getURI());
+    }
+
+    private String getPath(String uri) {
+        return translator().getPathFromSubject(ResourceFactory.createResource(uri));
+    }
+
 
     /**
      * Method to check for any jcr namespace element in the path
