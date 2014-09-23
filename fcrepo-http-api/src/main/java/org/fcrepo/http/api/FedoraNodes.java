@@ -414,8 +414,7 @@ public class FedoraNodes extends AbstractResource {
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-        throws IOException {
+    public Response updateSparql(@ContentLocation final InputStream requestBodyStream) throws IOException {
 
         init(uriInfo);
         LOGGER.debug("Attempting to update path: {}", path);
@@ -483,8 +482,7 @@ public class FedoraNodes extends AbstractResource {
     @PUT
     @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES, JSON_LD})
     @Timed
-    public Response createOrReplaceObjectRdf(@HeaderParam("Content-Type")
-            final MediaType requestContentType,
+    public Response createOrReplaceObjectRdf(@HeaderParam("Content-Type") final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream) throws URISyntaxException {
         init(uriInfo);
 
