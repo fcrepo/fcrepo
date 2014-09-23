@@ -506,9 +506,8 @@ public class FedoraNodes extends AbstractResource {
                 final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
                 resource = createFedoraResource(null, effectiveContentType, path);
-                final HttpIdentifierTranslator idTranslator = translator();
 
-                final URI location = new URI(idTranslator.getSubject(resource.getPath()).getURI());
+                final URI location = new URI(translator().getSubject(resource.getPath()).getURI());
 
                 response = created(location).entity(location.toString());
                 preexisting = false;
