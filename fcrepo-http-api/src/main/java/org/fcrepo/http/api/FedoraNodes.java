@@ -393,9 +393,7 @@ public class FedoraNodes extends AbstractResource {
                     final URI checksumURI = checksumURI(checksum);
                     final String originalFileName = originalFileName(contentDisposition);
 
-                    final Datastream datastream = datastreamService.findOrCreateDatastream(session, newObjectPath);
-
-                    final FedoraBinary binary = datastream.getBinary();
+                    final FedoraBinary binary = ((Datastream)result).getBinary();
                     binary.setContent(requestBodyStream,
                             contentTypeString,
                             checksumURI,
