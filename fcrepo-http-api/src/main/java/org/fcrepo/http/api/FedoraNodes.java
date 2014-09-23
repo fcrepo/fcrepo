@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.api;
 
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -95,6 +97,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.base.Function;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.Lang;
@@ -316,10 +319,14 @@ public class FedoraNodes extends AbstractResource {
 
                 final Iterator<FedoraResource> children = resource().getChildren();
 
-                while (children.hasNext()) {
-                    final FedoraResource child = children.next();
-                    rdfStream.concat(getTriples(child, PropertiesRdfContext.class));
-                }
+                rdfStream.concat(concat(transform(children,
+                        new Function<FedoraResource, RdfStream>() {
+
+                            @Override
+                            public RdfStream apply(final FedoraResource child) {
+                                return child.getTriples(translator(), PropertiesRdfContext.class);
+                            }
+                        })));
 
             }
 
