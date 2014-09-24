@@ -12,8 +12,6 @@
 
   <context:component-scan base-package="org.fcrepo"/>
 
-  <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
-
   <bean name="modeshapeRepofactory"
     class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
     p:repositoryConfiguration="${fcrepo.modeshape.configuration:/config/testing/repository.json}"/>

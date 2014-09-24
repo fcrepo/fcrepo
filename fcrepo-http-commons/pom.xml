@@ -23,6 +23,15 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-metrics</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-server</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.gagravarr</groupId>
       <artifactId>vorbis-java-tika</artifactId>
     </dependency>
@@ -223,12 +232,6 @@
           <groupId>commons-digester</groupId>
           <artifactId>commons-digester</artifactId>
         </exclusion>
-        <!-- modeshape-web-cmis brings in antlr:2.7.7, whereas
-        velocity-tools is bringing in 2.7.2 -->
-        <exclusion>
-          <groupId>antlr</groupId>
-          <artifactId>antlr</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
     
@@ -251,15 +254,6 @@
           <artifactId>log4j</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-    
-    <!-- antlr-2.7.7 is explicitly added here because of a dependency convergence
-    issue between modeshape-web-cmis and velocity-tools. If/when the two get in 
-    line, the exclusion on velocity-tools and this explicit dependency may be removed -->
-    <dependency>
-      <groupId>antlr</groupId>
-      <artifactId>antlr</artifactId>
-      <version>2.7.7</version>
     </dependency>
     <dependency>
       <groupId>org.modeshape</groupId>
