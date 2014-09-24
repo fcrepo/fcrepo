@@ -30,7 +30,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collections;
@@ -46,11 +45,7 @@ import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -64,9 +59,6 @@ import com.hp.hpl.jena.rdf.model.Statement;
  *
  * @author awoods
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
-@PrepareForTest({JcrRdfTools.class})
 public class JcrPropertyStatementListenerTest {
 
     private static final Logger LOGGER =
@@ -118,11 +110,9 @@ public class JcrPropertyStatementListenerTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        mockStatic(JcrRdfTools.class);
 
-        when(JcrRdfTools.withContext(mockSubjects, mockSession)).thenReturn(mockJcrRdfTools);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj = JcrPropertyStatementListener.getListener(mockSubjects, mockSession, mockProblems);
+        testObj = JcrPropertyStatementListener.getListener(mockSubjects, mockSession, mockProblems, mockJcrRdfTools);
         when(mockStatement.getSubject()).thenReturn(mockSubject);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
         setField(testObj, "propertiesTools", mockPropertiesTools);
@@ -140,7 +130,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testAddedProhibitedStatement() throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSubjects.getPathFromSubject(mockSubject)).thenReturn("/some/path");
         when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
@@ -153,7 +142,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testAddedStatement() throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSubjects.getPathFromSubject(mockSubject)).thenReturn("/some/path");
         when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
@@ -172,7 +160,6 @@ public class JcrPropertyStatementListenerTest {
     @Test(expected = RuntimeException.class)
     public void testAddedStatementRepositoryException()
             throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
 
@@ -185,7 +172,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testRemovedStatement() throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
@@ -201,7 +187,6 @@ public class JcrPropertyStatementListenerTest {
     @Test(expected = RuntimeException.class)
     public void testRemovedStatementRepositoryException()
             throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
 
@@ -214,7 +199,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testRemovedProhibitedStatement() throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
         when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
         when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
         when(mockPredicate.getURI()).thenReturn("x");

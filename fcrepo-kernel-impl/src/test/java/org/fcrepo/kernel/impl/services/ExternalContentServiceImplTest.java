@@ -15,12 +15,11 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.apache.http.impl.client.HttpClients.createMinimal;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,22 +30,14 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.impl.client.HttpClients;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 
 /**
  * @author cabeer
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
-@PrepareForTest({HttpClients.class})
 public class ExternalContentServiceImplTest {
 
     private ExternalContentServiceImpl testObj;
@@ -72,11 +63,10 @@ public class ExternalContentServiceImplTest {
     public void setUp() throws URISyntaxException, IOException {
         initMocks(this);
         sourceUri = new URI("http://localhost:8080/xyz");
-        testObj = new ExternalContentServiceImpl();
+        testObj = spy(new ExternalContentServiceImpl());
         testObj.setConnManager(mockClientPool);
 
-        mockStatic(HttpClients.class);
-        when(createMinimal(mockClientPool)).thenReturn(mockClient);
+        when(testObj.getCloseableHttpClient()).thenReturn(mockClient);
         when(mockClient.execute(any(HttpGet.class))).thenReturn(mockResponse);
         when(mockResponse.getEntity()).thenReturn(mockEntity);
         when(mockEntity.getContent()).thenReturn(mockInputStream);

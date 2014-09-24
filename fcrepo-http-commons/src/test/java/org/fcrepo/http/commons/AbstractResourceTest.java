@@ -30,24 +30,16 @@ import javax.ws.rs.core.UriInfo;
 import com.google.common.collect.ImmutableMap;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.utils.NamespaceTools;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * <p>AbstractResourceTest class.</p>
  *
  * @author awoods
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
-@PrepareForTest({NamespaceTools.class})
 public class AbstractResourceTest {
 
     private AbstractResource testObj;

@@ -33,15 +33,10 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.impl.services.ServiceHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.google.common.base.Predicate;
 
@@ -50,9 +45,6 @@ import com.google.common.base.Predicate;
  *
  * @author ksclarke
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "javax.xml.parsers.*", "org.apache.xerces.*"})
-@PrepareForTest({ServiceHelpers.class})
 public class FedoraObjectImplTest implements FedoraJcrTypes {
 
     private static final String testPid = "testObj";
