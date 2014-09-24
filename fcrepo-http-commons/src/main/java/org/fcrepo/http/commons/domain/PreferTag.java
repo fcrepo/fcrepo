@@ -88,11 +88,15 @@ public class PreferTag {
     }
 
     public void addResponseHeaders(final HttpServletResponse servletResponse) {
-        if (!value.equals("minimal")) {
+        if (!isMinimal()) {
             servletResponse.addHeader("Preference-Applied", "return=representation");
         } else {
             servletResponse.addHeader("Preference-Applied", "return=minimal");
         }
         servletResponse.addHeader("Vary", "Prefer");
+    }
+
+    public boolean isMinimal() {
+        return value.equals("minimal");
     }
 }
