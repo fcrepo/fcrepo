@@ -29,7 +29,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -216,22 +215,4 @@ public class FedoraBatchIT extends AbstractResourceIT {
         assertEquals(400, response.getStatusLine().getStatusCode());
     }
 
-    @Test
-    public void testBatchDeleteDatastream() throws Exception {
-        final String pid = randomUUID().toString();
-        createObject(pid);
-
-        createDatastream(pid, "ds1", "foo1");
-        createDatastream(pid, "ds2", "foo2");
-
-        final HttpDelete dmethod =
-            new HttpDelete( serverAddress + pid + "/fcr:batch?child=ds1&child=ds2");
-        assertEquals(204, getStatus(dmethod));
-
-        final HttpGet method_test_get1 = new HttpGet(serverAddress + pid + "/ds1");
-        assertEquals(404, getStatus(method_test_get1));
-        final HttpGet method_test_get2 =
-            new HttpGet(serverAddress + pid + "/ds2");
-        assertEquals(404, getStatus(method_test_get2));
-    }
 }
