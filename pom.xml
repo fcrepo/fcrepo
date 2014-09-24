@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
-    <version>7</version>
+    <version>9</version>
   </parent>
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
@@ -577,19 +577,6 @@
           <artifactId>maven-deploy-plugin</artifactId>
           <version>2.7</version>
         </plugin>
-        <!-- oss-parent:7 declares maven-enforcer-plugin:1.0, which can't 
-          be overridden in pluginManagement. Our deployment of snapshots via Jenkins 
-          requires that we use at least version 1.1 because of http://jira.codehaus.org/browse/MENFORCER-118. 
-          If/when oss-parent:8 is released we can re-instate this section of pluginManagement 
-          <plugin> <artifactId>maven-enforcer-plugin</artifactId> <version>1.2</version> 
-          <executions> <execution> <goals> <goal>enforce</goal> </goals> <configuration> 
-          <rules> <DependencyConvergence /> <bannedDependencies> <searchTransitive>true</searchTransitive> 
-          <excludes> <exclude>commons-logging</exclude> <exclude>log4j:log4j</exclude> 
-          <exclude>org.slf4j:slf4j-jcl</exclude> <exclude>org.slf4j:slf4j-jdk14</exclude> 
-          <exclude>org.slf4j:slf4j-log4j12</exclude> <exclude>org.slf4j:slf4j-log4j13</exclude> 
-          <exclude>org.slf4j:slf4j-nop</exclude> <exclude>org.slf4j:slf4j-simple</exclude> 
-          <exclude>org.apache.cxf</exclude> </excludes> </bannedDependencies> </rules> 
-          </configuration> </execution> </executions> </plugin> -->
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
           <version>2.17</version>
