@@ -1,6 +1,7 @@
 package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
@@ -62,6 +63,19 @@ public class FedoraLdp extends AbstractResource {
 
     protected FedoraResource resource;
     protected HttpIdentifierTranslator identifierTranslator;
+
+    public FedoraLdp() {
+        super();
+    }
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param path
+     */
+    @VisibleForTesting
+    public FedoraLdp(final String path) {
+        this.path = path;
+    }
 
 
     /**
