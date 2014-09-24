@@ -15,24 +15,16 @@
  */
 package org.fcrepo.services;
 
-import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
-import java.lang.management.ManagementFactory;
 
 import javax.management.MBeanServer;
 
 import org.fcrepo.metrics.ReporterFactory;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.graphite.Graphite;
@@ -43,9 +35,6 @@ import com.codahale.metrics.graphite.GraphiteReporter;
  *
  * @author ghill
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*", "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({ManagementFactory.class})
 public class ReporterFactoryTest {
 
     private ReporterFactory factory;
@@ -59,8 +48,6 @@ public class ReporterFactoryTest {
     @Before
     public void setUp() {
         initMocks(this);
-        mockStatic(ManagementFactory.class);
-        when(getPlatformMBeanServer()).thenReturn(mockMBeanServer);
         factory = new ReporterFactory();
     }
 

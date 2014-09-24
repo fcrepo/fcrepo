@@ -22,16 +22,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,17 +52,11 @@ import javax.jcr.query.qom.QueryObjectModelFactory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.RepositoryService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -75,11 +66,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  * @author ksclarke
  */
-@RunWith(PowerMockRunner.class)
-// PowerMock needs to ignore some packages to prevent class-cast errors
-@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
-        "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({JcrRdfTools.class})
 public class RepositoryServiceImplTest implements FedoraJcrTypes {
 
     private static final String TESTPID = "testObj";
@@ -211,9 +197,6 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
     }
 
     private void setupSearchRepository() throws RepositoryException {
-        mockStatic(JcrRdfTools.class);
-        final JcrRdfTools mockJcrRdfTools = mock(JcrRdfTools.class);
-        when(JcrRdfTools.withContext(mockSubjectFactory, mockSession)).thenReturn(mockJcrRdfTools);
 
         subject = createResource(RESTAPI_NAMESPACE + "search/request");
 
@@ -227,9 +210,6 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
         when(mockQueryResult.getNodes()).thenReturn(mockNI);
         when(mockNI.getSize()).thenReturn(500L);
         when(mockNI.next()).thenReturn("");
-        when(mockJcrRdfTools.getJcrPropertiesModel(
-                any(org.fcrepo.kernel.utils.iterators.NodeIterator.class),
-                eq(subject))).thenReturn(new RdfStream());
     }
 
     @Test

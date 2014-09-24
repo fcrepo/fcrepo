@@ -48,9 +48,14 @@ public class ExternalContentServiceImpl implements ExternalContentService {
     @Override
     public InputStream retrieveExternalContent(final URI sourceUri) throws IOException {
         final HttpGet httpGet = new HttpGet(sourceUri);
-        final CloseableHttpClient client = HttpClients.createMinimal(connManager);
+        final CloseableHttpClient client = getCloseableHttpClient();
         final HttpResponse response = client.execute(httpGet);
         return response.getEntity().getContent();
+    }
+
+    @VisibleForTesting
+    protected CloseableHttpClient getCloseableHttpClient() {
+        return HttpClients.createMinimal(connManager);
     }
 
     @VisibleForTesting

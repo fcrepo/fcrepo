@@ -29,6 +29,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.RdfLexicon;
@@ -80,7 +81,25 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     public static JcrPropertyStatementListener getListener(
             final IdentifierTranslator subjects, final Session session, final Model problemModel) {
-        return new JcrPropertyStatementListener(subjects, session, problemModel);
+        return new JcrPropertyStatementListener(subjects,
+                session,
+                problemModel,
+                JcrRdfTools.withContext(subjects, session));
+    }
+
+    /**
+     * Return a Listener given the subject factory and JcrSession.
+     * @param subjects
+     * @param session
+     * @param problemModel
+     * @return JcrPropertyStatementListener for the given subject factory and JcrSession
+     */
+    @VisibleForTesting
+    public static JcrPropertyStatementListener getListener(final IdentifierTranslator subjects,
+                                                           final Session session,
+                                                           final Model problemModel,
+                                                           final JcrRdfTools tools) {
+        return new JcrPropertyStatementListener(subjects, session, problemModel, tools);
     }
 
     /**
@@ -90,12 +109,12 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param session
      */
     private JcrPropertyStatementListener(final IdentifierTranslator subjects,
-            final Session session, final Model problems) {
+            final Session session, final Model problems, final JcrRdfTools tools) {
         super();
         this.session = session;
         this.subjects = subjects;
         this.problems = problems;
-        this.jcrRdfTools = JcrRdfTools.withContext(subjects, session);
+        this.jcrRdfTools = tools;
         this.skolemizedBnodeMap = new HashMap<>();
     }
 
