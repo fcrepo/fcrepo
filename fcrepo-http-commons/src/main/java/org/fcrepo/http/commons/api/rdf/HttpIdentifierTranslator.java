@@ -15,13 +15,11 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
-import org.fcrepo.kernel.impl.services.functions.GetDefaultWorkspace;
 import org.slf4j.Logger;
 
 import static com.google.common.base.Throwables.propagate;
@@ -42,11 +40,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFormatException;
-import javax.jcr.Workspace;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -68,7 +64,6 @@ import javax.ws.rs.core.UriInfo;
 public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTranslator {
 
     private static final Logger LOGGER = getLogger(HttpIdentifierTranslator.class);
-    public static final String WORKSPACE_PREFIX = "workspace:";
     public static final String TX_PREFIX = "tx:";
 
     protected final UriBuilder uriBuilder;
@@ -81,9 +76,6 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
 
     private final Session session;
 
-    private final String defaultWorkspace;
-
-    private final Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
     private final Class<?> relativeTo;
     private final UriInfo uris;
     private final boolean canonical;
@@ -129,7 +121,6 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
         }
         this.basePath = normalizedBasePath;
         this.pathIx = normalizedBasePath.length() - 1;
-        this.defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
         LOGGER.debug("Resolving graph subjects to a base URI of \"{}\"",
                 normalizedBasePath);
     }
@@ -212,11 +203,6 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
                         throw new RepositoryException("Subject is not in this transaction");
                     }
                 }
-            } else if (segment.startsWith(WORKSPACE_PREFIX)) {
-                final String workspace = segment.substring(WORKSPACE_PREFIX.length());
-                if (!session.getWorkspace().getName().equals(workspace)) {
-                    throw new RepositoryException("Subject is not in this workspace");
-                }
             } else if (segment.equals(FCR_CONTENT)) {
                 pathBuilder.append("/");
                 pathBuilder.append(JCR_CONTENT);
@@ -274,14 +260,10 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
         // the path param value doesn't start with a slash
         String path = absPath.substring(1);
         if (session != null) {
-            final Workspace workspace = session.getWorkspace();
-
             final String txId = getCurrentTransactionId(session);
 
             if (!canonical && txId != null) {
                 path = TX_PREFIX + txId + "/" + path;
-            } else if (workspace != null && !workspace.getName().equals(defaultWorkspace)) {
-                path = WORKSPACE_PREFIX + workspace.getName() + "/" + path;
             }
         }
 

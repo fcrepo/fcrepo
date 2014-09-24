@@ -57,7 +57,6 @@ import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.WorkspaceRdfContext;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -219,16 +218,6 @@ public class JcrRdfTools {
      */
     public RdfStream getNamespaceTriples() throws RepositoryException {
         return new NamespaceRdfContext(session);
-    }
-
-    /**
-     * Get an {@link RdfStream} of the registered JCR workspaces
-     *
-     * @return workspace triples as an RdfStream
-     * @throws RepositoryException
-     */
-    public RdfStream getWorkspaceTriples(final IdentifierTranslator subjects) throws RepositoryException {
-        return new WorkspaceRdfContext(session, subjects);
     }
 
     /**

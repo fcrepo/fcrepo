@@ -28,7 +28,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
-import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
@@ -46,7 +45,6 @@ import org.fcrepo.http.api.FedoraVersions;
 import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
-import org.fcrepo.http.api.repository.FedoraRepositoryWorkspaces;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -175,11 +173,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         // fcr:namespaces
         model.add(s, HAS_NAMESPACE_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryNamespaces.class)
-                .build().toASCIIString()));
-
-        // fcr:workspaces
-        model.add(s, HAS_WORKSPACE_SERVICE, createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraRepositoryWorkspaces.class)
                 .build().toASCIIString()));
 
         final Property dcFormat = createProperty(DC_NAMESPACE + "format");
