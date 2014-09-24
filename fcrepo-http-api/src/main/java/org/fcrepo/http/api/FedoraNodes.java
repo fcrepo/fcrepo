@@ -192,76 +192,6 @@ public class FedoraNodes extends FedoraLdp {
         }
     }
 
-
-    /**
-     * Retrieve the node profile
-     *
-     * @return triples for the specified node
-     * @throws RepositoryException
-     */
-    @GET
-    @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
-            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML})
-    public RdfStream describe(@HeaderParam("Prefer") final Prefer prefer) {
-        LOGGER.trace("Getting profile for: {}", path);
-
-        checkCacheControlHeaders(request, servletResponse, resource(), session);
-
-        final RdfStream rdfStream = getTriples(PropertiesRdfContext.class).session(session)
-                .topic(translator().getSubject(resource().getPath()).asNode());
-
-        final PreferTag returnPreference;
-
-        if (prefer != null && prefer.hasReturn()) {
-            returnPreference = prefer.getReturn();
-        } else {
-            returnPreference = new PreferTag("");
-        }
-
-        if (!returnPreference.getValue().equals("minimal")) {
-            final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
-
-            if (ldpPreferences.prefersReferences()) {
-                rdfStream.concat(getTriples(ReferencesRdfContext.class));
-            }
-
-            rdfStream.concat(getTriples(ParentRdfContext.class));
-
-            if (ldpPreferences.prefersContainment() || ldpPreferences.prefersMembership()) {
-                rdfStream.concat(getTriples(ChildrenRdfContext.class));
-            }
-
-            if (ldpPreferences.prefersContainment()) {
-
-                final Iterator<FedoraResource> children = resource().getChildren();
-
-                rdfStream.concat(concat(transform(children,
-                        new Function<FedoraResource, RdfStream>() {
-
-                            @Override
-                            public RdfStream apply(final FedoraResource child) {
-                                return child.getTriples(translator(), PropertiesRdfContext.class);
-                            }
-                        })));
-
-            }
-
-            rdfStream.concat(getTriples(ContainerRdfContext.class));
-        }
-        
-        returnPreference.addResponseHeaders(servletResponse);
-
-        addResourceHttpHeaders(servletResponse, resource(), translator());
-
-        addResponseInformationToStream(resource(), rdfStream, uriInfo,
-                translator());
-
-        return rdfStream;
-
-
-    }
-
     /**
      * Creates a new object.
      *
@@ -615,14 +545,6 @@ public class FedoraNodes extends FedoraLdp {
         final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
         return createObject(mixin, null, null, effectiveContentType, slug, file);
 
-    }
-
-    private RdfStream getTriples(final Class<? extends RdfStream> x) {
-        return getTriples(resource(), x);
-    }
-
-    private RdfStream getTriples(final FedoraResource resource, final Class<? extends RdfStream> x) {
-        return resource.getTriples(translator(), x);
     }
 
     private String mintNewPid(final String base, final String slug) {
