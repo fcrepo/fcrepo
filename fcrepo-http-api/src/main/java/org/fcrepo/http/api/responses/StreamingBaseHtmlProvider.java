@@ -27,6 +27,9 @@ import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypes
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,6 +38,9 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -112,6 +118,27 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     private static final Logger LOGGER =
         getLogger(StreamingBaseHtmlProvider.class);
 
+    protected final Predicate<NodeType> acceptWhenTemplateExists = new Predicate<NodeType>() {
+        @Override
+        public boolean apply(final NodeType nodeType) {
+            final String nodeTypeName = nodeType.getName();
+            if (isBlank(nodeTypeName)) {
+                return false;
+            }
+            return velocity.resourceExists(getTemplateLocation(nodeTypeName));
+            }
+    };
+
+    protected final Predicate<String> acceptWhenTemplateMapContainsKey = new Predicate<String>() {
+        @Override
+        public boolean apply(final String key) {
+            if (isBlank(key)) {
+                return false;
+            }
+            return templatesMap.containsKey(key);
+        }
+    };
+
     @PostConstruct
     void init() throws IOException {
 
@@ -138,50 +165,20 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                         primaryNodeTypes.nextNodeType();
                 final String primaryNodeTypeName =
                         primaryNodeType.getName();
-                // for each node primary type, we try to find a template
-                String templateLocation =
-                        templatesLocation + "/" +
-                                primaryNodeTypeName.replace(':', '-') +
-                                templateFilenameExtension;
-                if (velocity.resourceExists(templateLocation)) {
-                    final Template template =
-                            velocity.getTemplate(templateLocation);
-                    template.setName(templateLocation);
-                    LOGGER.debug("Found template: {}", templateLocation);
-                    templatesMapBuilder.put(primaryNodeTypeName, template);
-                    LOGGER.debug("which we will use for nodes with primary type: {}",
-                            primaryNodeTypeName);
+
+                // Create a list of the primary type and all its parents
+                final List<NodeType> nodeTypesList = new ArrayList();
+                nodeTypesList.add(primaryNodeType);
+                nodeTypesList.addAll(Arrays.asList(primaryNodeType.getSupertypes()));
+
+                // Find a template that matches the primary type or one of its parents
+                final NodeType templateMatch = Iterables.find(nodeTypesList, acceptWhenTemplateExists, null);
+                if (templateMatch != null) {
+                    addTemplate(primaryNodeTypeName, templateMatch.getName(), templatesMapBuilder);
                 } else {
                     // No HTML representation available for that kind of node
-                    LOGGER.debug("Didn't find template for nodes with primary type: {} in location: {}",
-                            primaryNodeTypeName, templateLocation);
-
-                    // Look for templates of the primary type's parents
-                    boolean templateFound = false;
-                    for (NodeType superType : primaryNodeType.getSupertypes()) {
-                        // for each node primary type, we try to find a template
-                        templateLocation =
-                            templatesLocation + "/" +
-                                    superType.getName().replace(':', '-') +
-                                    templateFilenameExtension;
-                        if (velocity.resourceExists(templateLocation)) {
-                            final Template template =
-                                velocity.getTemplate(templateLocation);
-                            template.setName(templateLocation);
-                            LOGGER.debug("Found template: {}", templateLocation);
-                            templatesMapBuilder.put(primaryNodeTypeName, template);
-                            LOGGER.debug("which we will use for nodes with primary type: {}",
-                                         primaryNodeTypeName);
-                            templateFound = true;
-                            break;
-                        }
-                    }
-
-                    if (!templateFound) {
-                        // No HTML representation available for that kind of node
-                      LOGGER.debug("Didn't find template for nodes with primary type: {} in location: {}",
-                                   primaryNodeTypeName, templateLocation);
-                    }
+                    LOGGER.debug("Didn't find template for nodes with primary type or its parents: {} in location: {}",
+                                 primaryNodeTypeName, templatesLocation);
                 }
             }
 
@@ -190,9 +187,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
             for (final String key : otherTemplates) {
                 final Template template =
-                        velocity.getTemplate(templatesLocation + "/" +
-                                key.replace(':', '-') +
-                                templateFilenameExtension);
+                    velocity.getTemplate(getTemplateLocation(key));
                 templatesMapBuilder.put(key, template);
             }
 
@@ -278,14 +273,15 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
         if (template == null) {
             LOGGER.trace("Attempting to discover the mixin types of the node for the resource in question...");
-            final List<String> mixinTypes =
+            final Iterator<String> mixinTypes =
                     getAllValuesForPredicate(rdf, subject,
                             mixinTypesPredicate);
 
-            for (String mixin : mixinTypes) {
+            final ImmutableList<String> copy = copyOf(mixinTypes);
+            final String mixin = Iterables.find(copy, acceptWhenTemplateMapContainsKey, null);
+            if (mixin != null) {
                 LOGGER.debug("Found mixin type: {}", mixin);
                 template = templatesMap.get(mixin);
-                break;
             }
         }
 
@@ -315,5 +311,22 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                         final MediaType mediaType) {
         // we don't know in advance how large the result might be
         return -1;
+    }
+
+    private void addTemplate(final String primaryNodeTypeName, final String templateNodeTypeName,
+                                final Builder<String, Template> templatesMapBuilder) {
+        final String templateLocation = getTemplateLocation(templateNodeTypeName);
+        final Template template =
+            velocity.getTemplate(templateLocation);
+        template.setName(templateLocation);
+        LOGGER.debug("Found template: {}", templateLocation);
+        templatesMapBuilder.put(primaryNodeTypeName, template);
+        LOGGER.debug("which we will use for nodes with primary type: {}",
+                     primaryNodeTypeName);
+    }
+
+    private String getTemplateLocation(final String nodeTypeName) {
+        return templatesLocation + "/" +
+            nodeTypeName.replace(':', '-') + templateFilenameExtension;
     }
 }

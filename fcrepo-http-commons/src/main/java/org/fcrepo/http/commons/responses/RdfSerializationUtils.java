@@ -97,7 +97,7 @@ public class RdfSerializationUtils {
      * @param predicate
      * @return first value for the given predicate or null if not found
      */
-    public static List<String> getAllValuesForPredicate(final Model rdf,
+    public static Iterator<String> getAllValuesForPredicate(final Model rdf,
             final Node subject, final Node predicate) {
         final NodeIterator statements =
                 rdf.listObjectsOfProperty(createResource(subject.getURI()),
@@ -111,7 +111,6 @@ public class RdfSerializationUtils {
             LOGGER.trace("No values found for predicate: {}", predicate);
             return null;
         }
-        return results;
+        return results.iterator();
     }
-
 }
