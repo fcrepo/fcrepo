@@ -123,15 +123,6 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + pid + "?" + query);
     }
 
-    protected static HttpPost postDSMethod(final String pid, final String ds,
-        final String content) throws UnsupportedEncodingException {
-        final HttpPost post =
-                new HttpPost(serverAddress + pid + "/" + ds +
-                        "/fcr:content");
-        post.setEntity(new StringEntity(content));
-        return post;
-    }
-
     protected static HttpPut putDSMethod(final String pid, final String ds,
         final String content) throws UnsupportedEncodingException {
         final HttpPut put =
@@ -244,7 +235,7 @@ public abstract class AbstractResourceIT {
                 "Attempting to create datastream for object: {} at datastream ID: {}",
                 pid, dsid);
         final HttpResponse response =
-            client.execute(postDSMethod(pid, dsid, content));
+            client.execute(putDSMethod(pid, dsid, content));
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
         return response;
     }

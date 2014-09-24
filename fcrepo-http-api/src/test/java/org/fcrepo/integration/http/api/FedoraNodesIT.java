@@ -353,9 +353,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testRangeRequestWithJCRContentBadPath() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
-
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/jcr:content");
         method_test_get.setHeader("Range", "bytes=1-3");
@@ -366,9 +364,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testPutDatastreamContentWithJCRContentBadPath() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
-
-        final HttpPost createDSMethod = postDSMethod(pid, "ds1", "marbles for everyone");
-        assertEquals(201, getStatus(createDSMethod));
+        createDatastream(pid, "ds1", "marbles for everyone");
 
         final HttpPut method_test_put = new HttpPut(serverAddress + pid + "/ds1/jcr:content");
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(method_test_put));
