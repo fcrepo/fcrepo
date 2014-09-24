@@ -17,7 +17,6 @@ package org.fcrepo.connector.file;
 
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -35,6 +34,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -252,4 +252,5 @@ public class FedoraFileSystemConnectorTest {
         spy.storeDocument(spy.getDocumentById(id));
         verify(spy).touchParent(id);
     }
+
 }

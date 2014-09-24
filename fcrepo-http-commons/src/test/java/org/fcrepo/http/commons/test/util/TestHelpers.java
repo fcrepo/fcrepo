@@ -69,7 +69,6 @@ import org.modeshape.jcr.api.query.QueryManager;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
-import com.sun.jersey.api.uri.UriBuilderImpl;
 
 /**
  * <p>Abstract TestHelpers class.</p>
@@ -92,12 +91,7 @@ public abstract class TestHelpers {
             public UriBuilder
                     answer(final InvocationOnMock invocation) throws Throwable {
 
-                final UriBuilder ub = new UriBuilderImpl();
-                ub.scheme("http");
-                ub.host("localhost");
-                ub.path("/fcrepo");
-
-                return ub;
+                return UriBuilder.fromUri("http://localhost/fcrepo");
             }
         };
 

@@ -318,8 +318,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     public static PropertyDefinition getDefinitionForPropertyName(final Node node,
         final String propertyName) throws RepositoryException {
 
-        final PropertyDefinition[] propertyDefinitions =
-            node.getPrimaryNodeType().getPropertyDefinitions();
+        final NodeType primaryNodeType = node.getPrimaryNodeType();
+        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
         LOGGER.debug("Looking for property name: {}", propertyName);
         for (final PropertyDefinition p : propertyDefinitions) {
             LOGGER.debug("Checking property: {}", p.getName());

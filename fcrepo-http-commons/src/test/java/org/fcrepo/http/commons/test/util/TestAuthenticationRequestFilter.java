@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.test.util;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -36,9 +37,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
 
 import org.glassfish.grizzly.http.server.GrizzlyPrincipal;
+import org.glassfish.jersey.internal.util.Base64;
 import org.slf4j.Logger;
-import static  com.sun.jersey.api.core.HttpRequestContext.AUTHORIZATION;
-import static com.sun.jersey.core.util.Base64.base64Decode;
 
 /**
  * @author Gregory Jansen
@@ -119,8 +119,7 @@ public class TestAuthenticationRequestFilter implements Filter {
             return null;
         }
         authentication = authentication.substring("Basic ".length());
-        final String[] values =
-            new String(base64Decode(authentication)).split(":");
+        final String[] values = Base64.decodeAsString(authentication).split(":");
         if (values.length < 2) {
             throw new WebApplicationException(400);
             // "Invalid syntax for username and password"

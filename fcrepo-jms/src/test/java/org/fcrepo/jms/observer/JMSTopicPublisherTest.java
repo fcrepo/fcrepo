@@ -16,13 +16,13 @@
 package org.fcrepo.jms.observer;
 
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.fcrepo.kernel.impl.utils.TestHelpers.setField;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.IOException;
 

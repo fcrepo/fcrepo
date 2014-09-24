@@ -83,8 +83,7 @@ public class FedoraFieldSearchTest {
     @Test
     public void testFieldSearch() throws RepositoryException {
         when(mockRequest.selectVariant(anyListOf(Variant.class))).thenReturn(
-                new Variant(MediaType.valueOf("application/n-triples"), null,
-                        null));
+                new Variant(MediaType.valueOf("application/n-triples"), (String)null, null));
         when(
                 mockService
                         .searchRepository(

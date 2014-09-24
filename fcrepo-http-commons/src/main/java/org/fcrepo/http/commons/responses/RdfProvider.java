@@ -41,7 +41,6 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
 
 import com.hp.hpl.jena.query.Dataset;
 
@@ -52,7 +51,6 @@ import com.hp.hpl.jena.query.Dataset;
  * @author awoods
  */
 @Provider
-@Component
 @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X, JSON_LD})
 public class RdfProvider implements MessageBodyWriter<Dataset> {
 

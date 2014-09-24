@@ -16,10 +16,9 @@
 package org.fcrepo.http.api.repository;
 
 import org.fcrepo.http.api.FedoraExport;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.ws.rs.Path;
 
@@ -31,12 +30,11 @@ import javax.ws.rs.Path;
  * @author awoods
  * @author daines
  */
-@Component
 @Scope("prototype")
 @Path("/fcr:export")
 public class FedoraRepositoryExport extends FedoraExport {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
 }

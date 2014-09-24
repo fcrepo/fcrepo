@@ -16,17 +16,17 @@
 package org.fcrepo.generator;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.InputStream;
+import java.util.Collections;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -34,6 +34,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.generator.dublincore.DCGenerator;
+import org.fcrepo.generator.dublincore.DublinCoreGenerators;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
@@ -67,7 +68,7 @@ public class DublinCoreGeneratorTest {
         setField(testObj, "nodeService", mockNodeService);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
-        testObj.dcgenerators = asList(mockGenerator);
+        testObj.dcgenerators = new DublinCoreGenerators(asList(mockGenerator));
     }
 
     @Test
@@ -83,7 +84,7 @@ public class DublinCoreGeneratorTest {
 
     @Test
     public void testNoGenerators() {
-        testObj.dcgenerators = emptyList();
+        testObj.dcgenerators = new DublinCoreGenerators(Collections.<DCGenerator>emptyList());
         try {
             testObj.getObjectAsDublinCore(createPathList("objects", "foo"));
             fail("Should have failed without a generator configured!");

@@ -28,6 +28,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -39,7 +40,6 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.sun.jersey.api.NotFoundException;
 
 /**
  * @author Andrew Woods Date: 8/7/13

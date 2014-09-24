@@ -26,6 +26,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Calendar;
 
+import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -44,11 +45,9 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapEntry;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapIndex;
 import org.fcrepo.http.commons.jaxb.responses.sitemap.SitemapUrlSet;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Timed;
 
@@ -59,12 +58,11 @@ import com.codahale.metrics.annotation.Timed;
  * @author ajs6f
  * @author cbeer
  */
-@Component
 @Scope("prototype")
 @Path("/sitemap")
 public class FedoraRepositorySitemap extends AbstractResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraRepositorySitemap.class);

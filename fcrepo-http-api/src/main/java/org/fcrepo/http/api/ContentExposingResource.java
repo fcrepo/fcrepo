@@ -15,14 +15,13 @@
  */
 package org.fcrepo.http.api;
 
-import com.sun.jersey.core.header.ContentDisposition;
-
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 
 import javax.jcr.Binary;
 import javax.jcr.RepositoryException;

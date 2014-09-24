@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -38,31 +37,21 @@ import com.google.common.collect.ImmutableSet;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.ValueFactory;
 import org.modeshape.jcr.value.binary.StoredBinaryValue;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * <p>DatastreamServiceImplTest class.</p>
  *
  * @author ksclarke
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"org.slf4j.*", "org.apache.xerces.*", "javax.xml.*",
-        "org.xml.sax.*", "javax.management.*"})
-@PrepareForTest({JcrRdfTools.class, CacheEntryFactory.class})
 public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
     private static final String MOCK_CONTENT_TYPE = "application/test-data";
@@ -140,9 +129,6 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
     @Test
     public void testGetFixityResultsModel() throws Exception {
-        mockStatic(CacheEntryFactory.class);
-
-
         final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
         when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(createResource("abc"));
 
@@ -155,14 +141,12 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProperty);
         when(mockProperty.getBinary()).thenReturn(mockBinary);
+        when(mockFedoraBinary.getFixity(mockRepository, "SHA-1")).thenReturn(fixityResults);
 
         when(mockFedoraBinary.getNode()).thenReturn(mockNode);
         when(mockFedoraBinary.getContentDigest()).thenReturn(
                 new URI("urn:sha1:abc"));
 
-        when(CacheEntryFactory.forProperty(mockRepository, mockProperty)).thenReturn(mockCacheEntry);
-
-        when(mockCacheEntry.checkFixity(any(String.class))).thenReturn(fixityResults);
 
         final RdfStream actual = testObj.getFixityResultsModel(mockSubjects, mockFedoraBinary);
 

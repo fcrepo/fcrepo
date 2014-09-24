@@ -84,7 +84,7 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionWithNullPath() throws RepositoryException {
-        when(mockRequest.getPathInfo()).thenReturn(null);
+        when(mockRequest.getRequestURI()).thenReturn(null);
         when(mockRepo.login(any(Credentials.class))).thenReturn(mockSession);
         testObj.getSession(mockRequest);
         verify(mockRepo).login(any(ServletCredentials.class));
@@ -105,14 +105,14 @@ public class SessionFactoryTest {
 
     @Test
     public void testCreateSession() throws RepositoryException {
-        when(mockRequest.getPathInfo()).thenReturn("/some/path");
+        when(mockRequest.getRequestURI()).thenReturn("/some/path");
         testObj.createSession(mockRequest);
         verify(mockRepo).login(any(Credentials.class));
     }
 
     @Test
     public void testCreateSessionWithWorkspace() throws RepositoryException {
-        when(mockRequest.getPathInfo()).thenReturn(
+        when(mockRequest.getRequestURI()).thenReturn(
                 "/workspace:some-workspace/some/path");
         testObj.createSession(mockRequest);
         verify(mockRepo).login(any(ServletCredentials.class), eq("some-workspace"));
@@ -120,7 +120,7 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionFromTransaction() throws RepositoryException {
-        when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
+        when(mockRequest.getRequestURI()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123", null)).thenReturn(mockTx);
         final Session session = testObj.getSessionFromTransaction(mockRequest, "123");
@@ -129,7 +129,7 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetSessionThrowException() throws RepositoryException {
-        when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
+        when(mockRequest.getRequestURI()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123", null)).thenThrow(
                 new TransactionMissingException(""));
@@ -148,7 +148,7 @@ public class SessionFactoryTest {
         final String fedoraUser = "fedoraUser";
         when(mockRequest.getUserPrincipal()).thenReturn(mockUser);
         when(mockUser.getName()).thenReturn(fedoraUser);
-        when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
+        when(mockRequest.getRequestURI()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(txSession);
         when(mockTx.isAssociatedWithUser(eq(fedoraUser))).thenReturn(true);
         when(mockTxService.getTransaction("123", fedoraUser))
@@ -160,35 +160,35 @@ public class SessionFactoryTest {
 
     @Test
     public void testGetEmbeddedIdTx() {
-        when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
+        when(mockRequest.getRequestURI()).thenReturn("/tx:123/some/path");
         final String txId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.TX);
         assertEquals("txId should be 123", "123", txId);
     }
 
     @Test
     public void testGetEmbeddedIdWorkspace() {
-        when(mockRequest.getPathInfo()).thenReturn("/workspace:some-workspace/some/path");
+        when(mockRequest.getRequestURI()).thenReturn("/workspace:some-workspace/some/path");
         final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertEquals("wsId should be some-workspace", "some-workspace", wsId);
     }
 
     @Test
     public void testGetEmbeddedIdNotExisting() {
-        when(mockRequest.getPathInfo()).thenReturn("/some/path");
+        when(mockRequest.getRequestURI()).thenReturn("/some/path");
         final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertNull("expected wsId to be null", wsId);
     }
 
     @Test
     public void testGetEmbeddedIdWithEmptyPath() {
-        when(mockRequest.getPathInfo()).thenReturn("");
+        when(mockRequest.getRequestURI()).thenReturn("");
         final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertNull("expected wsId to be null", wsId);
     }
 
     @Test
     public void testGetEmbeddedIdWithNullPath() {
-        when(mockRequest.getPathInfo()).thenReturn(null);
+        when(mockRequest.getRequestURI()).thenReturn(null);
         final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
         assertNull("expected wsId to be null", wsId);
     }

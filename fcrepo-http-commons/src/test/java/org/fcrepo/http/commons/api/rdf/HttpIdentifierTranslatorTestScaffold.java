@@ -16,7 +16,6 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
@@ -91,17 +90,9 @@ public abstract class HttpIdentifierTranslatorTestScaffold {
     protected static UriInfo getUriInfoImpl(final String path) {
         // UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
         final UriInfo ui = mock(UriInfo.class);
-        final UriBuilder ub = new UriBuilderImpl();
-        ub.scheme("http");
-        ub.host("localhost");
-        ub.port(8080);
-        ub.path("/fcrepo");
+        final UriBuilder ub = UriBuilder.fromUri("http://localhost:8080/fcrepo");
 
-        final UriBuilder rb = new UriBuilderImpl();
-        rb.scheme("http");
-        rb.host("localhost");
-        rb.port(8080);
-        rb.path("/fcrepo/rest" + path);
+        final UriBuilder rb = UriBuilder.fromUri("http://localhost:8080/fcrepo/rest" + path);
 
         when(ui.getRequestUri()).thenReturn(
                 URI.create("http://localhost:8080/fcrepo/rest" + path));

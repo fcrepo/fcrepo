@@ -20,7 +20,6 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.api.versioning.VersionAwareHttpIdentifierTranslator;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.session.InjectedSession;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
@@ -33,8 +32,8 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -81,12 +80,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author awoods
  */
-@Component
 @Scope("prototype")
 @Path("/{path: .*}/fcr:versions")
 public class FedoraVersions extends ContentExposingResource {
 
-    @InjectedSession
+    @Inject
     protected Session session;
 
     @Autowired

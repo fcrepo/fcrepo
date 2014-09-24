@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.domain;
 
-import com.sun.jersey.core.header.reader.HttpHeaderReader;
+import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
 import java.text.ParseException;
 import java.util.HashMap;

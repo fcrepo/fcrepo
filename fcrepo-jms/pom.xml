@@ -12,13 +12,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.thoughtworks.xstream</groupId>
-      <artifactId>xstream</artifactId>
-      <version>1.4.7</version>
-    </dependency>
-    <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -26,16 +21,9 @@
       <artifactId>fcrepo-kernel-impl</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-      <type>test-jar</type>
     </dependency>
     <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-commons</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.inject</groupId>
+      <groupId>org.glassfish.hk2.external</groupId>
       <artifactId>javax.inject</artifactId>
     </dependency>
     <dependency>
@@ -52,6 +40,10 @@
           <artifactId>commons-logging</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
     </dependency>
 
     <dependency>
@@ -86,17 +78,6 @@
       <artifactId>gson</artifactId>
       <version>2.3</version>
     </dependency>
-    <!-- axiom-api is a dependency of abdera-parser. It is only explicitly declared 
-      here because abdera-parser depends on an older version of jaxen (1.1.1) than axiom-api. 
-      If/when abdera-parser catches up, we can remove this explicit dependency on axiom-api -->
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jgroups</groupId>
-      <artifactId>jgroups</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -117,6 +98,10 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
   </dependencies>
   <build>
