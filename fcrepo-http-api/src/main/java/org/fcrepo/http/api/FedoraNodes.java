@@ -139,29 +139,18 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
  */
 @Scope("request")
 @Path("/{path: .*}")
-public class FedoraNodes extends AbstractResource {
-
-    @Inject
-    protected Session session;
+public class FedoraNodes extends FedoraLdp {
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
     private static boolean baseURLSet = false;
 
-    @Context protected Request request;
-    @Context protected HttpServletResponse servletResponse;
-    @Context protected UriInfo uriInfo;
-
     @PathParam("path") protected List<PathSegment> pathList;
-
-    protected String path;
-
-    protected FedoraResource resource;
-    private HttpIdentifierTranslator identifierTranslator;
 
     @PostConstruct
     private void postConstruct() {
         throwIfPathIncludesJcr(pathList);
         this.path = toPath(pathList);
+        init(uriInfo);
     }
 
     /**
@@ -201,33 +190,6 @@ public class FedoraNodes extends AbstractResource {
                 LOGGER.warn("Error setting baseURL", ex);
             }
         }
-    }
-
-    /**
-     * Retrieve the node headers
-     * @return response
-     * @throws RepositoryException
-     */
-    @HEAD
-    @Timed
-    public Response head() {
-        LOGGER.trace("Getting head for: {}", path);
-
-        checkCacheControlHeaders(request, servletResponse, resource(), session);
-
-        addResourceHttpHeaders(servletResponse, resource(), translator());
-
-        return ok().build();
-    }
-
-    /**
-     * Outputs information about the supported HTTP methods, etc.
-     */
-    @OPTIONS
-    @Timed
-    public Response options() {
-        addOptionsHttpHeaders(servletResponse);
-        return ok().build();
     }
 
 
@@ -491,35 +453,6 @@ public class FedoraNodes extends AbstractResource {
         }
     }
 
-    /**
-     * Deletes an object.
-     *
-     * @return response
-     * @throws RepositoryException
-     */
-    @DELETE
-    @Timed
-    public Response deleteObject() {
-        init(uriInfo);
-
-        try {
-
-            evaluateRequestPreconditions(request, servletResponse, resource(), session);
-
-            resource().delete();
-
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            return noContent().build();
-        } finally {
-            session.logout();
-        }
-    }
-
 
     /**
      * Update an object using SPARQL-UPDATE
@@ -696,68 +629,12 @@ public class FedoraNodes extends AbstractResource {
 
     }
 
-    private FedoraResource resource() {
-        if (resource == null) {
-            resource = nodeService.getObject(session, path);
-        }
-
-        return resource;
-    }
-
-    private HttpIdentifierTranslator translator() {
-        if (identifierTranslator == null) {
-            identifierTranslator = new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
-        }
-
-        return identifierTranslator;
-    }
-
     private RdfStream getTriples(final Class<? extends RdfStream> x) {
         return getTriples(resource(), x);
     }
 
     private RdfStream getTriples(final FedoraResource resource, final Class<? extends RdfStream> x) {
         return resource.getTriples(translator(), x);
-    }
-
-
-    private void addResourceHttpHeaders(final HttpServletResponse servletResponse,
-                                        final FedoraResource resource,
-                                        final HttpIdentifierTranslator subjects) {
-
-        if (resource.hasContent()) {
-            try {
-                servletResponse.addHeader("Link", "<" + subjects.getSubject(
-                        resource.getNode().getNode(JCR_CONTENT).getPath()) + ">;rel=\"describes\"");
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
-
-        if (!subjects.isCanonical()) {
-            final IdentifierTranslator subjectsCanonical = subjects.getCanonical(true);
-
-            try {
-                servletResponse.addHeader("Link",
-                        "<" + subjectsCanonical.getSubject(resource.getPath()) + ">;rel=\"canonical\"");
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
-
-        addOptionsHttpHeaders(servletResponse);
-        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
-        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
-    }
-
-    private void addOptionsHttpHeaders(final HttpServletResponse servletResponse) {
-        servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
-
-        servletResponse.addHeader("Allow", "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS");
-        final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT1 + ","
-                                    + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;
-        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
-                + "," + contentTypeSPARQLUpdate);
     }
 
     private void addPaginationInformation(final int offset, final int limit, final RdfStream rdfStream) {
@@ -855,14 +732,6 @@ public class FedoraNodes extends AbstractResource {
             }
         }
         return objectType;
-    }
-
-    private URI getUri(final FedoraResource resource) throws URISyntaxException {
-        return new URI(translator().getSubject(resource.getPath()).getURI());
-    }
-
-    private String getPath(final String uri) {
-        return translator().getPathFromSubject(ResourceFactory.createResource(uri));
     }
 
     private void handleProblems(final Dataset properties) {
