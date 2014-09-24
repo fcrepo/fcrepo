@@ -124,7 +124,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         for (int i = 0; i < numThreads; i++) {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to ingest content file to object";
-            final HttpRequestBase request = postDSMethod(pid, "ds", "This is a content file: " + taskName + pid);
+            final HttpRequestBase request = putDSMethod(pid, "ds", "This is a content file: " + taskName + pid);
             final HttpRunner task = new HttpRunner(request, taskName);
             task.setExpectedStatusCode(CREATED.getStatusCode());
             tasks.add(task);
