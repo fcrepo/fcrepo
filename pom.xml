@@ -870,7 +870,13 @@
                     <exclude>org.slf4j:slf4j-nop</exclude>
                     <exclude>org.slf4j:slf4j-simple</exclude>
                     <exclude>org.apache.cxf</exclude>
+                    <exclude>org.glassfish.grizzly</exclude>
+                    <exclude>org.glassfish.jersey.test-framework.providers</exclude>
                   </excludes>
+                  <includes>
+                    <include>org.glassfish.grizzly:*:*:*:test</include>
+                    <include>org.glassfish.jersey.test-framework.providers:*:*:*:test</include>
+                  </includes>
                 </bannedDependencies>
               </rules>
             </configuration>
