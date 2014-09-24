@@ -79,7 +79,7 @@ import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.query.DatasetFactory;
 
 /**
- * Simple HTML provider that delegates to {@link BaseHtmlProvider}
+ * Simple HTML provider for RdfStreams
  *
  * @author ajs6f
  * @since Nov 19, 2013
@@ -94,10 +94,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
     @javax.ws.rs.core.Context
     UriInfo uriInfo;
-
-    @Inject
-    private BaseHtmlProvider delegate;
-
 
     private static EscapeTool escapeTool = new EscapeTool();
 

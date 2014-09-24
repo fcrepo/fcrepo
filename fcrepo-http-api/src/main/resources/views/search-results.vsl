@@ -29,7 +29,7 @@
     </div>
 
     ## output triples for the topic node
-  <div class="well" resource="$topic.getURI()">
+  <div class="well" resource="$topic">
     #triples($topic)
    </div>
 

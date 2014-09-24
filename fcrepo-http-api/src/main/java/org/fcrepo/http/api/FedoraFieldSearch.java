@@ -55,10 +55,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Statement;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -87,6 +92,13 @@ public class FedoraFieldSearch extends AbstractResource implements
 
     private static final Logger LOGGER = getLogger(FedoraFieldSearch.class);
 
+    private Function<? super Statement, Triple> stmtToTriple = new Function<Statement, Triple>() {
+        @Override
+        public Triple apply(final Statement input) {
+            return input.asTriple();
+        }
+    };
+
     /**
      * A stub method so we can return a text/html representation using
      * the right template.
@@ -102,7 +114,7 @@ public class FedoraFieldSearch extends AbstractResource implements
     @Timed
     @HtmlTemplate("search:results")
     @Produces({TEXT_HTML})
-    public Dataset searchSubmitHtml(@QueryParam(QUERY_PARAM)
+    public RdfStream searchSubmitHtml(@QueryParam(QUERY_PARAM)
                                         final String terms,
                                     @QueryParam(OFFSET_PARAM) @DefaultValue("0")
                                     final long offset,
@@ -131,7 +143,7 @@ public class FedoraFieldSearch extends AbstractResource implements
     @GET
     @Timed
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X, JSON_LD})
-    public Dataset searchSubmitRdf(@QueryParam(QUERY_PARAM) final String terms,
+    public RdfStream searchSubmitRdf(@QueryParam(QUERY_PARAM) final String terms,
             @QueryParam(OFFSET_PARAM) @DefaultValue("0") final long offset,
             @QueryParam(LIMIT_PARAM) @DefaultValue("25") final int limit,
             @Context final Request request,
@@ -147,91 +159,95 @@ public class FedoraFieldSearch extends AbstractResource implements
         return getSearchDataset(terms, offset, limit, servletResponse, uriInfo);
     }
 
-    private Dataset getSearchDataset(final String terms,
-                                     final long offset,
-                                     final int limit,
-                                     final HttpServletResponse servletResponse,
-                                     final UriInfo uriInfo) {
+    private RdfStream getSearchDataset(final String terms,
+                                       final long offset,
+                                       final int limit,
+                                       final HttpServletResponse servletResponse,
+                                       final UriInfo uriInfo) {
 
-        try {
-            LOGGER.debug(
-                    "Received search request with search terms {}, offset {}, and limit {}",
-                    terms, offset, limit);
+        LOGGER.debug(
+                "Received search request with search terms {}, offset {}, and limit {}",
+                terms, offset, limit);
 
-            final Resource searchResult;
+        final Resource searchResult;
 
-            if (terms == null) {
-                searchResult = createResource(uriInfo.getBaseUriBuilder()
-                                                  .path(FedoraFieldSearch.class)
-                                                  .build().toString());
-            } else {
-                searchResult = createResource(uriInfo.getBaseUriBuilder()
-                                                  .path(FedoraFieldSearch.class)
-                                                  .queryParam(QUERY_PARAM, terms)
-                                                  .build().toString());
-            }
-
-            final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-            final Dataset dataset = repositoryService.searchRepository(subjects, searchResult,
-                            session, terms, limit, offset);
-
-            final Model searchModel = createDefaultModel();
-            if (terms != null) {
-                final Resource pageResource = createResource(uriInfo.getRequestUri().toASCIIString());
-                searchModel.add(pageResource, type, SEARCH_PAGE);
-                searchModel.add(pageResource, type, PAGE);
-                searchModel.add(pageResource, PAGE_OF, searchResult);
-
-
-                searchModel.add(pageResource,
-                                   SEARCH_ITEMS_PER_PAGE,
-                                   searchModel.createTypedLiteral(limit));
-                searchModel.add(pageResource,
-                                   SEARCH_OFFSET,
-                                   searchModel.createTypedLiteral(offset));
-                searchModel.add(pageResource, SEARCH_TERMS, terms);
-
-                if (dataset.getDefaultModel()
-                        .contains(searchResult,
-                                     SEARCH_HAS_MORE,
-                                     searchModel.createTypedLiteral(true))) {
-
-                    final Resource nextPageResource =
-                        searchModel.createResource(uriInfo
-                                                       .getBaseUriBuilder()
-                                                       .path(FedoraFieldSearch.class)
-                                                       .queryParam(QUERY_PARAM, terms)
-                                                       .queryParam(OFFSET_PARAM, offset + limit)
-                                                       .queryParam(LIMIT_PARAM, limit)
-                                                       .build()
-                                                       .toString());
-                    searchModel.add(pageResource, NEXT_PAGE, nextPageResource);
-                } else {
-                    searchModel.add(pageResource, NEXT_PAGE, nil);
-                }
-
-                final String firstPage = uriInfo
-                                       .getBaseUriBuilder()
-                                       .path(FedoraFieldSearch.class)
-                                       .queryParam(QUERY_PARAM, terms)
-                                       .queryParam(OFFSET_PARAM, 0)
-                                       .queryParam(LIMIT_PARAM, limit)
-                                       .build()
-                                       .toString();
-                final Resource firstPageResource =
-                    searchModel.createResource(firstPage);
-                searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
-
-                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
-
-                dataset.addNamedModel("search-pagination", searchModel);
-            }
-
-            return dataset;
-
-        } finally {
-            session.logout();
+        if (terms == null) {
+            searchResult = createResource(uriInfo.getBaseUriBuilder()
+                    .path(FedoraFieldSearch.class)
+                    .build().toString());
+        } else {
+            searchResult = createResource(uriInfo.getBaseUriBuilder()
+                    .path(FedoraFieldSearch.class)
+                    .queryParam(QUERY_PARAM, terms)
+                    .build().toString());
         }
+
+        final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+
+        final Dataset dataset = repositoryService.searchRepository(subjects, searchResult,
+                session, terms, limit, offset);
+
+        final RdfStream stream = new RdfStream();
+
+        final Model searchModel = createDefaultModel();
+        if (terms != null) {
+            final Resource pageResource = createResource(uriInfo.getRequestUri().toASCIIString());
+            searchModel.add(pageResource, type, SEARCH_PAGE);
+            searchModel.add(pageResource, type, PAGE);
+            searchModel.add(pageResource, PAGE_OF, searchResult);
+
+
+            searchModel.add(pageResource,
+                    SEARCH_ITEMS_PER_PAGE,
+                    searchModel.createTypedLiteral(limit));
+            searchModel.add(pageResource,
+                    SEARCH_OFFSET,
+                    searchModel.createTypedLiteral(offset));
+            searchModel.add(pageResource, SEARCH_TERMS, terms);
+
+            if (dataset.getDefaultModel()
+                    .contains(searchResult,
+                            SEARCH_HAS_MORE,
+                            searchModel.createTypedLiteral(true))) {
+
+                final Resource nextPageResource =
+                        searchModel.createResource(uriInfo
+                                .getBaseUriBuilder()
+                                .path(FedoraFieldSearch.class)
+                                .queryParam(QUERY_PARAM, terms)
+                                .queryParam(OFFSET_PARAM, offset + limit)
+                                .queryParam(LIMIT_PARAM, limit)
+                                .build()
+                                .toString());
+                searchModel.add(pageResource, NEXT_PAGE, nextPageResource);
+            } else {
+                searchModel.add(pageResource, NEXT_PAGE, nil);
+            }
+
+            final String firstPage = uriInfo
+                    .getBaseUriBuilder()
+                    .path(FedoraFieldSearch.class)
+                    .queryParam(QUERY_PARAM, terms)
+                    .queryParam(OFFSET_PARAM, 0)
+                    .queryParam(LIMIT_PARAM, limit)
+                    .build()
+                    .toString();
+            final Resource firstPageResource =
+                    searchModel.createResource(firstPage);
+            searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
+
+            servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
+
+            dataset.addNamedModel("search-pagination", searchModel);
+        }
+
+        stream.concat(Iterators.transform(searchModel.listStatements(), stmtToTriple));
+        stream.concat(Iterators.transform(dataset.getDefaultModel().listStatements(), stmtToTriple));
+
+        stream.topic(subjects.getContext().asNode());
+        stream.session(session);
+        stream.namespaces(dataset.getDefaultModel().getNsPrefixMap());
+
+        return stream;
     }
 }
