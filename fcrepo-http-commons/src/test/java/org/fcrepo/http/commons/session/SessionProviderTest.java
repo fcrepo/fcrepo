@@ -44,9 +44,6 @@ public class SessionProviderTest {
     private SessionFactory mockSessionFactory;
 
     @Mock
-    private InjectedSession in;
-
-    @Mock
     private HttpServletRequest mockHttpServletRequest;
 
     @Before
