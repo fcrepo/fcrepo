@@ -221,8 +221,6 @@ public final class RdfLexicon {
             createProperty(RESTAPI_NAMESPACE + "hasTransactionProvider");
     public static final Property HAS_NAMESPACE_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasNamespaces");
-    public static final Property HAS_WORKSPACE_SERVICE =
-            createProperty(RESTAPI_NAMESPACE + "hasWorkspaces");
     public static final Property HAS_ACCESS_ROLES_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasAccessRoles");
     public static final Property HAS_SEARCH_SERVICE =
@@ -233,7 +231,7 @@ public final class RdfLexicon {
 
     public static final Set<Property> repositoryProperties = of(
             HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE,
-            HAS_NAMESPACE_SERVICE, HAS_WORKSPACE_SERVICE, HAS_SEARCH_SERVICE,
+            HAS_NAMESPACE_SERVICE, HAS_SEARCH_SERVICE,
             HAS_SITEMAP);
 
     // NAMESPACES
@@ -333,10 +331,6 @@ public final class RdfLexicon {
             createProperty("http://www.w3.org/2000/01/rdf-schema#label");
     public static final Property DC_TITLE =
             createProperty("http://purl.org/dc/elements/1.1/title");
-
-    public static final Resource WORKSPACE_TYPE = createResource(JCR_NAMESPACE + "#Workspace");
-    public static final Property HAS_WORKSPACE = createProperty(REPOSITORY_NAMESPACE + "hasWorkspace");
-    public static final Property HAS_DEFAULT_WORKSPACE = createProperty(REPOSITORY_NAMESPACE + "hasDefaultWorkspace");
 
     public static final Set<Property> managedProperties;
 

@@ -96,25 +96,10 @@ public class SessionFactoryTest {
     }
 
     @Test
-    public void testGetSessionUnauthenticatedWithWorkspace()
-            throws RepositoryException {
-        testObj.getInternalSession("ws");
-        verify(mockRepo).login(eq("ws"));
-    }
-
-    @Test
     public void testCreateSession() throws RepositoryException {
         when(mockRequest.getRequestURI()).thenReturn("/some/path");
         testObj.createSession(mockRequest);
         verify(mockRepo).login(any(Credentials.class));
-    }
-
-    @Test
-    public void testCreateSessionWithWorkspace() throws RepositoryException {
-        when(mockRequest.getRequestURI()).thenReturn(
-                "/workspace:some-workspace/some/path");
-        testObj.createSession(mockRequest);
-        verify(mockRepo).login(any(ServletCredentials.class), eq("some-workspace"));
     }
 
     @Test
@@ -163,35 +148,5 @@ public class SessionFactoryTest {
         final String txId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.TX);
         assertEquals("txId should be 123", "123", txId);
     }
-
-    @Test
-    public void testGetEmbeddedIdWorkspace() {
-        when(mockRequest.getRequestURI()).thenReturn("/workspace:some-workspace/some/path");
-        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
-        assertEquals("wsId should be some-workspace", "some-workspace", wsId);
-    }
-
-    @Test
-    public void testGetEmbeddedIdNotExisting() {
-        when(mockRequest.getRequestURI()).thenReturn("/some/path");
-        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
-        assertNull("expected wsId to be null", wsId);
-    }
-
-    @Test
-    public void testGetEmbeddedIdWithEmptyPath() {
-        when(mockRequest.getRequestURI()).thenReturn("");
-        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
-        assertNull("expected wsId to be null", wsId);
-    }
-
-    @Test
-    public void testGetEmbeddedIdWithNullPath() {
-        when(mockRequest.getRequestURI()).thenReturn(null);
-        final String wsId = testObj.getEmbeddedId(mockRequest, SessionFactory.Prefix.WORKSPACE);
-        assertNull("expected wsId to be null", wsId);
-    }
-
-
 
 }
