@@ -167,7 +167,7 @@ public class FedoraNodes extends FedoraLdp {
      */
     @VisibleForTesting
     public FedoraNodes(final String path) {
-        this.path = path;
+        super(path);
     }
 
     /**
@@ -248,13 +248,9 @@ public class FedoraNodes extends FedoraLdp {
             }
 
             rdfStream.concat(getTriples(ContainerRdfContext.class));
-
-            servletResponse.addHeader("Preference-Applied", "return=representation");
-
-        } else {
-            servletResponse.addHeader("Preference-Applied", "return=minimal");
         }
-        servletResponse.addHeader("Vary", "Prefer");
+        
+        returnPreference.addResponseHeaders(servletResponse);
 
         addResourceHttpHeaders(servletResponse, resource(), translator());
 
