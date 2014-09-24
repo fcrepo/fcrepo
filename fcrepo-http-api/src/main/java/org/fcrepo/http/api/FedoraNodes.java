@@ -196,10 +196,6 @@ public class FedoraNodes extends FedoraLdp {
     /**
      * Retrieve the node profile
      *
-     * @param offset with limit, control the pagination window of details for
-     *        child nodes
-     * @param limit with offset, control the pagination window of details for
-     *        child nodes
      * @return triples for the specified node
      * @throws RepositoryException
      */
@@ -207,17 +203,13 @@ public class FedoraNodes extends FedoraLdp {
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML})
-    public RdfStream describe(@QueryParam("offset") @DefaultValue("0") final int offset,
-                              @QueryParam("limit")  @DefaultValue("-1") final int limit,
-                              @HeaderParam("Prefer") final Prefer prefer) {
+    public RdfStream describe(@HeaderParam("Prefer") final Prefer prefer) {
         LOGGER.trace("Getting profile for: {}", path);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         final RdfStream rdfStream = getTriples(PropertiesRdfContext.class).session(session)
                 .topic(translator().getSubject(resource().getPath()).asNode());
-
-        addPaginationInformation(offset, limit, rdfStream);
 
         final PreferTag returnPreference;
 
@@ -635,30 +627,6 @@ public class FedoraNodes extends FedoraLdp {
 
     private RdfStream getTriples(final FedoraResource resource, final Class<? extends RdfStream> x) {
         return resource.getTriples(translator(), x);
-    }
-
-    private void addPaginationInformation(final int offset, final int limit, final RdfStream rdfStream) {
-        if (limit >= 0) {
-            try {
-                final Node firstPage =
-                        createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
-                                .replaceQueryParam("limit", limit).build()
-                                .toString().replace("&", "&amp;"));
-                rdfStream.concat(create(translator().getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
-                servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
-
-                if (resource().getNode().getNodes().getSize() > (offset + limit)) {
-                    final Node nextPage =
-                            createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
-                                    .replaceQueryParam("limit", limit).build()
-                                    .toString().replace("&", "&amp;"));
-                    rdfStream.concat(create(translator().getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
-                    servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
-                }
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
     }
 
     private String mintNewPid(final String base, final String slug) {
