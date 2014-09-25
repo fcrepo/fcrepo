@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.api.rdf;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -93,7 +94,7 @@ public class HttpIdentifierTranslatorTest extends HttpIdentifierTranslatorTestSc
         assertEquals(expected, actual.getURI());
         when(mockNode.getPath()).thenReturn(testPath + "/jcr:content");
         actual = testObj.getSubject(mockNode.getPath());
-        assertEquals(expected + "/fcr:content", actual.getURI());
+        assertEquals(expected, actual.getURI());
     }
 
     @Test
@@ -121,14 +122,14 @@ public class HttpIdentifierTranslatorTest extends HttpIdentifierTranslatorTestSc
                 "http://localhost:8080/fcrepo/rest" + testPath + "/bad");
         actual = mockSession.getNode(testObj.getPathFromSubject(mockSubject));
         assertEquals(null, actual);
-        // test a fcr:content path
-        when(mockSession.nodeExists(testPath + "/jcr:content")).thenReturn(true);
+        // test a fcr:metadata path
+        when(mockSession.nodeExists(testPath + "/ds")).thenReturn(true);
         when(mockSubject.getURI())
                 .thenReturn(
-                        "http://localhost:8080/fcrepo/rest" + testPath +
-                                "/fcr:content");
+                        "http://localhost:8080/fcrepo/rest" + testPath + "/ds"
+                                + "/" + FCR_METADATA);
         actual = mockSession.getNode(testObj.getPathFromSubject(mockSubject));
-        verify(mockSession).getNode(testPath + "/jcr:content");
+        verify(mockSession).getNode(testPath + "/ds");
     }
 
     @Test

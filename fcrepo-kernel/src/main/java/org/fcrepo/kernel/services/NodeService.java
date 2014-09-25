@@ -66,5 +66,4 @@ public interface NodeService extends Service {
      * @throws IOException
      */
     void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException;
-
 }

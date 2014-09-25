@@ -19,7 +19,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
@@ -514,7 +514,7 @@ public class ViewHelpers {
      * @return content-bearing node for the given subject
      */
     public Node getContentNode(final Node subject) {
-        return NodeFactory.createURI(subject + "/" + FCR_CONTENT);
+        return NodeFactory.createURI(subject.getURI().replace(FCR_METADATA, ""));
     }
 
     /**

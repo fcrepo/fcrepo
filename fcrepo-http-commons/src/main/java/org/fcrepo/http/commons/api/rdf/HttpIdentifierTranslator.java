@@ -33,8 +33,8 @@ import static javax.jcr.PropertyType.PATH;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.UnsupportedEncodingException;
@@ -55,7 +55,6 @@ import javax.ws.rs.core.UriInfo;
  * Translate JCR paths to URLs.  There are a few types of translations
  * that occur as part of this implementation:
  * <ul>
- *     <li>jcr:content is replaced with fcr:content</li>
  *     <li>information about the transaction is added</li>
  * </ul>
  *
@@ -217,11 +216,8 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
                 if (!session.getWorkspace().getName().equals(workspace)) {
                     throw new RepositoryException("Subject is not in this workspace");
                 }
-            } else if (segment.equals(FCR_CONTENT)) {
-                pathBuilder.append("/");
-                pathBuilder.append(JCR_CONTENT);
             } else {
-                if (!segment.isEmpty()) {
+                if (!segment.isEmpty() && !segment.equals(FCR_METADATA)) {
                     pathBuilder.append("/");
                     pathBuilder.append(segment);
                 }
@@ -283,6 +279,8 @@ public class HttpIdentifierTranslator extends SpringContextAwareIdentifierTransl
             } else if (workspace != null && !workspace.getName().equals(defaultWorkspace)) {
                 path = WORKSPACE_PREFIX + workspace.getName() + "/" + path;
             }
+
+            path = path.replace("/" + FCR_CONTENT, "");
         }
 
         return singletonMap("path", path);
