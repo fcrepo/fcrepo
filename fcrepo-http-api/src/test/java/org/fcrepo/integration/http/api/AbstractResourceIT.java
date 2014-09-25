@@ -126,8 +126,7 @@ public abstract class AbstractResourceIT {
     protected static HttpPut putDSMethod(final String pid, final String ds,
         final String content) throws UnsupportedEncodingException {
         final HttpPut put =
-                new HttpPut(serverAddress + pid + "/" + ds +
-                        "/fcr:content");
+                new HttpPut(serverAddress + pid + "/" + ds);
 
         put.setEntity(new StringEntity(content));
         return put;
@@ -135,8 +134,7 @@ public abstract class AbstractResourceIT {
 
     protected static HttpGet getDSMethod(final String pid, final String ds) {
             final HttpGet get =
-                    new HttpGet(serverAddress + pid + "/" + ds +
-                            "/fcr:content");
+                    new HttpGet(serverAddress + pid + "/" + ds);
             return get;
         }
 
@@ -178,6 +176,7 @@ public abstract class AbstractResourceIT {
         final HttpResponse response = execute(method);
         final int result = response.getStatusLine().getStatusCode();
         if (!(result > 199) || !(result < 400)) {
+            logger.warn("Got status {}", result);
             logger.warn(EntityUtils.toString(response.getEntity()));
         }
         return result;

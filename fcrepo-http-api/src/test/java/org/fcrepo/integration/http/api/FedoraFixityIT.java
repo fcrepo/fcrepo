@@ -51,7 +51,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         logger.debug("Got triples {}", graphStore);
 
         assertTrue(graphStore.contains(ANY,
-                                          createResource(serverAddress + pid + "/zxc/fcr:content").asNode(),
+                                          createResource(serverAddress + pid + "/zxc").asNode(),
                                           HAS_FIXITY_RESULT.asNode(),
                                           ANY
                 ));
