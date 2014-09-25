@@ -76,11 +76,12 @@ public class RdfSerializationUtilsTest {
 
     @Test
     public void testGetAllValuesForPredicate() {
-        final List<String> foundValues =
-            getAllValuesForPredicate(testData, createURI("test:subject"), createURI("test:anotherPredicate"));
+        final Iterator<String> foundValues =
+            getAllValuesForPredicate(testData, ANY,
+                    createURI("test:anotherPredicate"));
 
-        assertEquals("Didn't find correct value for predicate!", foundValues,
-                     Arrays.asList("test:object1", "test:object2"));
+        assertEquals("Didn't find correct values for predicate!", copyOf(foundValues),
+                     of("test:object2", "test:object1"));
     }
 
 }

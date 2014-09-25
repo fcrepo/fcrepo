@@ -71,6 +71,7 @@ public class StreamingBaseHtmlProviderTest {
     private final StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();
 
     private final RdfStream testData = new RdfStream();
+    private final RdfStream testData2 = new RdfStream();
 
     @Mock
     private Session mockSession;
@@ -99,6 +100,17 @@ public class StreamingBaseHtmlProviderTest {
         testData.concat(
                 new Triple(createURI("test:subject"), primaryTypePredicate,
                         createLiteral("nt:file")));
+
+        testData2.session(mockSession);
+        testData2.topic(createURI("test:subject"));
+        testData2.concat(
+                new Triple(createURI("test:subject2"),
+                        primaryTypePredicate,
+                        createLiteral("childOf:ntFile")));
+        testData2.contact(
+                new Triple(createURI("test:subject3"),
+                        primaryTypePredicate,
+                        createLiteral("grandchildOf:ntFile")));
 
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
@@ -176,6 +188,34 @@ public class StreamingBaseHtmlProviderTest {
                 new Annotation[]{mockAnnotation}, MediaType
                         .valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
+        final byte[] results = outStream.toByteArray();
+        assertTrue("Got no output from serialization!", results.length > 0);
+
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    public void testWriteToWithParentTemplate() throws WebApplicationException,
+            IllegalArgumentException, IOException {
+        final Template mockTemplate = mock(Template.class);
+        final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+
+        doAnswer(new Answer<Object>() {
+
+            @Override
+            public Object answer(final InvocationOnMock invocation) {
+                outStream.write("abcdefighijk".getBytes(), 0, 10);
+                return "I am pretending to merge a template for you.";
+            }
+        }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
+
+        setField(baseHtmlProvider, "templatesMap",
+                 of("childOf:ntFile", mockTemplate,
+                    "grandchildOf:ntFile", mockTemplate));
+        baseHtmlProvider.writeTo(testData2, Dataset.class, mock(Type.class),
+                new Annotation[] {}, MediaType
+                        .valueOf("text/html"),
+                (MultivaluedMap) new MultivaluedMapImpl(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 

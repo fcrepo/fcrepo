@@ -167,7 +167,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                         primaryNodeType.getName();
 
                 // Create a list of the primary type and all its parents
-                final List<NodeType> nodeTypesList = new ArrayList();
+                final List<NodeType> nodeTypesList = new ArrayList<NodeType>();
                 nodeTypesList.add(primaryNodeType);
                 nodeTypesList.addAll(Arrays.asList(primaryNodeType.getSupertypes()));
 
@@ -277,11 +277,14 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                     getAllValuesForPredicate(rdf, subject,
                             mixinTypesPredicate);
 
-            final ImmutableList<String> copy = copyOf(mixinTypes);
-            final String mixin = Iterables.find(copy, acceptWhenTemplateMapContainsKey, null);
-            if (mixin != null) {
-                LOGGER.debug("Found mixin type: {}", mixin);
-                template = templatesMap.get(mixin);
+            LOGGER.debug("Found mixins: {}", mixinTypes);
+            if (mixinTypes != null) {
+                final ImmutableList<String> copy = copyOf(mixinTypes);
+                final String mixin = Iterables.find(copy, acceptWhenTemplateMapContainsKey, null);
+                if (mixin != null) {
+                    LOGGER.debug("Matched mixin type: {}", mixin);
+                    template = templatesMap.get(mixin);
+                }
             }
         }
 
