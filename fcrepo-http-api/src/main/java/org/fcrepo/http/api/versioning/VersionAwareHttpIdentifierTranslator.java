@@ -73,16 +73,14 @@ public class VersionAwareHttpIdentifierTranslator extends HttpIdentifierTranslat
      * other expensive operations for nodes that appear to be historic versions.
      *
      * @param session the current session (may contain transaction information)
-     * @param internalSession a session with read access to all content
      * @param relativeTo a class whose path annotation will be used as the
      *                   base for all relative paths
      * @param uris a UriInfo implementation with information about the request
      *             URI.
      */
-    public VersionAwareHttpIdentifierTranslator(final Session session,
-        final Session internalSession, final Class<?> relativeTo, final UriInfo uris) {
+    public VersionAwareHttpIdentifierTranslator(final Session session, final Class<?> relativeTo, final UriInfo uris) {
         super(session, relativeTo, uris);
-        this.internalSession = internalSession;
+        internalSession = session;
     }
 
     @Override

@@ -15,43 +15,34 @@
  */
 package org.fcrepo.http.api;
 
-import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.api.versioning.VersionAwareHttpIdentifierTranslator;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.impl.DatastreamImpl;
+import org.fcrepo.kernel.impl.FedoraBinaryImpl;
+import org.fcrepo.kernel.impl.FedoraObjectImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.VersionException;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -62,7 +53,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -72,7 +62,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -80,47 +69,47 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author awoods
  */
-@Scope("prototype")
-@Path("/{path: .*}/fcr:versions")
+@Scope("request")
+@Path("/{path: .*}/fcr:versions/{labelAndOptionalPathIntoVersion: .*}")
 public class FedoraVersions extends ContentExposingResource {
 
     @Inject
     protected Session session;
 
-    @Autowired
-    private SessionFactory sessionFactory = null;
-
     private static final Logger LOGGER = getLogger(FedoraVersions.class);
 
+    @PathParam("path") protected List<PathSegment> pathList;
+    @PathParam("labelAndOptionalPathIntoVersion") protected List<PathSegment> pathListIntoVersion;
+
+    protected String path;
+    protected String label;
+    protected String pathIntoVersion;
+
+    protected FedoraResource resource;
+
     /**
-     * Get the list of versions for the object
-     *
-     * @param pathList
-     * @param request
-     * @param uriInfo
-     * @return List of versions for the object as RDF
-     * @throws RepositoryException
+     * Default JAX-RS entry point
      */
-    @GET
-    @HtmlTemplate(value = "fcr:versions")
-    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
-    public RdfStream getVersionList(@PathParam("path") final List<PathSegment> pathList,
-            @Context final Request request,
-            @Context final UriInfo uriInfo) {
-        final String path = toPath(pathList);
+    public FedoraVersions() {
+        super();
+    }
 
-        LOGGER.trace("Getting versions list for: {}", path);
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param path
+     */
+    @VisibleForTesting
+    public FedoraVersions(final String path, final String label, final String pathIntoVersion) {
+        this.path = path;
+        this.label = label;
+        this.pathIntoVersion = pathIntoVersion;
+    }
 
-        final FedoraResource resource = nodeService.getObject(session, path);
-
-        if (!resource.hasType("mix:versionable")) {
-            throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
-        }
-
-        return resource.getTriples(nodeTranslator(), VersionsRdfContext.class)
-                .session(session)
-                .topic(nodeTranslator().getSubject(resource.getPath()).asNode());
+    @PostConstruct
+    private void postConstruct() {
+        this.path = toPath(pathList);
+        this.label = pathListIntoVersion.get(0).getPath();
+        this.pathIntoVersion = "." + toPath(pathListIntoVersion.subList(1, pathListIntoVersion.size()));
     }
 
     /**
@@ -128,33 +117,34 @@ public class FedoraVersions extends ContentExposingResource {
      * that label already describes another version it will silently be
      * reassigned to describe this version.
      *
-     * @param pathList
-     * @param label
      * @return response
      * @throws RepositoryException
      */
     @POST
-    @Path("/{label:.+}")
-    public Response addVersion(@PathParam("path")
-            final List<PathSegment> pathList,
-            @PathParam("label")
-            final String label) throws RepositoryException {
-        return addVersion(toPath(pathList), label);
+    public Response addVersion() throws RepositoryException {
+        try {
+            final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
+                    singleton(path));
+            if (label != null) {
+                unversionedResource().addVersionLabel(label);
+            }
+
+            final String version = (label != null) ? label : versions.iterator().next();
+            return noContent().header("Location", translator().getSubject(
+                    path) + "/fcr:versions/" + version).build();
+        } finally {
+            session.logout();
+        }
     }
 
     /**
      * Reverts the resource at the given path to the version specified by
      * the label.
-     * @param pathList
-     * @param label
      * @return response
      * @throws RepositoryException
      */
     @PATCH
-    @Path("/{label:.+}")
-    public Response revertToVersion(@PathParam("path") final List<PathSegment> pathList,
-                                    @PathParam("label") final String label) throws RepositoryException {
-        final String path = toPath(pathList);
+    public Response revertToVersion() throws RepositoryException {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
         try {
@@ -167,16 +157,11 @@ public class FedoraVersions extends ContentExposingResource {
 
     /**
      * Removes the version specified by the label.
-     * @param pathList The resource the version is associated with.
-     * @param label The version label
      * @return 204 No Content
      * @throws RepositoryException
     **/
     @DELETE
-    @Path("/{label:.+}")
-    public Response removeVersion(@PathParam("path") final List<PathSegment> pathList,
-            @PathParam("label") final String label) throws RepositoryException {
-        final String path = toPath(pathList);
+    public Response removeVersion() throws RepositoryException {
         LOGGER.info("Removing {} version {}.", path, label);
         try {
             versionService.removeVersion(session.getWorkspace(), path, label);
@@ -189,110 +174,96 @@ public class FedoraVersions extends ContentExposingResource {
     }
 
     /**
-     * Create a new version checkpoint with no label.
-     * @return response
-     */
-    @POST
-    public Response addVersion(@PathParam("path")
-            final List<PathSegment> pathList) throws RepositoryException {
-        return addVersion(toPath(pathList), null);
-    }
-
-    private Response addVersion(final String path, final String label) throws RepositoryException {
-        try {
-            final FedoraResource resource =
-                    nodeService.getObject(session, path);
-            final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
-                                                                             singleton(path));
-            if (label != null) {
-                resource.addVersionLabel(label);
-            }
-            final String version = (label != null) ? label : versions.iterator().next();
-            return noContent().header("Location", nodeTranslator().getSubject(
-                path) + "/fcr:versions/" + version).build();
-        } finally {
-            session.logout();
-        }
-    }
-
-    /**
      * Retrieve a version of an object.  The path structure is as follows
      * (though these URLs are returned from getVersionList and need not be
      * constructed manually):
      * /versionable-node/fcr:versions/label/path/to/any/copied/unversionable/nodes
-     * @param pathList
-     * @param label the label for the version of the subgraph
-     * @param uriInfo
      * @return the version of the object as RDF in the requested format
      * @throws RepositoryException
      */
-    @Path("/{label:.+}")
     @GET
-    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-                      TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
-    public RdfStream getVersion(@PathParam("path")
-            final List<PathSegment> pathList,
-            @PathParam("label")
-            final String label,
-            @Context
-            final Request request, @Context final HttpServletResponse servletResponse,
-            @Context
-            final UriInfo uriInfo) throws RepositoryException {
-        final String path = toPath(pathList);
+    @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
+            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+            TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
+    public Response getVersion(@HeaderParam("Prefer") final Prefer prefer,
+                               @HeaderParam("Range") final String rangeValue) throws RepositoryException, IOException {
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
-        final Node node = nodeTranslator().getNodeFromGraphSubjectForVersionNode(uriInfo.getRequestUri().toString());
-        if (node == null) {
-            throw new WebApplicationException(status(NOT_FOUND).build());
-        }
-        final FedoraResource resource = new FedoraResourceImpl(node);
-        checkCacheControlHeaders(request, servletResponse, resource, session);
-        return resource.getTriples(nodeTranslator(), PropertiesRdfContext.class).session(session).topic(
-                nodeTranslator().getSubject(resource.getNode().getPath()).asNode());
+        checkCacheControlHeaders(request, servletResponse, resource(), session);
+        final RdfStream rdfStream = new RdfStream().session(session).topic(
+                translator().getSubject(unversionedResource().getPath()).asNode());
+        return getContent(prefer, rangeValue, rdfStream);
     }
 
-    /**
-     * Get the binary content of a historic version of a datastream.
-     * @see FedoraLdp#getContent
-     * @param pathList
-     * @return Binary blob
-     * @throws RepositoryException
-     */
-    @Path("/{label:.+}/fcr:content")
-    @GET
-    @Timed
-    public Response getHistoricContent(@PathParam("path")
-                                       final List<PathSegment> pathList, @HeaderParam("Range")
-                                       final String rangeValue, @Context
-                                       final Request request,
-                                       @Context final HttpServletResponse servletResponse
-    ) throws IOException {
+    @VisibleForTesting
+    protected FedoraResource unversionedResource() {
+        return getResourceFromPath();
+    }
+
+    @Override
+    protected FedoraResource resource() {
+
         try {
-            LOGGER.info("Attempting get of {}.", uriInfo.getRequestUri());
-            final Node frozenNode = nodeTranslator().getNodeFromGraphSubjectForVersionNode(
-                    uriInfo.getRequestUri().toString().replace("/" + FCR_CONTENT, ""));
-            final Datastream ds =
-                    datastreamService.asDatastream(frozenNode);
-            final HttpIdentifierTranslator subjects =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class,
-                            uriInfo);
-            return getDatastreamContentResponse(ds.getBinary(),
-                    rangeValue, request, servletResponse, subjects, session);
+            if (resource == null) {
+                final FedoraResource fedoraResource = unversionedResource();
+
+                final Node frozenNode = fedoraResource.getNodeVersion(label);
+
+                if (frozenNode == null) {
+                    throw new NotFoundException();
+                }
+
+                final Node node;
+
+                if (pathIntoVersion != null) {
+                    node = frozenNode.getNode(pathIntoVersion);
+                } else {
+                    node = frozenNode;
+                }
+
+                final boolean metadata = pathListIntoVersion != null &&
+                        pathListIntoVersion.get(pathListIntoVersion.size() - 1).getPath().equals("fcr:metadata");
+
+                if (DatastreamImpl.hasMixin(node)) {
+                    final DatastreamImpl datastream = new DatastreamImpl(node);
+
+                    if (metadata) {
+                        resource = datastream;
+                    } else {
+                        resource = datastream.getBinary();
+                    }
+                } else if (FedoraBinaryImpl.hasMixin(node)) {
+                    resource = new FedoraBinaryImpl(node);
+                } else {
+                    resource = new FedoraObjectImpl(node);
+                }
+            }
+
+            return resource;
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
     }
 
-    /**
-     * A translator suitable for subjects that represent nodes.
-     */
-    protected VersionAwareHttpIdentifierTranslator nodeTranslator() {
-        return new VersionAwareHttpIdentifierTranslator(session,
-                sessionFactory.getInternalSession(), FedoraNodes.class,
-                uriInfo);
+    @Override
+    void addResourceHttpHeaders(final FedoraResource resource) {
+        // no-op
     }
 
+    @Override
+    String path() {
+        return path;
+    }
+
+    @Override
+    List<PathSegment> pathList() {
+        return pathList;
+    }
+
+
+    @Override
+    Session session() {
+        return session;
+    }
 }

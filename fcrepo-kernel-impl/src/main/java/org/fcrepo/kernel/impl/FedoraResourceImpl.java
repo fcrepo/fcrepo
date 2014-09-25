@@ -24,9 +24,9 @@ import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.property2values;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.value2string;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -50,6 +51,7 @@ import javax.jcr.version.VersionHistory;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -405,6 +407,91 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             return shaHex(getPath() + lastModifiedDate.getTime());
         }
         return "";
+    }
+
+    @Override
+    public void enableVersioning() {
+        try {
+            node.addMixin("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void disableVersioning() {
+        try {
+            node.removeMixin("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+    }
+
+    @Override
+    public boolean isVersioned() {
+        try {
+            return node.isNodeType("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public Node getNodeVersion(final String label) {
+        try {
+            final Session session = getSession();
+            try {
+
+                final Node frozenNode = session.getNodeByIdentifier(label);
+
+                final String baseUUID;
+
+                if (this instanceof FedoraBinary) {
+                    baseUUID = ((FedoraBinary)this).getDescription().getNode().getIdentifier();
+                } else {
+                    baseUUID = getNode().getIdentifier();
+                }
+
+            /*
+             * We found a node whose identifier is the "label" for the version.  Now
+             * we must do due dilligence to make sure it's a frozen node representing
+             * a version of the subject node.
+             */
+                final Property p = frozenNode.getProperty("jcr:frozenUuid");
+                if (p != null) {
+                    if (p.getString().equals(baseUUID)) {
+                        return frozenNode;
+                    }
+                }
+            /*
+             * Though a node with an id of the label was found, it wasn't the
+             * node we were looking for, so fall through and look for a labeled
+             * node.
+             */
+            } catch (final ItemNotFoundException ex) {
+            /*
+             * the label wasn't a uuid of a frozen node but
+             * instead possibly a version label.
+             */
+            }
+
+            if (isVersioned()) {
+                final VersionHistory hist =
+                        session.getWorkspace().getVersionManager().getVersionHistory(getPath());
+
+                if (hist.hasVersionLabel(label)) {
+                    LOGGER.debug("Found version for {} by label {}.", this, label);
+                    return hist.getVersionByLabel(label).getFrozenNode();
+                }
+            }
+
+            LOGGER.warn("Unknown version {} with label or uuid {}!", this, label);
+            return null;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
     }
 
     private Session getSession() {
