@@ -279,6 +279,18 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     }
 
+    /**
+     * When deleting the binary, we also need to clean up the description document.
+     */
+    @Override
+    public void delete() {
+        final Datastream description = getDescription();
+
+        super.delete();
+
+        description.delete();
+    }
+
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {
         if (contentNode == null) {
             LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
@@ -302,4 +314,16 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
+    /**
+     * Check if the given node is a Fedora binary
+     * @param node
+     * @return
+     */
+    public static boolean hasMixin(final Node node) {
+        try {
+            return node.isNodeType(FEDORA_BINARY);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 }

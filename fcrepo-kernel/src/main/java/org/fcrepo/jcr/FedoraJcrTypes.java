@@ -47,6 +47,8 @@ public interface FedoraJcrTypes {
 
     String FCR_CONTENT = "fcr:content";
 
+    String FCR_METADATA = "fcr:metadata";
+
     String FCR_VERSIONS = "fcr:versions";
 
     String FCR_LOCK = "fcr:lock";

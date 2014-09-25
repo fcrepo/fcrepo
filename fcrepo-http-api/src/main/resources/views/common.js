@@ -23,7 +23,7 @@ function addChild()
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
                 if (xhr.status == 201) {
-                    var loc = xhr.getResponseHeader('Location').replace("/fcr:content", "");
+                    var loc = xhr.getResponseHeader('Location');
 
                     if (loc != null) {
                         window.location = loc;
@@ -37,9 +37,9 @@ function addChild()
         }
 
         if (id == "") {
-            xhr.open( "POST", newURI + "/fcr:content" );
+            xhr.open( "POST", newURI );
         } else {
-            xhr.open( "PUT", newURI + "/fcr:content" );
+            xhr.open( "PUT", newURI );
         }
 
         xhr.setRequestHeader("Content-type", update_file.type || "application/octet-stream");
@@ -271,7 +271,7 @@ function viewLock(lockUrl)
 function updateFile()
 {
     var update_file = document.getElementById("update_file").files[0];
-    var url = window.location + "/fcr:content";
+    var url = window.location.replace("fcr:metadata", "");
     var reader = new FileReader();
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {

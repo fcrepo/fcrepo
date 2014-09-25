@@ -253,7 +253,7 @@ public class FedoraVersions extends ContentExposingResource {
 
     /**
      * Get the binary content of a historic version of a datastream.
-     * @see FedoraContent#getContent
+     * @see FedoraLdp#getContent
      * @param pathList
      * @return Binary blob
      * @throws RepositoryException

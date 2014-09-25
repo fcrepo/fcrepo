@@ -79,15 +79,6 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + pid);
     }
 
-    protected static HttpPost postDSMethod(final String pid, final String ds,
-            final String content) throws UnsupportedEncodingException {
-        final HttpPost post =
-                new HttpPost(serverAddress + pid + "/" + ds +
-                        "/fcr:content");
-        post.setEntity(new StringEntity(content));
-        return post;
-    }
-
     protected HttpResponse createDatastream(final String pid, final String dsid, final String content)
             throws IOException {
         logger.trace(
@@ -102,8 +93,7 @@ public abstract class AbstractResourceIT {
     protected static HttpPut putDSMethod(final String pid, final String ds,
                                          final String content) throws UnsupportedEncodingException {
         final HttpPut put =
-                new HttpPut(serverAddress + pid + "/" + ds +
-                        "/fcr:content");
+                new HttpPut(serverAddress + pid + "/" + ds);
 
         put.setEntity(new StringEntity(content));
         return put;
