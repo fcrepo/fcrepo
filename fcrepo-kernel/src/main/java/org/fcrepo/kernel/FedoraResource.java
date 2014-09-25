@@ -178,4 +178,26 @@ public interface FedoraResource {
      */
     String getEtagValue();
 
+    /**
+     * Enable versioning
+     */
+    void enableVersioning();
+
+    /**
+     * Disable versioning
+     */
+    void disableVersioning();
+
+    /**
+     * Check if a resource is versioned
+     * @return
+     */
+    boolean isVersioned();
+
+    /**
+     * Get the node for this object at the version provided.
+     * @param label
+     * @return
+     */
+    Node getNodeVersion(String label);
 }

@@ -62,7 +62,7 @@ public class VersionAwareHttpGraphSubjectsTest extends HttpIdentifierTranslatorT
 
     @Override
     protected HttpIdentifierTranslator getTestObj() {
-        return new VersionAwareHttpIdentifierTranslator(mockSession, mockSession,
+        return new VersionAwareHttpIdentifierTranslator(mockSession,
                 MockNodeController.class,
                 uriInfo);
     }

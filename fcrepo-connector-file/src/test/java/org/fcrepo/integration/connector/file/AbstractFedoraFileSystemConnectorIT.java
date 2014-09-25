@@ -58,10 +58,10 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -199,7 +199,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_OBJECT);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_OBJECT);
         assertTrue("Mixin not found: " + FEDORA_OBJECT, found);
 
         session.save();
@@ -217,7 +217,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_DATASTREAM);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_DATASTREAM);
         assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
 
         session.save();
@@ -234,7 +234,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_BINARY);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
         final File file = fileForNode(node);

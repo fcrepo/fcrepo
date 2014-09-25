@@ -17,9 +17,9 @@ package org.fcrepo.kernel.impl.utils;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -30,13 +30,11 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 import javax.jcr.version.VersionHistory;
 import java.util.Collection;
-import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
@@ -45,11 +43,9 @@ import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterators.contains;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
-import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -72,25 +68,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         public boolean apply(final Node node) {
             checkNotNull(node, "null cannot be a Fedora object!");
             try {
-                return map(node.getMixinNodeTypes(), nodetype2name).contains(
+                return map(node.getMixinNodeTypes(), JcrPropertyFunctions.nodetype2name).contains(
                         FEDORA_RESOURCE);
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
-        }
-    };
-
-    /**
-     * Predicate for determining whether this {@link Node} is a frozen node
-     * (a part of the system version history).
-     */
-    public static Predicate<Node> isFrozen = new Predicate<Node>() {
-
-        @Override
-        public boolean apply(final Node node) {
-            checkNotNull(node, "null cannot be a Frozen node!");
-            try {
-                return node.getPrimaryNodeType().getName().equals(FROZEN_NODE);
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
@@ -118,95 +97,6 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             new AnyTypesPredicate(FEDORA_OBJECT, FEDORA_DATASTREAM);
 
     /**
-     * Translates a {@link NodeType} to its {@link String} name.
-     */
-    public static Function<NodeType, String> nodetype2name =
-        new Function<NodeType, String>() {
-
-            @Override
-            public String apply(final NodeType t) {
-                checkNotNull(t, "null has no name!");
-                return t.getName();
-            }
-        };
-
-    /**
-     * Translates a JCR {@link Value} to its {@link String} expression.
-     */
-    public static Function<Value, String> value2string =
-        new Function<Value, String>() {
-
-            @Override
-            public String apply(final Value v) {
-                try {
-                    checkNotNull(v, "null has no appropriate "
-                                        + "String representation!");
-                    return v.getString();
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
-
-    /**
-     * Constructs an {@link Iterator} of {@link Value}s from any
-     * {@link Property}, multi-valued or not.
-     */
-    public static Function<Property, Iterator<Value>> property2values =
-        new Function<Property, Iterator<Value>>() {
-
-            @Override
-            public Iterator<Value> apply(final Property p) {
-                try {
-                    if (p.isMultiple()) {
-                        LOGGER.debug("Found multi-valued property: {}", p);
-                        return Iterators.forArray(p.getValues());
-                    }
-                    LOGGER.debug("Found single-valued property: {}", p);
-                    return Iterators.forArray(p.getValue());
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                } catch (final Exception e) {
-                    throw propagate(e);
-                }
-            }
-        };
-
-    /**
-     * Check if a JCR property is a multivalued property or not
-     */
-    public static Predicate<Property> isMultipleValuedProperty =
-        new Predicate<Property>() {
-
-            @Override
-            public boolean apply(final Property p) {
-                checkNotNull(p, "null is neither multiple nor not multiple!");
-                try {
-                    return p.isMultiple();
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
-
-    /**
-     * Check if a JCR property is a binary jcr:data property
-     */
-    public static Predicate<Property> isBinaryContentProperty =
-        new Predicate<Property>() {
-
-            @Override
-            public boolean apply(final Property p) {
-                checkNotNull(p, "null is neither binary nor not binary!");
-                try {
-                    return p.getType() == BINARY && p.getName().equals(JCR_DATA);
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
-
-    /**
      * Check if a property is a reference property.
      */
     public static Predicate<Property> isReferenceProperty =
@@ -232,7 +122,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
             @Override
             public boolean apply(final Property p) {
-                return isReferenceProperty.apply(p) || isBinaryContentProperty.apply(p)
+                return isReferenceProperty.apply(p) || JcrPropertyFunctions.isBinaryContentProperty.apply(p)
                         || isProtectedAndShouldBeHidden.apply(p);
             }
         };
@@ -389,7 +279,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         }
 
         if (p.isMultiple()) {
-            return contains(transform(forArray(p.getValues()), value2string), value);
+            return contains(transform(forArray(p.getValues()), JcrPropertyFunctions.value2string), value);
         }
         return value.equals(p.getString());
 
