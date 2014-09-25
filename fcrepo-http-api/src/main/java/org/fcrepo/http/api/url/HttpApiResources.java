@@ -41,8 +41,8 @@ import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraFieldSearch;
 import org.fcrepo.http.api.FedoraFixity;
 import org.fcrepo.http.api.FedoraLocks;
+import org.fcrepo.http.api.FedoraVersioning;
 import org.fcrepo.http.api.repository.FedoraRepositorySitemap;
-import org.fcrepo.http.api.FedoraVersions;
 import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
@@ -135,7 +135,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         // fcr:versions
         if (resource.hasType(NodeType.MIX_VERSIONABLE)) {
             model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraVersions.class).buildFromMap(
+                    .getBaseUriBuilder().path(FedoraVersioning.class).buildFromMap(
                             pathMap, false).toASCIIString()));
         }
 

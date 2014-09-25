@@ -291,6 +291,11 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         description.delete();
     }
 
+    @Override
+    public void addVersionLabel(final String label) {
+        getDescription().addVersionLabel(label);
+    }
+
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {
         if (contentNode == null) {
             LOGGER.warn("{} node appears to be null!", JCR_CONTENT);

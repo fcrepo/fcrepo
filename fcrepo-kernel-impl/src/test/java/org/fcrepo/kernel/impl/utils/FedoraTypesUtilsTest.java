@@ -20,17 +20,17 @@ import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.convertDateToXSDString;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getVersionHistory;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBinaryContentProperty;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isMultipleValuedProperty;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isMultipleValuedProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.nodeHasType;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.propertyContains;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.value2string;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
 
 import static org.junit.Assert.assertEquals;
@@ -69,6 +69,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -360,13 +361,13 @@ public class FedoraTypesUtilsTest {
         // single-valued
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        assertEquals("Found wrong Value!", FedoraTypesUtils.property2values
+        assertEquals("Found wrong Value!", JcrPropertyFunctions.property2values
                 .apply(mockProperty).next(), mockValue);
         // multi-valued
         when(mockProperty.isMultiple()).thenReturn(true);
         when(mockProperty.getValues()).thenReturn(
                 new Value[] {mockValue, mockValue2});
-        final Iterator<Value> testIterator = FedoraTypesUtils.property2values.apply(mockProperty);
+        final Iterator<Value> testIterator = JcrPropertyFunctions.property2values.apply(mockProperty);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue2);
 
