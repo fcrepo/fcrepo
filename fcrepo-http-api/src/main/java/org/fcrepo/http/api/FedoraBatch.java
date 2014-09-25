@@ -19,7 +19,6 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
@@ -45,7 +44,6 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -303,33 +301,6 @@ public class FedoraBatch extends AbstractResource {
 
             return created(new URI(subjects.getSubject(path).getURI())).build();
 
-        } finally {
-            session.logout();
-        }
-    }
-
-    /**
-     * Delete multiple child objects given by the child query parameter
-     *
-     * @param pathList
-     * @param childList
-     * @return response
-     * @throws RepositoryException
-     */
-    @DELETE
-    @Timed
-    public Response batchDelete(@PathParam("path") final List<PathSegment> pathList,
-                                @QueryParam("child") final List<String> childList) throws RepositoryException {
-        try {
-            final String path = toPath(pathList);
-            for (final String dsid : childList) {
-                final String dsPath = path + "/" + dsid;
-                LOGGER.debug("purging node {}", dsPath);
-                nodeService.getObject(session, dsPath).delete();
-            }
-            session.save();
-            versionService.nodeUpdated(session, path);
-            return noContent().build();
         } finally {
             session.logout();
         }

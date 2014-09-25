@@ -19,7 +19,6 @@ import static java.util.Arrays.asList;
 import static javax.ws.rs.core.Response.notModified;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
@@ -45,7 +44,6 @@ import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import javax.jcr.Node;
@@ -313,24 +311,6 @@ public class FedoraBatchTest {
 
         testObj.batchModify(createPathList(pid), multipart);
         verify(mockObject).delete();
-        verify(mockSession).save();
-    }
-
-    @Test
-    public void testDeleteDatastreams() throws RepositoryException {
-        final String pid = "FedoraDatastreamsTest1";
-        final String path = "/" + pid;
-        final List<String> dsidList = asList("ds1", "ds2");
-
-        when(mockNodes.getObject(isA(Session.class), eq("/FedoraDatastreamsTest1/ds1"))).thenReturn(mockObject);
-        when(mockNodes.getObject(isA(Session.class), eq("/FedoraDatastreamsTest1/ds2"))).thenReturn(mockDatastream);
-
-        final Response actual =
-            testObj.batchDelete(createPathList(pid), dsidList);
-
-        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObject).delete();
-        verify(mockDatastream).delete();
         verify(mockSession).save();
     }
 

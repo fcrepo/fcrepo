@@ -18,7 +18,6 @@ package org.fcrepo.integration.http.api;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.junit.Test;
 
 /**
@@ -52,9 +51,8 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         final String pid = getRandomUniquePid();
         createObject(pid);
-        final HttpPost postDsMethod =
-            postDSMethod(pid, "ds1", "foo");
-        assertEquals(201, getStatus(postDsMethod));
+
+        createDatastream(pid, "ds1", "foo");
 
         final HttpGet method =
             new HttpGet(serverAddress + pid + "/ds1");
