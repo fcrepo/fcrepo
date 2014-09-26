@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.domain.ldp;
 
 import static com.google.common.base.Optional.fromNullable;
 import static java.util.Arrays.asList;
+import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 
@@ -42,6 +43,8 @@ public class LdpPreferTag extends PreferTag {
 
     private final boolean preferMinimalContainer;
 
+    private final boolean embed;
+
     /**
      * Standard constructor.
      *
@@ -65,6 +68,8 @@ public class LdpPreferTag extends PreferTag {
                 !omits.contains(LDP_NAMESPACE + "PreferContainment");
 
         references = !omits.contains(INBOUND_REFERENCES.toString());
+
+        embed = includes.contains(EMBED_CONTAINS.toString());
     }
 
     /**
@@ -86,5 +91,11 @@ public class LdpPreferTag extends PreferTag {
      */
     public boolean prefersReferences() {
         return references;
+    }
+    /**
+     * @return Whether this prefer tag demands references triples.
+     */
+    public boolean prefersEmbed() {
+        return embed;
     }
 }
