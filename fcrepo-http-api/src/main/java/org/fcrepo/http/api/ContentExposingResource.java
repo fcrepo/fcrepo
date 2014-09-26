@@ -152,7 +152,7 @@ public abstract class ContentExposingResource extends AbstractResource {
 
                 rdfStream.concat(getTriples(ParentRdfContext.class));
 
-                if (ldpPreferences.prefersContainment() || ldpPreferences.prefersMembership()) {
+                if (ldpPreferences.prefersContainment()) {
                     rdfStream.concat(getTriples(ChildrenRdfContext.class));
                 }
 
@@ -160,7 +160,7 @@ public abstract class ContentExposingResource extends AbstractResource {
                     rdfStream.concat(getTriples(LdpContainerRdfContext.class));
                 }
 
-                if (ldpPreferences.prefersContainment()) {
+                if (ldpPreferences.prefersEmbed()) {
 
                     final Iterator<FedoraResource> children = resource().getChildren();
 
