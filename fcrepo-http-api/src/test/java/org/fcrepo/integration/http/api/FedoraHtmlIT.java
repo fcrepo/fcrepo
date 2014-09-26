@@ -15,11 +15,14 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static org.apache.commons.lang.StringUtils.contains;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
-
 /**
  * <p>FedoraHtmlIT class.</p>
  *
@@ -59,5 +62,20 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         method.addHeader("Accept", "text/html");
         assertEquals(200, getStatus(method));
+    }
+
+    @Test
+    public void testGetTemplate() throws Exception {
+
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        createDatastream(pid, "ds1", "foo");
+        setProperty(pid + "/ds1", "fcrepo:primaryType", "some:type");
+
+        final HttpGet method = new HttpGet(serverAddress + pid + "/ds1");
+        method.addHeader("Accept", "text/html");
+        final HttpResponse response = execute(method);
+        final String html = EntityUtils.toString(response.getEntity());
+        assertTrue(contains(html, "body class=\"nt_file\""));
     }
 }
