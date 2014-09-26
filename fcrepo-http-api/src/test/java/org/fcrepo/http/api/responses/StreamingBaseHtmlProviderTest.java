@@ -107,7 +107,7 @@ public class StreamingBaseHtmlProviderTest {
                 new Triple(createURI("test:subject2"),
                         primaryTypePredicate,
                         createLiteral("childOf:ntFile")));
-        testData2.contact(
+        testData2.concat(
                 new Triple(createURI("test:subject3"),
                         primaryTypePredicate,
                         createLiteral("grandchildOf:ntFile")));
@@ -209,13 +209,13 @@ public class StreamingBaseHtmlProviderTest {
             }
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
 
-        setField(baseHtmlProvider, "templatesMap",
+        setField(testProvider, "templatesMap",
                  of("childOf:ntFile", mockTemplate,
                     "grandchildOf:ntFile", mockTemplate));
-        baseHtmlProvider.writeTo(testData2, Dataset.class, mock(Type.class),
+        testProvider.writeTo(testData2, Dataset.class, mock(Type.class),
                 new Annotation[] {}, MediaType
                         .valueOf("text/html"),
-                (MultivaluedMap) new MultivaluedMapImpl(), outStream);
+                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 

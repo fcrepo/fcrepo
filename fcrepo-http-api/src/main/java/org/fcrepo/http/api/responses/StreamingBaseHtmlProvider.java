@@ -58,8 +58,10 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.velocity.Template;
@@ -317,7 +319,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     }
 
     private void addTemplate(final String primaryNodeTypeName, final String templateNodeTypeName,
-                                final Builder<String, Template> templatesMapBuilder) {
+                             final ImmutableMap.Builder<String, Template> templatesMapBuilder) {
         final String templateLocation = getTemplateLocation(templateNodeTypeName);
         final Template template =
             velocity.getTemplate(templateLocation);
