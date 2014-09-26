@@ -15,27 +15,22 @@
  */
 package org.fcrepo.http.api;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static javax.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang.ArrayUtils.contains;
+import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
-import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -48,10 +43,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
-import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
-import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -64,6 +56,7 @@ import java.text.ParseException;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.PathNotFoundException;
@@ -71,10 +64,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
@@ -86,7 +80,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
@@ -94,6 +88,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.base.Function;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.Lang;
@@ -105,6 +100,7 @@ import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.http.commons.domain.PreferTag;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
@@ -123,7 +119,6 @@ import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -150,6 +145,35 @@ public class FedoraNodes extends AbstractResource {
     @Context protected HttpServletResponse servletResponse;
     @Context protected UriInfo uriInfo;
 
+    @PathParam("path") protected List<PathSegment> pathList;
+
+    protected String path;
+
+    protected FedoraResource resource;
+    private HttpIdentifierTranslator identifierTranslator;
+
+    @PostConstruct
+    private void postConstruct() {
+        throwIfPathIncludesJcr(pathList);
+        this.path = toPath(pathList);
+    }
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraNodes() {
+        super();
+    }
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param path
+     */
+    @VisibleForTesting
+    public FedoraNodes(final String path) {
+        this.path = path;
+    }
+
     /**
      * Set the baseURL for JMS events.
     **/
@@ -174,41 +198,35 @@ public class FedoraNodes extends AbstractResource {
 
     /**
      * Retrieve the node headers
-     * @param pathList
      * @return response
      * @throws RepositoryException
      */
     @HEAD
     @Timed
-    public Response head(@PathParam("path") final List<PathSegment> pathList) {
-        throwIfPathIncludesJcr(pathList, "HEAD");
-
-        final String path = toPath(pathList);
+    public Response head() {
         LOGGER.trace("Getting head for: {}", path);
 
-        final FedoraResource resource = nodeService.getObject(session, path);
+        checkCacheControlHeaders(request, servletResponse, resource(), session);
 
-        final HttpIdentifierTranslator subjects = getIdentifierTranslator();
+        addResourceHttpHeaders(servletResponse, resource(), translator());
 
-        checkCacheControlHeaders(request, servletResponse, resource, session);
-
-        addResourceHttpHeaders(servletResponse, resource, subjects);
-
-        return status(OK).build();
+        return ok().build();
     }
 
-    private HttpIdentifierTranslator getIdentifierTranslator() {
-        return new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
+    /**
+     * Outputs information about the supported HTTP methods, etc.
+     */
+    @OPTIONS
+    @Timed
+    public Response options() {
+        addOptionsHttpHeaders(servletResponse);
+        return ok().build();
     }
+
 
     /**
      * Retrieve the node profile
      *
-     * @param pathList
-     * @param offset with limit, control the pagination window of details for
-     *        child nodes
-     * @param limit with offset, control the pagination window of details for
-     *        child nodes
      * @return triples for the specified node
      * @throws RepositoryException
      */
@@ -216,24 +234,13 @@ public class FedoraNodes extends AbstractResource {
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML})
-    public RdfStream describe(@PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("offset") @DefaultValue("0") final int offset,
-            @QueryParam("limit")  @DefaultValue("-1") final int limit,
-            @HeaderParam("Prefer") final Prefer prefer) {
-        throwIfPathIncludesJcr(pathList, "MOVE");
-
-        final String path = toPath(pathList);
+    public RdfStream describe(@HeaderParam("Prefer") final Prefer prefer) {
         LOGGER.trace("Getting profile for: {}", path);
 
-        final FedoraResource resource = nodeService.getObject(session, path);
+        checkCacheControlHeaders(request, servletResponse, resource(), session);
 
-        checkCacheControlHeaders(request, servletResponse, resource, session);
-
-        final HttpIdentifierTranslator subjects = getIdentifierTranslator();
-
-        final RdfStream rdfStream =
-            resource.getTriples(subjects, PropertiesRdfContext.class).session(session)
-                    .topic(subjects.getSubject(resource.getPath()).asNode());
+        final RdfStream rdfStream = getTriples(PropertiesRdfContext.class).session(session)
+                .topic(translator().getSubject(resource().getPath()).asNode());
 
         final PreferTag returnPreference;
 
@@ -244,92 +251,455 @@ public class FedoraNodes extends AbstractResource {
         }
 
         if (!returnPreference.getValue().equals("minimal")) {
-            String include = returnPreference.getParams().get("include");
-            if (include == null) {
-                include = "";
+            final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
+
+            if (ldpPreferences.prefersReferences()) {
+                rdfStream.concat(getTriples(ReferencesRdfContext.class));
             }
 
-            String omit = returnPreference.getParams().get("omit");
-            if (omit == null) {
-                omit = "";
+            rdfStream.concat(getTriples(ParentRdfContext.class));
+
+            if (ldpPreferences.prefersContainment() || ldpPreferences.prefersMembership()) {
+                rdfStream.concat(getTriples(ChildrenRdfContext.class));
             }
 
-            final String[] includes = include.split(" ");
-            final String[] omits = omit.split(" ");
+            if (ldpPreferences.prefersContainment()) {
 
-            if (limit >= 0) {
-                try {
-                    final Node firstPage =
-                            createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", 0)
-                                    .replaceQueryParam("limit", limit).build()
-                                    .toString().replace("&", "&amp;"));
-                    rdfStream.concat(create(subjects.getContext().asNode(), FIRST_PAGE.asNode(), firstPage));
-                    servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
+                final Iterator<FedoraResource> children = resource().getChildren();
 
-                    if (resource.getNode().getNodes().getSize() > (offset + limit)) {
-                        final Node nextPage =
-                                createURI(uriInfo.getRequestUriBuilder().replaceQueryParam("offset", offset + limit)
-                                        .replaceQueryParam("limit", limit).build()
-                                        .toString().replace("&", "&amp;"));
-                        rdfStream.concat(create(subjects.getContext().asNode(), NEXT_PAGE.asNode(), nextPage));
-                        servletResponse.addHeader("Link", "<" + nextPage + ">;rel=\"next\"");
-                    }
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-            }
+                rdfStream.concat(concat(transform(children,
+                        new Function<FedoraResource, RdfStream>() {
 
-            final boolean membership =
-                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
-                     contains(includes, LDP_NAMESPACE + "PreferMembership"))
-                    && !contains(omits, LDP_NAMESPACE + "PreferMembership");
-
-            final boolean containment =
-                (!contains(includes, LDP_NAMESPACE + "PreferMinimalContainer") ||
-                     contains(includes, LDP_NAMESPACE + "PreferContainment"))
-                    && !contains(omits, LDP_NAMESPACE + "PreferContainment");
-
-
-            final boolean references = !contains(omits, INBOUND_REFERENCES.toString());
-
-            if (references) {
-                rdfStream.concat(resource.getTriples(subjects, ReferencesRdfContext.class));
-            }
-
-            rdfStream.concat(resource.getTriples(subjects, ParentRdfContext.class));
-
-            if (membership || containment) {
-                rdfStream.concat(resource.getTriples(subjects, ChildrenRdfContext.class));
-            }
-
-            if (containment) {
-
-                final Iterator<FedoraResource> children = resource.getChildren();
-
-                while (children.hasNext()) {
-                    final FedoraResource child = children.next();
-                    rdfStream.concat(child.getTriples(subjects, PropertiesRdfContext.class));
-                }
+                            @Override
+                            public RdfStream apply(final FedoraResource child) {
+                                return child.getTriples(translator(), PropertiesRdfContext.class);
+                            }
+                        })));
 
             }
 
-            rdfStream.concat(resource.getTriples(subjects, ContainerRdfContext.class));
-
-            servletResponse.addHeader("Preference-Applied", "return=representation");
-
-        } else {
-            servletResponse.addHeader("Preference-Applied", "return=minimal");
+            rdfStream.concat(getTriples(ContainerRdfContext.class));
         }
-        servletResponse.addHeader("Vary", "Prefer");
 
-        addResourceHttpHeaders(servletResponse, resource, subjects);
+        returnPreference.addResponseHeaders(servletResponse);
 
-        addResponseInformationToStream(resource, rdfStream, uriInfo,
-                subjects);
+        addResourceHttpHeaders(servletResponse, resource(), translator());
+
+        addResponseInformationToStream(resource(), rdfStream, uriInfo,
+                translator());
 
         return rdfStream;
 
 
+    }
+
+    /**
+     * Creates a new object.
+     *
+     * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
+     * requests without a Content-Type get routed here.
+     *
+     * @return 201
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
+    @Timed
+    public Response createObject(@QueryParam("mixin") final String mixin,
+                                 @QueryParam("checksum") final String checksum,
+                                 @HeaderParam("Content-Disposition") final String contentDisposition,
+                                 @HeaderParam("Content-Type") final MediaType requestContentType,
+                                 @HeaderParam("Slug") final String slug,
+                                 @ContentLocation final InputStream requestBodyStream)
+            throws ParseException, IOException,
+            InvalidChecksumException, URISyntaxException {
+        init(uriInfo);
+
+        if (resource().hasType(FEDORA_DATASTREAM)) {
+            throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
+        }
+
+        final MediaType contentType = getSimpleContentType(requestContentType);
+
+        final String contentTypeString = contentType.toString();
+
+        final String newObjectPath = mintNewPid(path, slug);
+
+        LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
+
+        try {
+
+            final MediaType effectiveContentType
+                    = requestBodyStream == null || requestContentType == null ? null : contentType;
+            final FedoraResource result = createFedoraResource(mixin,
+                    effectiveContentType,
+                    newObjectPath);
+
+            final Response.ResponseBuilder response;
+            final URI location = getUri(result);
+
+            if (requestBodyStream == null || requestContentType == null) {
+                LOGGER.trace("No request body detected");
+                response = created(location).entity(location.toString());
+            } else {
+                LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
+
+                if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                    LOGGER.trace("Found SPARQL-Update content, applying..");
+                    result.updatePropertiesDataset(translator(), IOUtils.toString(requestBodyStream));
+                    if (result.isNew()) {
+                        response = created(location).entity(location.toString());
+                    } else {
+                        response = noContent();
+                    }
+                } else if (isRdfContentType(contentTypeString)) {
+                    LOGGER.trace("Found a RDF syntax, attempting to replace triples");
+
+                    final Lang lang = contentTypeToLang(contentTypeString);
+
+                    final String format = lang.getName().toUpperCase();
+
+                    final Model inputModel =
+                            createDefaultModel().read(requestBodyStream, getUri(result).toString(), format);
+
+                    result.replaceProperties(translator(), inputModel,
+                            getTriples(result, PropertiesRdfContext.class));
+                    response = created(location).entity(location.toString());
+                } else if (result instanceof Datastream) {
+                    LOGGER.trace("Created a datastream and have a binary payload.");
+
+                    final URI checksumURI = checksumURI(checksum);
+                    final String originalFileName = originalFileName(contentDisposition);
+
+                    final FedoraBinary binary = ((Datastream)result).getBinary();
+                    binary.setContent(requestBodyStream,
+                            contentTypeString,
+                            checksumURI,
+                            originalFileName,
+                            datastreamService.getStoragePolicyDecisionPoint());
+
+                    final URI contentLocation = getUri(binary);
+
+                    response = created(contentLocation).entity(contentLocation.toString());
+
+                } else {
+                    response = created(location).entity(location.toString());
+                }
+            }
+
+            try {
+                session.save();
+                versionService.nodeUpdated(result.getNode());
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+            LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
+
+            addCacheControlHeaders(servletResponse, result, session);
+
+            return response.build();
+
+        } finally {
+            session.logout();
+        }
+    }
+
+    /**
+     * Create a resource at a specified path, or replace triples with provided RDF.
+     * @param requestContentType
+     * @param requestBodyStream
+     * @return 204
+     */
+    @PUT
+    @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES, JSON_LD})
+    @Timed
+    public Response createOrReplaceObjectRdf(@HeaderParam("Content-Type") final MediaType requestContentType,
+                                             @ContentLocation final InputStream requestBodyStream)
+            throws URISyntaxException {
+        init(uriInfo);
+
+        LOGGER.debug("Attempting to replace path: {}", path);
+        try {
+
+            final FedoraResource resource;
+            final Response.ResponseBuilder response;
+
+
+            final MediaType contentType = getSimpleContentType(requestContentType);
+
+            final boolean preexisting;
+            if (nodeService.exists(session, path)) {
+                resource = resource();
+                response = noContent();
+                preexisting = true;
+            } else {
+                final MediaType effectiveContentType
+                        = requestBodyStream == null || requestContentType == null ? null : contentType;
+                resource = createFedoraResource(null, effectiveContentType, path);
+
+                final URI location = getUri(resource);
+
+                response = created(location).entity(location.toString());
+                preexisting = false;
+            }
+
+            evaluateRequestPreconditions(request, servletResponse, resource, session);
+
+            if (requestContentType != null && requestBodyStream != null)  {
+                final String format = contentTypeToLang(contentType.toString()).getName().toUpperCase();
+
+                final Model inputModel = createDefaultModel()
+                        .read(requestBodyStream, getUri(resource).toString(), format);
+
+                resource.replaceProperties(translator(), inputModel,
+                        getTriples(resource, PropertiesRdfContext.class));
+
+            } else if (preexisting) {
+                throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
+            }
+
+            try {
+                session.save();
+                versionService.nodeUpdated(resource.getNode());
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+            addCacheControlHeaders(servletResponse, resource, session);
+
+            return response.build();
+        } finally {
+            session.logout();
+        }
+    }
+
+    /**
+     * Deletes an object.
+     *
+     * @return response
+     * @throws RepositoryException
+     */
+    @DELETE
+    @Timed
+    public Response deleteObject() {
+        init(uriInfo);
+
+        try {
+
+            evaluateRequestPreconditions(request, servletResponse, resource(), session);
+
+            resource().delete();
+
+            try {
+                session.save();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+            return noContent().build();
+        } finally {
+            session.logout();
+        }
+    }
+
+
+    /**
+     * Update an object using SPARQL-UPDATE
+     *
+     * @return 201
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @PATCH
+    @Consumes({contentTypeSPARQLUpdate})
+    @Timed
+    public Response updateSparql(@ContentLocation final InputStream requestBodyStream) throws IOException {
+
+        init(uriInfo);
+        LOGGER.debug("Attempting to update path: {}", path);
+
+        if (null == requestBodyStream) {
+            throw new BadRequestException("SPARQL-UPDATE requests must have content!");
+        }
+
+        try {
+            final String requestBody = IOUtils.toString(requestBodyStream);
+            if (isBlank(requestBody)) {
+                throw new BadRequestException("SPARQL-UPDATE requests must have content!");
+            }
+
+            evaluateRequestPreconditions(request, servletResponse, resource(), session);
+
+            final Dataset properties = resource().updatePropertiesDataset(translator(), requestBody);
+
+            handleProblems(properties);
+
+            try {
+                session.save();
+                versionService.nodeUpdated(resource().getNode());
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+            addCacheControlHeaders(servletResponse, resource(), session);
+
+            return noContent().build();
+
+        } catch ( final RuntimeException ex ) {
+            final Throwable cause = ex.getCause();
+            if ( cause != null && cause instanceof PathNotFoundException ) {
+                // the sparql update referred to a repository resource that doesn't exist
+                throw new BadRequestException(cause.getMessage());
+            }
+            throw ex;
+        } finally {
+            session.logout();
+        }
+    }
+
+    /**
+     * Copies an object from one path to another
+     */
+    @COPY
+    @Timed
+    public Response copyObject(@HeaderParam("Destination") final String destinationUri)
+            throws URISyntaxException {
+        init(uriInfo);
+
+        try {
+
+            if (!nodeService.exists(session, path)) {
+                throw new ClientErrorException("The source path does not exist", CONFLICT);
+            }
+
+            final String destination = getPath(destinationUri);
+
+            if (destination == null) {
+                throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
+            } else if (nodeService.exists(session, destination)) {
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
+            }
+
+            nodeService.copyObject(session, path, destination);
+
+            session.save();
+            versionService.nodeUpdated(session, destination);
+
+            return created(new URI(destinationUri)).build();
+        } catch (final RepositoryRuntimeException e) {
+            final Throwable cause = e.getCause();
+
+            if (cause instanceof ItemExistsException) {
+
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED, e);
+
+            } else if (cause instanceof PathNotFoundException) {
+
+                throw new ClientErrorException("There is no node that will serve as the parent of the copied item",
+                        CONFLICT, e);
+            } else {
+                throw e;
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        } finally {
+            session.logout();
+        }
+
+    }
+
+    /**
+     * Copies an object from one path to another
+     */
+    @MOVE
+    @Timed
+    public Response moveObject(@HeaderParam("Destination") final String destinationUri)
+            throws URISyntaxException {
+        init(uriInfo);
+
+        try {
+
+            if (!nodeService.exists(session, path)) {
+                throw new ClientErrorException("The source path does not exist", CONFLICT);
+            }
+
+
+            evaluateRequestPreconditions(request, servletResponse, resource(), session);
+
+            final String destination = getPath(destinationUri);
+
+            if (destination == null) {
+                throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
+            } else if (nodeService.exists(session, destination)) {
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
+            }
+
+            nodeService.moveObject(session, path, destination);
+            session.save();
+            versionService.nodeUpdated(session, destination);
+            return created(new URI(destinationUri)).build();
+        } catch (final RepositoryRuntimeException e) {
+            final Throwable cause = e.getCause();
+
+            if (cause instanceof ItemExistsException) {
+                throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED, e);
+            } else if (cause instanceof PathNotFoundException) {
+                throw new ClientErrorException("There is no node that will serve as the parent of the moved item",
+                        CONFLICT, e);
+            } else {
+                throw e;
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        } finally {
+            session.logout();
+        }
+
+    }
+
+    /**
+     * Create a new object from a multipart/form-data POST request
+     * @param mixin
+     * @param slug
+     * @param file
+     * @return response
+     */
+    @POST
+    @Consumes({MediaType.MULTIPART_FORM_DATA})
+    @Timed
+    public Response createObjectFromFormPost(@FormDataParam("mixin") final String mixin,
+                                             @FormDataParam("slug") final String slug,
+                                             @FormDataParam("file") final InputStream file
+    ) throws URISyntaxException, InvalidChecksumException, ParseException, IOException {
+        init(uriInfo);
+
+        final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
+        return createObject(mixin, null, null, effectiveContentType, slug, file);
+
+    }
+
+    private FedoraResource resource() {
+        if (resource == null) {
+            resource = nodeService.getObject(session, path);
+        }
+
+        return resource;
+    }
+
+    private HttpIdentifierTranslator translator() {
+        if (identifierTranslator == null) {
+            identifierTranslator = new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
+        }
+
+        return identifierTranslator;
+    }
+
+    private RdfStream getTriples(final Class<? extends RdfStream> x) {
+        return getTriples(resource(), x);
+    }
+
+    private RdfStream getTriples(final FedoraResource resource, final Class<? extends RdfStream> x) {
+        return resource.getTriples(translator(), x);
     }
 
     private void addResourceHttpHeaders(final HttpServletResponse servletResponse,
@@ -371,198 +741,11 @@ public class FedoraNodes extends AbstractResource {
                 + "," + contentTypeSPARQLUpdate);
     }
 
-    /**
-     * Update an object using SPARQL-UPDATE
-     *
-     * @param pathList
-     * @return 201
-     * @throws RepositoryException
-     * @throws IOException
-     */
-    @PATCH
-    @Consumes({contentTypeSPARQLUpdate})
-    @Timed
-    public Response updateSparql(@PathParam("path") final List<PathSegment> pathList,
-            @ContentLocation final InputStream requestBodyStream)
-        throws IOException {
-        throwIfPathIncludesJcr(pathList, "PATCH");
-
-        init(uriInfo);
-        final String path = toPath(pathList);
-        LOGGER.debug("Attempting to update path: {}", path);
-
-        if (null == requestBodyStream) {
-            return status(SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content!").build();
-        }
-
-        try {
-            final String requestBody = IOUtils.toString(requestBodyStream);
-            if (isBlank(requestBody)) {
-                return status(SC_BAD_REQUEST).entity("SPARQL-UPDATE requests must have content!").build();
-            }
-
-            final FedoraResource resource =
-                    nodeService.getObject(session, path);
-
-            evaluateRequestPreconditions(request, servletResponse, resource, session);
-
-            final Dataset properties = resource.updatePropertiesDataset(getIdentifierTranslator(), requestBody);
-
-            final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
-            if (!problems.isEmpty()) {
-                LOGGER.info(
-                        "Found these problems updating the properties for {}: {}",
-                        path, problems);
-                final StringBuilder error = new StringBuilder();
-                final StmtIterator sit = problems.listStatements();
-                while (sit.hasNext()) {
-                    final String message = getMessage(sit.next());
-                    if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
-                        error.append(message + " \n");
-                    }
-                }
-                return status(FORBIDDEN).entity(error.length() > 0 ? error.toString() : problems.toString())
-                        .build();
-            }
-
-            try {
-                session.save();
-                versionService.nodeUpdated(resource.getNode());
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            addCacheControlHeaders(servletResponse, resource, session);
-
-            return noContent().build();
-
-        } catch ( final RuntimeException ex ) {
-            final Throwable cause = ex.getCause();
-            if ( cause != null && cause instanceof PathNotFoundException ) {
-                // the sparql update referred to a repository resource that doesn't exist
-                return status(SC_BAD_REQUEST).entity(cause.getMessage()).build();
-            }
-            throw ex;
-        } finally {
-            session.logout();
-        }
-    }
-
-    /**
-     * Create a resource at a specified path, or replace triples with provided RDF.
-     * @param pathList
-     * @param requestContentType
-     * @param requestBodyStream
-     * @return 204
-     */
-    @PUT
-    @Consumes({TURTLE, N3, N3_ALT1, N3_ALT2, RDF_XML, NTRIPLES, JSON_LD})
-    @Timed
-    public Response createOrReplaceObjectRdf(
-            @PathParam("path") final List<PathSegment> pathList,
-            @HeaderParam("Content-Type")
-            final MediaType requestContentType,
-            @ContentLocation final InputStream requestBodyStream) throws URISyntaxException {
-        throwIfPathIncludesJcr(pathList, "PUT");
-        init(uriInfo);
-
-        final String path = toPath(pathList);
-        LOGGER.debug("Attempting to replace path: {}", path);
-        try {
-
-            final FedoraResource resource;
-            final Response.ResponseBuilder response;
-
-
-            final MediaType contentType = getSimpleContentType(requestContentType);
-
-            final boolean preexisting;
-            if (nodeService.exists(session, path)) {
-                resource = nodeService.getObject(session, path);
-                response = noContent();
-                preexisting = true;
-            } else {
-                final MediaType effectiveContentType
-                    = requestBodyStream == null || requestContentType == null ? null : contentType;
-                resource = createFedoraResource(null, effectiveContentType, path);
-                final HttpIdentifierTranslator idTranslator = getIdentifierTranslator();
-
-                final URI location = new URI(idTranslator.getSubject(resource.getPath()).getURI());
-
-                response = created(location).entity(location.toString());
-                preexisting = false;
-            }
-
-            evaluateRequestPreconditions(request, servletResponse, resource, session);
-
-            final HttpIdentifierTranslator graphSubjects =
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-            if (requestContentType != null && requestBodyStream != null)  {
-                final String format = contentTypeToLang(contentType.toString()).getName().toUpperCase();
-
-                final Model inputModel = createDefaultModel()
-                                             .read(requestBodyStream,
-                                                      graphSubjects.getSubject(resource.getPath()).toString(),
-                                                      format);
-
-                resource.replaceProperties(graphSubjects, inputModel,
-                        resource.getTriples(graphSubjects, PropertiesRdfContext.class));
-
-            } else if (preexisting) {
-                return status(SC_CONFLICT).entity("No RDF provided and the resource already exists!").build();
-            }
-
-            try {
-                session.save();
-                versionService.nodeUpdated(resource.getNode());
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            addCacheControlHeaders(servletResponse, resource, session);
-
-            return response.build();
-        } finally {
-            session.logout();
-        }
-    }
-
-    /**
-     * Creates a new object.
-     *
-     * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
-     * requests without a Content-Type get routed here.
-     *
-     * @param pathList
-     * @return 201
-     */
-    @POST
-    @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
-    @Timed
-    public Response createObject(@PathParam("path") final List<PathSegment> pathList,
-            @QueryParam("mixin") final String mixin,
-            @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Disposition") final String contentDisposition,
-            @HeaderParam("Content-Type") final MediaType requestContentType,
-            @HeaderParam("Slug") final String slug,
-            @ContentLocation final InputStream requestBodyStream)
-        throws ParseException, IOException,
-                   InvalidChecksumException, URISyntaxException {
-        throwIfPathIncludesJcr(pathList, "POST");
-        init(uriInfo);
-
+    private String mintNewPid(final String base, final String slug) {
         String pid;
         final String newObjectPath;
-        final String path = toPath(pathList);
 
-        final HttpIdentifierTranslator idTranslator = getIdentifierTranslator();
-
-        final MediaType contentType = getSimpleContentType(requestContentType);
-
-        final String contentTypeString = contentType.toString();
-
-        assertPathExists(path);
+        assertPathExists(base);
 
         if (slug != null && !slug.isEmpty()) {
             pid = slug;
@@ -572,102 +755,15 @@ public class FedoraNodes extends AbstractResource {
         // reverse translate the proffered or created identifier
         LOGGER.trace("Using external identifier {} to create new resource.", pid);
         LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
-                                                                                          + pid);
-        pid = idTranslator.getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
+                + pid);
+        pid = translator().getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
         // remove leading slash left over from translation
         pid = pid.substring(1, pid.length());
         LOGGER.trace("Using internal identifier {} to create new resource.", pid);
-        newObjectPath = path + "/" + pid;
+        newObjectPath = base + "/" + pid;
 
         assertPathMissing(newObjectPath);
-
-        final FedoraResource object = nodeService.getObject(session, path);
-
-        if (object.hasType(FEDORA_DATASTREAM)) {
-            throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
-        }
-
-        LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
-
-        try {
-
-            final MediaType effectiveContentType
-                = requestBodyStream == null || requestContentType == null ? null : contentType;
-            final FedoraResource result = createFedoraResource(mixin,
-                                                                  effectiveContentType,
-                                                                  newObjectPath);
-
-            final Response.ResponseBuilder response;
-            final URI location = new URI(idTranslator.getSubject(result.getPath()).getURI());
-
-            if (requestBodyStream == null || requestContentType == null) {
-                LOGGER.trace("No request body detected");
-                response = created(location).entity(location.toString());
-            } else {
-                LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
-
-                if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                    LOGGER.trace("Found SPARQL-Update content, applying..");
-                    result.updatePropertiesDataset(idTranslator, IOUtils.toString(requestBodyStream));
-                    if (result.isNew()) {
-                        response = created(location).entity(location.toString());
-                    } else {
-                        response = noContent();
-                    }
-                } else if (isRdfContentType(contentTypeString)) {
-                    LOGGER.trace("Found a RDF syntax, attempting to replace triples");
-
-                    final Lang lang = contentTypeToLang(contentTypeString);
-
-                    final String format = lang.getName().toUpperCase();
-
-                    final Model inputModel =
-                        createDefaultModel().read(requestBodyStream,
-                                idTranslator.getSubject(result.getPath()).toString(), format);
-
-                    result.replaceProperties(idTranslator, inputModel,
-                            result.getTriples(idTranslator, PropertiesRdfContext.class));
-                    response = created(location).entity(location.toString());
-                } else if (result instanceof Datastream) {
-                    LOGGER.trace("Created a datastream and have a binary payload.");
-
-                    final URI checksumURI = checksumURI(checksum);
-                    final String originalFileName = originalFileName(contentDisposition);
-
-                    final Datastream datastream = datastreamService.findOrCreateDatastream(session, newObjectPath);
-
-                    final FedoraBinary binary = datastream.getBinary();
-                    binary.setContent(requestBodyStream,
-                            contentTypeString,
-                            checksumURI,
-                            originalFileName,
-                            datastreamService.getStoragePolicyDecisionPoint());
-
-                    final URI contentLocation = new URI(idTranslator.getSubject(binary.getPath()).getURI());
-
-                    response = created(contentLocation).entity(contentLocation.toString());
-
-                } else {
-                    response = created(location).entity(location.toString());
-                }
-            }
-
-            try {
-                session.save();
-                versionService.nodeUpdated(result.getNode());
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
-
-            addCacheControlHeaders(servletResponse, result, session);
-
-            return response.build();
-
-        } finally {
-            session.logout();
-        }
+        return newObjectPath;
     }
 
     private FedoraResource createFedoraResource(final String requestMixin,
@@ -718,207 +814,40 @@ public class FedoraNodes extends AbstractResource {
         return objectType;
     }
 
-    /**
-     * Create a new object from a multipart/form-data POST request
-     * @param pathList
-     * @param mixin
-     * @param slug
-     * @param file
-     * @return response
-     */
-    @POST
-    @Consumes({MediaType.MULTIPART_FORM_DATA})
-    @Timed
-    public Response createObjectFromFormPost(
-                                                @PathParam("path") final List<PathSegment> pathList,
-                                                @FormDataParam("mixin") final String mixin,
-                                                @FormDataParam("slug") final String slug,
-                                                @FormDataParam("file") final InputStream file
-    ) throws URISyntaxException, InvalidChecksumException, ParseException, IOException {
-        throwIfPathIncludesJcr(pathList, "POST with multipart attachment");
-        init(uriInfo);
-
-        final MediaType effectiveContentType = file == null ? null : MediaType.APPLICATION_OCTET_STREAM_TYPE;
-        return createObject(pathList, mixin, null, null, effectiveContentType, slug, file);
-
+    private URI getUri(final FedoraResource resource) throws URISyntaxException {
+        return new URI(translator().getSubject(resource.getPath()).getURI());
     }
 
-    /**
-     * Deletes an object.
-     *
-     * @param pathList
-     * @return response
-     * @throws RepositoryException
-     */
-    @DELETE
-    @Timed
-    public Response deleteObject(@PathParam("path") final List<PathSegment> pathList) {
-        throwIfPathIncludesJcr(pathList, "DELETE");
-        init(uriInfo);
+    private String getPath(final String uri) {
+        return translator().getPathFromSubject(ResourceFactory.createResource(uri));
+    }
 
-        try {
+    private void handleProblems(final Dataset properties) {
 
-            final String path = toPath(pathList);
+        final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
 
-            final FedoraResource resource =
-                nodeService.getObject(session, path);
-            evaluateRequestPreconditions(request, servletResponse, resource, session);
-
-            resource.delete();
-
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
+        if (!problems.isEmpty()) {
+            LOGGER.info(
+                    "Found these problems updating the properties for {}: {}",
+                    path, problems);
+            final StringBuilder error = new StringBuilder();
+            final StmtIterator sit = problems.listStatements();
+            while (sit.hasNext()) {
+                final String message = getMessage(sit.next());
+                if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
+                    error.append(message + " \n");
+                }
             }
 
-            return noContent().build();
-        } finally {
-            session.logout();
+            throw new ForbiddenException(error.length() > 0 ? error.toString() : problems.toString());
         }
-    }
-
-    /**
-     * Copies an object from one path to another
-     */
-    @COPY
-    @Timed
-    public Response copyObject(@PathParam("path") final List<PathSegment> path,
-                               @HeaderParam("Destination") final String destinationUri)
-        throws URISyntaxException {
-        throwIfPathIncludesJcr(path, "COPY");
-        init(uriInfo);
-
-        try {
-
-            final IdentifierTranslator subjects = getIdentifierTranslator();
-
-            if (!nodeService.exists(session, toPath(path))) {
-                return status(SC_CONFLICT).entity("The source path does not exist").build();
-            }
-
-            final String destination =
-                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
-
-            if (destination == null) {
-                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
-            } else if (nodeService.exists(session, destination)) {
-                return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
-            }
-
-
-            nodeService.copyObject(session, toPath(path), destination);
-
-            session.save();
-            versionService.nodeUpdated(session, destination);
-
-            return created(new URI(destinationUri)).build();
-        } catch (final RepositoryRuntimeException e) {
-            final Throwable cause = e.getCause();
-
-            if (cause instanceof ItemExistsException) {
-
-                throw new WebApplicationException(e,
-                        status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
-
-            } else if (cause instanceof PathNotFoundException) {
-
-                throw new WebApplicationException(e, status(SC_CONFLICT).entity(
-                        "There is no node that will serve as the parent of the copied item")
-                        .build());
-            } else {
-                throw e;
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
-        }
-
-    }
-
-    /**
-     * Copies an object from one path to another
-     */
-    @MOVE
-    @Timed
-    public Response moveObject(@PathParam("path") final List<PathSegment> pathList,
-                               @HeaderParam("Destination") final String destinationUri)
-        throws URISyntaxException {
-        throwIfPathIncludesJcr(pathList, "MOVE");
-        init(uriInfo);
-
-        try {
-
-            final String path = toPath(pathList);
-
-            if (!nodeService.exists(session, path)) {
-                return status(SC_CONFLICT).entity("The source path does not exist").build();
-            }
-
-
-            final FedoraResource resource =
-                nodeService.getObject(session, path);
-
-
-            evaluateRequestPreconditions(request, servletResponse, resource, session);
-
-            final IdentifierTranslator subjects = getIdentifierTranslator();
-
-            final String destination =
-                subjects.getPathFromSubject(ResourceFactory.createResource(destinationUri));
-
-            if (destination == null) {
-                return status(SC_BAD_GATEWAY).entity("Destination was not a valid resource path").build();
-            } else if (nodeService.exists(session, destination)) {
-                return status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build();
-            }
-
-            nodeService.moveObject(session, path, destination);
-            session.save();
-            versionService.nodeUpdated(session, destination);
-            return created(new URI(destinationUri)).build();
-        } catch (final RepositoryRuntimeException e) {
-            final Throwable cause = e.getCause();
-
-            if (cause instanceof ItemExistsException) {
-
-                throw new WebApplicationException(e,
-                        status(SC_PRECONDITION_FAILED).entity("Destination resource already exists").build());
-
-            } else if (cause instanceof PathNotFoundException) {
-
-                throw new WebApplicationException(e, status(SC_CONFLICT).entity(
-                        "There is no node that will serve as the parent of the moved item")
-                        .build());
-            } else {
-                throw e;
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
-        }
-
-    }
-
-    /**
-     * Outputs information about the supported HTTP methods, etc.
-     */
-    @OPTIONS
-    @Timed
-    public Response options(@PathParam("path") final List<PathSegment> pathList) {
-        throwIfPathIncludesJcr(pathList, "OPTIONS");
-
-        addOptionsHttpHeaders(servletResponse);
-        return status(OK).build();
     }
 
     /**
      * Method to check for any jcr namespace element in the path
      */
     @VisibleForTesting
-    protected void throwIfPathIncludesJcr(final List<PathSegment> pathList, final String msg) {
+    protected void throwIfPathIncludesJcr(final List<PathSegment> pathList) {
         if (pathList == null || pathList.size() == 0) {
             return;
         }
@@ -926,7 +855,7 @@ public class FedoraNodes extends AbstractResource {
         final String[] tokens = pathSegment.getPath().split(":");
         if (tokens.length == 2 && tokens[0].equalsIgnoreCase("jcr")) {
             final String requestPath = uriInfo.getPath();
-            LOGGER.trace("{} request with jcr namespace is not allowed: {} ", msg, requestPath);
+            LOGGER.trace("Request with jcr namespace is not allowed: {} ", requestPath);
             throw new NotFoundException();
         }
     }

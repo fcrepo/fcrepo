@@ -17,6 +17,7 @@ package org.fcrepo.http.commons.domain;
 
 import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
+import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,5 +85,18 @@ public class PreferTag {
      */
     public Map<String,String> getParams() {
         return params;
+    }
+
+    /**
+     * Add appropriate response headers to indicate that the incoming preferences were acknowledged
+     * @param servletResponse
+     */
+    public void addResponseHeaders(final HttpServletResponse servletResponse) {
+        if (!value.equals("minimal")) {
+            servletResponse.addHeader("Preference-Applied", "return=representation");
+        } else {
+            servletResponse.addHeader("Preference-Applied", "return=minimal");
+        }
+        servletResponse.addHeader("Vary", "Prefer");
     }
 }
