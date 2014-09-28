@@ -26,7 +26,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
-import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE_SERVICE;
 import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -116,7 +115,6 @@ public class HttpApiResourcesTest {
         assertTrue(model.contains(graphSubject, HAS_SITEMAP));
         assertTrue(model.contains(graphSubject, HAS_TRANSACTION_SERVICE));
         assertTrue(model.contains(graphSubject, HAS_NAMESPACE_SERVICE));
-        assertTrue(model.contains(graphSubject, HAS_WORKSPACE_SERVICE));
     }
 
     @Test
