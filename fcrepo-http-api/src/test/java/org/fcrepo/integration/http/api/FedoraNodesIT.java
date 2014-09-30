@@ -859,12 +859,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
         patchObjMethod.setEntity(e);
         final HttpResponse response = client.execute(patchObjMethod);
 
-        if (response.getStatusLine().getStatusCode() != 403
+        if (response.getStatusLine().getStatusCode() != CONFLICT.getStatusCode()
                 && response.getEntity() != null) {
             final String content = EntityUtils.toString(response.getEntity());
             logger.trace("Got unexpected update response:\n" + content);
         }
-        assertEquals(403, response.getStatusLine().getStatusCode());
+        assertEquals(CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
 
     }
 

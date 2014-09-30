@@ -45,7 +45,6 @@ import javax.inject.Inject;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeTypeDefinition;
 import javax.jcr.nodetype.NodeTypeTemplate;
-import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -532,10 +531,28 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.updatePropertiesDataset(subjects, "INSERT { <"
                 + createGraphSubjectNode("/testObjectRdfType").getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }");
-        assertEquals(PropertyType.URI, object.getNode().getProperty("rdf:type")
-                .getType());
-        assertEquals("http://some/uri", object.getNode()
-                .getProperty("rdf:type").getValues()[0].getString());
+        assertTrue(object.getNode().isNodeType("{http://some/}uri"));
+    }
+
+    @Test
+    public void testRemoveRdfType() throws RepositoryException {
+        final FedoraResource object =
+                objectService.findOrCreateObject(session, "/testRemoveObjectRdfType");
+
+        final Dataset propertiesDataset =
+                object.getPropertiesDataset(subjects, 0, -2);
+
+        logger.debug(propertiesDataset.toString());
+
+        object.updatePropertiesDataset(subjects, "INSERT { <"
+                + createGraphSubjectNode("/testRemoveObjectRdfType").getURI() + "> <" + RDF.type
+                + "> <http://some/uri> } WHERE { }");
+        assertTrue(object.getNode().isNodeType("{http://some/}uri"));
+
+        object.updatePropertiesDataset(subjects, "DELETE { <"
+                + createGraphSubjectNode("/testRemoveObjectRdfType").getURI() + "> <" + RDF.type
+                + "> <http://some/uri> } WHERE { }");
+        assertFalse(object.getNode().isNodeType("{http://some/}uri"));
     }
 
     @Test

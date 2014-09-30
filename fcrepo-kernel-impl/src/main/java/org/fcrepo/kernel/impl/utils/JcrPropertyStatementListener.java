@@ -15,24 +15,18 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static com.google.common.base.Throwables.propagate;
 import static java.net.URLDecoder.decode;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.UnsupportedEncodingException;
-import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
-import org.apache.commons.lang.StringUtils;
-import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.modeshape.jcr.api.JcrTools;
@@ -61,8 +55,6 @@ public class JcrPropertyStatementListener extends StatementListener {
     private final JcrRdfTools jcrRdfTools;
 
     private final HashMap<AnonId, Node> skolemizedBnodeMap;
-
-    private NodePropertiesTools propertiesTools = new NodePropertiesTools();
 
     private Model problems;
 
@@ -146,7 +138,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                     skolemizedBnodeMap.put(subject.getId(), subjectNode);
                 }
             } else {
-                String path = null;
+                String path;
                 try {
                     path = decode(subjects.getPathFromSubject(subject), "UTF-8");
                 } catch ( UnsupportedEncodingException ex ) {
@@ -163,45 +155,13 @@ public class JcrPropertyStatementListener extends StatementListener {
             final RDFNode objectNode = s.getObject();
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                final String nameSpace = mixinResource.getNameSpace();
-
-                if (nameSpace.equals(LDP_NAMESPACE)) {
-                    return;
-                }
-
-                try {
-                    final String namespacePrefix = session.getNamespacePrefix(nameSpace);
-                    final String mixinName = namespacePrefix + ":" + mixinResource.getLocalName();
-
-                    if (FedoraTypesUtils.nodeHasType(subjectNode, mixinName)) {
-
-                        if (subjectNode.canAddMixin(mixinName)) {
-                            subjectNode.addMixin(mixinName);
-                        } else {
-                            problems.add(subject, COULD_NOT_STORE_PROPERTY, property.getURI());
-                        }
-
-                        return;
-
-                    }
-                } catch (final NamespaceException e) {
-                    LOGGER.trace("Unable to resolve registered namespace for resource {}: {}", mixinResource, e);
-                }
+                jcrRdfTools.addMixin(subjectNode, mixinResource, s.getModel().getNsPrefixMap());
+                return;
             }
 
-            // extract the JCR propertyName from the predicate
-            final String propertyName =
-                    jcrRdfTools.getPropertyNameFromPredicate(subjectNode,
-                                                             property,
-                                                             s.getModel().getNsPrefixMap());
-
-            if (validateModificationsForPropertyName(subject, subjectNode, property)) {
-                final Value v = createValue(subjectNode, objectNode, propertyName);
-
-                propertiesTools.appendOrReplaceNodeProperty(subjects, subjectNode, propertyName, v);
-            }
+            jcrRdfTools.addProperty(subjectNode, property, objectNode, s.getModel().getNsPrefixMap());
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
 
     }
@@ -233,91 +193,20 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                final String nameSpace = mixinResource.getNameSpace();
-                final String errorPrefix = "Error removing node type";
                 try {
-                    final String namespacePrefix = session.getNamespacePrefix(nameSpace);
-                    final String mixinName = namespacePrefix + ":" + mixinResource.getLocalName();
-
-                    if (FedoraTypesUtils.nodeHasType(subjectNode, mixinName)) {
-                        try {
-                            subjectNode.removeMixin(mixinName);
-                        } catch (final RepositoryException e) {
-                            LOGGER.info(
-                                    "problem with removing <{}> <{}> <{}>: {}",
-                                    subject.getURI(),
-                                    RdfLexicon.COULD_NOT_STORE_PROPERTY,
-                                    property.getURI(),
-                                    e);
-                            String errorMessage = e.getMessage();
-                            final String className = e.getClass().getName();
-                            if (StringUtils.isNotBlank(errorMessage)) {
-                                errorMessage = errorPrefix + " '" + mixinName +
-                                        "': \n" + className + ": " + errorMessage;
-                            } else {
-                                errorMessage = errorPrefix + " '" + mixinName +
-                                        "': \n" + className;
-                            }
-                            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
-                        }
-                        return;
-                    }
-
-                } catch (final NamespaceException e) {
-                    LOGGER.trace("Unable to resolve registered namespace for resource {}: {}", mixinResource, e);
-
-                    String errorMessage = e.getMessage();
-                    final String className = e.getClass().getName();
-                    if (StringUtils.isNotBlank(errorMessage)) {
-                        errorMessage = errorPrefix + " " +
-                               className + ": "  + errorMessage;
-                    } else {
-                        errorMessage = errorPrefix + ": " + className;
-                    }
-                    problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, errorMessage);
+                    jcrRdfTools.removeMixin(subjectNode, mixinResource, s.getModel().getNsPrefixMap());
+                } catch (final RepositoryException e) {
+                    // TODO
                 }
-
+                return;
             }
 
-            final String propertyName =
-                jcrRdfTools.getPropertyNameFromPredicate(subjectNode, property);
-
-
-            // if the property doesn't exist, we don't need to worry about it.
-            if (subjectNode.hasProperty(propertyName) &&
-                validateModificationsForPropertyName(subject, subjectNode, property) ) {
-                final Value v = createValue(subjectNode, objectNode, propertyName);
-
-                propertiesTools.removeNodeProperty(subjects, subjectNode,
-                        propertyName, v);
-            }
+            jcrRdfTools.removeProperty(subjectNode, property, objectNode, s.getModel().getNsPrefixMap());
 
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
 
-    }
-
-    private boolean validateModificationsForPropertyName(
-            final Resource subject, final Node subjectNode, final Resource predicate) {
-        if (jcrRdfTools.isInternalProperty(subjectNode, predicate)) {
-            LOGGER.debug("problem with <{}> <{}> <{}>",
-                         subject.getURI(),
-                         RdfLexicon.COULD_NOT_STORE_PROPERTY,
-                         predicate.getURI());
-            problems.add(subject, RdfLexicon.COULD_NOT_STORE_PROPERTY, predicate.getURI());
-            return false;
-        }
-
-        return true;
-    }
-
-    private Value createValue(final Node subjectNode,
-                              final RDFNode RDFNode,
-                              final String propertyName) throws RepositoryException {
-        return jcrRdfTools.createValue(subjectNode,
-                                       RDFNode,
-                                       propertiesTools.getPropertyType(subjectNode, propertyName));
     }
 
     /**

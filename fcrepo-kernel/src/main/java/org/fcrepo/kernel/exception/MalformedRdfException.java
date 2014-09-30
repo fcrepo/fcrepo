@@ -15,8 +15,8 @@
  */
 package org.fcrepo.kernel.exception;
 
-import javax.jcr.RepositoryException;
 
+import javax.jcr.RepositoryException;
 
 /**
  * Indicates that RDF was presented for persistence to the repository,

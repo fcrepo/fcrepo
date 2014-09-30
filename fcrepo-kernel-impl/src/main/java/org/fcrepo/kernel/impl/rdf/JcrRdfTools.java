@@ -30,7 +30,8 @@ import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyOriginalName;
@@ -49,9 +50,13 @@ import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
@@ -261,14 +266,8 @@ public class JcrRdfTools {
      * @return True if a predicate is an internal property of a node
      */
     public boolean isInternalProperty(final Node subjectNode,
-            final Resource predicate) {
-        switch (predicate.getNameSpace()) {
-            case REPOSITORY_NAMESPACE:
-            case JCR_NAMESPACE:
-                return true;
-            default:
-                return false;
-        }
+            final com.hp.hpl.jena.rdf.model.Property predicate) {
+        return isManagedPredicate.apply(predicate);
     }
 
     /**
@@ -556,4 +555,146 @@ public class JcrRdfTools {
 
                 }
             };
+
+
+    /**
+     * Add a mixin to a node
+     * @param node
+     * @param mixinResource
+     * @param namespaces
+     * @throws RepositoryException
+     */
+    public void addMixin(final Node node, final Resource mixinResource, final Map<String,String> namespaces)
+            throws RepositoryException {
+
+        final Session session = node.getSession();
+        final String mixinName = getPropertyNameFromPredicate(node, mixinResource, namespaces);
+        if (!repositoryHasType(session, mixinName)) {
+            final NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
+            final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
+            type.setName(mixinName);
+            type.setMixin(true);
+            type.setQueryable(true);
+            mgr.registerNodeType(type, false);
+        }
+
+        if (node.isNodeType(mixinName)) {
+            LOGGER.trace("Subject {} is already a {}; skipping", node, mixinName);
+            return;
+        }
+
+        if (node.canAddMixin(mixinName)) {
+            LOGGER.debug("Adding mixin: {} to node: {}.", mixinName, node.getPath());
+            node.addMixin(mixinName);
+        } else {
+            throw new MalformedRdfException("Could not persist triple containing type assertion: "
+                    + mixinResource.toString()
+                    + " because no such mixin/type can be added to this node: "
+                    + node.getPath() + "!");
+        }
+    }
+
+    /**
+     * Add property to a node
+     * @param node
+     * @param predicate
+     * @param value
+     * @param namespaces
+     * @throws RepositoryException
+     */
+    public void addProperty(final Node node,
+                            final com.hp.hpl.jena.rdf.model.Property predicate,
+                            final RDFNode value,
+                            final Map<String,String> namespaces) throws RepositoryException {
+
+        if (isManagedPredicate.apply(predicate)) {
+
+            throw new MalformedRdfException("Could not persist triple containing predicate "
+                    + predicate.toString()
+                    + " to node "
+                    + node.getPath());
+        }
+
+        final String propertyName =
+                getPropertyNameFromPredicate(node, predicate, namespaces);
+        final Value v = createValue(node, value, getPropertyType(node, propertyName));
+        new NodePropertiesTools().appendOrReplaceNodeProperty(graphSubjects, node, propertyName, v);
+    }
+
+    /**
+     * Get the JCR property type ID for a given property name. If unsure, mark
+     * it as UNDEFINED.
+     *
+     * @param node the JCR node to add the property on
+     * @param propertyName the property name
+     * @return a PropertyType value
+     * @throws RepositoryException
+     */
+    public int getPropertyType(final Node node, final String propertyName)
+            throws RepositoryException {
+        LOGGER.debug("Getting type of property: {} from node: {}",
+                propertyName, node);
+        final PropertyDefinition def =
+                getDefinitionForPropertyName(node, propertyName);
+
+        if (def == null) {
+            return UNDEFINED;
+        }
+
+        return def.getRequiredType();
+    }
+
+    protected boolean repositoryHasType(final Session session, final String mixinName) throws RepositoryException {
+        return session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName);
+    }
+
+    /**
+     * Remove a mixin from a node
+     * @param subjectNode
+     * @param mixinResource
+     * @param nsPrefixMap
+     * @throws RepositoryException
+     */
+    public void removeMixin(final Node subjectNode,
+                            final Resource mixinResource,
+                            final Map<String, String> nsPrefixMap) throws RepositoryException {
+
+        final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource, nsPrefixMap);
+        if (repositoryHasType(session, mixinName) && subjectNode.isNodeType(mixinName)) {
+            subjectNode.removeMixin(mixinName);
+        }
+
+    }
+
+    /**
+     * Remove a property from a node
+     * @param node
+     * @param predicate
+     * @param objectNode
+     * @param nsPrefixMap
+     * @throws RepositoryException
+     */
+    public void removeProperty(final Node node,
+                               final com.hp.hpl.jena.rdf.model.Property predicate,
+                               final RDFNode objectNode,
+                               final Map<String, String> nsPrefixMap) throws RepositoryException {
+
+        final String propertyName = getPropertyNameFromPredicate(node, predicate);
+
+        if (isManagedPredicate.apply(predicate)) {
+
+            throw new MalformedRdfException("Could not persist triple containing predicate "
+                    + predicate.toString()
+                    + " to node "
+                    + node.getPath());
+        }
+
+        // if the property doesn't exist, we don't need to worry about it.
+        if (node.hasProperty(propertyName)) {
+            final Value v = createValue(node, objectNode, getPropertyType(node, propertyName));
+
+            new NodePropertiesTools().removeNodeProperty(graphSubjects, node, propertyName, v);
+        }
+    }
+
 }
