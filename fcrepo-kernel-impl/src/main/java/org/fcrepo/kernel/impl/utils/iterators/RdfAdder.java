@@ -20,12 +20,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.nodetype.NodeTypeManager;
-import javax.jcr.nodetype.NodeTypeTemplate;
 
-import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
+import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -45,7 +41,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfAdder.class);
 
-    private final NodePropertiesTools propertiesTools = new NodePropertiesTools();
+    private final JcrRdfTools jcrRdfTools;
 
     /**
      * Ordinary constructor.
@@ -57,36 +53,13 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     public RdfAdder(final IdentifierTranslator graphSubjects, final Session session,
         final RdfStream stream) {
         super(graphSubjects, session, stream);
+        jcrRdfTools = new JcrRdfTools(graphSubjects, session);
     }
 
     @Override
     protected void operateOnMixin(final Resource mixinResource,
         final Node subjectNode) throws RepositoryException {
-
-        final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
-        if (!sessionHasType(session(), mixinName)) {
-            final NodeTypeManager mgr = session().getWorkspace().getNodeTypeManager();
-            final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
-            type.setName(mixinName);
-            type.setMixin(true);
-            type.setQueryable(true);
-            mgr.registerNodeType(type, false);
-        }
-
-        if (subjectNode.isNodeType(mixinName)) {
-            LOGGER.trace("Subject {} is already a {}; skipping", subjectNode, mixinName);
-            return;
-        }
-
-        if (subjectNode.canAddMixin(mixinName)) {
-            LOGGER.debug("Adding mixin: {} to node: {}.", mixinName, subjectNode.getPath());
-            subjectNode.addMixin(mixinName);
-        } else {
-            throw new MalformedRdfException("Could not persist triple containing type assertion: "
-                                                    + mixinResource.toString()
-                                                    + " because no such mixin/type can be added to this node: "
-                                                    + subjectNode.getPath() + "!");
-        }
+        jcrRdfTools.addMixin(subjectNode, mixinResource, stream().namespaces());
     }
 
 
@@ -95,9 +68,6 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         LOGGER.debug("Adding property from triple: {} to node: {}.", t, n
                 .getPath());
 
-        final String propertyName =
-            getPropertyNameFromPredicate(n, t.getPredicate());
-        final Value v = createValue(n, t, propertyName);
-        propertiesTools.appendOrReplaceNodeProperty(idTranslator(), n, propertyName, v);
+        jcrRdfTools.addProperty(n, t.getPredicate(), t.getObject(), stream().namespaces());
     }
 }

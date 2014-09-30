@@ -33,6 +33,10 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import static com.hp.hpl.jena.graph.Triple.create;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -52,11 +56,15 @@ public class LdpContainerRdfContext extends NodeRdfContext {
     public LdpContainerRdfContext(final Node node, final IdentifierTranslator graphSubjects)
             throws RepositoryException {
         super(node, graphSubjects);
-        final PropertyIterator properties = new PropertyIterator(node.getReferences("ldp:membershipResource"));
+        final PropertyIterator properties = new PropertyIterator(node.getReferences(LDP_MEMBER_RESOURCE));
 
         if (properties.hasNext()) {
             LOGGER.trace("Found membership containers for {}", node);
             concat(membershipContext(properties));
+        }
+
+        if (!node.hasProperty(LDP_MEMBER_RESOURCE) && node.isNodeType(LDP_CONTAINER)) {
+            concat(memberRelations(node));
         }
     }
 
@@ -72,38 +80,48 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 try {
                     final Node inputNode = input.getParent();
 
-                    final String memberRelation;
-
-                    if (inputNode.hasProperty("ldp:hasMemberRelation")) {
-                        final Property property = inputNode.getProperty("ldp:hasMemberRelation");
-                        memberRelation = property.getString();
-                    } else {
-                        memberRelation = "ldp:member";
-                    }
-
-                    if (inputNode.hasNodes()) {
-                        final NodeIterator memberNodes = new NodeIterator(inputNode.getNodes());
-                        return Iterators.transform(memberNodes, new Function<Node, Triple>() {
-
-                            @Override
-                            public Triple apply(final Node child) {
-                                try {
-                                    final com.hp.hpl.jena.graph.Node childSubject
-                                            = graphSubjects().getSubject(child.getPath()).asNode();
-                                    return create(subject(), NodeFactory.createURI(memberRelation), childSubject);
-                                } catch (final RepositoryException e) {
-                                    throw new RepositoryRuntimeException(e);
-                                }
-                            }
-                        });
-                    } else {
-                        return Collections.emptyIterator();
-                    }
+                    return memberRelations(inputNode);
                 } catch (RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }
             }
         };
+    }
+
+    /**
+     * Get the member relations assert on the subject by the given node
+     * @param inputNode
+     * @return
+     * @throws RepositoryException
+     */
+    private Iterator<Triple> memberRelations(final Node inputNode) throws RepositoryException {
+        final com.hp.hpl.jena.graph.Node memberRelation;
+
+        if (inputNode.hasProperty(LDP_HAS_MEMBER_RELATION)) {
+            final Property property = inputNode.getProperty(LDP_HAS_MEMBER_RELATION);
+            memberRelation = NodeFactory.createURI(property.getString());
+        } else {
+            memberRelation = LDP_MEMBER.asNode();
+        }
+
+        if (inputNode.hasNodes()) {
+            final NodeIterator memberNodes = new NodeIterator(inputNode.getNodes());
+            return Iterators.transform(memberNodes, new Function<Node, Triple>() {
+
+                @Override
+                public Triple apply(final Node child) {
+                    try {
+                        final com.hp.hpl.jena.graph.Node childSubject
+                                = graphSubjects().getSubject(child.getPath()).asNode();
+                        return create(subject(), memberRelation, childSubject);
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                }
+            });
+        } else {
+            return Collections.emptyIterator();
+        }
     }
 
 }

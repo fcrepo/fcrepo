@@ -25,7 +25,6 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.STRING;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -42,7 +41,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
@@ -92,6 +90,7 @@ public class RdfRemoverTest {
 
     @Test
     public void testRemovingExistentMixin() throws Exception {
+        when(mockNode.isNodeType(mixinShortName)).thenReturn(true);
         testRemover =
             new RdfRemover(mockGraphSubjects, mockSession, testStream);
         testRemover.operateOnMixin(mixinStmnt.getObject().asResource(),
@@ -115,13 +114,10 @@ public class RdfRemoverTest {
 
     @Test
     public void testRemovingNonExistentMixin() throws Exception {
-        doThrow(new NoSuchNodeTypeException("Expected.")).when(mockNode)
-                .removeMixin(mixinShortName);
         testRemover =
             new RdfRemover(mockGraphSubjects, mockSession, testStream);
         testRemover.operateOnMixin(mixinStmnt.getObject().asResource(),
                 mockNode);
-        verify(mockNode).removeMixin(mixinShortName);
     }
 
     @Test

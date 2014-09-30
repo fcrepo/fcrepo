@@ -70,7 +70,7 @@
     - fedorarelsext:isExternalContentOf (URI) multiple COPY
 
 
-[ldp:container] mixin
+[ldp:Container] mixin
     - ldp:membershipResource (REFERENCE)
     - ldp:hasMemberRelation (URI)
 
@@ -106,7 +106,7 @@
 /*
  * A Fedora object.
  */
-[fedora:object] > fedora:resource, ldp:container mixin
+[fedora:object] > fedora:resource, ldp:Container mixin
 
 
 /*
