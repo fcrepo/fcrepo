@@ -1804,9 +1804,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
     **/
     @Test
     public void testBreakFederation() throws Exception {
+        final String pid = getRandomUniquePid();
         testGetRepositoryGraph();
-        createObject("files/a0/b0");
-        createObject("files/a0/b1");
+        createObject("files/a0/" + pid + "b0");
+        createObject("files/a0/" + pid + "b1");
         testGetRepositoryGraph();
     }
 

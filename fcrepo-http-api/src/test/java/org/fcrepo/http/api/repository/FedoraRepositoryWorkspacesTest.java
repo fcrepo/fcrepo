@@ -22,6 +22,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.kernel.RdfLexicon.HAS_WORKSPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -36,6 +37,7 @@ import javax.ws.rs.core.UriInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
 
@@ -75,6 +77,8 @@ public class FedoraRepositoryWorkspacesTest {
     @Before
     public void setUp() {
         initMocks(this);
+        mockWorkspaceSession = mock(Session.class,
+                Mockito.withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
         mockUriInfo = getUriInfoImpl();
         workspaces = new FedoraRepositoryWorkspaces();
         setField(workspaces, "session", mockSession);
@@ -104,7 +108,7 @@ public class FedoraRepositoryWorkspacesTest {
         final Repository mockRepository = mockRepository();
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockWorkspaceSession.getRepository()).thenReturn(mockRepository);
-        when(mockRepository.login("xxx")).thenReturn(mockWorkspaceSession);
+        when(mockRepository.login("xxx")).thenReturn((org.modeshape.jcr.api.Session) mockWorkspaceSession);
         when(mockWorkspaceSession.getWorkspace()).thenReturn(mockOtherWorkspace);
         when(mockOtherWorkspace.getName()).thenReturn("xxx");
         final Response response = workspaces.createWorkspace("xxx", mockUriInfo);

@@ -38,7 +38,7 @@
     <jgroups.version>3.5.0.Final</jgroups.version>
     <joda-time.version>2.4</joda-time.version>
     <logback.version>1.1.2</logback.version>
-    <modeshape.version>4.0.0.Beta1</modeshape.version>
+    <modeshape.version>4.0.0.Beta2</modeshape.version>
     <metrics.version>3.1.0</metrics.version>
     <sesame.version>2.7.13</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
