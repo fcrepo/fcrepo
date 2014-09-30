@@ -43,7 +43,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -171,17 +170,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         }
     }
 
-    protected String getPropertyNameFromPredicate(final Node subjectNode,
-        final Property predicate) throws RepositoryException {
-        return jcrRdfTools().getPropertyNameFromPredicate(subjectNode, predicate,
-                stream.namespaces());
-    }
-
-    protected String getPropertyNameFromPredicate(final Node subjectNode,
-                                                  final Resource predicate) throws RepositoryException {
-        return jcrRdfTools().getPropertyNameFromPredicate(subjectNode, predicate, stream.namespaces());
-    }
-
     protected Value createValue(final Node subjectNode, final RDFNode object,
         final Integer propertyType) throws RepositoryException {
         return jcrRdfTools().createValue(subjectNode, object, propertyType);
@@ -191,13 +179,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected Value createValue(final Node n, final Statement t, final String propertyName) throws RepositoryException {
         final NodePropertiesTools propertiesTools = new NodePropertiesTools();
         return jcrRdfTools().createValue(n, t.getObject(), propertiesTools.getPropertyType(n, propertyName));
-    }
-
-    protected boolean sessionHasType(final Session session, final String mixinName) throws RepositoryException {
-        if (session == null) {
-            return false;
-        }
-        return session().getWorkspace().getNodeTypeManager().hasNodeType(mixinName);
     }
 
     protected abstract void operateOnProperty(final Statement t,

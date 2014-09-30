@@ -20,10 +20,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
 
-import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -42,7 +39,6 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class RdfRemover extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfRemover.class);
-    private final NodePropertiesTools propertiesTools = new NodePropertiesTools();
 
     /**
      * Ordinary constructor.
@@ -60,23 +56,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     protected void operateOnMixin(final Resource mixinResource,
         final Node subjectNode) throws RepositoryException {
 
-        final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource);
-        if (sessionHasType(session(), mixinName)) {
-            LOGGER.debug("Removing mixin: {} from node: {}.", mixinName,
-                    subjectNode.getPath());
-
-            if (subjectNode.getPrimaryNodeType().isNodeType(mixinName)) {
-                LOGGER.debug("Unable to remove primary type from node");
-                return;
-            }
-
-            try {
-                subjectNode.removeMixin(mixinName);
-            } catch (final NoSuchNodeTypeException e) {
-                LOGGER.debug("which that node turned out not to have.");
-                LOGGER.trace("Backtrace: ", e);
-            }
-        }
+        jcrRdfTools().removeMixin(subjectNode, mixinResource, stream().namespaces());
     }
 
     @Override
@@ -84,12 +64,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
         throws RepositoryException {
         LOGGER.debug("Trying to remove property from triple: {} on node: {}.", t, n
                 .getPath());
+        jcrRdfTools().removeProperty(n, t.getPredicate(), t.getObject(), stream().namespaces());
 
-        final String propertyName =
-            getPropertyNameFromPredicate(n, t.getPredicate());
-        if (n.hasProperty(propertyName)) {
-            final Value v = createValue(n, t, propertyName);
-            propertiesTools.removeNodeProperty(idTranslator(), n, propertyName, v);
-        }
     }
 }

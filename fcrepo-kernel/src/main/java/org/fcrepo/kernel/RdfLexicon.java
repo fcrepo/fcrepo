@@ -203,11 +203,13 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "hasMemberRelation");
     public static final Property CONTAINS =
         createProperty(LDP_NAMESPACE + "contains");
+    public static final Property LDP_MEMBER =
+            createProperty(LDP_NAMESPACE + "member");
     public static final Property NON_RDF_SOURCE =
         createProperty(LDP_NAMESPACE + "NonRDFSource");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
-            FIRST_PAGE, NEXT_PAGE, CONTAINS);
+            FIRST_PAGE, NEXT_PAGE, CONTAINS, LDP_MEMBER);
     public static final Set<Resource> ldpResources = of(CONTAINER,
             DIRECT_CONTAINER);
 

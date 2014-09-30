@@ -352,7 +352,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         assertTrue(testObj.isInternalProperty(mockNode, createProperty(
                 "http://www.jcp.org/jcr/1.0", "some-property")));
         assertTrue(testObj.isInternalProperty(mockNode,
-                createProperty(LDP_NAMESPACE + "some-property")));
+                createProperty(LDP_NAMESPACE + "member")));
         assertFalse(testObj
                 .isInternalProperty(
                         mockNode,
