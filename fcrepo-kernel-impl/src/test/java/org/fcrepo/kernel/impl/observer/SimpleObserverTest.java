@@ -22,6 +22,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.Mockito.mock;
 
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -35,6 +36,7 @@ import org.fcrepo.kernel.observer.FedoraEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.modeshape.jcr.api.Repository;
 
 import com.google.common.base.Predicate;
@@ -73,7 +75,8 @@ public class SimpleObserverTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        when(mockRepository.login()).thenReturn(mockSession);
+        mockSession = mock(Session.class, Mockito.withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
+        when(mockRepository.login()).thenReturn((org.modeshape.jcr.api.Session) mockSession);
         when(mockEvents.hasNext()).thenReturn(true, false);
         when(mockEvents.next()).thenReturn(mockEvent);
         testObserver = new SimpleObserver();
