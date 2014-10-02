@@ -26,6 +26,7 @@
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <rdfs = 'http://www.w3.org/2000/01/rdf-schema#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
+<ldp = 'http://www.w3.org/ns/ldp#'>
 
 /*
  * A fedora namespace for properties a user may set on a node that may
@@ -69,6 +70,11 @@
     - fedorarelsext:isExternalContentOf (URI) multiple COPY
 
 
+[ldp:container] mixin
+    - ldp:membershipResource (REFERENCE)
+    - ldp:hasMemberRelation (URI)
+
+
 /*
  *  Dublin Core terms
  */
@@ -100,7 +106,7 @@
 /*
  * A Fedora object.
  */
-[fedora:object] > fedora:resource mixin
+[fedora:object] > fedora:resource, ldp:container mixin
 
 
 /*

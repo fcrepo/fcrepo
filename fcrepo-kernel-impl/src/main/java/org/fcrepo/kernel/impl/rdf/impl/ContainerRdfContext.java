@@ -26,9 +26,6 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
-import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -56,10 +53,8 @@ public class ContainerRdfContext extends NodeRdfContext {
     private Triple[] containerContext() {
         return new Triple[] {
                 create(subject(), type.asNode(), CONTAINER.asNode()),
-                create(subject(), type.asNode(), DIRECT_CONTAINER.asNode()),
-                create(subject(), MEMBERSHIP_RESOURCE.asNode(), subject()),
-                create(subject(), HAS_MEMBER_RELATION.asNode(), HAS_CHILD
-                        .asNode())};
+                create(subject(), type.asNode(), DIRECT_CONTAINER.asNode())
+        };
     }
 
 }
