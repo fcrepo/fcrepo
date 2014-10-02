@@ -57,6 +57,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
@@ -575,7 +576,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 "Didn't find child node!",
                 model.contains(
                         subjectUri,
-                createProperty(REPOSITORY_NAMESPACE + "hasChild"),
+                createProperty(LDP_NAMESPACE + "contains"),
                 createResource(location + "/c")));
         final Collection<String> links =
             map(response.getHeaders("Link"), new Function<Header, String>() {
@@ -672,15 +673,15 @@ public class FedoraNodesIT extends AbstractResourceIT {
                       compile(
                                  "<"
                                      + serverAddress
-                                     + pid + "> <" + HAS_CHILD + ">",
+                                     + pid + "> <" + LDP_MEMBER + ">",
                                  DOTALL).matcher(content).find());
 
-        assertFalse("Didn't expect contained member resources",
-                       compile(
-                                  "^<"
-                                      + serverAddress
-                                      + pid + "/a>",
-                                  DOTALL).matcher(content).find());
+        assertFalse("Didn't expect contained resources",
+                compile(
+                        "<"
+                                + serverAddress
+                                + pid + "> <" + CONTAINS + ">",
+                        DOTALL).matcher(content).find());
 
     }
 
