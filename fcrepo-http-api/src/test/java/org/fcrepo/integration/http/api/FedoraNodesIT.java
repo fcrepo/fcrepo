@@ -250,7 +250,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpPost method = postObjMethod("");
         method.addHeader("Slug", pid);
-        assertEquals(409, getStatus(method));
+        assertEquals(201, getStatus(method));
     }
 
     @Test
