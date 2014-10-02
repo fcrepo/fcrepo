@@ -15,13 +15,10 @@
  */
 package org.fcrepo.kernel.impl.utils.iterators;
 
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.not;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
-import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedTriple;
 import static org.slf4j.LoggerFactory.getLogger;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 
@@ -105,10 +102,9 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
         };
         this.skolemizedBnodeMap = new HashMap<>();
-        // we knock out managed RDF and non-Fedora RDF
+        // we knock out non-Fedora RDF
         this.stream =
-                stream.withThisContext(stream.filter(and(not(isManagedTriple),
-                        isFedoraSubjectTriple)));
+                stream.withThisContext(stream.filter(isFedoraSubjectTriple));
         this.session = session;
     }
 

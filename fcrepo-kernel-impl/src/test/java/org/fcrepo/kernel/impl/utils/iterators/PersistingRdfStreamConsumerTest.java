@@ -91,26 +91,9 @@ public class PersistingRdfStreamConsumerTest {
                 acceptedStatements.contains(propertyStatement)
                         && !rejectedStatements.contains(propertyStatement));
 
-        assertTrue("Wrongly operated on LDP managed property!",
-                !acceptedStatements.contains(ldpManagedPropertyStatement)
-                        && rejectedStatements.contains(ldpManagedPropertyStatement));
-
-        assertTrue("Wrongly operated on JCR managed property!",
-                !acceptedStatements.contains(jcrManagedPropertyStatement)
-                        && rejectedStatements.contains(jcrManagedPropertyStatement));
-
-        assertTrue("Wrongly operated on Fedora managed property!",
-                !acceptedStatements.contains(fedoraManagedPropertyStatement)
-                        && rejectedStatements.contains(fedoraManagedPropertyStatement));
-
         assertTrue("Wrongly operated on foreign property!",
                 !acceptedStatements.contains(foreignStatement)
                         && rejectedStatements.contains(foreignStatement));
-
-        assertTrue("Wrongly operated on managed mixin!", !acceptedMixins
-                .contains(managedMixinStatement.getObject().asResource())
-                && rejectedMixins.contains(managedMixinStatement.getObject()
-                        .asResource()));
 
         assertTrue("Failed to operate on ordinary mixin!", acceptedMixins
                 .contains(mixinStatement.getObject().asResource())
