@@ -18,7 +18,6 @@ package org.fcrepo.integration.kernel.impl;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -56,7 +55,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -68,6 +66,7 @@ import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -576,8 +575,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = UUID.randomUUID().toString();
         final FedoraObject object = objectService.findOrCreateObject(session, pid);
 
-        final StmtIterator stmtIterator = object.getPropertiesDataset(subjects).getDefaultModel().listStatements();
-        final Model model = createDefaultModel().add(stmtIterator);
+        final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class);
+        final Model model = triples.asModel();
 
         final Resource resource = model.createResource();
         final Resource subject = subjects.getSubject(object.getPath());
