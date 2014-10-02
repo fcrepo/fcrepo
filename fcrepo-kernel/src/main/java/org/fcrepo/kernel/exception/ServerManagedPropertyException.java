@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.http.commons.exceptionhandlers;
-
-import org.fcrepo.kernel.exception.MalformedRdfException;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.status;
+package org.fcrepo.kernel.exception;
 
 /**
  * @author cabeer
- * @since 9/30/14
+ * @since 10/1/14
  */
-@Provider
-public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdfException> {
-
-    @Override
-    public Response toResponse(final MalformedRdfException e) {
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+public class ServerManagedPropertyException extends RepositoryRuntimeException {
+    /**
+     *
+     * @param msg
+     */
+    public ServerManagedPropertyException(final String msg) {
+        super(msg);
     }
 }
