@@ -660,6 +660,10 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.trace("Using internal identifier {} to create new resource.", pid);
         newObjectPath = base + "/" + pid;
 
+        if (nodeService.exists(session, newObjectPath)) {
+            return mintNewPid(base, null);
+        }
+
         assertPathMissing(newObjectPath);
         return newObjectPath;
     }
