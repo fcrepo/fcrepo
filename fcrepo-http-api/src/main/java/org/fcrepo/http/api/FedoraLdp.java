@@ -34,7 +34,6 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -444,8 +443,7 @@ public class FedoraLdp extends ContentExposingResource {
                     final Model inputModel =
                             createDefaultModel().read(requestBodyStream, getUri(result).toString(), format);
 
-                    result.replaceProperties(translator(), inputModel,
-                            getTriples(result, PropertiesRdfContext.class));
+                    result.replaceProperties(translator(), inputModel, new RdfStream());
                 } else if (result instanceof FedoraBinary) {
                     LOGGER.trace("Created a datastream and have a binary payload.");
 
