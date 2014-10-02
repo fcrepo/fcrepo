@@ -479,7 +479,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
         getObjMethod.addHeader("Accept", "text/turtle");
-        getObjMethod.addHeader("Prefer", "return=minimal");
+     //   getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
 
         final BasicHttpEntity e = new BasicHttpEntity();
