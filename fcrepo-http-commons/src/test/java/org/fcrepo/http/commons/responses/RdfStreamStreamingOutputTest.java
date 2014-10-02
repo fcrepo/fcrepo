@@ -19,6 +19,7 @@ import static com.google.common.util.concurrent.Futures.addCallback;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.responses.RdfStreamStreamingOutput.getValueForObject;
 import static org.junit.Assert.assertEquals;
@@ -38,6 +39,7 @@ import java.io.OutputStream;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,17 +113,38 @@ public class RdfStreamStreamingOutputTest {
 
     @Test
     public void testWrite() throws IOException {
+        assertOutputContainsTriple(triple);
+    }
+
+    public void assertOutputContainsTriple(final Triple expected) throws IOException {
+        final RdfStream input = new RdfStream(expected);
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            testRdfStreamStreamingOutput.write(output);
+            new RdfStreamStreamingOutput(input, testMediaType).write(output);
             try (
                 final InputStream resultStream =
                     new ByteArrayInputStream(output.toByteArray())) {
                 final Model result =
                     createDefaultModel().read(resultStream, null);
                 assertTrue("Didn't find our test triple!", result
-                        .contains(result.asStatement(triple)));
+                        .contains(result.asStatement(expected)));
             }
         }
+    }
+
+    @Test
+    public void testWriteWithTypedObject() throws IOException {
+        assertOutputContainsTriple(create(createURI("info:testSubject"),
+                createURI("info:testPredicate"),
+                createTypedLiteral(0).asNode()));
+    }
+
+    @Test
+    public void testWriteWithDatetimeObject() throws IOException {
+
+        assertOutputContainsTriple(create(createURI("info:testSubject"),
+                createURI("info:testPredicate"),
+                NodeFactory.createLiteral("2014-01-01T01:02:03Z", XSDDatatype.XSDdateTime)));
+
     }
 
     @Test(expected = WebApplicationException.class)
