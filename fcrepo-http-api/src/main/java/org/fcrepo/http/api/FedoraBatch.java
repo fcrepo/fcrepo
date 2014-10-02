@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -60,19 +61,19 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.Model;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.utils.ContentDigest;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -90,9 +91,9 @@ import com.codahale.metrics.annotation.Timed;
  *
  * @author cbeer
  */
-@Scope("prototype")
+@Scope("request")
 @Path("/{path: .*}/fcr:batch")
-public class FedoraBatch extends AbstractResource {
+public class FedoraBatch extends ContentExposingResource {
 
     public static final String ATTACHMENT = "attachment";
     public static final String INLINE = "inline";
@@ -102,6 +103,32 @@ public class FedoraBatch extends AbstractResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraBatch.class);
+
+    @PathParam("path") protected List<PathSegment> pathList;
+
+    protected String path;
+
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraBatch() {
+        super();
+    }
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param path
+     */
+    @VisibleForTesting
+    public FedoraBatch(final String path) {
+        this.path = path;
+    }
+
+    @PostConstruct
+    private void postConstruct() {
+        this.path = toPath(pathList);
+    }
 
     /**
      * Apply batch modifications relative to the node.
@@ -136,7 +163,6 @@ public class FedoraBatch extends AbstractResource {
      *  - otherwise, treat the entity as binary content.
      *
      *
-     * @param pathList
      * @param multipart
      * @return response
      * @throws RepositoryException
@@ -145,11 +171,8 @@ public class FedoraBatch extends AbstractResource {
      */
     @POST
     @Timed
-    public Response batchModify(@PathParam("path") final List<PathSegment> pathList,
-                                final MultiPart multipart)
+    public Response batchModify(final MultiPart multipart)
         throws InvalidChecksumException, IOException, URISyntaxException {
-
-        final String path = toPath(pathList);
 
         // TODO: this is ugly, but it works.
         final PathFactory pathFactory = new ExecutionContext().getValueFactories().getPathFactory();
@@ -242,8 +265,14 @@ public class FedoraBatch extends AbstractResource {
                                 createDefaultModel().read(src,
                                         subjects.getSubject(resource.getPath()).toString(), format);
 
-                            resource.replaceProperties(subjects, inputModel,
-                                    resource.getTriples(subjects, PropertiesRdfContext.class));
+                            final RdfStream resourceTriples;
+
+                            if (resource.isNew()) {
+                                resourceTriples = new RdfStream();
+                            } else {
+                                resourceTriples = getResourceTriples();
+                            }
+                            resource.replaceProperties(subjects, inputModel, resourceTriples);
                         } else {
                             throw new WebApplicationException(notAcceptable(null)
                                 .entity("Invalid Content Type " + contentTypeString).build());
@@ -310,7 +339,6 @@ public class FedoraBatch extends AbstractResource {
      * Retrieve multiple datastream bitstreams in a single request as a
      * multipart/mixed response.
      *
-     * @param pathList
      * @param requestedChildren
      * @param request
      * @return response
@@ -320,18 +348,15 @@ public class FedoraBatch extends AbstractResource {
     @GET
     @Produces("multipart/mixed")
     @Timed
-    public Response getBinaryContents(
-        @PathParam("path") final List<PathSegment> pathList,
-        @QueryParam("child") final List<String> requestedChildren,
+    public Response getBinaryContents(@QueryParam("child") final List<String> requestedChildren,
         @Context final Request request) throws RepositoryException, NoSuchAlgorithmException {
 
         final List<Datastream> datastreams = new ArrayList<>();
 
         try {
-            final String path = toPath(pathList);
             // TODO: wrap some of this JCR logic in an fcrepo abstraction;
 
-            final Node node = nodeService.getObject(session, path).getNode();
+            final Node node = resource().getNode();
 
             Date date = new Date();
 
@@ -416,5 +441,25 @@ public class FedoraBatch extends AbstractResource {
         } finally {
             session.logout();
         }
+    }
+
+    @Override
+    Session session() {
+        return session;
+    }
+
+    @Override
+    void addResourceHttpHeaders(final FedoraResource resource) {
+
+    }
+
+    @Override
+    String path() {
+        return path;
+    }
+
+    @Override
+    List<PathSegment> pathList() {
+        return pathList;
     }
 }
