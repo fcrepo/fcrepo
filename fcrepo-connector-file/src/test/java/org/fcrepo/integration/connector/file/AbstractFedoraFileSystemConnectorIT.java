@@ -33,11 +33,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.modeshape.common.util.SecureHash.getHash;
 import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -55,15 +58,16 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -130,6 +134,9 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         return getProperty(PROP_TEST_DIR2);
     }
 
+    private static final Logger logger =
+            getLogger(AbstractFedoraFileSystemConnectorIT.class);
+
     /**
      * Sets a system property and ensures artifacts from previous tests are
      * cleaned up.
@@ -141,7 +148,6 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         // we configure the FedoraFileSystemFederation instances to
         // point to paths within the "target" directory.
         final File testDir1 = new File("target/test-classes/config/testing");
-        cleanUpJsonFilesFiles(testDir1);
         setProperty(PROP_TEST_DIR1, testDir1.getAbsolutePath());
 
         final File testDir2 = new File("target/test-classes/spring-test");
@@ -171,8 +177,13 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         // Clean up files persisted in previous runs
         while (iterator.hasNext()) {
-            if (!iterator.next().delete()) {
-                fail("Unable to delete work files from a previous test run");
+            final File f = iterator.next();
+            final String path = f.getAbsolutePath();
+            try {
+                Files.deleteIfExists(Paths.get(path));
+            } catch (IOException e) {
+                logger.error("Error in clean up", e);
+                fail("Unable to delete work files from a previous test run. File=" + path);
             }
         }
     }
@@ -188,7 +199,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_OBJECT);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_OBJECT);
         assertTrue("Mixin not found: " + FEDORA_OBJECT, found);
 
         session.save();
@@ -206,7 +217,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_DATASTREAM);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_DATASTREAM);
         assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
 
         session.save();
@@ -223,7 +234,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_BINARY);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
         final File file = fileForNode(node);

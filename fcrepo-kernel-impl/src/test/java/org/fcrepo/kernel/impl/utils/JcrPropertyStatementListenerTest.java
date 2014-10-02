@@ -45,6 +45,7 @@ import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
@@ -59,6 +60,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  *
  * @author awoods
  */
+@Ignore
 public class JcrPropertyStatementListenerTest {
 
     private static final Logger LOGGER =

@@ -34,6 +34,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.slf4j.Logger;
 
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -184,7 +185,7 @@ public class NodePropertiesTools {
 
             final Property property = node.getProperty(propertyName);
 
-            if (FedoraTypesUtils.isMultipleValuedProperty.apply(property)) {
+            if (JcrPropertyFunctions.isMultipleValuedProperty.apply(property)) {
 
                 final List<Value> newValues = new ArrayList<>();
 
@@ -297,5 +298,6 @@ public class NodePropertiesTools {
 
         return def.isMultiple();
     }
+
 
 }

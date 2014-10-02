@@ -18,7 +18,6 @@ package org.fcrepo.integration.kernel.impl;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -46,7 +45,6 @@ import javax.inject.Inject;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeTypeDefinition;
 import javax.jcr.nodetype.NodeTypeTemplate;
-import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -56,10 +54,10 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
@@ -68,6 +66,7 @@ import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -520,6 +519,25 @@ public class FedoraResourceImplIT extends AbstractIT {
                 .getValues()[0].getLong());
     }
 
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testAddMissingReference() throws RepositoryException {
+        final FedoraResource object =
+                objectService.findOrCreateObject(session, "/testRefObject");
+
+        final Dataset propertiesDataset =
+                object.getPropertiesDataset(subjects, 0, -2);
+
+        logger.debug(propertiesDataset.toString());
+
+        object.updatePropertiesDataset(
+                subjects,
+                "PREFIX example: <http://example.org/>\n"
+                        + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
+                        + "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>\n"
+                        + "INSERT { <> fedorarelsext:isPartOf <" + subjects.getSubject("/some-path") + ">}"
+                        + "WHERE { }");
+    }
+
     @Test
     public void testUpdatingRdfType() throws RepositoryException {
         final FedoraResource object =
@@ -533,10 +551,28 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.updatePropertiesDataset(subjects, "INSERT { <"
                 + createGraphSubjectNode("/testObjectRdfType").getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }");
-        assertEquals(PropertyType.URI, object.getNode().getProperty("rdf:type")
-                .getType());
-        assertEquals("http://some/uri", object.getNode()
-                .getProperty("rdf:type").getValues()[0].getString());
+        assertTrue(object.getNode().isNodeType("{http://some/}uri"));
+    }
+
+    @Test
+    public void testRemoveRdfType() throws RepositoryException {
+        final FedoraResource object =
+                objectService.findOrCreateObject(session, "/testRemoveObjectRdfType");
+
+        final Dataset propertiesDataset =
+                object.getPropertiesDataset(subjects, 0, -2);
+
+        logger.debug(propertiesDataset.toString());
+
+        object.updatePropertiesDataset(subjects, "INSERT { <"
+                + createGraphSubjectNode("/testRemoveObjectRdfType").getURI() + "> <" + RDF.type
+                + "> <http://some/uri> } WHERE { }");
+        assertTrue(object.getNode().isNodeType("{http://some/}uri"));
+
+        object.updatePropertiesDataset(subjects, "DELETE { <"
+                + createGraphSubjectNode("/testRemoveObjectRdfType").getURI() + "> <" + RDF.type
+                + "> <http://some/uri> } WHERE { }");
+        assertFalse(object.getNode().isNodeType("{http://some/}uri"));
     }
 
     @Test
@@ -576,8 +612,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = UUID.randomUUID().toString();
         final FedoraObject object = objectService.findOrCreateObject(session, pid);
 
-        final StmtIterator stmtIterator = object.getPropertiesDataset(subjects).getDefaultModel().listStatements();
-        final Model model = createDefaultModel().add(stmtIterator);
+        final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class);
+        final Model model = triples.asModel();
 
         final Resource resource = model.createResource();
         final Resource subject = subjects.getSubject(object.getPath());

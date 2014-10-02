@@ -19,6 +19,7 @@ import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -156,6 +157,8 @@ public abstract class AbstractResource {
                     (p.startsWith("tx:") || p.startsWith("workspace:"))) {
                 LOGGER.trace("Ignoring internal segment {}", p);
                 i++;
+            } else if (p.equals(FCR_METADATA)) {
+                // noop
             } else {
 
                 LOGGER.trace("Adding segment {}", p);

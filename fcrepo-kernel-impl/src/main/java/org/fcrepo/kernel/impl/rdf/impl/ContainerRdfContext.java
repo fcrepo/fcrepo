@@ -22,12 +22,18 @@ import org.slf4j.Logger;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -50,16 +56,30 @@ public class ContainerRdfContext extends NodeRdfContext {
         super(node, graphSubjects);
 
         concat(containerContext());
+        concat(membershipRelationContext());
 
+    }
+
+    private Collection<Triple> membershipRelationContext() throws RepositoryException {
+
+        final Set<Triple> triples1 = new HashSet<>();
+
+        if (!node().hasProperty(LDP_HAS_MEMBER_RELATION)) {
+            triples1.add(create(subject(), HAS_MEMBER_RELATION.asNode(), LDP_MEMBER.asNode()));
+        }
+
+        if (!node().hasProperty(LDP_MEMBER_RESOURCE)) {
+            triples1.add(create(subject(), MEMBERSHIP_RESOURCE.asNode(), subject()));
+        }
+
+        return triples1;
     }
 
     private Triple[] containerContext() {
         return new Triple[] {
                 create(subject(), type.asNode(), CONTAINER.asNode()),
-                create(subject(), type.asNode(), DIRECT_CONTAINER.asNode()),
-                create(subject(), MEMBERSHIP_RESOURCE.asNode(), subject()),
-                create(subject(), HAS_MEMBER_RELATION.asNode(), HAS_CHILD
-                        .asNode())};
+                create(subject(), type.asNode(), DIRECT_CONTAINER.asNode())
+        };
     }
 
 }

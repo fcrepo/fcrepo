@@ -25,6 +25,7 @@ import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -38,6 +39,7 @@ import javax.jcr.observation.Event;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.modeshape.jcr.api.Repository;
 
 import com.google.common.base.Predicate;
@@ -72,12 +74,13 @@ public class DefaultFilterTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
+        mockSession = mock(Session.class, Mockito.withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
         when(mockEvent.getPath()).thenReturn(testPath);
         when(mockEvent.getIdentifier()).thenReturn(testId);
         when(mockEvent.getType()).thenReturn(NODE_ADDED);
         when(mockNode.isNode()).thenReturn(true);
         testObj = new DefaultFilter();
-        when(mockRepo.login()).thenReturn(mockSession);
+        when(mockRepo.login()).thenReturn((org.modeshape.jcr.api.Session) mockSession);
     }
 
     @Test

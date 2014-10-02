@@ -60,6 +60,7 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.impl.identifiers.UUIDPidMinter;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -111,7 +112,7 @@ public abstract class TestHelpers {
         try {
             final Query mockQ = getQueryMock();
             when(mockQM.createQuery(anyString(), anyString()))
-                    .thenReturn(mockQ);
+                    .thenReturn((org.modeshape.jcr.api.query.Query) mockQ);
             when(mockWS.getQueryManager()).thenReturn(mockQM);
         } catch (final RepositoryException e) {
             e.printStackTrace();
@@ -204,8 +205,8 @@ public abstract class TestHelpers {
     public static Repository mockRepository() throws LoginException,
                                              RepositoryException {
         final Repository mockRepo = mock(Repository.class);
-        final Session mockSession = mock(Session.class);
-        when(mockRepo.login()).thenReturn(mockSession);
+        when(mockRepo.login()).thenReturn(
+                mock(org.modeshape.jcr.api.Session.class, Mockito.withSettings().extraInterfaces(Session.class)));
         return mockRepo;
     }
 

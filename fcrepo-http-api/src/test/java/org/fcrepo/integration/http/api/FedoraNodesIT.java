@@ -26,6 +26,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.TimeZone.getTimeZone;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -44,7 +45,6 @@ import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
@@ -57,6 +57,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
@@ -108,6 +109,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.glassfish.grizzly.http.util.ContentType;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -247,7 +249,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpPost method = postObjMethod("");
         method.addHeader("Slug", pid);
-        assertEquals(409, getStatus(method));
+        assertEquals(201, getStatus(method));
     }
 
     @Test
@@ -266,7 +268,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 .find());
         final String location = response.getFirstHeader("Location").getValue();
         assertNotEquals(serverAddress + "/objects", location);
-        assertTrue(location.endsWith("fcr:content"));
         assertEquals("Object wasn't created!", OK.getStatusCode(),
                 getStatus(new HttpGet(location)));
     }
@@ -321,7 +322,9 @@ public class FedoraNodesIT extends AbstractResourceIT {
             execute(new HttpGet(serverAddress + pid + "/ds1"));
         assertEquals(EntityUtils.toString(response.getEntity()), 200, response
                 .getStatusLine().getStatusCode());
-        assertEquals(TURTLE, response.getFirstHeader("Content-Type").getValue());
+
+        assertEquals(TEXT_PLAIN,
+                ContentType.newContentType(response.getFirstHeader("Content-Type").getValue()).getMimeType());
 
         final Collection<String> links =
             map(response.getHeaders("Link"), new Function<Header, String>() {
@@ -331,45 +334,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
                     return h.getValue();
                 }
             });
-        assertTrue("Didn't find 'describes' link header!",
-                      links.contains("<" + serverAddress + pid + "/ds1/fcr:content>;rel=\"describes\""));
+        assertTrue("Didn't find 'describedby' link header!",
+                      links.contains("<" + serverAddress + pid + "/ds1/fcr:metadata>;rel=\"describedby\""));
 
     }
 
-    @Test
-    public void testGetDatastreamContentWithJCRBadBath() throws Exception {
-        final String pid = getRandomUniquePid();
-
-        createObject(pid);
-        createDatastream(pid, "ds1", "foo");
-
-        final HttpResponse response =
-            execute(new HttpGet(serverAddress + pid + "/ds1/jcr:content"));
-        assertEquals(NOT_FOUND.getStatusCode(), response
-                .getStatusLine().getStatusCode());
-    }
-
-    @Test
-    public void testRangeRequestWithJCRContentBadPath() throws Exception {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-        createDatastream(pid, "ds1", "marbles for everyone");
-
-        final HttpGet method_test_get = new HttpGet(serverAddress + pid + "/ds1/jcr:content");
-        method_test_get.setHeader("Range", "bytes=1-3");
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(method_test_get));
-    }
-
-    @Test
-    public void testPutDatastreamContentWithJCRContentBadPath() throws Exception {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-        createDatastream(pid, "ds1", "marbles for everyone");
-
-        final HttpPut method_test_put = new HttpPut(serverAddress + pid + "/ds1/jcr:content");
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(method_test_put));
-
-    }
 
     @Test
     public void testDeleteDatastream() throws Exception {
@@ -386,19 +355,6 @@ public class FedoraNodesIT extends AbstractResourceIT {
             new HttpGet(serverAddress +  pid + "/ds1");
         assertEquals(404, getStatus(method_test_get));
     }
-
-    @Test
-    public void testDeleteDatastreamContentWithJCRBadPath() throws Exception {
-        final String pid = getRandomUniquePid();
-
-        createObject(pid);
-        createDatastream(pid, "ds1", "foo");
-
-        final HttpDelete dmethod =
-            new HttpDelete(serverAddress + pid + "/ds1/jcr:content");
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(dmethod));
-    }
-
 
     @Test
     public void testHeadRepositoryGraph() throws Exception {
@@ -575,7 +531,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
                 "Didn't find child node!",
                 model.contains(
                         subjectUri,
-                createProperty(REPOSITORY_NAMESPACE + "hasChild"),
+                createProperty(LDP_NAMESPACE + "contains"),
                 createResource(location + "/c")));
         final Collection<String> links =
             map(response.getHeaders("Link"), new Function<Header, String>() {
@@ -672,15 +628,15 @@ public class FedoraNodesIT extends AbstractResourceIT {
                       compile(
                                  "<"
                                      + serverAddress
-                                     + pid + "> <" + HAS_CHILD + ">",
+                                     + pid + "> <" + LDP_MEMBER + ">",
                                  DOTALL).matcher(content).find());
 
-        assertFalse("Didn't expect contained member resources",
-                       compile(
-                                  "^<"
-                                      + serverAddress
-                                      + pid + "/a>",
-                                  DOTALL).matcher(content).find());
+        assertFalse("Didn't expect contained resources",
+                compile(
+                        "<"
+                                + serverAddress
+                                + pid + "> <" + CONTAINS + ">",
+                        DOTALL).matcher(content).find());
 
     }
 
@@ -858,12 +814,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
         patchObjMethod.setEntity(e);
         final HttpResponse response = client.execute(patchObjMethod);
 
-        if (response.getStatusLine().getStatusCode() != 403
+        if (response.getStatusLine().getStatusCode() != CONFLICT.getStatusCode()
                 && response.getEntity() != null) {
             final String content = EntityUtils.toString(response.getEntity());
             logger.trace("Got unexpected update response:\n" + content);
         }
-        assertEquals(403, response.getStatusLine().getStatusCode());
+        assertEquals(CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
 
     }
 
@@ -878,28 +834,16 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testFilteredLDPTypes() throws Exception {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-
-        final HttpPut put = new HttpPut(serverAddress + pid);
-        put.addHeader("Content-Type", "text/rdf+n3");
-        final BasicHttpEntity e = new BasicHttpEntity();
-        e.setContent(new ByteArrayInputStream(
-               "<> a <http://www.w3.org/ns/ldp#IndirectContainer>".getBytes()));
-        put.setEntity(e);
-        assertEquals(204, getStatus(put));
-    }
-
-    @Test
     public void testReplaceGraph() throws Exception {
         final HttpResponse object = createObject("");
         final String subjectURI =  object.getFirstHeader("Location").getValue();
+
+        final String initialContent = EntityUtils.toString(execute(new HttpGet(subjectURI)).getEntity());
         final HttpPut replaceMethod = new HttpPut(subjectURI);
         replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
+                (initialContent + "\n<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
                         .getBytes()));
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
@@ -969,7 +913,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
         getObjMethod.addHeader("Accept", "text/turtle");
-        getObjMethod.addHeader("Prefer", "return=minimal");
+        //getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
 
         final BasicHttpEntity e = new BasicHttpEntity();
@@ -1001,7 +945,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         createDatastream(pid, "ds1", "some-content");
 
-        final HttpGet getObjMethod = new HttpGet(subjectURI);
+        final HttpGet getObjMethod = new HttpGet(subjectURI + "/fcr:metadata");
         getObjMethod.addHeader("Accept", "text/turtle");
         getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
@@ -1018,28 +962,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
                             w);
         }
 
-        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        final HttpPut replaceMethod = new HttpPut(subjectURI + "/fcr:metadata");
         replaceMethod.addHeader("Content-Type", "text/turtle");
 
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(204, response.getStatusLine().getStatusCode());
-
-    }
-    @Test
-    public void testGetGraphForDatastreamWithJCRBadPath() throws Exception {
-
-        final String pid = getRandomUniquePid();
-        final String subjectURI = serverAddress + pid + "/ds1/jcr:content";
-
-        createDatastream(pid, "ds1", "some-content");
-
-        final HttpGet getObjMethod = new HttpGet(subjectURI);
-        getObjMethod.addHeader("Accept", "text/turtle");
-        getObjMethod.addHeader("Prefer", "return=minimal");
-        final HttpResponse response = client.execute(getObjMethod);
-
-        assertEquals(NOT_FOUND.getStatusCode(), response.getStatusLine().getStatusCode());
 
     }
 
@@ -1183,17 +1111,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testValidHTMLForDS() throws Exception {
         final String pid = getRandomUniquePid();
-        client.execute(new HttpPut(serverAddress
-                + pid + "/ds/fcr:content"));
-        validateHTML(pid + "/ds");
-    }
-
-    @Test
-    public void testGetHTMLForDSWithJCRBadPath() throws Exception {
-        final String pid = getRandomUniquePid();
-        final HttpResponse response = client.execute(new HttpPut(serverAddress
-                + pid + "/ds/jcr:content"));
-        assertEquals(NOT_FOUND.getStatusCode(), response.getStatusLine().getStatusCode());
+        createDatastream(pid, "ds", "content");
+        validateHTML(pid + "/ds/fcr:metadata");
     }
 
     @Test
@@ -1457,7 +1376,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
         final String pid = getRandomUniquePid();
-        final String uploadLocation = serverAddress + "files/" + pid + "/ds1/fcr:content";
+        final String uploadLocation = serverAddress + "files/" + pid + "/ds1";
         final String uploadContent = "abc123";
         logger.debug("Uploading to federated filesystem via rest api: " + uploadLocation);
         final HttpResponse response = createDatastream("files/" + pid, "ds1", uploadContent);
@@ -1804,9 +1723,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
     **/
     @Test
     public void testBreakFederation() throws Exception {
+        final String pid = getRandomUniquePid();
         testGetRepositoryGraph();
-        createObject("files/a0/b0");
-        createObject("files/a0/b1");
+        createObject("files/a0/" + pid + "b0");
+        createObject("files/a0/" + pid + "b1");
         testGetRepositoryGraph();
     }
 
