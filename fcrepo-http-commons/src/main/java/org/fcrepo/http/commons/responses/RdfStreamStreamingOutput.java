@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.responses;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
+import static org.openrdf.model.util.Literals.createLiteralOrFail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
@@ -29,8 +30,10 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
+import org.openrdf.model.util.LiteralUtilException;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFWriterRegistry;
@@ -132,7 +135,21 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             return vfactory.createURI(object.getURI());
         }
         if (object.isLiteral()) {
-            return createLiteral(vfactory, object.getLiteralValue());
+            final Object literalValue = object.getLiteralValue();
+
+            try {
+                return createLiteralOrFail(vfactory, literalValue);
+            } catch (final LiteralUtilException e) {
+
+                final String literalDatatypeURI = object.getLiteralDatatypeURI();
+
+                if (literalDatatypeURI != null) {
+                    final URI uri = vfactory.createURI(literalDatatypeURI);
+                    return vfactory.createLiteral(literalValue.toString(), uri);
+                } else {
+                    return createLiteral(vfactory, literalValue);
+                }
+            }
         }
         throw new UnsupportedOperationException(
                 "We do not serialize blank nodes!");
