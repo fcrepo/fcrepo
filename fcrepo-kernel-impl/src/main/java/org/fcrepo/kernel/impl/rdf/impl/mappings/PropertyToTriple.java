@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -37,6 +36,10 @@ import java.util.Iterator;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
+
+import com.google.common.collect.Iterators;
+import com.google.common.collect.UnmodifiableIterator;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.slf4j.Logger;
 import com.google.common.base.Function;
@@ -50,7 +53,7 @@ import com.hp.hpl.jena.graph.Triple;
  * @since Oct 10, 2013
  */
 public class PropertyToTriple implements
-        Function<Property, Function<Iterator<Value>, Iterator<Triple>>> {
+        Function<Property, Iterator<Triple>> {
 
     private IdentifierTranslator graphSubjects;
 
@@ -88,22 +91,28 @@ public class PropertyToTriple implements
      * @see <a href="http://en.wikipedia.org/wiki/Currying">Currying</a>
      */
     @Override
-    public Function<Iterator<Value>, Iterator<Triple>> apply(final Property p) {
-        return new Function<Iterator<Value>, Iterator<Triple>>() {
-
-            @Override
-            public Iterator<Triple> apply(final Iterator<Value> vs) {
-                return transform(vs, new Function<Value, Triple>() {
-
-                    @Override
-                    public Triple apply(final Value v) {
-                        return propertyvalue2triple(p, v);
-                    }
-                });
-
+    public Iterator<Triple> apply(final Property p) {
+        final UnmodifiableIterator<Value> valuesIterator;
+        try {
+            if (p.isMultiple()) {
+                LOGGER.debug("Found multi-valued property: {}", p);
+                valuesIterator = Iterators.forArray(p.getValues());
+            } else {
+                LOGGER.debug("Found single-valued property: {}", p);
+                valuesIterator =  Iterators.forArray(p.getValue());
             }
-        };
 
+
+            return Iterators.transform(valuesIterator, new Function<Value, Triple>() {
+
+                @Override
+                public Triple apply(final Value v) {
+                    return propertyvalue2triple(p, v);
+                }
+            });
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**

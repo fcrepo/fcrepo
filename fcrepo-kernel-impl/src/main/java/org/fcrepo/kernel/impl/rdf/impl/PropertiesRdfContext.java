@@ -21,7 +21,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.property2values;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,7 +32,6 @@ import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
-import org.fcrepo.kernel.impl.rdf.impl.mappings.ZippingIterator;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.slf4j.Logger;
 
@@ -112,17 +110,10 @@ public class PropertiesRdfContext extends NodeRdfContext {
     private Iterator<Triple> triplesFromProperties(final javax.jcr.Node n)
         throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
-        final UnmodifiableIterator<Property> nonBinaryProperties =
+        final UnmodifiableIterator<Property> properties =
             Iterators.filter(new PropertyIterator(n.getProperties()), not(isInternalProperty));
 
-        final UnmodifiableIterator<Property> nonBinaryPropertiesCopy =
-            Iterators.filter(new PropertyIterator(n.getProperties()), not(isInternalProperty));
-
-        return Iterators.concat(new ZippingIterator<>(
-                Iterators.transform(
-                    nonBinaryProperties, property2values),
-                Iterators.transform(
-                    nonBinaryPropertiesCopy, property2triple)));
+        return Iterators.concat(Iterators.transform(properties, property2triple));
 
     }
 
