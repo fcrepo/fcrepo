@@ -56,6 +56,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
@@ -312,9 +313,13 @@ public class JcrRdfTools {
         if (data.isURIResource()
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
-            final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromSubject(data.asResource()));
-            return valueFactory.createValue(nodeFromGraphSubject,
-                    type == WEAKREFERENCE);
+            try {
+                final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromSubject(data.asResource()));
+                return valueFactory.createValue(nodeFromGraphSubject,
+                        type == WEAKREFERENCE);
+            } catch (final RepositoryException e) {
+                throw new MalformedRdfException("Unable to find referenced node", e);
+            }
         } else if (!data.isURIResource() && (type == REFERENCE || type == WEAKREFERENCE)) {
             throw new ValueFormatException("Reference properties can only refer to URIs, not literals");
         } else if (data.isURIResource() || type == URI) {
@@ -609,7 +614,7 @@ public class JcrRdfTools {
 
         if (isManagedPredicate.apply(predicate)) {
 
-            throw new MalformedRdfException("Could not persist triple containing predicate "
+            throw new ServerManagedPropertyException("Could not persist triple containing predicate "
                     + predicate.toString()
                     + " to node "
                     + node.getPath());
@@ -683,7 +688,7 @@ public class JcrRdfTools {
 
         if (isManagedPredicate.apply(predicate)) {
 
-            throw new MalformedRdfException("Could not persist triple containing predicate "
+            throw new ServerManagedPropertyException("Could not remove triple containing predicate "
                     + predicate.toString()
                     + " to node "
                     + node.getPath());

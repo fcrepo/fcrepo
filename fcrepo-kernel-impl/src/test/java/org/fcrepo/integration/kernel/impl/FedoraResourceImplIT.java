@@ -57,6 +57,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
@@ -516,6 +517,25 @@ public class FedoraResourceImplIT extends AbstractIT {
                 .getType());
         assertEquals(0L, object.getNode().getProperty("example:int-property")
                 .getValues()[0].getLong());
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testAddMissingReference() throws RepositoryException {
+        final FedoraResource object =
+                objectService.findOrCreateObject(session, "/testRefObject");
+
+        final Dataset propertiesDataset =
+                object.getPropertiesDataset(subjects, 0, -2);
+
+        logger.debug(propertiesDataset.toString());
+
+        object.updatePropertiesDataset(
+                subjects,
+                "PREFIX example: <http://example.org/>\n"
+                        + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
+                        + "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>\n"
+                        + "INSERT { <> fedorarelsext:isPartOf <" + subjects.getSubject("/some-path") + ">}"
+                        + "WHERE { }");
     }
 
     @Test
