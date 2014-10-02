@@ -87,7 +87,7 @@ public final class RdfLexicon {
      * The namespaces that the repository manages internally.
      */
     public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
-            REPOSITORY_NAMESPACE, JCR_NAMESPACE, LDP_NAMESPACE);
+            REPOSITORY_NAMESPACE, JCR_NAMESPACE);
 
     /**
      * Is this namespace one that the repository manages?
@@ -207,8 +207,7 @@ public final class RdfLexicon {
         createProperty(LDP_NAMESPACE + "NonRDFSource");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
-            FIRST_PAGE, NEXT_PAGE, MEMBERSHIP_RESOURCE,
-            HAS_MEMBER_RELATION, CONTAINS);
+            FIRST_PAGE, NEXT_PAGE, CONTAINS);
     public static final Set<Resource> ldpResources = of(CONTAINER,
             DIRECT_CONTAINER);
 

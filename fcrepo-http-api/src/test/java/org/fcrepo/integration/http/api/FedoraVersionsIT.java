@@ -25,6 +25,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
@@ -621,6 +622,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     private GraphStore getContent(final String url) throws IOException {
         final HttpGet getVersion = new HttpGet(url);
+        getVersion.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINS.toString() + "\"");
         return getGraphStore(getVersion);
     }
 

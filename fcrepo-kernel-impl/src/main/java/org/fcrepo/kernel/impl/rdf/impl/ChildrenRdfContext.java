@@ -33,7 +33,6 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -83,7 +82,6 @@ public class ChildrenRdfContext extends NodeRdfContext {
                     final RdfStream childStream = new RdfStream();
 
                     childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
-                    childStream.concat(create(subject(), HAS_CHILD.asNode(), childSubject));
 
                     return childStream;
                 } catch (final RepositoryException e) {

@@ -30,7 +30,6 @@ import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
@@ -266,7 +265,6 @@ public class JcrRdfTools {
         switch (predicate.getNameSpace()) {
             case REPOSITORY_NAMESPACE:
             case JCR_NAMESPACE:
-            case LDP_NAMESPACE:
                 return true;
             default:
                 return false;

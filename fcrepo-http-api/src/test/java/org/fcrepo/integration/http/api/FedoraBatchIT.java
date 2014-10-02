@@ -25,6 +25,7 @@ import static junit.framework.TestCase.assertFalse;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -93,6 +94,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
 
         final HttpGet getDSesMethod =
             new HttpGet(serverAddress + pid);
+        getDSesMethod.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINS.toString() + "\"");
         final GraphStore result = getGraphStore(getDSesMethod);
 
         final String subjectURI = serverAddress + pid;
