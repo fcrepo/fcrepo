@@ -280,8 +280,14 @@ public class FedoraLdp extends ContentExposingResource {
                     final Model inputModel = createDefaultModel()
                             .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
 
-                    resource.replaceProperties(translator(), inputModel,
-                            getTriples(resource, PropertiesRdfContext.class));
+                    final RdfStream resourceTriples;
+
+                    if (resource.isNew()) {
+                        resourceTriples = new RdfStream();
+                    } else {
+                        resourceTriples = getResourceTriples();
+                    }
+                    resource.replaceProperties(translator(), inputModel, resourceTriples);
                 } else if (resource instanceof FedoraBinary) {
                     final URI checksumURI = checksumURI(checksum);
                     final String originalFileName
