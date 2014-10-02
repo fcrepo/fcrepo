@@ -17,7 +17,6 @@ package org.fcrepo.http.api.url;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_SERVICE;
@@ -34,6 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;

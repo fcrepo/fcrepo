@@ -18,11 +18,11 @@ package org.fcrepo.http.api;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
