@@ -36,12 +36,14 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.FedoraObjectImpl;
+import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -160,6 +162,8 @@ public abstract class ContentExposingResource extends AbstractResource {
         final RdfStream rdfStream = new RdfStream();
 
         rdfStream.concat(getTriples(PropertiesRdfContext.class));
+        rdfStream.concat(getTriples(AclRdfContext.class));
+        rdfStream.concat(getTriples(TypeRdfContext.class));
 
         if (!returnPreference.getValue().equals("minimal")) {
             final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);

@@ -1,0 +1,102 @@
+/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.rdf.impl;
+
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.security.AccessControlException;
+
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @since 10/1/14
+ */
+public class AclRdfContextTest {
+
+    @Mock
+    private Node node;
+
+    @Mock
+    private IdentifierTranslator mockGraphSubjects;
+
+    @Mock
+    private Session mockSession;
+
+    private static final Resource nodeSubject = createResource();
+    private String path = "/path/to/node";
+
+    @Before
+    public void setUp() throws RepositoryException {
+        initMocks(this);
+
+        // read-only node mocks
+        when(node.getSession()).thenReturn(mockSession);
+        when(node.getPath()).thenReturn(path);
+        when(mockGraphSubjects.getSubject(path)).thenReturn(nodeSubject);
+    }
+
+    @Test
+    public void testWritableNode() throws RepositoryException {
+        final Model actual = new AclRdfContext(node, mockGraphSubjects).asModel();
+        final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
+        assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanTrue));
+    }
+
+    @Test
+    public void testReadOnlyNode() throws RepositoryException, IOException {
+
+        doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
+                eq(path), eq("add_node,set_property,remove"));
+        final Model actual = new AclRdfContext(node, mockGraphSubjects).asModel();
+        logRdf("Constructed RDF: ", actual);
+        final Literal booleanFalse = actual.createTypedLiteral(false, XSDboolean);
+        assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanFalse));
+    }
+
+    private static void logRdf(final String message, final Model model) throws IOException {
+        LOGGER.debug(message);
+        try (Writer w = new StringWriter()) {
+            model.write(w);
+            LOGGER.debug("\n" + w.toString());
+        }
+    }
+
+    private static final Logger LOGGER = getLogger(AclRdfContextTest.class);
+
+
+}
