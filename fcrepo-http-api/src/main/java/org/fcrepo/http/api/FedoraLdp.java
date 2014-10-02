@@ -451,6 +451,10 @@ public class FedoraLdp extends ContentExposingResource {
                             checksumURI,
                             originalFileName,
                             datastreamService.getStoragePolicyDecisionPoint());
+
+                    final URI descriptionUri = getUri(((FedoraBinary) result).getDescription());
+                    servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\";"
+                            + " anchor=\"" + location + "\"");
                 }
             }
 
