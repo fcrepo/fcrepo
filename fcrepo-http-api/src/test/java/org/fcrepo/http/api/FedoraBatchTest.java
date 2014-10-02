@@ -35,7 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.IOException;
 import java.io.InputStream;
