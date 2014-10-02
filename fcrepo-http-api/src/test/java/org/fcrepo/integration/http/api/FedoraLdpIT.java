@@ -400,11 +400,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObject(pid);
 
         final String subjectURI = serverAddress + pid;
+
+        final String initialContent = EntityUtils.toString(execute(new HttpGet(subjectURI)).getEntity());
+
         final HttpPut replaceMethod = new HttpPut(subjectURI);
         replaceMethod.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
+                (initialContent + "\n<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
                         .getBytes()));
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
