@@ -280,7 +280,7 @@ public class NodeTypeRdfContextTest {
         }
     }
 
-    private static final Logger LOGGER = getLogger(NodeRdfContextTest.class);
+    private static final Logger LOGGER = getLogger(NodeTypeRdfContextTest.class);
 
 
 }
