@@ -15,24 +15,24 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.status;
 
 /**
  * @author cabeer
- * @since 9/30/14
+ * @since 10/1/14
  */
 @Provider
-public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdfException> {
+public class ServerManagedPropertyExceptionMapper implements ExceptionMapper<ServerManagedPropertyException> {
 
     @Override
-    public Response toResponse(final MalformedRdfException e) {
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+    public Response toResponse(final ServerManagedPropertyException e) {
+        return status(CONFLICT).entity(e.getMessage()).build();
     }
 }
