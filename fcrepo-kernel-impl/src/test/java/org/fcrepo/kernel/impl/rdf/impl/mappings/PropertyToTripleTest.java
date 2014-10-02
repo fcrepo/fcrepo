@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
-import static com.google.common.collect.Iterators.singletonIterator;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -51,7 +50,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -77,10 +75,7 @@ public class PropertyToTripleTest {
         when(mockValue.getType()).thenReturn(STRING);
         when(mockValue2.getString()).thenReturn(TEST_VALUE);
         when(mockValue2.getType()).thenReturn(STRING);
-        final Function<Iterator<Value>, Iterator<Triple>> mapping =
-            testPropertyToTriple.apply(mockProperty);
-        final Iterator<Triple> ts =
-            mapping.apply(twoValueIterator(mockValue, mockValue2));
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
         final Triple t1 = ts.next();
         LOGGER.debug("Constructed triple: {}", t1);
         final Triple t2 = ts.next();
@@ -110,9 +105,8 @@ public class PropertyToTripleTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn(TEST_NODE_PATH);
         when(mockValue.getType()).thenReturn(PATH);
-        final Function<Iterator<Value>, Iterator<Triple>> mapping =
-            testPropertyToTriple.apply(mockProperty);
-        final Triple t = mapping.apply(singletonIterator(mockValue)).next();
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Triple t = ts.next();
         LOGGER.debug("Constructed triple: {}", t);
         assertEquals("Got wrong RDF object!", TEST_NODE_SUBJECT.asNode(), t
                 .getObject());
@@ -261,10 +255,7 @@ public class PropertyToTripleTest {
         when(mockValue.getType()).thenReturn(PATH);
         when(mockValue2.getString()).thenReturn(TEST_NODE_PATH);
         when(mockValue2.getType()).thenReturn(PATH);
-        final Function<Iterator<Value>, Iterator<Triple>> mapping =
-            testPropertyToTriple.apply(mockProperty);
-        final Iterator<Triple> ts =
-            mapping.apply(twoValueIterator(mockValue, mockValue2));
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
         final Triple t1 = ts.next();
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
@@ -306,10 +297,7 @@ public class PropertyToTripleTest {
         when(mockSession.getNodeByIdentifier(TEST_NODE_PATH)).thenReturn(
                 mockNode);
 
-        final Function<Iterator<Value>, Iterator<Triple>> mapping =
-            testPropertyToTriple.apply(mockProperty);
-        final Iterator<Triple> ts =
-            mapping.apply(twoValueIterator(mockValue, mockValue2));
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
         final Triple t1 = ts.next();
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
@@ -349,9 +337,8 @@ public class PropertyToTripleTest {
 
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        final Function<Iterator<Value>, Iterator<Triple>> mapping =
-            testPropertyToTriple.apply(mockProperty);
-        final Triple t = mapping.apply(singletonIterator(mockValue)).next();
+        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Triple t = ts.next();
         LOGGER.debug("Constructed triple: {}", t);
         return t;
     }
