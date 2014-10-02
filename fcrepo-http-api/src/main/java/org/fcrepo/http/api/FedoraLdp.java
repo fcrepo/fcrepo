@@ -451,6 +451,10 @@ public class FedoraLdp extends ContentExposingResource {
                             checksumURI,
                             originalFileName,
                             datastreamService.getStoragePolicyDecisionPoint());
+
+                    final URI descriptionUri = getUri(((FedoraBinary) result).getDescription());
+                    servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\";"
+                            + " anchor=\"" + location + "\"");
                 }
             }
 
@@ -483,21 +487,13 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     protected void addResourceHttpHeaders(final FedoraResource resource) {
+        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
 
         if (resource instanceof Datastream) {
-            final URI binaryUri = getUri(((Datastream) resource).getBinary());
-            servletResponse.addHeader("Link", "<" + binaryUri + ">;rel=\"describes\"");
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
             servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
-
         } else if (resource instanceof FedoraBinary) {
-            final URI descriptionUri = getUri(((FedoraBinary) resource).getDescription());
-            servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\"");
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
             servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
-
         } else if (resource instanceof FedoraObject) {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
             servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
         }
 
@@ -545,6 +541,17 @@ public class FedoraLdp extends ContentExposingResource {
                     + "," + contentTypeSPARQLUpdate);
         } else {
             options = "";
+        }
+
+        final FedoraResource resource = resource();
+
+
+        if (resource instanceof Datastream) {
+            final URI binaryUri = getUri(((Datastream) resource).getBinary());
+            servletResponse.addHeader("Link", "<" + binaryUri + ">;rel=\"describes\"");
+        } else if (resource instanceof FedoraBinary) {
+            final URI descriptionUri = getUri(((FedoraBinary) resource).getDescription());
+            servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\"");
         }
 
         servletResponse.addHeader("Allow", options);
