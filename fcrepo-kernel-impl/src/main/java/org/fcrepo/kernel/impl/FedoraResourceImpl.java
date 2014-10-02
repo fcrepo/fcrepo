@@ -55,10 +55,12 @@ import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
@@ -253,7 +255,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     PropertiesRdfContext.class,
                     ParentRdfContext.class,
                     ChildrenRdfContext.class,
-                    ContainerRdfContext.class));
+                    ContainerRdfContext.class,
+                    AclRdfContext.class,
+                    TypeRdfContext.class));
 
             final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
 
