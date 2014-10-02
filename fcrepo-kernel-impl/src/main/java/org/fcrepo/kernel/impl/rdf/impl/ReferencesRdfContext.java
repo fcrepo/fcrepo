@@ -19,7 +19,6 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
-import org.fcrepo.kernel.impl.rdf.impl.mappings.ZippingIterator;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -28,8 +27,6 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
-
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.property2values;
 
 /**
  * Accumulate inbound references to a given node
@@ -61,28 +58,14 @@ public class ReferencesRdfContext extends RdfStream {
     private Iterator<Triple> putWeakReferencePropertiesIntoContext() throws RepositoryException {
         final Iterator<Property> properties = new PropertyIterator(node.getWeakReferences());
 
-        final Iterator<Property> propertiesCopy = new PropertyIterator(node.getWeakReferences());
-
-        return zipPropertiesToTriples(properties, propertiesCopy);
-
+        return Iterators.concat(Iterators.transform(properties, property2triple));
     }
 
     private Iterator<Triple> putStrongReferencePropertiesIntoContext() throws RepositoryException {
         final Iterator<Property> properties = new PropertyIterator(node.getReferences());
 
-        final Iterator<Property> propertiesCopy = new PropertyIterator(node.getReferences());
-
-        return zipPropertiesToTriples(properties, propertiesCopy);
+        return Iterators.concat(Iterators.transform(properties, property2triple));
 
     }
 
-    private Iterator<Triple> zipPropertiesToTriples(final Iterator<Property> propertyIterator,
-                                                    final Iterator<Property> propertyIteratorCopy) {
-        return Iterators.concat(
-            new ZippingIterator<>(
-                Iterators.transform(propertyIterator, property2values),
-                Iterators.transform(propertyIteratorCopy, property2triple)
-            )
-        );
-    }
 }
