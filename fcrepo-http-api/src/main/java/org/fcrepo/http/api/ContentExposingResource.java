@@ -134,8 +134,6 @@ public abstract class ContentExposingResource extends AbstractResource {
 
         } else {
 
-            rdfStream.concat(getTriples(PropertiesRdfContext.class));
-
             final PreferTag returnPreference;
 
             if (prefer != null && prefer.hasReturn()) {
@@ -144,48 +142,64 @@ public abstract class ContentExposingResource extends AbstractResource {
                 returnPreference = new PreferTag("");
             }
 
-            if (!returnPreference.getValue().equals("minimal")) {
-                final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
+            rdfStream.concat(getResourceTriples(returnPreference));
 
-                if (ldpPreferences.prefersReferences()) {
-                    rdfStream.concat(getTriples(ReferencesRdfContext.class));
-                }
-
-                rdfStream.concat(getTriples(ParentRdfContext.class));
-
-                if (ldpPreferences.prefersContainment()) {
-                    rdfStream.concat(getTriples(ChildrenRdfContext.class));
-                }
-
-                if (ldpPreferences.prefersMembership()) {
-                    rdfStream.concat(getTriples(LdpContainerRdfContext.class));
-                }
-
-                if (ldpPreferences.prefersEmbed()) {
-
-                    final Iterator<FedoraResource> children = resource().getChildren();
-
-                    rdfStream.concat(concat(transform(children,
-                            new Function<FedoraResource, RdfStream>() {
-
-                                @Override
-                                public RdfStream apply(final FedoraResource child) {
-                                    return child.getTriples(translator(), PropertiesRdfContext.class);
-                                }
-                            })));
-
-                }
-
-                rdfStream.concat(getTriples(ContainerRdfContext.class));
-            }
             returnPreference.addResponseHeaders(servletResponse);
 
 
-            addResponseInformationToStream(resource(), rdfStream, uriInfo,
-                    translator());
         }
 
         return Response.ok(rdfStream).build();
+    }
+
+    protected RdfStream getResourceTriples() {
+        return getResourceTriples(new PreferTag(""));
+    }
+
+    protected RdfStream getResourceTriples(final PreferTag returnPreference) {
+        final RdfStream rdfStream = new RdfStream();
+
+        rdfStream.concat(getTriples(PropertiesRdfContext.class));
+
+        if (!returnPreference.getValue().equals("minimal")) {
+            final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
+
+            if (ldpPreferences.prefersReferences()) {
+                rdfStream.concat(getTriples(ReferencesRdfContext.class));
+            }
+
+            rdfStream.concat(getTriples(ParentRdfContext.class));
+
+            if (ldpPreferences.prefersContainment()) {
+                rdfStream.concat(getTriples(ChildrenRdfContext.class));
+            }
+
+            if (ldpPreferences.prefersMembership()) {
+                rdfStream.concat(getTriples(LdpContainerRdfContext.class));
+            }
+
+            if (ldpPreferences.prefersEmbed()) {
+
+                final Iterator<FedoraResource> children = resource().getChildren();
+
+                rdfStream.concat(concat(transform(children,
+                        new Function<FedoraResource, RdfStream>() {
+
+                            @Override
+                            public RdfStream apply(final FedoraResource child) {
+                                return child.getTriples(translator(), PropertiesRdfContext.class);
+                            }
+                        })));
+
+            }
+
+            rdfStream.concat(getTriples(ContainerRdfContext.class));
+        }
+
+        addResponseInformationToStream(resource(), rdfStream, uriInfo,
+                translator());
+
+        return rdfStream;
     }
 
     /**
