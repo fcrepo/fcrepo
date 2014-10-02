@@ -321,7 +321,8 @@ public abstract class ContentExposingResource extends AbstractResource {
     protected FedoraResource getResourceFromPath() {
         final FedoraResource resource;
         try {
-            final boolean metadata = pathList().get(pathList().size() - 1).getPath().equals("fcr:metadata");
+            final boolean metadata = pathList() != null
+                    && pathList().get(pathList().size() - 1).getPath().equals("fcr:metadata");
 
             final Node node = session().getNode(path());
 
