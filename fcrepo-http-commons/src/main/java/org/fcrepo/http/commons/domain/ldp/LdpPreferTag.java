@@ -61,11 +61,11 @@ public class LdpPreferTag extends PreferTag {
 
         preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer");
 
-        membership = includes.contains(LDP_NAMESPACE + "PreferMembership") ||
-                !omits.contains(LDP_NAMESPACE + "PreferMembership");
+        membership = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferMembership")) ||
+                includes.contains(LDP_NAMESPACE + "PreferMembership");
 
-        containment = includes.contains(LDP_NAMESPACE + "PreferMembership") ||
-                !omits.contains(LDP_NAMESPACE + "PreferContainment");
+        containment = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferContainment")) ||
+                includes.contains(LDP_NAMESPACE + "PreferContainment");
 
         references = !omits.contains(INBOUND_REFERENCES.toString());
 
@@ -76,14 +76,14 @@ public class LdpPreferTag extends PreferTag {
      * @return Whether this prefer tag demands membership triples.
      */
     public boolean prefersMembership() {
-        return !preferMinimalContainer && membership;
+        return membership;
     }
 
     /**
      * @return Whether this prefer tag demands containment triples.
      */
     public boolean prefersContainment() {
-        return !preferMinimalContainer && containment;
+        return containment;
     }
 
     /**
