@@ -16,35 +16,32 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.security.AccessControlException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.modeshape.jcr.value.ValueFormatException;
 import org.slf4j.Logger;
 
 /**
- * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
+ * Translate Modeshape jcr ValueFormatException to HTTP 400 Bad Request
  *
  * @author lsitu
- * @author awoods
- * @author gregjan
  */
 @Provider
-public class AccessControlExceptionMapper implements
-        ExceptionMapper<AccessControlException> {
+public class ValueFormatExceptionMapper implements
+        ExceptionMapper<ValueFormatException> {
 
     private static final Logger LOGGER =
-        getLogger(AccessControlExceptionMapper.class);
+        getLogger(ValueFormatExceptionMapper.class);
 
     @Override
-    public Response toResponse(final AccessControlException e) {
-        LOGGER.debug("AccessControlExceptionMapper intercepted exception: \n",
-                        e);
-
-        return status(FORBIDDEN).build();
+    public Response toResponse(final ValueFormatException e) {
+        LOGGER.debug(
+                "ValueFormatException intercepted by ValueFormatExceptionMapper: \n", e);
+        return status(BAD_REQUEST).build();
     }
 }

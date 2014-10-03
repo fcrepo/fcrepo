@@ -16,35 +16,32 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.security.AccessControlException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.modeshape.jcr.cache.DocumentStoreException;
 import org.slf4j.Logger;
 
 /**
- * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
+ * Translate Modeshape jcr DocumentStoreException to HTTP 500 Internal Server Error
  *
  * @author lsitu
- * @author awoods
- * @author gregjan
  */
 @Provider
-public class AccessControlExceptionMapper implements
-        ExceptionMapper<AccessControlException> {
+public class DocumentStoreExceptionMapper implements
+        ExceptionMapper<DocumentStoreException> {
 
     private static final Logger LOGGER =
-        getLogger(AccessControlExceptionMapper.class);
+        getLogger(DocumentStoreExceptionMapper.class);
 
     @Override
-    public Response toResponse(final AccessControlException e) {
-        LOGGER.debug("AccessControlExceptionMapper intercepted exception: \n",
-                        e);
-
-        return status(FORBIDDEN).build();
+    public Response toResponse(final DocumentStoreException e) {
+        LOGGER.debug(
+                "DocumentStoreException intercepted by DocumentStoreExceptionMapper: \n", e);
+        return status(INTERNAL_SERVER_ERROR).build();
     }
 }

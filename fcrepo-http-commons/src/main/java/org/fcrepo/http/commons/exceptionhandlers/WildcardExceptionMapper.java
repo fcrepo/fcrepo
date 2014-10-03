@@ -57,12 +57,6 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
             return ((WebApplicationException) e).getResponse();
         }
 
-        if (java.security.AccessControlException.class.isAssignableFrom(e
-                .getClass())) {
-            return new AccessControlExceptionMapper()
-                    .toResponse((java.security.AccessControlException) e);
-        }
-
         if (javax.jcr.AccessDeniedException.class.isAssignableFrom(e.getClass())) {
             return new AccessDeniedExceptionMapper()
                     .toResponse((javax.jcr.AccessDeniedException) e);

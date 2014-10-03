@@ -16,35 +16,32 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.security.AccessControlException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.modeshape.jcr.cache.NodeNotFoundException;
 import org.slf4j.Logger;
 
 /**
- * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
+ * Translate Modeshape jcr NodeNotFoundException to HTTP 404 Not Found
  *
  * @author lsitu
- * @author awoods
- * @author gregjan
  */
 @Provider
-public class AccessControlExceptionMapper implements
-        ExceptionMapper<AccessControlException> {
+public class NodeNotFoundExceptionMapper implements
+        ExceptionMapper<NodeNotFoundException> {
 
     private static final Logger LOGGER =
-        getLogger(AccessControlExceptionMapper.class);
+        getLogger(NodeNotFoundExceptionMapper.class);
 
     @Override
-    public Response toResponse(final AccessControlException e) {
-        LOGGER.debug("AccessControlExceptionMapper intercepted exception: \n",
-                        e);
-
-        return status(FORBIDDEN).build();
+    public Response toResponse(final NodeNotFoundException e) {
+        LOGGER.debug(
+                "NodeNotFoundException intercepted by NodeNotFoundExceptionMapper: \n", e);
+        return status(NOT_FOUND).build();
     }
 }
