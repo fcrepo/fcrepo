@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 
@@ -36,6 +37,7 @@ import org.fcrepo.kernel.utils.iterators.VersionIterator;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
+import org.slf4j.Logger;
 
 
 /**
@@ -54,6 +56,8 @@ public class VersionsRdfContext extends RdfStream {
     private final IdentifierTranslator graphSubjects;
 
     private final com.hp.hpl.jena.graph.Node subject;
+
+    private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
     /**
      * Ordinary constructor.
@@ -74,8 +78,22 @@ public class VersionsRdfContext extends RdfStream {
     }
 
     private Iterator<Triple> versionTriples() throws RepositoryException {
-        return Iterators.concat(Iterators.transform(new VersionIterator(versionHistory
-                .getAllVersions()), version2triples));
+        VersionIterator it = new VersionIterator(versionHistory
+                .getAllVersions());
+        /* jcr:rootVersion should be the first returned version: remove it.
+           unless, it's not, or we have tests elsewhere in the codebase that rely on jcr:rootVersion being present
+        */
+        if (it.hasNext()) {
+            final Version version = it.next();
+            final String versionName = version.getName();
+            if (!versionName.equalsIgnoreCase(versionHistory.getRootVersion().getName()) || !it.hasNext()) {
+                it =  new VersionIterator(versionHistory
+                        .getAllVersions());
+            } else {
+                LOGGER.trace("Skipped version={} from triples", versionName);
+            }
+        }
+        return Iterators.concat(Iterators.transform(it, version2triples));
     }
 
     private Function<Version, Iterator<Triple>> version2triples =
