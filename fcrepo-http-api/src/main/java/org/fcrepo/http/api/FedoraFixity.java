@@ -42,6 +42,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
@@ -73,6 +74,7 @@ public class FedoraFixity extends AbstractResource {
      */
     @GET
     @Timed
+    @HtmlTemplate(value = "fcr:fixity")
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream getDatastreamFixity(@PathParam("path")
