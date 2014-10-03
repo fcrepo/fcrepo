@@ -15,11 +15,9 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.security.AccessControlException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -27,24 +25,21 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 
 /**
- * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
+ * Handle Jersey WebApplicationException
  *
  * @author lsitu
- * @author awoods
- * @author gregjan
  */
 @Provider
-public class AccessControlExceptionMapper implements
-        ExceptionMapper<AccessControlException> {
+public class WebApplicationExceptionMapper implements
+        ExceptionMapper<WebApplicationException> {
 
     private static final Logger LOGGER =
-        getLogger(AccessControlExceptionMapper.class);
+        getLogger(WebApplicationExceptionMapper.class);
 
     @Override
-    public Response toResponse(final AccessControlException e) {
-        LOGGER.debug("AccessControlExceptionMapper intercepted exception: \n",
-                        e);
-
-        return status(FORBIDDEN).build();
+    public Response toResponse(final WebApplicationException e) {
+        LOGGER.debug(
+                "WebApplicationException intercepted by WebApplicationExceptionMapper: \n", e);
+        return e.getResponse();
     }
 }

@@ -21,13 +21,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.lock.LockException;
-import javax.jcr.security.AccessControlException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-
-import org.codehaus.jackson.JsonParseException;
 
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.slf4j.Logger;
@@ -35,6 +31,7 @@ import org.slf4j.Logger;
 /**
  * Catch all the exceptions!
  *
+ * @author lsitu
  * @author awoods
  * @author cbeer
  * @author fasseg
@@ -50,28 +47,6 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(final Exception e) {
 
-        if (WebApplicationException.class.isAssignableFrom(e.getClass())) {
-            LOGGER.debug(
-                            "WebApplicationException intercepted by WildcardExceptionMapper: \n",
-                            e);
-            return ((WebApplicationException) e).getResponse();
-        }
-
-        if (java.security.AccessControlException.class.isAssignableFrom(e
-                .getClass())) {
-            return new AccessControlExceptionMapper()
-                    .toResponse((java.security.AccessControlException) e);
-        }
-
-        if (javax.jcr.AccessDeniedException.class.isAssignableFrom(e.getClass())) {
-            return new AccessDeniedExceptionMapper()
-                    .toResponse((javax.jcr.AccessDeniedException) e);
-        }
-        if (AccessControlException.class.isAssignableFrom(e.getClass())) {
-            return new AccessControlExceptionMapper()
-                    .toResponse((AccessControlException) e);
-        }
-
         if (e.getCause() instanceof LockException) {
             return new LockExceptionMapper()
                     .toResponse((LockException) e.getCause());
@@ -80,10 +55,6 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
         if (e.getCause() instanceof TransactionMissingException) {
             return new TransactionMissingExceptionMapper()
                     .toResponse((TransactionMissingException) e.getCause());
-        }
-
-        if (e instanceof JsonParseException) {
-            return new JsonParseExceptionMapper().toResponse((JsonParseException)e);
         }
 
         if ( e.getCause() instanceof RepositoryException) {

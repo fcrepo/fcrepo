@@ -19,7 +19,8 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.security.AccessControlException;
+import java.security.AccessControlException;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -27,24 +28,25 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 
 /**
- * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
+ * Translate Java Security AccessControlExceptions into HTTP 403 Forbidden errors
  *
  * @author lsitu
  * @author awoods
  * @author gregjan
  */
 @Provider
-public class AccessControlExceptionMapper implements
+public class AccessControlJavaSecurityExceptionMapper implements
         ExceptionMapper<AccessControlException> {
 
     private static final Logger LOGGER =
-        getLogger(AccessControlExceptionMapper.class);
+        getLogger(AccessControlJavaSecurityExceptionMapper.class);
 
     @Override
     public Response toResponse(final AccessControlException e) {
-        LOGGER.debug("AccessControlExceptionMapper intercepted exception: \n",
+        LOGGER.debug("AccessControlJavaSecurityExceptionMapper intercepted exception: \n",
                         e);
 
         return status(FORBIDDEN).build();
     }
+
 }

@@ -21,6 +21,7 @@ import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import javax.jcr.AccessDeniedException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author fasseg
  */
+@Provider
 public class AccessDeniedExceptionMapper implements
         ExceptionMapper<AccessDeniedException> {
 
