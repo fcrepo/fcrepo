@@ -35,10 +35,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomAttr;
 import com.gargoylesoftware.htmlunit.html.DomText;
@@ -153,7 +154,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
+        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress + pid);
         assertEquals(serverAddress + pid, page1.getTitleText());
     }
 
@@ -178,7 +179,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     @Test
     public void testNodeTypes() throws IOException {
-        final HtmlPage page = webClient.getPage(serverAddress + "fcr:nodetypes");
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress + "fcr:nodetypes");
         assertTrue(page.asText().contains("fedora:object"));
     }
 
@@ -199,7 +200,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "INSERT DATA { <> fedoraconfig:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
 
-        final HtmlPage objectPage = webClient.getPage(serverAddress + pid);
+        final HtmlPage objectPage = javascriptlessWebClient.getPage(serverAddress + pid);
         assertEquals("Auto versioning should be set.", "auto-version",
                      objectPage.getFirstByXPath(
                              "//span[@property='http://fedora.info/definitions/v4/config#versioningPolicy']/text()")
@@ -216,7 +217,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         postSparqlUpdateUsingHttpClient(updateSparql2, pid);
 
         final HtmlPage versions =
-            webClient.getPage(serverAddress + pid + "/fcr:versions");
+                javascriptlessWebClient.getPage(serverAddress + pid + "/fcr:versions");
         final List<DomAttr> versionLinks =
             castList(versions.getByXPath("//a[@class='version_link']/@href"));
         assertEquals("There should be two revisions.", 2, versionLinks.size());
@@ -232,13 +233,13 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                      chronological ? "are" : "are not", labels.get(0).asText(), labels.get(1).asText());
 
         final HtmlPage firstRevision =
-            webClient.getPage(versionLinks.get(chronological ? 0 : 1)
+                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 0 : 1)
                     .getNodeValue());
         final List<DomText> v1Titles =
             castList(firstRevision
                     .getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()"));
         final HtmlPage secondRevision =
-            webClient.getPage(versionLinks.get(chronological ? 1 : 0)
+                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 1 : 0)
                     .getNodeValue());
         final List<DomText> v2Titles =
             castList(secondRevision
@@ -267,7 +268,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     public void testCreateNewObjectAndSetProperties() throws IOException {
         final String pid = createNewObject();
 
-        final HtmlPage page = webClient.getPage(serverAddress + pid);
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress + pid);
         final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_update");
         final HtmlTextArea sparql_update_query = (HtmlTextArea)page.getElementById("sparql_update_query");
         sparql_update_query.setText("INSERT { <> <info:some-predicate> 'asdf' } WHERE { }");
@@ -275,7 +276,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
+        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress + pid);
         assertTrue(page1.getElementById("metadata").asText().contains("some-predicate"));
     }
 
@@ -337,6 +338,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
         webClient.setAjaxController(new NicelyResynchronizingAjaxController());
+        //Suppress warning from IncorrectnessListener
+        webClient.setIncorrectnessListener(new SuppressWarningIncorrectnessListener());
+
+        //Suppress css warning with the silent error handler.
+        webClient.setCssErrorHandler(new SilentCssErrorHandler());
         return webClient;
 
     }
@@ -353,4 +359,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         });
     }
 
+    private static class SuppressWarningIncorrectnessListener
+            implements IncorrectnessListener {
+        @Override
+        public void notify(final String arg0, final Object arg1) {
+
+        }
+      }
 }
