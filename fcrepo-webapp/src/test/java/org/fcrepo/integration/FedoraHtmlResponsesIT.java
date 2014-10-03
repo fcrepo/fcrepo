@@ -35,6 +35,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.w3c.css.sac.CSSException;
+import org.w3c.css.sac.CSSParseException;
+import org.w3c.css.sac.ErrorHandler;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
@@ -364,6 +367,21 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
         webClient.setAjaxController(new NicelyResynchronizingAjaxController());
+        //Suppress css warning with empty error handler.
+        webClient.setCssErrorHandler(new ErrorHandler() {
+            @Override
+            public void warning(final CSSParseException ex) throws CSSException {
+            }
+
+            @Override
+            public void error(final CSSParseException ex) throws CSSException {
+            }
+
+            @Override
+            public void fatalError(final CSSParseException ex) throws CSSException {
+                logger.error("CSS fatal error", ex);
+            }
+        });
         return webClient;
 
     }
