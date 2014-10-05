@@ -24,8 +24,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
@@ -75,13 +73,8 @@ public class HierarchyConverter extends InternalIdentifierConverter {
     @Override
     protected String doBackward(final String flat) {
         log.debug("Converting incoming identifier: {}", flat);
-        String nonContentSuffixed = flat;
-        // strip content-indicating suffix
-        if (flat.endsWith(FCR_CONTENT)) {
-            nonContentSuffixed = flat.substring(0, flat.length() - (FCR_CONTENT.length()));
-        }
         final List<String> hierarchySegments = createHierarchySegments();
-        final List<String> flatSegments = asList(nonContentSuffixed.split(separator));
+        final List<String> flatSegments = asList(flat.split(separator));
         List<String> firstSegments = emptyList();
         List<String> lastSegment = emptyList();
         if (flatSegments.size() == 0) {
@@ -96,9 +89,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
             lastSegment = singletonList(flatSegments.get(0));
         }
         final Iterable<String> allSegments = concat(firstSegments, hierarchySegments, lastSegment);
-        if (flat.endsWith(FCR_CONTENT)) {
-            return on(separator).join(concat(allSegments, singletonList(JCR_CONTENT)));
-        }
+
         return on(separator).join(allSegments);
     }
 
@@ -109,12 +100,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
     @Override
     protected String doForward(final String hierarchical) {
         log.debug("Converting outgoing identifier: {}", hierarchical);
-        String nonContentSuffixed = hierarchical;
-        // strip content-indicating suffix
-        if (hierarchical.endsWith(JCR_CONTENT)) {
-            nonContentSuffixed = hierarchical.substring(0, hierarchical.length() - (JCR_CONTENT.length()));
-        }
-        final List<String> segments = asList(nonContentSuffixed.split(separator));
+        final List<String> segments = asList(hierarchical.split(separator));
         if (segments.size() <= levels) {
             // must be a root identifier
             return "";
@@ -129,9 +115,6 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         } else {
             // just the trailing non-hierarchical segment
             lastSegment = singletonList(getLast(segments));
-        }
-        if (hierarchical.endsWith(JCR_CONTENT)) {
-            return on(separator).join(concat(firstSegments, lastSegment, singletonList(FCR_CONTENT)));
         }
         return on(separator).join(concat(firstSegments, lastSegment));
     }

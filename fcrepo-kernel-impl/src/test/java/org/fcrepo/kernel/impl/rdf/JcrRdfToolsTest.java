@@ -38,7 +38,6 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator.RESOURCE_NAMESPACE;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -92,7 +91,6 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.impl.utils.FixityResultImpl;
 import org.fcrepo.kernel.impl.utils.JcrPropertyMock;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.Before;
@@ -120,7 +118,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
 
-    private IdentifierTranslator testSubjects;
+    private DefaultIdentifierTranslator testSubjects;
 
     private JcrRdfTools testObj;
 
@@ -136,7 +134,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     @Before
     public final void setUp() throws RepositoryException {
         initMocks(this);
-        testSubjects = new DefaultIdentifierTranslator();
+        testSubjects = new DefaultIdentifierTranslator(mockSession);
         testObj = new JcrRdfTools(testSubjects, mockSession);
         buildMockNodeAndSurroundings();
     }
@@ -186,7 +184,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         when(mockNode.getSession().getValueFactory()).thenReturn(
                 mockValueFactory);
 
-        RDFNode n = createResource(RESOURCE_NAMESPACE + "abc");
+        RDFNode n = testSubjects.toDomain("/abc");
 
         // node references
         when(mockSession.getNode("/abc")).thenReturn(mockNode);
@@ -198,13 +196,13 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
 
         // uris
         testObj.createValue(mockNode, n, UNDEFINED);
-        verify(mockValueFactory).createValue(RESOURCE_NAMESPACE + "abc",
+        verify(mockValueFactory).createValue(n.asResource().getURI(),
                 PropertyType.URI);
 
         // other random resources
-        n = createResource();
-        testObj.createValue(mockNode, n, 0);
-        verify(mockValueFactory).createValue(n.toString(), UNDEFINED);
+//        Resource anon = createResource();
+//        testObj.createValue(mockNode, anon, 0);
+//        verify(mockValueFactory).createValue(anon.getURI(), UNDEFINED);
 
         // undeclared types, but infer them from rdf types
 
@@ -274,8 +272,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     @Test
     public final void testJcrNodeIteratorAddsPredicatesForEachNode()
         throws RepositoryException {
-        final Resource mockResource =
-            createResource(RESOURCE_NAMESPACE + "search/resource");
+        final Resource mockResource = testSubjects.toDomain("search/resource");
         when(mockProperties.hasNext()).thenReturn(false);
         when(mockNode1.getProperties()).thenReturn(mockProperties);
         when(mockNode1.getSession()).thenReturn(mockSession);
@@ -318,7 +315,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
             testObj.getJcrTriples(mockNode, mockBlobs, new URI(testFixityUri), 0L).asModel();
 
         logRDF(fixityResultsModel);
-        assertTrue(fixityResultsModel.contains(createResource(RESOURCE_NAMESPACE + "test/jcr"),
+        assertTrue(fixityResultsModel.contains(testSubjects.toDomain("/test/jcr"),
                                                   HAS_FIXITY_RESULT,
                                                   (RDFNode)null));
         assertTrue(fixityResultsModel.contains(null, HAS_MESSAGE_DIGEST,
@@ -487,9 +484,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
 
     @Mock
     private NamespaceRegistry mockNsRegistry;
-
-    @Mock
-    private IdentifierTranslator mockFactory;
 
     @Mock
     private Resource mockSubject;

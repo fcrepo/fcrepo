@@ -33,8 +33,10 @@ import java.net.URISyntaxException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,6 +76,9 @@ public class FedoraIdentifiersTest {
         setField(testObj, "uriInfo", uriInfo);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
+
+        setField(testObj, "identifierTranslator",
+                new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
 
     }
 

@@ -66,7 +66,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
@@ -249,13 +248,10 @@ public class FedoraBatch extends ContentExposingResource {
                 switch (realContentDisposition) {
                     case INLINE:
 
-                        final HttpIdentifierTranslator subjects =
-                            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
                         final FedoraResource resource = objectService.findOrCreateObject(session, objPath);
 
                         if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                            resource.updatePropertiesDataset(subjects, IOUtils.toString(src));
+                            resource.updatePropertiesDataset(translator(), IOUtils.toString(src));
                         } else if (contentTypeToLang(contentTypeString) != null) {
                             final Lang lang = contentTypeToLang(contentTypeString);
 
@@ -263,7 +259,8 @@ public class FedoraBatch extends ContentExposingResource {
 
                             final Model inputModel =
                                 createDefaultModel().read(src,
-                                        subjects.getSubject(resource.getPath()).toString(), format);
+                                        translator().reverse().convert(resource.getNode()).toString(),
+                                        format);
 
                             final RdfStream resourceTriples;
 
@@ -272,7 +269,7 @@ public class FedoraBatch extends ContentExposingResource {
                             } else {
                                 resourceTriples = getResourceTriples();
                             }
-                            resource.replaceProperties(subjects, inputModel, resourceTriples);
+                            resource.replaceProperties(translator(), inputModel, resourceTriples);
                         } else {
                             throw new WebApplicationException(notAcceptable(null)
                                 .entity("Invalid Content Type " + contentTypeString).build());
@@ -325,10 +322,7 @@ public class FedoraBatch extends ContentExposingResource {
                 throw new RepositoryRuntimeException(e);
             }
 
-            final HttpIdentifierTranslator subjects =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-            return created(new URI(subjects.getSubject(path).getURI())).build();
+            return created(new URI(path)).build();
 
         } finally {
             session.logout();
@@ -444,7 +438,7 @@ public class FedoraBatch extends ContentExposingResource {
     }
 
     @Override
-    Session session() {
+    protected Session session() {
         return session;
     }
 

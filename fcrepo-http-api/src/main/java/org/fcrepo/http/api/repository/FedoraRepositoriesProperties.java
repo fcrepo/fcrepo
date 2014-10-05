@@ -33,11 +33,12 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.http.api.FedoraNodes;
+import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -82,9 +83,11 @@ public class FedoraRepositoriesProperties extends AbstractResource {
                 final FedoraResource result =
                     nodeService.getObject(session, "/");
 
+                final UriAwareIdentifierConverter translator
+                        = new UriAwareIdentifierConverter(session, UriBuilder.fromResource(FedoraLdp.class));
+
                 final Dataset dataset =
-                    result.updatePropertiesDataset(new HttpIdentifierTranslator(
-                            session, FedoraNodes.class, uriInfo), IOUtils
+                    result.updatePropertiesDataset(translator, IOUtils
                             .toString(requestBodyStream));
                 if (dataset.containsNamedModel(PROBLEMS_MODEL_NAME)) {
                     final Model problems = dataset.getNamedModel(PROBLEMS_MODEL_NAME);

@@ -31,6 +31,9 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 //import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 //import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositorySize;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.metrics.RegistryService;
 
 import java.util.Map;
@@ -43,7 +46,6 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.JcrRepository;
 import org.slf4j.Logger;
@@ -70,7 +72,8 @@ public class RootRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public RootRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public RootRdfContext(final Node node,
+                          final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
 
         super(node, graphSubjects);
 

@@ -35,6 +35,8 @@ import java.util.Date;
 
 import static org.fcrepo.kernel.impl.DatastreamImpl.hasMixin;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -129,19 +131,17 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testHasMixin() throws RepositoryException {
-        final NodeType mockYes = mock(NodeType.class);
-        when(mockYes.getName()).thenReturn(FEDORA_DATASTREAM);
-        final NodeType mockNo = mock(NodeType.class);
-        when(mockNo.getName()).thenReturn("not" + FEDORA_DATASTREAM);
-        final NodeType[] types = new NodeType[] {mockYes};
+    public void testHasDatastreamMixin() throws RepositoryException {
         final Node test = mock(Node.class);
-        final NodeType mockPrimaryNodeType = mock(NodeType.class);
-        when(mockPrimaryNodeType.getName()).thenReturn("nt:object");
-        when(test.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(test.getMixinNodeTypes()).thenReturn(types);
-        assertEquals(true, hasMixin(test));
-        types[0] = mockNo;
-        assertEquals(false, hasMixin(test));
+        when(test.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
+        assertTrue("mockYes should have mixin", hasMixin(test));
     }
+
+    @Test
+    public void testHasNoMixin() throws RepositoryException {
+        final Node test = mock(Node.class);
+        when(test.isNodeType(FEDORA_DATASTREAM)).thenReturn(false);
+        assertFalse("mockNo should not have mixin", hasMixin(test));
+    }
+
 }

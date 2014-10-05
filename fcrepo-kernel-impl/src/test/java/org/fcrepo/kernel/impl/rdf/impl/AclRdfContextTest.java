@@ -18,7 +18,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -33,7 +33,6 @@ import java.io.Writer;
 import java.security.AccessControlException;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
@@ -51,13 +50,12 @@ public class AclRdfContextTest {
     @Mock
     private Node node;
 
-    @Mock
-    private IdentifierTranslator mockGraphSubjects;
+    private IdentifierConverter<Resource, Node> mockGraphSubjects;
 
     @Mock
     private Session mockSession;
 
-    private static final Resource nodeSubject = createResource();
+    private Resource nodeSubject;
     private String path = "/path/to/node";
 
     @Before
@@ -67,7 +65,8 @@ public class AclRdfContextTest {
         // read-only node mocks
         when(node.getSession()).thenReturn(mockSession);
         when(node.getPath()).thenReturn(path);
-        when(mockGraphSubjects.getSubject(path)).thenReturn(nodeSubject);
+        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        nodeSubject = mockGraphSubjects.reverse().convert(node);
     }
 
     @Test

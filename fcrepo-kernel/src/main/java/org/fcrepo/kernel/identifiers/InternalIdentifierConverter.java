@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.identifiers;
 
+import com.google.common.base.Converter;
+
 /**
  * Translates internal {@link String} identifiers to internal {@link String}
  * identifiers.
@@ -22,9 +24,7 @@ package org.fcrepo.kernel.identifiers;
  * @author ajs6f
  * @since Apr 1, 2014
  */
-public abstract class InternalIdentifierConverter extends IdentifierConverter<String> {
-
-    private static final InternalIdentifierConverter identity = new InternalIdentifierConverter() {};
+public abstract class InternalIdentifierConverter extends Converter<String, String> {
 
     /*
      * (non-Javadoc)
@@ -42,13 +42,6 @@ public abstract class InternalIdentifierConverter extends IdentifierConverter<St
     @Override
     protected String doBackward(final String b) {
         return b;
-    }
-
-    /**
-     * @return an identity translation
-     */
-    public static InternalIdentifierConverter identityConverter() {
-        return identity;
     }
 
 }

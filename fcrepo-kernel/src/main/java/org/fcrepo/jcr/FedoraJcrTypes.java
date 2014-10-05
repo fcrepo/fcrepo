@@ -45,8 +45,6 @@ public interface FedoraJcrTypes {
 
     String CONTENT_DIGEST = "fedora:digest";
 
-    String FCR_CONTENT = "fcr:content";
-
     String FCR_METADATA = "fcr:metadata";
 
     String FCR_VERSIONS = "fcr:versions";

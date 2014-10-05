@@ -17,9 +17,10 @@ package org.fcrepo.kernel.services;
 
 import java.io.File;
 
+import javax.jcr.Node;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.Problems;
 
@@ -52,7 +53,7 @@ public interface RepositoryService extends Service {
      * @param session
      * @return JCR namespace information as an RDF Dataset
      */
-    Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator);
+    Dataset getNamespaceRegistryDataset(final Session session, final IdentifierConverter<Resource,Node> idTranslator);
 
     /**
      * Serialize the JCR namespace information as an {@link RdfStream}
@@ -60,7 +61,7 @@ public interface RepositoryService extends Service {
      * @param session
      * @return JCR namespace information as an {@link RdfStream}
      */
-    RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator);
+    RdfStream getNamespaceRegistryStream(final Session session, final IdentifierConverter<Resource,Node> idTranslator);
 
     /**
      * Perform a full-text search on the whole repository and return the
@@ -74,8 +75,9 @@ public interface RepositoryService extends Service {
      * @param offset
      * @return full text search results as an RDF Dataset
      */
-    Dataset searchRepository(IdentifierTranslator subjectFactory, Resource searchSubject, Session session, String terms,
-            int limit, long offset);
+    Dataset searchRepository(IdentifierConverter<Resource,Node> subjectFactory,
+                             Resource searchSubject, Session session, String terms,
+                             int limit, long offset);
 
     /**
      * This method backups up a running repository

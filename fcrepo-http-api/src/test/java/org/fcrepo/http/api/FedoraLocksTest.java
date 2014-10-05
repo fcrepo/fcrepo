@@ -31,6 +31,7 @@ import java.net.URISyntaxException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Response;
 
@@ -62,6 +63,9 @@ public class FedoraLocksTest {
     @Mock
     private NodeType mockNodeType;
 
+    @Mock
+    private Workspace mockWorkspace;
+
     private Session mockSession;
 
     @Before
@@ -72,6 +76,9 @@ public class FedoraLocksTest {
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
         when(mockLock.getLockToken()).thenReturn("token");
+
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getName()).thenReturn("default");
     }
 
     @Test

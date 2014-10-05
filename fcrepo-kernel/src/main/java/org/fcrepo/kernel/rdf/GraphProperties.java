@@ -21,7 +21,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.util.Symbol;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 
 /**
@@ -53,7 +55,7 @@ public interface GraphProperties {
      * @return Dataset
      * @throws RepositoryException
      */
-    Dataset getProperties(final Node node, final IdentifierTranslator subjects,
+    Dataset getProperties(final Node node, final IdentifierConverter<Resource,Node> subjects,
             final int offset, final int limit) throws RepositoryException;
 
 }

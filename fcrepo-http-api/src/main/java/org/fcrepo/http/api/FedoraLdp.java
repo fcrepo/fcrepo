@@ -34,7 +34,6 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
@@ -72,7 +71,9 @@ import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.util.List;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -101,6 +102,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -194,7 +196,7 @@ public class FedoraLdp extends ContentExposingResource {
         addResourceHttpHeaders(resource());
 
         final RdfStream rdfStream = new RdfStream().session(session)
-                    .topic(translator().getSubject(resource().getPath()).asNode());
+                    .topic(translator().reverse().convert(resource().getNode()).asNode());
 
         return getContent(prefer, rangeValue, rdfStream);
 
@@ -306,10 +308,6 @@ public class FedoraLdp extends ContentExposingResource {
             try {
                 session.save();
                 versionService.nodeUpdated(resource.getNode());
-
-                if (resource instanceof FedoraBinary) {
-                    versionService.nodeUpdated(((FedoraBinary) resource).getDescription().getNode());
-                }
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
@@ -359,8 +357,8 @@ public class FedoraLdp extends ContentExposingResource {
                 session.save();
                 versionService.nodeUpdated(resource().getNode());
 
-                if (resource() instanceof FedoraBinary) {
-                    versionService.nodeUpdated(((FedoraBinary) resource()).getDescription().getNode());
+                if (resource() instanceof Datastream) {
+                    versionService.nodeUpdated(((Datastream) resource()).getContentNode());
                 }
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
@@ -471,10 +469,6 @@ public class FedoraLdp extends ContentExposingResource {
             try {
                 session.save();
                 versionService.nodeUpdated(result.getNode());
-
-                if (result instanceof FedoraBinary) {
-                    versionService.nodeUpdated(((FedoraBinary) result).getDescription().getNode());
-                }
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
@@ -501,15 +495,16 @@ public class FedoraLdp extends ContentExposingResource {
             servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
         }
 
-        if (!translator().isCanonical()) {
-            final IdentifierTranslator subjectsCanonical = translator().getCanonical(true);
 
-            try {
-                servletResponse.addHeader("Link",
-                        "<" + subjectsCanonical.getSubject(resource.getPath()) + ">;rel=\"canonical\"");
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
+        if (getCurrentTransactionId(session) != null) {
+            final String canonical = translator().reverse()
+                    .convert(resource.getNode())
+                    .toString()
+                    .replaceFirst("/tx:[^/]+", "");
+
+
+            servletResponse.addHeader("Link", "<" + canonical + ">;rel=\"canonical\"");
+
         }
 
         addOptionsHttpHeaders();
@@ -605,7 +600,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     @Override
-    Session session() {
+    protected Session session() {
         return session;
     }
 
@@ -658,19 +653,31 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.trace("Using external identifier {} to create new resource.", pid);
         LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
                 + pid);
-        pid = translator().getPathFromSubject(createResource(uriInfo.getBaseUri() + "/" + pid));
-        // remove leading slash left over from translation
-        pid = pid.substring(1, pid.length());
-        LOGGER.trace("Using internal identifier {} to create new resource.", pid);
-        newObjectPath = base + "/" + pid;
+        String basePath = base.substring(1);
 
-        if (nodeService.exists(session, newObjectPath)) {
+        if (!basePath.isEmpty()) {
+            basePath += "/";
+        }
+
+        final URI path1 = uriInfo.getAbsolutePathBuilder().clone().path(FedoraLdp.class)
+                .resolveTemplate("path", basePath + pid, false).build();
+
+        pid = translator().asString(createResource(path1.toString()));
+        try {
+            pid = URLDecoder.decode(pid, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // noop
+        }
+        // remove leading slash left over from translation
+        LOGGER.trace("Using internal identifier {} to create new resource.", pid);
+
+        if (nodeService.exists(session, pid)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", pid);
             return mintNewPid(base, null);
         }
 
-        assertPathMissing(newObjectPath);
-        return newObjectPath;
+        assertPathMissing(pid);
+        return pid;
     }
 
     private void assertPathMissing(final String path) {

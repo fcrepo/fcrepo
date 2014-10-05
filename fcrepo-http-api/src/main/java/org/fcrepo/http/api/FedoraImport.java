@@ -37,9 +37,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -88,14 +89,14 @@ public class FedoraImport extends AbstractResource {
         final String path = toPath(pathList);
         LOGGER.debug("Deserializing at {}", path);
 
-        final HttpIdentifierTranslator subjects =
-            new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
+        final UriAwareIdentifierConverter subjects =
+                new UriAwareIdentifierConverter(session, UriBuilder.fromResource(FedoraLdp.class));
 
         try {
             serializers.getSerializer(format)
                     .deserialize(session, path, requestBodyStream);
             session.save();
-            return created(new URI(subjects.getSubject(path).getURI())).build();
+            return created(new URI(path)).build();
         } catch ( ItemExistsException ex ) {
             return status(CONFLICT).entity("Item already exists").build();
         } catch (final RepositoryException e) {

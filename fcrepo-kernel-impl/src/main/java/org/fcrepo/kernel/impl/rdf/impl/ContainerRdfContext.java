@@ -16,7 +16,8 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -52,7 +53,8 @@ public class ContainerRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public ContainerRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public ContainerRdfContext(final Node node,
+                               final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
         super(node, graphSubjects);
 
         concat(containerContext());

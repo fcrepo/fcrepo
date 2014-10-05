@@ -50,18 +50,18 @@ import javax.jcr.version.VersionHistory;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
@@ -142,7 +142,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
                @Override
                public FedoraResource apply(final Node node) {
-                   return new FedoraResourceImpl(node);
+                   final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(node);
+
+                   if (fedoraResource.hasContent()) {
+                       return new DatastreamImpl(node).getBinary();
+                   } else {
+                       return fedoraResource;
+                   }
                }
            });
         } catch (final RepositoryException e) {
@@ -229,10 +235,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#updatePropertiesDataset
-     *     (org.fcrepo.kernel.rdf.IdentifierTranslator, java.lang.String)
+     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String)
      */
     @Override
-    public Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
+    public Dataset updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
             final String sparqlUpdateStatement) {
         final Dataset dataset = getPropertiesDataset(subjects);
         final UpdateRequest request =
@@ -244,65 +250,63 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.IdentifierTranslator, int, int)
+     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.identifiers.IdentifierConverter,
+      * int,
+      * int)
      */
     @Override
-    public Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
+    public Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> graphSubjects,
         final int offset, final int limit) {
-        try {
 
-            final RdfStream propertiesStream = getTriples(graphSubjects, ImmutableSet.of(
-                    PropertiesRdfContext.class,
-                    ParentRdfContext.class,
-                    ChildrenRdfContext.class,
-                    ContainerRdfContext.class,
-                    AclRdfContext.class,
-                    TypeRdfContext.class));
+        final RdfStream propertiesStream = getTriples(graphSubjects, ImmutableSet.of(
+                PropertiesRdfContext.class,
+                ParentRdfContext.class,
+                ChildrenRdfContext.class,
+                ContainerRdfContext.class,
+                AclRdfContext.class,
+                TypeRdfContext.class));
 
-            final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
+        final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
 
-            final Model problemsModel = createDefaultModel();
+        final Model problemsModel = createDefaultModel();
 
-            final JcrPropertyStatementListener listener =
-                    JcrPropertyStatementListener.getListener(graphSubjects, getSession(), problemsModel);
+        final JcrPropertyStatementListener listener =
+                JcrPropertyStatementListener.getListener(graphSubjects, getSession(), problemsModel);
 
-            dataset.getDefaultModel().register(listener);
+        dataset.getDefaultModel().register(listener);
 
-            dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
+        dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
 
-            dataset.getContext().set(URI_SYMBOL, graphSubjects.getSubject(getPath()));
+        dataset.getContext().set(URI_SYMBOL, graphSubjects.reverse().convert(getNode()));
 
 
-            return dataset;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return dataset;
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.IdentifierTranslator)
+     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.identifiers.IdentifierConverter)
      */
     @Override
-    public Dataset getPropertiesDataset(final IdentifierTranslator subjects) {
+    public Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> subjects) {
         return getPropertiesDataset(subjects, 0, -1);
     }
 
 
     @Override
-    public RdfStream getTriples(final IdentifierTranslator graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource,Node> graphSubjects,
                                 final Class<? extends RdfStream> context) {
         return getTriples(graphSubjects, Collections.singleton(context));
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierTranslator graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource,Node> graphSubjects,
                                 final Iterable<? extends Class<? extends RdfStream>> contexts) {
         final RdfStream stream = new RdfStream();
 
         for (final Class<? extends RdfStream> context : contexts) {
             try {
                 final Constructor<? extends RdfStream> declaredConstructor
-                        = context.getDeclaredConstructor(Node.class, IdentifierTranslator.class);
+                        = context.getDeclaredConstructor(Node.class, IdentifierConverter.class);
 
                 final RdfStream rdfStream = declaredConstructor.newInstance(node, graphSubjects);
 
@@ -373,10 +377,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#replaceProperties
-     *     (org.fcrepo.kernel.rdf.IdentifierTranslator, com.hp.hpl.jena.rdf.model.Model)
+     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
-    public RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
+    public RdfStream replaceProperties(final IdentifierConverter<Resource,Node> graphSubjects,
         final Model inputModel, final RdfStream originalTriples) {
 
         final RdfStream replacementStream = RdfStream.fromModel(inputModel);
@@ -449,13 +453,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
                 final Node frozenNode = session.getNodeByIdentifier(label);
 
-                final String baseUUID;
-
-                if (this instanceof FedoraBinary) {
-                    baseUUID = ((FedoraBinary)this).getDescription().getNode().getIdentifier();
-                } else {
-                    baseUUID = getNode().getIdentifier();
-                }
+                final String baseUUID = getNode().getIdentifier();
 
             /*
              * We found a node whose identifier is the "label" for the version.  Now

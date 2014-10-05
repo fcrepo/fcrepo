@@ -38,8 +38,10 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.Variant;
 
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
@@ -101,6 +103,9 @@ public class FedoraVersionsTest {
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+
+        setField(testObj, "identifierTranslator",
+                new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
     @Test

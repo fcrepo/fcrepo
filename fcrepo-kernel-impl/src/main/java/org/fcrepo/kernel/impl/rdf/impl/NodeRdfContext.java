@@ -20,7 +20,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -34,7 +35,7 @@ public class NodeRdfContext extends RdfStream {
 
     private final Node node;
 
-    private final IdentifierTranslator graphSubjects;
+    private final IdentifierConverter<Resource,Node> graphSubjects;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
@@ -47,11 +48,12 @@ public class NodeRdfContext extends RdfStream {
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public NodeRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public NodeRdfContext(final Node node,
+                          final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
         super();
         this.node = node;
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getSubject(node.getPath()).asNode();
+        this.subject = graphSubjects.reverse().convert(node).asNode();
     }
 
     /**
@@ -62,9 +64,9 @@ public class NodeRdfContext extends RdfStream {
     }
 
     /**
-     * @return local {@link IdentifierTranslator}
+     * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
      */
-    public IdentifierTranslator graphSubjects() {
+    public IdentifierConverter<Resource,Node> graphSubjects() {
         return graphSubjects;
     }
 

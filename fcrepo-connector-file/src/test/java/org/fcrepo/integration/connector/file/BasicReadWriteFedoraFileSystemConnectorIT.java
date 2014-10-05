@@ -16,7 +16,6 @@
 package org.fcrepo.integration.connector.file;
 
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Test;
 
@@ -69,7 +68,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
 
         // Write the properties
-        object.updatePropertiesDataset(new DefaultIdentifierTranslator(), sparql);
+        object.updatePropertiesDataset(new DefaultIdentifierTranslator(session), sparql);
 
         // Verify
         final Property property = object.getNode().getProperty("fedora:name");
@@ -94,7 +93,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                 "'some-property-to-remove' }";
 
         // Write the properties
-        final IdentifierTranslator graphSubjects = new DefaultIdentifierTranslator();
+        final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
         object.updatePropertiesDataset(graphSubjects, sparql);
 
         // Verify property exists
@@ -110,8 +109,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                 "}";
 
         // Remove the properties
-        final IdentifierTranslator graphSubjectsRemove = new DefaultIdentifierTranslator();
-        object.updatePropertiesDataset(graphSubjectsRemove, sparqlRemove);
+        object.updatePropertiesDataset(graphSubjects, sparqlRemove);
 
         // Persist the object (although the propery will be removed from memory without this.)
         session.save();

@@ -15,11 +15,9 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static java.net.URLDecoder.decode;
 import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.UnsupportedEncodingException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -27,7 +25,7 @@ import javax.jcr.Session;
 import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -58,7 +56,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private Model problems;
 
-    private final IdentifierTranslator subjects;
+    private final IdentifierConverter<Resource,Node> subjects;
 
     private final Session session;
 
@@ -72,7 +70,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @return JcrPropertyStatementListener for the given subject factory and JcrSession
      */
     public static JcrPropertyStatementListener getListener(
-            final IdentifierTranslator subjects, final Session session, final Model problemModel) {
+            final IdentifierConverter<Resource,Node> subjects, final Session session, final Model problemModel) {
         return new JcrPropertyStatementListener(subjects,
                 session,
                 problemModel,
@@ -87,7 +85,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @return JcrPropertyStatementListener for the given subject factory and JcrSession
      */
     @VisibleForTesting
-    public static JcrPropertyStatementListener getListener(final IdentifierTranslator subjects,
+    public static JcrPropertyStatementListener getListener(final IdentifierConverter<Resource,Node> subjects,
                                                            final Session session,
                                                            final Model problemModel,
                                                            final JcrRdfTools tools) {
@@ -100,7 +98,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param subjects
      * @param session
      */
-    private JcrPropertyStatementListener(final IdentifierTranslator subjects,
+    private JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects,
             final Session session, final Model problems, final JcrRdfTools tools) {
         super();
         this.session = session;
@@ -123,7 +121,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, ignore it.
-            if (!subjects.isFedoraGraphSubject(subject) && !subject.isAnon()) {
+            if (!subjects.inDomain(subject) && !subject.isAnon()) {
                 return;
             }
 
@@ -138,14 +136,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                     skolemizedBnodeMap.put(subject.getId(), subjectNode);
                 }
             } else {
-                String path;
-                try {
-                    path = decode(subjects.getPathFromSubject(subject), "UTF-8");
-                } catch ( UnsupportedEncodingException ex ) {
-                    LOGGER.warn("Required encoding (UTF-8) not supported, trying undecoded path",ex);
-                    path = subjects.getPathFromSubject(subject);
-                }
-                subjectNode = session.getNode(path);
+                subjectNode = subjects.convert(subject);
             }
 
             // special logic for handling rdf:type updates.
@@ -179,11 +170,11 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, we don't care.
-            if (!subjects.isFedoraGraphSubject(subject)) {
+            if (!subjects.inDomain(subject)) {
                 return;
             }
 
-            final Node subjectNode = session.getNode(subjects.getPathFromSubject(subject));
+            final Node subjectNode = subjects.convert(subject);
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update

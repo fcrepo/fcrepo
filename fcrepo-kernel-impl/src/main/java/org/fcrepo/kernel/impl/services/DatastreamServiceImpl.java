@@ -31,15 +31,16 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
@@ -169,7 +170,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
      * @throws RepositoryException
      */
     @Override
-    public RdfStream getFixityResultsModel(final IdentifierTranslator subjects,
+    public RdfStream getFixityResultsModel(final IdentifierConverter<Resource,Node> subjects,
             final FedoraBinary binary) {
         try {
 
@@ -181,8 +182,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
             return JcrRdfTools.withContext(subjects,binary.getNode().getSession())
                     .getJcrTriples(binary.getNode(), blobs, digestUri, size)
-                    .topic(subjects.getSubject(binary.getPath())
-                            .asNode());
+                    .topic(subjects.reverse().convert(binary.getNode()).asNode());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

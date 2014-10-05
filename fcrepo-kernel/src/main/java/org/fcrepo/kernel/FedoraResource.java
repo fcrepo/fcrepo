@@ -22,7 +22,8 @@ import javax.jcr.Node;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import com.hp.hpl.jena.query.Dataset;
@@ -90,7 +91,7 @@ public interface FedoraResource {
      * @param subjects
      * @param sparqlUpdateStatement
      */
-    Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
+    Dataset updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
             final String sparqlUpdateStatement);
 
     /**
@@ -101,7 +102,7 @@ public interface FedoraResource {
      * @param limit
      * @return properties
      */
-    Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
+    Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> graphSubjects,
        final int offset, final int limit);
 
     /**
@@ -109,7 +110,7 @@ public interface FedoraResource {
      * @param subjects
      * @return properties
      */
-    Dataset getPropertiesDataset(final IdentifierTranslator subjects);
+    Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> subjects);
 
 
     /**
@@ -118,7 +119,8 @@ public interface FedoraResource {
      * @param context
      * @return
      */
-    RdfStream getTriples(final IdentifierTranslator graphSubjects, final Class<? extends RdfStream> context);
+    RdfStream getTriples(final IdentifierConverter<Resource,Node> graphSubjects,
+                         final Class<? extends RdfStream> context);
 
     /**
      * Return the RDF properties of this object using the provided contexts
@@ -126,7 +128,8 @@ public interface FedoraResource {
      * @param contexts
      * @return
      */
-    RdfStream getTriples(IdentifierTranslator graphSubjects, Iterable<? extends Class<? extends RdfStream>> contexts);
+    RdfStream getTriples(IdentifierConverter<Resource,Node> graphSubjects,
+                         Iterable<? extends Class<? extends RdfStream>> contexts);
 
     /**
      * Tag the current version of the Node with a version label that
@@ -164,7 +167,7 @@ public interface FedoraResource {
      * @param inputModel
      * @return RDFStream
      */
-    RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
+    RdfStream replaceProperties(final IdentifierConverter<Resource,Node> graphSubjects,
                                 final Model inputModel,
                                 final RdfStream originalTriples);
 

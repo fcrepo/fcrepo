@@ -20,8 +20,8 @@ import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.transform.Transformation;
@@ -98,7 +98,7 @@ public class FedoraTransformTest {
                      model.createProperty("http://purl.org/dc/elements/1.1/title"),
                      model.createLiteral("some-title"));
         final Dataset dataset = DatasetFactory.create(model);
-        when(mockResource.getPropertiesDataset(any(IdentifierTranslator.class))).thenReturn(dataset);
+        when(mockResource.getPropertiesDataset(any(IdentifierConverter.class))).thenReturn(dataset);
 
         final InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
                 "{\n" +

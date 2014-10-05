@@ -17,7 +17,8 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -46,7 +47,7 @@ public class ReferencesRdfContext extends RdfStream {
      * @throws javax.jcr.RepositoryException
      */
 
-    public ReferencesRdfContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects)
+    public ReferencesRdfContext(final javax.jcr.Node node, final IdentifierConverter<Resource,Node> graphSubjects)
         throws RepositoryException {
         super();
         this.node = node;

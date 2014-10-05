@@ -17,7 +17,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -68,8 +68,7 @@ public class TypeRdfContextTest {
     @Mock
     private NodeType mockMixinSuperNodeType;
 
-    @Mock
-    private IdentifierTranslator mockGraphSubjects;
+    private IdentifierConverter<Resource,Node> mockGraphSubjects;
 
     @Mock
     private Session mockSession;
@@ -92,8 +91,6 @@ public class TypeRdfContextTest {
     private static final String mockPrimarySuperNodeTypeName = "somePrimarySuperType";
     private static final String mockMixinSuperNodeTypeName = "someMixinSuperType";
 
-    private static final Resource mockNodeSubject = createResource();
-
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -101,7 +98,7 @@ public class TypeRdfContextTest {
         when(mockPrimaryNodeType.getName()).thenReturn(
                 mockNodeTypePrefix + ":" + mockPrimaryNodeTypeName);
 
-        when(mockNode.getName()).thenReturn(mockNodeName);
+        when(mockNode.getPath()).thenReturn("/" + mockNodeName);
 
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockMixinNodeType});
@@ -123,12 +120,15 @@ public class TypeRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
-        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
+        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
     public void testRdfTypesForNodetypes() throws RepositoryException,
             IOException {
+
+        final Resource mockNodeSubject = mockGraphSubjects.reverse().convert(mockNode);
+
         final Model actual =
                 new TypeRdfContext(mockNode, mockGraphSubjects).asModel();
         final Resource expectedRdfTypePrimary =

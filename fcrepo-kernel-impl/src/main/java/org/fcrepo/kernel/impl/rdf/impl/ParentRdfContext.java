@@ -16,7 +16,8 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -44,7 +45,8 @@ public class ParentRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public ParentRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public ParentRdfContext(final Node node,
+                            final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
         super(node, graphSubjects);
 
         if (node.getDepth() > 0) {
@@ -55,7 +57,7 @@ public class ParentRdfContext extends NodeRdfContext {
 
     private Iterator<Triple> parentContext() throws RepositoryException {
         final javax.jcr.Node parentNode = node().getParent();
-        final com.hp.hpl.jena.graph.Node parentNodeSubject = graphSubjects().getSubject(parentNode.getPath()).asNode();
+        final com.hp.hpl.jena.graph.Node parentNodeSubject = graphSubjects().reverse().convert(parentNode).asNode();
 
         final RdfStream parentStream = new RdfStream();
 

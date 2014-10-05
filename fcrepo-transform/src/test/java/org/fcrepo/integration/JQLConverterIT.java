@@ -16,7 +16,6 @@
 package org.fcrepo.integration;
 
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.junit.Before;
@@ -51,12 +50,14 @@ public class JQLConverterIT {
     Repository repo;
 
     private Session session;
-    private IdentifierTranslator subjects;
+    private DefaultIdentifierTranslator subjects;
 
     @Before
     public void setUp() throws Exception {
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator();
+        new JcrTools().findOrCreateNode(session, "/foo");
+        session.save();
+        subjects = new DefaultIdentifierTranslator(session);
     }
 
     @Test
@@ -156,7 +157,7 @@ public class JQLConverterIT {
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> " +
                 "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>" +
                 "SELECT ?title WHERE { ?subject dc:title ?title . ?subject fedorarelsext:isPartOf <" +
-                subjects.getSubject("/xyz") + "> }";
+                subjects.toDomain("/xyz") + "> }";
         final JQLConverter testObj = new JQLConverter(session, subjects, sparql);
         assertEquals("SELECT [fedoraResource_subject].[dc:title] AS title FROM [fedora:resource] AS " +
                              "[fedoraResource_subject] WHERE ([fedoraResource_subject].[dc:title] IS NOT NULL AND " +
@@ -308,7 +309,7 @@ public class JQLConverterIT {
     public void testConstantSubjectQuery() throws RepositoryException {
         final String path = "/foo";
         final String selector = "fedoraResource_" + path.replace("/", "_");
-        final String baseUri = subjects.getBaseUri();
+        final String baseUri = subjects.toDomain("/").getURI();
         final String subjectUri = (baseUri.endsWith("/") ? baseUri.substring(0, baseUri.length() - 1) : baseUri) + path;
         final String sparql = "PREFIX fcrepo: <http://fedora.info/definitions/v4/repository#> "
                 + "select ?date where { <" + subjectUri + "> fcrepo:created ?date }";
@@ -326,7 +327,7 @@ public class JQLConverterIT {
     public void testConstantSubjectSimpleReferenceQuery() throws RepositoryException {
         final String path = "/foo";
         final String selector = "fedoraResource_" + path.replace("/", "_");
-        final String baseUri = subjects.getBaseUri();
+        final String baseUri = subjects.toDomain("/").getURI();
         final String subjectUri = (baseUri.endsWith("/") ? baseUri.substring(0, baseUri.length() - 1) : baseUri) + path;
         final String sparql =
                 "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#> " +
@@ -345,7 +346,7 @@ public class JQLConverterIT {
     public void testConstantSubjectReferenceQuery() throws RepositoryException {
         final String path = "/foo";
         final String selector = "fedoraResource_" + path.replace("/", "_");
-        final String baseUri = subjects.getBaseUri();
+        final String baseUri = subjects.toDomain("/").getURI();
         final String subjectUri = (baseUri.endsWith("/") ? baseUri.substring(0, baseUri.length() - 1) : baseUri) + path;
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>" +
                 "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>" +

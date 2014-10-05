@@ -39,8 +39,9 @@ import javax.jcr.Value;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;
@@ -55,17 +56,17 @@ import com.hp.hpl.jena.graph.Triple;
 public class PropertyToTriple implements
         Function<Property, Iterator<Triple>> {
 
-    private IdentifierTranslator graphSubjects;
+    private IdentifierConverter<Resource, javax.jcr.Node> graphSubjects;
 
     private static final Logger LOGGER = getLogger(PropertyToTriple.class);
 
     /**
-     * Default constructor. We require a {@link IdentifierTranslator} in order to
+     * Default constructor. We require a {@link IdentifierConverter} in order to
      * construct the externally-meaningful RDF subjects of our triples.
      *
      * @param graphSubjects
      */
-    public PropertyToTriple(final IdentifierTranslator graphSubjects) {
+    public PropertyToTriple(final IdentifierConverter<Resource,javax.jcr.Node> graphSubjects) {
         this.graphSubjects = graphSubjects;
     }
 
@@ -181,7 +182,7 @@ public class PropertyToTriple implements
 
     private Node getGraphSubject(final javax.jcr.Node n)
         throws RepositoryException {
-        return graphSubjects.getSubject(n.getPath()).asNode();
+        return graphSubjects.reverse().convert(n).asNode();
     }
 
 }

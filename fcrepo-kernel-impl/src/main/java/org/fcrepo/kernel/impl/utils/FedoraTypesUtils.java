@@ -89,6 +89,13 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     public static Predicate<Node> isFedoraDatastream =
             new AnyTypesPredicate(FEDORA_DATASTREAM);
 
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora
+     * binary.
+     */
+    public static Predicate<Node> isFedoraBinary =
+            new AnyTypesPredicate(FEDORA_BINARY);
     /**
      * Predicate for objects, datastreams, whatever!
      */

@@ -255,7 +255,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     @Test
     public void isAutoVersionedContentStillAccessible() throws Exception {
         final String objName = getRandomUniquePid();
-        final String dsName = getRandomUniquePid();
+        final String dsName = "some-datastream";
         final String firstVersionText = "foo";
         final String secondVersionText = "bar";
 
@@ -545,10 +545,11 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String firstVersionText = "foo";
         final String secondVersionText = "bar";
         createDatastream(objName, dsName, firstVersionText);
-        final GraphStore dsInitialVersion = getContent(serverAddress + objName);
-        assertTrue("Should find auto-created versoning policy",
+        final GraphStore dsInitialVersion = getContent(serverAddress + objName + "/" + dsName + "/" + FCR_METADATA);
+        assertTrue("Should find auto-created versioning policy",
                 dsInitialVersion.contains(ANY,
-                                          createResource(serverAddress + objName + "/" + dsName).asNode(),
+                                          createResource(serverAddress + objName + "/" + dsName + "/" + FCR_METADATA)
+                                                  .asNode(),
                                           VERSIONING_POLICY.asNode(),
                                           createLiteral("auto-version")));
 

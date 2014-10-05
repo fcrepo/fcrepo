@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.services;
 
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.TransactionMissingException;
+import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.services.TransactionService;
 import org.fcrepo.kernel.services.VersionService;
 import org.slf4j.Logger;
@@ -93,6 +94,11 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             if (!isVersioningEnabled(n)) {
                 enableVersioning(n);
             }
+
+            if (FedoraBinaryImpl.hasMixin(n)) {
+                queueOrCommitCheckpoint(n.getSession(), n.getParent().getPath());
+            }
+
             queueOrCommitCheckpoint(n.getSession(), n.getPath());
         } else {
             LOGGER.trace("No implicit version checkpoint set for {}", n.getPath());
@@ -182,15 +188,26 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     private static boolean isVersioningEnabled(final Node n) throws RepositoryException {
-        return n.isNodeType(VERSIONABLE);
+        return n.isNodeType(VERSIONABLE) || (FedoraBinaryImpl.hasMixin(n) && isVersioningEnabled(n.getParent()));
     }
 
     private static void enableVersioning(final Node node) throws RepositoryException {
         node.addMixin(VERSIONABLE);
+
+        if (FedoraBinaryImpl.hasMixin(node)) {
+            node.getParent().addMixin(VERSIONABLE);
+        }
         node.getSession().save();
     }
 
     private static boolean isImplicitVersioningEnabled(final Node n) throws RepositoryException {
+        if (FedoraBinaryImpl.hasMixin(n) && isImplicitVersioningEnabled(n.getParent())) {
+            if (!n.isNodeType(VERSIONABLE)) {
+                enableVersioning(n);
+            }
+
+            return true;
+        }
         if (!n.hasProperty(VERSION_POLICY)) {
             return false;
         }
@@ -236,7 +253,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
         final Session session = node.getSession();
         final String absPath = node.getPath();
-        if (node.isNodeType(VERSIONABLE)) {
+        if (isVersioningEnabled(node)) {
             LOGGER.trace("Setting checkpoint for {}", absPath);
 
             final String txId = getCurrentTransactionId(session);

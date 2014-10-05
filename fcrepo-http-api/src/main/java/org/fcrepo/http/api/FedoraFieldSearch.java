@@ -58,9 +58,8 @@ import javax.ws.rs.core.UriInfo;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -81,7 +80,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 @Scope("prototype")
 @Path("/fcr:search")
-public class FedoraFieldSearch extends AbstractResource implements
+public class FedoraFieldSearch extends FedoraBaseResource implements
         FedoraJcrTypes {
 
     public static final String OFFSET_PARAM = "offset";
@@ -182,14 +181,13 @@ public class FedoraFieldSearch extends AbstractResource implements
                     .build().toString());
         }
 
-        final HttpIdentifierTranslator subjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-        final Dataset dataset = repositoryService.searchRepository(subjects, searchResult,
+        final Dataset dataset = repositoryService.searchRepository(translator(), searchResult,
                 session, terms, limit, offset);
 
         final RdfStream stream = new RdfStream();
 
         final Model searchModel = createDefaultModel();
+        final Resource context = ResourceFactory.createResource(uriInfo.getRequestUri().toString());
         if (terms != null) {
             final Resource pageResource = createResource(uriInfo.getRequestUri().toASCIIString());
             searchModel.add(pageResource, type, SEARCH_PAGE);
@@ -234,7 +232,7 @@ public class FedoraFieldSearch extends AbstractResource implements
                     .toString();
             final Resource firstPageResource =
                     searchModel.createResource(firstPage);
-            searchModel.add(subjects.getContext(), FIRST_PAGE, firstPageResource);
+            searchModel.add(context, FIRST_PAGE, firstPageResource);
 
             servletResponse.addHeader("Link", "<" + firstPage + ">;rel=\"first\"");
 
@@ -244,10 +242,15 @@ public class FedoraFieldSearch extends AbstractResource implements
         stream.concat(Iterators.transform(searchModel.listStatements(), stmtToTriple));
         stream.concat(Iterators.transform(dataset.getDefaultModel().listStatements(), stmtToTriple));
 
-        stream.topic(subjects.getContext().asNode());
+        stream.topic(context.asNode());
         stream.session(session);
         stream.namespaces(dataset.getDefaultModel().getNsPrefixMap());
 
         return stream;
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 }

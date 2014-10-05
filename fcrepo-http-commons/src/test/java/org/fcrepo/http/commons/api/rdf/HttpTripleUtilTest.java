@@ -24,11 +24,13 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Map;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -53,7 +55,7 @@ public class HttpTripleUtilTest {
     private UriInfo mockUriInfo;
 
     @Mock
-    private IdentifierTranslator mockSubjects;
+    private IdentifierConverter<Resource,Node> mockSubjects;
 
     @Mock
     private UriAwareResourceModelFactory mockBean1;

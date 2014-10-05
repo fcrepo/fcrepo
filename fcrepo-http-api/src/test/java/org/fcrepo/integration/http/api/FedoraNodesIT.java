@@ -656,9 +656,11 @@ public class FedoraNodesIT extends AbstractResourceIT {
         e.setContent(
                 new ByteArrayInputStream(
                         ("INSERT { " +
-                                "<" + serverAddress + pid + "/a" + "> <http://fedora.info/definitions/v4/rels-ext#isPartOf> <"
+                                "<" + serverAddress + pid + "/a"
+                                + "> <http://fedora.info/definitions/v4/rels-ext#isPartOf> <"
                                 + serverAddress + pid + "/b" + "> . \n" +
-                                "<" + serverAddress + pid + "/a" + "> <info:xyz#some-other-property> <" + serverAddress + pid + "/b"
+                                "<" + serverAddress + pid + "/a" + "> <info:xyz#some-other-property> <"
+                                + serverAddress + pid + "/b"
                                 + "> " + "} WHERE {}").getBytes()));
 
         updateObjectGraphMethod.setEntity(e);

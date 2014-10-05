@@ -65,7 +65,7 @@ public class SparqlQueryTransformIT extends AbstractResourceIT {
         testObj = new SparqlQueryTransform(stringReader);
 
         try (final QueryExecution qexec =
-                testObj.apply(object.getPropertiesDataset(new DefaultIdentifierTranslator()))) {
+                testObj.apply(object.getPropertiesDataset(new DefaultIdentifierTranslator(session)))) {
             assert (qexec != null);
             final ResultSet results = qexec.execSelect();
             assert (results != null);

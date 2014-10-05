@@ -38,6 +38,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.net.URISyntaxException;
 import java.security.Principal;
 
 /**
@@ -80,7 +81,7 @@ public class FedoraTransactionsTest {
     }
 
     @Test
-    public void shouldStartANewTransaction() throws RepositoryException {
+    public void shouldStartANewTransaction() throws RepositoryException, URISyntaxException {
         setField(testObj, "session", regularSession);
         when(mockTxService.beginTransaction(regularSession, USER_NAME)).thenReturn(mockTx);
         when(mockRequest.getUserPrincipal()).thenReturn(mockPrincipal);
@@ -92,7 +93,7 @@ public class FedoraTransactionsTest {
     @Test
     public void
             shouldUpdateExpiryOnExistingTransaction()
-                                                     throws RepositoryException {
+            throws RepositoryException, URISyntaxException {
         when(mockTxService.getTransaction(Mockito.any(TxSession.class))).thenReturn(mockTx);
         testObj.createTransaction(createPathList(), mockRequest);
         verify(mockTx).updateExpiryDate();

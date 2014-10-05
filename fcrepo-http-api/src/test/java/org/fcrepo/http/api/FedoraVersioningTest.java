@@ -16,8 +16,9 @@
 package org.fcrepo.http.api;
 
 import com.hp.hpl.jena.query.Dataset;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.NodeService;
@@ -33,6 +34,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.Variant;
 
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
@@ -42,6 +44,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -89,18 +93,23 @@ public class FedoraVersioningTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        testObj = new FedoraVersioning(path);
+        testObj = spy(new FedoraVersioning(path));
         mockSession = mockSession(testObj);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
         setField(testObj, "versionService", mockVersions);
-        setField(testObj, "sessionFactory", mockSessionFactory);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
-        when(mockResource.getPath()).thenReturn("/test/path");
+        when(mockResource.getPath()).thenReturn(path);
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockSession.getNode(path)).thenReturn(mockNode);
+        doReturn(mockResource).when(testObj).resource();
+
+        setField(testObj, "identifierTranslator",
+                new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
 
@@ -110,9 +119,9 @@ public class FedoraVersioningTest {
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
                 mockResource);
-        when(mockResource.getTriples(any(HttpIdentifierTranslator.class), eq(VersionsRdfContext.class)))
+        when(mockResource.getTriples(any(IdentifierConverter.class), eq(VersionsRdfContext.class)))
                 .thenReturn(mockRdfStream);
-        when(mockResource.hasType("mix:versionable")).thenReturn(true);
+        when(mockResource.isVersioned()).thenReturn(true);
         when(mockVariant.getMediaType()).thenReturn(
                 new MediaType("text", "turtle"));
         final RdfStream response = testObj.getVersionList();

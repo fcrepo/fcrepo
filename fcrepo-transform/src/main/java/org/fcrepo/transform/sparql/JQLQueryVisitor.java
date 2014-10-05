@@ -24,6 +24,7 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryVisitor;
 import com.hp.hpl.jena.query.SortCondition;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.core.TriplePath;
 import com.hp.hpl.jena.sparql.expr.Expr;
@@ -58,7 +59,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.transform.exception.JQLParsingException;
 import org.modeshape.common.collection.Collections;
@@ -136,7 +137,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private Map<String, Source> joins;
     private Map<String, String> joinTypes;
     private Map<String, JoinCondition> joinConditions;
-    private IdentifierTranslator subjects;
+    private IdentifierConverter<Resource,javax.jcr.Node> subjects;
 
     /**
      * Create a new query
@@ -147,7 +148,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     public JQLQueryVisitor(final Session session,
                            final JcrRdfTools jcrTools,
                            final QueryManager queryManager,
-                           final IdentifierTranslator subjects) {
+                           final IdentifierConverter<Resource, javax.jcr.Node> subjects) {
         if (null == subjects) {
             throw new IllegalArgumentException("IdentifierTranslator is null!");
         }
@@ -574,7 +575,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         final String subjectUri = subject.getURI();
 
         // Go through the IdentifierConverter for potential transparent hierarchy path conversion.
-        final String path = subjects.getPathFromSubject(model.createResource(subjectUri));
+        final String path = subjects.convert(model.createResource(subjectUri)).getPath();
 
         final String subjectSelector = "fedoraResource_" + path.replace("/", "_");
 

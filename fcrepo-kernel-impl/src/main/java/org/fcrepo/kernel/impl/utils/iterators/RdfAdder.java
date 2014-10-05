@@ -21,8 +21,8 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -50,7 +50,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public RdfAdder(final IdentifierTranslator graphSubjects, final Session session,
+    public RdfAdder(final IdentifierConverter<Resource,Node> graphSubjects, final Session session,
         final RdfStream stream) {
         super(graphSubjects, session, stream);
         jcrRdfTools = new JcrRdfTools(graphSubjects, session);

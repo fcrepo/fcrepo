@@ -20,7 +20,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.impl.testutilities.TestNodeIterator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -30,6 +29,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
@@ -61,7 +61,10 @@ public class LdpContainerRdfContextTest {
     @Mock
     private Property mockProperty;
 
-    private IdentifierTranslator subjects = new DefaultIdentifierTranslator();
+    @Mock
+    private Session mockSession;
+
+    private DefaultIdentifierTranslator subjects;
 
     private LdpContainerRdfContext testObj;
 
@@ -70,6 +73,7 @@ public class LdpContainerRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getPath()).thenReturn("/a");
+        subjects = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
@@ -110,10 +114,9 @@ public class LdpContainerRdfContextTest {
         final Model model = testObj.asModel();
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
-        assertTrue(model.contains(
-                subjects.getSubject(mockNode.getPath()),
+        assertTrue(model.contains(subjects.reverse().convert(mockNode),
                 LDP_MEMBER,
-                subjects.getSubject(mockChild.getPath())));
+                subjects.reverse().convert(mockChild)));
     }
 
 
@@ -135,9 +138,9 @@ public class LdpContainerRdfContextTest {
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
-                subjects.getSubject(mockNode.getPath()),
+                subjects.reverse().convert(mockNode),
                 ResourceFactory.createProperty("some:property"),
-                subjects.getSubject(mockChild.getPath())));
+                subjects.reverse().convert(mockChild)));
     }
 
 

@@ -133,7 +133,7 @@ public abstract class JcrPropertyFunctions {
         public boolean apply(final Node node) {
             checkNotNull(node, "null cannot be a Frozen node!");
             try {
-                return node.getPrimaryNodeType().getName().equals(FedoraJcrTypes.FROZEN_NODE);
+                return node.isNodeType(FedoraJcrTypes.FROZEN_NODE);
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
