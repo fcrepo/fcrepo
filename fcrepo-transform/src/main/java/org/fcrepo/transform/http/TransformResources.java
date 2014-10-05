@@ -23,11 +23,10 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.springframework.stereotype.Component;
 
-import javax.jcr.RepositoryException;
+import javax.jcr.Node;
 import javax.ws.rs.core.UriInfo;
 
 /**
@@ -40,19 +39,16 @@ public class TransformResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-         final UriInfo uriInfo, final IdentifierTranslator graphSubjects) {
-        try {
-            final Model model = createDefaultModel();
-            final Resource s = graphSubjects.getSubject(resource.getPath());
+                                        final UriInfo uriInfo,
+                                        final IdentifierConverter<Resource,Node> graphSubjects) {
+        final Model model = createDefaultModel();
+        final Resource s = graphSubjects.reverse().convert(resource.getNode());
 
-            if (resource.hasType(ROOT)) {
-                model.add(s, HAS_SPARQL_ENDPOINT, model.createResource(uriInfo
-                        .getBaseUriBuilder().path(FedoraSparql.class).build()
-                        .toASCIIString()));
-            }
-            return model;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        if (resource.hasType(ROOT)) {
+            model.add(s, HAS_SPARQL_ENDPOINT, model.createResource(uriInfo
+                    .getBaseUriBuilder().path(FedoraSparql.class).build()
+                    .toASCIIString()));
         }
+        return model;
     }
 }

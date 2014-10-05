@@ -18,7 +18,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -40,8 +40,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class ReferencesRdfContextTest {
 
-    public static final Resource NODE_A = ResourceFactory.createResource("info:a");
-    public static final Resource NODE_B = ResourceFactory.createResource("info:b");
     @Mock
     private Property mockProperty;
 
@@ -65,7 +63,9 @@ public class ReferencesRdfContextTest {
         when(mockReferences.next()).thenReturn(mockProperty);
         final ReferencesRdfContext triples = new ReferencesRdfContext(mockNode, mockGraphSubjects);
         final Model model = triples.asModel();
-        assertTrue(model.contains(NODE_B, ResourceFactory.createProperty("some-property"), NODE_A));
+        assertTrue(model.contains(getResource(mockOtherNode),
+                ResourceFactory.createProperty("some-property"),
+                getResource(mockNode)));
     }
 
     @Test
@@ -76,13 +76,16 @@ public class ReferencesRdfContextTest {
         when(mockReferences.next()).thenReturn(mockProperty);
         final ReferencesRdfContext triples = new ReferencesRdfContext(mockNode, mockGraphSubjects);
         final Model model = triples.asModel();
-        assertTrue(model.contains(NODE_B, ResourceFactory.createProperty("some-property"), NODE_A));
+        assertTrue(model.contains(getResource(mockOtherNode),
+                ResourceFactory.createProperty("some-property"),
+                getResource(mockNode)));
     }
 
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
 
+        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getPath()).thenReturn("a");
         when(mockOtherNode.getPath()).thenReturn("b");
         when(mockProperty.getName()).thenReturn("some-property");
@@ -93,21 +96,22 @@ public class ReferencesRdfContextTest {
         when(mockValue.getString()).thenReturn("some-uuid");
         when(mockProperty.getSession()).thenReturn(mockSession);
         when(mockSession.getNodeByIdentifier("some-uuid")).thenReturn(mockNode);
-        when(mockGraphSubjects.getSubject("a")).thenReturn(NODE_A);
-        when(mockGraphSubjects.getSubject("b")).thenReturn(NODE_B);
         when(emptyPropertyIterator.hasNext()).thenReturn(false);
     }
 
     @Mock
     private Node mockNode;
 
-    @Mock
-    private IdentifierTranslator mockGraphSubjects;
+    private IdentifierConverter<Resource, Node> mockGraphSubjects;
 
     @Mock
     private PropertyIterator mockReferences;
 
     @Mock
     private PropertyIterator emptyPropertyIterator;
+
+    private Resource getResource(final Node n) {
+        return mockGraphSubjects.reverse().convert(n);
+    }
 
 }

@@ -29,8 +29,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
@@ -69,10 +69,10 @@ public class FedoraObjectImplIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.findOrCreateObject(session, "/graphObject");
-        final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
-        final String graphSubject = subjects.getSubject("/graphObject").getURI();
+        final Resource graphSubject = subjects.reverse().convert(object.getNode());
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(graphStore.toString()).find());
@@ -149,8 +149,8 @@ public class FedoraObjectImplIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraObject object =
             objectService.findOrCreateObject(session, "/graphObject");
-        final IdentifierTranslator subjects = new DefaultIdentifierTranslator();
-        final String graphSubject = subjects.getSubject("/graphObject").getURI();
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
+        final Resource graphSubject = subjects.reverse().convert(object.getNode());
         final Dataset graphStore = object.getPropertiesDataset(subjects);
 
         parseExecute("PREFIX some: <info:some#>\n" +

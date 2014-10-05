@@ -27,7 +27,6 @@ import java.util.Iterator;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
@@ -71,8 +70,8 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
                     }
                 }
             } else {
-                for (NodeType nodeType: input.getMixinNodeTypes()) {
-                    if (nodeTypes.contains(nodeType.getName())) {
+                for (final String nodeType : nodeTypes) {
+                    if (input.isNodeType(nodeType)) {
                         matched++;
                     }
                 }

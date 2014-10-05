@@ -21,21 +21,14 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.http.api.versioning.VersionAwareHttpIdentifierTranslator;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
-import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.DatastreamImpl;
-import org.fcrepo.kernel.impl.FedoraBinaryImpl;
-import org.fcrepo.kernel.impl.FedoraObjectImpl;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
@@ -50,9 +43,7 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 
 import javax.jcr.Binary;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.CacheControl;
@@ -77,7 +68,6 @@ import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -87,7 +77,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author Mike Durbin
  */
-public abstract class ContentExposingResource extends AbstractResource {
+public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
 
@@ -96,11 +86,11 @@ public abstract class ContentExposingResource extends AbstractResource {
     @Context protected UriInfo uriInfo;
 
     protected FedoraResource resource;
-    protected HttpIdentifierTranslator identifierTranslator;
 
     private static long MAX_BUFFER_SIZE = 10240000;
 
-    abstract Session session();
+    abstract String path();
+    abstract List<PathSegment> pathList();
 
     abstract void addResourceHttpHeaders(FedoraResource resource);
 
@@ -314,62 +304,18 @@ public abstract class ContentExposingResource extends AbstractResource {
 
     protected URI getUri(final FedoraResource resource) {
         try {
-            final String uri = translator().getSubject(resource.getPath()).getURI();
-
-            if (resource instanceof Datastream) {
-                return new URI(uri + "/" + FCR_METADATA);
-            } else {
-                return new URI(uri);
-            }
+            final String uri = translator().reverse().convert(resource.getNode()).getURI();
+            return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);
         }
     }
 
-    abstract String path();
-    abstract List<PathSegment> pathList();
-
     protected FedoraResource resource() {
         if (resource == null) {
-            resource = getResourceFromPath();
+            resource = getResourceFromPath(pathList(), path());
         }
 
         return resource;
     }
-
-    protected FedoraResource getResourceFromPath() {
-        final FedoraResource resource;
-        try {
-            final boolean metadata = pathList() != null
-                    && pathList().get(pathList().size() - 1).getPath().equals(FCR_METADATA);
-
-            final Node node = session().getNode(path());
-
-            if (DatastreamImpl.hasMixin(node)) {
-                final DatastreamImpl datastream = new DatastreamImpl(node);
-
-                if (metadata) {
-                    resource = datastream;
-                } else {
-                    resource = datastream.getBinary();
-                }
-            } else if (FedoraBinaryImpl.hasMixin(node)) {
-                resource = new FedoraBinaryImpl(node);
-            } else {
-                resource = new FedoraObjectImpl(node);
-            }
-            return resource;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    protected HttpIdentifierTranslator translator() {
-        if (identifierTranslator == null) {
-            identifierTranslator = new VersionAwareHttpIdentifierTranslator(session(), FedoraLdp.class, uriInfo);
-        }
-
-        return identifierTranslator;
-    }
-
 }

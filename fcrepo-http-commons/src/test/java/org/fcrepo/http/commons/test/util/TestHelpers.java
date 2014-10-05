@@ -196,6 +196,11 @@ public abstract class TestHelpers {
         when(mockSession.getUserID()).thenReturn(mockUser);
         when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
         when(mockPrincipal.getName()).thenReturn(mockUser);
+
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getName()).thenReturn("default");
+
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "pidMinter", new UUIDPidMinter());
         return mockSession;

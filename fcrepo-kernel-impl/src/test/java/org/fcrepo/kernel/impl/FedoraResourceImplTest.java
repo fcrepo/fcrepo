@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
@@ -56,8 +55,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -89,8 +88,6 @@ public class FedoraResourceImplTest {
     @Mock
     private Session mockSession;
 
-    private final Resource mockResource = createResource();
-
     @Mock
     private Property mockProp;
 
@@ -100,15 +97,20 @@ public class FedoraResourceImplTest {
     @Mock
     private JcrRdfTools mockJcrRdfTools;
 
+    private IdentifierConverter mockSubjects;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn("/some/path");
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         testObj = new FedoraResourceImpl(mockNode);
         assertEquals(mockNode, testObj.getNode());
+
+        mockSubjects = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
@@ -198,10 +200,6 @@ public class FedoraResourceImplTest {
 
         final FedoraResource spy = spy(testObj);
 
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
-
-        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
-
         final RdfStream propertiesStream = new RdfStream(mockTriple);
 
         when(spy.getTriples(eq(mockSubjects), anyCollection())).thenReturn(propertiesStream);
@@ -211,13 +209,13 @@ public class FedoraResourceImplTest {
                 propertiesStream.asModel()));
         assertTrue(dataset.getDefaultModel().containsAll(
                 propertiesStream.asModel()));
-        assertEquals(mockResource, dataset.getContext().get(
+        assertEquals(mockSubjects.reverse().convert(mockNode), dataset.getContext().get(
                 Symbol.create("uri")));
     }
 
     @Test
     public void testGetTriples() {
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
+        final IdentifierConverter mockSubjects = mock(IdentifierConverter.class);
 
         final RdfStream triples = testObj.getTriples(mockSubjects, TestTriplesContext.class);
 
@@ -312,7 +310,7 @@ public class FedoraResourceImplTest {
     @Test
     public void testReplacePropertiesDataset() throws Exception {
 
-        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator();
+        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);
 
         when(mockNode.getPath()).thenReturn("/xyz");
         when(mockSession.getNode("/xyz")).thenReturn(mockNode);

@@ -41,7 +41,8 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeManager;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,8 +75,7 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private Session mockSession;
 
-    @Mock
-    private IdentifierTranslator mockSubjects;
+    private IdentifierConverter mockSubjects;
 
     @Mock
     private Statement mockStatement;
@@ -120,11 +120,11 @@ public class JcrPropertyStatementListenerTest {
         setField(testObj, "propertiesTools", mockPropertiesTools);
         when(mockStatement.getModel()).thenReturn(mockModel);
         when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
+        mockSubjects = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
     public void testAddedIrrelevantStatement() {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(false);
         testObj.addedStatement(mockStatement);
         // this was ignored, but not a problem
         verify(mockProblems, never()).add(any(Resource.class), any(Property.class), any(String.class));
@@ -132,8 +132,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testAddedProhibitedStatement() throws RepositoryException {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getPathFromSubject(mockSubject)).thenReturn("/some/path");
         when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
         when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
 
@@ -144,8 +142,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testAddedStatement() throws RepositoryException {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSubjects.getPathFromSubject(mockSubject)).thenReturn("/some/path");
         when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
         when(
@@ -162,8 +158,6 @@ public class JcrPropertyStatementListenerTest {
     @Test(expected = RuntimeException.class)
     public void testAddedStatementRepositoryException()
             throws RepositoryException {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
 
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate, mockNsMapping))
                .thenThrow(new RepositoryException());
@@ -174,8 +168,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testRemovedStatement() throws RepositoryException {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
         final String mockPropertyName = "mock:property";
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
                 .thenReturn(mockPropertyName);
@@ -189,8 +181,6 @@ public class JcrPropertyStatementListenerTest {
     @Test(expected = RuntimeException.class)
     public void testRemovedStatementRepositoryException()
             throws RepositoryException {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
 
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
                 .thenThrow(new RepositoryException());
@@ -201,8 +191,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testRemovedProhibitedStatement() throws RepositoryException {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(mockSubject))).thenReturn(mockSubjectNode);
         when(mockPredicate.getURI()).thenReturn("x");
         final String mockPropertyName = "jcr:property";
         when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
@@ -217,7 +205,6 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testRemovedIrrelevantStatement() {
-        when(mockSubjects.isFedoraGraphSubject(mockSubject)).thenReturn(false);
         testObj.removedStatement(mockStatement);
         // this was ignored, but not a problem
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
@@ -227,8 +214,6 @@ public class JcrPropertyStatementListenerTest {
     public void testAddRdfType() throws RepositoryException {
 
         final Resource resource = createResource("xyz");
-        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(mockSubjects.getPathFromSubject(resource)).thenReturn("/xyz");
         when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
@@ -250,8 +235,6 @@ public class JcrPropertyStatementListenerTest {
     public void testRemoveRdfType() throws RepositoryException {
 
         final Resource resource = createResource();
-        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -269,8 +252,6 @@ public class JcrPropertyStatementListenerTest {
     public void testAddRdfTypeForNonMixin() throws RepositoryException {
 
         final Resource resource = createResource("xyz");
-        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(mockSubjects.getPathFromSubject(resource)).thenReturn("/xyz");
         when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
@@ -296,8 +277,6 @@ public class JcrPropertyStatementListenerTest {
     public void testRemoveRdfTypeForNonMixin() throws RepositoryException {
 
         final Resource resource = createResource();
-        when(mockSubjects.isFedoraGraphSubject(resource)).thenReturn(true);
-        when(mockSession.getNode(mockSubjects.getPathFromSubject(resource))).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);

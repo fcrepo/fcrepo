@@ -56,9 +56,10 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
@@ -104,7 +105,7 @@ public class JcrRdfTools {
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
 
-    private final IdentifierTranslator graphSubjects;
+    private final IdentifierConverter<Resource,Node> graphSubjects;
 
     private Session session;
 
@@ -114,7 +115,7 @@ public class JcrRdfTools {
      *
      * @param graphSubjects
      */
-    public JcrRdfTools(final IdentifierTranslator graphSubjects) {
+    public JcrRdfTools(final IdentifierConverter<Resource,Node> graphSubjects) {
         this(graphSubjects, null);
     }
     /**
@@ -123,7 +124,7 @@ public class JcrRdfTools {
      * @param graphSubjects
      * @param session
      */
-    public JcrRdfTools(final IdentifierTranslator graphSubjects, final Session session) {
+    public JcrRdfTools(final IdentifierConverter<Resource,Node> graphSubjects, final Session session) {
         this.graphSubjects = graphSubjects;
         this.session = session;
     }
@@ -135,7 +136,7 @@ public class JcrRdfTools {
      * @param session
      * @return new JcrRdfTools instance
      */
-    public static JcrRdfTools withContext(final IdentifierTranslator idTranslator,
+    public static JcrRdfTools withContext(final IdentifierConverter<Resource,Node> idTranslator,
         final Session session) {
         checkNotNull(idTranslator, "JcrRdfTools must operate with a non-null IdentifierTranslator for context!");
         return new JcrRdfTools(idTranslator, session);
@@ -197,7 +198,7 @@ public class JcrRdfTools {
             results.concat(new PropertiesRdfContext(node, graphSubjects));
             if (iteratorSubject != null) {
                 results.concat(singleton(create(iteratorSubject.asNode(), HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
-                        .getSubject(node.getPath()).asNode())));
+                        .reverse().convert(node).asNode())));
             }
         }
         return results;
@@ -232,7 +233,7 @@ public class JcrRdfTools {
      * @return workspace triples as an RdfStream
      * @throws RepositoryException
      */
-    public RdfStream getWorkspaceTriples(final IdentifierTranslator subjects) throws RepositoryException {
+    public RdfStream getWorkspaceTriples(final IdentifierConverter<Resource,Node> subjects) throws RepositoryException {
         return new WorkspaceRdfContext(session, subjects);
     }
 
@@ -314,10 +315,10 @@ public class JcrRdfTools {
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
             try {
-                final Node nodeFromGraphSubject = session.getNode(graphSubjects.getPathFromSubject(data.asResource()));
+                final Node nodeFromGraphSubject = graphSubjects.convert(data.asResource());
                 return valueFactory.createValue(nodeFromGraphSubject,
                         type == WEAKREFERENCE);
-            } catch (final RepositoryException e) {
+            } catch (final RepositoryRuntimeException e) {
                 throw new MalformedRdfException("Unable to find referenced node", e);
             }
         } else if (!data.isURIResource() && (type == REFERENCE || type == WEAKREFERENCE)) {

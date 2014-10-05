@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ContiguousSet.create;
 import static com.google.common.collect.DiscreteDomain.integers;
@@ -38,7 +37,6 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
@@ -50,9 +48,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 
@@ -68,10 +65,12 @@ import com.hp.hpl.jena.graph.Triple;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:identifier")
-public class FedoraIdentifiers extends AbstractResource {
+public class FedoraIdentifiers extends FedoraBaseResource {
 
     @Inject
     protected Session session;
+
+    protected IdentifierConverter<Resource, javax.jcr.Node> identifierTranslator;
 
     /**
      * Mint identifiers (without creating the objects)
@@ -99,11 +98,8 @@ public class FedoraIdentifiers extends AbstractResource {
 
         final Collection<String> identifiers = transform(create(closed(1, count), integers()), pidMinter.makePid());
 
-        final HttpIdentifierTranslator subjects =
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
         return new RdfStream(transform(transform(identifiers, absolutize(path)),
-                identifier2triple(subjects, pidsResult))).topic(pidsResult).session(session);
+                identifier2triple(translator(), pidsResult))).topic(pidsResult).session(session);
 
     }
 
@@ -119,21 +115,23 @@ public class FedoraIdentifiers extends AbstractResource {
     }
 
     private static Function<String, Triple> identifier2triple(
-        final IdentifierTranslator subjects, final Node pidsResult) {
+        final IdentifierConverter<Resource, javax.jcr.Node> subjects, final Node pidsResult) {
         return new Function<String, Triple>() {
 
             @Override
             public Triple apply(final String identifier) {
 
-                try {
-                    final Node s =
-                        subjects.getSubject(identifier).asNode();
-                    return Triple.create(pidsResult, HAS_MEMBER_OF_RESULT
-                            .asNode(), s);
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
+                final Node s = subjects.toDomain(identifier).asNode();
+                return Triple.create(pidsResult, HAS_MEMBER_OF_RESULT
+                        .asNode(), s);
+
             }
         };
     }
+
+    @Override
+    protected Session session() {
+        return session;
+    }
+
 }

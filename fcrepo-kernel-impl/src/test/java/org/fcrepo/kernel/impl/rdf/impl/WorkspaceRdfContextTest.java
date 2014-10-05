@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -40,7 +39,7 @@ public class WorkspaceRdfContextTest {
 
 
     @Mock
-    private IdentifierTranslator subjects;
+    private DefaultIdentifierTranslator subjects;
 
     @Mock
     private Session session;
@@ -55,7 +54,7 @@ public class WorkspaceRdfContextTest {
     @Before
     public void setUp() {
         initMocks(this);
-        subjects = new DefaultIdentifierTranslator();
+        subjects = new DefaultIdentifierTranslator(session);
         when(session.getRepository()).thenReturn(repository);
         when(session.getWorkspace()).thenReturn(mockWorkspace);
     }
@@ -67,21 +66,21 @@ public class WorkspaceRdfContextTest {
 
         final Model model = testObj.asModel();
 
-        assertTrue(model.contains(subjects.getSubject("/"),
+        assertTrue(model.contains(subjects.toDomain("/"),
                                       RdfLexicon.HAS_DEFAULT_WORKSPACE,
-                                     subjects.getSubject("/workspace:default" )));
+                                      subjects.toDomain("/workspace:default")));
 
-        assertTrue(model.contains(subjects.getSubject("/workspace:default" ),
+        assertTrue(model.contains(subjects.toDomain("/workspace:default"),
                                      RdfLexicon.DC_TITLE,
                                      "default"));
 
-        assertTrue(model.contains(subjects.getSubject("/"),
+        assertTrue(model.contains(subjects.toDomain("/"),
                                      RdfLexicon.HAS_WORKSPACE,
-                                     subjects.getSubject("/workspace:a")));
+                                     subjects.toDomain("/workspace:a")));
 
-        assertTrue(model.contains(subjects.getSubject("/"),
+        assertTrue(model.contains(subjects.toDomain("/"),
                                      RdfLexicon.HAS_WORKSPACE,
-                                     subjects.getSubject("/workspace:b" )));
+                                     subjects.toDomain("/workspace:b" )));
 
     }
 

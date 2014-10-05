@@ -55,9 +55,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.transform.TransformationFactory;
 import org.jvnet.hk2.annotations.Optional;
@@ -75,7 +73,7 @@ import com.hp.hpl.jena.query.Dataset;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:transform")
-public class FedoraTransform extends AbstractResource {
+public class FedoraTransform extends FedoraBaseResource {
 
     @Inject
     protected Session session;
@@ -140,7 +138,7 @@ public class FedoraTransform extends AbstractResource {
             final FedoraResource object = nodeService.getObject(session, path);
 
             final Dataset propertiesDataset =
-                object.getPropertiesDataset(new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
+                object.getPropertiesDataset(translator());
 
             return getNodeTypeTransform(object.getNode(), program).apply(propertiesDataset);
 
@@ -176,13 +174,19 @@ public class FedoraTransform extends AbstractResource {
         try {
             final String path = toPath(pathList);
             final FedoraResource object = nodeService.getObject(session, path);
+
             final Dataset propertiesDataset =
-                object.getPropertiesDataset(new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
+                object.getPropertiesDataset(translator());
 
             return transformationFactory.getTransform(contentType, requestBodyStream).apply(propertiesDataset);
 
         } finally {
             session.logout();
         }
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 }

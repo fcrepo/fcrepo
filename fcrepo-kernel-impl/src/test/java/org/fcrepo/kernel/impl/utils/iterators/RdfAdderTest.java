@@ -48,7 +48,7 @@ import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -220,7 +220,8 @@ public class RdfAdderTest {
         when(mockPropertyDefinition.isMultiple()).thenReturn(false);
         when(mockPropertyDefinition.getName()).thenReturn(propertyShortName);
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
-        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockNodeSubject);
+        when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
+        when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
         when(mockTriples.hasNext()).thenReturn(true, true, false);
         when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         testStream = new RdfStream(mockTriples);
@@ -264,7 +265,10 @@ public class RdfAdderTest {
     private RdfStream testStream;
 
     @Mock
-    private IdentifierTranslator mockGraphSubjects;
+    private IdentifierConverter<Resource,Node> mockGraphSubjects;
+
+    @Mock
+    private IdentifierConverter<Node,Resource> mockReverseGraphSubjects;
 
     @Mock
     private Property mockProperty;

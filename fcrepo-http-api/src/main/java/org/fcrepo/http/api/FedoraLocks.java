@@ -18,8 +18,6 @@ package org.fcrepo.http.api;
 import com.codahale.metrics.annotation.Timed;
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Lock;
@@ -72,7 +70,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:lock")
-public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
+public class FedoraLocks extends FedoraBaseResource implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(FedoraLocks.class);
 
@@ -115,7 +113,7 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
             final Node node = session.getNode(path);
             final Lock lock = lockService.acquireLock(session, path, isDeep);
             session.save();
-            final String location = getTranslator().getSubject(node.getPath()).getURI();
+            final String location = translator().reverse().convert(node).getURI();
             LOGGER.debug("Locked {} with lock token {}.", path, lock.getLockToken());
             return created(new URI(location)).entity(location).header("Lock-Token", lock.getLockToken()).build();
         } catch (final RepositoryException e) {
@@ -146,33 +144,29 @@ public class FedoraLocks extends AbstractResource implements FedoraJcrTypes {
         }
     }
 
-    private HttpIdentifierTranslator getTranslator() {
-        return new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-    }
-
     private RdfStream getLockRdfStream(final Node node, final Lock lock) {
-        try {
-            final HttpIdentifierTranslator translator = getTranslator();
-            final com.hp.hpl.jena.graph.Node nodeSubject = translator.getSubject(node.getPath()).asNode();
-            final com.hp.hpl.jena.graph.Node lockSubject = createURI(nodeSubject.getURI() + "/" + FCR_LOCK);
+        final com.hp.hpl.jena.graph.Node nodeSubject = translator().reverse().convert(node).asNode();
+        final com.hp.hpl.jena.graph.Node lockSubject = createURI(nodeSubject.getURI() + "/" + FCR_LOCK);
 
-            final Triple[] lockTriples;
-            final Triple locksT = create(lockSubject, LOCKS.asNode(), nodeSubject);
-            final Triple isDeepT = create(lockSubject, IS_DEEP.asNode(),
-                    createLiteral(String.valueOf(lock.isDeep()), "", XSDDatatype.XSDboolean));
-            if (lock.getLockToken() != null) {
-                lockTriples = new Triple[]{
-                        locksT,
-                        isDeepT,
-                        create(lockSubject, HAS_LOCK_TOKEN.asNode(), createLiteral(lock.getLockToken()))};
-            } else {
-                lockTriples = new Triple[]{
-                        locksT, isDeepT};
-            }
-            return new RdfStream(lockTriples).topic(lockSubject).session(session);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        final Triple[] lockTriples;
+        final Triple locksT = create(lockSubject, LOCKS.asNode(), nodeSubject);
+        final Triple isDeepT = create(lockSubject, IS_DEEP.asNode(),
+                createLiteral(String.valueOf(lock.isDeep()), "", XSDDatatype.XSDboolean));
+        if (lock.getLockToken() != null) {
+            lockTriples = new Triple[]{
+                    locksT,
+                    isDeepT,
+                    create(lockSubject, HAS_LOCK_TOKEN.asNode(), createLiteral(lock.getLockToken()))};
+        } else {
+            lockTriples = new Triple[]{
+                    locksT, isDeepT};
         }
+        return new RdfStream(lockTriples).topic(lockSubject).session(session);
+
     }
 
+    @Override
+    protected Session session() {
+        return session;
+    }
 }

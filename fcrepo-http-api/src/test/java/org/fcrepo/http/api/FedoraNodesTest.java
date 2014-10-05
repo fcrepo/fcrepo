@@ -49,8 +49,10 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
@@ -168,7 +170,10 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("XYZ");
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockSession.getNode(path)).thenReturn(mockNode);
 
+        setField(testObj, "identifierTranslator",
+                new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
     @Test

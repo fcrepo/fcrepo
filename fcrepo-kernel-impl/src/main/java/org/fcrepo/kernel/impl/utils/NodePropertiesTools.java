@@ -32,8 +32,9 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.slf4j.Logger;
 
@@ -61,7 +62,7 @@ public class NodePropertiesTools {
      * @param newValue the JCR value to insert
      * @throws RepositoryException
      */
-    public void appendOrReplaceNodeProperty(final IdentifierTranslator subjects,
+    public void appendOrReplaceNodeProperty(final IdentifierConverter<Resource,Node> subjects,
                                                    final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
@@ -123,15 +124,19 @@ public class NodePropertiesTools {
 
     }
 
-    private void addReferencePlaceholders(final IdentifierTranslator subjects,
+    private void addReferencePlaceholders(final IdentifierConverter<Resource,Node> subjects,
                                           final Node node,
                                           final Property property,
                                           final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
-            if (subjects.isFedoraGraphSubject(resource)) {
-                final Node refNode = node.getSession().getNode(subjects.getPathFromSubject(resource));
+            if (!subjects.inDomain(resource)) {
+                return;
+            }
+
+            try {
+                final Node refNode = subjects.convert(resource);
                 final String referencePropertyName = getReferencePropertyName(property);
 
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
@@ -140,24 +145,27 @@ public class NodePropertiesTools {
 
                 final Value v = node.getSession().getValueFactory().createValue(refNode, true);
                 appendOrReplaceNodeProperty(subjects, node, referencePropertyName, v);
+
+            } catch (final IdentifierConversionException e) {
+                // no-op
             }
         }
     }
 
-    private void removeReferencePlaceholders(final IdentifierTranslator subjects,
+    private void removeReferencePlaceholders(final IdentifierConverter<Resource,Node> subjects,
                                              final Node node,
                                              final Property property,
                                              final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
-            if (subjects.isFedoraGraphSubject(resource)) {
+            if (subjects.inDomain(resource)) {
                 final String referencePropertyName = getReferencePropertyName(property);
 
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
                     node.setProperty(referencePropertyName, (Value[])null);
                 } else {
-                    final Node refNode = node.getSession().getNode(subjects.getPathFromSubject(resource));
+                    final Node refNode = subjects.convert(resource);
                     final Value v = node.getSession().getValueFactory().createValue(refNode, true);
                     removeNodeProperty(subjects, node, referencePropertyName, v);
                 }
@@ -175,7 +183,7 @@ public class NodePropertiesTools {
      * @param valueToRemove the JCR value to remove
      * @throws RepositoryException
      */
-    public void removeNodeProperty(final IdentifierTranslator subjects,
+    public void removeNodeProperty(final IdentifierConverter<Resource, Node> subjects,
                                           final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)

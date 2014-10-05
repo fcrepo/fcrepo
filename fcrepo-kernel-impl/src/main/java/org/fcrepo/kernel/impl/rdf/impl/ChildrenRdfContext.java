@@ -19,7 +19,10 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -52,7 +55,8 @@ public class ChildrenRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public ChildrenRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public ChildrenRdfContext(final Node node,
+                              final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
         super(node, graphSubjects);
 
         if (node.hasNodes()) {
@@ -75,18 +79,25 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
             @Override
             public Iterator<Triple> apply(final javax.jcr.Node child) {
-                try {
-                    final com.hp.hpl.jena.graph.Node childSubject
-                            = graphSubjects().getSubject(child.getPath()).asNode();
-                    LOGGER.trace("Creating triples for child node: {}", child);
-                    final RdfStream childStream = new RdfStream();
 
-                    childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
+                final com.hp.hpl.jena.graph.Node childSubject;
 
-                    return childStream;
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
+                if (DatastreamImpl.hasMixin(child)) {
+                    try {
+                        childSubject = graphSubjects().reverse().convert(child.getNode(JCR_CONTENT)).asNode();
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                } else {
+                    childSubject = graphSubjects().reverse().convert(child).asNode();
                 }
+                LOGGER.trace("Creating triples for child node: {}", child);
+                final RdfStream childStream = new RdfStream();
+
+                childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
+
+                return childStream;
+
             }
         };
     }

@@ -20,6 +20,8 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 
 import javax.jcr.Node;
@@ -28,7 +30,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.AnonId;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.RdfStreamConsumer;
@@ -55,7 +56,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private final RdfStream stream;
 
-    private final IdentifierTranslator idTranslator;
+    private final IdentifierConverter<Resource,Node> idTranslator;
 
     private final Session session;
 
@@ -79,7 +80,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public PersistingRdfStreamConsumer(final IdentifierTranslator graphSubjects,
+    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource,Node> graphSubjects,
             final Session session, final RdfStream stream) {
         this.idTranslator = graphSubjects;
         this.jcrRdfTools = JcrRdfTools.withContext(graphSubjects, session);
@@ -88,8 +89,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             @Override
             public boolean apply(final Triple t) {
 
-                final boolean result =
-                        graphSubjects.isFedoraGraphSubject(m.asStatement(t).getSubject()) || t.getSubject().isBlank();
+                final boolean result = graphSubjects.inDomain(m.asStatement(t).getSubject())
+                        || t.getSubject().isBlank();
                 if (result) {
                     LOGGER.debug(
                             "Discovered a Fedora-relevant subject in triple: {}.",
@@ -136,7 +137,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             final Node orCreateNode =
                     jcrTools.findOrCreateNode(session, "/.well-known/genid/" + randomUUID().toString());
             orCreateNode.addMixin("fedora:blanknode");
-            final Resource skolemizedSubject = idTranslator().getSubject(orCreateNode.getPath());
+            final Resource skolemizedSubject = idTranslator().reverse().convert(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }
 
@@ -146,7 +147,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected void operateOnTriple(final Statement t)
         throws RepositoryException {
         final Resource subject = t.getSubject();
-        final Node subjectNode = session().getNode(idTranslator().getPathFromSubject(subject));
+        final Node subjectNode = idTranslator().convert(subject);
 
         // if this is a user-managed RDF type assertion, update the node's
         // mixins. If it isn't, treat it as a "data" property.
@@ -210,7 +211,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * @return the idTranslator
      */
-    public IdentifierTranslator idTranslator() {
+    public IdentifierConverter<Resource,Node> idTranslator() {
         return idTranslator;
     }
 

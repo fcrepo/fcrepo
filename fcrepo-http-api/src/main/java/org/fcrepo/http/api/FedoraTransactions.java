@@ -15,13 +15,14 @@
  */
 package org.fcrepo.http.api;
 
-import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
 
@@ -36,7 +37,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.services.TransactionService;
@@ -52,7 +52,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:tx")
-public class FedoraTransactions extends AbstractResource {
+public class FedoraTransactions extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
@@ -71,7 +71,7 @@ public class FedoraTransactions extends AbstractResource {
      */
     @POST
     public Response createTransaction(@PathParam("path") final List<PathSegment> pathList,
-                                      @Context final HttpServletRequest req) {
+                                      @Context final HttpServletRequest req) throws URISyntaxException {
 
         if (session instanceof TxSession) {
             final Transaction t = txService.getTransaction(session);
@@ -93,11 +93,7 @@ public class FedoraTransactions extends AbstractResource {
         final Transaction t = txService.beginTransaction(session, userName);
         LOGGER.debug("created transaction {}", t.getId());
 
-        return created(
-                uriInfo.getBaseUriBuilder().path(FedoraNodes.class)
-                        .buildFromMap(
-                                singletonMap("path", "tx:" +
-                                        t.getId()), false)).expires(
+        return created(new URI(translator().toDomain("/tx:" + t.getId()).toString())).expires(
                 t.getExpires()).build();
     }
 
@@ -160,5 +156,10 @@ public class FedoraTransactions extends AbstractResource {
             txService.rollback(txId);
         }
         return noContent().build();
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 }

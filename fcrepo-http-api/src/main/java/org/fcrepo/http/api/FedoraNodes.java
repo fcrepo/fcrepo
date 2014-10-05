@@ -45,8 +45,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.kernel.FedoraResource;
@@ -65,7 +63,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
  */
 @Scope("request")
 @Path("/{path: .*}")
-public class FedoraNodes extends AbstractResource {
+public class FedoraNodes extends ContentExposingResource {
 
     @Inject
     protected Session session;
@@ -82,7 +80,6 @@ public class FedoraNodes extends AbstractResource {
     protected String path;
 
     protected FedoraResource resource;
-    private HttpIdentifierTranslator identifierTranslator;
 
     @PostConstruct
     private void postConstruct() {
@@ -143,7 +140,7 @@ public class FedoraNodes extends AbstractResource {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
-            final String destination = getPath(destinationUri);
+            final String destination = translator().asString(ResourceFactory.createResource(destinationUri));
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
@@ -197,7 +194,7 @@ public class FedoraNodes extends AbstractResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
-            final String destination = getPath(destinationUri);
+            final String destination = translator().asString(ResourceFactory.createResource(destinationUri));
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
@@ -228,27 +225,25 @@ public class FedoraNodes extends AbstractResource {
 
     }
 
-    private FedoraResource resource() {
-        if (resource == null) {
-            resource = nodeService.getObject(session, path);
-        }
-
-        return resource;
+    @Override
+    protected Session session() {
+        return session;
     }
 
-    private HttpIdentifierTranslator translator() {
-        if (identifierTranslator == null) {
-            identifierTranslator = new HttpIdentifierTranslator(session, this.getClass(), uriInfo);
-        }
+    @Override
+    void addResourceHttpHeaders(final FedoraResource resource) {
 
-        return identifierTranslator;
     }
 
-
-    private String getPath(final String uri) {
-        return translator().getPathFromSubject(ResourceFactory.createResource(uri));
+    @Override
+    String path() {
+        return path;
     }
 
+    @Override
+    List<PathSegment> pathList() {
+        return pathList;
+    }
 
     /**
      * Method to check for any jcr namespace element in the path

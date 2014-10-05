@@ -51,7 +51,7 @@ import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
@@ -126,7 +126,7 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
     private Row mockRow;
 
     @Mock
-    private IdentifierTranslator mockSubjectFactory;
+    private IdentifierConverter mockSubjectFactory;
 
     @Mock
     private QueryObjectModelFactory mockQOMFactory;

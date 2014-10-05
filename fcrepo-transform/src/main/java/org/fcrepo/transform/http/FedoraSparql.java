@@ -18,17 +18,16 @@ package org.fcrepo.transform.http;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.impl.utils.LogoutCallback;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
@@ -38,6 +37,7 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.Consumes;
@@ -102,7 +102,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Scope("prototype")
 @Path("/fcr:sparql")
-public class FedoraSparql extends AbstractResource {
+public class FedoraSparql extends FedoraBaseResource {
 
     @Inject
     protected Session session;
@@ -205,14 +205,12 @@ public class FedoraSparql extends AbstractResource {
         @Context final Request request, @Context final UriInfo uriInfo)
         throws IOException, RepositoryException {
 
-        final IdentifierTranslator graphSubjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
         final Variant bestPossibleResponse =
             request.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS);
 
         final String sparqlQuery = IOUtils.toString(requestBodyStream);
 
-        return rexecSparql(sparqlQuery, bestPossibleResponse, graphSubjects);
+        return rexecSparql(sparqlQuery, bestPossibleResponse, translator());
     }
 
     /**
@@ -242,12 +240,17 @@ public class FedoraSparql extends AbstractResource {
         }
         return rexecSparql(query,
                            request.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS),
-                           new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
+                translator());
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 
     private Response rexecSparql(final String sparql,
                                  final Variant bestPossibleResponse,
-                                 final IdentifierTranslator graphSubjects)
+                                 final IdentifierConverter<Resource,Node> graphSubjects)
             throws RepositoryException {
         LOGGER.trace("Running SPARQL query: {}", sparql);
 

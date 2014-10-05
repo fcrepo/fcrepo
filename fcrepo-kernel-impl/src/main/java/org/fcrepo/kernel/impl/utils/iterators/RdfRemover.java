@@ -21,7 +21,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -47,7 +47,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public RdfRemover(final IdentifierTranslator graphSubjects, final Session session,
+    public RdfRemover(final IdentifierConverter<Resource,Node> graphSubjects, final Session session,
         final RdfStream stream) {
         super(graphSubjects, session, stream);
     }

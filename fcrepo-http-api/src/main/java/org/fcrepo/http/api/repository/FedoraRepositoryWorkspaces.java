@@ -52,12 +52,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.common.collect.ImmutableSet;
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
@@ -72,7 +69,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/fcr:workspaces")
-public class FedoraRepositoryWorkspaces extends AbstractResource {
+public class FedoraRepositoryWorkspaces extends FedoraBaseResource {
 
     @Inject
     protected Session session;
@@ -90,10 +87,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
     public RdfStream getWorkspaces() {
         try {
 
-            final IdentifierTranslator idTranslator =
-                    new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-            return JcrRdfTools.withContext(idTranslator, session).getWorkspaceTriples(idTranslator).session(session);
+            return JcrRdfTools.withContext(translator(), session).getWorkspaceTriples(translator()).session(session);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -128,11 +122,7 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
 
             workspace.createWorkspace(path);
 
-            final IdentifierTranslator subjects =
-                new HttpIdentifierTranslator(session.getRepository().login(path), FedoraNodes.class, uriInfo);
-
-
-            return created(new URI(subjects.getSubject("/").getURI())).build();
+            return created(new URI(translator().toDomain("/workspace:" + path + "/").toString())).build();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         } finally {
@@ -165,4 +155,10 @@ public class FedoraRepositoryWorkspaces extends AbstractResource {
             session.logout();
         }
     }
+
+    @Override
+    protected Session session() {
+        return session;
+    }
+
 }

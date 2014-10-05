@@ -20,8 +20,10 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.slf4j.Logger;
@@ -37,6 +39,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.LDP_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -53,7 +56,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public LdpContainerRdfContext(final Node node, final IdentifierTranslator graphSubjects)
+    public LdpContainerRdfContext(final Node node, final IdentifierConverter<Resource,Node> graphSubjects)
             throws RepositoryException {
         super(node, graphSubjects);
         final PropertyIterator properties = new PropertyIterator(node.getReferences(LDP_MEMBER_RESOURCE));
@@ -110,13 +113,18 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
                 @Override
                 public Triple apply(final Node child) {
-                    try {
-                        final com.hp.hpl.jena.graph.Node childSubject
-                                = graphSubjects().getSubject(child.getPath()).asNode();
-                        return create(subject(), memberRelation, childSubject);
-                    } catch (final RepositoryException e) {
-                        throw new RepositoryRuntimeException(e);
+                    final com.hp.hpl.jena.graph.Node childSubject;
+                    if (DatastreamImpl.hasMixin(child)) {
+                        try {
+                            childSubject = graphSubjects().reverse().convert(child.getNode(JCR_CONTENT)).asNode();
+                        } catch (final RepositoryException e) {
+                            throw new RepositoryRuntimeException(e);
+                        }
+                    } else {
+                        childSubject = graphSubjects().reverse().convert(child).asNode();
                     }
+                    return create(subject(), memberRelation, childSubject);
+
                 }
             });
         } else {

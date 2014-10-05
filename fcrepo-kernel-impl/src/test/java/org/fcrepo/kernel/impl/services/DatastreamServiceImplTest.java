@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -34,9 +33,11 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import com.google.common.collect.ImmutableSet;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -101,6 +102,8 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     @Mock
     private CacheEntry mockCacheEntry;
 
+    private IdentifierConverter<Resource,Node> mockSubjects;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -111,6 +114,8 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:file");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        mockSubjects = new DefaultIdentifierTranslator(mockSession);
+        when(mockNode.getPath()).thenReturn("/some/path");
     }
 
     @Test
@@ -129,8 +134,6 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
     @Test
     public void testGetFixityResultsModel() throws Exception {
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
-        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(createResource("abc"));
 
         final FixityResult fixityResult = mock(FixityResult.class);
         when(fixityResult.matches(any(Long.class), any(URI.class))).thenReturn(true);
@@ -150,7 +153,8 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
         final RdfStream actual = testObj.getFixityResultsModel(mockSubjects, mockFedoraBinary);
 
-        assertEquals("Got wrong topic of fixity results!", createResource("abc").asNode(), actual.topic());
+        assertEquals("Got wrong topic of fixity results!",
+                mockSubjects.reverse().convert(mockNode).asNode(), actual.topic());
     }
 
 }

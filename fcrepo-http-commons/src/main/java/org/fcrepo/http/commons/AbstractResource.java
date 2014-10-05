@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.jcr.Node;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
@@ -40,12 +41,13 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.LockService;
 import org.fcrepo.kernel.services.NodeService;
@@ -247,7 +249,7 @@ public abstract class AbstractResource {
 
     protected void addResponseInformationToStream(
             final FedoraResource resource, final RdfStream dataset,
-            final UriInfo uriInfo, final IdentifierTranslator subjects) {
+            final UriInfo uriInfo, final IdentifierConverter<Resource,Node> subjects) {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
                     uriInfo, subjects);

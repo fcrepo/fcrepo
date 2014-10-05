@@ -41,6 +41,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
@@ -319,16 +320,29 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
+    @Override
+    public boolean isVersioned() {
+        return getDescription().isVersioned();
+    }
+
+    @Override
+    public void enableVersioning() {
+        super.enableVersioning();
+        getDescription().enableVersioning();
+    }
+
+    @Override
+    public void disableVersioning() {
+        super.disableVersioning();
+        getDescription().disableVersioning();
+    }
+
     /**
      * Check if the given node is a Fedora binary
      * @param node
      * @return
      */
     public static boolean hasMixin(final Node node) {
-        try {
-            return node.isNodeType(FEDORA_BINARY);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return isFedoraBinary.apply(node);
     }
 }

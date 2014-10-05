@@ -110,7 +110,7 @@ public class FedoraFieldSearchIT extends AbstractResourceIT {
 
         method.setURI(uri);
 
-        final GraphStore graphStore =  getGraphStore(method);
+        final GraphStore graphStore = getGraphStore(method);
 
         logger.debug("Got search results graph: {}", graphStore);
         assertTrue(graphStore.contains(ANY, createResource(

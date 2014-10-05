@@ -20,7 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -50,7 +51,8 @@ public class TypeRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public TypeRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public TypeRdfContext(final Node node,
+                          final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
         super(node, graphSubjects);
 
         //include rdf:type for primaryType, mixins, and their supertypes

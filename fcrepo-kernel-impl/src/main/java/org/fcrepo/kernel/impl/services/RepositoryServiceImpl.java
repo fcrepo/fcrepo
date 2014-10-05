@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
@@ -43,7 +44,6 @@ import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
 
 import org.fcrepo.kernel.rdf.GraphProperties;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.services.RepositoryService;
@@ -120,7 +120,8 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * (javax.jcr.Session)
      */
     @Override
-    public Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator) {
+    public Dataset getNamespaceRegistryDataset(final Session session,
+                                               final IdentifierConverter<Resource,Node> idTranslator) {
 
 
         final Model model;
@@ -144,7 +145,8 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * (javax.jcr.Session)
      */
     @Override
-    public RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator) {
+    public RdfStream getNamespaceRegistryStream(final Session session,
+                                                final IdentifierConverter<Resource,Node> idTranslator) {
 
         try {
             return JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples();
@@ -162,7 +164,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * javax.jcr.Session, java.lang.String, int, long)
      */
     @Override
-    public Dataset searchRepository(final IdentifierTranslator subjectFactory,
+    public Dataset searchRepository(final IdentifierConverter<Resource,Node> subjectFactory,
             final Resource searchSubject, final Session session,
             final String terms, final int limit, final long offset) {
 

@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
@@ -37,7 +36,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -81,8 +80,8 @@ public class PropertiesRdfContextTest {
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockContentNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockContentNode.hasProperties()).thenReturn(false);
-        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(mockSubject);
-        when(mockGraphSubjects.getSubject(mockContentNode.getPath())).thenReturn(mockContentSubject);
+        when(mockContentNode.getPath()).thenReturn("/mockNode/jcr:content");
+        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockContentNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
@@ -90,13 +89,12 @@ public class PropertiesRdfContextTest {
                  mockNodeTypePrefix + ":" + mockNodeName);
 
         //when(mockNodeType.getName()).thenReturn("not:root");
+        mockSubject = mockGraphSubjects.reverse().convert(mockNode);
+        mockContentSubject = mockGraphSubjects.reverse().convert(mockContentNode);
     }
 
-    private static final Resource mockContentSubject =
-        createResource("http://example.com/node/jcr:content");
-
-    private static final Resource mockSubject =
-        createResource("http://example.com/node");
+    private Resource mockContentSubject;
+    private Resource mockSubject;
 
     private static final String mockNodeTypePrefix = "jcr";
 
@@ -111,8 +109,7 @@ public class PropertiesRdfContextTest {
     @Mock
     private NodeType mockNodeType;
 
-    @Mock
-    private IdentifierTranslator mockGraphSubjects;
+    private IdentifierConverter<Resource,Node> mockGraphSubjects;
 
     @Mock
     private Session mockSession;

@@ -57,14 +57,16 @@ import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -157,6 +159,9 @@ public class FedoraBatchTest {
         final PropertyIterator emptyPropertyIterator = mock(PropertyIterator.class);
         when(emptyPropertyIterator.hasNext()).thenReturn(false);
         when(mockNode.getReferences(anyString())).thenReturn(emptyPropertyIterator);
+
+        setField(testObj, "identifierTranslator",
+                new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
     @Test
@@ -184,7 +189,7 @@ public class FedoraBatchTest {
         multipart.bodyPart(part);
 
         testObj.batchModify(multipart);
-        verify(mockObject).updatePropertiesDataset(any(IdentifierTranslator.class), eq("xyz"));
+        verify(mockObject).updatePropertiesDataset(any(IdentifierConverter.class), eq("xyz"));
         verify(mockSession).save();
     }
 
@@ -215,7 +220,7 @@ public class FedoraBatchTest {
 
         testObj.batchModify(multipart);
         final ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
-        verify(mockObject).replaceProperties(any(IdentifierTranslator.class), captor.capture(), any(RdfStream.class));
+        verify(mockObject).replaceProperties(any(IdentifierConverter.class), captor.capture(), any(RdfStream.class));
         final Model capturedModel = captor.getValue();
         assertTrue(capturedModel.contains(capturedModel.createResource("http://localhost/fcrepo/" + pid),
                                              capturedModel.createProperty("info:a"),

@@ -33,7 +33,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
@@ -85,7 +85,7 @@ public class FedoraFixityTest {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockDs.getNode()).thenReturn(mockNode);
         when(mockDatastreams.findOrCreateDatastream(mockSession, path)).thenReturn(mockDs);
-        when(mockDatastreams.getFixityResultsModel(any(IdentifierTranslator.class), any(FedoraBinary.class)))
+        when(mockDatastreams.getFixityResultsModel(any(IdentifierConverter.class), any(FedoraBinary.class)))
                 .thenReturn(expected);
 
         final RdfStream actual = testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"),

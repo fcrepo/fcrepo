@@ -131,7 +131,7 @@ public class FedoraVersions extends ContentExposingResource {
             }
 
             final String version = (label != null) ? label : versions.iterator().next();
-            return noContent().header("Location", translator().getSubject(
+            return noContent().header("Location", translator().toDomain(
                     path) + "/fcr:versions/" + version).build();
         } finally {
             session.logout();
@@ -192,13 +192,12 @@ public class FedoraVersions extends ContentExposingResource {
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
         final RdfStream rdfStream = new RdfStream().session(session).topic(
-                translator().getSubject(unversionedResource().getPath()).asNode());
+                translator().reverse().convert(resource().getNode()).asNode());
         return getContent(prefer, rangeValue, rdfStream);
     }
 
-    @VisibleForTesting
     protected FedoraResource unversionedResource() {
-        return getResourceFromPath();
+        return getResourceFromPath(pathList, path);
     }
 
     @Override
@@ -264,7 +263,7 @@ public class FedoraVersions extends ContentExposingResource {
 
 
     @Override
-    Session session() {
+    protected Session session() {
         return session;
     }
 }

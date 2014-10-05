@@ -29,7 +29,8 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.VersionIterator;
 
@@ -51,7 +52,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final VersionHistory versionHistory;
 
-    private final IdentifierTranslator graphSubjects;
+    private final IdentifierConverter<Resource,Node> graphSubjects;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
@@ -62,11 +63,12 @@ public class VersionsRdfContext extends RdfStream {
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public VersionsRdfContext(final Node node, final IdentifierTranslator graphSubjects)
+    public VersionsRdfContext(final Node node,
+                              final IdentifierConverter<Resource,Node> graphSubjects)
         throws RepositoryException {
         super();
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getSubject(node.getPath()).asNode();
+        this.subject = graphSubjects.reverse().convert(node).asNode();
         versionManager = node.getSession().getWorkspace().getVersionManager();
         versionHistory = versionManager.getVersionHistory(node.getPath());
 
@@ -86,12 +88,12 @@ public class VersionsRdfContext extends RdfStream {
 
                 try {
                     final Node frozenNode = version.getFrozenNode();
-                    final com.hp.hpl.jena.graph.Node versionSubject =
-                        graphSubjects.getSubject(frozenNode.getPath()).asNode();
+                    final com.hp.hpl.jena.graph.Node versionSubject
+                            = graphSubjects.reverse().convert(frozenNode).asNode();
 
-                    final RdfStream results =
+                    final RdfStream results = new RdfStream(
                             new RdfStream(new PropertiesRdfContext(frozenNode,
-                                    graphSubjects));
+                                    graphSubjects)));
 
                     results.concat(create(subject, HAS_VERSION.asNode(),
                             versionSubject));

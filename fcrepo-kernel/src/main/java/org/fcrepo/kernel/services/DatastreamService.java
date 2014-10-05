@@ -18,10 +18,11 @@ package org.fcrepo.kernel.services;
 import javax.jcr.Node;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.ResourceTypeException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -71,7 +72,7 @@ public interface DatastreamService extends Service {
      * @param datastream
      * @return fixity results for datastream
      */
-    RdfStream getFixityResultsModel(IdentifierTranslator subjects, FedoraBinary datastream);
+    RdfStream getFixityResultsModel(IdentifierConverter<Resource,Node> subjects, FedoraBinary datastream);
 
     /**
      * Get the active storage policy decision point

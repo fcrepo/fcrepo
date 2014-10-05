@@ -34,6 +34,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -83,6 +84,8 @@ public class FedoraRepositoryWorkspacesTest {
         workspaces = new FedoraRepositoryWorkspaces();
         setField(workspaces, "session", mockSession);
         setField(workspaces, "uriInfo", mockUriInfo);
+        setField(workspaces, "identifierTranslator",
+                new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getRepository()).thenReturn(mockRepository);

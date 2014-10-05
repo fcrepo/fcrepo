@@ -40,8 +40,6 @@ import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -57,7 +55,7 @@ import com.codahale.metrics.annotation.Timed;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:fixity")
-public class FedoraFixity extends AbstractResource {
+public class FedoraFixity extends FedoraBaseResource {
 
     @Inject
     protected Session session;
@@ -89,8 +87,13 @@ public class FedoraFixity extends AbstractResource {
         final Datastream ds = datastreamService.findOrCreateDatastream(session, path);
 
         return datastreamService.getFixityResultsModel(
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo), ds.getBinary())
+                translator(), ds.getBinary())
                 .session(session);
 
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 }

@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
@@ -54,6 +55,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -113,7 +115,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator();
+        subjects = new DefaultIdentifierTranslator(session);
     }
 
     @After
@@ -129,8 +131,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.logout();
     }
 
-    private Node createGraphSubjectNode(final String absPath) {
-        return subjects.getSubject(absPath).asNode();
+    private Node createGraphSubjectNode(final FedoraResource obj) {
+        return subjects.reverse().convert(obj.getNode()).asNode();
     }
 
     @Test
@@ -138,9 +140,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             objectService.findOrCreateObject(session, "/testNodeGraph");
 
-        logger.debug(object.getPropertiesDataset(
-                new DefaultIdentifierTranslator()).toString());
-        final Node s = createGraphSubjectNode("/testNodeGraph");
+        logger.debug(object.getPropertiesDataset(subjects).toString());
+        final Node s = subjects.reverse().convert(object.getNode()).asNode();
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         final Node o = createLiteral("nt:folder");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -166,7 +167,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object = nodeService.getObject(session, "/");
 
         logger.debug(object.getPropertiesDataset(subjects).toString());
-        final Node s = createGraphSubjectNode("/");
+        final Node s = createGraphSubjectNode(object);
         Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         Node o = createLiteral("mode:root");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -196,7 +197,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
-        final Node s = createGraphSubjectNode(pid);
+        final Node s = createGraphSubjectNode(object);
         Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -237,7 +238,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(object.getPropertiesDataset(subjects).toString());
 
         // jcr property
-        final Node s = createGraphSubjectNode("/testObjectGraph");
+        final Node s = createGraphSubjectNode(object);
         Node p = DC_TITLE.asNode();
         Node o = createLiteral("this-is-some-title");
         assertTrue(object.getPropertiesDataset(subjects).asDatasetGraph()
@@ -287,7 +288,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         object = objectService.findOrCreateObject(session, "/testNTTnheritanceObject");
 
         //test that supertype has been inherited as rdf:type
-        final Node s = createGraphSubjectNode("/testNTTnheritanceObject");
+        final Node s = createGraphSubjectNode(object);
         final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
         final Node o = createProperty("info:fedora/test/aSupertype").asNode();
         assertTrue("supertype test:aSupertype not found inherited in test:testInher!",
@@ -297,7 +298,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException {
 
-        objectService.findOrCreateObject(session, "/testDatastreamGraphParent");
+        final FedoraObject parentObject = objectService.findOrCreateObject(session, "/testDatastreamGraphParent");
 
         datastreamService.getBinary(session, "/testDatastreamGraph").setContent(
                 new ByteArrayInputStream("123456789test123456789".getBytes()),
@@ -307,8 +308,8 @@ public class FedoraResourceImplIT extends AbstractIT {
                 null
         );
 
-        final FedoraResource object =
-            nodeService.getObject(session, "/testDatastreamGraph");
+        final Datastream object =
+            datastreamService.getBinary(session, "/testDatastreamGraph").getDescription();
 
         object.getNode().setProperty("fedorarelsext:isPartOf",
                 session.getNode("/testDatastreamGraphParent"));
@@ -321,7 +322,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(propertiesDataset.toString());
 
         // jcr property
-        Node s = createGraphSubjectNode("/testDatastreamGraph");
+        Node s = createGraphSubjectNode(object);
         Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
@@ -346,15 +347,15 @@ public class FedoraResourceImplIT extends AbstractIT {
         //assertTrue(datasetGraph.contains(ANY, s, p, o));
         // relations
         p = createURI(RELATIONS_NAMESPACE + "isPartOf");
-        o = createGraphSubjectNode("/testDatastreamGraphParent");
+        o = createGraphSubjectNode(parentObject);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
         p = createURI(REPOSITORY_NAMESPACE + "hasContent");
-        o = createGraphSubjectNode("/testDatastreamGraph/fcr:content");
+        o = createGraphSubjectNode(object.getBinary());
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
         // content properties
-        s = createGraphSubjectNode("/testDatastreamGraph/fcr:content");
+        s = createGraphSubjectNode(object.getBinary());
         p = createURI(REPOSITORY_NAMESPACE + "mimeType");
         o = createLiteral("text/plain");
         assertTrue(datasetGraph.contains(ANY, s, p, o));
@@ -371,9 +372,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             objectService.findOrCreateObject(session, "/testObjectGraphWindow");
 
-        objectService.findOrCreateObject(session, "/testObjectGraphWindow/a");
-        objectService.findOrCreateObject(session, "/testObjectGraphWindow/b");
-        objectService.findOrCreateObject(session, "/testObjectGraphWindow/c");
+        final FedoraResource a = objectService.findOrCreateObject(session, "/testObjectGraphWindow/a");
+        final FedoraResource b = objectService.findOrCreateObject(session, "/testObjectGraphWindow/b");
+        final FedoraResource c = objectService.findOrCreateObject(session, "/testObjectGraphWindow/c");
 
         final Dataset propertiesDataset =
             object.getPropertiesDataset(subjects, 1, 1);
@@ -383,26 +384,26 @@ public class FedoraResourceImplIT extends AbstractIT {
         final DatasetGraph datasetGraph = propertiesDataset.asDatasetGraph();
 
         // jcr property
-        Node s = createGraphSubjectNode("/testObjectGraphWindow");
+        Node s = createGraphSubjectNode(object);
         Node p = HAS_PRIMARY_IDENTIFIER.asNode();
         Node o = createLiteral(object.getNode().getIdentifier());
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
         p = HAS_CHILD.asNode();
-        o = createGraphSubjectNode("/testObjectGraphWindow/a");
+        o = createGraphSubjectNode(a);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
-        o = createGraphSubjectNode("/testObjectGraphWindow/b");
+        o = createGraphSubjectNode(b);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
-        o = createGraphSubjectNode("/testObjectGraphWindow/c");
+        o = createGraphSubjectNode(c);
         assertTrue(datasetGraph.contains(ANY, s, p, o));
 
-        s = createGraphSubjectNode("/testObjectGraphWindow/b");
+        s = createGraphSubjectNode(b);
         p = HAS_PRIMARY_IDENTIFIER.asNode();
         assertTrue(datasetGraph.contains(ANY, s, p, ANY));
 
-        s = createGraphSubjectNode("/testObjectGraphWindow/c");
+        s = createGraphSubjectNode(c);
         assertFalse(datasetGraph.contains(ANY, s, p, ANY));
 
     }
@@ -414,22 +415,22 @@ public class FedoraResourceImplIT extends AbstractIT {
             objectService.findOrCreateObject(session, "/testObjectGraphUpdates");
 
         object.updatePropertiesDataset(subjects, "INSERT { " + "<"
-                + subjects.getSubject("/testObjectGraphUpdates").getURI() + "> "
+                + createGraphSubjectNode(object).getURI() + "> "
                 + "<info:fcrepo/zyx> \"a\" } WHERE {} ");
 
         // jcr property
-        final Resource s = subjects.getSubject("/testObjectGraphUpdates");
+        final Resource s = createResource(createGraphSubjectNode(object).getURI());
         final Property p = createProperty("info:fcrepo/zyx");
         Literal o = createPlainLiteral("a");
         assertTrue(object.getPropertiesDataset(subjects).getDefaultModel()
                 .contains(s, p, o));
 
         object.updatePropertiesDataset(subjects, "DELETE { " + "<"
-                + createGraphSubjectNode("/testObjectGraphUpdates").getURI() + "> "
+                + createGraphSubjectNode(object).getURI() + "> "
                 + "<info:fcrepo/zyx> ?o }\n" + "INSERT { " + "<"
-                + createGraphSubjectNode("/testObjectGraphUpdates").getURI() + "> "
+                + createGraphSubjectNode(object).getURI() + "> "
                 + "<info:fcrepo/zyx> \"b\" } " + "WHERE { " + "<"
-                + createGraphSubjectNode("/testObjectGraphUpdates").getURI() + "> "
+                + createGraphSubjectNode(object).getURI() + "> "
                 + "<info:fcrepo/zyx> ?o } ");
 
         assertFalse("found value we should have removed", object
@@ -479,7 +480,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(graphStore.toString());
 
         // go querying for the version URI
-        Resource s = subjects.getSubject("/testObjectVersionGraph");
+        Resource s = createResource(createGraphSubjectNode(object).getURI());
         Property p = createProperty(REPOSITORY_NAMESPACE + "hasVersion");
         final ExtendedIterator<Statement> triples = graphStore.listStatements(s, p, (RDFNode)null);
 
@@ -510,7 +511,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 "PREFIX example: <http://example.org/>\n"
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
                         + "INSERT { <"
-                        + createGraphSubjectNode("/testObjectRdfType").getURI()
+                        + createGraphSubjectNode(object).getURI()
                         + "> example:int-property \"0\"^^xsd:long } "
                         + "WHERE { }");
         assertEquals(LONG, object.getNode().getProperty("example:int-property")
@@ -534,7 +535,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 "PREFIX example: <http://example.org/>\n"
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
                         + "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>\n"
-                        + "INSERT { <> fedorarelsext:isPartOf <" + subjects.getSubject("/some-path") + ">}"
+                        + "INSERT { <> fedorarelsext:isPartOf <" + subjects.toDomain("/some-path") + ">}"
                         + "WHERE { }");
     }
 
@@ -549,7 +550,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(propertiesDataset.toString());
 
         object.updatePropertiesDataset(subjects, "INSERT { <"
-                + createGraphSubjectNode("/testObjectRdfType").getURI() + "> <" + RDF.type
+                + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }");
         assertTrue(object.getNode().isNodeType("{http://some/}uri"));
     }
@@ -565,12 +566,12 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(propertiesDataset.toString());
 
         object.updatePropertiesDataset(subjects, "INSERT { <"
-                + createGraphSubjectNode("/testRemoveObjectRdfType").getURI() + "> <" + RDF.type
+                + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }");
         assertTrue(object.getNode().isNodeType("{http://some/}uri"));
 
         object.updatePropertiesDataset(subjects, "DELETE { <"
-                + createGraphSubjectNode("/testRemoveObjectRdfType").getURI() + "> <" + RDF.type
+                + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }");
         assertFalse(object.getNode().isNodeType("{http://some/}uri"));
     }
@@ -601,9 +602,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model = object.getTriples(subjects, ReferencesRdfContext.class).asModel();
 
         assertTrue(
-            model.contains(subjects.getSubject(subject.getPath()),
+            model.contains(subjects.reverse().convert(subject.getNode()),
                               ResourceFactory.createProperty("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
-                              subjects.getSubject(object.getPath()))
+                              subjects.reverse().convert(object.getNode()))
         );
     }
 
@@ -616,7 +617,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model = triples.asModel();
 
         final Resource resource = model.createResource();
-        final Resource subject = subjects.getSubject(object.getPath());
+        final Resource subject = subjects.reverse().convert(object.getNode());
         final Property predicate = model.createProperty("info:xyz");
         model.add(subject, predicate, resource);
         model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");

@@ -24,7 +24,30 @@ import com.google.common.base.Converter;
  *
  * @author ajs6f
  * @since Mar 26, 2014
- * @param <T> the type to and from which we are translating
+ * @param <B> the type to and from which we are translating
  */
-public abstract class IdentifierConverter<T> extends Converter<String, T> {
+public abstract class IdentifierConverter<A, B> extends Converter<A, B> {
+
+    /**
+     * Check if the given resource is in the domain of this converter
+     * @param resource
+     * @return
+     */
+    public boolean inDomain(final A resource) {
+        return convert(resource) != null;
+    }
+
+    /**
+     * Convert a plain string to a resource appropriate to this converter
+     * @param resource
+     * @return
+     */
+    abstract public A toDomain(final String resource);
+
+    /**
+     * Convert the given resource into a plain string representation of the conversion to the resource
+     * @param resource
+     * @return
+     */
+    abstract public String asString(final A resource);
 }

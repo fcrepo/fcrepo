@@ -15,7 +15,8 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -38,7 +39,8 @@ public class AclRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public AclRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public AclRdfContext(final Node node,
+                         final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
         super(node, graphSubjects);
 
         // include writable status

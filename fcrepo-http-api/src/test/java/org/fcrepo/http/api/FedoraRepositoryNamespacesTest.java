@@ -31,7 +31,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.http.api.repository.FedoraRepositoryNamespaces;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
@@ -73,7 +73,7 @@ public class FedoraRepositoryNamespacesTest {
 
     @Test
     public void testGetNamespaces() throws RepositoryException {
-        when(mockService.getNamespaceRegistryStream(any(Session.class), any(IdentifierTranslator.class)))
+        when(mockService.getNamespaceRegistryStream(any(Session.class), any(IdentifierConverter.class)))
                 .thenReturn(testRdfStream);
         assertEquals(testRdfStream, testObj.getNamespaces());
     }
@@ -83,7 +83,7 @@ public class FedoraRepositoryNamespacesTest {
 
         final Model model = createDefaultModel();
         final Dataset mockDataset = DatasetFactory.create(model);
-        when(mockService.getNamespaceRegistryDataset(any(Session.class), any(IdentifierTranslator.class))).thenReturn(
+        when(mockService.getNamespaceRegistryDataset(any(Session.class), any(IdentifierConverter.class))).thenReturn(
                 mockDataset);
 
         testObj.updateNamespaces(new ByteArrayInputStream(

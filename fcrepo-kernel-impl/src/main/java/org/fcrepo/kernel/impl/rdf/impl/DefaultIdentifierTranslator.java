@@ -15,17 +15,19 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
 /**
- * A very simple {@link IdentifierTranslator} which translates JCR paths into
+ * A very simple {@link IdentifierConverter} which translates JCR paths into
  * un-dereference-able Fedora subjects (by replacing JCR-specific names with
  * Fedora names). Should not be used except in "embedded" deployments in which
  * no publication of translated identifiers is expected!
@@ -34,57 +36,71 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @since May 15, 2013
  */
-public class DefaultIdentifierTranslator implements IdentifierTranslator {
+public class DefaultIdentifierTranslator extends IdentifierConverter<Resource,Node> {
 
     /**
      * Default namespace to use for node URIs
      */
     public static final String RESOURCE_NAMESPACE = "info:fedora/";
-
-    private final Resource context;
+    private final Session session;
 
     /**
      * Construct the graph with a placeholder context resource
      */
-    public DefaultIdentifierTranslator() {
-        this.context = createResource();
+    public DefaultIdentifierTranslator(final Session session) {
+        this.session = session;
     }
 
+
     @Override
-    public Resource getSubject(final String absPath) {
-        if (absPath.endsWith(JCR_CONTENT)) {
-            return createResource(RESOURCE_NAMESPACE + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
+    protected Node doForward(final Resource subject) {
+        try {
+            if (!inDomain(subject)) {
+                throw new RepositoryRuntimeException("Subject " + subject + " is not in this repository");
+            }
+
+            return session.getNode(asString(subject));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return createResource(RESOURCE_NAMESPACE + absPath.substring(1));
     }
 
     @Override
-    public Resource getContext() {
-        return context;
+    protected Resource doBackward(final Node node) {
+        try {
+            final String absPath = node.getPath();
+
+            return toDomain(absPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     @Override
-    public String getPathFromSubject(final Resource subject) {
-        if (!isFedoraGraphSubject(subject)) {
+    public boolean inDomain(final Resource subject) {
+        return subject.isURIResource() && subject.getURI().startsWith(RESOURCE_NAMESPACE);
+    }
+
+    @Override
+    public Resource toDomain(final String absPath) {
+        final String relativePath;
+
+        if (absPath.startsWith("/")) {
+            relativePath = absPath.substring(1);
+        } else {
+            relativePath = absPath;
+        }
+        return createResource(RESOURCE_NAMESPACE + relativePath);
+    }
+
+    @Override
+    public String asString(final Resource subject) {
+        if (!inDomain(subject)) {
             return null;
         }
 
         final String absPath = subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
 
-        if (absPath.endsWith(FCR_CONTENT)) {
-            return absPath.replace(FCR_CONTENT, JCR_CONTENT);
-        }
         return absPath;
-    }
-
-    @Override
-    public boolean isFedoraGraphSubject(final Resource subject) {
-        checkNotNull(subject, "null cannot be a Fedora object!");
-        return subject.isURIResource() && subject.getURI().startsWith(RESOURCE_NAMESPACE);
-    }
-
-    @Override
-    public String getBaseUri() {
-        return RESOURCE_NAMESPACE;
     }
 }

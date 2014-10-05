@@ -311,6 +311,7 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testPredicateExceptionHandling() throws RepositoryException {
         when(mockNode.getMixinNodeTypes()).thenThrow(new RepositoryException());
+        when(mockNode.isNodeType(anyString())).thenThrow(new RepositoryException());
         try {
             isFedoraResource.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraResource" +

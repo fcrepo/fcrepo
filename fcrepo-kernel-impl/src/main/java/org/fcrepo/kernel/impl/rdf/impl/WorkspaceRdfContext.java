@@ -28,7 +28,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import com.google.common.base.Function;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.services.functions.GetDefaultWorkspace;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -55,7 +56,7 @@ public class WorkspaceRdfContext extends RdfStream {
      * @param subjects
      * @throws RepositoryException
      */
-    public WorkspaceRdfContext(final Session session, final IdentifierTranslator subjects)
+    public WorkspaceRdfContext(final Session session, final IdentifierConverter<Resource,javax.jcr.Node> subjects)
         throws RepositoryException {
         super();
 
@@ -63,11 +64,10 @@ public class WorkspaceRdfContext extends RdfStream {
             session.getWorkspace().getAccessibleWorkspaceNames();
 
         final String defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
-        final Node repositorySubject = subjects.getSubject("/").asNode();
+        final Node repositorySubject = subjects.toDomain("/").asNode();
 
         for (final String workspace : workspaces) {
-            final Node resource = subjects.getSubject(
-                        "/workspace:" + workspace).asNode();
+            final Node resource = subjects.toDomain("/workspace:" + workspace).asNode();
             LOGGER.debug("Discovered workspace: {}", resource);
 
             concat(Triple.create(resource, type.asNode(), WORKSPACE_TYPE

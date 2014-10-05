@@ -38,10 +38,8 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +49,9 @@ import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.HashSet;
@@ -75,7 +75,7 @@ public class HttpApiResourcesTest {
     @Mock
     private NodeType mockNodeType;
 
-    private IdentifierTranslator mockSubjects;
+    private UriAwareIdentifierConverter mockSubjects;
 
     @Mock
     private SerializerUtil mockSerializers;
@@ -86,6 +86,9 @@ public class HttpApiResourcesTest {
     @Mock
     private Repository mockRepository;
 
+    @Mock
+    private Workspace mockWorkspace;
+
     @Before
     public void setUp() {
         initMocks(this);
@@ -93,9 +96,9 @@ public class HttpApiResourcesTest {
         mockResource = new FedoraResourceImpl(mockNode);
         uriInfo = getUriInfoImpl();
         when(mockSession.getRepository()).thenReturn(mockRepository);
-        mockSubjects =
-            new HttpIdentifierTranslator(mockSession, FedoraNodes.class,
-                    uriInfo);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getName()).thenReturn("default");
+        mockSubjects = new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
         setField(testObj, "serializers", mockSerializers);
     }
 
@@ -107,7 +110,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
-        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -129,7 +132,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
-        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -149,7 +152,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
-        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
 
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -165,7 +168,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
-        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -183,7 +186,7 @@ public class HttpApiResourcesTest {
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockNode.getPath()).thenReturn("/");
 
-        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo,
                         mockSubjects);
@@ -203,7 +206,7 @@ public class HttpApiResourcesTest {
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
-        final Resource graphSubject = mockSubjects.getSubject(mockNode.getPath());
+        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo,
                         mockSubjects);
