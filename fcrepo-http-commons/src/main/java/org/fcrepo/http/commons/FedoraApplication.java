@@ -17,6 +17,7 @@ package org.fcrepo.http.commons;
 
 import org.fcrepo.http.commons.session.SessionProvider;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -26,11 +27,17 @@ import com.codahale.metrics.jersey2.InstrumentedResourceMethodApplicationListene
 import com.codahale.metrics.MetricRegistry;
 import javax.jcr.Session;
 
+import java.util.logging.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
 /**
  * @author cabeer
  * @since 9/22/14
  */
 public class FedoraApplication extends ResourceConfig {
+
+    private static final org.slf4j.Logger LOGGER = getLogger(FedoraApplication.class);
 
     /**
      * THIS IS OUR RESOURCE CONFIG!
@@ -41,6 +48,11 @@ public class FedoraApplication extends ResourceConfig {
         register(new FactoryBinder());
         register(MultiPartFeature.class);
         register(JacksonFeature.class);
+
+        if (LOGGER.isDebugEnabled()) {
+            register(new LoggingFilter(Logger.getLogger(LoggingFilter.class.getName()), LOGGER.isTraceEnabled()));
+        }
+
         register(new InstrumentedResourceMethodApplicationListener(new MetricRegistry()));
     }
 
