@@ -16,15 +16,12 @@
 package org.fcrepo.kernel.impl.utils;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
-import static org.fcrepo.kernel.RdfLexicon.COULD_NOT_STORE_PROPERTY;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.impl.utils.TestHelpers.setField;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,12 +38,13 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeManager;
 
+import com.hp.hpl.jena.vocabulary.RDF;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Ignore;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
@@ -61,7 +59,6 @@ import com.hp.hpl.jena.rdf.model.Statement;
  *
  * @author awoods
  */
-@Ignore
 public class JcrPropertyStatementListenerTest {
 
     private static final Logger LOGGER =
@@ -75,10 +72,13 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private Session mockSession;
 
-    private IdentifierConverter mockSubjects;
+    private IdentifierConverter<Resource,Node> mockSubjects;
 
     @Mock
     private Statement mockStatement;
+
+    @Mock
+    private Statement mockIrrelevantStatement;
 
     @Mock
     private Resource mockSubject;
@@ -109,35 +109,41 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private NodePropertiesTools mockPropertiesTools;
 
+    @Mock
+    private com.hp.hpl.jena.rdf.model.RDFNode mockValue;
+
+    private Resource mockResource;
+
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
 
+        mockSubjects = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getSession()).thenReturn(mockSession);
         testObj = JcrPropertyStatementListener.getListener(mockSubjects, mockSession, mockProblems, mockJcrRdfTools);
-        when(mockStatement.getSubject()).thenReturn(mockSubject);
+        mockResource = mockSubjects.toDomain("/xyz");
+        when(mockStatement.getSubject()).thenReturn(mockResource);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
-        setField(testObj, "propertiesTools", mockPropertiesTools);
         when(mockStatement.getModel()).thenReturn(mockModel);
+        when(mockStatement.getObject()).thenReturn(mockValue);
+        when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
+        when(mockSubjectNode.getPath()).thenReturn("/xyz");
+
+        when(mockIrrelevantStatement.getSubject()).thenReturn(mockSubject);
+        when(mockIrrelevantStatement.getPredicate()).thenReturn(mockPredicate);
+        when(mockIrrelevantStatement.getModel()).thenReturn(mockModel);
+        when(mockIrrelevantStatement.getObject()).thenReturn(mockValue);
+
         when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
         mockSubjects = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
     public void testAddedIrrelevantStatement() {
-        testObj.addedStatement(mockStatement);
+        testObj.addedStatement(mockIrrelevantStatement);
         // this was ignored, but not a problem
         verify(mockProblems, never()).add(any(Resource.class), any(Property.class), any(String.class));
-    }
-
-    @Test
-    public void testAddedProhibitedStatement() throws RepositoryException {
-        when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
-        when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
-
-        when(mockPredicate.getURI()).thenReturn("x");
-        testObj.addedStatement(mockStatement);
-        verify(mockProblems).add(any(Resource.class), eq(COULD_NOT_STORE_PROPERTY), eq("x"));
     }
 
     @Test
@@ -159,8 +165,8 @@ public class JcrPropertyStatementListenerTest {
     public void testAddedStatementRepositoryException()
             throws RepositoryException {
 
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate, mockNsMapping))
-               .thenThrow(new RepositoryException());
+        doThrow(new RepositoryRuntimeException("")).when(mockJcrRdfTools)
+                .addProperty(mockSubjectNode, mockPredicate, mockValue, mockNsMapping);
 
         testObj.addedStatement(mockStatement);
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
@@ -182,39 +188,22 @@ public class JcrPropertyStatementListenerTest {
     public void testRemovedStatementRepositoryException()
             throws RepositoryException {
 
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
-                .thenThrow(new RepositoryException());
+        doThrow(new RepositoryRuntimeException("")).when(mockJcrRdfTools)
+                .removeProperty(mockSubjectNode, mockPredicate, mockValue, mockNsMapping);
 
         testObj.removedStatement(mockStatement);
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test
-    public void testRemovedProhibitedStatement() throws RepositoryException {
-        when(mockPredicate.getURI()).thenReturn("x");
-        final String mockPropertyName = "jcr:property";
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
-                .thenReturn(mockPropertyName);
-        when(mockJcrRdfTools.isInternalProperty(mockSubjectNode, mockPredicate)).thenReturn(true);
-        when(mockSubjectNode.hasProperty(mockPropertyName)).thenReturn(true);
-        when(mockPropertiesTools.getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
-                STRING);
-        testObj.removedStatement(mockStatement);
-        verify(mockProblems).add(any(Resource.class), eq(COULD_NOT_STORE_PROPERTY), eq("x"));
-    }
-
-    @Test
     public void testRemovedIrrelevantStatement() {
-        testObj.removedStatement(mockStatement);
+        testObj.removedStatement(mockIrrelevantStatement);
         // this was ignored, but not a problem
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 
     @Test
     public void testAddRdfType() throws RepositoryException {
-
-        final Resource resource = createResource("xyz");
-        when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -224,17 +213,16 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
                 .thenReturn("fedora");
         final Model model = ModelFactory.createDefaultModel();
-        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE
-                + "object"));
+        final Resource type = model.createResource(RESTAPI_NAMESPACE
+                + "object");
+        model.add(mockResource, RDF.type, type);
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
         testObj.addedStatements(model);
-        verify(mockSubjectNode).addMixin("fedora:object");
+        verify(mockJcrRdfTools).addMixin(mockSubjectNode, type, mockNsMapping);
     }
 
     @Test
     public void testRemoveRdfType() throws RepositoryException {
-
-        final Resource resource = createResource();
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -243,16 +231,14 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE)).thenReturn(
                 "fedora");
         final Model model = createDefaultModel();
-        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
+        final Resource type = model.createResource(RESTAPI_NAMESPACE + "object");
+        model.add(mockResource, RDF.type, type);
         testObj.removedStatements(model);
-        verify(mockSubjectNode).removeMixin("fedora:object");
+        verify(mockJcrRdfTools).removeMixin(mockSubjectNode, type, mockNsMapping);
     }
 
     @Test
     public void testAddRdfTypeForNonMixin() throws RepositoryException {
-
-        final Resource resource = createResource("xyz");
-        when(mockSession.getNode("/xyz")).thenReturn(mockSubjectNode);
 
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -266,7 +252,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
                 .thenReturn("fedora");
         final Model model = createDefaultModel();
-        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
+        model.add(mockResource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
         testObj.addedStatements(model);
         verify(mockSubjectNode, never()).addMixin("fedora:object");
@@ -276,15 +262,13 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testRemoveRdfTypeForNonMixin() throws RepositoryException {
 
-        final Resource resource = createResource();
-
         when(mockSubjectNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE)).thenReturn("fedora");
         final Model model = createDefaultModel();
-        model.add(resource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
+        model.add(mockResource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
         testObj.removedStatements(model);
         verify(mockSubjectNode, never()).removeMixin("fedora:object");
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
