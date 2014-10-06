@@ -620,7 +620,6 @@ public class FedoraLdp extends ContentExposingResource {
 
     private String mintNewPid(final String slug) {
         String pid;
-        final String newObjectPath;
 
         if (slug != null && !slug.isEmpty()) {
             pid = slug;
@@ -631,11 +630,6 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.trace("Using external identifier {} to create new resource.", pid);
         LOGGER.trace("Using prefixed external identifier {} to create new resource.", uriInfo.getBaseUri() + "/"
                 + pid);
-        String basePath = base.substring(1);
-
-        if (!basePath.isEmpty()) {
-            basePath += "/";
-        }
 
         final URI newResourceUri = uriInfo.getAbsolutePathBuilder().clone().path(FedoraLdp.class)
                 .resolveTemplate("path", pid, false).build();
