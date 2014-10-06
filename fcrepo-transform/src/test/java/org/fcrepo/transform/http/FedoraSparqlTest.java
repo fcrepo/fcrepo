@@ -18,6 +18,8 @@ package org.fcrepo.transform.http;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.ok;
 
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,7 +31,6 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
 import org.fcrepo.http.api.FedoraNodes;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
-import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
@@ -41,13 +42,6 @@ import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.query.qom.QueryObjectModelFactory;
 import org.modeshape.jcr.api.query.qom.SelectQuery;
-
-
-
-
-
-
-//import com.google.common.net.MediaType;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -137,13 +131,12 @@ public class FedoraSparqlTest {
         initMocks(this);
 
         testObj = new FedoraSparql();
-        TestHelpers.setField(testObj, "request", mockRequest);
 
         this.uriInfo = getUriInfoImpl();
-        TestHelpers.setField(testObj, "uriInfo", uriInfo);
+        setField(testObj, "uriInfo", uriInfo);
 
         mockSession = mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "session", mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
 
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
