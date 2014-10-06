@@ -24,12 +24,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.HeaderParam;
@@ -65,7 +65,6 @@ public class FedoraNodes extends ContentExposingResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
-    private static boolean baseURLSet = false;
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -91,26 +90,13 @@ public class FedoraNodes extends ContentExposingResource {
         this.externalPath = externalPath;
     }
 
+
     /**
-     * Set the baseURL for JMS events.
-    **/
-    private void init( final UriInfo uriInfo ) {
-        if ( !baseURLSet ) {
-            // set to true the first time this is run.  if there is an exception the first time, there
-            // will likely be an exception every time.  since this is run on each repository update,
-            // we should fail fast rather than retrying over and over.
-            baseURLSet = true;
-            try {
-                final URI baseURL = uriInfo.getBaseUri();
-                LOGGER.debug("FedoraNodes.init(): baseURL = " + baseURL.toString());
-                final ObservationManager obs = session.getWorkspace().getObservationManager();
-                final String json = "{\"baseURL\":\"" + baseURL.toString() + "\"}";
-                obs.setUserData(json);
-                LOGGER.trace("FedoraNodes.init(): done");
-            } catch ( Exception ex ) {
-                LOGGER.warn("Error setting baseURL", ex);
-            }
-        }
+     * Run these actions after initializing this resource
+     */
+    @PostConstruct
+    public void postConstruct() {
+        setUpJMSBaseURIs(uriInfo);
     }
 
     /**
@@ -120,7 +106,6 @@ public class FedoraNodes extends ContentExposingResource {
     @Timed
     public Response copyObject(@HeaderParam("Destination") final String destinationUri)
             throws URISyntaxException {
-        init(uriInfo);
 
         try {
 
@@ -173,7 +158,6 @@ public class FedoraNodes extends ContentExposingResource {
     @Timed
     public Response moveObject(@HeaderParam("Destination") final String destinationUri)
             throws URISyntaxException {
-        init(uriInfo);
 
         try {
 
