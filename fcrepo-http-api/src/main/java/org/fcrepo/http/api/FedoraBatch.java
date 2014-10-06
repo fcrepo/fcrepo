@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -103,6 +104,13 @@ public class FedoraBatch extends ContentExposingResource {
 
     @PathParam("path") protected String externalPath;
 
+    /**
+     * Run these actions after initializing this resource
+     */
+    @PostConstruct
+    public void postConstruct() {
+        setUpJMSBaseURIs(uriInfo);
+    }
 
     /**
      * Default JAX-RS entry point

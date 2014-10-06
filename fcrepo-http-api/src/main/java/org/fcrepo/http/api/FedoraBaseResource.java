@@ -24,17 +24,25 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.FedoraObjectImpl;
+import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.Session;
+import javax.jcr.observation.ObservationManager;
+import javax.ws.rs.core.UriInfo;
+
+import java.net.URI;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
  * @since 10/5/14
  */
 abstract public class FedoraBaseResource extends AbstractResource {
+
+    private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
     protected IdentifierConverter<Resource,Node> identifierTranslator;
 
@@ -76,6 +84,32 @@ abstract public class FedoraBaseResource extends AbstractResource {
             resource = new FedoraObjectImpl(node);
         }
         return resource;
+    }
+
+
+
+    private static boolean baseURLSet = false;
+    /**
+     * Set the baseURL for JMS events.
+     **/
+    protected void setUpJMSBaseURIs(final UriInfo uriInfo) {
+        if ( !baseURLSet ) {
+            // set to true the first time this is run.  if there is an exception the first time, there
+            // will likely be an exception every time.  since this is run on each repository update,
+            // we should fail fast rather than retrying over and over.
+            baseURLSet = true;
+            try {
+                final URI baseURL = uriInfo.getBaseUri();
+                final Class<? extends FedoraBaseResource> klass = this.getClass();
+                LOGGER.debug(klass + ".init(): baseURL = " + baseURL.toString());
+                final ObservationManager obs = session().getWorkspace().getObservationManager();
+                final String json = "{\"baseURL\":\"" + baseURL.toString() + "\"}";
+                obs.setUserData(json);
+                LOGGER.trace(klass + ".init(): done");
+            } catch ( Exception ex ) {
+                LOGGER.warn("Error setting baseURL", ex);
+            }
+        }
     }
 
 }

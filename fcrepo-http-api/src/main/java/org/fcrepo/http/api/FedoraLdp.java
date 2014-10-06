@@ -39,6 +39,7 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -138,6 +139,14 @@ public class FedoraLdp extends ContentExposingResource {
     @VisibleForTesting
     public FedoraLdp(final String externalPath) {
         this.externalPath = externalPath;
+    }
+
+    /**
+     * Run these actions after initializing this resource
+     */
+    @PostConstruct
+    public void postConstruct() {
+        setUpJMSBaseURIs(uriInfo);
     }
 
     /**
