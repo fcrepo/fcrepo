@@ -48,7 +48,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -58,7 +57,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
-import java.util.List;
 
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.transform;
@@ -89,8 +87,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static long MAX_BUFFER_SIZE = 10240000;
 
-    abstract String path();
-    abstract List<PathSegment> pathList();
+    abstract String externalPath();
 
     abstract void addResourceHttpHeaders(FedoraResource resource);
 
@@ -313,7 +310,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected FedoraResource resource() {
         if (resource == null) {
-            resource = getResourceFromPath(pathList(), path());
+            resource = getResourceFromPath(externalPath());
         }
 
         return resource;

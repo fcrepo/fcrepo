@@ -90,7 +90,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
 
         final HttpResponse postResponse = execute(post);
 
-        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+        assertEquals(204, postResponse.getStatusLine().getStatusCode());
 
         final HttpGet getDSesMethod =
             new HttpGet(serverAddress + pid);
@@ -131,7 +131,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
         post.setEntity(multiPartEntityBuilder.build());
 
         final HttpResponse postResponse = execute(post);
-        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+        assertEquals(204, postResponse.getStatusLine().getStatusCode());
 
         // TODO: we should actually evaluate the multipart response for the
         // things we're expecting
@@ -165,7 +165,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
         post.setEntity(multiPartEntityBuilder.build());
 
         final HttpResponse postResponse = execute(post);
-        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+        assertEquals(204, postResponse.getStatusLine().getStatusCode());
 
         // TODO: we should actually evaluate the multipart response for the
         // things we're expecting
@@ -199,7 +199,7 @@ public class FedoraBatchIT extends AbstractResourceIT {
         post.setEntity(multiPartEntityBuilder.build());
 
         final HttpResponse postResponse = execute(post);
-        assertEquals(201, postResponse.getStatusLine().getStatusCode());
+        assertEquals(204, postResponse.getStatusLine().getStatusCode());
 
         final HttpGet getDSesMethod = new HttpGet(serverAddress + pid + "/fcr:batch?child=ds3");
         final HttpResponse response = execute(getDSesMethod);

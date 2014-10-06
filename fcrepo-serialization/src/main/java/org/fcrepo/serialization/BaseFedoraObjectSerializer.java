@@ -23,7 +23,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -47,7 +47,7 @@ public abstract class BaseFedoraObjectSerializer implements
     protected DatastreamService dsService;
 
     @Override
-    public abstract void serialize(final FedoraObject obj,
+    public abstract void serialize(final FedoraResource obj,
                                    final OutputStream out,
                                    final boolean skipBinary,
                                    final boolean recurse) throws RepositoryException, IOException;

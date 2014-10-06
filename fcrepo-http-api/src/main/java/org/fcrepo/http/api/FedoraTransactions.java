@@ -24,7 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -34,7 +33,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.kernel.Transaction;
@@ -65,12 +63,12 @@ public class FedoraTransactions extends FedoraBaseResource {
     /**
      * Create a new transaction resource and add it to the registry
      *
-     * @param pathList
+     * @param externalPath
      * @return 201 with the transaction id and expiration date
      * @throws RepositoryException
      */
     @POST
-    public Response createTransaction(@PathParam("path") final List<PathSegment> pathList,
+    public Response createTransaction(@PathParam("path") final String externalPath,
                                       @Context final HttpServletRequest req) throws URISyntaxException {
 
         if (session instanceof TxSession) {
@@ -80,7 +78,7 @@ public class FedoraTransactions extends FedoraBaseResource {
             return noContent().expires(t.getExpires()).build();
         }
 
-        if (!pathList.isEmpty()) {
+        if (externalPath != null && !externalPath.isEmpty()) {
             return status(BAD_REQUEST).build();
         }
 
@@ -100,16 +98,14 @@ public class FedoraTransactions extends FedoraBaseResource {
     /**
      * Commit a transaction resource
      *
-     * @param pathList
+     * @param externalPath
      * @return 204
      * @throws RepositoryException
      */
     @POST
     @Path("fcr:commit")
-    public Response commit(@PathParam("path")
-        final List<PathSegment> pathList) {
-
-        return finalizeTransaction(pathList, true);
+    public Response commit(@PathParam("path") final String externalPath) {
+        return finalizeTransaction(externalPath, true);
 
     }
 
@@ -119,16 +115,15 @@ public class FedoraTransactions extends FedoraBaseResource {
      */
     @POST
     @Path("fcr:rollback")
-    public Response rollback(@PathParam("path")
-        final List<PathSegment> pathList) throws RepositoryException {
+    public Response rollback(@PathParam("path") final String externalPath) throws RepositoryException {
 
-        return finalizeTransaction(pathList, false);
+        return finalizeTransaction(externalPath, false);
     }
 
     private Response finalizeTransaction(@PathParam("path")
-        final List<PathSegment> pathList, final boolean commit) {
+        final String externalPath, final boolean commit) {
 
-        final String path = toPath(pathList);
+        final String path = toPath(translator(), externalPath);
         if (!path.equals("/")) {
             return status(BAD_REQUEST).build();
         }

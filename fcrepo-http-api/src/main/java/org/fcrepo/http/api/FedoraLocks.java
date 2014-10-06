@@ -38,11 +38,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -84,9 +82,9 @@ public class FedoraLocks extends FedoraBaseResource implements FedoraJcrTypes {
     @HtmlTemplate(value = "fcr:lock")
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
-    public RdfStream getLock(@PathParam("path") final List<PathSegment> pathList) {
+    public RdfStream getLock(@PathParam("path") final String externalPath) {
 
-        final String path = toPath(pathList);
+        final String path = toPath(translator(), externalPath);
         try {
             final Node node = session.getNode(path);
             final Lock lock = lockService.getLock(session, path);
@@ -105,11 +103,11 @@ public class FedoraLocks extends FedoraBaseResource implements FedoraJcrTypes {
      */
     @POST
     @Timed
-    public Response createLock(@PathParam("path") final List<PathSegment> pathList,
+    public Response createLock(@PathParam("path") final String externalPath,
                                @QueryParam("deep") @DefaultValue("false") final boolean isDeep)
         throws URISyntaxException {
         try {
-            final String path = toPath(pathList);
+            final String path = toPath(translator(), externalPath);
             final Node node = session.getNode(path);
             final Lock lock = lockService.acquireLock(session, path, isDeep);
             session.save();
@@ -130,9 +128,9 @@ public class FedoraLocks extends FedoraBaseResource implements FedoraJcrTypes {
      */
     @DELETE
     @Timed
-    public Response deleteLock(@PathParam("path") final List<PathSegment> pathList) {
+    public Response deleteLock(@PathParam("path") final String externalPath) {
         try {
-            final String path = toPath(pathList);
+            final String path = toPath(translator(), externalPath);
             lockService.releaseLock(session, path);
             session.save();
             LOGGER.debug("Unlocked {}.", path);

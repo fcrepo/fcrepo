@@ -16,6 +16,7 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,9 @@ public class UriAwareIdentifierConverterTest {
 
     @Mock
     private Session session;
+
+    @Mock
+    private TxSession txSession;
 
     @Mock
     private Node node;
@@ -118,6 +122,42 @@ public class UriAwareIdentifierConverterTest {
     }
 
     @Test
+    public void testDoForwardWithWorkspace() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/workspace:xyz/" + path);
+        when(mockWorkspace.getName()).thenReturn("xyz");
+        final Node converted = converter.convert(resource);
+        assertEquals(node, converted);
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testDoForwardInDifferentWorkspace() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/workspace:xyz/" + path);
+        when(mockWorkspace.getName()).thenReturn("abc");
+        final Node converted = converter.convert(resource);
+        assertEquals(node, converted);
+    }
+
+    @Test
+    public void testDoForwardWithTransaction() throws Exception {
+        final UriAwareIdentifierConverter converter = new UriAwareIdentifierConverter(txSession,
+                UriBuilder.fromUri(uriTemplate));
+        when(txSession.getTxId()).thenReturn("xyz");
+        when(txSession.getNode("/" + path)).thenReturn(node);
+        when(txSession.getWorkspace()).thenReturn(mockWorkspace);
+        final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
+        final Node converted = converter.convert(resource);
+        assertEquals(node, converted);
+    }
+
+    @Test
+    public void testDoForwardWithUuid() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/[xyz]");
+        when(session.getNode("/[xyz]")).thenReturn(node);
+        final Node converted = converter.convert(resource);
+        assertEquals(node, converted);
+    }
+
+    @Test
     public void testDoBackward() throws Exception {
         final Resource converted = converter.reverse().convert(node);
         assertEquals(resource, converted);
@@ -134,6 +174,14 @@ public class UriAwareIdentifierConverterTest {
         when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
         final Resource converted = converter.reverse().convert(node);
         assertEquals(metadataResource, converted);
+    }
+
+    @Test
+    public void testDoBackwardWithWorkspace() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/workspace:xyz/" + path);
+        when(mockWorkspace.getName()).thenReturn("xyz");
+        final Resource converted = converter.reverse().convert(node);
+        assertEquals(resource, converted);
     }
 
     @Test
@@ -177,5 +225,18 @@ public class UriAwareIdentifierConverterTest {
 
         final Resource converted = converter.reverse().convert(versionedNode);
         assertEquals(versionedResource, converted);
+    }
+
+    @Test
+    public void testDoBackwardWithTransaction() throws Exception {
+        final UriAwareIdentifierConverter converter = new UriAwareIdentifierConverter(txSession,
+                UriBuilder.fromUri(uriTemplate));
+        when(txSession.getTxId()).thenReturn("xyz");
+        when(txSession.getNode("/" + path)).thenReturn(node);
+        when(txSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(node.getSession()).thenReturn(txSession);
+        final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
+        final Resource converted = converter.reverse().convert(node);
+        assertEquals(resource, converted);
     }
 }

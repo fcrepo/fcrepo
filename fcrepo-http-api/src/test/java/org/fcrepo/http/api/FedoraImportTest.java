@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.mockito.Mockito.verify;
@@ -81,7 +80,7 @@ public class FedoraImportTest {
     public void testImportObject() throws Exception {
         when(mockNode.getPath()).thenReturn("/test/object");
         when(mockSession.getNode("/test/object")).thenReturn(mockNode);
-        testObj.importObject(createPathList("test", "object"), "fake-format",
+        testObj.importObject("test/object", "fake-format",
                 mockInputStream);
         verify(mockSerializer).deserialize(mockSession, "/test/object",
                 mockInputStream);
@@ -93,7 +92,7 @@ public class FedoraImportTest {
                 mockSerializer);
         when(mockNode.getPath()).thenReturn("/");
         when(mockSession.getNode("/")).thenReturn(mockNode);
-        testObj.importObject(createPathList(), "fake-format", mockInputStream);
+        testObj.importObject(null, "fake-format", mockInputStream);
         verify(mockSerializer).deserialize(mockSession, "/", mockInputStream);
 
     }

@@ -22,7 +22,7 @@ import java.io.OutputStream;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.springframework.stereotype.Component;
 
@@ -61,7 +61,7 @@ public interface FedoraObjectSerializer {
      * @throws RepositoryException
      * @throws IOException
      */
-    void serialize(final FedoraObject obj, final OutputStream out, final boolean skipBinary, final boolean recurse)
+    void serialize(final FedoraResource obj, final OutputStream out, final boolean skipBinary, final boolean recurse)
                     throws RepositoryException, IOException;
 
     /**

@@ -25,7 +25,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -39,13 +38,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.List;
 
 import static java.util.Collections.singleton;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
@@ -81,9 +78,8 @@ public class FedoraVersioning extends FedoraBaseResource {
     @Context protected HttpServletResponse servletResponse;
     @Context protected UriInfo uriInfo;
 
-    @PathParam("path") protected List<PathSegment> pathList;
+    @PathParam("path") protected String externalPath;
 
-    protected String path;
     protected FedoraResource resource;
 
 
@@ -96,16 +92,11 @@ public class FedoraVersioning extends FedoraBaseResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param path
+     * @param externalPath
      */
     @VisibleForTesting
-    public FedoraVersioning(final String path) {
-        this.path = path;
-    }
-
-    @PostConstruct
-    private void postConstruct() {
-        this.path = toPath(pathList);
+    public FedoraVersioning(final String externalPath) {
+        this.externalPath = externalPath;
     }
 
 
@@ -163,6 +154,7 @@ public class FedoraVersioning extends FedoraBaseResource {
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
         try {
+            final String path = toPath(translator(), externalPath);
             final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
                     singleton(path));
 
@@ -201,7 +193,7 @@ public class FedoraVersioning extends FedoraBaseResource {
 
     protected FedoraResource resource() {
         if (resource == null) {
-            resource = getResourceFromPath(pathList, path);
+            resource = getResourceFromPath(externalPath);
         }
 
         return resource;

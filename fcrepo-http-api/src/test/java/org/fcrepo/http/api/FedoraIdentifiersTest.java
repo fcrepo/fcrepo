@@ -16,7 +16,6 @@
 package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
@@ -102,7 +101,7 @@ public class FedoraIdentifiersTest {
         when(mockNode.getPath()).thenReturn("/asdf:123");
         when(mockSession.getNode("/asdf:123")).thenReturn(mockNode);
 
-        final Model np = testObj.getNextPid(createPathList(""), 2, uriInfo).asModel();
+        final Model np = testObj.getNextPid("", 2, uriInfo).asModel();
         LOGGER.debug("Got identifier results:\n{}", np.getGraph());
         assertTrue(np.contains(
                 createResource("http://localhost/fcrepo/fcr:identifier"),
@@ -131,7 +130,7 @@ public class FedoraIdentifiersTest {
         when(mockSession.getNode("/objects/asdf:123")).thenReturn(mockNode);
 
         final Model np =
-            testObj.getNextPid(createPathList("objects"), 2, uriInfo).asModel();
+            testObj.getNextPid("objects", 2, uriInfo).asModel();
 
         LOGGER.debug("Got identifier results:\n{}", np.getGraph());
         assertTrue(np.contains(

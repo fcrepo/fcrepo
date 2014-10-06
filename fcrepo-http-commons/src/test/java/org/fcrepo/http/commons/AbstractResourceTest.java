@@ -16,15 +16,11 @@
 package org.fcrepo.http.commons;
 
 import static org.fcrepo.http.commons.AbstractResource.getSimpleContentType;
-import static org.fcrepo.http.commons.AbstractResource.toPath;
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
-import java.util.List;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.common.collect.ImmutableMap;
@@ -78,93 +74,6 @@ public class AbstractResourceTest {
     public void testSetUriInfo() {
         setField(testObj, "uriInfo", mockUris);
         assertEquals(mockUris, testObj.uriInfo);
-    }
-
-    @Test
-    public void testToPath() {
-        final List<PathSegment> pathList =
-                createPathList("foo", "", "bar", "baz");
-        // empty path segments ('//') should be suppressed
-        final String expected = "/foo/bar/baz";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathWorkspace() {
-        final List<PathSegment> pathList =
-                createPathList("workspace:abc", "bar", "baz");
-        // workspaces should be ignored
-        final String expected = "/bar/baz";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathWorkspaceInSomeOtherSegment() {
-        final List<PathSegment> pathList =
-                createPathList("asdf", "workspace:abc", "bar", "baz");
-        // workspaces should be ignored
-        final String expected = "/asdf/workspace:abc/bar/baz";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathWorkspaceWithEmptyPrefix() {
-        final List<PathSegment> pathList =
-                createPathList("", "workspace:abc", "bar", "baz");
-        // workspaces should be ignored
-        final String expected = "/bar/baz";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathTransaction() {
-        final List<PathSegment> pathList =
-                createPathList("tx:abc", "bar", "baz");
-        // workspaces should be ignored
-        final String expected = "/bar/baz";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathTxInSomeOtherSegment() {
-        final List<PathSegment> pathList =
-                createPathList("asdf", "tx:abc", "bar", "baz");
-        // workspaces should be ignored
-        final String expected = "/asdf/tx:abc/bar/baz";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathTxWithEmptyPrefix() {
-        final List<PathSegment> pathList =
-                createPathList("", "tx:abc", "bar", "baz");
-        // workspaces should be ignored
-        final String expected = "/bar/baz";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathUuid() {
-        final List<PathSegment> pathList = createPathList("[foo]");
-        final String expected = "[foo]";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testToPathEmpty() {
-        final List<PathSegment> pathList = createPathList();
-        // empty path segments ('//') should be suppressed
-        final String expected = "/";
-        final String actual = toPath(pathList);
-        assertEquals(expected, actual);
     }
 
     @Test

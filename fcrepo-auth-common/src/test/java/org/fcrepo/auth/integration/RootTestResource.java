@@ -15,7 +15,10 @@
  */
 package org.fcrepo.auth.integration;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -28,10 +31,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -54,15 +55,15 @@ public class RootTestResource extends AbstractResource {
     private static final Logger LOGGER = getLogger(RootTestResource.class);
 
     @PUT
-    public Response put(@PathParam("path") final List<PathSegment> pathList) throws Exception {
-        final String path = toPath(pathList);
+    public Response put(@PathParam("path") final String externalPath) throws Exception {
+        final String path = toPath(translator(), externalPath);
         LOGGER.trace("PUT: {}", path);
         return doRequest(path);
     }
 
     @POST
-    public Response post(@PathParam("path") final List<PathSegment> pathList) throws Exception {
-        final String path = toPath(pathList);
+    public Response post(@PathParam("path") final String externalPath) throws Exception {
+        final String path = toPath(translator(), externalPath);
         LOGGER.trace("POST: {}", path);
         return doRequest(path);
     }
@@ -72,6 +73,11 @@ public class RootTestResource extends AbstractResource {
         final Node node = jcrTools.findOrCreateNode(session, path);
         final URI location = uriInfo.getBaseUriBuilder().path(node.getPath()).build();
         return Response.created(location).build();
+    }
+
+    protected IdentifierConverter<Resource,Node> translator() {
+        return new UriAwareIdentifierConverter(session,
+                    uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class));
     }
 
 }

@@ -23,9 +23,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.PathNotFoundException;
@@ -35,12 +33,10 @@ import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -75,17 +71,9 @@ public class FedoraNodes extends ContentExposingResource {
     @Context protected HttpServletResponse servletResponse;
     @Context protected UriInfo uriInfo;
 
-    @PathParam("path") protected List<PathSegment> pathList;
-
-    protected String path;
+    @PathParam("path") protected String externalPath;
 
     protected FedoraResource resource;
-
-    @PostConstruct
-    private void postConstruct() {
-        throwIfPathIncludesJcr(pathList);
-        this.path = toPath(pathList);
-    }
 
     /**
      * Default JAX-RS entry point
@@ -96,11 +84,11 @@ public class FedoraNodes extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param path
+     * @param externalPath
      */
     @VisibleForTesting
-    public FedoraNodes(final String path) {
-        this.path = path;
+    public FedoraNodes(final String externalPath) {
+        this.externalPath = externalPath;
     }
 
     /**
@@ -136,7 +124,9 @@ public class FedoraNodes extends ContentExposingResource {
 
         try {
 
-            if (!nodeService.exists(session, path)) {
+            final String source = translator().asString(translator().toDomain(externalPath));
+
+            if (!nodeService.exists(session, source)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
@@ -148,7 +138,7 @@ public class FedoraNodes extends ContentExposingResource {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
-            nodeService.copyObject(session, path, destination);
+            nodeService.copyObject(session, source, destination);
 
             session.save();
             versionService.nodeUpdated(session, destination);
@@ -187,7 +177,9 @@ public class FedoraNodes extends ContentExposingResource {
 
         try {
 
-            if (!nodeService.exists(session, path)) {
+            final String source = toPath(translator(), externalPath);
+
+            if (!nodeService.exists(session, source)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
@@ -202,7 +194,7 @@ public class FedoraNodes extends ContentExposingResource {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
-            nodeService.moveObject(session, path, destination);
+            nodeService.moveObject(session, resource().getPath(), destination);
             session.save();
             versionService.nodeUpdated(session, destination);
             return created(new URI(destinationUri)).build();
@@ -236,30 +228,8 @@ public class FedoraNodes extends ContentExposingResource {
     }
 
     @Override
-    String path() {
-        return path;
-    }
-
-    @Override
-    List<PathSegment> pathList() {
-        return pathList;
-    }
-
-    /**
-     * Method to check for any jcr namespace element in the path
-     */
-    @VisibleForTesting
-    protected void throwIfPathIncludesJcr(final List<PathSegment> pathList) {
-        if (pathList == null || pathList.size() == 0) {
-            return;
-        }
-        final PathSegment pathSegment = pathList.get(pathList.size() - 1);
-        final String[] tokens = pathSegment.getPath().split(":");
-        if (tokens.length == 2 && tokens[0].equalsIgnoreCase("jcr")) {
-            final String requestPath = uriInfo.getPath();
-            LOGGER.trace("Request with jcr namespace is not allowed: {} ", requestPath);
-            throw new NotFoundException();
-        }
+    String externalPath() {
+        return externalPath;
     }
 
 }

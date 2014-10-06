@@ -33,6 +33,7 @@ import org.springframework.context.ApplicationContext;
 
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -141,7 +142,17 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
 
     @Override
     public Resource toDomain(final String path) {
-        return createResource(uriBuilder().resolveTemplate("path", path.substring(1), false).build().toString());
+
+        final String realPath;
+        if (path == null) {
+            realPath = "";
+        } else if (path.startsWith("/")) {
+            realPath = path.substring(1);
+        } else {
+            realPath = path;
+        }
+
+        return createResource(uriBuilder().resolveTemplate("path", realPath, false).build().toString());
     }
 
     @Override
@@ -180,7 +191,11 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
                 LOGGER.debug("Unable to URL-decode path " + e + " as UTF-8", e);
             }
 
-            return path;
+            if (path.isEmpty()) {
+                return "/";
+            } else {
+                return path;
+            }
         } else {
             return null;
         }
@@ -189,12 +204,18 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
 
     private Node getNode(final String path) throws RepositoryException {
         if (path.contains(FCR_VERSIONS)) {
-            final String[] split = path.split("/" + FCR_VERSIONS, 2);
+            final String[] split = path.split("/" + FCR_VERSIONS + "/", 2);
             final String versionedPath = split[0];
             final String versionAndPathIntoVersioned = split[1];
             final String[] split1 = versionAndPathIntoVersioned.split("/", 2);
             final String version = split1[0];
-            final String pathIntoVersioned = split1[1];
+
+            final String pathIntoVersioned;
+            if (split1.length > 1) {
+                pathIntoVersioned = split1[1];
+            } else {
+                pathIntoVersioned = "";
+            }
 
             final Node node = getFrozenNodeByLabel(versionedPath, version);
 
@@ -203,7 +224,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
             } else if (node != null) {
                 return node.getNode(pathIntoVersioned);
             } else {
-                return null;
+                throw new PathNotFoundException("Unable to find versioned resource at " + path);
             }
         } else {
             return session.getNode(path);
@@ -253,7 +274,8 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
                 return hist.getVersionByLabel(label).getFrozenNode();
             }
             LOGGER.warn("Unknown version {} with label or uuid {}!", baseResourcePath, label);
-            return null;
+            throw new PathNotFoundException("Unknown version " + baseResourcePath
+                    + " with label or uuid " + label);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -350,7 +372,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
 
 
     private static final List<Converter<String,String>> minimalTranslationChain =
-            singletonList((Converter<String,String>) new NamespaceConverter());
+            singletonList((Converter<String, String>) new NamespaceConverter());
 
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
@@ -386,7 +408,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
         protected String doForward(final String path) {
             if (path.contains(WORKSPACE_PREFIX) && !path.contains(workspaceSegment())) {
                 throw new RepositoryRuntimeException("Path " + path
-                        + " is not in current workspace " + defaultWorkspace);
+                        + " is not in current workspace " + getWorkspaceName());
             }
             return replaceOnce(path, workspaceSegment(), EMPTY);
         }
@@ -397,12 +419,16 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
         }
 
         private String workspaceSegment() {
-            final String workspace = session.getWorkspace().getName();
+            final String workspace = getWorkspaceName();
             if (!workspace.equals(defaultWorkspace)) {
                 return "/" + WORKSPACE_PREFIX + workspace;
             } else {
                 return EMPTY;
             }
+        }
+
+        private String getWorkspaceName() {
+            return session.getWorkspace().getName();
         }
     }
 
