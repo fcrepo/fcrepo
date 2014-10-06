@@ -747,6 +747,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testIngestOnSubtree() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+
+        final HttpPost method = postObjMethod(pid);
+        method.addHeader("Slug", "x");
+        final HttpResponse response = client.execute(method);
+        final String location = response.getFirstHeader("Location").getValue();
+        assertEquals(serverAddress + pid + "/x", location);
+
+    }
+
+    @Test
     public void testCreateManyObjects() throws Exception {
         if (System.getProperty(TEST_ACTIVATION_PROPERTY) == null) {
             logger.info("Not running test because system property not set: {}", TEST_ACTIVATION_PROPERTY);
