@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
@@ -35,12 +34,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -57,7 +52,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:import")
-public class FedoraImport extends AbstractResource {
+public class FedoraImport extends FedoraBaseResource {
 
     @Inject
     protected Session session;
@@ -71,7 +66,7 @@ public class FedoraImport extends AbstractResource {
      * Deserialize a serialized object at the current path POST
      * /fcr:import?format=jcr/xml (with a JCR/XML payload)
      *
-     * @param pathList
+     * @param externalPath
      * @param format
      * @param requestBodyStream
      * @return 201 with Location header to the path of the imported resource
@@ -81,16 +76,13 @@ public class FedoraImport extends AbstractResource {
      * @throws URISyntaxException
      */
     @POST
-    public Response importObject(@PathParam("path") final List<PathSegment> pathList,
+    public Response importObject(@PathParam("path") final String externalPath,
         @QueryParam("format") @DefaultValue("jcr/xml") final String format,
         @ContentLocation final InputStream requestBodyStream)
         throws IOException, InvalidChecksumException, URISyntaxException {
 
-        final String path = toPath(pathList);
+        final String path = toPath(translator(), externalPath);
         LOGGER.debug("Deserializing at {}", path);
-
-        final UriAwareIdentifierConverter subjects =
-                new UriAwareIdentifierConverter(session, UriBuilder.fromResource(FedoraLdp.class));
 
         try {
             serializers.getSerializer(format)
@@ -104,5 +96,10 @@ public class FedoraImport extends AbstractResource {
         } finally {
             session.logout();
         }
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 }

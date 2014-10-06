@@ -19,7 +19,6 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static javax.ws.rs.core.Response.ok;
 
 import java.io.InputStream;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.jcr.PathNotFoundException;
@@ -29,11 +28,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.generator.dublincore.DublinCoreGenerators;
-import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.springframework.context.annotation.Scope;
@@ -46,7 +44,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/{path: .*}/oai:dc")
-public class DublinCoreGenerator extends AbstractResource {
+public class DublinCoreGenerator extends FedoraBaseResource {
 
     @Inject
     DublinCoreGenerators dcgenerators;
@@ -56,19 +54,16 @@ public class DublinCoreGenerator extends AbstractResource {
 
     /**
      * Get Dublin Core XML for a node
-     * @param pathList
+     * @param externalPath
      * @return response
      * @throws RepositoryException
      */
     @GET
     @Produces(TEXT_XML)
-    public Response getObjectAsDublinCore(
-            @PathParam("path")
-            final List<PathSegment> pathList) throws RepositoryException {
+    public Response getObjectAsDublinCore(@PathParam("path") final String externalPath) throws RepositoryException {
 
         try {
-            final String path = toPath(pathList);
-            final FedoraResource obj = nodeService.getObject(session, path);
+            final FedoraResource obj = getResourceFromPath(externalPath);
 
             for (final DCGenerator indexer : dcgenerators) {
                 final InputStream inputStream =
@@ -86,4 +81,8 @@ public class DublinCoreGenerator extends AbstractResource {
 
     }
 
+    @Override
+    protected Session session() {
+        return session;
+    }
 }

@@ -38,7 +38,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -53,7 +52,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.PathSegment;
 
 import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.kernel.FedoraResource;
@@ -121,7 +119,7 @@ public class FedoraTransform extends FedoraBaseResource {
     /**
      * Execute an LDpath program transform
      *
-     * @param pathList
+     * @param externalPath
      * @return Binary blob
      * @throws RepositoryException
      */
@@ -130,12 +128,11 @@ public class FedoraTransform extends FedoraBaseResource {
     @Produces({APPLICATION_JSON})
     @Timed
     public Object evaluateLdpathProgram(@PathParam("path")
-        final List<PathSegment> pathList, @PathParam("program")
+        final String externalPath, @PathParam("program")
         final String program) throws RepositoryException {
 
         try {
-            final String path = toPath(pathList);
-            final FedoraResource object = nodeService.getObject(session, path);
+            final FedoraResource object = getResourceFromPath(externalPath);
 
             final Dataset propertiesDataset =
                 object.getPropertiesDataset(translator());
@@ -150,7 +147,7 @@ public class FedoraTransform extends FedoraBaseResource {
     /**
      * Get the LDPath output as a JSON stream appropriate for e.g. Solr
      *
-     * @param pathList
+     * @param externalPath
      * @param requestBodyStream
      * @return LDPath as a JSON stream
      * @throws RepositoryException
@@ -163,7 +160,7 @@ public class FedoraTransform extends FedoraBaseResource {
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
     @Timed
     public Object evaluateTransform(@PathParam("path")
-        final List<PathSegment> pathList, @HeaderParam("Content-Type")
+        final String externalPath, @HeaderParam("Content-Type")
         final MediaType contentType, final InputStream requestBodyStream)
         throws RepositoryException {
 
@@ -172,8 +169,7 @@ public class FedoraTransform extends FedoraBaseResource {
         }
 
         try {
-            final String path = toPath(pathList);
-            final FedoraResource object = nodeService.getObject(session, path);
+            final FedoraResource object = getResourceFromPath(externalPath);
 
             final Dataset propertiesDataset =
                 object.getPropertiesDataset(translator());

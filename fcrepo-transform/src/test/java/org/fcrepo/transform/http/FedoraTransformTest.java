@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -39,10 +40,11 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -76,9 +78,9 @@ public class FedoraTransformTest {
     Transformation<Object> mockTransform;
 
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         initMocks(this);
-        testObj = new FedoraTransform();
+        testObj = spy(new FedoraTransform());
         TestHelpers.setField(testObj, "nodeService", mockNodeService);
         TestHelpers.setField(testObj, "transformationFactory", mockTransformationFactory);
 
@@ -88,11 +90,11 @@ public class FedoraTransformTest {
         TestHelpers.setField(testObj, "session", mockSession);
 
         when(mockResource.getNode()).thenReturn(mockNode);
+        doReturn(mockResource).when(testObj).getResourceFromPath("testObject");
     }
 
     @Test
     public void testEvaluateTransform() throws Exception {
-        when(mockNodeService.getObject(mockSession, "/testObject")).thenReturn(mockResource);
         final Model model = ModelFactory.createDefaultModel();
         model.add(model.createResource("http://example.org/book/book1"),
                      model.createProperty("http://purl.org/dc/elements/1.1/title"),
@@ -108,7 +110,7 @@ public class FedoraTransformTest {
         when(mockTransformationFactory.getTransform(MediaType.valueOf(contentTypeSPARQLQuery), query)).thenReturn(
                 mockTransform);
 
-        testObj.evaluateTransform(createPathList("testObject"), MediaType.valueOf(contentTypeSPARQLQuery), query);
+        testObj.evaluateTransform("testObject", MediaType.valueOf(contentTypeSPARQLQuery), query);
 
         verify(mockTransform).apply(dataset);
     }

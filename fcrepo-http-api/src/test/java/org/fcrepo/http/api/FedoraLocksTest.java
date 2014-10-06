@@ -16,7 +16,6 @@
 package org.fcrepo.http.api;
 
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK_TOKEN;
 import static org.junit.Assert.assertEquals;
@@ -88,7 +87,7 @@ public class FedoraLocksTest {
         initializeMockNode(path);
         when(mockLockService.getLock(mockSession, path)).thenReturn(mockLock);
 
-        testObj.getLock(createPathList(pid));
+        testObj.getLock(pid);
 
         verify(mockLockService).getLock(mockSession, path);
     }
@@ -100,7 +99,7 @@ public class FedoraLocksTest {
         initializeMockNode(path);
         when(mockLockService.acquireLock(mockSession, path, false)).thenReturn(mockLock);
 
-        final Response response = testObj.createLock(createPathList(pid), false);
+        final Response response = testObj.createLock(pid, false);
 
         verify(mockLockService).acquireLock(mockSession, path, false);
         assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
@@ -112,7 +111,7 @@ public class FedoraLocksTest {
         final String path = "/" + pid;
         initializeMockNode(path);
 
-        final Response response = testObj.deleteLock(createPathList(pid));
+        final Response response = testObj.deleteLock(pid);
 
         verify(mockLockService).releaseLock(mockSession, path);
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
@@ -125,7 +124,7 @@ public class FedoraLocksTest {
         initializeMockNode(path);
         when(mockLockService.getLock(mockSession, path)).thenReturn(mockLock);
 
-        final RdfStream stream = testObj.getLock(createPathList(pid));
+        final RdfStream stream = testObj.getLock(pid);
         while (stream.hasNext()) {
             final Triple t = stream.next();
             if (t.getPredicate().getURI().equals(HAS_LOCK_TOKEN.getURI())

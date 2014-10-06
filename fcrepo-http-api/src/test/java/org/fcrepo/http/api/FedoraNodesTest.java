@@ -17,7 +17,6 @@ package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
@@ -31,7 +30,6 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URISyntaxException;
 import java.util.Date;
-import java.util.List;
 
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
@@ -46,7 +44,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -164,9 +161,9 @@ public class FedoraNodesTest {
         final VersionManager mockVM = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
         when(mockDate.getTime()).thenReturn(0L);
-        when(mockNode.getPath()).thenReturn("/test/path");
+        when(mockNode.getPath()).thenReturn(path);
         when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockObject.getPath()).thenReturn("/test/path");
+        when(mockObject.getPath()).thenReturn(path);
         when(mockObject.getEtagValue()).thenReturn("XYZ");
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -274,13 +271,6 @@ public class FedoraNodesTest {
         when(mockObject.getEtagValue()).thenReturn("");
 
         testObj.moveObject("http://somewhere/else/baz");
-    }
-
-    @Test(expected = WebApplicationException.class)
-    public void testCheckJcrNamespace() {
-        final List<PathSegment> pathList = createPathList("anypath");
-        pathList.add(createPathList("jcr:path").get(0));
-        testObj.throwIfPathIncludesJcr(pathList);
     }
 
 }

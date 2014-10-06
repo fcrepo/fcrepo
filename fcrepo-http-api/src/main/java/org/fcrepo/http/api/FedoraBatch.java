@@ -18,7 +18,7 @@ package org.fcrepo.http.api;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
-import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
@@ -39,7 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -56,7 +55,6 @@ import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -103,9 +101,7 @@ public class FedoraBatch extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraBatch.class);
 
-    @PathParam("path") protected List<PathSegment> pathList;
-
-    protected String path;
+    @PathParam("path") protected String externalPath;
 
 
     /**
@@ -117,16 +113,11 @@ public class FedoraBatch extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param path
+     * @param externalPath
      */
     @VisibleForTesting
-    public FedoraBatch(final String path) {
-        this.path = path;
-    }
-
-    @PostConstruct
-    private void postConstruct() {
-        this.path = toPath(pathList);
+    public FedoraBatch(final String externalPath) {
+        this.externalPath = externalPath;
     }
 
     /**
@@ -172,6 +163,8 @@ public class FedoraBatch extends ContentExposingResource {
     @Timed
     public Response batchModify(final MultiPart multipart)
         throws InvalidChecksumException, IOException, URISyntaxException {
+
+        final String path = toPath(translator(), externalPath);
 
         // TODO: this is ugly, but it works.
         final PathFactory pathFactory = new ExecutionContext().getValueFactories().getPathFactory();
@@ -322,7 +315,7 @@ public class FedoraBatch extends ContentExposingResource {
                 throw new RepositoryRuntimeException(e);
             }
 
-            return created(new URI(path)).build();
+            return noContent().build();
 
         } finally {
             session.logout();
@@ -448,12 +441,7 @@ public class FedoraBatch extends ContentExposingResource {
     }
 
     @Override
-    String path() {
-        return path;
-    }
-
-    @Override
-    List<PathSegment> pathList() {
-        return pathList;
+    String externalPath() {
+        return externalPath;
     }
 }

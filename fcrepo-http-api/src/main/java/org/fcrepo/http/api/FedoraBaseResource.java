@@ -15,22 +15,18 @@
  */
 package org.fcrepo.http.api;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.FedoraObjectImpl;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.ws.rs.core.PathSegment;
-
-import java.util.List;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 
@@ -53,31 +49,33 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return identifierTranslator;
     }
 
-    protected FedoraResource getResourceFromPath(final List<PathSegment> pathList, final String path) {
+    /**
+     * Get the FedoraResource for the resource at the external path
+     * @param externalPath
+     * @return
+     */
+    @VisibleForTesting
+    public FedoraResource getResourceFromPath(final String externalPath) {
         final FedoraResource resource;
-        try {
-            final boolean metadata = pathList != null
-                    && pathList.get(pathList.size() - 1).getPath().equals(FCR_METADATA);
+        final boolean metadata = externalPath != null
+                && externalPath.endsWith(FCR_METADATA);
 
-            final Node node = session().getNode(path);
+        final Node node = translator().convert(translator().toDomain(externalPath));
 
-            if (DatastreamImpl.hasMixin(node)) {
-                final DatastreamImpl datastream = new DatastreamImpl(node);
+        if (DatastreamImpl.hasMixin(node)) {
+            final DatastreamImpl datastream = new DatastreamImpl(node);
 
-                if (metadata) {
-                    resource = datastream;
-                } else {
-                    resource = datastream.getBinary();
-                }
-            } else if (FedoraBinaryImpl.hasMixin(node)) {
-                resource = new FedoraBinaryImpl(node);
+            if (metadata) {
+                resource = datastream;
             } else {
-                resource = new FedoraObjectImpl(node);
+                resource = datastream.getBinary();
             }
-            return resource;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        } else if (FedoraBinaryImpl.hasMixin(node)) {
+            resource = new FedoraBinaryImpl(node);
+        } else {
+            resource = new FedoraObjectImpl(node);
         }
+        return resource;
     }
 
 }

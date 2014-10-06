@@ -34,7 +34,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 
 import java.util.Collection;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -45,7 +44,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -70,8 +68,6 @@ public class FedoraIdentifiers extends FedoraBaseResource {
     @Inject
     protected Session session;
 
-    protected IdentifierConverter<Resource, javax.jcr.Node> identifierTranslator;
-
     /**
      * Mint identifiers (without creating the objects)
      *
@@ -84,7 +80,7 @@ public class FedoraIdentifiers extends FedoraBaseResource {
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream getNextPid(@PathParam("path")
-            final List<PathSegment> pathList,
+            final String externalPath,
             @QueryParam("count")
             @DefaultValue("1")
             final Integer count,
@@ -92,7 +88,7 @@ public class FedoraIdentifiers extends FedoraBaseResource {
             final UriInfo uriInfo) {
 
 
-        final String path = toPath(pathList);
+        final String path = toPath(translator(), externalPath);
 
         final Node pidsResult = createURI(uriInfo.getAbsolutePath().toASCIIString());
 

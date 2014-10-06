@@ -39,7 +39,6 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -64,7 +63,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -74,7 +72,6 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.util.List;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -125,10 +122,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Context protected HttpServletResponse servletResponse;
     @Context protected UriInfo uriInfo;
 
-    @PathParam("path") protected List<PathSegment> pathList;
-
-    protected String path;
-
+    @PathParam("path") protected String externalPath;
 
     /**
      * Default JAX-RS entry point
@@ -139,16 +133,11 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param path
+     * @param externalPath
      */
     @VisibleForTesting
-    public FedoraLdp(final String path) {
-        this.path = path;
-    }
-
-    @PostConstruct
-    private void postConstruct() {
-        this.path = toPath(pathList);
+    public FedoraLdp(final String externalPath) {
+        this.externalPath = externalPath;
     }
 
     /**
@@ -159,7 +148,7 @@ public class FedoraLdp extends ContentExposingResource {
     @HEAD
     @Timed
     public Response head() {
-        LOGGER.trace("Getting head for: {}", path);
+        LOGGER.trace("Getting head for: {}", externalPath);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -251,6 +240,7 @@ public class FedoraLdp extends ContentExposingResource {
             final FedoraResource resource;
             final Response.ResponseBuilder response;
 
+            final String path = toPath(translator(), externalPath);
 
             final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -408,7 +398,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String contentTypeString = contentType.toString();
 
-        final String newObjectPath = mintNewPid(path, slug);
+        final String newObjectPath = mintNewPid(resource().getPath(), slug);
 
         LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
 
@@ -511,13 +501,8 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     @Override
-    String path() {
-        return path;
-    }
-
-    @Override
-    List<PathSegment> pathList() {
-        return pathList;
+    String externalPath() {
+        return externalPath;
     }
 
     private void addOptionsHttpHeaders() {
@@ -611,7 +596,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (!problems.isEmpty()) {
             LOGGER.info(
                     "Found these problems updating the properties for {}: {}",
-                    path, problems);
+                    externalPath, problems);
             final StringBuilder error = new StringBuilder();
             final StmtIterator sit = problems.listStatements();
             while (sit.hasNext()) {

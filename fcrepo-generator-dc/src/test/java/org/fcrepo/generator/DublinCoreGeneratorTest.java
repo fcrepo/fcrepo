@@ -16,11 +16,9 @@
 package org.fcrepo.generator;
 
 import static java.util.Arrays.asList;
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -35,7 +33,6 @@ import javax.jcr.Session;
 
 import org.fcrepo.generator.dublincore.DCGenerator;
 import org.fcrepo.generator.dublincore.DublinCoreGenerators;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,10 +58,13 @@ public class DublinCoreGeneratorTest {
     @Mock
     private InputStream mockIS;
 
+    @Mock
+    private Node mockNode;
+
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new DublinCoreGenerator();
+        testObj = spy(new DublinCoreGenerator());
         setField(testObj, "nodeService", mockNodeService);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
@@ -73,20 +73,18 @@ public class DublinCoreGeneratorTest {
 
     @Test
     public void testGetObjectAsDublinCore() throws RepositoryException {
-        final FedoraResourceImpl mockResource = mock(FedoraResourceImpl.class);
-        when(mockResource.getNode()).thenReturn(mock(Node.class));
-        when(mockNodeService.getObject(mockSession, "/objects/foo"))
-                .thenReturn(mockResource);
-        when(mockGenerator.getStream(any(Node.class))).thenReturn(mockIS);
-        testObj.getObjectAsDublinCore(createPathList("objects", "foo"));
+        when(mockSession.getNode("/objects/foo")).thenReturn(mockNode);
+        when(mockGenerator.getStream(mockNode)).thenReturn(mockIS);
+        testObj.getObjectAsDublinCore("objects/foo");
 
     }
 
     @Test
-    public void testNoGenerators() {
+    public void testNoGenerators() throws RepositoryException {
+        when(mockSession.getNode("/objects/foo")).thenReturn(mockNode);
         testObj.dcgenerators = new DublinCoreGenerators(Collections.<DCGenerator>emptyList());
         try {
-            testObj.getObjectAsDublinCore(createPathList("objects", "foo"));
+            testObj.getObjectAsDublinCore("objects/foo");
             fail("Should have failed without a generator configured!");
         } catch (final PathNotFoundException ex) {
             // this is what we expect

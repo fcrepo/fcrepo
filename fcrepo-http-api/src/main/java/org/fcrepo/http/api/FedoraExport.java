@@ -21,7 +21,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -32,11 +31,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
@@ -48,9 +46,9 @@ import org.springframework.context.annotation.Scope;
  *
  * @author awoods
  */
-@Scope("prototype")
+@Scope("request")
 @Path("/{path: .*}/fcr:export")
-public class FedoraExport extends AbstractResource {
+public class FedoraExport extends FedoraBaseResource {
 
     @Autowired
     protected SerializerUtil serializers;
@@ -64,7 +62,7 @@ public class FedoraExport extends AbstractResource {
      * Export an object with the given format, e.g.: GET
      * /path/to/object/fcr:export?format=jcr/xml : the node as JCR/XML
      *
-     * @param pathList
+     * @param externalPath
      * @param format
      * @param skipBinary
      * @param recurse
@@ -72,14 +70,14 @@ public class FedoraExport extends AbstractResource {
      */
     @GET
     public Response exportObject(
-        @PathParam("path") final List<PathSegment> pathList,
+        @PathParam("path") final String externalPath,
         @QueryParam("format") @DefaultValue("jcr/xml") final String format,
         @QueryParam("skipBinary") @DefaultValue("true") final String skipBinary,
         @QueryParam("recurse") @DefaultValue("false") final String recurse) {
 
-        final String path = toPath(pathList);
+        final FedoraResource resource = getResourceFromPath(externalPath);
 
-        LOGGER.debug("Requested object serialization for {} using serialization format {}", path, format);
+        LOGGER.debug("Requested object serialization for {} using serialization format {}", resource, format);
 
         final FedoraObjectSerializer serializer =
             serializers.getSerializer(format);
@@ -94,11 +92,11 @@ public class FedoraExport extends AbstractResource {
                         try {
                             LOGGER.debug("Selecting from serializer map: {}", serializers);
                             LOGGER.debug("Retrieved serializer for format: {}", format);
-                            serializer.serialize(objectService.findOrCreateObject(session, path),
+                            serializer.serialize(resource,
                                                  out,
                                                  parseBoolean(skipBinary),
                                                  parseBoolean(recurse));
-                            LOGGER.debug("Successfully serialized object: {}", path);
+                            LOGGER.debug("Successfully serialized object: {}", resource);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
                         } finally {
@@ -107,5 +105,10 @@ public class FedoraExport extends AbstractResource {
                     }
                 }).build();
 
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 }

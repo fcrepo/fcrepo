@@ -19,13 +19,11 @@ import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -36,7 +34,6 @@ import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -141,44 +138,22 @@ public abstract class AbstractResource {
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
      *
-     * @param paths
+     * @param translator
+     * @param originalPath
      * @return String jcr path
      */
-    public static final String toPath(final List<PathSegment> paths) {
-        final StringBuilder result = new StringBuilder();
-        LOGGER.trace("converting URI path to JCR path: {}", paths);
+    public static final String toPath(final IdentifierConverter<Resource, Node> translator,
+                                      final String originalPath) {
 
-        int i = 0;
+        final Resource resource = translator.toDomain(originalPath);
 
-        for (final PathSegment path : paths) {
-            final String p = path.getPath();
-
-            if (p.equals("")) {
-                LOGGER.trace("Ignoring empty segment {}", p);
-            } else if (i == 0 &&
-                    (p.startsWith("tx:") || p.startsWith("workspace:"))) {
-                LOGGER.trace("Ignoring internal segment {}", p);
-                i++;
-            } else if (p.equals(FCR_METADATA)) {
-                // noop
-            } else {
-
-                LOGGER.trace("Adding segment {}", p);
-
-                if (!p.startsWith("[")) {
-                    result.append('/');
-                }
-                result.append(p);
-                i++;
-            }
-        }
-
-        final String path = result.toString();
+        final String path = translator.asString(resource);
 
         if (path.isEmpty()) {
             return "/";
+        } else {
+            return path;
         }
-        return path;
     }
 
     /**

@@ -19,33 +19,25 @@ import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.DatastreamImpl;
-import org.fcrepo.kernel.impl.FedoraBinaryImpl;
-import org.fcrepo.kernel.impl.FedoraObjectImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.VersionException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 
 import static java.util.Collections.singleton;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
@@ -62,7 +54,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -79,14 +71,15 @@ public class FedoraVersions extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraVersions.class);
 
-    @PathParam("path") protected List<PathSegment> pathList;
-    @PathParam("labelAndOptionalPathIntoVersion") protected List<PathSegment> pathListIntoVersion;
+    @PathParam("path") protected String externalPath;
+    @PathParam("labelAndOptionalPathIntoVersion") protected String pathListIntoVersion;
 
     protected String path;
     protected String label;
     protected String pathIntoVersion;
 
     protected FedoraResource resource;
+    protected FedoraResource baseResource;
 
     /**
      * Default JAX-RS entry point
@@ -108,9 +101,8 @@ public class FedoraVersions extends ContentExposingResource {
 
     @PostConstruct
     private void postConstruct() {
-        this.path = toPath(pathList);
-        this.label = pathListIntoVersion.get(0).getPath();
-        this.pathIntoVersion = "." + toPath(pathListIntoVersion.subList(1, pathListIntoVersion.size()));
+        this.path = externalPath + "/" + FCR_VERSIONS + "/" + pathListIntoVersion;
+        this.label = pathListIntoVersion.split("/", 2)[0];
     }
 
     /**
@@ -125,14 +117,14 @@ public class FedoraVersions extends ContentExposingResource {
     public Response addVersion() throws RepositoryException {
         try {
             final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
-                    singleton(path));
+                    singleton(unversionedResource().getPath()));
             if (label != null) {
                 unversionedResource().addVersionLabel(label);
             }
 
             final String version = (label != null) ? label : versions.iterator().next();
             return noContent().header("Location", translator().toDomain(
-                    path) + "/fcr:versions/" + version).build();
+                    externalPath) + "/fcr:versions/" + version).build();
         } finally {
             session.logout();
         }
@@ -149,7 +141,7 @@ public class FedoraVersions extends ContentExposingResource {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
         try {
-            versionService.revertToVersion(session.getWorkspace(), path, label);
+            versionService.revertToVersion(session.getWorkspace(), unversionedResource().getPath(), label);
             return noContent().build();
         } finally {
             session.logout();
@@ -165,7 +157,7 @@ public class FedoraVersions extends ContentExposingResource {
     public Response removeVersion() throws RepositoryException {
         LOGGER.info("Removing {} version {}.", path, label);
         try {
-            versionService.removeVersion(session.getWorkspace(), path, label);
+            versionService.removeVersion(session.getWorkspace(), unversionedResource().getPath(), label);
             return noContent().build();
         } catch ( VersionException ex ) {
             return status(BAD_REQUEST).entity(ex.getMessage()).build();
@@ -197,53 +189,22 @@ public class FedoraVersions extends ContentExposingResource {
     }
 
     protected FedoraResource unversionedResource() {
-        return getResourceFromPath(pathList, path);
+
+        if (baseResource == null) {
+            baseResource = getResourceFromPath(externalPath);
+        }
+
+        return baseResource;
     }
 
     @Override
     protected FedoraResource resource() {
 
-        try {
-            if (resource == null) {
-                final FedoraResource fedoraResource = unversionedResource();
-
-                final Node frozenNode = fedoraResource.getNodeVersion(label);
-
-                if (frozenNode == null) {
-                    throw new NotFoundException();
-                }
-
-                final Node node;
-
-                if (pathIntoVersion != null) {
-                    node = frozenNode.getNode(pathIntoVersion);
-                } else {
-                    node = frozenNode;
-                }
-
-                final boolean metadata = pathListIntoVersion != null &&
-                        pathListIntoVersion.get(pathListIntoVersion.size() - 1).getPath().equals(FCR_METADATA);
-
-                if (DatastreamImpl.hasMixin(node)) {
-                    final DatastreamImpl datastream = new DatastreamImpl(node);
-
-                    if (metadata) {
-                        resource = datastream;
-                    } else {
-                        resource = datastream.getBinary();
-                    }
-                } else if (FedoraBinaryImpl.hasMixin(node)) {
-                    resource = new FedoraBinaryImpl(node);
-                } else {
-                    resource = new FedoraObjectImpl(node);
-                }
-            }
-
-            return resource;
-
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        if (resource == null) {
+            resource = getResourceFromPath(path);
         }
+
+        return resource;
     }
 
     @Override
@@ -252,13 +213,8 @@ public class FedoraVersions extends ContentExposingResource {
     }
 
     @Override
-    String path() {
-        return path;
-    }
-
-    @Override
-    List<PathSegment> pathList() {
-        return pathList;
+    String externalPath() {
+        return externalPath;
     }
 
 

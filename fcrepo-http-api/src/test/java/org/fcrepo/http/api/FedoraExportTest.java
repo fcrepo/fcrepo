@@ -15,10 +15,11 @@
  */
 package org.fcrepo.http.api;
 
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -69,7 +70,7 @@ public class FedoraExportTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new FedoraExport();
+        testObj = spy(new FedoraExport());
         mockSession = mockSession(testObj);
         when(mockSerializers.getSerializer("fake-format")).thenReturn(
                 mockSerializer);
@@ -81,10 +82,8 @@ public class FedoraExportTest {
 
     @Test
     public void testExportObject() throws Exception {
-        when(mockObjects.findOrCreateObject(mockSession, "/test/object")).thenReturn(
-                mockObject);
-        ((StreamingOutput) testObj.exportObject(
-                createPathList("test", "object"), "fake-format",
+        doReturn(mockObject).when(testObj).getResourceFromPath("test/object");
+        ((StreamingOutput) testObj.exportObject("test/object", "fake-format",
                     "false", "false").getEntity()).write(new ByteArrayOutputStream());
         verify(mockSerializer).serialize(eq(mockObject), any(OutputStream.class),
                 eq(Boolean.valueOf("false")), eq(Boolean.valueOf("false")));
@@ -96,10 +95,8 @@ public class FedoraExportTest {
         final String skipBinary = "true";
         when(mockSerializers.getSerializer(FedoraObjectSerializer.JCR_XML)).thenReturn(
                 mockJcrXmlSerializer);
-        when(mockObjects.findOrCreateObject(mockSession, "/test/object")).thenReturn(
-                mockObject);
-        ((StreamingOutput) testObj.exportObject(
-                createPathList("test", "object"), FedoraObjectSerializer.JCR_XML,
+        doReturn(mockObject).when(testObj).getResourceFromPath("test/object");
+        ((StreamingOutput) testObj.exportObject("test/object", FedoraObjectSerializer.JCR_XML,
                     "false", skipBinary).getEntity()).write(new ByteArrayOutputStream());
         verify(mockJcrXmlSerializer).serialize(eq(mockObject), any(OutputStream.class),
                 eq(Boolean.valueOf("false")), eq(Boolean.valueOf(skipBinary)));
@@ -110,10 +107,8 @@ public class FedoraExportTest {
         final String noRecurse = "true";
         when(mockSerializers.getSerializer(FedoraObjectSerializer.JCR_XML)).thenReturn(
                 mockJcrXmlSerializer);
-        when(mockObjects.findOrCreateObject(mockSession, "/test/object")).thenReturn(
-                mockObject);
-        ((StreamingOutput) testObj.exportObject(
-                createPathList("test", "object"), FedoraObjectSerializer.JCR_XML,
+        doReturn(mockObject).when(testObj).getResourceFromPath("test/object");
+        ((StreamingOutput) testObj.exportObject("test/object", FedoraObjectSerializer.JCR_XML,
                     noRecurse, "false").getEntity()).write(new ByteArrayOutputStream());
         verify(mockJcrXmlSerializer).serialize(eq(mockObject),
                 any(OutputStream.class), eq(Boolean.valueOf(noRecurse)),

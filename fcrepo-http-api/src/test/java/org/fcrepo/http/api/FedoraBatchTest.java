@@ -16,8 +16,8 @@
 package org.fcrepo.http.api;
 
 import static java.util.Arrays.asList;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.notModified;
-import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
@@ -252,7 +252,7 @@ public class FedoraBatchTest {
 
         final Response actual =
             testObj.batchModify(multipart);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockBinary1).setContent(any(InputStream.class), anyString(), eq((URI)null), eq("testDs1.txt"),
                 any(StoragePolicyDecisionPoint.class));
         verify(mockBinary2).setContent(any(InputStream.class), anyString(), eq((URI)null), eq("testDs2.txt"),
@@ -290,7 +290,7 @@ public class FedoraBatchTest {
         when(mockSession.getNode(path)).thenReturn(mockNode);
         final Response actual =
             testObj.batchModify(multipart);
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+        assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockBinary).setContent(any(InputStream.class), eq("text/turtle"), eq((URI) null), eq("filename.txt"),
                 any(StoragePolicyDecisionPoint.class));
         verify(mockSession).save();

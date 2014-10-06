@@ -15,12 +15,13 @@
  */
 package org.fcrepo.http.api;
 
-import static org.fcrepo.http.commons.test.util.PathSegmentImpl.createPathList;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -31,7 +32,6 @@ import javax.jcr.Session;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.DatastreamService;
@@ -62,10 +62,13 @@ public class FedoraFixityTest {
     @Mock
     private Node mockNode;
 
+    @Mock
+    private FedoraBinary mockBinary;
+
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new FedoraFixity();
+        testObj = spy(new FedoraFixity());
         setField(testObj, "datastreamService", mockDatastreams);
         this.uriInfo = getUriInfoImpl();
         setField(testObj, "uriInfo", uriInfo);
@@ -76,20 +79,15 @@ public class FedoraFixityTest {
     @Test
     public void testGetDatastreamFixity() throws RepositoryException {
         final RdfStream expected = new RdfStream();
-
-        final String pid = "FedoraDatastreamsTest1";
-        final String path = "/objects/" + pid + "/testDS";
-        final String dsId = "testDS";
-        final Datastream mockDs = mockDatastream(pid, dsId, null);
+        final String externalPath = "objects/FedoraDatastreamsTest1/testDS";
 
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockDs.getNode()).thenReturn(mockNode);
-        when(mockDatastreams.findOrCreateDatastream(mockSession, path)).thenReturn(mockDs);
-        when(mockDatastreams.getFixityResultsModel(any(IdentifierConverter.class), any(FedoraBinary.class)))
+
+        doReturn(mockBinary).when(testObj).getResourceFromPath(externalPath);
+        when(mockDatastreams.getFixityResultsModel(any(IdentifierConverter.class), eq(mockBinary)))
                 .thenReturn(expected);
 
-        final RdfStream actual = testObj.getDatastreamFixity(createPathList("objects", pid, "testDS"),
-                mockRequest, uriInfo);
+        final RdfStream actual = testObj.getDatastreamFixity(externalPath, mockRequest, uriInfo);
 
         assertEquals(expected, actual);
     }
