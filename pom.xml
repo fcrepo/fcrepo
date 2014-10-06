@@ -74,6 +74,7 @@
     <module>fcrepo-auth-common</module>
     <module>fcrepo-connector-file</module>
     <module>fcrepo-configs</module>
+    <module>fcrepo-integration-ldp</module>
   </modules>
   <dependencyManagement>
     <dependencies>
