@@ -29,6 +29,7 @@ import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -48,6 +49,7 @@ import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
 import org.glassfish.grizzly.http.util.ContentType;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -112,6 +114,7 @@ import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
@@ -120,6 +123,7 @@ import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
@@ -1791,6 +1795,75 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals( lastmodString, headerFormat.format(createdDateTriples) );
         assertNotNull( lastmodDateTriples );
         assertEquals( lastmodString, headerFormat.format(lastmodDateTriples) );
+    }
+
+    @Test
+    public void testLdpContainerInteraction() throws Exception {
+
+        final String id = getRandomUniquePid();
+        final HttpResponse object = createObject(id);
+        final String location = object.getFirstHeader("Location").getValue();
+        createObject(id + "/t");
+
+        final HttpPatch patch = new HttpPatch(location + "/t");
+        final String sparql = "INSERT DATA { "
+                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + location + "> .\n"
+                + "<> <" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n"
+                + " }";
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(IOUtils.toInputStream(sparql));
+
+        patch.setEntity(entity);
+
+        assertEquals("Expected patch to succeed", 204, getStatus(patch));
+
+
+        createObject(id + "/b");
+
+        final HttpPatch bPatch = new HttpPatch(location + "/b");
+        final String bSparql = "INSERT DATA { "
+                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + location + "> .\n"
+                + "<> <" + HAS_MEMBER_RELATION + "> <info:some/another-relation> .\n"
+                + " }";
+        final BasicHttpEntity bEntity = new BasicHttpEntity();
+        bEntity.setContent(IOUtils.toInputStream(bSparql));
+
+        bPatch.setEntity(bEntity);
+
+
+        assertEquals("Expected patch to succeed", 204, getStatus(bPatch));
+
+        createObject(id + "/t/1");
+        createObject(id + "/b/1");
+
+        final HttpGet getObjMethod = new HttpGet(location);
+        final HttpResponse response = client.execute(getObjMethod);
+        final GraphStore graphStore = getGraphStore(response);
+
+        assertTrue("Expected to have container t", graphStore.contains(Node.ANY,
+                NodeFactory.createURI(location),
+                NodeFactory.createURI(RdfLexicon.LDP_NAMESPACE + "contains"),
+                NodeFactory.createURI(location + "/t")
+        ));
+
+        assertTrue("Expected to have container b", graphStore.contains(Node.ANY,
+                NodeFactory.createURI(location),
+                NodeFactory.createURI(RdfLexicon.LDP_NAMESPACE + "contains"),
+                NodeFactory.createURI(location + "/b")
+        ));
+
+        assertTrue("Expected member relation", graphStore.contains(Node.ANY,
+                NodeFactory.createURI(location),
+                NodeFactory.createURI("info:some/relation"),
+                NodeFactory.createURI(location + "/t/1")
+                ));
+
+        assertTrue("Expected other member relation", graphStore.contains(Node.ANY,
+                NodeFactory.createURI(location),
+                NodeFactory.createURI("info:some/another-relation"),
+                NodeFactory.createURI(location + "/b/1")
+        ));
+
     }
 
     private Date getDateFromModel( final Model model, final Resource subj, final Property pred ) throws Exception {
