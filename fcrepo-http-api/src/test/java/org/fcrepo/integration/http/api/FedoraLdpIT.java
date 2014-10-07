@@ -213,7 +213,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertResourceOptionsHeaders(optionsResponse);
     }
 
-
     @Test
     public void testOptionsBinaryMetadata() throws Exception {
         final String pid = getRandomUniquePid();
@@ -221,6 +220,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(pid, "x", pid);
 
         final String location = serverAddress + pid + "/x/fcr:metadata";
+
+        final HttpOptions optionsRequest = new HttpOptions(location);
+        final HttpResponse optionsResponse = client.execute(optionsRequest);
+        assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
+
+        assertRdfOptionsHeaders(optionsResponse);
+    }
+
+    @Test
+    public void testOptionsBinaryMetadataWithUriEncoding() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createDatastream(pid, "x", pid);
+
+        final String location = serverAddress + pid + "/x/fcr%3Ametadata";
 
         final HttpOptions optionsRequest = new HttpOptions(location);
         final HttpResponse optionsResponse = client.execute(optionsRequest);
