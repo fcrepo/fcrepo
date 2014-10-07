@@ -20,13 +20,19 @@ import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.limit;
 import static com.hp.hpl.jena.query.DatasetFactory.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static java.util.Collections.singleton;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.hp.hpl.jena.graph.Triple;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
@@ -44,7 +50,6 @@ import javax.jcr.query.qom.QueryObjectModelFactory;
 import javax.jcr.query.qom.Source;
 
 import org.fcrepo.kernel.rdf.GraphProperties;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -149,7 +154,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
                                                 final IdentifierConverter<Resource,Node> idTranslator) {
 
         try {
-            return JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples();
+            return new NamespaceRdfContext(session);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -204,10 +209,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
                         limit(new org.fcrepo.kernel.utils.iterators.NodeIterator(nodeIterator),
                                 limit);
 
-                model =
-                        JcrRdfTools.withContext(subjectFactory, session)
-                                .getJcrPropertiesModel(limitedIterator, searchSubject)
-                                .asModel();
+                model = getJcrPropertiesModel(searchSubject, limitedIterator, subjectFactory).asModel();
 
             /* add the result description to the RDF model */
 
@@ -273,5 +275,33 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
             throw new RepositoryRuntimeException(e);
         }
     }
+
+    /**
+     * Get an {@link RdfStream} for the given JCR NodeIterator
+     *
+     * @param nodeIterator
+     * @param iteratorSubject
+     * @return RdfStream for the given JCR NodeIterator
+     * @throws RepositoryException
+     */
+    @VisibleForTesting
+    public RdfStream getJcrPropertiesModel(final Resource iteratorSubject,
+                                           final Iterator<Node> nodeIterator,
+                                           final IdentifierConverter<Resource,Node> graphSubjects)
+            throws RepositoryException {
+
+        final RdfStream results = new RdfStream();
+        while (nodeIterator.hasNext()) {
+            final Node node = nodeIterator.next();
+            results.concat(new PropertiesRdfContext(node, graphSubjects));
+            if (iteratorSubject != null) {
+                results.concat(singleton(Triple.create(iteratorSubject.asNode(),
+                        HAS_MEMBER_OF_RESULT.asNode(),
+                        graphSubjects.reverse().convert(node).asNode())));
+            }
+        }
+        return results;
+    }
+
 
 }

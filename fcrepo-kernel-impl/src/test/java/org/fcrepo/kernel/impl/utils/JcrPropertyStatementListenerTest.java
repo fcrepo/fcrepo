@@ -175,7 +175,7 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testRemovedStatement() throws RepositoryException {
         final String mockPropertyName = "mock:property";
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate))
+        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate, mockNsMapping))
                 .thenReturn(mockPropertyName);
         when(mockSubjectNode.hasProperty(mockPropertyName)).thenReturn(true);
         when(mockPropertiesTools.getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(

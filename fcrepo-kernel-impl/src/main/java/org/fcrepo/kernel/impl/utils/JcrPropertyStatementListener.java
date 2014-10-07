@@ -74,7 +74,7 @@ public class JcrPropertyStatementListener extends StatementListener {
         return new JcrPropertyStatementListener(subjects,
                 session,
                 problemModel,
-                JcrRdfTools.withContext(subjects, session));
+                new JcrRdfTools(subjects, session));
     }
 
     /**
