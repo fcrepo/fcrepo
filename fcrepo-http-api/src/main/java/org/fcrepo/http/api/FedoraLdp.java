@@ -44,7 +44,6 @@ import javax.inject.Inject;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -53,7 +52,6 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
@@ -62,11 +60,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -118,10 +113,6 @@ public class FedoraLdp extends ContentExposingResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
-
-    @Context protected Request request;
-    @Context protected HttpServletResponse servletResponse;
-    @Context protected UriInfo uriInfo;
 
     @PathParam("path") protected String externalPath;
 
@@ -331,12 +322,12 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream) throws IOException {
 
-        if (resource() instanceof FedoraBinary) {
-            throw new BadRequestException(resource() + " is not a valid object to receive a PATCH");
-        }
-
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
+        }
+
+        if (resource() instanceof FedoraBinary) {
+            throw new BadRequestException(resource() + " is not a valid object to receive a PATCH");
         }
 
         try {
@@ -348,7 +339,6 @@ public class FedoraLdp extends ContentExposingResource {
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
             final Dataset properties = resource().updatePropertiesDataset(translator(), requestBody);
-
 
             handleProblems(properties);
 
@@ -407,7 +397,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String contentTypeString = contentType.toString();
 
-        final String newObjectPath = mintNewPid(resource().getPath(), slug);
+        final String newObjectPath = mintNewPid(slug);
 
         LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
 
@@ -418,9 +408,6 @@ public class FedoraLdp extends ContentExposingResource {
             final FedoraResource result = createFedoraResource(mixin,
                     effectiveContentType,
                     newObjectPath, contentDisposition);
-
-            final Response.ResponseBuilder response;
-            final URI location = getUri(result);
 
             if (requestBodyStream == null || requestContentType == null) {
                 LOGGER.trace("No request body detected");
@@ -453,16 +440,7 @@ public class FedoraLdp extends ContentExposingResource {
                             originalFileName,
                             datastreamService.getStoragePolicyDecisionPoint());
 
-                    final URI descriptionUri = getUri(((FedoraBinary) result).getDescription());
-                    servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\";"
-                            + " anchor=\"" + location + "\"");
                 }
-            }
-
-            if (result.isNew()) {
-                response = created(location).entity(location.toString());
-            } else {
-                response = noContent();
             }
 
             try {
@@ -476,7 +454,15 @@ public class FedoraLdp extends ContentExposingResource {
 
             addCacheControlHeaders(servletResponse, result, session);
 
-            return response.build();
+            final URI location = getUri(result);
+
+            if (result instanceof FedoraBinary) {
+                final URI descriptionUri = getUri(((FedoraBinary) result).getDescription());
+                servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\";"
+                        + " anchor=\"" + location + "\"");
+            }
+
+            return created(location).entity(location.toString()).build();
 
         } finally {
             session.logout();
@@ -632,11 +618,9 @@ public class FedoraLdp extends ContentExposingResource {
         return null;
     }
 
-    private String mintNewPid(final String base, final String slug) {
+    private String mintNewPid(final String slug) {
         String pid;
         final String newObjectPath;
-
-        assertPathExists(base);
 
         if (slug != null && !slug.isEmpty()) {
             pid = slug;
@@ -653,10 +637,10 @@ public class FedoraLdp extends ContentExposingResource {
             basePath += "/";
         }
 
-        final URI path1 = uriInfo.getAbsolutePathBuilder().clone().path(FedoraLdp.class)
-                .resolveTemplate("path", basePath + pid, false).build();
+        final URI newResourceUri = uriInfo.getAbsolutePathBuilder().clone().path(FedoraLdp.class)
+                .resolveTemplate("path", pid, false).build();
 
-        pid = translator().asString(createResource(path1.toString()));
+        pid = translator().asString(createResource(newResourceUri.toString()));
         try {
             pid = URLDecoder.decode(pid, "UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -667,23 +651,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (nodeService.exists(session, pid)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", pid);
-            return mintNewPid(base, null);
+            return mintNewPid(null);
         }
 
-        assertPathMissing(pid);
         return pid;
-    }
-
-    private void assertPathMissing(final String path) {
-        if (nodeService.exists(session, path)) {
-            throw new ClientErrorException(path + " is an existing resource!", CONFLICT);
-        }
-    }
-
-    private void assertPathExists(final String path) {
-        if (!nodeService.exists(session, path)) {
-            throw new NotFoundException();
-        }
     }
 
 }
