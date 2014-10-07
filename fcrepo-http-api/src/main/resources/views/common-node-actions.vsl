@@ -175,10 +175,6 @@ WHERE { }
             <div class="control-label">Item is Locked!</div>
             <button type="button" id="btn_view_lock" class="btn btn-primary" onClick="javascript:viewLock('$lockUrl');">View Lock</button>
         </div>
-        <div class="form-group" id="div_create_lock" style="display:$createDisplay">
-            <div class="control-label"><input type="checkbox" id="deep_id" name="deep"/> Is Deep</div>
-            <button type="button" id="btn_create_lock" class="btn btn-primary" onClick="javascript:createLock();">Create Lock</button>
-        </div>     
         <hr />
     </div>
 #end
