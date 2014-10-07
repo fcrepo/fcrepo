@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 
@@ -36,6 +37,7 @@ import org.fcrepo.kernel.utils.iterators.VersionIterator;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
+import org.slf4j.Logger;
 
 
 /**
@@ -54,6 +56,8 @@ public class VersionsRdfContext extends RdfStream {
     private final IdentifierTranslator graphSubjects;
 
     private final com.hp.hpl.jena.graph.Node subject;
+
+    private final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
     /**
      * Ordinary constructor.
@@ -85,6 +89,13 @@ public class VersionsRdfContext extends RdfStream {
             public Iterator<Triple> apply(final Version version) {
 
                 try {
+                    /* Discard jcr:rootVersion (unless we have tests in the codebase that rely on it):*/
+                    if (version.getName().equals(versionHistory.getRootVersion().getName())
+                      && versionHistory.getAllVersions().getSize() != 1) {
+                        LOGGER.trace("Skipped root version from triples");
+                        return new RdfStream();
+                    }
+
                     final Node frozenNode = version.getFrozenNode();
                     final com.hp.hpl.jena.graph.Node versionSubject =
                         graphSubjects.getSubject(frozenNode.getPath()).asNode();
