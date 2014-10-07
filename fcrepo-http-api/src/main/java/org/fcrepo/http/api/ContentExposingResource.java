@@ -135,8 +135,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             returnPreference.addResponseHeaders(servletResponse);
 
-
         }
+        servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
         return Response.ok(rdfStream).build();
     }
