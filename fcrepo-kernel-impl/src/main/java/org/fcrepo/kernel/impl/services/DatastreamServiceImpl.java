@@ -40,7 +40,7 @@ import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
@@ -180,9 +180,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
             final Collection<FixityResult> blobs = runFixity(binary, algorithm);
 
-            return JcrRdfTools.withContext(subjects,binary.getNode().getSession())
-                    .getJcrTriples(binary.getNode(), blobs, digestUri, size)
-                    .topic(subjects.reverse().convert(binary.getNode()).asNode());
+            return new FixityRdfContext(binary.getNode(), subjects, blobs, digestUri, size);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

@@ -55,7 +55,7 @@ import com.google.common.collect.ImmutableSet;
 import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.fcrepo.kernel.impl.rdf.impl.WorkspaceRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 
@@ -86,8 +86,7 @@ public class FedoraRepositoryWorkspaces extends FedoraBaseResource {
     @HtmlTemplate("jcr:workspaces")
     public RdfStream getWorkspaces() {
         try {
-
-            return JcrRdfTools.withContext(translator(), session).getWorkspaceTriples(translator()).session(session);
+            return new WorkspaceRdfContext(session, translator()).session(session);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

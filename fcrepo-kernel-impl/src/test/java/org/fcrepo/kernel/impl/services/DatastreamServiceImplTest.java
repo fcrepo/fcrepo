@@ -15,7 +15,9 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.junit.Assert.assertEquals;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -33,15 +35,17 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import com.google.common.collect.ImmutableSet;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -137,6 +141,10 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
 
         final FixityResult fixityResult = mock(FixityResult.class);
         when(fixityResult.matches(any(Long.class), any(URI.class))).thenReturn(true);
+        when(fixityResult.getStoreIdentifier()).thenReturn("mockIdentifier");
+        final URI checksumURI = new URI("xyz");
+        when(fixityResult.getComputedChecksum()).thenReturn(checksumURI);
+        when(fixityResult.getComputedSize()).thenReturn(15L);
         final ImmutableSet<FixityResult> fixityResults = ImmutableSet.of(fixityResult);
 
         final FedoraBinary mockFedoraBinary = mock(FedoraBinary.class);
@@ -151,10 +159,17 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
                 new URI("urn:sha1:abc"));
 
 
-        final RdfStream actual = testObj.getFixityResultsModel(mockSubjects, mockFedoraBinary);
+        final Model actual = testObj.getFixityResultsModel(mockSubjects, mockFedoraBinary).asModel();
 
-        assertEquals("Got wrong topic of fixity results!",
-                mockSubjects.reverse().convert(mockNode).asNode(), actual.topic());
+        assertTrue("Should have a fixity result",
+                actual.contains(mockSubjects.toDomain("/some/path"), RdfLexicon.HAS_FIXITY_RESULT, (RDFNode)null));
+        assertTrue("Should have the message digest",
+                actual.contains(null,
+                        RdfLexicon.HAS_MESSAGE_DIGEST,
+                        createResource(checksumURI.toString())));
+        assertTrue("Should have the size",
+                actual.contains(null, RdfLexicon.HAS_SIZE, createTypedLiteral(15L)));
     }
+
 
 }

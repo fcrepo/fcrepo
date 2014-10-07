@@ -22,12 +22,10 @@ import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -83,7 +81,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     public PersistingRdfStreamConsumer(final IdentifierConverter<Resource,Node> graphSubjects,
             final Session session, final RdfStream stream) {
         this.idTranslator = graphSubjects;
-        this.jcrRdfTools = JcrRdfTools.withContext(graphSubjects, session);
+        this.jcrRdfTools = new JcrRdfTools(graphSubjects, session);
         this.isFedoraSubjectTriple = new Predicate<Triple>() {
 
             @Override
@@ -165,17 +163,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                     t);
             operateOnProperty(t, subjectNode);
         }
-    }
-
-    protected Value createValue(final Node subjectNode, final RDFNode object,
-        final Integer propertyType) throws RepositoryException {
-        return jcrRdfTools().createValue(subjectNode, object, propertyType);
-    }
-
-
-    protected Value createValue(final Node n, final Statement t, final String propertyName) throws RepositoryException {
-        final NodePropertiesTools propertiesTools = new NodePropertiesTools();
-        return jcrRdfTools().createValue(n, t.getObject(), propertiesTools.getPropertyType(n, propertyName));
     }
 
     protected abstract void operateOnProperty(final Statement t,

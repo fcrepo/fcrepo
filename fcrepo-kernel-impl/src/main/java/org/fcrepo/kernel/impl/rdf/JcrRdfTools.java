@@ -15,30 +15,20 @@
  */
 package org.fcrepo.kernel.impl.rdf;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.any;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singleton;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyOriginalName;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.URI;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.jcr.Node;
@@ -60,25 +50,16 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
-import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.WorkspaceRdfContext;
-import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -108,16 +89,8 @@ public class JcrRdfTools {
     private final IdentifierConverter<Resource,Node> graphSubjects;
 
     private Session session;
+    private NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
 
-    /**
-     * Factory method to create a new JcrRdfTools utility with a graph subjects
-     * converter
-     *
-     * @param graphSubjects
-     */
-    public JcrRdfTools(final IdentifierConverter<Resource,Node> graphSubjects) {
-        this(graphSubjects, null);
-    }
     /**
      * Constructor with even more context.
      *
@@ -127,19 +100,6 @@ public class JcrRdfTools {
     public JcrRdfTools(final IdentifierConverter<Resource,Node> graphSubjects, final Session session) {
         this.graphSubjects = graphSubjects;
         this.session = session;
-    }
-
-    /**
-     * Factory method to create a new JcrRdfTools instance
-     *
-     * @param idTranslator
-     * @param session
-     * @return new JcrRdfTools instance
-     */
-    public static JcrRdfTools withContext(final IdentifierConverter<Resource,Node> idTranslator,
-        final Session session) {
-        checkNotNull(idTranslator, "JcrRdfTools must operate with a non-null IdentifierTranslator for context!");
-        return new JcrRdfTools(idTranslator, session);
     }
 
     /**
@@ -173,130 +133,18 @@ public class JcrRdfTools {
     }
 
     /**
-     * Get a model in which to collect statements of RDF extraction problems
-     *
-     * @return an empty model
-     */
-    public static Model getProblemsModel() {
-        return createDefaultModel();
-    }
-
-    /**
-     * Get an {@link RdfStream} for the given JCR NodeIterator
-     *
-     * @param nodeIterator
-     * @param iteratorSubject
-     * @return RdfStream for the given JCR NodeIterator
-     * @throws RepositoryException
-     */
-    public RdfStream getJcrPropertiesModel(final Iterator<Node> nodeIterator,
-            final Resource iteratorSubject) throws RepositoryException {
-
-        final RdfStream results = new RdfStream();
-        while (nodeIterator.hasNext()) {
-            final Node node = nodeIterator.next();
-            results.concat(new PropertiesRdfContext(node, graphSubjects));
-            if (iteratorSubject != null) {
-                results.concat(singleton(create(iteratorSubject.asNode(), HAS_MEMBER_OF_RESULT.asNode(), graphSubjects
-                        .reverse().convert(node).asNode())));
-            }
-        }
-        return results;
-    }
-
-    /**
-     * Serialize the JCR fixity information in an {@link RdfStream}
-     *
-     * @param node
-     * @param blobs
-     * @return fixity information triples as an RdfStream
-     * @throws RepositoryException
-     */
-    public RdfStream getJcrTriples(final Node node,
-            final Iterable<FixityResult> blobs, final URI digest, final long size) throws RepositoryException {
-        return new FixityRdfContext(node, graphSubjects, blobs, digest, size);
-    }
-
-    /**
-     * Get an {@link RdfStream} of the registered JCR namespaces
-     *
-     * @return namespace triples as an RdfStream
-     * @throws RepositoryException
-     */
-    public RdfStream getNamespaceTriples() throws RepositoryException {
-        return new NamespaceRdfContext(session);
-    }
-
-    /**
-     * Get an {@link RdfStream} of the registered JCR workspaces
-     *
-     * @return workspace triples as an RdfStream
-     * @throws RepositoryException
-     */
-    public RdfStream getWorkspaceTriples(final IdentifierConverter<Resource,Node> subjects) throws RepositoryException {
-        return new WorkspaceRdfContext(session, subjects);
-    }
-
-    /**
-     * Decides whether the RDF representation of this {@link Node} will receive LDP Container status.
-     *
-     * @param node
-     * @return true if the node will receive LDP Container status
-     * @throws RepositoryException
-     */
-    public static boolean isContainer(final Node node) throws RepositoryException {
-        return HAS_CHILD_NODE_DEFINITIONS.apply(node.getPrimaryNodeType())
-                || any(ImmutableList.copyOf(node.getMixinNodeTypes()),
-                        HAS_CHILD_NODE_DEFINITIONS);
-    }
-
-    static Predicate<NodeType> HAS_CHILD_NODE_DEFINITIONS =
-        new Predicate<NodeType>() {
-
-            @Override
-            public boolean apply(final NodeType input) {
-                return input.getChildNodeDefinitions().length > 0;
-            }
-        };
-
-    /**
-     * Determine if a predicate is an internal property of a node (and should
-     * not be modified from external sources)
-     *
-     * @param subjectNode
-     * @param predicate
-     * @return True if a predicate is an internal property of a node
-     */
-    public boolean isInternalProperty(final Node subjectNode,
-            final com.hp.hpl.jena.rdf.model.Property predicate) {
-        return isManagedPredicate.apply(predicate);
-    }
-
-    /**
-     * Create a JCR value from an RDFNode, either by using the given JCR
-     * PropertyType or by looking at the RDFNode Datatype
-     *
+     * Create a JCR value from an RDFNode for a given JCR property
+     * @param node the JCR node we want a property for
      * @param data an RDF Node (possibly with a DataType)
-     * @param type a JCR PropertyType value
-     * @return a JCR Value
-     * @throws javax.jcr.RepositoryException
-     */
-    public Value createValue(final Node node, final RDFNode data, final int type)
-        throws RepositoryException {
-        final ValueFactory valueFactory = node.getSession().getValueFactory();
-        return createValue(valueFactory, data, type);
-
-    }
-
-    /**
-     * Create a JCR value from an RDFNode with the given JCR type
-     * @param data
-     * @param type
-     * @return created JCR value
+     * @param propertyName name of the property to populate (used to use the right type for the value)
+     * @return
      * @throws RepositoryException
      */
-    public Value createValue(final RDFNode data, final int type) throws RepositoryException {
-        return createValue(session.getValueFactory(), data, type);
+    public Value createValue(final Node node,
+                             final RDFNode data,
+                             final String propertyName) throws RepositoryException {
+        final ValueFactory valueFactory = node.getSession().getValueFactory();
+        return createValue(valueFactory, data, nodePropertiesTools.getPropertyType(node, propertyName));
     }
 
     /**
@@ -373,75 +221,18 @@ public class JcrRdfTools {
      *
      * @param node the JCR node we want a property for
      * @param predicate the predicate to map to a property name
-     * @return JCR property name
-     * @throws RepositoryException
-     */
-    public String getPropertyNameFromPredicate(final Node node,
-        final com.hp.hpl.jena.rdf.model.Property predicate)
-        throws RepositoryException {
-        final Map<String, String> s = emptyMap();
-        return getPropertyNameFromPredicate(node, predicate, s);
-
-    }
-
-    /**
-     * Given an RDF predicate value (namespace URI + local name), figure out
-     * what JCR property to use
-     *
-     * @param node the JCR node we want a property for
-     * @param predicate the predicate to map to a property name
      * @param namespaceMapping prefix to uri namespace mapping
      * @return the JCR property name
      * @throws RepositoryException
      */
-
-    public String getPropertyNameFromPredicate(final Node node, final com.hp.hpl.jena.rdf.model.Property predicate,
-                                               final Map<String, String> namespaceMapping) throws RepositoryException {
-
-        final NamespaceRegistry namespaceRegistry =
-            getNamespaceRegistry.apply(node);
-
-        return getJcrNameForRdfNode(namespaceRegistry,
-                                    predicate.getNameSpace(),
-                                    predicate.getLocalName(),
-                                    namespaceMapping);
-    }
-
-    /**
-     * Get a property name for an RDF predicate
-     * @param predicate
-     * @return property name from the given predicate
-     * @throws RepositoryException
-     */
-    public String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
-        throws RepositoryException {
-
-        final NamespaceRegistry namespaceRegistry =
-            (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
-
-        final Map<String, String> namespaceMapping = emptyMap();
-        return getJcrNameForRdfNode(namespaceRegistry,
-                                    predicate.getNameSpace(),
-                                    predicate.getLocalName(),
-                                    namespaceMapping);
-    }
-
-    /**
-     * Get the JCR name for the given RDF resource
-     * @param node
-     * @param resource
-     * @param namespaces
-     * @return JCR name for the given RDF resource
-     * @throws RepositoryException
-     */
     public String getPropertyNameFromPredicate(final Node node,
-                                               final Resource resource,
-                                               final Map<String,String> namespaces) throws RepositoryException {
+                                               final Resource predicate,
+                                               final Map<String,String> namespaceMapping) throws RepositoryException {
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry.apply(node);
         return getJcrNameForRdfNode(namespaceRegistry,
-                                    resource.getNameSpace(),
-                                    resource.getLocalName(),
-                                    namespaces);
+                                    predicate.getNameSpace(),
+                                    predicate.getLocalName(),
+                                    namespaceMapping);
     }
 
     /**
@@ -454,7 +245,7 @@ public class JcrRdfTools {
      * @return JCR property name for an RDF predicate
      * @throws RepositoryException
      */
-    private String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,
+    public String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,
                                         final String rdfNamespace,
                                         final String rdfLocalname,
                                         final Map<String, String> namespaceMapping)
@@ -490,40 +281,6 @@ public class JcrRdfTools {
 
         return propertyName;
 
-    }
-
-    /**
-     * Given a node type and a property name, figure out an appropriate jcr value type
-     * @param nodeType
-     * @param propertyName
-     * @return jcr value type
-     * @throws RepositoryException
-     */
-    public int getPropertyType(final String nodeType, final String propertyName) throws RepositoryException {
-        return getPropertyType(session.getWorkspace().getNodeTypeManager().getNodeType(nodeType), propertyName);
-
-    }
-
-    /**
-     * Given a node type and a property name, figure out an appropraite jcr value type
-     * @param nodeType
-     * @param propertyName
-     * @return jcr value type
-     */
-    public int getPropertyType(final NodeType nodeType, final String propertyName) {
-        final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();
-        int type = UNDEFINED;
-        for (final PropertyDefinition propertyDefinition : propertyDefinitions) {
-            if (propertyDefinition.getName().equals(propertyName)) {
-                if (type != UNDEFINED) {
-                    return UNDEFINED;
-                }
-
-                type = propertyDefinition.getRequiredType();
-            }
-        }
-
-        return type;
     }
 
     /**
@@ -623,31 +380,8 @@ public class JcrRdfTools {
 
         final String propertyName =
                 getPropertyNameFromPredicate(node, predicate, namespaces);
-        final Value v = createValue(node, value, getPropertyType(node, propertyName));
-        new NodePropertiesTools().appendOrReplaceNodeProperty(graphSubjects, node, propertyName, v);
-    }
-
-    /**
-     * Get the JCR property type ID for a given property name. If unsure, mark
-     * it as UNDEFINED.
-     *
-     * @param node the JCR node to add the property on
-     * @param propertyName the property name
-     * @return a PropertyType value
-     * @throws RepositoryException
-     */
-    public int getPropertyType(final Node node, final String propertyName)
-            throws RepositoryException {
-        LOGGER.debug("Getting type of property: {} from node: {}",
-                propertyName, node);
-        final PropertyDefinition def =
-                getDefinitionForPropertyName(node, propertyName);
-
-        if (def == null) {
-            return UNDEFINED;
-        }
-
-        return def.getRequiredType();
+        final Value v = createValue(node, value, propertyName);
+        nodePropertiesTools.appendOrReplaceNodeProperty(graphSubjects, node, propertyName, v);
     }
 
     protected boolean repositoryHasType(final Session session, final String mixinName) throws RepositoryException {
@@ -685,7 +419,7 @@ public class JcrRdfTools {
                                final RDFNode objectNode,
                                final Map<String, String> nsPrefixMap) throws RepositoryException {
 
-        final String propertyName = getPropertyNameFromPredicate(node, predicate);
+        final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
 
         if (isManagedPredicate.apply(predicate)) {
 
@@ -697,9 +431,9 @@ public class JcrRdfTools {
 
         // if the property doesn't exist, we don't need to worry about it.
         if (node.hasProperty(propertyName)) {
-            final Value v = createValue(node, objectNode, getPropertyType(node, propertyName));
+            final Value v = createValue(node, objectNode, propertyName);
 
-            new NodePropertiesTools().removeNodeProperty(graphSubjects, node, propertyName, v);
+            nodePropertiesTools.removeNodeProperty(graphSubjects, node, propertyName, v);
         }
     }
 

@@ -307,4 +307,5 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
         verify(mockSession).logout();
         verify(mockSession, never()).save();
     }
+
 }
