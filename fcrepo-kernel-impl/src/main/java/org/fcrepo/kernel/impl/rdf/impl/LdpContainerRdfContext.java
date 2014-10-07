@@ -37,6 +37,7 @@ import java.util.Iterator;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -103,6 +104,8 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         if (inputNode.hasProperty(LDP_HAS_MEMBER_RELATION)) {
             final Property property = inputNode.getProperty(LDP_HAS_MEMBER_RELATION);
             memberRelation = NodeFactory.createURI(property.getString());
+        } else if (inputNode.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
+            return Collections.emptyIterator();
         } else {
             memberRelation = LDP_MEMBER.asNode();
         }

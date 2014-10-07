@@ -312,6 +312,7 @@ public class FedoraLdpTest {
         });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
+                "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext",
@@ -344,6 +345,7 @@ public class FedoraLdpTest {
                 });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
+                "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext",
@@ -428,6 +430,8 @@ public class FedoraLdpTest {
                 });
         assertFalse("Should not include membership contexts",
                 rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext"));
+        assertFalse("Should not include membership contexts",
+                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext"));
 
         assertTrue("Should include containment contexts",
                 rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext"));
@@ -500,6 +504,7 @@ public class FedoraLdpTest {
                 });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
+                "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext",
