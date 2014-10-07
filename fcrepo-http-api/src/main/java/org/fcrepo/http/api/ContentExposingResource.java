@@ -33,6 +33,7 @@ import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
@@ -167,6 +168,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             if (ldpPreferences.prefersMembership()) {
                 rdfStream.concat(getTriples(LdpContainerRdfContext.class));
+                rdfStream.concat(getTriples(LdpIsMemberOfRdfContext.class));
             }
 
             if (ldpPreferences.prefersEmbed()) {
