@@ -315,13 +315,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     InstantiationException |
                     IllegalAccessException e) {
                 // Shouldn't happen.
-                propagate(e);
+                throw propagate(e);
             } catch (final InvocationTargetException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof RepositoryException) {
                     throw new RepositoryRuntimeException(cause);
                 }
-                propagate(cause);
+                throw propagate(cause);
             }
         }
 
