@@ -24,6 +24,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -47,6 +48,7 @@ public abstract class AbstractService extends JcrTools implements FedoraJcrTypes
      * @param repository
      */
     @Override
+    @VisibleForTesting
     public void setRepository(final Repository repository) {
         repo = repository;
     }
