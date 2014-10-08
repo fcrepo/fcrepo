@@ -27,8 +27,9 @@ import org.junit.Test;
  */
 public class UUIDPathMinterTest {
 
+    public static final String UUID_PATTERN = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
     private static final String PID_PATTERN =
-            "[a-f0-9]{3}/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+            "[a-f0-9]{3}/" + UUID_PATTERN;
 
     @Test
     public void testMintPid() {
@@ -36,6 +37,16 @@ public class UUIDPathMinterTest {
         final String pid = new UUIDPathMinter(3, 1).mintPid();
 
         assertTrue("PID wasn't a UUID path", compile(PID_PATTERN).matcher(pid)
+                .find());
+
+    }
+
+    @Test
+    public void testMintPidWithoutSegments() {
+
+        final String pid = new UUIDPathMinter(0, 0).mintPid();
+
+        assertTrue("PID wasn't a UUID path", compile(UUID_PATTERN).matcher(pid)
                 .find());
 
     }
