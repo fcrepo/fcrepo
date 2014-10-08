@@ -15,15 +15,14 @@
  */
 package org.fcrepo.http.api;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -61,23 +60,19 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.hp.hpl.jena.rdf.model.Model;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.ContentDigest;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.glassfish.jersey.media.multipart.MultiPart;
-import org.modeshape.jcr.ExecutionContext;
-import org.modeshape.jcr.value.PathFactory;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -174,10 +169,6 @@ public class FedoraBatch extends ContentExposingResource {
 
         final String path = toPath(translator(), externalPath);
 
-        // TODO: this is ugly, but it works.
-        final PathFactory pathFactory = new ExecutionContext().getValueFactories().getPathFactory();
-        final org.modeshape.jcr.value.Path jcrPath = pathFactory.create(path);
-
         try {
 
             final Set<FedoraResource> resourcesChanged = new HashSet<>();
@@ -207,7 +198,7 @@ public class FedoraBatch extends ContentExposingResource {
                     if (contentDisposition.getFileName() != null) {
                         realContentDisposition = ATTACHMENT;
                     } else if (contentTypeString.equals(contentTypeSPARQLUpdate)
-                        || isRdfContentType(contentTypeString)) {
+                        || (isRdfContentType(contentTypeString) && !contentTypeString.equals(TEXT_PLAIN))) {
                         realContentDisposition = INLINE;
                     } else if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
                         realContentDisposition = DELETE;
@@ -244,33 +235,43 @@ public class FedoraBatch extends ContentExposingResource {
                     pathName = partName;
                 }
 
-                final String objPath = pathFactory.create(jcrPath, pathName).getCanonicalPath().getString();
+                final String absPath;
+
+                if (pathName.startsWith("/")) {
+                    absPath = pathName;
+                } else {
+                    absPath = path + "/" + pathName;
+                }
+                final String objPath = translator().asString(translator().toDomain(absPath));
+
+                final FedoraResource resource;
+
+                if (nodeService.exists(session, objPath)) {
+                    resource = getResourceFromPath(objPath);
+                } else if ((isRdfContentType(contentTypeString) && !contentTypeString.equals(TEXT_PLAIN)) ||
+                        contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                    resource = objectService.findOrCreateObject(session, objPath);
+                } else {
+                    resource = datastreamService.findOrCreateDatastream(session, objPath).getBinary();
+                }
+
+                final String checksum = contentDisposition.getParameters().get("checksum");
 
                 switch (realContentDisposition) {
                     case INLINE:
+                    case ATTACHMENT:
 
-                        final FedoraResource resource = objectService.findOrCreateObject(session, objPath);
-
-                        if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                            resource.updatePropertiesDataset(translator(), IOUtils.toString(src));
-                        } else if (contentTypeToLang(contentTypeString) != null) {
-                            final Lang lang = contentTypeToLang(contentTypeString);
-
-                            final String format = lang.getName().toUpperCase();
-
-                            final Model inputModel =
-                                createDefaultModel().read(src,
-                                        translator().reverse().convert(resource.getNode()).toString(),
-                                        format);
-
-                            final RdfStream resourceTriples;
-
-                            if (resource.isNew()) {
-                                resourceTriples = new RdfStream();
-                            } else {
-                                resourceTriples = getResourceTriples();
-                            }
-                            resource.replaceProperties(translator(), inputModel, resourceTriples);
+                        if ((resource instanceof FedoraObject || resource instanceof Datastream)
+                                && isRdfContentType(contentTypeString)) {
+                            replaceResourceWithStream(resource, src, part.getMediaType());
+                        } else if (resource instanceof FedoraBinary) {
+                            replaceResourceBinaryWithStream((FedoraBinary) resource,
+                                    src,
+                                    contentDisposition,
+                                    part.getMediaType().toString(),
+                                    checksum);
+                        } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                            patchResourcewithSparql(resource, IOUtils.toString(src));
                         } else {
                             throw new WebApplicationException(notAcceptable(null)
                                 .entity("Invalid Content Type " + contentTypeString).build());
@@ -280,31 +281,8 @@ public class FedoraBatch extends ContentExposingResource {
 
                         break;
 
-                    case ATTACHMENT:
-
-                        final URI checksumURI;
-
-                        final String checksum = contentDisposition.getParameters().get("checksum");
-
-                        if (checksum != null && !checksum.equals("")) {
-                            checksumURI = new URI(checksum);
-                        } else {
-                            checksumURI = null;
-                        }
-
-                        final Datastream datastream = datastreamService.findOrCreateDatastream(session, objPath);
-
-                        datastream.getBinary().setContent(src,
-                                part.getMediaType().toString(),
-                                checksumURI,
-                                contentDisposition.getFileName(),
-                                datastreamService.getStoragePolicyDecisionPoint());
-
-                        resourcesChanged.add(datastream);
-                        break;
-
                     case DELETE:
-                        nodeService.getObject(session, objPath).delete();
+                        resource.delete();
                         break;
 
                     default:

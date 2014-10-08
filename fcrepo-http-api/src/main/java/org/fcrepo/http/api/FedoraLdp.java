@@ -17,14 +17,8 @@ package org.fcrepo.http.api;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.Prefer;
@@ -48,11 +42,9 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -60,6 +52,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -69,20 +62,19 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -96,7 +88,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -260,35 +251,18 @@ public class FedoraLdp extends ContentExposingResource {
             evaluateRequestPreconditions(request, servletResponse, resource, session);
 
             if (requestContentType != null && requestBodyStream != null)  {
-
-                if (resource instanceof FedoraObject) {
-                    final Lang format = contentTypeToLang(contentType.toString());
-
-                    if (format == null || contentType.equals(TEXT_PLAIN_TYPE)) {
-                        throw new NotSupportedException();
+                if ((resource instanceof FedoraObject || resource instanceof Datastream)
+                        && isRdfContentType(contentType.toString())) {
+                    try {
+                        replaceResourceWithStream(resource, requestBodyStream, contentType);
+                    } catch (final RiotException e) {
+                        throw new BadRequestException("RDF was not parsable", e);
                     }
-
-                    final Model inputModel = createDefaultModel()
-                            .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
-
-                    final RdfStream resourceTriples;
-
-                    if (resource.isNew()) {
-                        resourceTriples = new RdfStream();
-                    } else {
-                        resourceTriples = getResourceTriples();
-                    }
-                    resource.replaceProperties(translator(), inputModel, resourceTriples);
                 } else if (resource instanceof FedoraBinary) {
-                    final URI checksumURI = checksumURI(checksum);
-                    final String originalFileName
-                            = contentDisposition != null ? contentDisposition.getFileName() : null;
-
-                    ((FedoraBinary) resource).setContent(requestBodyStream,
-                            requestContentType.toString(),
-                            checksumURI,
-                            originalFileName,
-                            datastreamService.getStoragePolicyDecisionPoint());
+                    replaceResourceBinaryWithStream((FedoraBinary) resource,
+                            requestBodyStream, contentDisposition, requestContentType.toString(), checksum);
+                } else {
+                    throw new ClientErrorException(UNSUPPORTED_MEDIA_TYPE);
                 }
 
             } else if (!resource.isNew()) {
@@ -338,9 +312,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
-            final Dataset properties = resource().updatePropertiesDataset(translator(), requestBody);
-
-            handleProblems(properties);
+            patchResourcewithSparql(resource(), requestBody);
 
             try {
                 session.save();
@@ -368,7 +340,6 @@ public class FedoraLdp extends ContentExposingResource {
             session.logout();
         }
     }
-
 
     /**
      * Creates a new object.
@@ -414,32 +385,21 @@ public class FedoraLdp extends ContentExposingResource {
             } else {
                 LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
 
-                if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                    LOGGER.trace("Found SPARQL-Update content, applying..");
-                    result.updatePropertiesDataset(translator(), IOUtils.toString(requestBodyStream));
-                } else if (isRdfContentType(contentTypeString)) {
-                    LOGGER.trace("Found a RDF syntax, attempting to replace triples");
-
-                    final Lang lang = contentTypeToLang(contentTypeString);
-
-                    final String format = lang.getName().toUpperCase();
-
-                    final Model inputModel =
-                            createDefaultModel().read(requestBodyStream, getUri(result).toString(), format);
-
-                    result.replaceProperties(translator(), inputModel, new RdfStream());
+                if ((result instanceof FedoraObject || result instanceof Datastream)
+                        && isRdfContentType(contentTypeString)) {
+                    replaceResourceWithStream(result, requestBodyStream, contentType);
                 } else if (result instanceof FedoraBinary) {
                     LOGGER.trace("Created a datastream and have a binary payload.");
 
-                    final URI checksumURI = checksumURI(checksum);
-                    final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+                    replaceResourceBinaryWithStream((FedoraBinary) result,
+                            requestBodyStream, contentDisposition, contentTypeString, checksum);
 
-                    ((FedoraBinary)result).setContent(requestBodyStream,
-                            contentTypeString,
-                            checksumURI,
-                            originalFileName,
-                            datastreamService.getStoragePolicyDecisionPoint());
-
+                } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                    LOGGER.trace("Found SPARQL-Update content, applying..");
+                    patchResourcewithSparql(result, IOUtils.toString(requestBodyStream));
+                } else {
+                    throw new WebApplicationException(notAcceptable(null)
+                            .entity("Invalid Content Type " + contentTypeString).build());
                 }
             }
 
@@ -546,7 +506,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             if (requestContentType != null) {
                 final String s = requestContentType.toString();
-                if (!s.equals(contentTypeSPARQLUpdate) && !isRdfContentType(s)) {
+                if (!s.equals(contentTypeSPARQLUpdate) && !isRdfContentType(s) || s.equals(TEXT_PLAIN)) {
                     objectType = FEDORA_DATASTREAM;
                 }
             }
@@ -584,40 +544,6 @@ public class FedoraLdp extends ContentExposingResource {
         return session;
     }
 
-    private void handleProblems(final Dataset properties) {
-
-        final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
-
-        if (!problems.isEmpty()) {
-            LOGGER.info(
-                    "Found these problems updating the properties for {}: {}",
-                    externalPath, problems);
-            final StringBuilder error = new StringBuilder();
-            final StmtIterator sit = problems.listStatements();
-            while (sit.hasNext()) {
-                final String message = getMessage(sit.next());
-                if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
-                    error.append(message + " \n");
-                }
-            }
-
-            throw new ForbiddenException(error.length() > 0 ? error.toString() : problems.toString());
-        }
-    }
-
-    /*
-     * Return the statement's predicate and its literal value if there's any
-     * @param stmt
-     * @return
-     */
-    private static String getMessage(final Statement stmt) {
-        final Literal literal = stmt.getLiteral();
-        if (literal != null) {
-            return stmt.getPredicate().getURI() + ": " + literal.getString();
-        }
-        return null;
-    }
-
     private String mintNewPid(final String slug) {
         String pid;
 
@@ -649,16 +575,6 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return pid;
-    }
-
-    /**
-     * Create a checksum URI object.
-     **/
-    private static URI checksumURI( final String checksum ) {
-        if (!isBlank(checksum)) {
-            return URI.create(checksum);
-        }
-        return null;
     }
 
 }
