@@ -15,26 +15,18 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static java.util.Calendar.MILLISECOND;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.convertDateToXSDString;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getDefinitionForPropertyName;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getVersionHistory;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isMultipleValuedProperty;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.nodeHasType;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.propertyContains;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
@@ -43,9 +35,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.InputStream;
-import java.util.Calendar;
 import java.util.Iterator;
-import java.util.TimeZone;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -222,50 +212,6 @@ public class FedoraTypesUtilsTest {
     }
 
     @Test
-    public void testGetDefinitionForPropertyName() throws RepositoryException {
-        final String mockPropertyName = "mock:property";
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
-        when(mockNTM.getNodeType(anyString())).thenReturn(mockNodeType);
-        when(mockPropertyDefinition.getName()).thenReturn(mockPropertyName);
-        final PropertyDefinition[] PDs =
-                new PropertyDefinition[] {mockPropertyDefinition};
-        when(mockNodeType.getPropertyDefinitions()).thenReturn(PDs);
-        PropertyDefinition actual =
-                getDefinitionForPropertyName(mockNode, mockPropertyName);
-        assertEquals(mockPropertyDefinition, actual);
-        actual =
-                getDefinitionForPropertyName(mockNode, mockPropertyName +
-                        ":fail");
-        assertNull(actual);
-
-    }
-
-    @Test
-    public void testConvertDateToXSDString() {
-        final String expected = "2006-11-13T09:40:55.001Z";
-        final Calendar date = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        date.set(2006, 10, 13, 9, 40, 55);
-        date.set(MILLISECOND, 1);
-        assertEquals(expected, convertDateToXSDString(date.getTimeInMillis()));
-    }
-
-    @Test
-    public void testGetVersionHistoryForSessionAndPath() throws RepositoryException {
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getVersionManager()).thenReturn(mockVersionManager);
-        when(mockVersionManager.getVersionHistory("/my/path")).thenReturn(
-                mockVersionHistory);
-
-        final VersionHistory versionHistory =
-                getVersionHistory(mockSession, "/my/path");
-        assertEquals(mockVersionHistory, versionHistory);
-    }
-
-    @Test
     public void testIsInternalNode() throws RepositoryException {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.isNodeType("mode:system")).thenReturn(true);
@@ -291,13 +237,7 @@ public class FedoraTypesUtilsTest {
     public void testPredicateExceptionHandling() throws RepositoryException {
         when(mockNode.getMixinNodeTypes()).thenThrow(new RepositoryException());
         when(mockNode.isNodeType(anyString())).thenThrow(new RepositoryException());
-        try {
-            isFedoraResource.apply(mockNode);
-            fail("Unexpected FedoraTypesUtils.isFedoraResource" +
-                    " completion after RepositoryException!");
-        } catch (final RuntimeException e) {
-            // expected
-        }
+
         try {
             isFedoraObject.apply(mockNode);
             fail("Unexpected FedoraTypesUtils.isFedoraObject" +
@@ -351,58 +291,6 @@ public class FedoraTypesUtilsTest {
         assertEquals("Found wrong Value!", testIterator.next(), mockValue);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue2);
 
-    }
-
-    @Test
-    public void testPropertyContainsWithNull() throws RepositoryException {
-        assertFalse(propertyContains(null, "any-string"));
-    }
-
-    @Test
-    public void testSingleValuedPropertyContains() throws RepositoryException {
-        when(mockProperty.isMultiple()).thenReturn(false);
-        when(mockProperty.getString()).thenReturn("some-string");
-        assertTrue(propertyContains(mockProperty, "some-string"));
-        assertFalse(propertyContains(mockProperty, "some-other-string"));
-    }
-
-    @Test
-    public void testMultiValuedPropertyContains() throws RepositoryException {
-        when(mockProperty.isMultiple()).thenReturn(true);
-        when(mockProperty.getValues()).thenReturn(new Value[] { mockValue });
-        when(mockValue.getString()).thenReturn("some-string");
-        assertTrue(propertyContains(mockProperty, "some-string"));
-        assertFalse(propertyContains(mockProperty, "some-other-string"));
-    }
-
-    @Test
-    public void testNodeHasTypeNo() throws RepositoryException {
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
-        assertFalse(nodeHasType(mockNode, "mixin"));
-    }
-
-    @Test
-    public void testNodeHasTypeYes() throws RepositoryException {
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
-        when(mockNTM.hasNodeType("mixin")).thenReturn(true);
-        assertTrue(nodeHasType(mockNode, "mixin"));
-    }
-
-    @Test
-    public void testNodeHasTypeNullMixin() throws RepositoryException {
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getNodeTypeManager()).thenReturn(mockNTM);
-        assertFalse(nodeHasType(mockNode, null));
-    }
-
-    @Test
-    public void testNodeHasTypeNull() throws RepositoryException {
-        assertFalse(nodeHasType(null, "mixin"));
     }
 
 }

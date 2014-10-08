@@ -78,6 +78,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.ImmutableList.copyOf;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -129,7 +131,6 @@ import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -823,19 +824,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(TEXT_PLAIN,
                 ContentType.newContentType(response.getFirstHeader("Content-Type").getValue()).getMimeType());
 
-        final Collection<String> links =
-                map(response.getHeaders("Link"), new Function<Header, String>() {
-
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+        final Collection<String> links = getLinkHeaders(response);
         assertTrue("Didn't find 'describedby' link header!",
                 links.contains("<" + serverAddress + pid + "/ds1/" + FCR_METADATA + ">;rel=\"describedby\""));
 
     }
-
 
     @Test
     public void testDeleteDatastream() throws Exception {
@@ -917,14 +910,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertResourceOptionsHeaders(response);
 
-        final Collection<String> links =
-                map(response.getHeaders("Link"), new Function<Header, String>() {
-
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+        final Collection<String> links = getLinkHeaders(response);
         assertTrue("Didn't find LDP link header!", links
                 .contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
         final GraphStore results = getGraphStore(getObjMethod);
@@ -1034,14 +1020,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         subjectUri,
                         createProperty(LDP_NAMESPACE + "contains"),
                         createResource(location + "/c")));
-        final Collection<String> links =
-                map(response.getHeaders("Link"), new Function<Header, String>() {
-
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+        final Collection<String> links = getLinkHeaders(response);
         assertTrue("Didn't find LDP resource link header!",
                 links.contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
         assertTrue("Didn't find LDP container link header!",
@@ -1640,14 +1619,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Should have two children!", 2, firstContainsCount);
 
         // collect link headers
-        final Collection<String> firstLinks =
-                map(firstResponse.getHeaders("Link"), new Function<Header, String>() {
-
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+        final Collection<String> firstLinks = getLinkHeaders(firstResponse);
 
         // it should have a first page link
         assertTrue("Didn't find first page header!",firstLinks.contains("<" + serverAddress + pid
@@ -1675,14 +1647,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Should have two children!", 2, nextChildCount);
 
         // collect link headers
-        final Collection<String> nextLinks =
-                map(nextResponse.getHeaders("Link"), new Function<Header, String>() {
-
-                    @Override
-                    public String apply(final Header h) {
-                        return h.getValue();
-                    }
-                });
+        final Collection<String> nextLinks = getLinkHeaders(nextResponse);
 
         // it should have a first page link
         assertTrue("Didn't find first page header!", nextLinks.contains("<" + serverAddress + pid
@@ -1872,6 +1837,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
             return tripleFormat.parse(stmts.nextStatement().getString());
         }
         return null;
+    }
+
+
+    private static Collection<String> getLinkHeaders(final HttpResponse response) {
+        return transform(copyOf(response.getHeaders("Link")), new Function<Header, String>() {
+
+            @Override
+            public String apply(final Header h) {
+                return h.getValue();
+            }
+        });
     }
 
 

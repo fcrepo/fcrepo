@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.utils;
 
 import static com.google.common.collect.Iterables.toArray;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
@@ -28,6 +27,7 @@ import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -313,6 +313,39 @@ public class NodePropertiesTools {
         }
 
         return def.isMultiple();
+    }
+
+    /**
+     * Get the property definition information (containing type and multi-value
+     * information)
+     *
+     * @param node the node to use for inferring the property definition
+     * @param propertyName the property name to retrieve a definition for
+     * @return a JCR PropertyDefinition, if available, or null
+     * @throws javax.jcr.RepositoryException
+     */
+    private static PropertyDefinition getDefinitionForPropertyName(final Node node,
+                                                                  final String propertyName)
+            throws RepositoryException {
+
+        final NodeType primaryNodeType = node.getPrimaryNodeType();
+        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
+        LOGGER.debug("Looking for property name: {}", propertyName);
+        for (final PropertyDefinition p : propertyDefinitions) {
+            LOGGER.debug("Checking property: {}", p.getName());
+            if (p.getName().equals(propertyName)) {
+                return p;
+            }
+        }
+
+        for (final NodeType nodeType : node.getMixinNodeTypes()) {
+            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
+                if (p.getName().equals(propertyName)) {
+                    return p;
+                }
+            }
+        }
+        return null;
     }
 
 
