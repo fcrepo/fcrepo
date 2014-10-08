@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.identifiers;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static java.util.UUID.randomUUID;
 import org.fcrepo.metrics.RegistryService;
 
 import com.codahale.metrics.Timer;
@@ -28,24 +27,13 @@ import com.codahale.metrics.Timer;
  * @author ajs6f
  * @since Feb 7, 2013
  */
-public class UUIDPidMinter extends BasePidMinter {
+public class UUIDPidMinter extends UUIDPathMinter {
 
     static final Timer timer = RegistryService.getInstance().getMetrics().timer(
             name(UUIDPidMinter.class, "mint"));
 
     /**
-     * Mint a unique identifier as a UUID
-     * @return uuid
+     * Create a special kind of UUIDPathMinter with no prefixed segments
      */
-    @Override
-    public String mintPid() {
-
-        final Timer.Context context = timer.time();
-
-        try {
-            return randomUUID().toString();
-        } finally {
-            context.stop();
-        }
-    }
+    public UUIDPidMinter() { super(0,0); }
 }

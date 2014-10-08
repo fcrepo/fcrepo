@@ -74,6 +74,11 @@ public class UUIDPathMinter extends BasePidMinter {
 
         try {
             final String s = randomUUID().toString();
+
+            if (length == 0 || count == 0) {
+                return s;
+            }
+
             final Iterable<String> split =
                     fixedLength(length).split(s.substring(0, length * count));
 
