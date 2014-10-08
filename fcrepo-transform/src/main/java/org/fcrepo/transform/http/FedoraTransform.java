@@ -57,6 +57,7 @@ import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.transform.TransformationFactory;
 import org.jvnet.hk2.annotations.Optional;
+import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -92,6 +93,7 @@ public class FedoraTransform extends FedoraBaseResource {
     @PostConstruct
     public void setUpRepositoryConfiguration() throws RepositoryException, IOException {
 
+        final JcrTools jcrTools = new JcrTools(true);
         final Session internalSession = sessions.getInternalSession();
         try {
             // register our CND

@@ -651,4 +651,14 @@ public class FedoraLdp extends ContentExposingResource {
         return pid;
     }
 
+    /**
+     * Create a checksum URI object.
+     **/
+    private static URI checksumURI( final String checksum ) {
+        if (!isBlank(checksum)) {
+            return URI.create(checksum);
+        }
+        return null;
+    }
+
 }

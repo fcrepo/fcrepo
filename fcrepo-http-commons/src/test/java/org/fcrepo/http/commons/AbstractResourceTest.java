@@ -15,15 +15,12 @@
  */
 package org.fcrepo.http.commons;
 
-import static org.fcrepo.http.commons.AbstractResource.getSimpleContentType;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import com.google.common.collect.ImmutableMap;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.NodeService;
 import org.junit.Before;
@@ -76,11 +73,4 @@ public class AbstractResourceTest {
         assertEquals(mockUris, testObj.uriInfo);
     }
 
-    @Test
-    public void testGetSimpleContentType() {
-        final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
-        final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
-
-        assertEquals("text/plain", sanitizedMediaType.toString());
-    }
 }

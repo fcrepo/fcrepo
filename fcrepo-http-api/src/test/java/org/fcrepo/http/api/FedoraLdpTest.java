@@ -16,6 +16,7 @@
 package org.fcrepo.http.api;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.NodeFactory;
@@ -66,6 +67,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -702,5 +704,13 @@ public class FedoraLdpTest {
 
         testObj.createObject(null, null, null, null, null, null);
 
+    }
+
+    @Test
+    public void testGetSimpleContentType() {
+        final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
+        final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
+
+        assertEquals("text/plain", sanitizedMediaType.toString());
     }
 }
