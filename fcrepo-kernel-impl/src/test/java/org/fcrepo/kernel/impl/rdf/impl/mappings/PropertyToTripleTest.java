@@ -348,13 +348,14 @@ public class PropertyToTripleTest {
     public void setUp() throws ValueFormatException, RepositoryException {
         initMocks(this);
         mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
-        testPropertyToTriple = new PropertyToTriple(mockGraphSubjects);
+        testPropertyToTriple = new PropertyToTriple(mockSession, mockGraphSubjects);
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockProperty.getParent()).thenReturn(mockNode);
         when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
         when(mockProperty.getSession()).thenReturn(mockSession);
-        when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
+        when(mockSession.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
         testSubject = mockGraphSubjects.reverse().convert(mockNode).asNode();
     }
 

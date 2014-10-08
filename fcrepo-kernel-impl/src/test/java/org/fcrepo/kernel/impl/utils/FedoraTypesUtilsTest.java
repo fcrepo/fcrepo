@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.utils;
 
 import static java.util.Calendar.MILLISECOND;
-import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.convertDateToXSDString;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getVersionHistory;
@@ -75,7 +74,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.JcrConstants;
-import org.modeshape.jcr.api.Namespaced;
 
 import com.google.common.base.Predicate;
 
@@ -149,12 +147,6 @@ public class FedoraTypesUtilsTest {
     @Mock
     private Property mockProperty;
 
-
-    interface PropertyMock extends Property, Namespaced {
-        // we need to be able to cast to two interfaces to perform
-        // some tests this testing interface allows mocks to do that
-    }
-
     @Before
     public void setUp() {
         initMocks(this);
@@ -227,19 +219,6 @@ public class FedoraTypesUtilsTest {
         when(mockProperty.getType()).thenReturn(PropertyType.STRING);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
         assertFalse(isBinaryContentProperty.apply(mockProperty));
-    }
-
-    @Test
-    public void testGetPredicateForProperty() throws RepositoryException {
-        final PropertyMock mockProp = mock(PropertyMock.class);
-        getPredicateForProperty.apply(mockProp);
-        when(mockProp.getNamespaceURI()).thenThrow(new RepositoryException());
-        try {
-            getPredicateForProperty.apply(mockProp);
-            fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {
-            // expected
-        }
     }
 
     @Test
