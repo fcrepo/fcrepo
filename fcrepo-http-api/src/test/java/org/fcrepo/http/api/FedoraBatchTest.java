@@ -24,13 +24,15 @@ import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
+import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
@@ -60,6 +62,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
@@ -130,13 +133,12 @@ public class FedoraBatchTest {
 
     private String pid = "FedoraDatastreamsTest1";
     private String path = "/FedoraDatastreamsTest1";
-    private String fullPath = "/{}FedoraDatastreamsTest1";
     private UriInfo mockUriInfo;
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        testObj = new FedoraBatch(path);
+        testObj = spy(new FedoraBatch(path));
         setField(testObj, "objectService", mockObjects);
         setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodes);
@@ -166,11 +168,18 @@ public class FedoraBatchTest {
 
     @Test
     public void testBatchSparqlUpdate() throws Exception {
-        when(mockNode.getPath()).thenReturn(path);
-        when(mockObjects.findOrCreateObject(mockSession, fullPath)).thenReturn(mockObject);
-        when(mockSession.getNode(path)).thenReturn(
-                                                                           mockNode);
 
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockSession.getNode(path)).thenReturn(mockNode);
+        when(mockNodes.exists(mockSession, path + "/.")).thenReturn(true);
+        doReturn(mockObject).when(testObj).getResourceFromPath(path + "/.");
+
+        final Dataset mockDataset = mock(Dataset.class);
+        final Model mockProblems = mock(Model.class);
+        when(mockDataset.getNamedModel(PROBLEMS_MODEL_NAME)).thenReturn(mockProblems);
+        when(mockProblems.isEmpty()).thenReturn(true);
+        when(mockObject.updatePropertiesDataset(any(IdentifierConverter.class), eq("xyz"))).thenReturn(mockDataset);
         final MultiPart multipart = new MultiPart();
 
         final StreamDataBodyPart part = new StreamDataBodyPart(".",
@@ -196,10 +205,10 @@ public class FedoraBatchTest {
     @Test
     public void testBatchRdfPost() throws Exception {
         when(mockNode.getPath()).thenReturn(path);
-        when(mockObjects.findOrCreateObject(mockSession, fullPath)).thenReturn(mockObject);
         when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockObject.getPath()).thenReturn(path);
         when(mockSession.getNode(path)).thenReturn(mockNode);
+        when(mockNodes.exists(mockSession, path + "/.")).thenReturn(true);
+        doReturn(mockObject).when(testObj).getResourceFromPath(path + "/.");
 
         final MultiPart multipart = new MultiPart();
 
@@ -235,20 +244,20 @@ public class FedoraBatchTest {
         final Map<String, String> atts =
             ImmutableMap.of(dsId1, "asdf", dsId2, "sdfg");
         final MultiPart multipart = getStringsAsMultipart(atts);
-        when(mockNode.getPath()).thenReturn(path);
-        when(mockSession.getNode(path)).thenReturn(
-                mockNode);
 
-        when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId1)))
-                .thenReturn(mockDatastream);
-        final Datastream mockDatastream2 = mock(Datastream.class);
-        when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq("/{}" + pid + "/{}" + dsId2)))
-                .thenReturn(mockDatastream2);
 
         final FedoraBinary mockBinary1 = mock(FedoraBinary.class);
         final FedoraBinary mockBinary2 = mock(FedoraBinary.class);
-        when(mockDatastream.getBinary()).thenReturn(mockBinary1);
-        when(mockDatastream2.getBinary()).thenReturn(mockBinary2);
+
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockSession.getNode(path)).thenReturn(mockNode);
+        when(mockNodes.exists(mockSession, path + "/" + dsId1)).thenReturn(true);
+        doReturn(mockBinary1).when(testObj).getResourceFromPath(path + "/" + dsId1);
+
+
+        when(mockNodes.exists(mockSession, path + "/" + dsId2)).thenReturn(true);
+        doReturn(mockBinary2).when(testObj).getResourceFromPath(path + "/" + dsId2);
 
         final Response actual =
             testObj.batchModify(multipart);
@@ -280,14 +289,14 @@ public class FedoraBatchTest {
 
         multipart.bodyPart(part);
 
-        when(mockDatastreams.findOrCreateDatastream(any(Session.class), eq("/{}" + pid + "/{}xyz")))
-                .thenReturn(mockDatastream);
-
         final FedoraBinary mockBinary = mock(FedoraBinary.class);
-        when(mockDatastream.getBinary()).thenReturn(mockBinary);
 
         when(mockNode.getPath()).thenReturn(path);
+        when(mockObject.getNode()).thenReturn(mockNode);
         when(mockSession.getNode(path)).thenReturn(mockNode);
+        when(mockNodes.exists(mockSession, path + "/xyz")).thenReturn(true);
+        doReturn(mockBinary).when(testObj).getResourceFromPath(path + "/xyz");
+
         final Response actual =
             testObj.batchModify(multipart);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
@@ -298,10 +307,8 @@ public class FedoraBatchTest {
 
     @Test
     public void testBatchDelete() throws Exception {
-        when(mockNode.getPath()).thenReturn(path);
-        when(mockSession.getNode(path)).thenReturn(mockNode);
-
-        when(mockNodes.getObject(isA(Session.class), eq(fullPath + "/{}xyz"))).thenReturn(mockObject);
+        when(mockNodes.exists(mockSession, path + "/xyz")).thenReturn(true);
+        doReturn(mockObject).when(testObj).getResourceFromPath(path + "/xyz");
 
         final MultiPart multipart = new MultiPart();
 

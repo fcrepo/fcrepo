@@ -660,6 +660,12 @@ public class FedoraLdpTest {
 
         when(mockObjectService.findOrCreateObject(mockSession, "/b")).thenReturn(mockObject);
 
+        final Dataset dataset = mock(Dataset.class);
+        final Model mockModel = mock(Model.class);
+        when(dataset.getNamedModel(PROBLEMS_MODEL_NAME)).thenReturn(mockModel);
+        when(mockModel.isEmpty()).thenReturn(true);
+        when(mockObject.updatePropertiesDataset(identifierConverter, "x")).thenReturn(dataset);
+
         final Response actual = testObj.createObject(null, null, null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"));
 

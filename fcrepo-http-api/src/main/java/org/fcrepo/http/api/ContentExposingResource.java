@@ -18,9 +18,13 @@ package org.fcrepo.http.api;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.Prefer;
@@ -30,6 +34,7 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
@@ -54,6 +59,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
@@ -75,12 +81,13 @@ import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -455,6 +462,88 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected static boolean isRdfContentType(final String contentTypeString) {
-        return !contentTypeString.equals(TEXT_PLAIN) && contentTypeToLang(contentTypeString) != null;
+        return contentTypeToLang(contentTypeString) != null;
+    }
+
+    protected void replaceResourceBinaryWithStream(final FedoraBinary result,
+                                                   final InputStream requestBodyStream,
+                                                   final ContentDisposition contentDisposition,
+                                                   final String contentTypeString,
+                                                   final String checksum) throws InvalidChecksumException {
+        final URI checksumURI = checksumURI(checksum);
+        final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+
+        result.setContent(requestBodyStream,
+                contentTypeString,
+                checksumURI,
+                originalFileName,
+                datastreamService.getStoragePolicyDecisionPoint());
+    }
+
+    protected void replaceResourceWithStream(final FedoraResource resource,
+                                             final InputStream requestBodyStream,
+                                             final MediaType contentType) {
+        final Lang format = contentTypeToLang(contentType.toString());
+
+        final Model inputModel = createDefaultModel()
+                .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+
+        final RdfStream resourceTriples;
+
+        if (resource.isNew()) {
+            resourceTriples = new RdfStream();
+        } else {
+            resourceTriples = getResourceTriples();
+        }
+        resource.replaceProperties(translator(), inputModel, resourceTriples);
+    }
+
+    protected void patchResourcewithSparql(final FedoraResource resource, final String requestBody) {
+        final Dataset properties = resource.updatePropertiesDataset(translator(), requestBody);
+
+        handleProblems(resource, properties);
+    }
+
+    /**
+     * Create a checksum URI object.
+     **/
+    private static URI checksumURI( final String checksum ) {
+        if (!isBlank(checksum)) {
+            return URI.create(checksum);
+        }
+        return null;
+    }
+
+    private void handleProblems(final FedoraResource resource, final Dataset properties) {
+
+        final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
+
+        if (!problems.isEmpty()) {
+            LOGGER.info(
+                    "Found these problems updating the properties for {}: {}", resource, problems);
+            final StringBuilder error = new StringBuilder();
+            final StmtIterator sit = problems.listStatements();
+            while (sit.hasNext()) {
+                final String message = getMessage(sit.next());
+                if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
+                    error.append(message + " \n");
+                }
+            }
+
+            throw new ForbiddenException(error.length() > 0 ? error.toString() : problems.toString());
+        }
+    }
+
+    /*
+     * Return the statement's predicate and its literal value if there's any
+     * @param stmt
+     * @return
+     */
+    private static String getMessage(final Statement stmt) {
+        final Literal literal = stmt.getLiteral();
+        if (literal != null) {
+            return stmt.getPredicate().getURI() + ": " + literal.getString();
+        }
+        return null;
     }
 }

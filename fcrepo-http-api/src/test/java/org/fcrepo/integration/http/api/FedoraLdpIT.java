@@ -637,9 +637,24 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut put = new HttpPut(serverAddress + pid);
         put.setEntity(new StringEntity(content));
+        put.setHeader("Content-Type", "application/octet-stream");
         final HttpResponse response = execute(put);
         assertEquals("Expected 415 response code when PUTing content on an object (as opposed to a datastream).",
                 415, response.getStatusLine().getStatusCode());
+    }
+
+    @Test
+    public void testPutMalformedRDFOnObject() throws Exception {
+        final String content = "foo";
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPut put = new HttpPut(serverAddress + pid);
+        put.setEntity(new StringEntity(content));
+        put.setHeader("Content-Type", "text/plain");
+        final HttpResponse response = execute(put);
+        assertEquals("Expected 400 response code when PUTing malformed RDF on an object",
+                BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
     @Test
@@ -1296,7 +1311,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI + "/" + FCR_METADATA);
         getObjMethod.addHeader("Accept", "text/turtle");
-        getObjMethod.addHeader("Prefer", "return=minimal");
+   //     getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
 
         final BasicHttpEntity e = new BasicHttpEntity();

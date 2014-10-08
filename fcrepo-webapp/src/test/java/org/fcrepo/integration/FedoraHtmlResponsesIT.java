@@ -120,14 +120,14 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     @Test
     public void testCreateNewNodeWithGeneratedId() throws IOException {
 
-        final HtmlPage page = webClient.getPage(serverAddress);
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = form.getSelectByName("mixin");
         type.getOptionByValue("fedora:object").setSelected(true);
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page1 = webClient.getPage(serverAddress);
+        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress);
         assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
     }
 
