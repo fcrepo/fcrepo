@@ -19,8 +19,10 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
+import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.domain.Range;
@@ -29,6 +31,7 @@ import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
@@ -41,14 +44,21 @@ import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import javax.jcr.Binary;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -57,11 +67,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.Iterator;
 
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Response.ok;
@@ -83,6 +97,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
     @Context protected UriInfo uriInfo;
+
+    @Inject
+    @Optional
+    private HttpTripleUtil httpTripleUtil;
 
     protected FedoraResource resource;
 
@@ -316,5 +334,127 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         return resource;
+    }
+
+
+    protected void addResponseInformationToStream(
+            final FedoraResource resource, final RdfStream dataset,
+            final UriInfo uriInfo, final IdentifierConverter<Resource,Node> subjects) {
+        if (httpTripleUtil != null) {
+            httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
+                    uriInfo, subjects);
+        }
+    }
+
+    /**
+     * Evaluate the cache control headers for the request to see if it can be served from
+     * the cache.
+     *
+     * @param request
+     * @param servletResponse
+     * @param resource
+     * @param session
+     * @throws javax.jcr.RepositoryException
+     */
+    protected static void checkCacheControlHeaders(final Request request,
+                                                   final HttpServletResponse servletResponse,
+                                                   final FedoraResource resource,
+                                                   final Session session) {
+        evaluateRequestPreconditions(request, servletResponse, resource, session, true);
+        addCacheControlHeaders(servletResponse, resource, session);
+    }
+
+    /**
+     * Add ETag and Last-Modified cache control headers to the response
+     * @param servletResponse
+     * @param resource
+     */
+    protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
+                                                 final FedoraResource resource,
+                                                 final Session session) {
+
+        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
+        if (txId != null) {
+            // Do not add caching headers if in a transaction
+            return;
+        }
+
+        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final Date date = resource.getLastModifiedDate();
+
+        if (!etag.getValue().isEmpty()) {
+            servletResponse.addHeader("ETag", etag.toString());
+        }
+
+        if (date != null) {
+            servletResponse.addDateHeader("Last-Modified", date.getTime());
+        }
+    }
+
+    /**
+     * Evaluate request preconditions to ensure the resource is the expected state
+     * @param request
+     * @param resource
+     */
+    protected static void evaluateRequestPreconditions(final Request request,
+                                                       final HttpServletResponse servletResponse,
+                                                       final FedoraResource resource,
+                                                       final Session session) {
+        evaluateRequestPreconditions(request, servletResponse, resource, session, false);
+    }
+
+    private static void evaluateRequestPreconditions(final Request request,
+                                                     final HttpServletResponse servletResponse,
+                                                     final FedoraResource resource,
+                                                     final Session session,
+                                                     final boolean cacheControl) {
+
+        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
+        if (txId != null) {
+            // Force cache revalidation if in a transaction
+            servletResponse.addHeader(CACHE_CONTROL, "must-revalidate");
+            servletResponse.addHeader(CACHE_CONTROL, "max-age=0");
+            return;
+        }
+
+        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final Date date = resource.getLastModifiedDate();
+        final Date roundedDate = new Date();
+
+        if (date != null) {
+            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+        }
+
+        Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
+        if ( builder != null ) {
+            builder = builder.entity("ETag mismatch");
+        } else {
+            builder = request.evaluatePreconditions(roundedDate);
+            if ( builder != null ) {
+                builder = builder.entity("Date mismatch");
+            }
+        }
+
+        if (builder != null && cacheControl ) {
+            final CacheControl cc = new CacheControl();
+            cc.setMaxAge(0);
+            cc.setMustRevalidate(true);
+            // here we are implicitly emitting a 304
+            // the exception is not an error, it's genuinely
+            // an exceptional condition
+            builder = builder.cacheControl(cc).lastModified(date).tag(etag);
+        }
+        if (builder != null) {
+            throw new WebApplicationException(builder.build());
+        }
+    }
+
+    protected static MediaType getSimpleContentType(final MediaType requestContentType) {
+        return requestContentType != null ? new MediaType(requestContentType.getType(), requestContentType.getSubtype())
+                : APPLICATION_OCTET_STREAM_TYPE;
+    }
+
+    protected static boolean isRdfContentType(final String contentTypeString) {
+        return !contentTypeString.equals(TEXT_PLAIN) && contentTypeToLang(contentTypeString) != null;
     }
 }
