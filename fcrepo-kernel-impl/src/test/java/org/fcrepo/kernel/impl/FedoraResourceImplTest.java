@@ -19,10 +19,8 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -111,19 +109,6 @@ public class FedoraResourceImplTest {
         assertEquals(mockNode, testObj.getNode());
 
         mockSubjects = new DefaultIdentifierTranslator(mockSession);
-    }
-
-    @Test
-    public void testHasMixin() throws RepositoryException {
-        boolean actual;
-        final NodeType mockType = mock(NodeType.class);
-        final NodeType[] mockTypes = new NodeType[] {mockType};
-        when(mockNode.getMixinNodeTypes()).thenReturn(mockTypes);
-        actual = isFedoraResource.apply(mockNode);
-        assertEquals(false, actual);
-        when(mockType.getName()).thenReturn(FEDORA_RESOURCE);
-        actual = isFedoraResource.apply(mockNode);
-        assertEquals(true, actual);
     }
 
     @Test

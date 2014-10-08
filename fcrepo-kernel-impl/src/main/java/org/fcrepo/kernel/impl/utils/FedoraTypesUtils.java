@@ -15,34 +15,19 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
-import javax.jcr.nodetype.NodeTypeManager;
-import javax.jcr.nodetype.PropertyDefinition;
-import javax.jcr.version.VersionHistory;
-import java.util.Collection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.ImmutableSet.copyOf;
-import static com.google.common.collect.Iterators.contains;
-import static com.google.common.collect.Iterators.forArray;
-import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
@@ -58,23 +43,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
-
-    /**
-     * Predicate for determining whether this {@link Node} is a Fedora resource.
-     */
-    public static Predicate<Node> isFedoraResource = new Predicate<Node>() {
-
-        @Override
-        public boolean apply(final Node node) {
-            checkNotNull(node, "null cannot be a Fedora object!");
-            try {
-                return map(node.getMixinNodeTypes(), JcrPropertyFunctions.nodetype2name).contains(
-                        FEDORA_RESOURCE);
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
-        }
-    };
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
@@ -96,12 +64,6 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      */
     public static Predicate<Node> isFedoraBinary =
             new AnyTypesPredicate(FEDORA_BINARY);
-    /**
-     * Predicate for objects, datastreams, whatever!
-     */
-
-    public static Predicate<Node> isFedoraObjectOrDatastream =
-            new AnyTypesPredicate(FEDORA_OBJECT, FEDORA_DATASTREAM);
 
     /**
      * Check if a property is a reference property.
@@ -115,7 +77,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                     return (p.getType() == REFERENCE || p.getType() == WEAKREFERENCE)
                         && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX);
                 } catch (final RepositoryException e) {
-                    throw propagate(e);
+                    throw new RepositoryRuntimeException(e);
                 }
             }
         };
@@ -161,8 +123,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                         }
                         return true;
                     }
-                } catch (RepositoryException e) {
-                    throw propagate(e);
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
                 }
             }
         };
@@ -181,125 +143,9 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                 return primaryNodeType != null
                         && primaryNodeType.isNodeType("mode:system");
             } catch (final RepositoryException e) {
-                throw propagate(e);
+                throw new RepositoryRuntimeException(e);
             }
         }
     };
 
-    /**
-     * ISODateTimeFormat is thread-safe and immutable, and the formatters it
-     * returns are as well.
-     */
-    private static final DateTimeFormatter FMT = ISODateTimeFormat.dateTime();
-
-    /**
-     * Get the JCR Node Type manager
-     *
-     * @param node
-     * @return the JCR Node Type Manager
-     * @throws RepositoryException
-     */
-    public static NodeTypeManager getNodeTypeManager(final Node node) throws RepositoryException {
-        return node.getSession().getWorkspace().getNodeTypeManager();
-    }
-
-    /**
-     * Get the property definition information (containing type and multi-value
-     * information)
-     *
-     * @param node the node to use for inferring the property definition
-     * @param propertyName the property name to retrieve a definition for
-     * @return a JCR PropertyDefinition, if available, or null
-     * @throws javax.jcr.RepositoryException
-     */
-    public static PropertyDefinition getDefinitionForPropertyName(final Node node,
-        final String propertyName) throws RepositoryException {
-
-        final NodeType primaryNodeType = node.getPrimaryNodeType();
-        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
-        LOGGER.debug("Looking for property name: {}", propertyName);
-        for (final PropertyDefinition p : propertyDefinitions) {
-            LOGGER.debug("Checking property: {}", p.getName());
-            if (p.getName().equals(propertyName)) {
-                return p;
-            }
-        }
-
-        for (final NodeType nodeType : node.getMixinNodeTypes()) {
-            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
-                if (p.getName().equals(propertyName)) {
-                    return p;
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Convenience method for transforming arrays into {@link Collection}s
-     * through a mapping {@link Function}.
-     *
-     * @param input A {@literal Collection<F> }.
-     * @param f A {@literal Function<F,T> }.
-     * @return An ImmutableSet copy of input after transformation by f
-     */
-    public static <F, T> Collection<T> map(final F[] input,
-            final Function<F, T> f) {
-        return transform(copyOf(input), f);
-    }
-
-    /**
-     * @param date Instance of java.util.Date.
-     * @return the lexical form of the XSD dateTime value, e.g.
-     *         "2006-11-13T09:40:55.001Z".
-     */
-    public static String convertDateToXSDString(final long date) {
-        final DateTime dt = new DateTime(date, DateTimeZone.UTC);
-        return FMT.print(dt);
-    }
-
-    /**
-     * Get the JCR VersionHistory for a node at a given JCR path
-     * 
-     * @param session
-     * @param path
-     * @return the version history
-     * @throws RepositoryException
-     */
-    public static VersionHistory getVersionHistory(final Session session,
-            final String path) throws RepositoryException {
-        return session.getWorkspace().getVersionManager().getVersionHistory(
-                path);
-    }
-
-    /**
-     * Check if the property contains the given string value
-     * 
-     * @param p
-     * @param value
-     * @return true if the property contains the given string value
-     */
-    public static boolean propertyContains(final Property p, final String value) throws RepositoryException {
-
-        if (p == null) {
-            return false;
-        }
-
-        if (p.isMultiple()) {
-            return contains(transform(forArray(p.getValues()), JcrPropertyFunctions.value2string), value);
-        }
-        return value.equals(p.getString());
-
-    }
-    /**
-     * Check if there is a node of given type
-     * @param subjectNode
-     * @param mixinName
-     */
-    public static boolean nodeHasType(final Node subjectNode, final String mixinName) throws RepositoryException {
-        if (subjectNode == null) {
-            return false;
-        }
-        return getNodeTypeManager(subjectNode).hasNodeType(mixinName);
-    }
 }

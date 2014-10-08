@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterators.forArray;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -25,11 +26,11 @@ import static com.hp.hpl.jena.vocabulary.RDFS.Class;
 import static com.hp.hpl.jena.vocabulary.RDFS.label;
 import static com.hp.hpl.jena.vocabulary.RDFS.subClassOf;
 import static org.fcrepo.kernel.impl.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.map;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -112,9 +113,9 @@ public class NodeTypeRdfContext extends RdfStream {
         LOGGER.trace("Adding triples for nodeType: {} with URI: {}",
                 nodeTypeName, nodeTypeResource.getURI());
 
-        concat(map(nodeType.getDeclaredSupertypes(),
+        concat(Collections2.transform(copyOf(nodeType.getDeclaredSupertypes()),
 
-            new Function<NodeType, Triple>() {
+                new Function<NodeType, Triple>() {
 
                     @Override
                     public Triple apply(final NodeType input) {

@@ -20,6 +20,7 @@ import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.services.TransactionService;
 import org.fcrepo.kernel.services.VersionService;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,8 +40,10 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterators.contains;
+import static com.google.common.collect.Iterators.forArray;
+import static com.google.common.collect.Iterators.transform;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.propertyContains;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -274,5 +277,26 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     @Override
     public void setTxService(final TransactionService txService) {
         this.txService = txService;
+    }
+
+
+    /**
+     * Check if the property contains the given string value
+     *
+     * @param p
+     * @param value
+     * @return true if the property contains the given string value
+     */
+    private static boolean propertyContains(final Property p, final String value) throws RepositoryException {
+
+        if (p == null) {
+            return false;
+        }
+
+        if (p.isMultiple()) {
+            return contains(transform(forArray(p.getValues()), JcrPropertyFunctions.value2string), value);
+        }
+        return value.equals(p.getString());
+
     }
 }
