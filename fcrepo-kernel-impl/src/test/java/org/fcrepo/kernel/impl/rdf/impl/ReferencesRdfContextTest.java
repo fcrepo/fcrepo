@@ -29,6 +29,7 @@ import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.ValueFactory;
 
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.junit.Assert.assertTrue;
@@ -87,6 +88,7 @@ public class ReferencesRdfContextTest {
 
         mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getPath()).thenReturn("a");
+        when(mockNode.getSession()).thenReturn(mockSession);
         when(mockOtherNode.getPath()).thenReturn("b");
         when(mockProperty.getName()).thenReturn("some-property");
         when(mockProperty.getParent()).thenReturn(mockOtherNode);
@@ -96,6 +98,7 @@ public class ReferencesRdfContextTest {
         when(mockValue.getString()).thenReturn("some-uuid");
         when(mockProperty.getSession()).thenReturn(mockSession);
         when(mockSession.getNodeByIdentifier("some-uuid")).thenReturn(mockNode);
+        when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(emptyPropertyIterator.hasNext()).thenReturn(false);
     }
 
@@ -109,6 +112,9 @@ public class ReferencesRdfContextTest {
 
     @Mock
     private PropertyIterator emptyPropertyIterator;
+
+    @Mock
+    private ValueFactory mockValueFactory;
 
     private Resource getResource(final Node n) {
         return mockGraphSubjects.reverse().convert(n);

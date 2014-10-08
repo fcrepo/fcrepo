@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl.utils;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.mockito.Matchers.any;
@@ -149,14 +148,9 @@ public class JcrPropertyStatementListenerTest {
     @Test
     public void testAddedStatement() throws RepositoryException {
         when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
-        final String mockPropertyName = "mock:property";
-        when(
-                mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode,
-                        mockPredicate, mockNsMapping)).thenReturn(
-                mockPropertyName);
-        when(mockPropertiesTools.getPropertyType(mockSubjectNode, mockPropertyName))
-                .thenReturn(STRING);
         testObj.addedStatement(mockStatement);
+        verify(mockJcrRdfTools)
+                .addProperty(mockSubjectNode, mockStatement.getPredicate(), mockStatement.getObject(), mockNsMapping);
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
         LOGGER.debug("Finished testAddedStatement()");
     }
@@ -174,13 +168,12 @@ public class JcrPropertyStatementListenerTest {
 
     @Test
     public void testRemovedStatement() throws RepositoryException {
-        final String mockPropertyName = "mock:property";
-        when(mockJcrRdfTools.getPropertyNameFromPredicate(mockSubjectNode, mockPredicate, mockNsMapping))
-                .thenReturn(mockPropertyName);
-        when(mockSubjectNode.hasProperty(mockPropertyName)).thenReturn(true);
-        when(mockPropertiesTools.getPropertyType(mockSubjectNode, mockPropertyName)).thenReturn(
-                STRING);
         testObj.removedStatement(mockStatement);
+        verify(mockJcrRdfTools)
+                .removeProperty(mockSubjectNode,
+                        mockStatement.getPredicate(),
+                        mockStatement.getObject(),
+                        mockNsMapping);
         verify(mockProblems, times(0)).add(any(Resource.class), any(Property.class), any(String.class));
     }
 

@@ -36,6 +36,7 @@ import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
+import org.modeshape.jcr.IsExternal;
 import org.slf4j.Logger;
 
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -50,6 +51,7 @@ public class NodePropertiesTools {
 
     private static final Logger LOGGER = getLogger(NodePropertiesTools.class);
     public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
+    private static final IsExternal isExternal = new IsExternal();
 
     /**
      * Given a JCR node, property and value, either:
@@ -137,6 +139,12 @@ public class NodePropertiesTools {
 
             try {
                 final Node refNode = subjects.convert(resource);
+
+                if (isExternal.apply(refNode)) {
+                    // we can't apply REFERENCE properties to external resources
+                    return;
+                }
+
                 final String referencePropertyName = getReferencePropertyName(property);
 
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
@@ -294,7 +302,7 @@ public class NodePropertiesTools {
      * @return true if the property is (or could be) multivalued
      * @throws RepositoryException
      */
-    public static boolean isMultivaluedProperty(final Node node,
+    private static boolean isMultivaluedProperty(final Node node,
                                                 final String propertyName)
         throws RepositoryException {
         final PropertyDefinition def =

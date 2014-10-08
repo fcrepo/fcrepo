@@ -112,6 +112,7 @@ import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LESS_TH
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LIKE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_NOT_EQUAL_TO;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -484,13 +485,13 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     }
 
                     final String propertyName =
-                        getPropertyNameFromPredicate(defaultModel
+                            getPropertyName(defaultModel
                                 .createProperty(predicate.getURI()));
 
                     if (propertyName.equals("rdf:type") && object.isURI()) {
                         final String mixinName =
-                            getPropertyNameFromPredicate(defaultModel
-                                    .createProperty(object.getURI()));
+                                getPropertyName(defaultModel
+                                        .createProperty(object.getURI()));
 
                         if (session.getWorkspace().getNodeTypeManager()
                                 .hasNodeType(mixinName)) {
@@ -594,9 +595,9 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             throw new NotImplementedException("Element path may not contain a variable predicate");
         }
 
-        final String propertyName = getPropertyNameFromPredicate(model.createProperty(predicate.getURI()));
+        final String propertyName = getPropertyName(model.createProperty(predicate.getURI()));
         if (propertyName.equals("rdf:type") && object.isURI()) {
-            final String mixinName = getPropertyNameFromPredicate(model.createProperty(object.getURI()));
+            final String mixinName = getPropertyName(model.createProperty(object.getURI()));
 
             if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
                 final String selectorName = "ref_type_" + mixinName.replace(":", "_");
@@ -968,17 +969,14 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      * @return property name from the given predicate
      * @throws RepositoryException
      */
-    private String getPropertyNameFromPredicate(final com.hp.hpl.jena.rdf.model.Property predicate)
+    private String getPropertyName(final com.hp.hpl.jena.rdf.model.Property predicate)
             throws RepositoryException {
 
         final NamespaceRegistry namespaceRegistry =
                 (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
 
         final Map<String, String> namespaceMapping = emptyMap();
-        return jcrTools.getJcrNameForRdfNode(namespaceRegistry,
-                predicate.getNameSpace(),
-                predicate.getLocalName(),
-                namespaceMapping);
+        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
     }
 
     /**

@@ -15,51 +15,38 @@
  */
 package org.fcrepo.kernel.impl.rdf;
 
-import static com.google.common.base.Throwables.propagate;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
-import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
-import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyOriginalName;
+import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
 
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.ValueFactory;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.NodeTypeTemplate;
-import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
-import org.modeshape.jcr.api.NamespaceRegistry;
-import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
-import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -87,6 +74,7 @@ public class JcrRdfTools {
         jcrNamespacesToRDFNamespaces.inverse();
 
     private final IdentifierConverter<Resource,Node> graphSubjects;
+    private final ValueConverter valueConverter;
 
     private Session session;
     private NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
@@ -100,6 +88,7 @@ public class JcrRdfTools {
     public JcrRdfTools(final IdentifierConverter<Resource,Node> graphSubjects, final Session session) {
         this.graphSubjects = graphSubjects;
         this.session = session;
+        this.valueConverter = new ValueConverter(session, graphSubjects);
     }
 
     /**
@@ -159,7 +148,9 @@ public class JcrRdfTools {
         throws RepositoryException {
         assert (valueFactory != null);
 
-        if (data.isURIResource()
+        if (type == UNDEFINED) {
+            return valueConverter.reverse().convert(data);
+        } else if (data.isURIResource()
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
             try {
@@ -171,154 +162,15 @@ public class JcrRdfTools {
             }
         } else if (!data.isURIResource() && (type == REFERENCE || type == WEAKREFERENCE)) {
             throw new ValueFormatException("Reference properties can only refer to URIs, not literals");
-        } else if (data.isURIResource() || type == URI) {
+        } else if (type == URI) {
             // some random opaque URI
             return valueFactory.createValue(data.toString(), PropertyType.URI);
-        } else if (data.isResource()) {
-            // a non-URI resource (e.g. a blank node)
-            return valueFactory.createValue(data.toString(), UNDEFINED);
-        } else if (data.isLiteral() && type == UNDEFINED) {
-            // the JCR schema doesn't know what this should be; so introspect
-            // the RDF and try to figure it out
-            final Literal literal = data.asLiteral();
-            final RDFDatatype dataType = literal.getDatatype();
-            final Object rdfValue = literal.getValue();
-
-            if (rdfValue instanceof Boolean) {
-                return valueFactory.createValue((Boolean) rdfValue);
-            } else if (rdfValue instanceof Byte
-                    || (dataType != null && dataType.getJavaClass() == Byte.class)) {
-                return valueFactory.createValue(literal.getByte());
-            } else if (rdfValue instanceof Double) {
-                return valueFactory.createValue((Double) rdfValue);
-            } else if (rdfValue instanceof Float) {
-                return valueFactory.createValue((Float) rdfValue);
-            } else if (rdfValue instanceof Long
-                    || (dataType != null && dataType.getJavaClass() == Long.class)) {
-                return valueFactory.createValue(literal.getLong());
-            } else if (rdfValue instanceof Short
-                    || (dataType != null && dataType.getJavaClass() == Short.class)) {
-                return valueFactory.createValue(literal.getShort());
-            } else if (rdfValue instanceof Integer) {
-                return valueFactory.createValue((Integer) rdfValue);
-            } else if (rdfValue instanceof XSDDateTime) {
-                return valueFactory.createValue(((XSDDateTime) rdfValue)
-                        .asCalendar());
-            } else {
-                return valueFactory.createValue(literal.getString(), STRING);
-            }
-
         } else {
             LOGGER.debug("Using default JCR value creation for RDF literal: {}",
                     data);
             return valueFactory.createValue(data.asLiteral().getString(), type);
         }
     }
-
-    /**
-     * Given an RDF predicate value (namespace URI + local name), figure out
-     * what JCR property to use
-     *
-     * @param node the JCR node we want a property for
-     * @param predicate the predicate to map to a property name
-     * @param namespaceMapping prefix to uri namespace mapping
-     * @return the JCR property name
-     * @throws RepositoryException
-     */
-    public String getPropertyNameFromPredicate(final Node node,
-                                               final Resource predicate,
-                                               final Map<String,String> namespaceMapping) throws RepositoryException {
-        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry.apply(node);
-        return getJcrNameForRdfNode(namespaceRegistry,
-                                    predicate.getNameSpace(),
-                                    predicate.getLocalName(),
-                                    namespaceMapping);
-    }
-
-    /**
-     * Get the JCR property name for an RDF predicate
-     *
-     * @param namespaceRegistry
-     * @param rdfNamespace
-     * @param rdfLocalname
-     * @param namespaceMapping
-     * @return JCR property name for an RDF predicate
-     * @throws RepositoryException
-     */
-    public String getJcrNameForRdfNode(final NamespaceRegistry namespaceRegistry,
-                                        final String rdfNamespace,
-                                        final String rdfLocalname,
-                                        final Map<String, String> namespaceMapping)
-        throws RepositoryException {
-
-        final String prefix;
-
-        final String namespace =
-            getJcrNamespaceForRDFNamespace(rdfNamespace);
-
-        assert (namespaceRegistry != null);
-
-        if (namespaceRegistry.isRegisteredUri(namespace)) {
-            LOGGER.debug("Discovered namespace: {} in namespace registry.",namespace);
-            prefix = namespaceRegistry.getPrefix(namespace);
-        } else {
-            LOGGER.debug("Didn't discover namespace: {} in namespace registry.",namespace);
-            final ImmutableBiMap<String, String> nsMap =
-                ImmutableBiMap.copyOf(namespaceMapping);
-            if (nsMap.containsValue(namespace)) {
-                LOGGER.debug("Discovered namespace: {} in namespace map: {}.", namespace,
-                        nsMap);
-                prefix = nsMap.inverse().get(namespace);
-                namespaceRegistry.registerNamespace(prefix, namespace);
-            } else {
-                prefix = namespaceRegistry.registerNamespace(namespace);
-            }
-        }
-
-        final String propertyName = prefix + ":" + rdfLocalname;
-
-        LOGGER.debug("Took RDF predicate {} and translated it to JCR property {}", namespace, propertyName);
-
-        return propertyName;
-
-    }
-
-    /**
-     * Map a JCR property to an RDF property with the right namespace URI and
-     * local name
-     */
-    public static Function<Property, com.hp.hpl.jena.rdf.model.Property> getPredicateForProperty =
-            new Function<Property, com.hp.hpl.jena.rdf.model.Property>() {
-
-                @Override
-                public com.hp.hpl.jena.rdf.model.Property apply(
-                        final Property property) {
-                    LOGGER.trace("Creating predicate for property: {}",
-                            property);
-                    try {
-                        if (property instanceof Namespaced) {
-                            final Namespaced nsProperty = (Namespaced) property;
-                            final String uri = nsProperty.getNamespaceURI();
-                            final String localName = nsProperty.getLocalName();
-                            final String rdfLocalName;
-
-                            if (isReferenceProperty.apply(property)) {
-                                rdfLocalName = getReferencePropertyOriginalName(localName);
-                            } else {
-                                rdfLocalName = localName;
-                            }
-                            return createProperty(
-                                    getRDFNamespaceForJcrNamespace(uri),
-                                                     rdfLocalName);
-                        }
-                        return createProperty(property.getName());
-                    } catch (final RepositoryException e) {
-                        throw propagate(e);
-                    }
-
-                }
-            };
-
 
     /**
      * Add a mixin to a node

@@ -17,24 +17,13 @@ package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static javax.jcr.PropertyType.BOOLEAN;
-import static javax.jcr.PropertyType.DATE;
-import static javax.jcr.PropertyType.DECIMAL;
-import static javax.jcr.PropertyType.DOUBLE;
-import static javax.jcr.PropertyType.LONG;
-import static javax.jcr.PropertyType.PATH;
-import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.URI;
-import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getPredicateForProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.Value;
 
 import com.google.common.collect.Iterators;
@@ -42,9 +31,10 @@ import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.converters.PropertyConverter;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.slf4j.Logger;
 import com.google.common.base.Function;
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -56,6 +46,8 @@ import com.hp.hpl.jena.graph.Triple;
 public class PropertyToTriple implements
         Function<Property, Iterator<Triple>> {
 
+    private static final PropertyConverter propertyConverter = new PropertyConverter();
+    private final ValueConverter valueConverter;
     private IdentifierConverter<Resource, javax.jcr.Node> graphSubjects;
 
     private static final Logger LOGGER = getLogger(PropertyToTriple.class);
@@ -66,7 +58,8 @@ public class PropertyToTriple implements
      *
      * @param graphSubjects
      */
-    public PropertyToTriple(final IdentifierConverter<Resource,javax.jcr.Node> graphSubjects) {
+    public PropertyToTriple(final Session session, final IdentifierConverter<Resource,javax.jcr.Node> graphSubjects) {
+        this.valueConverter = new ValueConverter(session, graphSubjects);
         this.graphSubjects = graphSubjects;
     }
 
@@ -127,62 +120,14 @@ public class PropertyToTriple implements
         LOGGER.trace("Rendering triple for Property: {} with Value: {}", p, v);
         try {
             final Triple triple =
-                create(getGraphSubject(p.getParent()), getPredicateForProperty
-                        .apply(p).asNode(), propertyvalue2node(p, v));
+                create(graphSubjects.reverse().convert(p.getParent()).asNode(),
+                        propertyConverter.convert(p).asNode(),
+                        valueConverter.convert(v).asNode());
             LOGGER.trace("Created triple: {} ", triple);
             return triple;
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-    }
-
-    private Node propertyvalue2node(final Property p, final Value v) {
-        try {
-            switch (v.getType()) {
-                case BOOLEAN:
-                    return literal2node(v.getString());
-                case DATE:
-                    return literal2node(v.getDate());
-                case DECIMAL:
-                    return literal2node(v.getDecimal());
-                case DOUBLE:
-                    return literal2node(v.getDouble());
-                case LONG:
-                    return literal2node(v.getLong());
-                case URI:
-                    return createResource(v.getString()).asNode();
-                case REFERENCE:
-                case WEAKREFERENCE:
-                case PATH:
-                    return traverseLink(p, v);
-                default:
-                    return literal2node(v.getString());
-            }
-        } catch (final RepositoryException e) {
-            throw propagate(e);
-        }
-    }
-
-    private static Node literal2node(final Object literal) {
-        final Node result = createTypedLiteral(literal).asNode();
-        LOGGER.trace("Converting {} into {}", literal, result);
-        return result;
-    }
-
-    private Node traverseLink(final Property p, final Value v)
-        throws RepositoryException {
-        final javax.jcr.Node refNode;
-        if (v.getType() == PATH) {
-            refNode = p.getParent().getNode(v.getString());
-        } else {
-            refNode = p.getSession().getNodeByIdentifier(v.getString());
-        }
-        return getGraphSubject(refNode);
-    }
-
-    private Node getGraphSubject(final javax.jcr.Node n)
-        throws RepositoryException {
-        return graphSubjects.reverse().convert(n).asNode();
     }
 
 }

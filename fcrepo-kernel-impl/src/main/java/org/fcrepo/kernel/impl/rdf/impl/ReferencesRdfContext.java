@@ -51,7 +51,7 @@ public class ReferencesRdfContext extends RdfStream {
         throws RepositoryException {
         super();
         this.node = node;
-        property2triple = new PropertyToTriple(graphSubjects);
+        property2triple = new PropertyToTriple(node.getSession(), graphSubjects);
         concat(putStrongReferencePropertiesIntoContext());
         concat(putWeakReferencePropertiesIntoContext());
     }

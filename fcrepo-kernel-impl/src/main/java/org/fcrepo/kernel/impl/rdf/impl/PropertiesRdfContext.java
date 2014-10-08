@@ -65,7 +65,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource,javax.jcr.Node> graphSubjects)
         throws RepositoryException {
         super(node, graphSubjects);
-        property2triple = new PropertyToTriple(graphSubjects);
+        property2triple = new PropertyToTriple(node.getSession(), graphSubjects);
         putPropertiesIntoContext();
     }
 
