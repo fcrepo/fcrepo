@@ -22,23 +22,24 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.hp.hpl.jena.rdf.model.AnonId;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
-import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.vocabulary.RDF;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Listen to Jena statement events, and when the statement is changed in the
@@ -54,42 +55,22 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final HashMap<AnonId, Node> skolemizedBnodeMap;
 
-    private Model problems;
-
     private final IdentifierConverter<Resource,Node> subjects;
 
     private final Session session;
 
     private static final JcrTools jcrTools = new JcrTools();
 
-    /**
-     * Return a Listener given the subject factory and JcrSession.
-     * @param subjects
-     * @param session
-     * @param problemModel
-     * @return JcrPropertyStatementListener for the given subject factory and JcrSession
-     */
-    public static JcrPropertyStatementListener getListener(
-            final IdentifierConverter<Resource,Node> subjects, final Session session, final Model problemModel) {
-        return new JcrPropertyStatementListener(subjects,
-                session,
-                problemModel,
-                new JcrRdfTools(subjects, session));
-    }
+    private final List<String> exceptions;
 
     /**
-     * Return a Listener given the subject factory and JcrSession.
+     * Construct a statement listener within the given session
+     *
      * @param subjects
      * @param session
-     * @param problemModel
-     * @return JcrPropertyStatementListener for the given subject factory and JcrSession
      */
-    @VisibleForTesting
-    public static JcrPropertyStatementListener getListener(final IdentifierConverter<Resource,Node> subjects,
-                                                           final Session session,
-                                                           final Model problemModel,
-                                                           final JcrRdfTools tools) {
-        return new JcrPropertyStatementListener(subjects, session, problemModel, tools);
+    public JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects, final Session session) {
+        this(subjects, session, new JcrRdfTools(subjects, session));
     }
 
     /**
@@ -98,14 +79,15 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param subjects
      * @param session
      */
-    private JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects,
-            final Session session, final Model problems, final JcrRdfTools tools) {
+    public JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects,
+                                        final Session session,
+                                        final JcrRdfTools jcrRdfTools) {
         super();
         this.session = session;
         this.subjects = subjects;
-        this.problems = problems;
-        this.jcrRdfTools = tools;
+        this.jcrRdfTools = jcrRdfTools;
         this.skolemizedBnodeMap = new HashMap<>();
+        this.exceptions = new ArrayList<>();
     }
 
     /**
@@ -152,7 +134,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             jcrRdfTools.addProperty(subjectNode, property, objectNode, s.getModel().getNsPrefixMap());
         } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+            exceptions.add(e.getMessage());
         }
 
     }
@@ -195,19 +177,17 @@ public class JcrPropertyStatementListener extends StatementListener {
             jcrRdfTools.removeProperty(subjectNode, property, objectNode, s.getModel().getNsPrefixMap());
 
         } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+            exceptions.add(e.getMessage());
         }
 
     }
 
     /**
-     * Get a list of any problems from trying to apply the statement changes to
-     * the node's properties
-     *
-     * @return model containing any problems from applying the statement changes
+     * Assert that no exceptions were thrown while this listener was processing change
      */
-    public Model getProblems() {
-        return problems;
+    public void assertNoExceptions() {
+        if (!exceptions.isEmpty()) {
+            throw new MalformedRdfException(Joiner.on("\n").join(exceptions));
+        }
     }
-
 }

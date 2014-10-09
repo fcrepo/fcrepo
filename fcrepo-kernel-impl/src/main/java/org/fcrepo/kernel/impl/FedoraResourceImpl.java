@@ -18,11 +18,9 @@ package org.fcrepo.kernel.impl;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
-import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
@@ -238,15 +236,21 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String)
      */
     @Override
-    public Dataset updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
+    public void updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
             final String sparqlUpdateStatement) {
         final Dataset dataset = getPropertiesDataset(subjects);
+
+        final JcrPropertyStatementListener listener =
+                new JcrPropertyStatementListener(subjects, getSession());
+
+        dataset.getDefaultModel().register(listener);
+
         final UpdateRequest request =
-            create(sparqlUpdateStatement, dataset.getContext().getAsString(
-                    URI_SYMBOL));
+            create(sparqlUpdateStatement, subjects.reverse().convert(getNode()).toString());
         dataset.getDefaultModel().setNsPrefixes(request.getPrefixMapping());
         execute(request, dataset);
-        return dataset;
+
+        listener.assertNoExceptions();
     }
 
     /* (non-Javadoc)
@@ -268,17 +272,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
 
-        final Model problemsModel = createDefaultModel();
-
-        final JcrPropertyStatementListener listener =
-                JcrPropertyStatementListener.getListener(graphSubjects, getSession(), problemsModel);
-
-        dataset.getDefaultModel().register(listener);
-
-        dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
-
         dataset.getContext().set(URI_SYMBOL, graphSubjects.reverse().convert(getNode()));
-
 
         return dataset;
     }

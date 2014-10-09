@@ -1216,7 +1216,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 ("INSERT { <> <http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " +
                         "<" + serverAddress + "non-existant> } WHERE {}").getBytes()));
         patch.setEntity(e);
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(patch));
     }
 
     @Test

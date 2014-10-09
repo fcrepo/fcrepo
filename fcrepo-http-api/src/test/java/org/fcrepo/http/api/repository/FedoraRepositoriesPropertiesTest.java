@@ -74,9 +74,6 @@ public class FedoraRepositoriesPropertiesTest {
         final InputStream mockStream =
             new ByteArrayInputStream("my-sparql-statement".getBytes());
         when(mockNodes.getObject(mockSession, "/")).thenReturn(mockObject);
-        when(
-                mockObject.updatePropertiesDataset(any(IdentifierConverter.class),
-                        any(String.class))).thenReturn(mockDataset);
         testObj.updateSparql(mockStream);
 
         verify(mockObject).updatePropertiesDataset(any(IdentifierConverter.class),

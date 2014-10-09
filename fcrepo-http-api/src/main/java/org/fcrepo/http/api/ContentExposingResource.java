@@ -18,13 +18,10 @@ package org.fcrepo.http.api;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.Prefer;
@@ -59,7 +56,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
@@ -87,7 +83,6 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -499,9 +494,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource, final String requestBody) {
-        final Dataset properties = resource.updatePropertiesDataset(translator(), requestBody);
-
-        handleProblems(resource, properties);
+        resource.updatePropertiesDataset(translator(), requestBody);
     }
 
     /**
@@ -512,26 +505,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return URI.create(checksum);
         }
         return null;
-    }
-
-    private void handleProblems(final FedoraResource resource, final Dataset properties) {
-
-        final Model problems = properties.getNamedModel(PROBLEMS_MODEL_NAME);
-
-        if (!problems.isEmpty()) {
-            LOGGER.info(
-                    "Found these problems updating the properties for {}: {}", resource, problems);
-            final StringBuilder error = new StringBuilder();
-            final StmtIterator sit = problems.listStatements();
-            while (sit.hasNext()) {
-                final String message = getMessage(sit.next());
-                if (StringUtils.isNotEmpty(message) && error.indexOf(message) < 0) {
-                    error.append(message + " \n");
-                }
-            }
-
-            throw new ForbiddenException(error.length() > 0 ? error.toString() : problems.toString());
-        }
     }
 
     /*

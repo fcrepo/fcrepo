@@ -16,11 +16,9 @@
 package org.fcrepo.http.api.repository;
 
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -45,8 +43,6 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * Utility endpoint for running SPARQL Update queries on any object in the
@@ -85,17 +81,8 @@ public class FedoraRepositoriesProperties extends AbstractResource {
             final UriAwareIdentifierConverter translator
                     = new UriAwareIdentifierConverter(session, UriBuilder.fromResource(FedoraLdp.class));
 
-            final Dataset dataset =
-                    result.updatePropertiesDataset(translator, IOUtils
+            result.updatePropertiesDataset(translator, IOUtils
                             .toString(requestBodyStream));
-            if (dataset.containsNamedModel(PROBLEMS_MODEL_NAME)) {
-                final Model problems = dataset.getNamedModel(PROBLEMS_MODEL_NAME);
-
-                LOGGER.info("Found these problems updating the properties for {}: {}",
-                        "/", problems.toString());
-                return status(FORBIDDEN).entity(problems.toString())
-                        .build();
-            }
 
             try {
                 session.save();
