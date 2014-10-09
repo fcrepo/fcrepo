@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -73,7 +72,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -596,11 +594,6 @@ public class FedoraLdpTest {
 
         final FedoraResource mockObject = setResource(FedoraObject.class);
 
-        final Dataset dataset = mock(Dataset.class);
-        final Model mockModel = mock(Model.class);
-        when(dataset.getNamedModel(PROBLEMS_MODEL_NAME)).thenReturn(mockModel);
-        when(mockModel.isEmpty()).thenReturn(true);
-        when(mockObject.updatePropertiesDataset(identifierConverter, "xyz")).thenReturn(dataset);
         testObj.updateSparql(toInputStream("xyz"));
         verify(mockVersionService).nodeUpdated(mockObject.getNode());
     }
@@ -612,11 +605,6 @@ public class FedoraLdpTest {
         doReturn(mockObject).when(testObj).resource();
         when(mockObject.getContentNode()).thenReturn(mockBinaryNode);
 
-        final Dataset dataset = mock(Dataset.class);
-        final Model mockModel = mock(Model.class);
-        when(dataset.getNamedModel(PROBLEMS_MODEL_NAME)).thenReturn(mockModel);
-        when(mockModel.isEmpty()).thenReturn(true);
-        when(mockObject.updatePropertiesDataset(identifierConverter, "xyz")).thenReturn(dataset);
         testObj.updateSparql(toInputStream("xyz"));
         verify(mockVersionService).nodeUpdated(mockObject.getNode());
         verify(mockVersionService).nodeUpdated(mockObject.getContentNode());
@@ -659,12 +647,6 @@ public class FedoraLdpTest {
         setResource(FedoraObject.class);
 
         when(mockObjectService.findOrCreateObject(mockSession, "/b")).thenReturn(mockObject);
-
-        final Dataset dataset = mock(Dataset.class);
-        final Model mockModel = mock(Model.class);
-        when(dataset.getNamedModel(PROBLEMS_MODEL_NAME)).thenReturn(mockModel);
-        when(mockModel.isEmpty()).thenReturn(true);
-        when(mockObject.updatePropertiesDataset(identifierConverter, "x")).thenReturn(dataset);
 
         final Response actual = testObj.createObject(null, null, null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"));

@@ -24,7 +24,6 @@ import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
-import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -62,7 +61,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
@@ -175,11 +173,6 @@ public class FedoraBatchTest {
         when(mockNodes.exists(mockSession, path + "/.")).thenReturn(true);
         doReturn(mockObject).when(testObj).getResourceFromPath(path + "/.");
 
-        final Dataset mockDataset = mock(Dataset.class);
-        final Model mockProblems = mock(Model.class);
-        when(mockDataset.getNamedModel(PROBLEMS_MODEL_NAME)).thenReturn(mockProblems);
-        when(mockProblems.isEmpty()).thenReturn(true);
-        when(mockObject.updatePropertiesDataset(any(IdentifierConverter.class), eq("xyz"))).thenReturn(mockDataset);
         final MultiPart multipart = new MultiPart();
 
         final StreamDataBodyPart part = new StreamDataBodyPart(".",

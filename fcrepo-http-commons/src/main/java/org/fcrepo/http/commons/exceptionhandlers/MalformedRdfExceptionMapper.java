@@ -21,7 +21,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.status;
 
 /**
@@ -33,6 +33,6 @@ public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdf
 
     @Override
     public Response toResponse(final MalformedRdfException e) {
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+        return status(CONFLICT).entity(e.getMessage()).build();
     }
 }

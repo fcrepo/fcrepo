@@ -91,7 +91,7 @@ public interface FedoraResource {
      * @param subjects
      * @param sparqlUpdateStatement
      */
-    Dataset updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
+    void updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
             final String sparqlUpdateStatement);
 
     /**

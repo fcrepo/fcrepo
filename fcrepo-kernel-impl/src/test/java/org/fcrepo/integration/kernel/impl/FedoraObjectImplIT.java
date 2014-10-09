@@ -15,7 +15,6 @@
  */
 package org.fcrepo.integration.kernel.impl;
 
-import static com.hp.hpl.jena.update.UpdateAction.parseExecute;
 import static java.util.regex.Pattern.compile;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -80,15 +79,14 @@ public class FedoraObjectImplIT extends AbstractIT {
                     compile("fcrepo")
                     .matcher(graphStore.toString()).find());
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
-                          "INSERT { <http://example/egbook> dc:title " +
-                          "\"This is an example of an update that will be " +
-                          "ignored\" } WHERE {}", graphStore);
+        object.updatePropertiesDataset(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+                "INSERT { <http://example/egbook> dc:title " +
+                "\"This is an example of an update that will be " +
+                "ignored\" } WHERE {}");
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
-                          "INSERT { <" + graphSubject + "> dc:title " +
-                          "\"This is an example title\" } WHERE {}",
-                          graphStore);
+        object.updatePropertiesDataset(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+                "INSERT { <" + graphSubject + "> dc:title " +
+                "\"This is an example title\" } WHERE {}");
 
 
         final Value[] values = object.getNode().getProperty("dc:title").getValues();
@@ -100,10 +98,9 @@ public class FedoraObjectImplIT extends AbstractIT {
                           .getString().equals("This is an example title"));
 
 
-        parseExecute("PREFIX myurn: <info:myurn/>\n" +
-                          "INSERT { <" + graphSubject + "> myurn:info " +
-                          "\"This is some example data\"} WHERE {}",
-                          graphStore);
+        object.updatePropertiesDataset(subjects, "PREFIX myurn: <info:myurn/>\n" +
+                "INSERT { <" + graphSubject + "> myurn:info " +
+                "\"This is some example data\"} WHERE {}");
 
         final Value value =
             object.getNode().getProperty(object.getNode().getSession()
@@ -112,10 +109,10 @@ public class FedoraObjectImplIT extends AbstractIT {
 
         assertEquals("This is some example data", value.getString());
 
-        parseExecute("PREFIX fedora-rels-ext: <"
+        object.updatePropertiesDataset(subjects, "PREFIX fedora-rels-ext: <"
                 + RELATIONS_NAMESPACE + ">\n" +
                 "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
-                "isPartOf <" + graphSubject + "> } WHERE {}", graphStore);
+                "isPartOf <" + graphSubject + "> } WHERE {}");
 
         assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf")
                    .getValues()[0].getString(),
@@ -124,19 +121,18 @@ public class FedoraObjectImplIT extends AbstractIT {
                    .equals(object.getNode().getIdentifier()));
 
 
-        parseExecute("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
-                          "DELETE { <" + graphSubject + "> dc:title " +
-                          "\"This is an example title\" } WHERE {}",
-                          graphStore);
+        object.updatePropertiesDataset(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+                "DELETE { <" + graphSubject + "> dc:title " +
+                "\"This is an example title\" } WHERE {}");
 
         assertFalse("Found unexpected dc:title",
                     object.getNode().hasProperty("dc:title"));
 
-        parseExecute("PREFIX fedora-rels-ext: <" +
-                    RELATIONS_NAMESPACE + ">\n" +
-                    "DELETE { <" + graphSubject + "> " +
-                    "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
-                    "} WHERE {}", graphStore);
+        object.updatePropertiesDataset(subjects, "PREFIX fedora-rels-ext: <" +
+                RELATIONS_NAMESPACE + ">\n" +
+                "DELETE { <" + graphSubject + "> " +
+                "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
+                "} WHERE {}");
         assertFalse("found unexpected reference",
                     object.getNode().hasProperty("fedorarelsext:isPartOf"));
 
@@ -151,11 +147,10 @@ public class FedoraObjectImplIT extends AbstractIT {
             objectService.findOrCreateObject(session, "/graphObject");
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
         final Resource graphSubject = subjects.reverse().convert(object.getNode());
-        final Dataset graphStore = object.getPropertiesDataset(subjects);
 
-        parseExecute("PREFIX some: <info:some#>\n" +
-                         "INSERT { <" + graphSubject + "> some:urlProperty " +
-                         "<" + graphSubject + "> } WHERE {}", graphStore);
+        object.updatePropertiesDataset(subjects, "PREFIX some: <info:some#>\n" +
+                "INSERT { <" + graphSubject + "> some:urlProperty " +
+                "<" + graphSubject + "> } WHERE {}");
 
         final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
 
@@ -164,16 +159,16 @@ public class FedoraObjectImplIT extends AbstractIT {
         assertEquals(object.getNode(), session.getNodeByIdentifier(
                 object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
-        parseExecute("PREFIX some: <info:some#>\n" +
-                         "DELETE { <" + graphSubject + "> some:urlProperty " +
-                         "<" + graphSubject + "> } WHERE {}", graphStore);
+        object.updatePropertiesDataset(subjects, "PREFIX some: <info:some#>\n" +
+                "DELETE { <" + graphSubject + "> some:urlProperty " +
+                "<" + graphSubject + "> } WHERE {}");
 
         assertFalse(object.getNode().hasProperty(prefix + ":urlProperty_ref"));
 
 
-        parseExecute("PREFIX some: <info:some#>\n" +
+        object.updatePropertiesDataset(subjects, "PREFIX some: <info:some#>\n" +
                          "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
-                         "       some:urlProperty <info:somewhere/else> . }", graphStore);
+                         "       some:urlProperty <info:somewhere/else> . }");
 
         assertEquals(1, object.getNode().getProperty(prefix + ":urlProperty_ref").getValues().length);
         assertEquals(object.getNode(), session.getNodeByIdentifier(
