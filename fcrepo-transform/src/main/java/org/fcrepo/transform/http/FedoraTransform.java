@@ -133,17 +133,13 @@ public class FedoraTransform extends FedoraBaseResource {
         final String externalPath, @PathParam("program")
         final String program) throws RepositoryException {
 
-        try {
-            final FedoraResource object = getResourceFromPath(externalPath);
+        final FedoraResource object = getResourceFromPath(externalPath);
 
-            final Dataset propertiesDataset =
+        final Dataset propertiesDataset =
                 object.getPropertiesDataset(translator());
 
-            return getNodeTypeTransform(object.getNode(), program).apply(propertiesDataset);
+        return getNodeTypeTransform(object.getNode(), program).apply(propertiesDataset);
 
-        } finally {
-            session.logout();
-        }
     }
 
     /**
@@ -170,17 +166,13 @@ public class FedoraTransform extends FedoraBaseResource {
             transformationFactory = new TransformationFactory();
         }
 
-        try {
-            final FedoraResource object = getResourceFromPath(externalPath);
+        final FedoraResource object = getResourceFromPath(externalPath);
 
-            final Dataset propertiesDataset =
+        final Dataset propertiesDataset =
                 object.getPropertiesDataset(translator());
 
-            return transformationFactory.getTransform(contentType, requestBodyStream).apply(propertiesDataset);
+        return transformationFactory.getTransform(contentType, requestBodyStream).apply(propertiesDataset);
 
-        } finally {
-            session.logout();
-        }
     }
 
     @Override

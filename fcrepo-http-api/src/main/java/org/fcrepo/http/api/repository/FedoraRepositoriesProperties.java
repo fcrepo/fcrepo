@@ -77,39 +77,35 @@ public class FedoraRepositoriesProperties extends AbstractResource {
     public Response updateSparql(final InputStream requestBodyStream)
         throws IOException {
 
-        try {
-            if (requestBodyStream != null) {
+        if (requestBodyStream != null) {
 
-                final FedoraResource result =
+            final FedoraResource result =
                     nodeService.getObject(session, "/");
 
-                final UriAwareIdentifierConverter translator
-                        = new UriAwareIdentifierConverter(session, UriBuilder.fromResource(FedoraLdp.class));
+            final UriAwareIdentifierConverter translator
+                    = new UriAwareIdentifierConverter(session, UriBuilder.fromResource(FedoraLdp.class));
 
-                final Dataset dataset =
+            final Dataset dataset =
                     result.updatePropertiesDataset(translator, IOUtils
                             .toString(requestBodyStream));
-                if (dataset.containsNamedModel(PROBLEMS_MODEL_NAME)) {
-                    final Model problems = dataset.getNamedModel(PROBLEMS_MODEL_NAME);
+            if (dataset.containsNamedModel(PROBLEMS_MODEL_NAME)) {
+                final Model problems = dataset.getNamedModel(PROBLEMS_MODEL_NAME);
 
-                    LOGGER.info("Found these problems updating the properties for {}: {}",
-                                   "/", problems.toString());
-                    return status(FORBIDDEN).entity(problems.toString())
-                            .build();
-                }
-
-                try {
-                    session.save();
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-
-                return status(SC_NO_CONTENT).build();
+                LOGGER.info("Found these problems updating the properties for {}: {}",
+                        "/", problems.toString());
+                return status(FORBIDDEN).entity(problems.toString())
+                        .build();
             }
-            return status(SC_BAD_REQUEST).entity(
-                    "SPARQL-UPDATE requests must have content ").build();
-        } finally {
-            session.logout();
+
+            try {
+                session.save();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+            return status(SC_NO_CONTENT).build();
         }
+        return status(SC_BAD_REQUEST).entity(
+                "SPARQL-UPDATE requests must have content ").build();
     }
 }

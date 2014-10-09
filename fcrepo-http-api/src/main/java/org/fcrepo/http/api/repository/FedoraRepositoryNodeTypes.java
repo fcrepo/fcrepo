@@ -102,8 +102,6 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
                 return status(SC_BAD_REQUEST).entity(ex.getMessage()).build();
             }
             throw ex;
-        } finally {
-            session.logout();
         }
     }
 }

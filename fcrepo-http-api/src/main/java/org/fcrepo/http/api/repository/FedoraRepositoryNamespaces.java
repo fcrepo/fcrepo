@@ -101,8 +101,6 @@ public class FedoraRepositoryNamespaces extends AbstractResource {
             return status(SC_NO_CONTENT).build();
         } catch ( JenaException ex ) {
             return status(SC_BAD_REQUEST).entity(ex.getMessage()).build();
-        } finally {
-            session.logout();
         }
     }
 

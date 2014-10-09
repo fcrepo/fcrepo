@@ -81,27 +81,23 @@ public class FedoraRepositoryBackup extends AbstractResource {
         }
 
         LOGGER.debug("Backing up to: {}", backupDirectory.getAbsolutePath());
-        try {
-            final Problems problems = repositoryService.backupRepository(session, backupDirectory);
+        final Problems problems = repositoryService.backupRepository(session, backupDirectory);
 
-            if ( problems.hasProblems() ) {
-                LOGGER.error("Problems backing up the repository:");
+        if ( problems.hasProblems() ) {
+            LOGGER.error("Problems backing up the repository:");
 
-                final StringBuilder problemsOutput = new StringBuilder();
+            final StringBuilder problemsOutput = new StringBuilder();
 
-                // Report the problems (we'll just print them out) ...
-                for ( final Problem problem : problems ) {
-                    LOGGER.error("{}", problem.getMessage());
-                    problemsOutput.append(problem.getMessage());
-                    problemsOutput.append("\n");
-                }
-
-                throw new WebApplicationException(serverError().entity(problemsOutput.toString()).build());
-
+            // Report the problems (we'll just print them out) ...
+            for ( final Problem problem : problems ) {
+                LOGGER.error("{}", problem.getMessage());
+                problemsOutput.append(problem.getMessage());
+                problemsOutput.append("\n");
             }
-            return backupDirectory.getCanonicalPath();
-        } finally {
-            session.logout();
+
+            throw new WebApplicationException(serverError().entity(problemsOutput.toString()).build());
+
         }
+        return backupDirectory.getCanonicalPath();
     }
 }

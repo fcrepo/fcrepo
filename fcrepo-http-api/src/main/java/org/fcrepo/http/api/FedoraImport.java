@@ -93,8 +93,6 @@ public class FedoraImport extends FedoraBaseResource {
             return status(CONFLICT).entity("Item already exists").build();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
     }
 

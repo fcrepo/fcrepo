@@ -75,26 +75,23 @@ public class FedoraRepositoryRestore extends AbstractResource {
                             + backupDirectory.getAbsolutePath()).build());
         }
 
-        try {
-            final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
-            if (problems.hasProblems()) {
-                LOGGER.error("Problems restoring up the repository:");
+        final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
+        if (problems.hasProblems()) {
+            LOGGER.error("Problems restoring up the repository:");
 
-                final List<String> problemsOutput = new ArrayList<>();
+            final List<String> problemsOutput = new ArrayList<>();
 
-                // Report the problems (we'll just print them out) ...
-                for (final Problem problem : problems) {
-                    LOGGER.error("{}", problem.getMessage());
-                    problemsOutput.add(problem.getMessage());
-                }
-
-                throw new WebApplicationException(serverError()
-                        .entity(problemsOutput).build());
-
+            // Report the problems (we'll just print them out) ...
+            for (final Problem problem : problems) {
+                LOGGER.error("{}", problem.getMessage());
+                problemsOutput.add(problem.getMessage());
             }
-            return noContent().build();
-        } finally {
-            session.logout();
+
+            throw new WebApplicationException(serverError()
+                    .entity(problemsOutput).build());
+
         }
+        return noContent().build();
+
     }
 }

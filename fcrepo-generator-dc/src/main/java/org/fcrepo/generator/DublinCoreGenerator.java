@@ -62,23 +62,18 @@ public class DublinCoreGenerator extends FedoraBaseResource {
     @Produces(TEXT_XML)
     public Response getObjectAsDublinCore(@PathParam("path") final String externalPath) throws RepositoryException {
 
-        try {
-            final FedoraResource obj = getResourceFromPath(externalPath);
+        final FedoraResource obj = getResourceFromPath(externalPath);
 
-            for (final DCGenerator indexer : dcgenerators) {
-                final InputStream inputStream =
-                        indexer.getStream(obj.getNode());
+        for (final DCGenerator indexer : dcgenerators) {
+            final InputStream inputStream =
+                    indexer.getStream(obj.getNode());
 
-                if (inputStream != null) {
-                    return ok(inputStream).build();
-                }
+            if (inputStream != null) {
+                return ok(inputStream).build();
             }
-            // no indexers = no path for DC
-            throw new PathNotFoundException();
-        } finally {
-            session.logout();
         }
-
+        // no indexers = no path for DC
+        throw new PathNotFoundException();
     }
 
     @Override

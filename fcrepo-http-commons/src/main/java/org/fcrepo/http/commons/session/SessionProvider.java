@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.session;
 
+import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.isInTransaction;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
@@ -53,12 +54,17 @@ public class SessionProvider implements Factory<Session> {
 
     @Override
     public Session provide() {
-        return sessionFactory.getSession(request);
+        final Session session = sessionFactory.getSession(request);
+        LOGGER.trace("Providing new session {}", session);
+        return session;
     }
 
     @Override
     public void dispose(final Session session) {
-        // no-op
+        LOGGER.trace("Disposing session {}", session);
 
+        if (session.isLive() && !isInTransaction(session)) {
+            session.logout();
+        }
     }
 }

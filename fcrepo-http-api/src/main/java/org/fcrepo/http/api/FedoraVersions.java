@@ -27,7 +27,6 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.version.VersionException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -44,9 +43,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.status;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -115,19 +112,15 @@ public class FedoraVersions extends ContentExposingResource {
      */
     @POST
     public Response addVersion() throws RepositoryException {
-        try {
-            final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
+        final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
                     singleton(unversionedResource().getPath()));
-            if (label != null) {
-                unversionedResource().addVersionLabel(label);
-            }
-
-            final String version = (label != null) ? label : versions.iterator().next();
-            return noContent().header("Location", translator().toDomain(
-                    externalPath) + "/fcr:versions/" + version).build();
-        } finally {
-            session.logout();
+        if (label != null) {
+            unversionedResource().addVersionLabel(label);
         }
+
+        final String version = (label != null) ? label : versions.iterator().next();
+        return noContent().header("Location", translator().toDomain(
+                externalPath) + "/fcr:versions/" + version).build();
     }
 
     /**
@@ -140,12 +133,8 @@ public class FedoraVersions extends ContentExposingResource {
     public Response revertToVersion() throws RepositoryException {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
-        try {
-            versionService.revertToVersion(session.getWorkspace(), unversionedResource().getPath(), label);
-            return noContent().build();
-        } finally {
-            session.logout();
-        }
+        versionService.revertToVersion(session.getWorkspace(), unversionedResource().getPath(), label);
+        return noContent().build();
     }
 
     /**
@@ -156,14 +145,8 @@ public class FedoraVersions extends ContentExposingResource {
     @DELETE
     public Response removeVersion() throws RepositoryException {
         LOGGER.info("Removing {} version {}.", path, label);
-        try {
-            versionService.removeVersion(session.getWorkspace(), unversionedResource().getPath(), label);
-            return noContent().build();
-        } catch ( VersionException ex ) {
-            return status(BAD_REQUEST).entity(ex.getMessage()).build();
-        } finally {
-            session.logout();
-        }
+        versionService.removeVersion(session.getWorkspace(), unversionedResource().getPath(), label);
+        return noContent().build();
     }
 
     /**

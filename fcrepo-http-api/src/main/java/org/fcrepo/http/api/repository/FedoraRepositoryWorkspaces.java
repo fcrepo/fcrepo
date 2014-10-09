@@ -124,8 +124,6 @@ public class FedoraRepositoryWorkspaces extends FedoraBaseResource {
             return created(new URI(translator().toDomain("/workspace:" + path + "/").toString())).build();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
     }
 
@@ -150,8 +148,6 @@ public class FedoraRepositoryWorkspaces extends FedoraBaseResource {
             return noContent().build();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
     }
 

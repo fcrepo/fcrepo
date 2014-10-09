@@ -178,8 +178,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
         LOGGER.trace("Assembled template map.");
         LOGGER.trace("HtmlProvider initialization complete.");

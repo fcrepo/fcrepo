@@ -62,8 +62,6 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private final RdfStream rdfStream;
 
-    private static final Void finishedMarker = null;
-
     /**
      * Normal constructor
      *
@@ -97,7 +95,6 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
             Rio.write(asStatements(), output, format);
-            set(finishedMarker);
         } catch (final RDFHandlerException e) {
             setException(e);
             LOGGER.debug("Error serializing RDF", e);

@@ -108,7 +108,6 @@ public class FedoraNodes extends ContentExposingResource {
             throws URISyntaxException {
 
         try {
-
             final String source = translator().asString(translator().toDomain(externalPath));
 
             if (!nodeService.exists(session, source)) {
@@ -145,8 +144,6 @@ public class FedoraNodes extends ContentExposingResource {
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
 
     }
@@ -195,10 +192,7 @@ public class FedoraNodes extends ContentExposingResource {
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
-
     }
 
     @Override

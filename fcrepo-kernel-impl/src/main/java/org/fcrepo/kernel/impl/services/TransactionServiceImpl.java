@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.google.common.collect.ImmutableSet;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.TransactionImpl;
@@ -71,6 +72,19 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     private static Map<String, Transaction> transactions = new ConcurrentHashMap<>();
 
     public static final long REAP_INTERVAL = 1000;
+
+    /**
+     * Check if a session is possibly within a transaction
+     * @param session
+     * @return
+     */
+    public static boolean isInTransaction(final Session session) {
+        try {
+            return ImmutableSet.copyOf(session.getNamespacePrefixes()).contains(FCREPO4_TX_ID);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     /**
      * Every REAP_INTERVAL milliseconds, check for expired transactions. If the

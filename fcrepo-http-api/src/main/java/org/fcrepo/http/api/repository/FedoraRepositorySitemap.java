@@ -81,24 +81,21 @@ public class FedoraRepositorySitemap extends AbstractResource {
 
         LOGGER.trace("Executing getSitemapIndex()...");
 
-        try {
-            final long count =
+        final long count =
                 repositoryService.getRepositoryObjectCount() / entriesPerPage;
 
-            final SitemapIndex sitemapIndex = new SitemapIndex();
+        final SitemapIndex sitemapIndex = new SitemapIndex();
 
-            for (int i = 0; i <= count; i++) {
-                sitemapIndex
-                        .appendSitemapEntry(new SitemapEntry(uriInfo
-                                .getBaseUriBuilder().path(FedoraRepositorySitemap.class)
-                                .path(FedoraRepositorySitemap.class, "getSitemap").build(
-                                        i + 1)));
-            }
-            LOGGER.trace("Executed getSitemapIndex().");
-            return sitemapIndex;
-        } finally {
-            session.logout();
+        for (int i = 0; i <= count; i++) {
+            sitemapIndex
+                    .appendSitemapEntry(new SitemapEntry(uriInfo
+                            .getBaseUriBuilder().path(FedoraRepositorySitemap.class)
+                            .path(FedoraRepositorySitemap.class, "getSitemap").build(
+                                    i + 1)));
         }
+        LOGGER.trace("Executed getSitemapIndex().");
+        return sitemapIndex;
+
     }
 
     /**
@@ -113,22 +110,18 @@ public class FedoraRepositorySitemap extends AbstractResource {
     @Timed
     @Produces(TEXT_XML)
     public SitemapUrlSet getSitemap(@PathParam("page") final String page) {
-        try {
-            final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
+        final SitemapUrlSet sitemapUrlSet = new SitemapUrlSet();
 
-            final RowIterator rows =
+        final RowIterator rows =
                 getSitemapEntries(session, parseInt(page) - 1);
 
-            while (rows.hasNext()) {
-                final Row r = rows.nextRow();
+        while (rows.hasNext()) {
+            final Row r = rows.nextRow();
 
-                sitemapUrlSet.appendSitemapEntry(getSitemapEntry(r));
-            }
-
-            return sitemapUrlSet;
-        } finally {
-            session.logout();
+            sitemapUrlSet.appendSitemapEntry(getSitemapEntry(r));
         }
+
+        return sitemapUrlSet;
     }
 
     private RowIterator getSitemapEntries(final Session session, final long pg) {

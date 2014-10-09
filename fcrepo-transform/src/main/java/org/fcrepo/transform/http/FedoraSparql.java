@@ -29,7 +29,6 @@ import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
-import org.fcrepo.kernel.impl.utils.LogoutCallback;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.fcrepo.transform.sparql.SparqlServiceDescription;
@@ -61,7 +60,6 @@ import java.io.Writer;
 import java.net.URL;
 import java.util.Properties;
 
-import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -262,8 +260,6 @@ public class FedoraSparql extends FedoraBaseResource {
 
         final ResultSetStreamingOutput streamingOutput =
             new ResultSetStreamingOutput(resultSet, bestPossibleResponse.getMediaType());
-
-        addCallback(streamingOutput, new LogoutCallback(session));
 
         return ok(streamingOutput).build();
     }

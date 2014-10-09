@@ -133,33 +133,30 @@ public class FedoraStoragePolicy extends AbstractResource {
 
         final String[] str = split(request); // simple split for now
         validateArgs(str.length);
-        try {
-            final Node node = getJcrTools().findOrCreateNode(session,
-                    FEDORA_STORAGE_POLICY_PATH, "test");
-            if (isValidNodeTypeProperty(session, str[0]) ||
-                    isValidConfigurationProperty(str[0])) {
-                node.setProperty(str[0], new String[]{str[1] + ":" + str[2]});
+        final Node node = getJcrTools().findOrCreateNode(session,
+                FEDORA_STORAGE_POLICY_PATH, "test");
+        if (isValidNodeTypeProperty(session, str[0]) ||
+                isValidConfigurationProperty(str[0])) {
+            node.setProperty(str[0], new String[]{str[1] + ":" + str[2]});
 
-                // TODO (for now) instantiate PolicyType based on mix:mimeType
-                final StoragePolicy policy = newPolicyInstance(str[0], str[1], str[2]);
-                // TODO (for now) based on object comparison using equals()
-                if (storagePolicyDecisionPoint.contains(policy)) {
-                    throw new StoragePolicyTypeException("Property already exists!");
-                }
-                storagePolicyDecisionPoint.add(policy);
-                session.save();
-                LOGGER.debug("Saved PDS hint {}", request);
-
-                response = created(getUriInfo().getBaseUriBuilder()
-                                           .path(FedoraStoragePolicy.class)
-                                           .buildFromMap(singletonMap("path", str[0])));
-            } else {
-                throw new StoragePolicyTypeException(
-                        "Invalid property type specified: " + str[0]);
+            // TODO (for now) instantiate PolicyType based on mix:mimeType
+            final StoragePolicy policy = newPolicyInstance(str[0], str[1], str[2]);
+            // TODO (for now) based on object comparison using equals()
+            if (storagePolicyDecisionPoint.contains(policy)) {
+                throw new StoragePolicyTypeException("Property already exists!");
             }
-        } finally {
-            session.logout();
+            storagePolicyDecisionPoint.add(policy);
+            session.save();
+            LOGGER.debug("Saved PDS hint {}", request);
+
+            response = created(getUriInfo().getBaseUriBuilder()
+                    .path(FedoraStoragePolicy.class)
+                    .buildFromMap(singletonMap("path", str[0])));
+        } else {
+            throw new StoragePolicyTypeException(
+                    "Invalid property type specified: " + str[0]);
         }
+
 
         return response.build();
     }
@@ -196,27 +193,23 @@ public class FedoraStoragePolicy extends AbstractResource {
     @Timed
     public Response deleteNodeType(@PathParam("path") final String nodeType)
         throws RepositoryException {
-        try {
-            LOGGER.debug("Deleting node property{}", nodeType);
-            final Node node =
+        LOGGER.debug("Deleting node property{}", nodeType);
+        final Node node =
                 getJcrTools().findOrCreateNode(session,
-                                             FEDORA_STORAGE_POLICY_PATH, "test");
-            if (isValidNodeTypeProperty(session, nodeType)) {
-                node.getProperty(nodeType).remove();
-                session.save();
+                        FEDORA_STORAGE_POLICY_PATH, "test");
+        if (isValidNodeTypeProperty(session, nodeType)) {
+            node.getProperty(nodeType).remove();
+            session.save();
 
-                // remove all MimeType intances (since thats only the stored
-                // StoragePolicy for now.
-                // TODO Once StoragePolicy is updated to display StoragePolicy type, this
-                // would change
-                storagePolicyDecisionPoint.clear();
-                return noContent().build();
-            }
-            throw new RepositoryException(
-                "Invalid property type specified.");
-        } finally {
-            session.logout();
+            // remove all MimeType intances (since thats only the stored
+            // StoragePolicy for now.
+            // TODO Once StoragePolicy is updated to display StoragePolicy type, this
+            // would change
+            storagePolicyDecisionPoint.clear();
+            return noContent().build();
         }
+        throw new RepositoryException(
+                "Invalid property type specified.");
     }
 
     /**
@@ -246,25 +239,21 @@ public class FedoraStoragePolicy extends AbstractResource {
     private Response getStoragePolicy(final String nodeType) throws RepositoryException {
         LOGGER.debug("Get storage policy for: {}", nodeType);
         Response.ResponseBuilder response;
-        try {
-            final Node node =
+        final Node node =
                 getJcrTools().findOrCreateNode(session, FEDORA_STORAGE_POLICY_PATH, "test");
 
-            final Property prop = node.getProperty(nodeType);
-            if (null == prop) {
-                throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
-            }
-
-            final Value[] values = prop.getValues();
-            if (values != null && values.length > 0) {
-                response = ok(values[0].getString());
-            } else {
-                throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
-            }
-
-        } finally {
-            session.logout();
+        final Property prop = node.getProperty(nodeType);
+        if (null == prop) {
+            throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
         }
+
+        final Value[] values = prop.getValues();
+        if (values != null && values.length > 0) {
+            response = ok(values[0].getString());
+        } else {
+            throw new PathNotFoundException("StoragePolicy not found: " + nodeType);
+        }
+
         return response.build();
     }
 

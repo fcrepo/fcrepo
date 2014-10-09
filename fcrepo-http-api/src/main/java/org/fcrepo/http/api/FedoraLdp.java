@@ -191,22 +191,17 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
+        evaluateRequestPreconditions(request, servletResponse, resource(), session);
+
+        resource().delete();
+
         try {
-
-            evaluateRequestPreconditions(request, servletResponse, resource(), session);
-
-            resource().delete();
-
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            return noContent().build();
-        } finally {
-            session.logout();
+            session.save();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
+
+        return noContent().build();
     }
 
 
@@ -226,62 +221,58 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition)
             throws InvalidChecksumException {
 
-        try {
+        final FedoraResource resource;
+        final Response.ResponseBuilder response;
 
-            final FedoraResource resource;
-            final Response.ResponseBuilder response;
+        final String path = toPath(translator(), externalPath);
 
-            final String path = toPath(translator(), externalPath);
+        final MediaType contentType = getSimpleContentType(requestContentType);
 
-            final MediaType contentType = getSimpleContentType(requestContentType);
+        if (nodeService.exists(session, path)) {
+            resource = resource();
+            response = noContent();
+        } else {
+            final MediaType effectiveContentType
+                    = requestBodyStream == null || requestContentType == null ? null : contentType;
+            resource = createFedoraResource(null, effectiveContentType, path, contentDisposition);
 
-            if (nodeService.exists(session, path)) {
-                resource = resource();
-                response = noContent();
-            } else {
-                final MediaType effectiveContentType
-                        = requestBodyStream == null || requestContentType == null ? null : contentType;
-                resource = createFedoraResource(null, effectiveContentType, path, contentDisposition);
+            final URI location = getUri(resource);
 
-                final URI location = getUri(resource);
-
-                response = created(location).entity(location.toString());
-            }
-
-            evaluateRequestPreconditions(request, servletResponse, resource, session);
-
-            if (requestContentType != null && requestBodyStream != null)  {
-                if ((resource instanceof FedoraObject || resource instanceof Datastream)
-                        && isRdfContentType(contentType.toString())) {
-                    try {
-                        replaceResourceWithStream(resource, requestBodyStream, contentType);
-                    } catch (final RiotException e) {
-                        throw new BadRequestException("RDF was not parsable", e);
-                    }
-                } else if (resource instanceof FedoraBinary) {
-                    replaceResourceBinaryWithStream((FedoraBinary) resource,
-                            requestBodyStream, contentDisposition, requestContentType.toString(), checksum);
-                } else {
-                    throw new ClientErrorException(UNSUPPORTED_MEDIA_TYPE);
-                }
-
-            } else if (!resource.isNew()) {
-                throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
-            }
-
-            try {
-                session.save();
-                versionService.nodeUpdated(resource.getNode());
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            addCacheControlHeaders(servletResponse, resource, session);
-
-            return response.build();
-        } finally {
-            session.logout();
+            response = created(location).entity(location.toString());
         }
+
+        evaluateRequestPreconditions(request, servletResponse, resource, session);
+
+        if (requestContentType != null && requestBodyStream != null)  {
+            if ((resource instanceof FedoraObject || resource instanceof Datastream)
+                    && isRdfContentType(contentType.toString())) {
+                try {
+                    replaceResourceWithStream(resource, requestBodyStream, contentType);
+                } catch (final RiotException e) {
+                    throw new BadRequestException("RDF was not parsable", e);
+                }
+            } else if (resource instanceof FedoraBinary) {
+                replaceResourceBinaryWithStream((FedoraBinary) resource,
+                        requestBodyStream, contentDisposition, requestContentType.toString(), checksum);
+            } else {
+                throw new ClientErrorException(UNSUPPORTED_MEDIA_TYPE);
+            }
+
+        } else if (!resource.isNew()) {
+            throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
+        }
+
+        try {
+            session.save();
+            versionService.nodeUpdated(resource.getNode());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+        addCacheControlHeaders(servletResponse, resource, session);
+
+        return response.build();
+
     }
 
     /**
@@ -336,8 +327,6 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new BadRequestException(cause.getMessage());
             }
             throw ex;
-        } finally {
-            session.logout();
         }
     }
 
@@ -372,61 +361,56 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
 
-        try {
+        final MediaType effectiveContentType
+                = requestBodyStream == null || requestContentType == null ? null : contentType;
+        final FedoraResource result = createFedoraResource(mixin,
+                effectiveContentType,
+                newObjectPath, contentDisposition);
 
-            final MediaType effectiveContentType
-                    = requestBodyStream == null || requestContentType == null ? null : contentType;
-            final FedoraResource result = createFedoraResource(mixin,
-                    effectiveContentType,
-                    newObjectPath, contentDisposition);
+        if (requestBodyStream == null || requestContentType == null) {
+            LOGGER.trace("No request body detected");
+        } else {
+            LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
 
-            if (requestBodyStream == null || requestContentType == null) {
-                LOGGER.trace("No request body detected");
+            if ((result instanceof FedoraObject || result instanceof Datastream)
+                    && isRdfContentType(contentTypeString)) {
+                replaceResourceWithStream(result, requestBodyStream, contentType);
+            } else if (result instanceof FedoraBinary) {
+                LOGGER.trace("Created a datastream and have a binary payload.");
+
+                replaceResourceBinaryWithStream((FedoraBinary) result,
+                        requestBodyStream, contentDisposition, contentTypeString, checksum);
+
+            } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                LOGGER.trace("Found SPARQL-Update content, applying..");
+                patchResourcewithSparql(result, IOUtils.toString(requestBodyStream));
             } else {
-                LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
-
-                if ((result instanceof FedoraObject || result instanceof Datastream)
-                        && isRdfContentType(contentTypeString)) {
-                    replaceResourceWithStream(result, requestBodyStream, contentType);
-                } else if (result instanceof FedoraBinary) {
-                    LOGGER.trace("Created a datastream and have a binary payload.");
-
-                    replaceResourceBinaryWithStream((FedoraBinary) result,
-                            requestBodyStream, contentDisposition, contentTypeString, checksum);
-
-                } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                    LOGGER.trace("Found SPARQL-Update content, applying..");
-                    patchResourcewithSparql(result, IOUtils.toString(requestBodyStream));
-                } else {
-                    throw new WebApplicationException(notAcceptable(null)
-                            .entity("Invalid Content Type " + contentTypeString).build());
-                }
+                throw new WebApplicationException(notAcceptable(null)
+                        .entity("Invalid Content Type " + contentTypeString).build());
             }
-
-            try {
-                session.save();
-                versionService.nodeUpdated(result.getNode());
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
-
-            addCacheControlHeaders(servletResponse, result, session);
-
-            final URI location = getUri(result);
-
-            if (result instanceof FedoraBinary) {
-                final URI descriptionUri = getUri(((FedoraBinary) result).getDescription());
-                servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\";"
-                        + " anchor=\"" + location + "\"");
-            }
-
-            return created(location).entity(location.toString()).build();
-
-        } finally {
-            session.logout();
         }
+
+        try {
+            session.save();
+            versionService.nodeUpdated(result.getNode());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+        LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
+
+        addCacheControlHeaders(servletResponse, result, session);
+
+        final URI location = getUri(result);
+
+        if (result instanceof FedoraBinary) {
+            final URI descriptionUri = getUri(((FedoraBinary) result).getDescription());
+            servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\";"
+                    + " anchor=\"" + location + "\"");
+        }
+
+        return created(location).entity(location.toString()).build();
+
     }
 
     protected void addResourceHttpHeaders(final FedoraResource resource) {
