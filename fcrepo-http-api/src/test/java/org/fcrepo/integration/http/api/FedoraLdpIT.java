@@ -1298,7 +1298,34 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(201, getStatus(firstPut));
 
         final HttpPut secondPut = new HttpPut(serverAddress + pid);
+        secondPut.setHeader("Content-Type", "text/turtle");
         assertEquals(409, getStatus(secondPut));
+    }
+
+    @Test
+    public void testCreateResourceWithoutContentType() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        final HttpPut httpPut = new HttpPut(serverAddress + pid);
+        assertEquals(201, getStatus(httpPut));
+    }
+
+    @Test
+    public void testUpdateObjectWithoutContentType() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPut httpPut = new HttpPut(serverAddress + pid);
+        assertEquals(415, getStatus(httpPut));
+    }
+
+    @Test
+    public void testUpdateBinaryWithoutContentType() throws Exception {
+        final String pid = getRandomUniquePid();
+        createDatastream(pid, "x", "xyz");
+
+        final HttpPut httpPut = new HttpPut(serverAddress + pid + "/x");
+        assertEquals(204, getStatus(httpPut));
     }
 
     @Test
