@@ -110,6 +110,7 @@ $(function() {
     $('#action_create').submit(addChild);
     $('#action_sparql_update').submit(sendSparqlUpdate);
     $('#action_register_namespace').submit(registerNamespace);
+    $('#action_remove_namespace').submit(removeNamespace);
     $('#action_delete').submit(deleteItem);
     $('#action_create_transaction').submit(submitAndFollowLocation);
     $('#action_rollback_transaction').submit(submitAndRedirectToBase);
@@ -182,6 +183,20 @@ function registerNamespace() {
 
 
     var query = "INSERT { <" + $('#namespace_uri').val() + "> <http://purl.org/vocab/vann/preferredNamespacePrefix> \"" + $('#namespace_prefix').val() + "\"} WHERE {}";
+
+
+    $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: query, success: function(data, textStatus, request) {
+        window.location.reload(true);
+    }}).fail( ajaxErrorHandler);
+
+    return false;
+}
+
+function removeNamespace() {
+    var postURI = $('#main').attr('resource');
+
+
+    var query = "DELETE { <" + $('#namespace_uri_remove').val() + "> <http://purl.org/vocab/vann/preferredNamespacePrefix> \"" + $('#namespace_prefix_remove').val() + "\"} WHERE {}";
 
 
     $.ajax({url: postURI, type: "POST", contentType: "application/sparql-update", data: query, success: function(data, textStatus, request) {

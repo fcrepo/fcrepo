@@ -40,6 +40,25 @@
                     <button type="submit" class="btn btn-primary">Create</button>
                 </form>
             </div>
+
+            <div class="actions collapse visible-lg visible-md" id="actions">
+                <form id="action_remove_namespace">
+                    <h3>Remove Namespace</h3>
+
+                    <div class="form-group">
+                        <label for="namespace_prefix_remove">Prefix</label>
+                        <input class="form-control" type="text" name="prefix_remove" id="namespace_prefix_remove"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="namespace_uri">URI</label>
+                        <input class="form-control" type="text" name="uri_remove" id="namespace_uri_remove"/>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Delete</button>
+                </form>
+            </div>
+
         </div>
 
 <div class="col-md-9 col-md-pull-3">
