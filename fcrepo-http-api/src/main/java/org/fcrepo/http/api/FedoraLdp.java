@@ -52,7 +52,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -72,7 +71,6 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
@@ -219,7 +217,7 @@ public class FedoraLdp extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition)
-            throws InvalidChecksumException {
+            throws InvalidChecksumException, IOException {
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
@@ -243,7 +241,9 @@ public class FedoraLdp extends ContentExposingResource {
 
         evaluateRequestPreconditions(request, servletResponse, resource, session);
 
-        if (requestContentType != null && requestBodyStream != null)  {
+        if (requestBodyStream == null && !resource.isNew()) {
+            throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
+        } else if (requestBodyStream != null)  {
             if ((resource instanceof FedoraObject || resource instanceof Datastream)
                     && isRdfContentType(contentType.toString())) {
                 try {
@@ -253,13 +253,10 @@ public class FedoraLdp extends ContentExposingResource {
                 }
             } else if (resource instanceof FedoraBinary) {
                 replaceResourceBinaryWithStream((FedoraBinary) resource,
-                        requestBodyStream, contentDisposition, requestContentType.toString(), checksum);
-            } else {
-                throw new ClientErrorException(UNSUPPORTED_MEDIA_TYPE);
+                        requestBodyStream, contentDisposition, contentType.toString(), checksum);
+            } else if (!resource.isNew()) {
+                throw new ClientErrorException("Invalid Content Type " + requestContentType, UNSUPPORTED_MEDIA_TYPE);
             }
-
-        } else if (!resource.isNew()) {
-            throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
         }
 
         try {
@@ -367,7 +364,7 @@ public class FedoraLdp extends ContentExposingResource {
                 effectiveContentType,
                 newObjectPath, contentDisposition);
 
-        if (requestBodyStream == null || requestContentType == null) {
+        if (requestBodyStream == null) {
             LOGGER.trace("No request body detected");
         } else {
             LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
@@ -385,8 +382,9 @@ public class FedoraLdp extends ContentExposingResource {
                 LOGGER.trace("Found SPARQL-Update content, applying..");
                 patchResourcewithSparql(result, IOUtils.toString(requestBodyStream));
             } else {
-                throw new WebApplicationException(notAcceptable(null)
-                        .entity("Invalid Content Type " + contentTypeString).build());
+                if (requestBodyStream.read() != -1) {
+                    throw new ClientErrorException("Invalid Content Type " + contentTypeString, UNSUPPORTED_MEDIA_TYPE);
+                }
             }
         }
 
