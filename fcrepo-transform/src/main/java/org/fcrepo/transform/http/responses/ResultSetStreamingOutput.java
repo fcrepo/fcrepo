@@ -66,8 +66,6 @@ public class ResultSetStreamingOutput extends AbstractFuture<Void> implements St
     private final ResultSet results;
     private final MediaType mediaType;
 
-    private static final Void finishedMarker = null;
-
     /**
      * Stream the results of a SPARQL Query with the given MediaType
      * @param results
@@ -86,16 +84,13 @@ public class ResultSetStreamingOutput extends AbstractFuture<Void> implements St
     public void write(final OutputStream entityStream) {
         final ResultsFormat resultsFormat = getResultsFormat(mediaType);
 
-        try {
-            if (resultsFormat == FMT_UNKNOWN) {
-                new GraphStoreStreamingOutput(create(toModel(results)),
-                        mediaType).write(entityStream);
-            } else {
-                output(entityStream, results, resultsFormat);
-            }
-        } finally {
-            set(finishedMarker);
+        if (resultsFormat == FMT_UNKNOWN) {
+            new GraphStoreStreamingOutput(create(toModel(results)),
+                    mediaType).write(entityStream);
+        } else {
+            output(entityStream, results, resultsFormat);
         }
+
     }
 
     /**

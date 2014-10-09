@@ -107,19 +107,14 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @PUT
     public Response enableVersioning() throws URISyntaxException {
+        resource().enableVersioning();
+
         try {
-
-            resource().enableVersioning();
-
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-            return created(uriInfo.getRequestUri()).build();
-        } finally {
-            session.logout();
+            session.save();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
+        return created(uriInfo.getRequestUri()).build();
     }
 
     /**
@@ -128,19 +123,15 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @DELETE
     public Response disableVersioning() {
+        resource().disableVersioning();
+
         try {
-            resource().disableVersioning();
-
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            return noContent().build();
-        } finally {
-            session.logout();
+            session.save();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
+
+        return noContent().build();
     }
 
     /**
@@ -153,21 +144,17 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
-        try {
-            final String path = toPath(translator(), externalPath);
-            final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
-                    singleton(path));
+        final String path = toPath(translator(), externalPath);
+        final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
+                singleton(path));
 
-            if (slug != null) {
-                resource().addVersionLabel(slug);
-            }
-
-            final String version = (slug != null) ? slug : versions.iterator().next();
-
-            return noContent().header("Location", uriInfo.getRequestUri() + "/" + version).build();
-        } finally {
-            session.logout();
+        if (slug != null) {
+            resource().addVersionLabel(slug);
         }
+
+        final String version = (slug != null) ? slug : versions.iterator().next();
+
+        return noContent().header("Location", uriInfo.getRequestUri() + "/" + version).build();
     }
 
 

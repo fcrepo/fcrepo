@@ -99,8 +99,6 @@ public class FedoraExport extends FedoraBaseResource {
                             LOGGER.debug("Successfully serialized object: {}", resource);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
-                        } finally {
-                            session.logout();
                         }
                     }
                 }).build();

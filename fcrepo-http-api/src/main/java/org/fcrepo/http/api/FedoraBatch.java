@@ -169,143 +169,138 @@ public class FedoraBatch extends ContentExposingResource {
 
         final String path = toPath(translator(), externalPath);
 
-        try {
+        final Set<FedoraResource> resourcesChanged = new HashSet<>();
 
-            final Set<FedoraResource> resourcesChanged = new HashSet<>();
-
-            // iterate through the multipart entities
-            for (final BodyPart part : multipart.getBodyParts()) {
-                final ContentDisposition contentDisposition = part.getContentDisposition();
+        // iterate through the multipart entities
+        for (final BodyPart part : multipart.getBodyParts()) {
+            final ContentDisposition contentDisposition = part.getContentDisposition();
 
 
-                // a relative path (probably.)
+            // a relative path (probably.)
 
-                final String contentDispositionType = contentDisposition.getType();
+            final String contentDispositionType = contentDisposition.getType();
 
-                final String partName = contentDisposition.getParameters().get("name");
+            final String partName = contentDisposition.getParameters().get("name");
 
-                final String contentTypeString = getSimpleContentType(part.getMediaType()).toString();
+            final String contentTypeString = getSimpleContentType(part.getMediaType()).toString();
 
-                LOGGER.trace("Processing {} part {} with media type {}",
-                                contentDispositionType, partName, contentTypeString);
+            LOGGER.trace("Processing {} part {} with media type {}",
+                    contentDispositionType, partName, contentTypeString);
 
-                final String realContentDisposition;
+            final String realContentDisposition;
 
-                // we need to apply some heuristics for "dumb" clients that
-                // can only send form-data content
-                if (contentDispositionType.equals("form-data")) {
+            // we need to apply some heuristics for "dumb" clients that
+            // can only send form-data content
+            if (contentDispositionType.equals("form-data")) {
 
-                    if (contentDisposition.getFileName() != null) {
-                        realContentDisposition = ATTACHMENT;
-                    } else if (contentTypeString.equals(contentTypeSPARQLUpdate)
+                if (contentDisposition.getFileName() != null) {
+                    realContentDisposition = ATTACHMENT;
+                } else if (contentTypeString.equals(contentTypeSPARQLUpdate)
                         || (isRdfContentType(contentTypeString) && !contentTypeString.equals(TEXT_PLAIN))) {
-                        realContentDisposition = INLINE;
-                    } else if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
-                        realContentDisposition = DELETE;
+                    realContentDisposition = INLINE;
+                } else if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
+                    realContentDisposition = DELETE;
+                } else {
+                    realContentDisposition = ATTACHMENT;
+                }
+
+                LOGGER.trace("Converted form-data to content disposition {}", realContentDisposition);
+            } else {
+                realContentDisposition = contentDispositionType;
+            }
+
+            // convert the entity to an InputStream
+            final Object entityBody = part.getEntity();
+
+            final InputStream src;
+            if (entityBody instanceof BodyPartEntity) {
+                final BodyPartEntity entity =
+                        (BodyPartEntity) part.getEntity();
+                src = entity.getInputStream();
+            } else if (entityBody instanceof InputStream) {
+                src = (InputStream) entityBody;
+            } else {
+                LOGGER.debug("Got unknown multipart entity for {}; ignoring it", partName);
+                src = IOUtils.toInputStream("");
+            }
+
+            // convert the entity name to a node path
+            final String pathName;
+
+            if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
+                pathName = IOUtils.toString(src);
+            } else {
+                pathName = partName;
+            }
+
+            final String absPath;
+
+            if (pathName.startsWith("/")) {
+                absPath = pathName;
+            } else {
+                absPath = path + "/" + pathName;
+            }
+            final String objPath = translator().asString(translator().toDomain(absPath));
+
+            final FedoraResource resource;
+
+            if (nodeService.exists(session, objPath)) {
+                resource = getResourceFromPath(objPath);
+            } else if ((isRdfContentType(contentTypeString) && !contentTypeString.equals(TEXT_PLAIN)) ||
+                    contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                resource = objectService.findOrCreateObject(session, objPath);
+            } else {
+                resource = datastreamService.findOrCreateDatastream(session, objPath).getBinary();
+            }
+
+            final String checksum = contentDisposition.getParameters().get("checksum");
+
+            switch (realContentDisposition) {
+                case INLINE:
+                case ATTACHMENT:
+
+                    if ((resource instanceof FedoraObject || resource instanceof Datastream)
+                            && isRdfContentType(contentTypeString)) {
+                        replaceResourceWithStream(resource, src, part.getMediaType());
+                    } else if (resource instanceof FedoraBinary) {
+                        replaceResourceBinaryWithStream((FedoraBinary) resource,
+                                src,
+                                contentDisposition,
+                                part.getMediaType().toString(),
+                                checksum);
+                    } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                        patchResourcewithSparql(resource, IOUtils.toString(src));
                     } else {
-                        realContentDisposition = ATTACHMENT;
+                        throw new WebApplicationException(notAcceptable(null)
+                                .entity("Invalid Content Type " + contentTypeString).build());
                     }
 
-                    LOGGER.trace("Converted form-data to content disposition {}", realContentDisposition);
-                } else {
-                    realContentDisposition = contentDispositionType;
-                }
+                    resourcesChanged.add(resource);
 
-                // convert the entity to an InputStream
-                final Object entityBody = part.getEntity();
+                    break;
 
-                final InputStream src;
-                if (entityBody instanceof BodyPartEntity) {
-                    final BodyPartEntity entity =
-                        (BodyPartEntity) part.getEntity();
-                    src = entity.getInputStream();
-                } else if (entityBody instanceof InputStream) {
-                    src = (InputStream) entityBody;
-                } else {
-                    LOGGER.debug("Got unknown multipart entity for {}; ignoring it", partName);
-                    src = IOUtils.toInputStream("");
-                }
+                case DELETE:
+                    resource.delete();
+                    break;
 
-                // convert the entity name to a node path
-                final String pathName;
-
-                if (partName.equals(FORM_DATA_DELETE_PART_NAME)) {
-                    pathName = IOUtils.toString(src);
-                } else {
-                    pathName = partName;
-                }
-
-                final String absPath;
-
-                if (pathName.startsWith("/")) {
-                    absPath = pathName;
-                } else {
-                    absPath = path + "/" + pathName;
-                }
-                final String objPath = translator().asString(translator().toDomain(absPath));
-
-                final FedoraResource resource;
-
-                if (nodeService.exists(session, objPath)) {
-                    resource = getResourceFromPath(objPath);
-                } else if ((isRdfContentType(contentTypeString) && !contentTypeString.equals(TEXT_PLAIN)) ||
-                        contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                    resource = objectService.findOrCreateObject(session, objPath);
-                } else {
-                    resource = datastreamService.findOrCreateDatastream(session, objPath).getBinary();
-                }
-
-                final String checksum = contentDisposition.getParameters().get("checksum");
-
-                switch (realContentDisposition) {
-                    case INLINE:
-                    case ATTACHMENT:
-
-                        if ((resource instanceof FedoraObject || resource instanceof Datastream)
-                                && isRdfContentType(contentTypeString)) {
-                            replaceResourceWithStream(resource, src, part.getMediaType());
-                        } else if (resource instanceof FedoraBinary) {
-                            replaceResourceBinaryWithStream((FedoraBinary) resource,
-                                    src,
-                                    contentDisposition,
-                                    part.getMediaType().toString(),
-                                    checksum);
-                        } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                            patchResourcewithSparql(resource, IOUtils.toString(src));
-                        } else {
-                            throw new WebApplicationException(notAcceptable(null)
-                                .entity("Invalid Content Type " + contentTypeString).build());
-                        }
-
-                        resourcesChanged.add(resource);
-
-                        break;
-
-                    case DELETE:
-                        resource.delete();
-                        break;
-
-                    default:
-                        return status(Status.BAD_REQUEST)
-                                   .entity("Unknown Content-Disposition: " + realContentDisposition).build();
-                }
+                default:
+                    return status(Status.BAD_REQUEST)
+                            .entity("Unknown Content-Disposition: " + realContentDisposition).build();
             }
-
-            try {
-                session.save();
-                versionService.nodeUpdated(session, path);
-                for (final FedoraResource resource : resourcesChanged) {
-                    versionService.nodeUpdated(resource.getNode());
-                }
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-
-            return noContent().build();
-
-        } finally {
-            session.logout();
         }
+
+        try {
+            session.save();
+            versionService.nodeUpdated(session, path);
+            for (final FedoraResource resource : resourcesChanged) {
+                versionService.nodeUpdated(resource.getNode());
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+        return noContent().build();
+
     }
 
     /**
@@ -325,95 +320,88 @@ public class FedoraBatch extends ContentExposingResource {
         @Context final Request request) throws RepositoryException, NoSuchAlgorithmException {
 
         final List<Datastream> datastreams = new ArrayList<>();
+        // TODO: wrap some of this JCR logic in an fcrepo abstraction;
 
-        try {
-            // TODO: wrap some of this JCR logic in an fcrepo abstraction;
+        final Node node = resource().getNode();
 
-            final Node node = resource().getNode();
+        Date date = new Date();
 
-            Date date = new Date();
+        final MessageDigest digest = MessageDigest.getInstance("SHA-1");
 
-            final MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        final NodeIterator ni;
 
-            final NodeIterator ni;
-
-            if (requestedChildren.isEmpty()) {
-                ni = node.getNodes();
-            } else {
-                ni =
-                        node.getNodes(requestedChildren
-                                .toArray(new String[requestedChildren.size()]));
-            }
-
-            // complain if no children found
-            if ( ni.getSize() == 0 ) {
-                return status(Status.BAD_REQUEST).build();
-            }
-
-            // transform the nodes into datastreams, and calculate cache header
-            // data
-            while (ni.hasNext()) {
-
-                final Node dsNode = ni.nextNode();
-                final Datastream ds = datastreamService.asDatastream(dsNode);
-
-                if (!ds.hasContent()) {
-                    continue;
-                }
-
-                final FedoraBinary binary = ds.getBinary();
-
-                digest.update(binary.getContentDigest().toString().getBytes(
-                        UTF_8));
-
-                if (binary.getLastModifiedDate().after(date)) {
-                    date = binary.getLastModifiedDate();
-                }
-
-                datastreams.add(ds);
-            }
-
-            final URI digestURI =
-                    ContentDigest.asURI(digest.getAlgorithm(), digest.digest());
-            final EntityTag etag = new EntityTag(digestURI.toString());
-
-            final Date roundedDate = new Date();
-            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
-
-            ResponseBuilder builder =
-                    request.evaluatePreconditions(roundedDate, etag);
-
-            final CacheControl cc = new CacheControl();
-            cc.setMaxAge(0);
-            cc.setMustRevalidate(true);
-
-            if (builder == null) {
-                final MultiPart multipart = new MultiPart();
-
-                for (final Datastream ds : datastreams) {
-                    final FedoraBinary binary = ds.getBinary();
-                    final BodyPart bodyPart =
-                            new BodyPart(binary.getContent(),
-                                    MediaType.valueOf(binary.getMimeType()));
-                    bodyPart.setContentDisposition(
-                            ContentDisposition.type(ATTACHMENT)
-                                    .fileName(ds.getPath())
-                                    .creationDate(binary.getCreatedDate())
-                                    .modificationDate(binary.getLastModifiedDate())
-                                    .size(binary.getContentSize())
-                            .build());
-                    multipart.bodyPart(bodyPart);
-                }
-
-                builder = ok(multipart, MULTIPART_FORM_DATA);
-            }
-
-            return builder.cacheControl(cc).lastModified(date).tag(etag)
-                    .build();
-
-        } finally {
-            session.logout();
+        if (requestedChildren.isEmpty()) {
+            ni = node.getNodes();
+        } else {
+            ni = node.getNodes(requestedChildren
+                            .toArray(new String[requestedChildren.size()]));
         }
+
+        // complain if no children found
+        if ( ni.getSize() == 0 ) {
+            return status(Status.BAD_REQUEST).build();
+        }
+
+        // transform the nodes into datastreams, and calculate cache header
+        // data
+        while (ni.hasNext()) {
+
+            final Node dsNode = ni.nextNode();
+            final Datastream ds = datastreamService.asDatastream(dsNode);
+
+            if (!ds.hasContent()) {
+                continue;
+            }
+
+            final FedoraBinary binary = ds.getBinary();
+
+            digest.update(binary.getContentDigest().toString().getBytes(
+                    UTF_8));
+
+            if (binary.getLastModifiedDate().after(date)) {
+                date = binary.getLastModifiedDate();
+            }
+
+            datastreams.add(ds);
+        }
+
+        final URI digestURI = ContentDigest.asURI(digest.getAlgorithm(), digest.digest());
+        final EntityTag etag = new EntityTag(digestURI.toString());
+
+        final Date roundedDate = new Date();
+        roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+
+        ResponseBuilder builder =
+                request.evaluatePreconditions(roundedDate, etag);
+
+        final CacheControl cc = new CacheControl();
+        cc.setMaxAge(0);
+        cc.setMustRevalidate(true);
+
+        if (builder == null) {
+            final MultiPart multipart = new MultiPart();
+
+            for (final Datastream ds : datastreams) {
+                final FedoraBinary binary = ds.getBinary();
+                final BodyPart bodyPart =
+                        new BodyPart(binary.getContent(),
+                                MediaType.valueOf(binary.getMimeType()));
+                bodyPart.setContentDisposition(
+                        ContentDisposition.type(ATTACHMENT)
+                                .fileName(ds.getPath())
+                                .creationDate(binary.getCreatedDate())
+                                .modificationDate(binary.getLastModifiedDate())
+                                .size(binary.getContentSize())
+                                .build());
+                multipart.bodyPart(bodyPart);
+            }
+
+            builder = ok(multipart, MULTIPART_FORM_DATA);
+        }
+
+        return builder.cacheControl(cc).lastModified(date).tag(etag)
+                .build();
+
     }
 
     @Override

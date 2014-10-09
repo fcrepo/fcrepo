@@ -116,8 +116,6 @@ public class FedoraLocks extends FedoraBaseResource implements FedoraJcrTypes {
             return created(new URI(location)).entity(location).header("Lock-Token", lock.getLockToken()).build();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
     }
 
@@ -137,8 +135,6 @@ public class FedoraLocks extends FedoraBaseResource implements FedoraJcrTypes {
             return noContent().build();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
     }
 

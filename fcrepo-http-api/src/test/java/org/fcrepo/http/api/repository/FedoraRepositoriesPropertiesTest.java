@@ -82,6 +82,5 @@ public class FedoraRepositoriesPropertiesTest {
         verify(mockObject).updatePropertiesDataset(any(IdentifierConverter.class),
                 eq("my-sparql-statement"));
         verify(mockSession).save();
-        verify(mockSession).logout();
     }
 }
