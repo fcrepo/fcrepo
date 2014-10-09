@@ -21,6 +21,8 @@ import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import javax.jcr.Node;
@@ -142,26 +144,29 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         return skolemizedBnodeMap.get(id);
     }
 
-    protected void operateOnTriple(final Statement t)
-        throws RepositoryException {
-        final Resource subject = t.getSubject();
-        final Node subjectNode = idTranslator().convert(subject);
+    protected void operateOnTriple(final Statement t) {
+        try {
+            final Resource subject = t.getSubject();
+            final Node subjectNode = idTranslator().convert(subject);
 
-        // if this is a user-managed RDF type assertion, update the node's
-        // mixins. If it isn't, treat it as a "data" property.
-        if (t.getPredicate().equals(type) && t.getObject().isResource()) {
-            final Resource mixinResource = t.getObject().asResource();
-            if (!isManagedMixin.apply(mixinResource)) {
-                LOGGER.debug("Operating on node: {} with mixin: {}.",
-                        subjectNode, mixinResource);
-                operateOnMixin(mixinResource, subjectNode);
+            // if this is a user-managed RDF type assertion, update the node's
+            // mixins. If it isn't, treat it as a "data" property.
+            if (t.getPredicate().equals(type) && t.getObject().isResource()) {
+                final Resource mixinResource = t.getObject().asResource();
+                if (!isManagedMixin.apply(mixinResource)) {
+                    LOGGER.debug("Operating on node: {} with mixin: {}.",
+                            subjectNode, mixinResource);
+                    operateOnMixin(mixinResource, subjectNode);
+                } else {
+                    LOGGER.debug("Found repository-managed mixin on which we will not operate.");
+                }
             } else {
-                LOGGER.debug("Found repository-managed mixin on which we will not operate.");
+                LOGGER.debug("Operating on node: {} from triple: {}.", subjectNode,
+                        t);
+                operateOnProperty(t, subjectNode);
             }
-        } else {
-            LOGGER.debug("Operating on node: {} from triple: {}.", subjectNode,
-                    t);
-            operateOnProperty(t, subjectNode);
+        } catch (final RepositoryException | RepositoryRuntimeException e) {
+            throw new MalformedRdfException(e.getMessage(), e);
         }
     }
 
