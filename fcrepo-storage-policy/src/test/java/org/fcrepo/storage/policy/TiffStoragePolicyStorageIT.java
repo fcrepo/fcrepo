@@ -16,14 +16,13 @@
 package org.fcrepo.storage.policy;
 
 import static java.util.Collections.singletonMap;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
-import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
 
 import java.io.ByteArrayInputStream;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Map;
 
 import javax.jcr.Node;
@@ -31,13 +30,14 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.impl.services.DatastreamServiceImpl;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
 import org.fcrepo.kernel.impl.services.functions.GetBinaryKey;
-import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepositoryFactory;
@@ -93,6 +93,8 @@ public class TiffStoragePolicyStorageIT {
         ByteArrayInputStream data;
         final Session session = repo.login();
 
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
+
         objectService.findOrCreateObject(session, "/testCompositeObject");
 
         data = new ByteArrayInputStream(
@@ -134,22 +136,23 @@ public class TiffStoragePolicyStorageIT {
 
         final FedoraBinary normalBinary = datastreamService.asBinary(node);
 
-        Collection<FixityResult> fixity = normalBinary.getFixity(SHA_1.toString());
+        Model fixity = normalBinary.getFixity(subjects).asModel();
 
         assertNotEquals(0, fixity.size());
 
-        FixityResult e = fixity.iterator().next();
+        String contentLocation = fixity.getProperty(null, HAS_CONTENT_LOCATION).getObject().toString();
 
-        assertThat(e.getStoreIdentifier(), containsString(key.toString()));
+        assertThat(contentLocation, containsString(key.toString()));
 
         final FedoraBinary tiffBinary = datastreamService.asBinary(tiffNode);
 
-        fixity = tiffBinary.getFixity(SHA_1.toString());
+        fixity = tiffBinary.getFixity(subjects).asModel();
 
         assertNotEquals(0, fixity.size());
 
-        e = fixity.iterator().next();
+        contentLocation = fixity.getProperty(null, HAS_CONTENT_LOCATION).getObject().toString();
 
-        assertThat(e.getStoreIdentifier(), containsString(tiffKey.toString()));
+        assertThat(contentLocation, containsString(tiffKey.toString()));
+
     }
 }

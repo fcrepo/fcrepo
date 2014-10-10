@@ -15,14 +15,16 @@
  */
 package org.fcrepo.kernel;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import javax.jcr.Binary;
+import javax.jcr.Node;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
 
 /**
  * @author cabeer
@@ -85,9 +87,19 @@ public interface FedoraBinary extends FedoraResource {
     String getFilename();
 
     /**
-     * Get the fixity of this datastream in a given repository's binary store.
-     * @param algorithm the algorithm to use to calculate the checksum
+     * Get the fixity of this datastream compared to metadata stored in the repository
+     * @param graphSubjects
      * @return
      */
-    Collection<FixityResult> getFixity(String algorithm);
+    RdfStream getFixity(IdentifierConverter<Resource,Node> graphSubjects);
+
+    /**
+     * Get the fixity of this datastream in a given repository's binary store.
+     * @param graphSubjects
+     * @param contentDigest the checksum to compare against
+     * @param size the expected size of the binary
+     * @return
+     */
+    RdfStream getFixity(IdentifierConverter<Resource,Node> graphSubjects,
+                        URI contentDigest, long size);
 }

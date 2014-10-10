@@ -15,8 +15,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.collect.ImmutableSet.copyOf;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
@@ -26,36 +24,22 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.Set;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
-import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.utils.ContentDigest;
-import org.fcrepo.kernel.utils.FixityResult;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.fcrepo.metrics.RegistryService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Timer;
 
 /**
  * Service for creating and retrieving Datastreams without using the JCR API.
@@ -68,14 +52,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
 
     @Autowired(required = false)
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
-
-    static final RegistryService registryService = RegistryService.getInstance();
-    static final Counter fixityCheckCounter
-        = registryService.getMetrics().counter(name(DatastreamService.class, "fixity-check-counter"));
-
-    static final Timer timer = registryService.getMetrics().timer(
-            name(Datastream.class, "fixity-check-time"));
-
 
     private static final Logger LOGGER = getLogger(DatastreamServiceImpl.class);
 
@@ -162,57 +138,6 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         if (!resource.hasType(type)) {
             throw new ResourceTypeException(resource + " can not be used as a " + type);
         }
-    }
-
-    /**
-     * Get the fixity results for the datastream as a RDF Dataset
-     *
-     * @param subjects
-     * @param binary
-     * @return fixity results
-     * @throws RepositoryException
-     */
-    @Override
-    public RdfStream getFixityResultsModel(final IdentifierConverter<Resource,Node> subjects,
-            final FedoraBinary binary) {
-        try {
-
-            final URI digestUri = binary.getContentDigest();
-            final long size = binary.getContentSize();
-            final String algorithm = ContentDigest.getAlgorithm(digestUri);
-
-            final Collection<FixityResult> blobs = runFixity(binary, algorithm);
-
-            return new FixityRdfContext(binary.getNode(), subjects, blobs, digestUri, size);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
-     * Run the fixity check on the datastream and attempt to automatically
-     * correct failures if additional copies of the bitstream are available
-     *
-     * @param binary
-     * @return results
-     * @throws RepositoryException
-     */
-    private Collection<FixityResult> runFixity(final FedoraBinary binary, final String algorithm) {
-
-        Set<FixityResult> fixityResults;
-
-        fixityCheckCounter.inc();
-
-        final Timer.Context context = timer.time();
-
-        try {
-            fixityResults = copyOf(binary.getFixity(algorithm));
-
-        } finally {
-            context.stop();
-        }
-
-        return fixityResults;
     }
 
     /**
