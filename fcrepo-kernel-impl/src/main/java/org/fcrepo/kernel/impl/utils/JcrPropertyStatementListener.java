@@ -27,6 +27,8 @@ import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
+import org.fcrepo.kernel.services.ObjectService;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
@@ -62,6 +64,8 @@ public class JcrPropertyStatementListener extends StatementListener {
     private static final JcrTools jcrTools = new JcrTools();
 
     private final List<String> exceptions;
+
+    private static final ObjectService objectService = new ObjectServiceImpl();
 
     /**
      * Construct a statement listener within the given session
@@ -117,6 +121,9 @@ public class JcrPropertyStatementListener extends StatementListener {
                     subjectNode.addMixin("fedora:blanknode");
                     skolemizedBnodeMap.put(subject.getId(), subjectNode);
                 }
+            } else if (subject.getURI().contains("#")) {
+                final String absPath = subjects.asString(subject);
+                subjectNode = objectService.findOrCreateObject(session, absPath).getNode();
             } else {
                 subjectNode = subjects.convert(subject);
             }

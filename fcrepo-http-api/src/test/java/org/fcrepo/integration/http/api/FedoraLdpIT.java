@@ -1873,6 +1873,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testWithHashUris() throws IOException {
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "text/turtle");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String rdf = "<> <info:some-predicate> <#abc> .\n" +
+                "<#abc> <info:rubydora#label> \"asdfg\" .";
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                CREATED.getStatusCode(), status);
+
+    }
+
     private Date getDateFromModel( final Model model, final Resource subj, final Property pred ) throws Exception {
         final StmtIterator stmts = model.listStatements( subj, pred, (String)null );
         if ( stmts.hasNext() ) {

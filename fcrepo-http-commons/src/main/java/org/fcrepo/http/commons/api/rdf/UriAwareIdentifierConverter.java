@@ -25,6 +25,7 @@ import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
+import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.impl.services.functions.GetDefaultWorkspace;
 import org.glassfish.jersey.uri.UriTemplate;
@@ -371,8 +372,10 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
     }
 
 
-    private static final List<Converter<String,String>> minimalTranslationChain =
-            singletonList((Converter<String,String>) new NamespaceConverter());
+    private static final List<Converter<String,String>> minimalTranslationChain
+            = Lists.newArrayList(
+                    (Converter<String, String>) new NamespaceConverter(),
+                    (Converter<String, String>) new HashConverter());
 
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();

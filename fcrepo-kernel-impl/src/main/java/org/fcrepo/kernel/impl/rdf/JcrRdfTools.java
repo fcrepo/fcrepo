@@ -42,7 +42,9 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
+import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
+import org.fcrepo.kernel.services.ObjectService;
 import org.slf4j.Logger;
 
 import com.google.common.collect.BiMap;
@@ -78,6 +80,8 @@ public class JcrRdfTools {
 
     private Session session;
     private NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
+
+    private final static ObjectService objectService = new ObjectServiceImpl();
 
     /**
      * Constructor with even more context.
@@ -154,7 +158,17 @@ public class JcrRdfTools {
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
             try {
-                final Node nodeFromGraphSubject = graphSubjects.convert(data.asResource());
+                final Node nodeFromGraphSubject;
+                final String absPath = graphSubjects.asString(data.asResource());
+
+                if (objectService.exists(session, absPath)) {
+                    nodeFromGraphSubject = session.getNode(absPath);
+                } else if (absPath.contains("/#")) {
+                    nodeFromGraphSubject = objectService.findOrCreateObject(session, absPath).getNode();
+                } else {
+                    throw new RepositoryRuntimeException("Unable to find object to operate on");
+                }
+
                 return valueFactory.createValue(nodeFromGraphSubject,
                         type == WEAKREFERENCE);
             } catch (final RepositoryRuntimeException e) {
