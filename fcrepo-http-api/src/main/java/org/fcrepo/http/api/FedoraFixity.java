@@ -87,9 +87,7 @@ public class FedoraFixity extends FedoraBaseResource {
             throw new NotFoundException(resource + " is not a binary");
         }
 
-        return datastreamService.getFixityResultsModel(
-                translator(), (FedoraBinary)resource)
-                        .session(session);
+        return ((FedoraBinary)resource).getFixity(translator()).session(session);
 
     }
 

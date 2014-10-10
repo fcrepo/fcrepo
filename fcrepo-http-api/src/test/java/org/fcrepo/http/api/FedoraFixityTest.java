@@ -19,7 +19,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -84,8 +83,7 @@ public class FedoraFixityTest {
         when(mockNode.getSession()).thenReturn(mockSession);
 
         doReturn(mockBinary).when(testObj).getResourceFromPath(externalPath);
-        when(mockDatastreams.getFixityResultsModel(any(IdentifierConverter.class), eq(mockBinary)))
-                .thenReturn(expected);
+        when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
 
         final RdfStream actual = testObj.getDatastreamFixity(externalPath, mockRequest, uriInfo);
 

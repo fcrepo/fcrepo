@@ -15,16 +15,23 @@
  */
 package org.fcrepo.kernel.impl;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
+import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.metrics.RegistryService;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.ValueFactory;
@@ -55,8 +62,16 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);
 
+
+    static final RegistryService registryService = RegistryService.getInstance();
+    static final Counter fixityCheckCounter
+            = registryService.getMetrics().counter(name(DatastreamService.class, "fixity-check-counter"));
+
+    static final Timer timer = registryService.getMetrics().timer(
+            name(Datastream.class, "fixity-check-time"));
+
     static final Histogram contentSizeHistogram =
-            RegistryService.getInstance().getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
+            registryService.getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
 
     /**
      * Wrap an existing Node as a Fedora Binary
@@ -259,24 +274,36 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
-    /**
-     * Get the fixity results for this datastream's bitstream, and compare it
-     * against the given checksum and size.
-     *
-     * @param algorithm the algorithm to use
-     * @return fixity results
-     */
     @Override
-    public Collection<FixityResult> getFixity(final String algorithm) {
+    public RdfStream getFixity(final IdentifierConverter<Resource,Node> graphSubjects) {
+        return getFixity(graphSubjects, getContentDigest(), getContentSize());
+    }
+
+    @Override
+    public RdfStream getFixity(final IdentifierConverter<Resource,Node> graphSubjects,
+                               final URI digestUri,
+                               final long size) {
+
+        fixityCheckCounter.inc();
+
+        final Timer.Context context = timer.time();
+
         try {
+
             final Repository repo = node.getSession().getRepository();
             LOGGER.debug("Checking resource: " + getPath());
 
-            return CacheEntryFactory.forProperty(repo, getNode().getProperty(JCR_DATA)).checkFixity(algorithm);
+            final String algorithm = ContentDigest.getAlgorithm(digestUri);
+
+            final Collection<FixityResult> fixityResults
+                    = CacheEntryFactory.forProperty(repo, getNode().getProperty(JCR_DATA)).checkFixity(algorithm);
+
+            return new FixityRdfContext(getNode(), graphSubjects, fixityResults, digestUri, size);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
+        } finally {
+            context.stop();
         }
-
     }
 
     /**

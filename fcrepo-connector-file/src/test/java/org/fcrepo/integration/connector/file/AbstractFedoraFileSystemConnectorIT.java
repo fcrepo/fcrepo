@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.connector.file;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
@@ -24,6 +25,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -52,17 +54,18 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
-import org.fcrepo.kernel.utils.FixityResult;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -281,7 +284,8 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         }
     }
 
-    private String checkFixity(final FedoraBinary binary) throws IOException, NoSuchAlgorithmException {
+    private String checkFixity(final FedoraBinary binary)
+            throws IOException, NoSuchAlgorithmException, RepositoryException {
         assertNotNull(binary);
 
         final File file = fileForNode(null);
@@ -289,16 +293,18 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results = binary.getFixity(SHA_1.toString());
+        final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(repo.login());
+        final Model results = binary.getFixity(graphSubjects).asModel();
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());
 
-        final Iterator<FixityResult> resultIterator = results.iterator();
-        while (resultIterator.hasNext()) {
-            final FixityResult result = resultIterator.next();
-            assertTrue(result.matches(file.length(), calculatedChecksum));
-        }
+
+        assertTrue("Expected to find checksum",
+                results.contains(null,
+                        HAS_MESSAGE_DIGEST,
+                        createResource(calculatedChecksum.toString())));
+
         return calculatedChecksum.toString();
     }
 

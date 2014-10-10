@@ -15,11 +15,13 @@
  */
 package org.fcrepo.integration.kernel.impl;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
@@ -27,7 +29,6 @@ import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -35,16 +36,18 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.ContentDigest;
-import org.fcrepo.kernel.utils.FixityResult;
-import org.jgroups.util.Util;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -64,6 +67,13 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Inject
     ObjectService objectService;
+
+    private IdentifierConverter<Resource, Node> graphSubjects;
+
+    @Before
+    public void setUp() throws RepositoryException {
+        graphSubjects = new DefaultIdentifierTranslator(repo.login());
+    }
 
     @Test
     public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
@@ -248,16 +258,15 @@ public class FedoraBinaryImplIT extends AbstractIT {
                 datastreamService.getBinary(session, "/testLLObject/"
                         + "testRepositoryContent");
 
-
-        final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
-        final Collection<FixityResult> fixityResults = ds.getFixity(algorithm);
+        final Model fixityResults = ds.getFixity(graphSubjects).asModel();
 
         assertNotEquals(0, fixityResults.size());
 
-        for (final FixityResult fixityResult : fixityResults) {
-            Assert.assertEquals("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf",
-                    fixityResult.getComputedChecksum().toString());
-        }
+        assertTrue("Expected to find checksum",
+                fixityResults.contains(null,
+                        HAS_MESSAGE_DIGEST,
+                        createResource("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf")));
+
     }
 
     @Test
@@ -278,15 +287,14 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final FedoraBinary ds =
                 datastreamService.getBinary(session, "/testLLObject/testMemoryContent");
 
+        final Model fixityResults = ds.getFixity(graphSubjects).asModel();
 
-        final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
-        final Collection<FixityResult> fixityResults = ds.getFixity(algorithm);
         assertNotEquals(0, fixityResults.size());
 
-        for (final FixityResult fixityResult : fixityResults) {
-            Assert.assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
-                    fixityResult.getComputedChecksum().toString());
-        }
+        assertTrue("Expected to find checksum",
+                fixityResults.contains(null,
+                        HAS_MESSAGE_DIGEST,
+                        createResource("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016")));
     }
 
     @Test
@@ -307,15 +315,14 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final FedoraBinary ds =
                 datastreamService.getBinary(session, "/testLLObject/testRandomContent");
 
-        final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
-        final Collection<FixityResult> fixityResults = ds.getFixity(algorithm);
+        final Model fixityResults = ds.getFixity(graphSubjects).asModel();
 
         assertNotEquals(0, fixityResults.size());
 
-        for (final FixityResult fixityResult : fixityResults) {
-            assertFalse(fixityResult.matches(ds.getContentSize(), ds.getContentDigest()));
-            Util.assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016",
-                    fixityResult.getComputedChecksum().toString());
-        }
+
+        assertTrue("Expected to find checksum",
+                fixityResults.contains(null,
+                        HAS_MESSAGE_DIGEST,
+                        createResource("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016")));
     }
 }
