@@ -13,34 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.integration.kernel.impl;
+package org.fcrepo.kernel.services;
 
-import javax.inject.Inject;
-import javax.jcr.Repository;
+import org.fcrepo.kernel.FedoraBinary;
 
-import org.fcrepo.kernel.services.ObjectService;
-import org.junit.Test;
-import org.springframework.test.context.ContextConfiguration;
-
-import static org.junit.Assert.assertTrue;
+import javax.jcr.Node;
+import javax.jcr.Session;
 
 /**
- * <p>DatastreamImplIT class.</p>
- *
- * @author ksclarke
+ * @author cabeer
+ * @since 10/10/14
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
-public class DatastreamImplIT extends AbstractIT {
+public interface BinaryService {
 
-    @Inject
-    Repository repo;
+    /**
+     * Retrieve a Binary instance by session and path
+     *
+     * @param path jcr path to the datastream
+     * @return retrieved Datastream
+     */
+    FedoraBinary findOrCreateBinary(final Session session, final String path);
 
-    @Inject
-    ObjectService objectService;
-
-    @Test
-    public void toDo() {
-        assertTrue(true);
-    }
-
+    /**
+     * Retrieve a Binary instance from a node
+     *
+     * @param node datastream node
+     * @return node as a Datastream
+     */
+    FedoraBinary asBinary(Node node);
 }

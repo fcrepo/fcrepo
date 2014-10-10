@@ -15,13 +15,10 @@
  */
 package org.fcrepo.kernel.impl;
 
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -86,8 +83,6 @@ public class FedoraBinaryImplTest implements FedoraJcrTypes {
 
     @Mock
     private Node mockContent;
-
-    private IdentifierConverter<Resource,Node> graphSubjects = new DefaultIdentifierTranslator(mockSession);
 
     @Before
     public void setUp() {

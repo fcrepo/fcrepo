@@ -25,8 +25,6 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.services.DatastreamService;
-import org.fcrepo.kernel.services.ObjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -39,12 +37,6 @@ public abstract class BaseFedoraObjectSerializer implements
 
     @Autowired
     protected Repository repo;
-
-    @Autowired
-    protected ObjectService objService;
-
-    @Autowired
-    protected DatastreamService dsService;
 
     @Override
     public abstract void serialize(final FedoraResource obj,

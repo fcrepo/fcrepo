@@ -62,7 +62,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
@@ -97,7 +97,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     protected ObjectService objectService;
 
     @Inject
-    protected DatastreamService datastreamService;
+    protected BinaryService binaryService;
 
     /**
      * Gets the path (relative to the filesystem federation) of a directory
@@ -213,7 +213,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedDatastream() throws RepositoryException {
         final Session session = repo.login();
 
-        final Datastream datastream = datastreamService.findOrCreateDatastream(session, testFilePath());
+        final Datastream datastream = binaryService.findOrCreateBinary(session, testFilePath()).getDescription();
         assertNotNull(datastream);
 
         final Node node = datastream.getNode();
@@ -253,7 +253,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(datastreamService.findOrCreateDatastream(session, testFilePath()).getBinary());
+        checkFixity(binaryService.findOrCreateBinary(session, testFilePath()));
 
         session.save();
         session.logout();
@@ -263,14 +263,14 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final Datastream ds = datastreamService.findOrCreateDatastream(session, testFilePath());
+        final FedoraBinary binary = binaryService.findOrCreateBinary(session, testFilePath());
 
-        final String originalFixity = checkFixity(ds.getBinary());
+        final String originalFixity = checkFixity(binary);
 
         final File file = fileForNode(null);
         appendToFile(file, " ");
 
-        final String newFixity = checkFixity(ds.getBinary());
+        final String newFixity = checkFixity(binary);
 
         assertNotEquals("Checksum is expected to have changed!", originalFixity, newFixity);
 

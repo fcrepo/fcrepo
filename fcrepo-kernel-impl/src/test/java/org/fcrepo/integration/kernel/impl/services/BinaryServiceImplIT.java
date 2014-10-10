@@ -31,7 +31,7 @@ import javax.jcr.Session;
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.integration.kernel.impl.AbstractIT;
 import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -42,7 +42,7 @@ import org.springframework.test.context.ContextConfiguration;
  * @author ksclarke
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class DatastreamServiceImplIT extends AbstractIT {
+public class BinaryServiceImplIT extends AbstractIT {
 
     @Inject
     private Repository repository;
@@ -51,13 +51,13 @@ public class DatastreamServiceImplIT extends AbstractIT {
     ObjectService objectService;
 
     @Inject
-    DatastreamService datastreamService;
+    BinaryService binaryService;
 
     @Test
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
 
-        datastreamService.getBinary(session, "/testDatastreamNode").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -78,7 +78,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
     @Test
     public void testCreateDatastreamNodeWithfilename() throws Exception {
         Session session = repository.login();
-        datastreamService.getBinary(session, "/testDatastreamNode").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -102,7 +102,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
         objectService.findOrCreateObject(session, "/testDatastreamServiceObject");
 
-        datastreamService.getBinary(session, "/testDatastreamServiceObject/" + "testDatastreamNode")
+        binaryService.findOrCreateBinary(session, "/testDatastreamServiceObject/" + "testDatastreamNode")
                 .setContent(
                         is,
                         "application/octet-stream",
@@ -115,7 +115,7 @@ public class DatastreamServiceImplIT extends AbstractIT {
         session.logout();
         session = repository.login();
         final FedoraBinary binary =
-            datastreamService.getBinary(session,
+                binaryService.findOrCreateBinary(session,
                     "/testDatastreamServiceObject/" + "testDatastreamNode");
         assertEquals("asdf", IOUtils.toString(binary.getContent(), "UTF-8"));
         session.logout();

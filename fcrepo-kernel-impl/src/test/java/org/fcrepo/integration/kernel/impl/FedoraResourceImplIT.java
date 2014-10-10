@@ -64,7 +64,7 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
@@ -106,7 +106,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     ObjectService objectService;
 
     @Inject
-    DatastreamService datastreamService;
+    BinaryService binaryService;
 
     private Session session;
 
@@ -300,7 +300,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final FedoraObject parentObject = objectService.findOrCreateObject(session, "/testDatastreamGraphParent");
 
-        datastreamService.getBinary(session, "/testDatastreamGraph").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamGraph").setContent(
                 new ByteArrayInputStream("123456789test123456789".getBytes()),
                 "text/plain",
                 null,
@@ -309,7 +309,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         );
 
         final Datastream object =
-            datastreamService.getBinary(session, "/testDatastreamGraph").getDescription();
+                binaryService.findOrCreateBinary(session, "/testDatastreamGraph").getDescription();
 
         object.getNode().setProperty("fedorarelsext:isPartOf",
                 session.getNode("/testDatastreamGraphParent"));

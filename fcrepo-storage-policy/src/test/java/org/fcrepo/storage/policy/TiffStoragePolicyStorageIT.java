@@ -33,8 +33,8 @@ import javax.jcr.Session;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.services.DatastreamService;
-import org.fcrepo.kernel.impl.services.DatastreamServiceImpl;
+import org.fcrepo.kernel.impl.services.BinaryServiceImpl;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
 import org.fcrepo.kernel.impl.services.functions.GetBinaryKey;
@@ -57,7 +57,7 @@ public class TiffStoragePolicyStorageIT {
 
     static private Repository repo;
 
-    private DatastreamService datastreamService;
+    private BinaryService binaryService;
 
     private ObjectService objectService;
 
@@ -84,7 +84,7 @@ public class TiffStoragePolicyStorageIT {
         pdp = new StoragePolicyDecisionPointImpl();
         pdp.add(new MimeTypeStoragePolicy("image/tiff", "tiff-store"));
 
-        datastreamService = new DatastreamServiceImpl();
+        binaryService = new BinaryServiceImpl();
         objectService = new ObjectServiceImpl();
     }
 
@@ -101,7 +101,7 @@ public class TiffStoragePolicyStorageIT {
                 ("987654321987654321098765432109876543210987654321098765432109876543210987654" +
                         "3210987654321009876543210").getBytes());
 
-        final FedoraBinary binary = datastreamService.getBinary(session,
+        final FedoraBinary binary = binaryService.findOrCreateBinary(session,
                 "/testCompositeObject/content");
 
         binary.setContent(data, "application/octet-stream", null, null, pdp);
@@ -112,7 +112,7 @@ public class TiffStoragePolicyStorageIT {
                         "17b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a7" +
                         "16cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a7016")
                         .getBytes());
-        final FedoraBinary datastream1 = datastreamService.getBinary(session,
+        final FedoraBinary datastream1 = binaryService.findOrCreateBinary(session,
                 "/testCompositeObject/tiffContent");
 
         datastream1.setContent(data, "image/tiff", null, null, pdp);
@@ -134,7 +134,7 @@ public class TiffStoragePolicyStorageIT {
 
         logger.info("tiff key: {}", tiffKey);
 
-        final FedoraBinary normalBinary = datastreamService.asBinary(node);
+        final FedoraBinary normalBinary = binaryService.asBinary(node);
 
         Model fixity = normalBinary.getFixity(subjects).asModel();
 
@@ -144,7 +144,7 @@ public class TiffStoragePolicyStorageIT {
 
         assertThat(contentLocation, containsString(key.toString()));
 
-        final FedoraBinary tiffBinary = datastreamService.asBinary(tiffNode);
+        final FedoraBinary tiffBinary = binaryService.asBinary(tiffNode);
 
         fixity = tiffBinary.getFixity(subjects).asModel();
 

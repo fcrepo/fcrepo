@@ -24,7 +24,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.identifiers.PidMinter;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.LockService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -68,7 +68,7 @@ public abstract class AbstractResource {
      * The fcrepo datastream service
      */
     @Autowired
-    protected DatastreamService datastreamService;
+    protected BinaryService binaryService;
 
     /**
      * The fcrepo version service

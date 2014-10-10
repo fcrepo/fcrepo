@@ -36,7 +36,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.impl.AbstractIT;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     RepositoryService repositoryService;
 
     @Inject
-    DatastreamService datastreamService;
+    BinaryService binaryService;
 
     private DefaultIdentifierTranslator idTranslator;
 
@@ -75,7 +75,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
         final double originalSize = repositoryService.getRepositorySize();
 
 
-        datastreamService.getBinary(session, "/testObjectServiceNode").setContent(
+        binaryService.findOrCreateBinary(session, "/testObjectServiceNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -135,7 +135,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testBackupRepository() throws Exception {
         final Session session = repository.login();
 
-        datastreamService.getBinary(session, "/testObjectServiceNode0").setContent(
+        binaryService.findOrCreateBinary(session, "/testObjectServiceNode0").setContent(
                 new ByteArrayInputStream("asdfx".getBytes()),
                 "application/octet-stream",
                 null,
@@ -157,8 +157,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testRestoreRepository() throws Exception {
         final Session session = repository.login();
 
-
-        datastreamService.getBinary(session, "/testObjectServiceNode1").setContent(
+        binaryService.findOrCreateBinary(session, "/testObjectServiceNode1").setContent(
                 new ByteArrayInputStream("asdfy".getBytes()),
                 "application/octet-stream",
                 null,

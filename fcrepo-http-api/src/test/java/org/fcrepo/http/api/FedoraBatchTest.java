@@ -22,7 +22,7 @@ import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockDatastream;
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockBinary;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,7 +69,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
@@ -95,7 +96,7 @@ public class FedoraBatchTest {
     FedoraBatch testObj;
 
     @Mock
-    private DatastreamService mockDatastreams;
+    private BinaryService mockBinaries;
 
     @Mock
     private NodeService mockNodes;
@@ -138,7 +139,7 @@ public class FedoraBatchTest {
         initMocks(this);
         testObj = spy(new FedoraBatch(path));
         setField(testObj, "objectService", mockObjects);
-        setField(testObj, "datastreamService", mockDatastreams);
+        setField(testObj, "binaryService", mockBinaries);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", mockUriInfo);
         this.mockUriInfo = getUriInfoImpl();
@@ -328,27 +329,31 @@ public class FedoraBatchTest {
                                             NoSuchAlgorithmException {
         final String dsId = "testDS";
         final String dsContent = "asdf";
-        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
-        when(mockDs.hasContent()).thenReturn(true);
+        final FedoraBinary mockBinary = mockBinary(pid, dsId, dsContent);
+        final Node mockBinaryNode = mock(Node.class);
+        when(mockBinaryNode.getPath()).thenReturn(path + "/" + dsId + "/jcr:content");
+        when(mockBinary.getNode()).thenReturn(mockBinaryNode);
+        when(mockBinary.hasContent()).thenReturn(true);
         when(mockIterator.hasNext()).thenReturn(true, false);
         when(mockIterator.nextNode()).thenReturn(mockDsNode);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockBinaryNode);
         when(mockIterator.getSize()).thenReturn(1L);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getNodes(new String[] {dsId})).thenReturn(mockIterator);
         when(mockNodes.getObject(mockSession, path))
                 .thenReturn(mockObject);
-        when(mockDatastreams.asDatastream(mockDsNode)).thenReturn(mockDs);
+        when(mockBinaries.asBinary(mockBinaryNode)).thenReturn(mockBinary);
 
         final Response resp =
             testObj.getBinaryContents(asList(dsId), mockRequest);
         final MultiPart multipart = (MultiPart) resp.getEntity();
 
-        verify(mockDs.getBinary()).getContent();
+        verify(mockBinary).getContent();
         verify(mockSession, never()).save();
         assertEquals(1, multipart.getBodyParts().size());
         try (final InputStream actualContent =
                 (InputStream) multipart.getBodyParts().get(0).getEntity()) {
-            assertEquals(path + "/testDS", multipart.getBodyParts()
+            assertEquals("http://localhost/fcrepo/FedoraDatastreamsTest1/testDS", multipart.getBodyParts()
                     .get(0).getContentDisposition().getFileName());
             assertEquals("asdf", IOUtils.toString(actualContent, "UTF-8"));
         }
@@ -359,22 +364,27 @@ public class FedoraBatchTest {
                                                   NoSuchAlgorithmException {
         final String dsId = "testDS";
         final String dsContent = "asdf";
-        final Datastream mockDs = mockDatastream(pid, dsId, dsContent);
+        final FedoraBinary mockBinary = mockBinary(pid, dsId, dsContent);
+        final Node mockBinaryNode = mock(Node.class);
+        when(mockBinaryNode.getPath()).thenReturn(path + "/" + dsId + "/jcr:content");
+        when(mockBinary.getNode()).thenReturn(mockBinaryNode);
+        when(mockBinary.hasContent()).thenReturn(true);
         when(mockIterator.hasNext()).thenReturn(true, false);
         when(mockIterator.nextNode()).thenReturn(mockDsNode);
         when(mockIterator.getSize()).thenReturn(1L);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockBinaryNode);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getNodes(new String[] {dsId})).thenReturn(mockIterator);
         when(mockNodes.getObject(mockSession, path))
                 .thenReturn(mockObject);
-        when(mockDatastreams.asDatastream(mockDsNode)).thenReturn(mockDs);
+        when(mockBinaries.asBinary(mockBinaryNode)).thenReturn(mockBinary);
         when(
                 mockRequest.evaluatePreconditions(any(Date.class),
                         any(EntityTag.class))).thenReturn(notModified());
 
         final Response resp =
             testObj.getBinaryContents(asList(dsId), mockRequest);
-        verify(mockDs.getBinary(), never()).getContent();
+        verify(mockBinary, never()).getContent();
         verify(mockSession, never()).save();
         assertEquals(NOT_MODIFIED.getStatusCode(), resp.getStatus());
     }

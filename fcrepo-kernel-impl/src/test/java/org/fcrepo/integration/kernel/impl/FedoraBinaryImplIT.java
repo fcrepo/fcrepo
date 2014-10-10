@@ -16,6 +16,7 @@
 package org.fcrepo.integration.kernel.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.junit.Assert.assertEquals;
@@ -44,7 +45,7 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.junit.Before;
@@ -63,7 +64,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     Repository repo;
 
     @Inject
-    DatastreamService datastreamService;
+    BinaryService binaryService;
 
     @Inject
     ObjectService objectService;
@@ -80,7 +81,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         Session session = repo.login();
         objectService.findOrCreateObject(session, "/testDatastreamObject");
 
-        datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode1").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamObject/testDatastreamNode1").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -91,9 +92,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
         session.save();
         session.logout();
         session = repo.login();
-        final FedoraBinary ds =
-                datastreamService.getBinary(session,
-                        "/testDatastreamObject/testDatastreamNode1");
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session,
+                "/testDatastreamObject/testDatastreamNode1");
         assertNotNull("Couldn't find created date on datastream!", ds
                 .getCreatedDate());
     }
@@ -105,7 +105,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Session session = repo.login();
         objectService.findOrCreateObject(session, "/testDatastreamObject");
 
-        datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode1").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamObject/testDatastreamNode1").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -115,9 +115,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session,
-                        "/testDatastreamObject/testDatastreamNode1");
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session,
+                "/testDatastreamObject/testDatastreamNode1");
         final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
         assertEquals("asdf", contentString);
@@ -131,7 +130,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Session session = repo.login();
         objectService.findOrCreateObject(session, "/testDatastreamObject");
 
-        datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode2").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamObject/testDatastreamNode2").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -141,8 +140,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session,
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session,
                         "/testDatastreamObject/testDatastreamNode2");
         assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
                 .getContentDigest().toString());
@@ -161,7 +159,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Session session = repo.login();
         objectService.findOrCreateObject(session, "/testDatastreamObject");
 
-        datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode3").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamObject/testDatastreamNode3").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -171,9 +169,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session,
-                        "/testDatastreamObject/testDatastreamNode3");
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session,
+                "/testDatastreamObject/testDatastreamNode3");
 
         ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
 
@@ -193,7 +190,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Session session = repo.login();
         objectService.findOrCreateObject(session, "/testDatastreamObject");
 
-        datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode4").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamObject/testDatastreamNode4").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 ContentDigest.asURI("SHA-1", "3da541559918a808c2402bba5012f6c60b27661c"),
@@ -203,9 +200,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session,
-                        "/testDatastreamObject/testDatastreamNode4");
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session,
+                "/testDatastreamObject/testDatastreamNode4");
         assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
                 .getContentDigest().toString());
 
@@ -219,7 +215,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Session session = repo.login();
         objectService.findOrCreateObject(session, "/testDatastreamObject");
 
-        datastreamService.getBinary(session, "/testDatastreamObject/testDatastreamNode5").setContent(
+        binaryService.findOrCreateBinary(session, "/testDatastreamObject/testDatastreamNode5").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -229,8 +225,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session,
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session,
                         "/testDatastreamObject/testDatastreamNode5");
         final String filename = ds.getFilename();
 
@@ -244,7 +239,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Session session = repo.login();
         objectService.findOrCreateObject(session, "/testLLObject");
 
-        datastreamService.getBinary(session, "/testLLObject/testRepositoryContent").setContent(
+        binaryService.findOrCreateBinary(session, "/testLLObject/testRepositoryContent").setContent(
                 new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
                 "application/octet-stream",
                 null,
@@ -254,8 +249,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session, "/testLLObject/"
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session, "/testLLObject/"
                         + "testRepositoryContent");
 
         final Model fixityResults = ds.getFixity(graphSubjects).asModel();
@@ -274,7 +268,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         final Session session = repo.login();
         objectService.findOrCreateObject(session, "/testLLObject");
-        datastreamService.getBinary(session, "/testLLObject/testMemoryContent").setContent(
+        binaryService.findOrCreateBinary(session, "/testLLObject/testMemoryContent").setContent(
                 new ByteArrayInputStream("0123456789".getBytes()),
                 "application/octet-stream",
                 null,
@@ -284,8 +278,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session, "/testLLObject/testMemoryContent");
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session, "/testLLObject/testMemoryContent");
 
         final Model fixityResults = ds.getFixity(graphSubjects).asModel();
 
@@ -307,13 +300,13 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
         testRandomContentNode.addMixin(FEDORA_DATASTREAM);
         final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
+        testRandomContent.addMixin(FEDORA_BINARY);
         testRandomContent.setProperty(JCR_DATA,
                 factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));
 
         session.save();
 
-        final FedoraBinary ds =
-                datastreamService.getBinary(session, "/testLLObject/testRandomContent");
+        final FedoraBinary ds = binaryService.findOrCreateBinary(session, "/testLLObject/testRandomContent");
 
         final Model fixityResults = ds.getFixity(graphSubjects).asModel();
 

@@ -44,6 +44,7 @@ import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
@@ -103,6 +104,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     @Optional
     private HttpTripleUtil httpTripleUtil;
+
+    @Inject
+    @Optional
+    StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
     protected FedoraResource resource;
 
@@ -472,7 +477,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 contentTypeString,
                 checksumURI,
                 originalFileName,
-                datastreamService.getStoragePolicyDecisionPoint());
+                storagePolicyDecisionPoint);
     }
 
     protected void replaceResourceWithStream(final FedoraResource resource,
