@@ -112,7 +112,6 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
     public void setUp() throws RepositoryException {
         initMocks(this);
         testObj = new DatastreamServiceImpl();
-        testObj.setRepository(mockRepository);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockNode.getSession()).thenReturn(mockSession);
         final NodeType mockNodeType = mock(NodeType.class);
@@ -152,7 +151,8 @@ public class DatastreamServiceImplTest implements FedoraJcrTypes {
         when(mockNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProperty);
         when(mockProperty.getBinary()).thenReturn(mockBinary);
-        when(mockFedoraBinary.getFixity(mockRepository, "SHA-1")).thenReturn(fixityResults);
+        when(mockSession.getRepository()).thenReturn(mockRepository);
+        when(mockFedoraBinary.getFixity("SHA-1")).thenReturn(fixityResults);
 
         when(mockFedoraBinary.getNode()).thenReturn(mockNode);
         when(mockFedoraBinary.getContentDigest()).thenReturn(

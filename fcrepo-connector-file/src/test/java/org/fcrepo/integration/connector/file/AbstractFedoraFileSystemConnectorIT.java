@@ -289,7 +289,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results = binary.getFixity(repo, SHA_1.toString());
+        final Collection<FixityResult> results = binary.getFixity(SHA_1.toString());
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());

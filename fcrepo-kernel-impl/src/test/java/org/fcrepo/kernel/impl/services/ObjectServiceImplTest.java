@@ -16,9 +16,7 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
@@ -55,16 +53,23 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
     @Mock
     private NodeType mockNodeType;
 
+    private ObjectService testObj;
+
+    @Mock
+    private JcrTools mockJcrTools;
+
+    private String testPath = "/foo";
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
+        testObj = new ObjectServiceImpl();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
     }
 
     @Test
     public void testCreateObject() throws Exception {
-        final String testPath = "/foo";
-        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:folder");
@@ -72,7 +77,6 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         when(mockNode.getMixinNodeTypes()).thenReturn(
                 new NodeType[] {mockNodeType});
 
-        final ObjectService testObj = new ObjectServiceImpl();
         final Node actual =
                 testObj.findOrCreateObject(mockSession, testPath).getNode();
         assertEquals(mockNode, actual);
@@ -90,8 +94,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
 
         final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
-        final ObjectService testObj = spy(new ObjectServiceImpl());
-        doReturn(mockNode).when((JcrTools) testObj).findOrCreateNode(mockSession, "/foo", NT_FOLDER, NT_FOLDER);
+        when(mockJcrTools.findOrCreateNode(mockSession, "/foo", NT_FOLDER, NT_FOLDER)).thenReturn(mockNode);
         final FedoraObject actual = testObj.findOrCreateObject(mockSession, "/foo");
         assertEquals(mockNode, actual.getNode());
     }

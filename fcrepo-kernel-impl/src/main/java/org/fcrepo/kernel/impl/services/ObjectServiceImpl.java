@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -52,7 +54,7 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
         LOGGER.trace("Executing findOrCreateObject() with path: {}", path);
 
         try {
-            final Node node = findOrCreateNode(session, path, NT_FOLDER, NT_FOLDER);
+            final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, NT_FOLDER);
 
             if (node.isNew()) {
                 initializeNewObjectProperties(node);

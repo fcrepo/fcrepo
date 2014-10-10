@@ -15,15 +15,19 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.jcr.NamespaceException;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.impl.rdf.impl.NodeTypeRdfContext;
@@ -44,6 +48,19 @@ import org.springframework.stereotype.Component;
 public class NodeServiceImpl extends AbstractService implements NodeService {
 
     private static final Logger LOGGER = getLogger(NodeServiceImpl.class);
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.services.Service#exists(javax.jcr.Session, java.lang.String)
+     */
+    @Override
+    public boolean exists(final Session session, final String path) {
+        try {
+            validatePath(session, path);
+            return session.nodeExists(path);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     /**
      * Retrieve an existing Fedora resource at the given path
@@ -125,4 +142,43 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
             throw new RepositoryRuntimeException(e);
         }
     }
+
+    /**
+     * Validate resource path for unregistered namespace prefixes
+     *
+     * @param session the JCR session to use
+     * @param path the absolute path to the object
+     * @throws org.fcrepo.kernel.exception.FedoraInvalidNamespaceException on unregistered namespaces
+     * @throws RepositoryRuntimeException
+     */
+    private void validatePath(final Session session, final String path) {
+
+        final NamespaceRegistry namespaceRegistry;
+        try {
+            namespaceRegistry =
+                    session.getWorkspace().getNamespaceRegistry();
+            checkNotNull(namespaceRegistry,
+                    "Couldn't find namespace registry in repository!");
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+        final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
+        final String[] pathSegments = relPath.split("/");
+        for (final String segment : pathSegments) {
+            if (segment.length() > 0 && segment.contains(":") &&
+                    segment.substring(0, segment.indexOf(":")) != "fedora") {
+                final String prefix = segment.substring(0, segment.indexOf(":"));
+                try {
+                    namespaceRegistry.getURI(prefix);
+                } catch (final NamespaceException e) {
+                    throw new FedoraInvalidNamespaceException(
+                            String.format("The namespace prefix (%s) has not been registered", prefix), e);
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            }
+        }
+    }
+
 }
