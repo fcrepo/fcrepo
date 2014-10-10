@@ -24,6 +24,7 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -250,7 +251,7 @@ public class FedoraBatch extends ContentExposingResource {
                     contentTypeString.equals(contentTypeSPARQLUpdate)) {
                 resource = objectService.findOrCreateObject(session, objPath);
             } else {
-                resource = datastreamService.findOrCreateDatastream(session, objPath).getBinary();
+                resource = binaryService.findOrCreateBinary(session, objPath);
             }
 
             final String checksum = contentDisposition.getParameters().get("checksum");
@@ -319,7 +320,7 @@ public class FedoraBatch extends ContentExposingResource {
     public Response getBinaryContents(@QueryParam("child") final List<String> requestedChildren,
         @Context final Request request) throws RepositoryException, NoSuchAlgorithmException {
 
-        final List<Datastream> datastreams = new ArrayList<>();
+        final List<FedoraBinary> binaries = new ArrayList<>();
         // TODO: wrap some of this JCR logic in an fcrepo abstraction;
 
         final Node node = resource().getNode();
@@ -347,13 +348,7 @@ public class FedoraBatch extends ContentExposingResource {
         while (ni.hasNext()) {
 
             final Node dsNode = ni.nextNode();
-            final Datastream ds = datastreamService.asDatastream(dsNode);
-
-            if (!ds.hasContent()) {
-                continue;
-            }
-
-            final FedoraBinary binary = ds.getBinary();
+            final FedoraBinary binary = binaryService.asBinary(dsNode.getNode(JCR_CONTENT));
 
             digest.update(binary.getContentDigest().toString().getBytes(
                     UTF_8));
@@ -362,7 +357,7 @@ public class FedoraBatch extends ContentExposingResource {
                 date = binary.getLastModifiedDate();
             }
 
-            datastreams.add(ds);
+            binaries.add(binary);
         }
 
         final URI digestURI = ContentDigest.asURI(digest.getAlgorithm(), digest.digest());
@@ -381,14 +376,13 @@ public class FedoraBatch extends ContentExposingResource {
         if (builder == null) {
             final MultiPart multipart = new MultiPart();
 
-            for (final Datastream ds : datastreams) {
-                final FedoraBinary binary = ds.getBinary();
+            for (final FedoraBinary binary : binaries) {
                 final BodyPart bodyPart =
                         new BodyPart(binary.getContent(),
                                 MediaType.valueOf(binary.getMimeType()));
                 bodyPart.setContentDisposition(
                         ContentDisposition.type(ATTACHMENT)
-                                .fileName(ds.getPath())
+                                .fileName(translator().reverse().convert(binary.getNode()).toString())
                                 .creationDate(binary.getCreatedDate())
                                 .modificationDate(binary.getLastModifiedDate())
                                 .size(binary.getContentSize())

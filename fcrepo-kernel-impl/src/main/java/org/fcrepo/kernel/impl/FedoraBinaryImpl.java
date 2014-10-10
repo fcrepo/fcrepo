@@ -27,7 +27,6 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
-import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -65,13 +64,13 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     static final RegistryService registryService = RegistryService.getInstance();
     static final Counter fixityCheckCounter
-            = registryService.getMetrics().counter(name(DatastreamService.class, "fixity-check-counter"));
+            = registryService.getMetrics().counter(name(FedoraBinary.class, "fixity-check-counter"));
 
     static final Timer timer = registryService.getMetrics().timer(
             name(Datastream.class, "fixity-check-time"));
 
     static final Histogram contentSizeHistogram =
-            registryService.getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
+            registryService.getMetrics().histogram(name(FedoraBinary.class, "content-size"));
 
     /**
      * Wrap an existing Node as a Fedora Binary

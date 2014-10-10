@@ -32,7 +32,7 @@ import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
@@ -132,7 +132,7 @@ public class FedoraLdpTest {
     private ObjectService mockObjectService;
 
     @Mock
-    private DatastreamService mockDatastreamService;
+    private BinaryService mockBinaryService;
 
     @Mock
     private VersionService mockVersionService;
@@ -156,7 +156,7 @@ public class FedoraLdpTest {
         setField(testObj, "identifierTranslator", identifierConverter);
         setField(testObj, "nodeService", mockNodeService);
         setField(testObj, "objectService", mockObjectService);
-        setField(testObj, "datastreamService", mockDatastreamService);
+        setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "versionService", mockVersionService);
 
         when(mockObject.getNode()).thenReturn(mockObjectNode);
@@ -561,7 +561,7 @@ public class FedoraLdpTest {
         when(mockBinary.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
-        when(mockDatastreamService.findOrCreateDatastream(mockSession, "/some/path")).thenReturn(mockDatastream);
+        when(mockBinaryService.findOrCreateBinary(mockSession, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
                 toInputStream("xyz"), null, null);
@@ -675,7 +675,7 @@ public class FedoraLdpTest {
 
         setResource(FedoraObject.class);
 
-        when(mockDatastreamService.findOrCreateDatastream(mockSession, "/b")).thenReturn(mockDatastream);
+        when(mockBinaryService.findOrCreateBinary(mockSession, "/b")).thenReturn(mockBinary);
 
         final InputStream content = toInputStream("x");
         final Response actual = testObj.createObject(null, null, null, APPLICATION_OCTET_STREAM_TYPE, "b",

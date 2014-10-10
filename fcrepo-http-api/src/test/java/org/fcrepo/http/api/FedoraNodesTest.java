@@ -54,7 +54,6 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
-import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
@@ -91,9 +90,6 @@ public class FedoraNodesTest {
 
     @Mock
     private NodeType mockNodeType;
-
-    @Mock
-    private DatastreamService mockDatastreams;
 
     @Mock
     private Request mockRequest;
@@ -147,7 +143,6 @@ public class FedoraNodesTest {
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
         setField(testObj, "uriInfo", mockUriInfo);
-        setField(testObj, "datastreamService", mockDatastreams);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "versionService", mockVersions);
         this.mockUriInfo = getUriInfoImpl();

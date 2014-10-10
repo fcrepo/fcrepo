@@ -33,7 +33,6 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,9 +46,6 @@ import org.mockito.Mock;
 public class FedoraFixityTest {
 
     FedoraFixity testObj;
-
-    @Mock
-    private DatastreamService mockDatastreams;
 
     private Session mockSession;
 
@@ -68,7 +64,6 @@ public class FedoraFixityTest {
     public void setUp() {
         initMocks(this);
         testObj = spy(new FedoraFixity());
-        setField(testObj, "datastreamService", mockDatastreams);
         this.uriInfo = getUriInfoImpl();
         setField(testObj, "uriInfo", uriInfo);
         mockSession = mockSession(testObj);
