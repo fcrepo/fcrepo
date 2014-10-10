@@ -85,10 +85,7 @@ public class TiffStoragePolicyStorageIT {
         pdp.add(new MimeTypeStoragePolicy("image/tiff", "tiff-store"));
 
         datastreamService = new DatastreamServiceImpl();
-        datastreamService.setRepository(repo);
-        ((DatastreamServiceImpl) datastreamService).setStoragePolicyDecisionPoint(pdp);
         objectService = new ObjectServiceImpl();
-        objectService.setRepository(repo);
     }
 
     @Test
@@ -105,8 +102,7 @@ public class TiffStoragePolicyStorageIT {
         final FedoraBinary binary = datastreamService.getBinary(session,
                 "/testCompositeObject/content");
 
-        binary.setContent(data, "application/octet-stream", null, null,
-                datastreamService.getStoragePolicyDecisionPoint());
+        binary.setContent(data, "application/octet-stream", null, null, pdp);
 
         data = new ByteArrayInputStream(
                 ("87acec17cd9dcd20a716cc2cf67417b71c8a701687acec17cd9dcd20a716cc2cf67417b71c8a70" +
@@ -117,8 +113,7 @@ public class TiffStoragePolicyStorageIT {
         final FedoraBinary datastream1 = datastreamService.getBinary(session,
                 "/testCompositeObject/tiffContent");
 
-        datastream1.setContent(data, "image/tiff", null, null,
-                datastreamService.getStoragePolicyDecisionPoint());
+        datastream1.setContent(data, "image/tiff", null, null, pdp);
 
         session.save();
 
@@ -139,7 +134,7 @@ public class TiffStoragePolicyStorageIT {
 
         final FedoraBinary normalBinary = datastreamService.asBinary(node);
 
-        Collection<FixityResult> fixity = normalBinary.getFixity(repo, SHA_1.toString());
+        Collection<FixityResult> fixity = normalBinary.getFixity(SHA_1.toString());
 
         assertNotEquals(0, fixity.size());
 
@@ -149,7 +144,7 @@ public class TiffStoragePolicyStorageIT {
 
         final FedoraBinary tiffBinary = datastreamService.asBinary(tiffNode);
 
-        fixity = tiffBinary.getFixity(repo, SHA_1.toString());
+        fixity = tiffBinary.getFixity(SHA_1.toString());
 
         assertNotEquals(0, fixity.size());
 

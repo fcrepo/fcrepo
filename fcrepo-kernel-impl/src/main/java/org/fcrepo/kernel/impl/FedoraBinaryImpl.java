@@ -263,14 +263,13 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      * Get the fixity results for this datastream's bitstream, and compare it
      * against the given checksum and size.
      *
-     * @param repo
      * @param algorithm the algorithm to use
      * @return fixity results
      */
     @Override
-    public Collection<FixityResult> getFixity(final Repository repo,
-                                              final String algorithm) {
+    public Collection<FixityResult> getFixity(final String algorithm) {
         try {
+            final Repository repo = node.getSession().getRepository();
             LOGGER.debug("Checking resource: " + getPath());
 
             return CacheEntryFactory.forProperty(repo, getNode().getProperty(JCR_DATA)).checkFixity(algorithm);

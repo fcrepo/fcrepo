@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -155,7 +156,7 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
             when(mockRepo.login()).thenReturn(mockSession);
 
             testObj = new RepositoryServiceImpl();
-            testObj.setRepository(mockRepo);
+            setField(testObj, "repo", mockRepo);
 
             when(mockSession.getNode("/objects")).thenReturn(mockRootNode);
             when(mockRootNode.getNodes()).thenReturn(mockNI);

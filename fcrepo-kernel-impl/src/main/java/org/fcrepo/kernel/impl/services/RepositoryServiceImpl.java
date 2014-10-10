@@ -21,6 +21,7 @@ import static com.google.common.collect.Iterators.limit;
 import static com.hp.hpl.jena.query.DatasetFactory.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Collections.singleton;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_OF_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
 import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
@@ -38,8 +39,10 @@ import org.fcrepo.metrics.RegistryService;
 import java.io.File;
 import java.util.Iterator;
 
+import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
@@ -73,6 +76,9 @@ import com.hp.hpl.jena.sparql.util.Context;
  */
 @Component
 public class RepositoryServiceImpl extends AbstractService implements RepositoryService {
+
+    @Inject
+    private Repository repo;
 
     private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);
 

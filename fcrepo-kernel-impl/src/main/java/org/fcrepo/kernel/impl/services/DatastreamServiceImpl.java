@@ -17,6 +17,9 @@ package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
@@ -86,7 +89,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
     @Override
     public Datastream findOrCreateDatastream(final Session session, final String path) {
         try {
-            final Node node = findOrCreateNode(session, path, NT_FOLDER, NT_FILE);
+            final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, NT_FILE);
 
             if (node.isNew()) {
                 initializeNewDatastreamProperties(node);
@@ -109,7 +112,7 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
                 node.addMixin(FEDORA_DATASTREAM);
             }
 
-            final Node contentNode = findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+            final Node contentNode = jcrTools.findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
 
             if (contentNode.canAddMixin(FEDORA_BINARY)) {
                 contentNode.addMixin(FEDORA_BINARY);
@@ -203,24 +206,13 @@ public class DatastreamServiceImpl extends AbstractService implements Datastream
         final Timer.Context context = timer.time();
 
         try {
-            fixityResults =
-                    copyOf(binary.getFixity(repo, algorithm));
+            fixityResults = copyOf(binary.getFixity(algorithm));
 
         } finally {
             context.stop();
         }
 
         return fixityResults;
-    }
-
-    /**
-     * Set the storage policy decision point (if Spring didn't wire it in for
-     * us)
-     *
-     * @param pdp
-     */
-    public void setStoragePolicyDecisionPoint(final StoragePolicyDecisionPoint pdp) {
-        this.storagePolicyDecisionPoint = pdp;
     }
 
     /**

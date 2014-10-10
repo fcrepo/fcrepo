@@ -20,7 +20,6 @@ import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.FixityResult;
 
 import javax.jcr.Binary;
-import javax.jcr.Repository;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -87,10 +86,8 @@ public interface FedoraBinary extends FedoraResource {
 
     /**
      * Get the fixity of this datastream in a given repository's binary store.
-     * @param repo
      * @param algorithm the algorithm to use to calculate the checksum
      * @return
      */
-    Collection<FixityResult> getFixity(Repository repo,
-                                       String algorithm);
+    Collection<FixityResult> getFixity(String algorithm);
 }

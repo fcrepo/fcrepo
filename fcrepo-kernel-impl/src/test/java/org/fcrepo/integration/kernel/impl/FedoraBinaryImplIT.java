@@ -250,7 +250,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
 
         final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
-        final Collection<FixityResult> fixityResults = ds.getFixity(repo, algorithm);
+        final Collection<FixityResult> fixityResults = ds.getFixity(algorithm);
 
         assertNotEquals(0, fixityResults.size());
 
@@ -280,7 +280,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
 
         final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
-        final Collection<FixityResult> fixityResults = ds.getFixity(repo, algorithm);
+        final Collection<FixityResult> fixityResults = ds.getFixity(algorithm);
         assertNotEquals(0, fixityResults.size());
 
         for (final FixityResult fixityResult : fixityResults) {
@@ -308,7 +308,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
                 datastreamService.getBinary(session, "/testLLObject/testRandomContent");
 
         final String algorithm = ContentDigest.getAlgorithm(ds.getContentDigest());
-        final Collection<FixityResult> fixityResults = ds.getFixity(repo, algorithm);
+        final Collection<FixityResult> fixityResults = ds.getFixity(algorithm);
 
         assertNotEquals(0, fixityResults.size());
 

@@ -15,29 +15,10 @@
  */
 package org.fcrepo.kernel.services;
 
-import javax.jcr.Repository;
-import javax.jcr.Session;
-
 /**
  * @author bbpennel
  * @since Feb 21, 2014
  */
 public interface Service {
-
-    /**
-     * Set the repository to back this RepositoryService
-     *
-     * @param repository
-     */
-    void setRepository(Repository repository);
-
-    /**
-     * Test whether a datastream or object exists at the given path in the
-     * repository
-     *
-     * @param path
-     * @return whether a datastream or object exists at the given path
-     */
-    public boolean exists(final Session session, final String path);
 
 }
