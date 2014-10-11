@@ -13,6 +13,7 @@
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
+    <bean class="org.fcrepo.kernel.impl.identifiers.HashConverter"/>
     <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
   </util:list>
 

@@ -107,6 +107,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
             concat(new RootRdfContext(node(), graphSubjects()));
         }
 
+        concat(new HashRdfContext(node(), graphSubjects()));
+
     }
 
     private Iterator<Triple> triplesFromProperties(final javax.jcr.Node n)

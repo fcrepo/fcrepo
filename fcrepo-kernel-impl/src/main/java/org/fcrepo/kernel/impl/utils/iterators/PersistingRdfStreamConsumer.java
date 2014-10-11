@@ -31,6 +31,8 @@ import javax.jcr.Session;
 
 import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
+import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.RdfStreamConsumer;
 import org.modeshape.jcr.api.JcrTools;
@@ -72,6 +74,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     private static final Model m = createDefaultModel();
 
     private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumer.class);
+
+    private static final ObjectService objectService = new ObjectServiceImpl();
 
     /**
      * Ordinary constructor.
@@ -147,7 +151,17 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected void operateOnTriple(final Statement t) {
         try {
             final Resource subject = t.getSubject();
-            final Node subjectNode = idTranslator().convert(subject);
+            final String absPath = idTranslator().asString(subject);
+
+            final Node subjectNode;
+
+            if (objectService.exists(session, absPath)) {
+                subjectNode = session.getNode(absPath);
+            } else if (absPath.contains("/#")) {
+                subjectNode = objectService.findOrCreateObject(session, absPath).getNode();
+            } else {
+                throw new RepositoryRuntimeException("Unable to find subject to operate on");
+            }
 
             // if this is a user-managed RDF type assertion, update the node's
             // mixins. If it isn't, treat it as a "data" property.
