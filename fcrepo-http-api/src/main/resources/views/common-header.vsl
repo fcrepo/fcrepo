@@ -15,7 +15,6 @@
     <div class="collapse navbar-collapse navbar-ex1-collapse">
         <ul class="nav navbar-nav">
             <li><a href="$uriInfo.baseUriBuilder.build()">Home</a></li>
-            <li><a href="$uriInfo.baseUriBuilder.build()fcr:namespaces">Namespaces</a></li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:nodetypes">Types</a></li>
         </ul>
     </div>
