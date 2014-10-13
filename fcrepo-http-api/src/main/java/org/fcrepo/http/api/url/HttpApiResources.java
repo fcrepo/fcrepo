@@ -23,7 +23,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
-import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
@@ -38,7 +37,6 @@ import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraFixity;
 import org.fcrepo.http.api.FedoraLocks;
 import org.fcrepo.http.api.FedoraVersioning;
-import org.fcrepo.http.api.repository.FedoraRepositorySitemap;
 import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
@@ -152,10 +150,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
         final Resource s) {
-        // sitemap
-        model.add(s, HAS_SITEMAP, createResource(uriInfo.getBaseUriBuilder()
-                .path(FedoraRepositorySitemap.class).build().toASCIIString()));
-
         // fcr:tx
         model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)
