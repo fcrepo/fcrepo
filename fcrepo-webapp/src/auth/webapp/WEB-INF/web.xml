@@ -46,6 +46,7 @@
       <http-method>PATCH</http-method>
       <http-method>GET</http-method>
       <http-method>POST</http-method>
+      <http-method>MOVE</http-method>
     </web-resource-collection>
     <auth-constraint>
       <role-name>fedoraUser</role-name>
