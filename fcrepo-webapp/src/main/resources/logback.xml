@@ -28,9 +28,6 @@
   <logger name="org.fcrepo.kernel" additivity="false" level="${log.fcrepo.kernel:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo.storage.policy" additivity="false" level="${log.fcrepo.storage.policy:-INFO}">
-    <appender-ref ref="STDOUT"/>
-  </logger>
   <logger name="org.fcrepo.transform" additivity="false" level="${log.fcrepo.transform:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>

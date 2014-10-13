@@ -23,8 +23,6 @@
         <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
     </util:list>
     
-    <bean class="org.fcrepo.storage.policy.StoragePolicyDecisionPointImpl"/>
-
     <context:component-scan base-package="org.fcrepo"/>
 
 </beans>
