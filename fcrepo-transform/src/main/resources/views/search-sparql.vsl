@@ -26,7 +26,6 @@ SELECT ?subject WHERE { }
 
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
-    <a class="btn" href="$uriInfo.baseUriBuilder.build()fcr:search">Fulltext Search</a>
 </div>
 </div>
 

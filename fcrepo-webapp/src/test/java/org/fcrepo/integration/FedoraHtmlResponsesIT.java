@@ -80,7 +80,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage page = webClient.getPage(serverAddress);
 
         checkForHeaderBranding(page);
-        checkForHeaderSearch(page);
 
         final String namespaceLabel = page
             .getFirstByXPath("//span[@title='http://fedora.info/definitions/v4/repository#']/text()")
@@ -327,12 +326,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage lockPage = webClient.getPage(serverAddress + pid + "/fcr:lock");
         assertTrue("Should have fedora:locks property.", lockPage.asText().contains("lock"));
         assertTrue("Should have fedora:isDeep property.", lockPage.asText().contains("isDeep"));
-    }
-
-    private static void checkForHeaderSearch(final HtmlPage page) {
-        final HtmlForm form = page.getFirstByXPath("//form[@role='search']");
-        assertNotNull(form);
-        assertEquals(serverAddress + "fcr:search", form.getActionAttribute());
     }
 
     private static void checkForHeaderBranding(final HtmlPage page) {

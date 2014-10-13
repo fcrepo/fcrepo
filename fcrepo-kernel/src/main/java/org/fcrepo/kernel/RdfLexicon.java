@@ -119,8 +119,6 @@ public final class RdfLexicon {
             "http://www.jcp.org/jcr/nt/1.0";
 
     // MEMBERSHIP
-    public static final Property HAS_MEMBER_OF_RESULT =
-            createProperty(REPOSITORY_NAMESPACE + "hasMember");
     public static final Property HAS_PARENT =
             createProperty(REPOSITORY_NAMESPACE + "hasParent");
     public static final Property HAS_CHILD =
@@ -128,8 +126,7 @@ public final class RdfLexicon {
     public static final Property HAS_CHILD_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "numberOfChildren");
 
-    public static final Set<Property> membershipProperties = of(
-            HAS_MEMBER_OF_RESULT, HAS_PARENT, HAS_CHILD, HAS_CHILD_COUNT);
+    public static final Set<Property> membershipProperties = of(HAS_PARENT, HAS_CHILD, HAS_CHILD_COUNT);
 
     // FIXITY
 
@@ -155,24 +152,8 @@ public final class RdfLexicon {
             HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST, HAS_SIZE, HAS_FIXITY_STATE,
             HAS_FIXITY_CHECK_COUNT, HAS_FIXITY_ERROR_COUNT, HAS_FIXITY_REPAIRED_COUNT);
 
-    // SEARCH
-    public static final Property SEARCH_PAGE = createProperty("http://sindice.com/vocab/search#Page");
-    public static final Property SEARCH_HAS_TOTAL_RESULTS =
-            createProperty("http://sindice.com/vocab/search#totalResults");
-    public static final Property SEARCH_ITEMS_PER_PAGE =
-            createProperty("http://sindice.com/vocab/search#itemsPerPage");
-    public static final Property SEARCH_OFFSET =
-            createProperty("http://sindice.com/vocab/search#startIndex");
-    public static final Property SEARCH_TERMS =
-            createProperty("http://sindice.com/vocab/search#searchTerms");
-    public static final Property SEARCH_HAS_MORE =
-            createProperty(RESTAPI_NAMESPACE + "hasMoreResults");
     public static final Property WRITABLE =
             createProperty(RESTAPI_NAMESPACE + "writable");
-
-    public static final Set<Property> searchProperties = of(SEARCH_PAGE,
-            SEARCH_HAS_TOTAL_RESULTS, SEARCH_ITEMS_PER_PAGE, SEARCH_OFFSET,
-            SEARCH_OFFSET, SEARCH_TERMS, SEARCH_HAS_MORE);
 
     // Locks
     public static final Property LOCKS
@@ -224,16 +205,12 @@ public final class RdfLexicon {
             createProperty(RESTAPI_NAMESPACE + "hasNamespaces");
     public static final Property HAS_ACCESS_ROLES_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasAccessRoles");
-    public static final Property HAS_SEARCH_SERVICE =
-            createProperty("http://www.whatwg.org/specs/web-apps/current-work/"
-                                   + "#link-type-search");
     public static final Property HAS_SITEMAP =
             createProperty("http://microformats.org/wiki/rel-sitemap");
 
     public static final Set<Property> repositoryProperties = of(
             HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE,
-            HAS_NAMESPACE_SERVICE, HAS_SEARCH_SERVICE,
-            HAS_SITEMAP);
+            HAS_NAMESPACE_SERVICE, HAS_SITEMAP);
 
     // NAMESPACES
     public static final Property HAS_NAMESPACE_PREFIX =
@@ -338,8 +315,7 @@ public final class RdfLexicon {
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
-        b.addAll(membershipProperties).addAll(fixityProperties).addAll(
-                searchProperties).addAll(ldpProperties).addAll(
+        b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
                 otherServiceProperties).addAll(contentProperties).addAll(
                 versioningProperties).addAll(jcrProperties);

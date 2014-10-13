@@ -15,12 +15,8 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -59,7 +55,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -195,74 +190,6 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
     public void testGetRepositoryObjectCount() {
         final Long actual = testObj.getRepositoryObjectCount();
         assertEquals(EXPECTED_COUNT, actual);
-    }
-
-    private void setupSearchRepository() throws RepositoryException {
-
-        subject = createResource(RESTAPI_NAMESPACE + "search/request");
-
-        when(mockSession.getValueFactory()).thenReturn(mockFactory);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
-        when(mockQueryManager.getQOMFactory()).thenReturn(mockQOMFactory);
-        when(mockQOMFactory.createQuery(null, null, null, null)).thenReturn(
-                mockQueryOM);
-        when(mockQueryOM.execute()).thenReturn(mockQueryResult);
-        when(mockQueryResult.getNodes()).thenReturn(mockNI);
-        when(mockNI.getSize()).thenReturn(500L);
-        when(mockNI.next()).thenReturn("");
-    }
-
-    @Test
-    public void testSearchRepository() throws RepositoryException {
-
-        setupSearchRepository();
-
-        final Dataset dataset =
-                testObj.searchRepository(mockSubjectFactory, subject,
-                        mockSession,
-                "search terms", 10, 0L);
-
-        // n+1
-        verify(mockQueryOM).setLimit(11);
-        verify(mockQueryOM).setOffset(0);
-        verify(mockQueryOM).execute();
-
-        assertFalse("Dataset graph should contain results", dataset
-                .getDefaultModel().getGraph().isEmpty());
-
-    }
-
-    @Test
-    public void testSearchRepositoryNullSearchTerms()
-            throws RepositoryException {
-        setupSearchRepository();
-
-        final Dataset dataset = testObj.searchRepository(mockSubjectFactory, subject, mockSession,
-                null, 10, 0L);
-
-        // No query should have been run
-        verify(mockQueryManager, never()).getQOMFactory();
-        verify(mockQueryOM, never()).execute();
-
-        assertTrue("Null search terms should return an empty result graph",
-                dataset.getDefaultModel().getGraph().isEmpty());
-    }
-
-    @Test
-    public void testSearchRepositoryNoSearchTerms() throws RepositoryException {
-        setupSearchRepository();
-
-        final Dataset dataset =
-                testObj.searchRepository(mockSubjectFactory, subject,
-                        mockSession, "", 10, 0L);
-
-        // No query should have been run
-        verify(mockQueryManager, never()).getQOMFactory();
-        verify(mockQueryOM, never()).execute();
-
-        assertTrue("Blank query should return an empty result graph", dataset
-                .getDefaultModel().getGraph().isEmpty());
     }
 
     @Test
