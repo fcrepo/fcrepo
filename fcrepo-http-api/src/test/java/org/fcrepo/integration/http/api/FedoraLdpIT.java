@@ -1847,7 +1847,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(getObjMethod);
         final GraphStore graphStore = getGraphStore(response);
 
-        assertTrue("Expected to have container a", graphStore.contains(Node.ANY,
+        assertTrue("Expected to have container t", graphStore.contains(Node.ANY,
                 NodeFactory.createURI(location),
                 NodeFactory.createURI(RdfLexicon.LDP_NAMESPACE + "contains"),
                 NodeFactory.createURI(location + "/t")
