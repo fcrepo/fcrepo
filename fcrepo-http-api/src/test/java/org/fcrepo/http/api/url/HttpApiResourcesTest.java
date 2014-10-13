@@ -20,7 +20,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
-import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.jgroups.util.Util.assertFalse;
@@ -112,7 +111,6 @@ public class HttpApiResourcesTest {
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 
-        assertTrue(model.contains(graphSubject, HAS_SITEMAP));
         assertTrue(model.contains(graphSubject, HAS_TRANSACTION_SERVICE));
     }
 

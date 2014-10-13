@@ -203,11 +203,9 @@ public final class RdfLexicon {
             createProperty(RESTAPI_NAMESPACE + "hasTransactionProvider");
     public static final Property HAS_ACCESS_ROLES_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasAccessRoles");
-    public static final Property HAS_SITEMAP =
-            createProperty("http://microformats.org/wiki/rel-sitemap");
 
     public static final Set<Property> repositoryProperties = of(
-            HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE, HAS_SITEMAP);
+            HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE);
 
     // NAMESPACES
     public static final Property HAS_NAMESPACE_PREFIX =
