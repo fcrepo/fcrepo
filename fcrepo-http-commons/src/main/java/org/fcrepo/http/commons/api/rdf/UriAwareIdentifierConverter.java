@@ -372,7 +372,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
 
 
     private static final List<Converter<String,String>> minimalTranslationChain =
-            singletonList((Converter<String,String>) new NamespaceConverter());
+            singletonList((Converter<String, String>) new NamespaceConverter());
 
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
@@ -408,7 +408,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
         protected String doForward(final String path) {
             if (path.contains(WORKSPACE_PREFIX) && !path.contains(workspaceSegment())) {
                 throw new RepositoryRuntimeException("Path " + path
-                        + " is not in current workspace " + defaultWorkspace);
+                        + " is not in current workspace " + getWorkspaceName());
             }
             return replaceOnce(path, workspaceSegment(), EMPTY);
         }
@@ -419,12 +419,16 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
         }
 
         private String workspaceSegment() {
-            final String workspace = session.getWorkspace().getName();
+            final String workspace = getWorkspaceName();
             if (!workspace.equals(defaultWorkspace)) {
                 return "/" + WORKSPACE_PREFIX + workspace;
             } else {
                 return EMPTY;
             }
+        }
+
+        private String getWorkspaceName() {
+            return session.getWorkspace().getName();
         }
     }
 
