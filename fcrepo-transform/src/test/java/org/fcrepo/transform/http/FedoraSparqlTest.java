@@ -27,12 +27,12 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFLanguages;
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLResultSet;
 import org.fcrepo.transform.sparql.SparqlServiceDescription;
@@ -43,6 +43,7 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.query.qom.QueryObjectModelFactory;
 import org.modeshape.jcr.api.query.qom.SelectQuery;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.ValueFactory;
@@ -116,7 +117,7 @@ public class FedoraSparqlTest {
     private QueryResult mockResults;
 
     @Mock
-    private IdentifierTranslator MockIdentifierTranslator;
+    private IdentifierConverter<Resource, Node> MockIdentifierTranslator;
 
     @Mock
     private Variant mockVariant;
@@ -192,7 +193,7 @@ public class FedoraSparqlTest {
         final Response response = testObj.runSparqlQuery(input, mockRequest, uriInfo);
         assertTrue(response.getStatus() == OK.getStatusCode());
         assertEquals(ok(new ResultSetStreamingOutput(new JQLResultSet(mockSession,
-                new HttpIdentifierTranslator(mockSession, FedoraNodes.class, uriInfo),
+                new UriAwareIdentifierConverter(mockSession, uriInfo.getBaseUriBuilder()),
                 mockResults), mockVariant.getMediaType())).build().toString(),
                 response.toString());
     }
@@ -204,7 +205,7 @@ public class FedoraSparqlTest {
         final Response response = testObj.runSparqlQuery(testSparql, mockRequest, uriInfo);
         assertTrue(response.getStatus() == OK.getStatusCode());
         assertEquals(ok(new ResultSetStreamingOutput(new JQLResultSet(mockSession,
-                new HttpIdentifierTranslator(mockSession, FedoraNodes.class, uriInfo),
+                new UriAwareIdentifierConverter(mockSession, uriInfo.getBaseUriBuilder()),
                 mockResults), mockVariant.getMediaType())).build().toString(),
                 response.toString());
     }
