@@ -1,0 +1,47 @@
+{
+  "name" : "repo",
+  "jndiName" : "",
+  "workspaces" : {
+    "predefined" : [],
+    "default" : "default",
+    "allowCreation" : true
+  },
+  "storage" : {
+    "cacheName" : "FedoraRepository",
+    "cacheConfiguration" : "${fcrepo.infinispan.cache_configuration:config/testing/infinispan-basic.xml}",
+    "binaryStorage" : {
+      "type" : "cache",
+      "dataCacheName" : "FedoraRepositoryBinaryData",
+      "metadataCacheName" : "FedoraRepositoryMetaData"
+    }
+  },
+  "externalSources" : {
+    "fileSystem" : {
+      "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
+      "directoryPath" : "target/test-classes/test-objects",
+      "readonly" : false,
+      "extraPropertiesStorage": "json",
+      "cacheTtlSeconds" : 2,
+      "projections" : [ "default:/files => /" ]
+    },
+    "readonly" : {
+      "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
+      "directoryPath" : "target/test-classes/test-objects",
+      "propertiesDirectoryPath" : "target/test-classes/test-meta",
+      "readonly" : true,
+      "extraPropertiesStorage": "none",
+      "cacheTtlSeconds" : 2,
+      "projections" : [ "default:/readonlyfiles => /" ]
+    }
+  },
+  "security" : {
+    "anonymous" : {
+      "roles" : ["readonly","readwrite","admin"],
+      "useOnFailedLogin" : false
+    },
+    "providers" : [
+      { "classname" : "org.fcrepo.auth.common.BypassSecurityServletAuthenticationProvider" }
+    ]
+  },
+  "node-types" : ["auto-versioning-fedora-node-types.cnd"]
+}

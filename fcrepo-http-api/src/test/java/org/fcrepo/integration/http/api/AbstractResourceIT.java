@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
-import com.hp.hpl.jena.update.GraphStore;
-
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -43,25 +41,26 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.hp.hpl.jena.update.GraphStore;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -69,7 +68,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  * @author awoods
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("/spring-test/test-container.xml")
+@UseStockConfiguration
 public abstract class AbstractResourceIT {
 
     protected static Logger logger;

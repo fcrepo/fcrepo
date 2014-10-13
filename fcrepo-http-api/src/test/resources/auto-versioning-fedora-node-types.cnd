@@ -1,0 +1,131 @@
+/*
+ * JCR node types for use with Fedora
+ */
+<jcr = 'http://www.jcp.org/jcr/1.0'>
+<nt = 'http://www.jcp.org/jcr/nt/1.0'>
+<mix = 'http://www.jcp.org/jcr/mix/1.0'>
+<image='http://www.modeshape.org/images/1.0'>
+
+/*
+ * Friend-of-a-Friend
+ */
+<foaf = 'http://xmlns.com/foaf/0.1/'>
+
+/*
+ * Dublin Core. See:
+ * 
+ * http://dublincore.org/documents/dcmi-namespace/
+ */
+<dc = 'http://purl.org/dc/elements/1.1/'>
+
+/*
+ * Generic Fedora namespace
+ */
+<fedora = 'http://fedora.info/definitions/v4/rest-api#'>
+<fedorarelsext = 'http://fedora.info/definitions/v4/rels-ext#'>
+<rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+<rdfs = 'http://www.w3.org/2000/01/rdf-schema#'>
+<premis = 'http://www.loc.gov/premis/rdf/v1#'>
+<ldp = 'http://www.w3.org/ns/ldp#'>
+
+/*
+ * A fedora namespace for properties a user may set on a node that may
+ * enable or disable a fedora-specific behavior of that node.
+ */
+<fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
+
+<test = 'info:fedora/test/'>
+
+/*
+ * The following relationship properties are made available in support of legacy graph constructions from the
+ * Fedora 3 era that use direct resource-to-resource relationships. New work would be best accomplished by 
+ * using literal-valued properties with defined semantics and associated vocabularies, or by directly using
+ * JCR technical idioms like hierarchy.
+ */
+
+[fedora:relations] mixin
+
+	- fedorarelsext:isPartOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasPart (REFERENCE) multiple COPY
+	- fedorarelsext:isConstituentOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasConstituent (REFERENCE) multiple COPY
+	- fedorarelsext:isMemberOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasMember (REFERENCE) multiple COPY
+	- fedorarelsext:isSubsetOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasSubset (REFERENCE) multiple COPY
+	- fedorarelsext:isMemberOfCollection (REFERENCE) multiple COPY
+	- fedorarelsext:hasCollectionMember (REFERENCE) multiple COPY
+	- fedorarelsext:isDerivationOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasDerivation (REFERENCE) multiple COPY
+	- fedorarelsext:isDependentOf (REFERENCE) multiple COPY
+	- fedorarelsext:hasDependent (REFERENCE) multiple COPY
+	- fedorarelsext:isDescriptionOf (REFERENCE) multiple COPY
+	- fedorarelsext:HasDescription (REFERENCE) multiple COPY
+	- fedorarelsext:isMetadataFor (REFERENCE) multiple COPY
+	- fedorarelsext:HasMetadata (REFERENCE) multiple COPY
+	- fedorarelsext:isAnnotationOf (REFERENCE) multiple COPY
+	- fedorarelsext:HasAnnotation (REFERENCE) multiple COPY
+	- fedorarelsext:hasEquivalent (REFERENCE) multiple COPY
+    - fedorarelsext:hasExternalContent (URI) multiple COPY
+    - fedorarelsext:isExternalContentOf (URI) multiple COPY
+
+
+[ldp:Container] mixin
+    - ldp:membershipResource (REFERENCE)
+    - ldp:hasMemberRelation (URI)
+
+
+/*
+ *  Dublin Core terms
+ */
+[dc:describable] mixin
+  - dc:contributor (STRING) multiple
+  - dc:coverage (STRING) multiple
+  - dc:creator (STRING) multiple
+  - dc:date (STRING) multiple
+  - dc:description (STRING) multiple
+  - dc:format (STRING) multiple
+  - dc:identifier (STRING) multiple
+  - dc:language (STRING) multiple
+  - dc:publisher (STRING) multiple
+  - dc:relation (STRING) multiple
+  - dc:rights (STRING) multiple
+  - dc:source (STRING) multiple
+  - dc:subject (STRING) multiple
+  - dc:title (STRING) multiple
+  - dc:type (STRING) multiple
+
+/*
+ * Node types in support of autoversioning functionality
+ */
+[fedora:autoVersioned] mixin 
+  - fedoraconfig:versioningPolicy (STRING) = "auto-version" autocreated
+
+[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:versionable, fedora:autoVersioned, dc:describable mixin
+  - rdf:type (URI) multiple
+  - * (undefined) multiple
+  - * (undefined)
+  
+/*
+ * A Fedora object.
+ */
+[fedora:object] > fedora:resource, ldp:Container mixin
+
+
+/*
+ * A Fedora datastream.
+ */
+[fedora:datastream] > fedora:resource mixin
+   + image:metadata (nt:unstructured) SNS
+
+/*
+ * Some content that can have a checksum
+ */
+[fedora:binary] > mix:created mixin
+  - premis:hasOriginalName (STRING)
+  - premis:hasSize (LONG) COPY
+  - fedora:digest (URI) COPY
+
+[fedora:blanknode] > mix:referenceable mixin
+
+

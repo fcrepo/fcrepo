@@ -15,28 +15,27 @@
  */
 package org.fcrepo.http.api.repository;
 
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.io.InputStream;
+import java.net.URI;
+
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-
-import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
+import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  *
@@ -84,12 +83,5 @@ public class FedoraRepositoryNodeTypesTest {
 
         assertEquals("Got wrong triples!", mockRdfStream, nodeTypes);
 
-    }
-
-    @Test
-    public void itShouldPersistIncomingCndFile() throws RepositoryException, IOException {
-        testObj.updateCnd(mockInputStream);
-
-        verify(mockNodes).registerNodeTypes(mockSession, mockInputStream);
     }
 }
