@@ -162,8 +162,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
             }
 
             final List<String> otherTemplates =
-                    ImmutableList.of("search:results", "jcr:namespaces",
-                            "jcr:workspaces", "jcr:nodetypes",
+                    ImmutableList.of("search:results", "jcr:namespaces", "jcr:nodetypes",
                             "node", "fcr:versions", "fcr:lock", "fcr:fixity");
 
             for (final String key : otherTemplates) {

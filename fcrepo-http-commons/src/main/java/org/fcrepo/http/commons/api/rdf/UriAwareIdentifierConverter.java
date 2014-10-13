@@ -16,7 +16,6 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import com.google.common.base.Converter;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -26,7 +25,6 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
-import org.fcrepo.kernel.impl.services.functions.GetDefaultWorkspace;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -35,7 +33,6 @@ import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
@@ -347,12 +344,10 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
         if (translationChain == null) {
             translationChain = getTranslationChain();
 
-            final Converter<String,String> workspaceIdentifierConverter = new WorkspaceIdentifierConverter(session);
             final Converter<String,String> transactionIdentifierConverter = new TransactionIdentifierConverter(session);
 
             setTranslationChain(ImmutableList.copyOf(
                     Iterables.concat(Lists.newArrayList(
-                                    workspaceIdentifierConverter,
                                     transactionIdentifierConverter),
                                     translationChain)));
         }
@@ -387,49 +382,6 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
 
     protected ApplicationContext getApplicationContext() {
         return getCurrentWebApplicationContext();
-    }
-
-    /**
-     * Translate the current workspace into the identifier
-     */
-    class WorkspaceIdentifierConverter extends Converter<String, String> {
-        public static final String WORKSPACE_PREFIX = "workspace:";
-
-        private final Session session;
-        private final Function<Repository, String> getDefaultWorkspace = new GetDefaultWorkspace();
-        private final String defaultWorkspace;
-
-        public WorkspaceIdentifierConverter(final Session session) {
-            this.session = session;
-            this.defaultWorkspace = getDefaultWorkspace.apply(session.getRepository());
-        }
-
-        @Override
-        protected String doForward(final String path) {
-            if (path.contains(WORKSPACE_PREFIX) && !path.contains(workspaceSegment())) {
-                throw new RepositoryRuntimeException("Path " + path
-                        + " is not in current workspace " + getWorkspaceName());
-            }
-            return replaceOnce(path, workspaceSegment(), EMPTY);
-        }
-
-        @Override
-        protected String doBackward(final String path) {
-            return workspaceSegment() + path;
-        }
-
-        private String workspaceSegment() {
-            final String workspace = getWorkspaceName();
-            if (!workspace.equals(defaultWorkspace)) {
-                return "/" + WORKSPACE_PREFIX + workspace;
-            } else {
-                return EMPTY;
-            }
-        }
-
-        private String getWorkspaceName() {
-            return session.getWorkspace().getName();
-        }
     }
 
     /**
