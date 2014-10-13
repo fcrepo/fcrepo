@@ -103,9 +103,11 @@ public class PropertiesRdfContext extends NodeRdfContext {
 
         }
 
-        if (node().getPrimaryNodeType().getName().equals(ROOT)) {
+        if (node().isNodeType(ROOT)) {
             concat(new RootRdfContext(node(), graphSubjects()));
         }
+
+        concat(new HashRdfContext(node(), graphSubjects()));
 
     }
 

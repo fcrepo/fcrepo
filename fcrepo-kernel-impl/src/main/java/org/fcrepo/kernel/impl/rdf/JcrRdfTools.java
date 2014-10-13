@@ -24,6 +24,7 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.NodeTypeTemplate;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -84,8 +86,10 @@ public class JcrRdfTools {
     private final ValueConverter valueConverter;
 
     private Session session;
-    private NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
-    private JcrTools jcrTools = new JcrTools();
+    private final NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
+
+    @VisibleForTesting
+    protected JcrTools jcrTools = new JcrTools();
 
     private final Map<AnonId, Resource> skolemizedBnodeMap;
 
@@ -321,10 +325,27 @@ public class JcrRdfTools {
             skolemized = m.createStatement(getSkolemizedResource(graphSubjects, skolemized.getSubject()),
                     t.getPredicate(),
                     t.getObject());
+        } else if (graphSubjects.inDomain(t.getSubject()) && t.getSubject().getURI().contains("#")) {
+            final String absPath = graphSubjects.asString(t.getSubject());
+
+            if (!absPath.isEmpty() && !session.nodeExists(absPath)) {
+                final Node orCreateNode = jcrTools.findOrCreateNode(session, absPath, NT_FOLDER);
+                orCreateNode.addMixin("fedora:resource");
+            }
         }
 
         if (t.getObject().isAnon()) {
             skolemized = t.changeObject(getSkolemizedResource(graphSubjects, skolemized.getObject()));
+        } else if (t.getObject().isResource()
+                && graphSubjects.inDomain(t.getObject().asResource())
+                && t.getObject().asResource().getURI().contains("#")) {
+
+            final String absPath = graphSubjects.asString(t.getObject().asResource());
+
+            if (!absPath.isEmpty() && !session.nodeExists(absPath)) {
+                final Node orCreateNode = jcrTools.findOrCreateNode(session, absPath, NT_FOLDER);
+                orCreateNode.addMixin("fedora:resource");
+            }
         }
 
         return skolemized;

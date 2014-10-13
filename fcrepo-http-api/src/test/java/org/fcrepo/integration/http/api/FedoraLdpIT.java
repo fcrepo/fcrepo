@@ -1915,6 +1915,36 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testWithHashUris() throws IOException {
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "text/turtle");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String rdf = "<> <info:some-predicate> <#abc> .\n" +
+                "<#abc> <info:rubydora#label> \"asdfg\" .";
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                CREATED.getStatusCode(), status);
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpGet httpGet = new HttpGet(location);
+
+        final GraphStore graphStore = getGraphStore(httpGet);
+
+        assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
+                createProperty("info:some-predicate").asNode(), createResource(location + "#abc").asNode()));
+
+        assertTrue(graphStore.contains(ANY, createResource(location + "#abc").asNode(),
+                createProperty("info:rubydora#label").asNode(), createLiteral("asdfg")));
+
+
+    }
+
     private Date getDateFromModel( final Model model, final Resource subj, final Property pred ) throws Exception {
         final StmtIterator stmts = model.listStatements( subj, pred, (String)null );
         if ( stmts.hasNext() ) {
