@@ -16,11 +16,6 @@
     <dependencies>
       <dependency>
         <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-audit</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-auth-common</artifactId>
         <version>${project.version}</version>
       </dependency>
