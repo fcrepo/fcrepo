@@ -122,22 +122,6 @@ public class UriAwareIdentifierConverterTest {
     }
 
     @Test
-    public void testDoForwardWithWorkspace() throws Exception {
-        final Resource resource = createResource("http://localhost:8080/some/workspace:xyz/" + path);
-        when(mockWorkspace.getName()).thenReturn("xyz");
-        final Node converted = converter.convert(resource);
-        assertEquals(node, converted);
-    }
-
-    @Test(expected = RepositoryRuntimeException.class)
-    public void testDoForwardInDifferentWorkspace() throws Exception {
-        final Resource resource = createResource("http://localhost:8080/some/workspace:xyz/" + path);
-        when(mockWorkspace.getName()).thenReturn("abc");
-        final Node converted = converter.convert(resource);
-        assertEquals(node, converted);
-    }
-
-    @Test
     public void testDoForwardWithTransaction() throws Exception {
         final UriAwareIdentifierConverter converter = new UriAwareIdentifierConverter(txSession,
                 UriBuilder.fromUri(uriTemplate));
@@ -174,14 +158,6 @@ public class UriAwareIdentifierConverterTest {
         when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
         final Resource converted = converter.reverse().convert(node);
         assertEquals(metadataResource, converted);
-    }
-
-    @Test
-    public void testDoBackwardWithWorkspace() throws Exception {
-        final Resource resource = createResource("http://localhost:8080/some/workspace:xyz/" + path);
-        when(mockWorkspace.getName()).thenReturn("xyz");
-        final Resource converted = converter.reverse().convert(node);
-        assertEquals(resource, converted);
     }
 
     @Test
