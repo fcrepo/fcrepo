@@ -24,6 +24,7 @@ import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
+import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -45,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
@@ -149,7 +149,19 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
             realPath = path;
         }
 
-        return createResource(uriBuilder().resolveTemplate("path", realPath, false).build().toString());
+        final UriBuilder uri = uriBuilder();
+
+        if (realPath.contains("#")) {
+
+            final String[] split = realPath.split("#", 2);
+
+            uri.resolveTemplate("path", split[0], false);
+            uri.fragment(split[1]);
+        } else {
+            uri.resolveTemplate("path", realPath, false);
+
+        }
+        return createResource(uri.build().toString());
     }
 
     @Override
@@ -367,7 +379,10 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
 
 
     private static final List<Converter<String,String>> minimalTranslationChain =
-            singletonList((Converter<String, String>) new NamespaceConverter());
+            Lists.newArrayList(
+                    (Converter<String, String>) new NamespaceConverter(),
+                    (Converter<String, String>) new HashConverter()
+                    );
 
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();

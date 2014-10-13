@@ -122,6 +122,13 @@ public class UriAwareIdentifierConverterTest {
     }
 
     @Test
+    public void testDoForwardWithAHash() throws Exception {
+        when(session.getNode("/" + path + "/#/with-a-hash")).thenReturn(node);
+        final Node converted = converter.convert(createResource("http://localhost:8080/some/" + path + "#with-a-hash"));
+        assertEquals(node, converted);
+    }
+
+    @Test
     public void testDoForwardWithTransaction() throws Exception {
         final UriAwareIdentifierConverter converter = new UriAwareIdentifierConverter(txSession,
                 UriBuilder.fromUri(uriTemplate));
@@ -158,6 +165,13 @@ public class UriAwareIdentifierConverterTest {
         when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
         final Resource converted = converter.reverse().convert(node);
         assertEquals(metadataResource, converted);
+    }
+
+    @Test
+    public void testDoBackwardWithHash() throws Exception {
+        when(node.getPath()).thenReturn(path + "/#/with-a-hash");
+        final Resource converted = converter.reverse().convert(node);
+        assertEquals(createResource("http://localhost:8080/some/" + path + "#with-a-hash"), converted);
     }
 
     @Test
@@ -214,5 +228,10 @@ public class UriAwareIdentifierConverterTest {
         final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
         final Resource converted = converter.reverse().convert(node);
         assertEquals(resource, converted);
+    }
+
+    @Test
+    public void testToStringWithRoot() throws Exception {
+        assertEquals("/", converter.asString(createResource("http://localhost:8080/some/")));
     }
 }
