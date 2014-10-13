@@ -61,7 +61,6 @@
     <module>fcrepo-boms</module>
     <module>fcrepo-kernel</module>
     <module>fcrepo-kernel-impl</module>
-    <module>fcrepo-audit</module>
     <module>fcrepo-webapp</module>
     <module>fcrepo-jms</module>
     <module>fcrepo-http-commons</module>
