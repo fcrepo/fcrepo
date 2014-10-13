@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static java.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
@@ -23,11 +22,9 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import com.google.common.base.Joiner;
-import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
-import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
@@ -38,7 +35,6 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.vocabulary.RDF;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -53,13 +49,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final JcrRdfTools jcrRdfTools;
 
-    private final HashMap<AnonId, Node> skolemizedBnodeMap;
-
     private final IdentifierConverter<Resource,Node> subjects;
-
-    private final Session session;
-
-    private static final JcrTools jcrTools = new JcrTools();
 
     private final List<String> exceptions;
 
@@ -70,56 +60,42 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param session
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects, final Session session) {
-        this(subjects, session, new JcrRdfTools(subjects, session));
+        this(subjects, new JcrRdfTools(subjects, session));
     }
 
     /**
      * Construct a statement listener within the given session
      *
      * @param subjects
-     * @param session
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects,
-                                        final Session session,
                                         final JcrRdfTools jcrRdfTools) {
         super();
-        this.session = session;
         this.subjects = subjects;
         this.jcrRdfTools = jcrRdfTools;
-        this.skolemizedBnodeMap = new HashMap<>();
         this.exceptions = new ArrayList<>();
     }
 
     /**
      * When a statement is added to the graph, serialize it to a JCR property
      *
-     * @param s
+     * @param input
      */
     @Override
-    public void addedStatement(final Statement s) {
-        LOGGER.debug(">> added statement {}", s);
+    public void addedStatement(final Statement input) {
+        LOGGER.debug(">> added statement {}", input);
 
         try {
-            final Resource subject = s.getSubject();
+            final Resource subject = input.getSubject();
 
             // if it's not about a node, ignore it.
             if (!subjects.inDomain(subject) && !subject.isAnon()) {
                 return;
             }
 
-            final Node subjectNode;
+            final Statement s = jcrRdfTools.skolemize(subjects, input);
 
-            if (subject.isAnon()) {
-                if (skolemizedBnodeMap.containsKey(subject.getId())) {
-                    subjectNode = skolemizedBnodeMap.get(subject.getId());
-                } else {
-                    subjectNode = jcrTools.findOrCreateNode(session, "/.well-known/genid/" + randomUUID().toString());
-                    subjectNode.addMixin("fedora:blanknode");
-                    skolemizedBnodeMap.put(subject.getId(), subjectNode);
-                }
-            } else {
-                subjectNode = subjects.convert(subject);
-            }
+            final Node subjectNode = subjects.convert(s.getSubject());
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -128,11 +104,11 @@ public class JcrPropertyStatementListener extends StatementListener {
             final RDFNode objectNode = s.getObject();
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                jcrRdfTools.addMixin(subjectNode, mixinResource, s.getModel().getNsPrefixMap());
+                jcrRdfTools.addMixin(subjectNode, mixinResource, input.getModel().getNsPrefixMap());
                 return;
             }
 
-            jcrRdfTools.addProperty(subjectNode, property, objectNode, s.getModel().getNsPrefixMap());
+            jcrRdfTools.addProperty(subjectNode, property, objectNode, input.getModel().getNsPrefixMap());
         } catch (final RepositoryException e) {
             exceptions.add(e.getMessage());
         }

@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl.utils.iterators;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -29,11 +28,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.hp.hpl.jena.rdf.model.AnonId;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.RdfStreamConsumer;
-import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.google.common.base.Predicate;
@@ -41,12 +38,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author ajs6f
@@ -63,11 +56,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     // if it's not about a Fedora resource, we don't care.
     protected final Predicate<Triple> isFedoraSubjectTriple;
 
-    private final Map<AnonId, Resource> skolemizedBnodeMap;
-
     private final JcrRdfTools jcrRdfTools;
-
-    private static final JcrTools jcrTools = new JcrTools();
 
     private static final Model m = createDefaultModel();
 
@@ -102,7 +91,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             }
 
         };
-        this.skolemizedBnodeMap = new HashMap<>();
         // we knock out non-Fedora RDF
         this.stream =
                 stream.withThisContext(stream.filter(isFedoraSubjectTriple));
@@ -112,40 +100,19 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     @Override
     public void consume() throws RepositoryException {
         while (stream.hasNext()) {
-            Statement t = m.asStatement(stream.next());
+            final Statement t = m.asStatement(stream.next());
             LOGGER.debug("Operating triple {}.", t);
-
-            if (t.getObject().isAnon()) {
-                t = t.changeObject(getSkolemizedResource(t.getObject()));
-            }
-
-            if (t.getSubject().isAnon()) {
-                t = m.createStatement(getSkolemizedResource(t.getSubject()), t.getPredicate(), t.getObject());
-            }
-
-            LOGGER.trace("Operating on skolemized triple {}.", t);
 
             operateOnTriple(t);
         }
 
     }
 
-    private Resource getSkolemizedResource(final RDFNode resource) throws RepositoryException {
-        final AnonId id = resource.asResource().getId();
-
-        if (!skolemizedBnodeMap.containsKey(id)) {
-            final Node orCreateNode =
-                    jcrTools.findOrCreateNode(session, "/.well-known/genid/" + randomUUID().toString());
-            orCreateNode.addMixin("fedora:blanknode");
-            final Resource skolemizedSubject = idTranslator().reverse().convert(orCreateNode);
-            skolemizedBnodeMap.put(id, skolemizedSubject);
-        }
-
-        return skolemizedBnodeMap.get(id);
-    }
-
-    protected void operateOnTriple(final Statement t) {
+    protected void operateOnTriple(final Statement input) {
         try {
+
+            final Statement t = jcrRdfTools.skolemize(idTranslator, input);
+
             final Resource subject = t.getSubject();
             final Node subjectNode = idTranslator().convert(subject);
 
