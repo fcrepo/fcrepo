@@ -11,6 +11,10 @@
 
     <context:annotation-config/>
 
+    <bean class="org.fcrepo.generator.dublincore.DublinCoreGenerators">
+        <constructor-arg ref="dcgenerators"/>
+    </bean>
+
     <util:list id="dcgenerators"
         value-type="org.fcrepo.generator.dublincore.DCGenerator">
         <bean
