@@ -19,7 +19,6 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_NAMESPACE_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SITEMAP;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
@@ -115,7 +114,6 @@ public class HttpApiResourcesTest {
 
         assertTrue(model.contains(graphSubject, HAS_SITEMAP));
         assertTrue(model.contains(graphSubject, HAS_TRANSACTION_SERVICE));
-        assertTrue(model.contains(graphSubject, HAS_NAMESPACE_SERVICE));
     }
 
     @Test

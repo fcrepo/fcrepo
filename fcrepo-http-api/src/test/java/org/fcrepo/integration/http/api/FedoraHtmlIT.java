@@ -60,12 +60,4 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         method.addHeader("Accept", "text/html");
         assertEquals(200, getStatus(method));
     }
-
-    @Test
-    public void testGetNamespaces() throws Exception {
-
-        final HttpGet method = new HttpGet(serverAddress + "fcr:namespaces");
-        method.addHeader("Accept", "text/html");
-        assertEquals(200, getStatus(method));
-    }
 }
