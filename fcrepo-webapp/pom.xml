@@ -87,16 +87,6 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-auth-roles-common</artifactId>
-      <version>4.0.0-beta-04-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-auth-roles-basic</artifactId>
-      <version>4.0.0-beta-04-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-auth-common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -501,35 +491,6 @@
               </propertiesUser>
               <resultsFileNameDateFormat>'jmeter'</resultsFileNameDateFormat>
             </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>auth-war</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-war-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>special-auth-war</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>war</goal>
-                </goals>
-                <configuration>
-                  <classifier>auth</classifier>
-                  <warSourceDirectory>src/main/webapp</warSourceDirectory>
-                  <warSourceDirectory>src/auth/webapp</warSourceDirectory>
-                  <packagingExcludes>WEB-INF/classes/spring/repo.xml</packagingExcludes>
-                  <packagingExcludes>WEB-INF/classes/spring/master.xml</packagingExcludes>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>
