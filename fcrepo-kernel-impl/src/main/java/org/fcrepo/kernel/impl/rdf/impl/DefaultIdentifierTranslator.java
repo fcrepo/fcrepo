@@ -17,14 +17,19 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 
+import com.google.common.base.Converter;
+import com.google.common.collect.Lists;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.impl.identifiers.HashConverter;
+import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import java.util.List;
 
 /**
  * A very simple {@link IdentifierConverter} which translates JCR paths into
@@ -49,8 +54,29 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource,No
      */
     public DefaultIdentifierTranslator(final Session session) {
         this.session = session;
+        setTranslationChain();
     }
 
+
+    protected Converter<String, String> forward = identity();
+    protected Converter<String, String> reverse = identity();
+
+    private void setTranslationChain() {
+
+        for (final Converter<String, String> t : minimalTranslationChain) {
+            forward = forward.andThen(t);
+        }
+        for (final Converter<String, String> t : Lists.reverse(minimalTranslationChain)) {
+            reverse = reverse.andThen(t.reverse());
+        }
+    }
+
+
+    private static final List<Converter<String,String>> minimalTranslationChain =
+            Lists.newArrayList(
+                    (Converter<String, String>) new NamespaceConverter(),
+                    (Converter<String, String>) new HashConverter()
+            );
 
     @Override
     protected Node doForward(final Resource subject) {
@@ -90,7 +116,7 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource,No
         } else {
             relativePath = absPath;
         }
-        return createResource(RESOURCE_NAMESPACE + relativePath);
+        return createResource(RESOURCE_NAMESPACE + reverse.convert(relativePath));
     }
 
     @Override
@@ -99,8 +125,14 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource,No
             return null;
         }
 
-        final String absPath = subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
+        final String path = subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
 
-        return absPath;
+        final String absPath = forward.convert(path);
+
+        if (absPath.isEmpty()) {
+            return "/";
+        } else {
+            return absPath;
+        }
     }
 }
