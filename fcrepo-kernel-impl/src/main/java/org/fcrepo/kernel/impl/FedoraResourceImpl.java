@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2st
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -49,6 +50,7 @@ import javax.jcr.version.VersionHistory;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
@@ -57,9 +59,11 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
@@ -159,14 +163,34 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         try {
             final PropertyIterator inboundProperties = new PropertyIterator(node.getReferences());
 
-            for (final Property inboundProperty : inboundProperties) {
-                inboundProperty.remove();
-            }
+            if (softDelete()) {
+                final PropertyToTriple propertyToTriple = new PropertyToTriple(getSession(),
+                        new DefaultIdentifierTranslator(getSession()));
 
-            node.remove();
-        } catch (final RepositoryException e) {
+                for (final Property inboundProperty : inboundProperties) {
+                    inboundProperty.remove();
+                }
+
+                final ByteArrayOutputStream os = new ByteArrayOutputStream();
+                new RdfStream(Iterators.concat(Iterators.transform(inboundProperties, propertyToTriple)))
+                        .asModel().write(os, "TURTLE");
+
+                node.addMixin("fedora:deleted");
+                node.setProperty("fedora:inboundReferences", os.toString("UTF-8"));
+            } else {
+                for (final Property inboundProperty : inboundProperties) {
+                    inboundProperty.remove();
+                }
+
+                node.remove();
+            }
+        } catch (final RepositoryException | UnsupportedEncodingException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    private boolean softDelete() {
+        return true;
     }
 
     /* (non-Javadoc)

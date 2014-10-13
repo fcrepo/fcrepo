@@ -20,6 +20,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
@@ -27,8 +28,10 @@ import org.fcrepo.kernel.impl.FedoraObjectImpl;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
@@ -69,6 +72,14 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 && externalPath.endsWith(FCR_METADATA);
 
         final Node node = translator().convert(translator().toDomain(externalPath));
+
+        try {
+            if (node.isNodeType("fedora:deleted")) {
+                throw new ClientErrorException(externalPath + " is gone", 410);
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
 
         if (DatastreamImpl.hasMixin(node)) {
             final DatastreamImpl datastream = new DatastreamImpl(node);

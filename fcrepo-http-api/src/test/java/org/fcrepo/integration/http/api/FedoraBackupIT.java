@@ -18,7 +18,10 @@ package org.fcrepo.integration.http.api;
 
 import static com.google.common.io.Files.createTempDir;
 import static java.util.UUID.randomUUID;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 import java.io.File;
 
@@ -77,7 +80,7 @@ public class FedoraBackupIT extends AbstractResourceIT {
 
         // Verify object removed
         response = execute(new HttpGet(serverAddress + objName));
-        assertEquals(404, response.getStatusLine().getStatusCode());
+        assertThat(response.getStatusLine().getStatusCode(), anyOf(is(404), is(410)));
 
         // try to restore it
         final HttpPost restoreMethod =

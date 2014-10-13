@@ -19,6 +19,7 @@ import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -27,12 +28,15 @@ import java.net.URISyntaxException;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.ServerErrorException;
@@ -193,6 +197,49 @@ public class FedoraNodes extends ContentExposingResource {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     *
+     * @return
+     * @throws RepositoryException
+     */
+    @POST
+    @Path("/fcr:delete")
+    public Response hardDeleteObject() throws RepositoryException {
+        final Node node = translator().convert(translator().toDomain(externalPath()));
+
+        if (node.isNodeType("fedora:deleted")) {
+            node.remove();
+            session.save();
+        } else {
+            throw new BadRequestException(externalPath + " is not deleted");
+        }
+        return noContent().build();
+    }
+
+    /**
+     * 
+     * @return
+     * @throws RepositoryException
+     */
+    @POST
+    @Path("/fcr:restore")
+    public Response unDeleteObject() throws RepositoryException {
+        final Node node = translator().convert(translator().toDomain(externalPath()));
+
+        if (node.isNodeType("fedora:deleted")) {
+            node.removeMixin("fedora:deleted");
+
+            // TODO: assert inbound properties
+
+            node.setProperty("fedora:inboundProperties", (String)null);
+
+            session.save();
+        } else {
+            throw new BadRequestException(externalPath + " is not deleted");
+        }
+        return noContent().build();
     }
 
     @Override
