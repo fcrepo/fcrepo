@@ -64,7 +64,6 @@
     <module>fcrepo-audit</module>
     <module>fcrepo-webapp</module>
     <module>fcrepo-jms</module>
-    <module>fcrepo-generator-dc</module>
     <module>fcrepo-http-commons</module>
     <module>fcrepo-http-api</module>
     <module>fcrepo-metrics</module>
