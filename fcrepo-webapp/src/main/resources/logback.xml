@@ -13,9 +13,6 @@
   <logger name="org.fcrepo.connector.file" additivity="false" level="${log.fcrepo.connector.file:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo.generator.dublincore" additivity="false" level="${log.fcrepo.generator.dublincore:-INFO}">
-    <appender-ref ref="STDOUT"/>
-  </logger>
   <logger name="org.fcrepo.http.api" additivity="false" level="${log.fcrepo.http.api:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
