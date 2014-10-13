@@ -18,7 +18,6 @@ package org.fcrepo.http.api;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -508,19 +507,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private static URI checksumURI( final String checksum ) {
         if (!isBlank(checksum)) {
             return URI.create(checksum);
-        }
-        return null;
-    }
-
-    /*
-     * Return the statement's predicate and its literal value if there's any
-     * @param stmt
-     * @return
-     */
-    private static String getMessage(final Statement stmt) {
-        final Literal literal = stmt.getLiteral();
-        if (literal != null) {
-            return stmt.getPredicate().getURI() + ": " + literal.getString();
         }
         return null;
     }
