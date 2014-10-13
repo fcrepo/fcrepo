@@ -30,6 +30,7 @@ import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_TSV;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_XML;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_TEXT;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
@@ -45,13 +46,14 @@ import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
+import static org.fcrepo.kernel.impl.rdf.SerializationUtils.unifyDatasetModel;
 
 import java.io.OutputStream;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.fcrepo.http.commons.responses.GraphStoreStreamingOutput;
+import com.hp.hpl.jena.rdf.model.Model;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import com.hp.hpl.jena.query.ResultSet;
@@ -85,8 +87,9 @@ public class ResultSetStreamingOutput extends AbstractFuture<Void> implements St
         final ResultsFormat resultsFormat = getResultsFormat(mediaType);
 
         if (resultsFormat == FMT_UNKNOWN) {
-            new GraphStoreStreamingOutput(create(toModel(results)),
-                    mediaType).write(entityStream);
+            final String format = contentTypeToLang(mediaType.toString()).getName().toUpperCase();
+            final Model model = unifyDatasetModel(create(toModel(results)));
+            model.write(entityStream, format);
         } else {
             output(entityStream, results, resultsFormat);
         }

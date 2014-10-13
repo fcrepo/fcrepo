@@ -64,22 +64,6 @@ public interface RepositoryService extends Service {
     RdfStream getNamespaceRegistryStream(final Session session, final IdentifierConverter<Resource,Node> idTranslator);
 
     /**
-     * Perform a full-text search on the whole repository and return the
-     * information as an RDF Dataset
-     *
-     * @param subjectFactory
-     * @param searchSubject RDF resource to use as the subject of the search
-     * @param session
-     * @param terms
-     * @param limit
-     * @param offset
-     * @return full text search results as an RDF Dataset
-     */
-    Dataset searchRepository(IdentifierConverter<Resource,Node> subjectFactory,
-                             Resource searchSubject, Session session, String terms,
-                             int limit, long offset);
-
-    /**
      * This method backups up a running repository
      *
      * @param session

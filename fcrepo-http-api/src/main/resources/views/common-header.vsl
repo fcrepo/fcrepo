@@ -18,12 +18,6 @@
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:namespaces">Namespaces</a></li>
             <li><a href="$uriInfo.baseUriBuilder.build()fcr:nodetypes">Types</a></li>
         </ul>
-        <form class="navbar-form navbar-left" role="search" method="GET" action="$uriInfo.baseUriBuilder.build()fcr:search">
-            <div class="form-group">
-                <input class="form-control" type="text" name="q" placeholder="Search"/>
-            </div>
-            <button type="submit" class="btn btn-default">Search</button>
-        </form>
     </div>
 </nav>
 
