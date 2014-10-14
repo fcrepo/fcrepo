@@ -185,10 +185,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
                 node.remove();
 
-                final Node deletedNode = findOrCreateNode(session, path);
+                final Node deletedNode = findOrCreateNode(session, path, "fedora:deleted");
 
                 deletedNode.setProperty("fedora:inboundReferences", os.toString("UTF-8"));
-                deletedNode.addMixin("fedora:deleted");
                 deletedNode.setProperty("fedora:serializedData", out.toString("UTF-8"));
             } else {
                 for (final Property inboundProperty : inboundProperties) {

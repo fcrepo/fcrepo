@@ -125,7 +125,7 @@
 
 [fedora:blanknode] > mix:referenceable mixin
 
-[fedora:deleted] mixin
+[fedora:deleted] > nt:hierarchyNode
   - fedora:deleted (date) mandatory autocreated protected abort
   - fedora:serializedData (STRING) COPY
   - fedora:inboundReferences (STRING) COPY
