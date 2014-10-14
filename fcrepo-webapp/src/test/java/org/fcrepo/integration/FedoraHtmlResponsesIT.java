@@ -280,6 +280,22 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertTrue(page1.getElementById("metadata").asText().contains("some-predicate"));
     }
 
+    @Test
+    @Ignore("htmlunit can't see links in the HTML5 <nav> element..")
+    public void testSparqlSearch() throws IOException {
+        final HtmlPage page = webClient.getPage(serverAddress);
+
+        logger.error(page.toString());
+        page.getAnchorByText("Search").click();
+
+        final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_select");
+        final HtmlTextArea q = form.getTextAreaByName("q");
+        q.setText("SELECT ?subject WHERE { ?subject a <http://fedora.info/definitions/v4/rest-api#resource> }");
+        final HtmlButton button = form.getFirstByXPath("button");
+        button.click();
+    }
+
+
     private static void checkForHeaderBranding(final HtmlPage page) {
         assertNotNull(
                 page.getFirstByXPath("//nav[@role='navigation']/div[@class='navbar-header']/a[@class='navbar-brand']"));
