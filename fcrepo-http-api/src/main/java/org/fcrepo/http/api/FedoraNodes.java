@@ -201,12 +201,12 @@ public class FedoraNodes extends ContentExposingResource {
     }
 
     @Override
-    void addResourceHttpHeaders(final FedoraResource resource) {
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
 
     }
 
     @Override
-    String externalPath() {
+    protected String externalPath() {
         return externalPath;
     }
 

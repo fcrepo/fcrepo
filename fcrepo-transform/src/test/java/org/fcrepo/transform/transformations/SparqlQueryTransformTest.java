@@ -15,11 +15,10 @@
  */
 package org.fcrepo.transform.transformations;
 
-import com.hp.hpl.jena.query.DatasetFactory;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -31,6 +30,9 @@ import javax.jcr.Session;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -60,17 +62,17 @@ public class SparqlQueryTransformTest {
 
     @Test
     public void testApply() {
-        final Model model = ModelFactory.createDefaultModel();
-        model.add(model.createResource("http://example.org/book/book1"),
-                     model.createProperty("http://purl.org/dc/elements/1.1/title"),
-                     model.createLiteral("some-title"));
+        final RdfStream model = new RdfStream();
+        model.concat(new Triple(createResource("http://example.org/book/book1").asNode(),
+                createProperty("http://purl.org/dc/elements/1.1/title").asNode(),
+                createLiteral("some-title")));
         final InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
                 "{\n" +
                 "  <http://example.org/book/book1> <http://purl.org/dc/elements/1.1/title> ?title .\n" +
                 "} ").getBytes());
         testObj = new SparqlQueryTransform(query);
 
-        try (final QueryExecution apply = testObj.apply(DatasetFactory.create(model))) {
+        try (final QueryExecution apply = testObj.apply(model)) {
             assert (apply != null);
             final ResultSet resultSet = apply.execSelect();
             assertTrue(resultSet.hasNext());

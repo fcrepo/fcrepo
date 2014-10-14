@@ -17,13 +17,13 @@ package org.fcrepo.transform.transformations;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.apache.marmotta.ldpath.LDPath;
 import org.apache.marmotta.ldpath.backend.jena.GenericJenaBackend;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.Transformation;
 import org.slf4j.Logger;
 
@@ -46,8 +46,6 @@ import static com.google.common.collect.ImmutableSortedSet.orderedBy;
 import static com.google.common.collect.Maps.transformValues;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.fcrepo.kernel.impl.rdf.SerializationUtils.getDatasetSubject;
-import static org.fcrepo.kernel.impl.rdf.SerializationUtils.unifyDatasetModel;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -137,13 +135,12 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
     }
 
     @Override
-    public Map<String, Collection<Object>> apply(final Dataset dataset) {
+    public Map<String, Collection<Object>> apply(final RdfStream stream) {
         try {
             final LDPath<RDFNode> ldpathForResource =
-                getLdpathResource(dataset);
+                getLdpathResource(stream);
 
-            final Resource context =
-                createResource(getDatasetSubject(dataset).getURI());
+            final Resource context = createResource(stream.topic().getURI());
 
             final Map<String, Collection<?>> wildcardCollection =
                 ldpathForResource.programQuery(context, new InputStreamReader(
@@ -173,12 +170,12 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
 
     /**
      * Get the LDPath resource for an object
-     * @param dataset
+     * @param rdfStream
      * @return the LDPath resource for the given object
      */
-    private static LDPath<RDFNode> getLdpathResource(final Dataset dataset) {
+    private static LDPath<RDFNode> getLdpathResource(final RdfStream rdfStream) {
 
-        return new LDPath<>(new GenericJenaBackend(unifyDatasetModel(dataset)));
+        return new LDPath<>(new GenericJenaBackend(rdfStream.asModel()));
 
     }
 
