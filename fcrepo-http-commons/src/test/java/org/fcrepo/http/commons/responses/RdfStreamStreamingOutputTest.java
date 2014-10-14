@@ -23,6 +23,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.responses.RdfStreamStreamingOutput.getValueForObject;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -40,6 +41,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -128,6 +130,27 @@ public class RdfStreamStreamingOutputTest {
                 assertTrue("Didn't find our test triple!", result
                         .contains(result.asStatement(expected)));
             }
+        }
+    }
+
+    @Test
+    public void testWriteWithNamespace() throws IOException {
+        final RdfStream input = new RdfStream().namespace("a", "info:a");
+        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            new RdfStreamStreamingOutput(input, RDFMediaType.TURTLE_TYPE).write(output);
+            final String s = output.toString("UTF-8");
+            assertTrue(s.contains("@prefix a: <info:a>"));
+        }
+    }
+
+
+    @Test
+    public void testWriteWithXmlnsNamespace() throws IOException {
+        final RdfStream input = new RdfStream().namespace("xmlns", "info:a");
+        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            new RdfStreamStreamingOutput(input, RDFMediaType.TURTLE_TYPE).write(output);
+            final String s = output.toString("UTF-8");
+            assertFalse(s.contains("@prefix xmlns"));
         }
     }
 
