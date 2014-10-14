@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.impl.rdf;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static java.util.UUID.randomUUID;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
@@ -24,6 +26,7 @@ import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.jcr.Node;
@@ -36,6 +39,9 @@ import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.NodeTypeTemplate;
 
+import com.hp.hpl.jena.rdf.model.AnonId;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Statement;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -43,6 +49,7 @@ import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
+import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.google.common.collect.BiMap;
@@ -78,6 +85,12 @@ public class JcrRdfTools {
 
     private Session session;
     private NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
+    private JcrTools jcrTools = new JcrTools();
+
+    private final Map<AnonId, Resource> skolemizedBnodeMap;
+
+    private static final Model m = createDefaultModel();
+
 
     /**
      * Constructor with even more context.
@@ -89,6 +102,7 @@ public class JcrRdfTools {
         this.graphSubjects = graphSubjects;
         this.session = session;
         this.valueConverter = new ValueConverter(session, graphSubjects);
+        this.skolemizedBnodeMap = new HashMap<>();
     }
 
     /**
@@ -289,4 +303,48 @@ public class JcrRdfTools {
         }
     }
 
+    /**
+     * Convert an external statement into a persistable statement by skolemizing
+     * blank nodes, creating hash-uri subjects, etc
+     *
+     * @param graphSubjects
+     * @param t
+     * @return
+     * @throws RepositoryException
+     */
+    public Statement skolemize(final IdentifierConverter<Resource,Node> graphSubjects, final Statement t)
+            throws RepositoryException {
+
+        Statement skolemized = t;
+
+        if (t.getSubject().isAnon()) {
+            skolemized = m.createStatement(getSkolemizedResource(graphSubjects, skolemized.getSubject()),
+                    t.getPredicate(),
+                    t.getObject());
+        }
+
+        if (t.getObject().isAnon()) {
+            skolemized = t.changeObject(getSkolemizedResource(graphSubjects, skolemized.getObject()));
+        }
+
+        return skolemized;
+    }
+
+    private Resource getSkolemizedResource(final IdentifierConverter<Resource, Node> graphSubjects,
+                                           final RDFNode resource) throws RepositoryException {
+        final AnonId id = resource.asResource().getId();
+
+        if (!skolemizedBnodeMap.containsKey(id)) {
+            final Node orCreateNode = jcrTools.findOrCreateNode(session, skolemizedId());
+            orCreateNode.addMixin("fedora:blanknode");
+            final Resource skolemizedSubject = graphSubjects.reverse().convert(orCreateNode);
+            skolemizedBnodeMap.put(id, skolemizedSubject);
+        }
+
+        return skolemizedBnodeMap.get(id);
+    }
+
+    private String skolemizedId() {
+        return "/.well-known/genid/" + randomUUID().toString();
+    }
 }
