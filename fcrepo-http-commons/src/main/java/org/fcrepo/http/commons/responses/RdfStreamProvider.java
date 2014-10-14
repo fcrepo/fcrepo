@@ -100,11 +100,12 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
 
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
         try {
-            final RdfStream namespaceRdfContext = new NamespaceRdfContext(rdfStream.session());
-            final RdfStreamStreamingOutput streamOutput =
-                new RdfStreamStreamingOutput(rdfStream
-                        .namespaces(namespaceRdfContext.namespaces()),
-                        mediaType);
+            if (rdfStream.namespaces().isEmpty()) {
+                final RdfStream namespaceRdfContext = new NamespaceRdfContext(rdfStream.session());
+                rdfStream.namespaces(namespaceRdfContext.namespaces());
+            }
+
+            final RdfStreamStreamingOutput streamOutput = new RdfStreamStreamingOutput(rdfStream, mediaType);
             streamOutput.write(entityStream);
         } catch (final RepositoryException e) {
             throw new WebApplicationException(e);
