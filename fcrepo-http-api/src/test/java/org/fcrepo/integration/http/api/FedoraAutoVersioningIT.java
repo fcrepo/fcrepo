@@ -18,6 +18,7 @@ package org.fcrepo.integration.http.api;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.lang.Integer.parseInt;
 import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertTrue;
 
@@ -35,6 +36,9 @@ import com.hp.hpl.jena.update.GraphStore;
 @UseAutoVersioningConfiguration
 public class FedoraAutoVersioningIT extends AbstractVersioningIT {
 
+    // avoid port collisions with other running (cacheable) test context
+    protected static int SERVER_PORT = parseInt(System.getProperty(
+            "test.port1", "8080"));
     @Test
     public void testRepositoryWideAutoVersioning() throws IOException {
         final String objName = getRandomUniquePid();

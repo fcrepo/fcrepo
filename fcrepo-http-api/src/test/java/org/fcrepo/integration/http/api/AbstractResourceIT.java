@@ -78,7 +78,7 @@ public abstract class AbstractResourceIT {
         logger = getLogger(this.getClass());
     }
 
-    protected static final int SERVER_PORT = parseInt(System.getProperty(
+    protected static int SERVER_PORT = parseInt(System.getProperty(
             "test.port", "8080"));
 
     protected static final String HOSTNAME = "localhost";

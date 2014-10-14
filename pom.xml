@@ -586,6 +586,7 @@
           <configuration>
             <systemPropertyVariables>
               <test.port>${test.port}</test.port>
+              <test.port1>${test.port1}</test.port1>
               <test.context.path>${test.context.path}</test.context.path>
               <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
                 ${project.build.directory}/object-store-default
@@ -681,11 +682,12 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
-          <!-- reserve a port under the property ${test.port} for integration 
+          <!-- reserve ports under the propertes ${test.port} or ${test.port1} for integration 
             tests -->
           <configuration>
             <portNames>
               <portName>test.port</portName>
+              <portName>test.port1</portName>
             </portNames>
           </configuration>
           <executions>
