@@ -127,4 +127,5 @@
 
 [fedora:deleted] mixin
   - fedora:deleted (date) mandatory autocreated protected abort
+  - fedora:serializedData (STRING) COPY
   - fedora:inboundReferences (STRING) COPY

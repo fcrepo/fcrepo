@@ -28,7 +28,7 @@ import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2st
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
@@ -161,22 +161,35 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public void delete() {
         try {
+
             final PropertyIterator inboundProperties = new PropertyIterator(node.getReferences());
 
             if (softDelete()) {
+                final Session session = node.getSession();
+                final String path = node.getPath();
+
                 final PropertyToTriple propertyToTriple = new PropertyToTriple(getSession(),
                         new DefaultIdentifierTranslator(getSession()));
 
-                for (final Property inboundProperty : inboundProperties) {
-                    inboundProperty.remove();
-                }
 
                 final ByteArrayOutputStream os = new ByteArrayOutputStream();
                 new RdfStream(Iterators.concat(Iterators.transform(inboundProperties, propertyToTriple)))
                         .asModel().write(os, "TURTLE");
 
-                node.addMixin("fedora:deleted");
-                node.setProperty("fedora:inboundReferences", os.toString("UTF-8"));
+                final ByteArrayOutputStream out = new ByteArrayOutputStream();
+                node.getSession().exportSystemView(node.getPath(), out, false, false);
+
+                for (final Property inboundProperty : inboundProperties) {
+                    inboundProperty.remove();
+                }
+
+                node.remove();
+
+                final Node deletedNode = findOrCreateNode(session, path);
+
+                deletedNode.setProperty("fedora:inboundReferences", os.toString("UTF-8"));
+                deletedNode.addMixin("fedora:deleted");
+                deletedNode.setProperty("fedora:serializedData", out.toString("UTF-8"));
             } else {
                 for (final Property inboundProperty : inboundProperties) {
                     inboundProperty.remove();
@@ -184,12 +197,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
                 node.remove();
             }
-        } catch (final RepositoryException | UnsupportedEncodingException e) {
+        } catch (final RepositoryException | IOException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
-    private boolean softDelete() {
+    protected boolean softDelete() {
         return true;
     }
 

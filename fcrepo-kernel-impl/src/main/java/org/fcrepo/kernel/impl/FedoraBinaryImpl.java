@@ -312,7 +312,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public void delete() {
         final Datastream description = getDescription();
 
-        super.delete();
+        if (!softDelete()) {
+            super.delete();
+        }
 
         description.delete();
     }

@@ -22,14 +22,17 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
@@ -225,15 +228,20 @@ public class FedoraNodes extends ContentExposingResource {
      */
     @POST
     @Path("/fcr:restore")
-    public Response unDeleteObject() throws RepositoryException {
+    public Response unDeleteObject() throws RepositoryException, IOException {
         final Node node = translator().convert(translator().toDomain(externalPath()));
 
         if (node.isNodeType("fedora:deleted")) {
-            node.removeMixin("fedora:deleted");
+            final Property property = node.getProperty("fedora:serializedData");
+            final String inboundProperties = node.getProperty("fedora:inboundProperties").getString();
 
-            // TODO: assert inbound properties
+            final String path = node.getPath();
+            node.remove();
+            session.importXML(path,
+                    property.getValue().getBinary().getStream(),
+                    ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
 
-            node.setProperty("fedora:inboundProperties", (String)null);
+            // TODO: assert inbound properties, maybe?
 
             session.save();
         } else {
