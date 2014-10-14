@@ -16,7 +16,7 @@
 package org.fcrepo.transform;
 
 import com.google.common.base.Function;
-import com.hp.hpl.jena.query.Dataset;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import java.io.InputStream;
 
@@ -26,15 +26,15 @@ import java.io.InputStream;
  *
  * @author cbeer
  */
-public interface Transformation<T> extends Function<Dataset, T> {
+public interface Transformation<T> extends Function<RdfStream, T> {
 
     /**
      * Execute a transform on a dataset
-     * @param dataset
+     * @param stream
      * @return transformed dataset
      */
     @Override
-    T apply(final Dataset dataset);
+    T apply(final RdfStream stream);
 
     /**
      * Get the Query the transformation is using

@@ -191,12 +191,12 @@ public class FedoraVersions extends ContentExposingResource {
     }
 
     @Override
-    void addResourceHttpHeaders(final FedoraResource resource) {
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
         // no-op
     }
 
     @Override
-    String externalPath() {
+    protected String externalPath() {
         return externalPath;
     }
 

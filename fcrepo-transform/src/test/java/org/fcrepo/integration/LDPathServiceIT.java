@@ -15,9 +15,12 @@
  */
 package org.fcrepo.integration;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,7 +84,10 @@ public class LDPathServiceIT {
         testObj = new LDPathTransform(stringReader);
 
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
-        final Map<String, Collection<Object>> stuff = testObj.apply(object.getPropertiesDataset(subjects));
+        final Resource topic = subjects.reverse().convert(object.getNode());
+        final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class)
+                                        .topic(topic.asNode());
+        final Map<String, Collection<Object>> stuff = testObj.apply(triples);
 
         assertNotNull("Failed to retrieve results!", stuff);
 

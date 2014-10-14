@@ -438,7 +438,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     @Override
-    String externalPath() {
+    protected String externalPath() {
         return externalPath;
     }
 
