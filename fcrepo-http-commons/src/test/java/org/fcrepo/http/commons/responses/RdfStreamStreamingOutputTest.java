@@ -19,6 +19,8 @@ import static com.google.common.util.concurrent.Futures.addCallback;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.responses.RdfStreamStreamingOutput.getValueForObject;
@@ -41,6 +43,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
@@ -107,12 +110,6 @@ public class RdfStreamStreamingOutputTest {
         assertEquals("Created bad Value!", createLiteral(vf, "test"), result);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void testGetValueForObjectWithBlank() {
-        final Node resource = NodeFactory.createAnon();
-        getValueForObject(resource);
-    }
-
     @Test
     public void testWrite() throws IOException {
         assertOutputContainsTriple(triple);
@@ -160,6 +157,42 @@ public class RdfStreamStreamingOutputTest {
                 createURI("info:testPredicate"),
                 createTypedLiteral(0).asNode()));
     }
+
+    @Test
+    public void testWriteWithBlankSubject() throws IOException {
+
+        final RdfStream input = new RdfStream(create(createResource().asNode(),
+                createURI("info:testPredicate"),
+                createTypedLiteral(0).asNode()));
+        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            new RdfStreamStreamingOutput(input, testMediaType).write(output);
+
+            try (final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
+                final Model result = createDefaultModel().read(resultStream, null);
+                assertTrue(result.contains(null, createProperty("info:testPredicate"), createTypedLiteral(0)));
+            }
+        }
+
+    }
+
+
+    @Test
+    public void testWriteWithBlankObject() throws IOException {
+
+        final RdfStream input = new RdfStream(create(createResource().asNode(),
+                createURI("info:testPredicate"),
+                createResource().asNode()));
+        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            new RdfStreamStreamingOutput(input, testMediaType).write(output);
+
+            try (final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
+                final Model result = createDefaultModel().read(resultStream, null);
+                assertTrue(result.contains(null, createProperty("info:testPredicate"), (RDFNode)null));
+            }
+        }
+
+    }
+
 
     @Test
     public void testWriteWithDatetimeObject() throws IOException {
