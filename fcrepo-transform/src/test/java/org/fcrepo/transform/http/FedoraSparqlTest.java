@@ -15,27 +15,25 @@
  */
 package org.fcrepo.transform.http;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.ok;
 
+import static org.fcrepo.kernel.RdfLexicon.SPARQL_SD_NAMESPACE;
+import static org.junit.Assert.assertFalse;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFLanguages;
 import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLResultSet;
-import org.fcrepo.transform.sparql.SparqlServiceDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -58,7 +56,6 @@ import javax.jcr.query.qom.QueryObjectModel;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Variant;
 
@@ -160,21 +157,10 @@ public class FedoraSparqlTest {
 
     @Test
     public void testSparqlServiceDescription() {
-        final Response response = testObj.sparqlServiceDescription(mockRequest, uriInfo);
-        assertTrue(response.getStatus() == OK.getStatusCode());
-        final StreamingOutput stream = new StreamingOutput() {
-            @Override
-            public void write(final OutputStream output) {
-                final SparqlServiceDescription sd = new SparqlServiceDescription(mockSession, uriInfo);
-                final Lang rdfLang = RDFLanguages.contentTypeToLang(response.getMediaType().toString());
-                final Writer outWriter = new OutputStreamWriter(output);
-                sd.createServiceDescription().asModel().write(outWriter, rdfLang.getName());
-            }
-        };
-        final String expected = ok(stream).header("Content-Type",
-                RDFLanguages.contentTypeToLang(response.getMediaType().toString()))
-                .build().toString();
-        assertEquals(expected, response.toString());
+        final Model response = testObj.sparqlServiceDescription(mockRequest, uriInfo).asModel();
+        assertFalse(response.isEmpty());
+        assertTrue(response.contains(null,
+                createProperty(SPARQL_SD_NAMESPACE + "resultFormat")));
     }
 
     @Test

@@ -20,8 +20,6 @@ import com.google.common.base.Strings;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFLanguages;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -29,6 +27,7 @@ import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.fcrepo.transform.sparql.SparqlServiceDescription;
@@ -115,7 +114,7 @@ public class FedoraSparql extends FedoraBaseResource {
     @GET
     @Timed
     @Produces({RDF_XML + ";qs=20", TURTLE, N3, N3_ALT2, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD})
-    public Response sparqlServiceDescription(@Context final Request request,
+    public RdfStream sparqlServiceDescription(@Context final Request request,
                                              @Context final UriInfo uriInfo) {
 
         final SparqlServiceDescription sd = new SparqlServiceDescription(session, uriInfo);
@@ -123,23 +122,7 @@ public class FedoraSparql extends FedoraBaseResource {
 
         LOGGER.debug("Getting sparql service description with media type {} ...", bestPossibleResponse);
 
-        Lang tmpLang;
-        if (bestPossibleResponse == null ||
-                (tmpLang = RDFLanguages.contentTypeToLang(bestPossibleResponse.getMediaType().toString())) == null) {
-            // set default format to rdf/xml
-            tmpLang = RDFLanguages.RDFXML;
-        }
-        final Lang rdfLang = tmpLang;
-        final StreamingOutput stream = new StreamingOutput() {
-            @Override
-            public void write(final OutputStream output) {
-
-                LOGGER.debug("Writting sparql service description with jena RdfLanguages name {}.", rdfLang.getName());
-                final Writer outWriter = new OutputStreamWriter(output);
-                sd.createServiceDescription().asModel().write(outWriter, rdfLang.getName());
-            }
-        };
-        return ok(stream).header("Content-Type", rdfLang.getContentType().getContentType()).build();
+        return sd.createServiceDescription();
     }
 
     /**
