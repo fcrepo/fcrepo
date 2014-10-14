@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -57,12 +56,10 @@ import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.util.Context;
 
@@ -101,14 +98,6 @@ public class FedoraNodesTest {
 
     @Mock
     private FedoraObject mockObject;
-
-    @Mock
-    private Dataset mockDataset;
-
-    private RdfStream mockRdfStream = new RdfStream().topic(createAnon());
-
-    private RdfStream mockRdfStream2 = new RdfStream().topic(createAnon());
-    private RdfStream mockRdfStream3 = new RdfStream().topic(createAnon());
 
     @Mock
     private Model mockModel;

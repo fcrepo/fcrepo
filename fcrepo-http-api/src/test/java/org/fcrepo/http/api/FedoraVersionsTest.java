@@ -50,8 +50,6 @@ import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 
-import com.hp.hpl.jena.query.Dataset;
-
 /**
  * <p>FedoraVersionsTest class.</p>
  *
@@ -83,9 +81,6 @@ public class FedoraVersionsTest {
 
     @Mock
     private Variant mockVariant;
-
-    @Mock
-    private Dataset mockDataset;
 
     private String path = "/some/path";
     private String versionLabel = "someLabel";

@@ -24,12 +24,9 @@ import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -63,10 +60,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.sparql.util.Symbol;
 
 /**
  * <p>FedoraResourceImplTest class.</p>
@@ -178,24 +173,6 @@ public class FedoraResourceImplTest {
         }
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(modDate.getTimeInMillis(), actual.getTime());
-    }
-
-    @Test
-    public void testGetPropertiesDataset() throws Exception {
-
-        final FedoraResource spy = spy(testObj);
-
-        final RdfStream propertiesStream = new RdfStream(mockTriple);
-
-        when(spy.getTriples(eq(mockSubjects), anyCollection())).thenReturn(propertiesStream);
-        final Dataset dataset = spy.getPropertiesDataset(mockSubjects, 0, -1);
-
-        assertTrue(dataset.getDefaultModel().containsAll(
-                propertiesStream.asModel()));
-        assertTrue(dataset.getDefaultModel().containsAll(
-                propertiesStream.asModel()));
-        assertEquals(mockSubjects.reverse().convert(mockNode), dataset.getContext().get(
-                Symbol.create("uri")));
     }
 
     @Test

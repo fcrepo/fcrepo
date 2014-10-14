@@ -17,6 +17,8 @@ package org.fcrepo.integration.connector.file;
 
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Test;
 
 import javax.jcr.PathNotFoundException;
@@ -68,7 +70,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
 
         // Write the properties
-        object.updatePropertiesDataset(new DefaultIdentifierTranslator(session), sparql);
+        object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new RdfStream());
 
         // Verify
         final Property property = object.getNode().getProperty("fedora:name");
@@ -94,7 +96,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
         // Write the properties
         final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
-        object.updatePropertiesDataset(graphSubjects, sparql);
+        object.updateProperties(graphSubjects, sparql, new RdfStream());
 
         // Verify property exists
         final Property property = object.getNode().getProperty("fedora:remove");
@@ -109,7 +111,9 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                 "}";
 
         // Remove the properties
-        object.updatePropertiesDataset(graphSubjects, sparqlRemove);
+        object.updateProperties(graphSubjects,
+                sparqlRemove,
+                object.getTriples(graphSubjects, PropertiesRdfContext.class));
 
         // Persist the object (although the propery will be removed from memory without this.)
         session.save();

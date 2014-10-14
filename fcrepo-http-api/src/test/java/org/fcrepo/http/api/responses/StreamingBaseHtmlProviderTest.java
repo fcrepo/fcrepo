@@ -111,7 +111,7 @@ public class StreamingBaseHtmlProviderTest {
                 testProvider.isWriteable(RdfStream.class, RdfStream.class,
                         null, TEXT_HTML_TYPE));
         assertFalse(
-                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than Dataset!",
+                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than a RdfStream!",
                 testProvider.isWriteable(StreamingBaseHtmlProvider.class,
                         StreamingBaseHtmlProvider.class, null, TEXT_HTML_TYPE));
         assertFalse(

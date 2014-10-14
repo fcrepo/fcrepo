@@ -499,7 +499,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource, final String requestBody) {
-        resource.updatePropertiesDataset(translator(), requestBody);
+        final RdfStream resourceTriples;
+
+        if (resource.isNew()) {
+            resourceTriples = new RdfStream();
+        } else {
+            resourceTriples = getResourceTriples();
+        }
+
+        resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 
     /**

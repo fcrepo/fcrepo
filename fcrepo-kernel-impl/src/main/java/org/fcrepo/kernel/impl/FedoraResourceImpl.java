@@ -46,19 +46,12 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
@@ -72,8 +65,6 @@ import org.slf4j.Logger;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -231,55 +222,26 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#updatePropertiesDataset
-     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String)
+     * @see org.fcrepo.kernel.FedoraResource#updateProperties
+     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
-    public void updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
-            final String sparqlUpdateStatement) {
-        final Dataset dataset = getPropertiesDataset(subjects);
+    public void updateProperties(final IdentifierConverter<Resource, Node> subjects,
+                                 final String sparqlUpdateStatement, final RdfStream originalTriples) {
+
+        final Model model = originalTriples.asModel();
 
         final JcrPropertyStatementListener listener =
                 new JcrPropertyStatementListener(subjects, getSession());
 
-        dataset.getDefaultModel().register(listener);
+        model.register(listener);
 
-        final UpdateRequest request =
-            create(sparqlUpdateStatement, subjects.reverse().convert(getNode()).toString());
-        dataset.getDefaultModel().setNsPrefixes(request.getPrefixMapping());
-        execute(request, dataset);
+        final UpdateRequest request = create(sparqlUpdateStatement, subjects.reverse().convert(getNode()).toString());
+        model.setNsPrefixes(request.getPrefixMapping());
+        execute(request, model);
 
         listener.assertNoExceptions();
     }
-
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.identifiers.IdentifierConverter,
-      * int,
-      * int)
-     */
-    @Override
-    public Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> graphSubjects,
-        final int offset, final int limit) {
-
-        final RdfStream propertiesStream = getTriples(graphSubjects, ImmutableSet.of(
-                PropertiesRdfContext.class,
-                ParentRdfContext.class,
-                ChildrenRdfContext.class,
-                ContainerRdfContext.class,
-                AclRdfContext.class,
-                TypeRdfContext.class));
-
-        return DatasetFactory.create(propertiesStream.asModel());
-    }
-
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.identifiers.IdentifierConverter)
-     */
-    @Override
-    public Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> subjects) {
-        return getPropertiesDataset(subjects, 0, -1);
-    }
-
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource,Node> graphSubjects,
