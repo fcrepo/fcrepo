@@ -15,7 +15,6 @@
  */
 package org.fcrepo.transform.http.responses;
 
-import static com.hp.hpl.jena.query.DatasetFactory.create;
 import static com.hp.hpl.jena.query.ResultSetFormatter.output;
 import static com.hp.hpl.jena.query.ResultSetFormatter.toModel;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_N3;
@@ -46,7 +45,6 @@ import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
-import static org.fcrepo.kernel.impl.rdf.SerializationUtils.unifyDatasetModel;
 
 import java.io.OutputStream;
 
@@ -88,7 +86,7 @@ public class ResultSetStreamingOutput extends AbstractFuture<Void> implements St
 
         if (resultsFormat == FMT_UNKNOWN) {
             final String format = contentTypeToLang(mediaType.toString()).getName().toUpperCase();
-            final Model model = unifyDatasetModel(create(toModel(results)));
+            final Model model = toModel(results);
             model.write(entityStream, format);
         } else {
             output(entityStream, results, resultsFormat);

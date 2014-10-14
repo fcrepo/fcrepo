@@ -98,7 +98,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
-    @Context protected UriInfo uriInfo;
 
     @Inject
     @Optional
@@ -112,9 +111,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static long MAX_BUFFER_SIZE = 10240000;
 
-    abstract String externalPath();
+    protected abstract String externalPath();
 
-    abstract void addResourceHttpHeaders(FedoraResource resource);
+    protected abstract void addResourceHttpHeaders(FedoraResource resource);
 
     protected Response getContent(final Prefer prefer,
                                   final String rangeValue,
@@ -147,18 +146,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
         } else {
+            rdfStream.concat(getResourceTriples(prefer));
 
-            final PreferTag returnPreference;
-
-            if (prefer != null && prefer.hasReturn()) {
-                returnPreference = prefer.getReturn();
-            } else {
-                returnPreference = new PreferTag("");
+            if (prefer != null) {
+                prefer.getReturn().addResponseHeaders(servletResponse);
             }
-
-            rdfStream.concat(getResourceTriples(returnPreference));
-
-            returnPreference.addResponseHeaders(servletResponse);
 
         }
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
@@ -167,10 +159,19 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected RdfStream getResourceTriples() {
-        return getResourceTriples(new PreferTag(""));
+        return getResourceTriples(null);
     }
 
-    protected RdfStream getResourceTriples(final PreferTag returnPreference) {
+    protected RdfStream getResourceTriples(final Prefer prefer) {
+
+        final PreferTag returnPreference;
+
+        if (prefer != null && prefer.hasReturn()) {
+            returnPreference = prefer.getReturn();
+        } else {
+            returnPreference = new PreferTag("");
+        }
+
         final RdfStream rdfStream = new RdfStream();
 
         rdfStream.concat(getTriples(PropertiesRdfContext.class));

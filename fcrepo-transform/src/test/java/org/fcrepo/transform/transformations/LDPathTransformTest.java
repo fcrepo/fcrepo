@@ -15,7 +15,9 @@
  */
 package org.fcrepo.transform.transformations;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.transform.transformations.LDPathTransform.CONFIGURATION_FOLDER;
 import static org.fcrepo.transform.transformations.LDPathTransform.getNodeTypeTransform;
 import static org.junit.Assert.assertEquals;
@@ -36,15 +38,12 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.WebApplicationException;
 
+import com.hp.hpl.jena.graph.Triple;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Symbol;
 
 /**
  * <p>LDPathTransformTest class.</p>
@@ -134,16 +133,15 @@ public class LDPathTransformTest {
     @Test
     public void testProgramQuery() {
 
-        final Model model = createDefaultModel();
-        model.add(model.createResource("abc"),
-                  model.createProperty("http://purl.org/dc/elements/1.1/title"),
-                  model.createLiteral("some-title"));
-        final Dataset testDataset = DatasetFactory.create(model);
-        testDataset.getContext().set(Symbol.create("uri"), "abc");
+        final RdfStream rdfStream = new RdfStream();
+        rdfStream.concat(new Triple(createResource("abc").asNode(),
+                createProperty("http://purl.org/dc/elements/1.1/title").asNode(),
+                createLiteral("some-title")));
+        rdfStream.topic(createResource("abc").asNode());
         final InputStream testReader = new ByteArrayInputStream("title = dc:title :: xsd:string ;".getBytes());
 
         testObj = new LDPathTransform(testReader);
-        final Map<String,Collection<Object>> stringCollectionMap = testObj.apply(testDataset);
+        final Map<String,Collection<Object>> stringCollectionMap = testObj.apply(rdfStream);
 
         assert(stringCollectionMap != null);
         assertEquals(1, stringCollectionMap.size());

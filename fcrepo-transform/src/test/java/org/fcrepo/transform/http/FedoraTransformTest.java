@@ -15,15 +15,10 @@
  */
 package org.fcrepo.transform.http;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.http.commons.test.util.TestHelpers;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.Transformation;
 import org.fcrepo.transform.TransformationFactory;
 import org.junit.Before;
@@ -48,6 +43,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * <p>FedoraTransformTest class.</p>
@@ -80,27 +76,24 @@ public class FedoraTransformTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        testObj = spy(new FedoraTransform());
-        TestHelpers.setField(testObj, "nodeService", mockNodeService);
-        TestHelpers.setField(testObj, "transformationFactory", mockTransformationFactory);
+        testObj = spy(new FedoraTransform("testObject"));
+        setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "transformationFactory", mockTransformationFactory);
 
         this.uriInfo = getUriInfoImpl();
-        TestHelpers.setField(testObj, "uriInfo", uriInfo);
+        setField(testObj, "uriInfo", uriInfo);
         mockSession = mockSession(testObj);
-        TestHelpers.setField(testObj, "session", mockSession);
+        setField(testObj, "session", mockSession);
 
         when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn("/testObject");
         doReturn(mockResource).when(testObj).getResourceFromPath("testObject");
     }
 
     @Test
     public void testEvaluateTransform() throws Exception {
-        final Model model = ModelFactory.createDefaultModel();
-        model.add(model.createResource("http://example.org/book/book1"),
-                     model.createProperty("http://purl.org/dc/elements/1.1/title"),
-                     model.createLiteral("some-title"));
-        final Dataset dataset = DatasetFactory.create(model);
-        when(mockResource.getPropertiesDataset(any(IdentifierConverter.class))).thenReturn(dataset);
+        final RdfStream stream = new RdfStream();
+        when(mockResource.getTriples(any(IdentifierConverter.class), any(Class.class))).thenReturn(stream);
 
         final InputStream query = new ByteArrayInputStream(("SELECT ?title WHERE\n" +
                 "{\n" +
@@ -110,9 +103,9 @@ public class FedoraTransformTest {
         when(mockTransformationFactory.getTransform(MediaType.valueOf(contentTypeSPARQLQuery), query)).thenReturn(
                 mockTransform);
 
-        testObj.evaluateTransform("testObject", MediaType.valueOf(contentTypeSPARQLQuery), query);
+        testObj.evaluateTransform(MediaType.valueOf(contentTypeSPARQLQuery), null, query);
 
-        verify(mockTransform).apply(dataset);
+        verify(mockTransform).apply(any(RdfStream.class));
     }
 
 
