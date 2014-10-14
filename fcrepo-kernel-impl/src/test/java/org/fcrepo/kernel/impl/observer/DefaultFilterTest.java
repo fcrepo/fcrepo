@@ -15,34 +15,25 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
-import static com.google.common.base.Predicates.alwaysFalse;
-import static com.google.common.base.Predicates.alwaysTrue;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static java.util.UUID.randomUUID;
-import static javax.jcr.observation.Event.NODE_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.observation.Event;
+import javax.jcr.nodetype.NodeType;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.modeshape.jcr.api.Repository;
-
-import com.google.common.base.Predicate;
 
 /**
  * @author ajs6f
@@ -59,7 +50,7 @@ public class DefaultFilterTest {
     private Repository mockRepo;
 
     @Mock
-    private Event mockEvent;
+    private org.modeshape.jcr.api.observation.Event mockEvent;
 
     @Mock
     private Node mockNode;
@@ -71,72 +62,53 @@ public class DefaultFilterTest {
 
     private final static String testPath = "/foo/bar";
 
+    @Mock
+    private NodeType fedoraResource;
+    @Mock
+    private NodeType fedoraObject;
+    @Mock
+    private NodeType fedoraDatastream;
+    @Mock
+    private NodeType fedoraBinary;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        mockSession = mock(Session.class, Mockito.withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
-        when(mockEvent.getPath()).thenReturn(testPath);
-        when(mockEvent.getIdentifier()).thenReturn(testId);
-        when(mockEvent.getType()).thenReturn(NODE_ADDED);
-        when(mockNode.isNode()).thenReturn(true);
         testObj = new DefaultFilter();
-        when(mockRepo.login()).thenReturn((org.modeshape.jcr.api.Session) mockSession);
+        when(fedoraResource.getName()).thenReturn(FEDORA_RESOURCE);
+        when(fedoraObject.getName()).thenReturn(FEDORA_OBJECT);
+        when(fedoraDatastream.getName()).thenReturn(FEDORA_DATASTREAM);
+        when(fedoraBinary.getName()).thenReturn(FEDORA_BINARY);
     }
 
     @Test
-    public void shouldApplyToObjectOrDatastream() throws Exception {
-        when(mockSession.getItem(testPath)).thenReturn(mockNode);
-        final Predicate<Node> holdO = isFedoraObject;
-        try {
-            isFedoraObject = alwaysTrue();
-            assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
-        } finally {
-            isFedoraObject = holdO;
-        }
+    public void shouldApplyToResource() throws Exception {
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraResource });
+        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
     }
 
     @Test
-    public void shouldNotApplyToNonExistentNodes() throws Exception {
-        when(mockSession.getNodeByIdentifier(testId)).thenThrow(
-                new PathNotFoundException("Expected."));
-        assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
+    public void shouldApplyToObject() throws Exception {
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraObject });
+        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
     }
+
+    @Test
+    public void shouldApplyToDatastream() throws Exception {
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraDatastream });
+        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+    }
+
+    @Test
+    public void shouldApplyToBinary() throws Exception {
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraBinary });
+        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+    }
+
 
     @Test
     public void shouldNotApplyToNonFedoraNodes() throws Exception {
-        when(mockSession.getNode(testPath)).thenReturn(mockNode);
-        final Predicate<Node> holdO = isFedoraObject;
-        final Predicate<Node> hold1 = isFedoraDatastream;
-        try {
-            isFedoraObject = alwaysFalse();
-            isFedoraDatastream = alwaysFalse();
-            assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
-        } finally {
-            isFedoraObject = holdO;
-            isFedoraDatastream = hold1;
-        }
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testBadItem() throws RepositoryException {
-        when(mockEvent.getType()).thenReturn(PROPERTY_ADDED);
-        when(mockSession.getNode("/foo")).thenThrow(
-                new RepositoryException("Expected."));
-        when(mockProperty.isNode()).thenReturn(false);
-        testObj.getFilter(mockSession).apply(mockEvent);
-    }
-
-    @Test
-    public void testProperty() throws RepositoryException {
-        when(mockProperty.isNode()).thenReturn(false);
-        when(mockProperty.getParent()).thenReturn(mockNode);
-        when(mockSession.getItem(testPath)).thenReturn(mockProperty);
-        final Predicate<Node> holdO = isFedoraObject;
-        try {
-            isFedoraObject = alwaysTrue();
-            assertNotNull(testObj.getFilter(mockSession).apply(mockEvent));
-        } finally {
-            isFedoraObject = holdO;
-        }
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {  });
+        assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
     }
 }
