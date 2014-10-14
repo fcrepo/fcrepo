@@ -112,11 +112,6 @@ public abstract class RDFMediaType extends MediaType {
 
     public static final MediaType RESULTS_BIO_TYPE = typeFromString(RESULTS_BIO);
 
-    public static final List<Variant> POSSIBLE_SPARQL_RDF_VARIANTS = mediaTypes(
-            TSV_TYPE, CSV_TYPE, SSE_TYPE, PLAIN_TYPE, RESULTS_JSON_TYPE,
-            RESULTS_XML_TYPE, RESULTS_BIO_TYPE, RDF_XML_TYPE, NTRIPLES_TYPE,
-            N3_TYPE, N3_ALT1_TYPE, N3_ALT2_TYPE, TURTLE_TYPE).add().build();
-
     private static MediaType typeFromString(final String type) {
         return new MediaType(type.split("/")[0], type.split("/")[1]);
     }

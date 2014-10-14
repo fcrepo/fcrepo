@@ -29,6 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Type;
 
 import javax.ws.rs.WebApplicationException;
@@ -78,7 +79,7 @@ public class QueryExecutionProviderTest {
 
     @Test
     public void testWriteTo() throws WebApplicationException,
-                             IllegalArgumentException {
+            IllegalArgumentException, IOException {
 
         final Query sparqlQuery =
             QueryFactory.create("SELECT ?x WHERE { ?x ?y ?z }");

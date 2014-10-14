@@ -73,6 +73,7 @@ public class ResultSetStreamingOutputTest {
     @Before
     public void setUp() {
         initMocks(this);
+        testObj = new ResultSetStreamingOutput();
     }
 
     @Test
@@ -85,12 +86,11 @@ public class ResultSetStreamingOutputTest {
                 QueryExecutionFactory.create(sparqlQuery, testData)) {
             final ResultSet resultSet = testResult.execSelect();
 
-            testObj =
-                    new ResultSetStreamingOutput(resultSet, MediaType
-                            .valueOf(contentTypeTextTSV));
 
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                testObj.write(out);
+                testObj.writeTo(resultSet, null, null, null, MediaType
+                        .valueOf(contentTypeTextTSV), null, out);
+
                 final String serialized = out.toString();
                 assertTrue(serialized.contains("test:subject"));
             }
@@ -107,12 +107,9 @@ public class ResultSetStreamingOutputTest {
                 QueryExecutionFactory.create(sparqlQuery, testData)) {
             final ResultSet resultSet = testResult.execSelect();
 
-            testObj =
-                    new ResultSetStreamingOutput(resultSet, MediaType
-                            .valueOf(contentTypeRDFXML));
-
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                testObj.write(out);
+                testObj.writeTo(resultSet, null, null, null, MediaType
+                        .valueOf(contentTypeRDFXML), null, out);
                 final String serialized = out.toString();
                 assertTrue(serialized.contains("rs:ResultSet"));
             }

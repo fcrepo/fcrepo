@@ -17,7 +17,6 @@ package org.fcrepo.transform.http;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.ok;
 
 import static org.fcrepo.kernel.RdfLexicon.SPARQL_SD_NAMESPACE;
 import static org.junit.Assert.assertFalse;
@@ -27,12 +26,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
 import org.fcrepo.transform.sparql.JQLResultSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,14 +51,10 @@ import javax.jcr.query.QueryManager;
 import javax.jcr.query.QueryResult;
 import javax.jcr.query.qom.Column;
 import javax.jcr.query.qom.QueryObjectModel;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Variant;
 
-import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
-import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_SPARQL_RDF_VARIANTS;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertTrue;
@@ -117,9 +111,6 @@ public class FedoraSparqlTest {
     private IdentifierConverter<Resource, Node> MockIdentifierTranslator;
 
     @Mock
-    private Variant mockVariant;
-
-    @Mock
     private Request mockRequest;
 
     private static String testSparql = "SELECT ?s WHERE { ?x <" + RdfLexicon.DC_TITLE.getURI() + "> ?z }";
@@ -173,26 +164,14 @@ public class FedoraSparqlTest {
 
     @Test
     public void testRunSparqlQuery() throws RepositoryException, IOException {
-        when(mockRequest.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS)).thenReturn(mockVariant);
-        when(mockVariant.getMediaType()).thenReturn(MediaType.valueOf(contentTypeTextTSV));
         final InputStream input = new ByteArrayInputStream(testSparql.getBytes());
-        final Response response = testObj.runSparqlQuery(input, mockRequest, uriInfo);
-        assertTrue(response.getStatus() == OK.getStatusCode());
-        assertEquals(ok(new ResultSetStreamingOutput(new JQLResultSet(mockSession,
-                new UriAwareIdentifierConverter(mockSession, uriInfo.getBaseUriBuilder()),
-                mockResults), mockVariant.getMediaType())).build().toString(),
-                response.toString());
+        final ResultSet resultSet = testObj.runSparqlQuery(input, mockRequest, uriInfo);
+        assertEquals(mockResults, ((JQLResultSet) resultSet).getQueryResult());
     }
 
     @Test
     public void testRunSparqlQueryWithHTMLForm() throws RepositoryException {
-        when(mockRequest.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS)).thenReturn(mockVariant);
-        when(mockVariant.getMediaType()).thenReturn(MediaType.valueOf(contentTypeTextTSV));
-        final Response response = testObj.runSparqlQuery(testSparql, mockRequest, uriInfo);
-        assertTrue(response.getStatus() == OK.getStatusCode());
-        assertEquals(ok(new ResultSetStreamingOutput(new JQLResultSet(mockSession,
-                new UriAwareIdentifierConverter(mockSession, uriInfo.getBaseUriBuilder()),
-                mockResults), mockVariant.getMediaType())).build().toString(),
-                response.toString());
+        final ResultSet resultSet = testObj.runSparqlQuery(testSparql, mockRequest, uriInfo);
+        assertEquals(mockResults, ((JQLResultSet) resultSet).getQueryResult());
     }
 }
