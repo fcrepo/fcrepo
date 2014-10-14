@@ -17,35 +17,26 @@ package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
-import static com.hp.hpl.jena.query.DatasetFactory.create;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.impl.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.services.RepositoryService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.Problems;
 import org.modeshape.jcr.api.RepositoryManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Timer;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * Service for repository-wide management and querying
@@ -101,49 +92,6 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryDataset
-     * (javax.jcr.Session)
-     */
-    @Override
-    public Dataset getNamespaceRegistryDataset(final Session session,
-                                               final IdentifierConverter<Resource,Node> idTranslator) {
-
-
-        final Model model;
-
-        try {
-            model = getNamespaceRegistryStream(session, idTranslator).asModel();
-
-            model.register(new NamespaceChangedStatementListener(session));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-        return create(model);
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryStream
-     * (javax.jcr.Session)
-     */
-    @Override
-    public RdfStream getNamespaceRegistryStream(final Session session,
-                                                final IdentifierConverter<Resource,Node> idTranslator) {
-
-        try {
-            return new NamespaceRdfContext(session);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
     }
 
     /*
