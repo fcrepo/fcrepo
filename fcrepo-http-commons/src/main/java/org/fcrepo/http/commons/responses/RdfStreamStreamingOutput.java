@@ -148,32 +148,48 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
             @Override
             public Statement apply(final Triple t) {
+                final Resource subject = getResourceForSubject(t.getSubject());
+                final URI predicate = vfactory.createURI(t.getPredicate().getURI());
                 final Value object = getValueForObject(t.getObject());
-                return vfactory.createStatement(vfactory.createURI(t
-                        .getSubject().getURI()), vfactory.createURI(t
-                        .getPredicate().getURI()), object);
+                return vfactory.createStatement(subject, predicate, object);
             }
 
         };
 
-    protected static Value getValueForObject(final Node object) {
-        if (object.isURI()) {
-            return vfactory.createURI(object.getURI());
+    private static Resource getResourceForSubject(final Node subjectNode) {
+        final Resource subject;
+
+        if (subjectNode.isBlank()) {
+            subject = vfactory.createBNode(subjectNode.getBlankNodeLabel());
+        } else {
+            subject = vfactory.createURI(subjectNode.getURI());
         }
-        if (object.isLiteral()) {
+
+        return subject;
+    }
+
+    protected static Value getValueForObject(final Node object) {
+        final Value value;
+        if (object.isURI()) {
+            value = vfactory.createURI(object.getURI());
+        } else if (object.isBlank()) {
+            value = vfactory.createBNode(object.getBlankNodeLabel());
+        } else if (object.isLiteral()) {
             final Object literalValue = object.getLiteralValue();
 
             final String literalDatatypeURI = object.getLiteralDatatypeURI();
 
             if (literalDatatypeURI != null) {
                 final URI uri = vfactory.createURI(literalDatatypeURI);
-                return vfactory.createLiteral(literalValue.toString(), uri);
+                value = vfactory.createLiteral(literalValue.toString(), uri);
             } else {
-                return createLiteral(vfactory, literalValue);
+                value = createLiteral(vfactory, literalValue);
             }
-
+        } else {
+            // should not happen..
+            throw new AssertionError("Unable to convert " + object + " to a value");
         }
-        throw new UnsupportedOperationException(
-                "We do not serialize blank nodes!");
+
+        return value;
     }
 }
