@@ -87,7 +87,7 @@ WHERE { }
 </form>
 #end
 
-#set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
+#set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
 #if($serializations.hasNext())
 <div class="btn-group">
@@ -109,7 +109,7 @@ WHERE { }
 
 
 #if ($writable == true)
-#set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
+#set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 #set ($isLockable = $helpers.isRdfResource($rdf, $topic, $rdfLexicon.MIX_NAMESPACE, "lockable"))
 
 #if($serializations.hasNext())
@@ -181,7 +181,7 @@ WHERE { }
 #end
 
 #if ($writable == true)
-#set ($fedoraresc = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_MIXIN_TYPE), $helpers.asLiteralStringNode("fedora:resource")))
+#set ($fedoraresc = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_MIXIN_TYPE), $helpers.asLiteralStringNode("fedora:resource")))
 #if($fedoraresc.hasNext())
 <h3>Access Roles</h3>
 <form id="update_rbacl" type="application/json" action="javascript:updateAccessRoles()" method="POST">

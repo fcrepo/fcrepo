@@ -1,40 +1,40 @@
 #* @vtlvariable name="quad" type="com.hp.hpl.jena.sparql.core.Quad" *#
-#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.graph.Graph" *#
 #* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
 #macro( triples $sub )
         <dl>
 
             #set ($last_quad = false)
-            #foreach($quad in $helpers.getSortedTriples($model, $rdf.find($nodeany, $sub, $nodeany, $nodeany)))
-                #if( $rdfLexicon.isManagedPredicateURI.apply($quad.getPredicate().toString()) )
+            #foreach($triple in $helpers.getSortedTriples($model, $rdf.find($sub, $nodeany, $nodeany)))
+                #if( $rdfLexicon.isManagedPredicateURI.apply($triple.getPredicate().toString()) )
                   #set ($prop_status = ' class="text-info" title="managed predicate"')
                 #else
                   #set ($prop_status = "")
                 #end
 
-                #if($last_quad == false || !$last_quad.getPredicate().equals($quad.getPredicate()))
+                #if($last_quad == false || !$last_quad.getPredicate().equals($triple.getPredicate()))
                     <dt$prop_status>
-                        #if($last_quad == false || !$last_quad.getPredicate().getNameSpace().equals($quad.getPredicate().getNameSpace()))
-                        <span class="namespace text-muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace(), false)</span>
+                        #if($last_quad == false || !$last_quad.getPredicate().getNameSpace().equals($triple.getPredicate().getNameSpace()))
+                        <span class="namespace text-muted" title="$triple.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $triple.getPredicate().getNameSpace(), false)</span>
                         #else
-                        <span class="namespace text-muted" title="$quad.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $quad.getPredicate().getNameSpace(), true)</span>
+                        <span class="namespace text-muted" title="$triple.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $triple.getPredicate().getNameSpace(), true)</span>
                         #end
-                        <span class="localName">$quad.getPredicate().getLocalName()</span>
+                        <span class="localName">$triple.getPredicate().getLocalName()</span>
                     </dt>
                 #end
                     <dd>
-                        #if($quad.getObject().isURI() && $quad.getObject().getURI().startsWith("http"))
-                            <a href="$quad.getObject().getURI()"  property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</a>
-                        #elseif ($quad.getObject().isLiteral())
-                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject().getLiteral().getLexicalForm())</span>
+                        #if($triple.getObject().isURI() && $triple.getObject().getURI().startsWith("http"))
+                            <a href="$triple.getObject().getURI()"  property="$triple.getPredicate().toString()">$esc.html($triple.getObject())</a>
+                        #elseif ($triple.getObject().isLiteral())
+                            <span property="$triple.getPredicate().toString()">$esc.html($triple.getObject().getLiteral().getLexicalForm())</span>
                         #else
-                            <span property="$quad.getPredicate().toString()">$esc.html($quad.getObject())</span>
+                            <span property="$triple.getPredicate().toString()">$esc.html($triple.getObject())</span>
                         #end
-                        #if( $quad.getPredicate().toString().equals("http://fedora.info/definitions/v4/rest-api#digest") )
+                        #if( $triple.getPredicate().toString().equals("http://fedora.info/definitions/v4/rest-api#digest") )
                             <a href="$topic/fcr:fixity">check fixity</a>
                         #end
                     </dd>
-                #set ($last_quad = $quad)
+                #set ($last_quad = $triple)
 
             #end
         </dl>
@@ -43,5 +43,5 @@
 #macro( isObject $sub )
 #set($type = $anynode.createURI("http://fedora.info/definitions/v4/repository#mixinTypes"))
 #set($object = $anynode.createLiteral("fedora:object"))
-$rdf.find($nodeany, $sub, $type, $object).hasNext()
+$rdf.find($sub, $type, $object).hasNext()
 #end

@@ -21,7 +21,6 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
-import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
@@ -270,11 +269,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 AclRdfContext.class,
                 TypeRdfContext.class));
 
-        final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
-
-        dataset.getContext().set(URI_SYMBOL, graphSubjects.reverse().convert(getNode()));
-
-        return dataset;
+        return DatasetFactory.create(propertiesStream.asModel());
     }
 
     /* (non-Javadoc)

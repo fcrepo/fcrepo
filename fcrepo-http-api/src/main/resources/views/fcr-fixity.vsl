@@ -1,5 +1,5 @@
-#* @vtlvariable name="quad" type="com.hp.hpl.jena.sparql.core.Quad" *#
-#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="triple" type="com.hp.hpl.jena.sparql.core.Quad" *#
+#* @vtlvariable name="rdf" type="com.hp.hpl.jena.graph.Graph" *#
 #* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
 <!DOCTYPE html>
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
@@ -51,12 +51,12 @@
             	## output triples for fixity
 
 				#set($hasFixity = $nodeany.createURI("http://www.loc.gov/premis/rdf/v1#hasFixity"))
-				#set($fixities = $rdf.find($nodeany, $topic, $hasFixity, $nodeany))
+				#set($fixities = $rdf.find($topic, $hasFixity, $nodeany))
 				#if ($fixities.hasNext())		            
-	            	#set($quad = $fixities.next())
-	            	#set($sub = $nodeany.createURI($quad.getObject().getURI()))
+	            	#set($triple = $fixities.next())
+	            	#set($sub = $nodeany.createURI($triple.getObject().getURI()))
 	                <div class="panel-heading">
-	                    <h4>Fixity Properties <br/><small><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $sub))</a></small></h4>
+	                    <h4>Fixity Properties <br/><small><a href="$triple.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $sub))</a></small></h4>
 	                </div>
 	                <div class="panel-body">
 	                    #triples($sub)

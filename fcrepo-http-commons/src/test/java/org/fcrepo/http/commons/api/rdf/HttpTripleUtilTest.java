@@ -31,13 +31,12 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 /**
@@ -49,7 +48,6 @@ public class HttpTripleUtilTest {
 
     private HttpTripleUtil testObj;
 
-    private Dataset dataset;
 
     @Mock
     private UriInfo mockUriInfo;
@@ -74,7 +72,6 @@ public class HttpTripleUtilTest {
         initMocks(this);
         testObj = new HttpTripleUtil();
         testObj.setApplicationContext(mockContext);
-        dataset = DatasetFactory.create(createDefaultModel());
     }
 
     @Test
@@ -93,7 +90,8 @@ public class HttpTripleUtilTest {
                         eq(mockUriInfo), eq(mockSubjects))).thenReturn(
                 createDefaultModel());
 
-        testObj.addHttpComponentModelsForResource(dataset, mockResource,
+        final RdfStream rdfStream = new RdfStream();
+        testObj.addHttpComponentModelsForResourceToStream(rdfStream, mockResource,
                 mockUriInfo, mockSubjects);
         verify(mockBean1).createModelForResource(eq(mockResource),
                 eq(mockUriInfo), eq(mockSubjects));
