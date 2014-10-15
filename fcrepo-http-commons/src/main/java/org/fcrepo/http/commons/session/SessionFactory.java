@@ -199,7 +199,12 @@ public class SessionFactory {
      */
     protected String getEmbeddedId(
             final HttpServletRequest servletRequest, final Prefix prefix) {
-        final String requestPath = servletRequest.getRequestURI();
+        String requestPath = servletRequest.getPathInfo();
+
+        // http://stackoverflow.com/questions/18963562/grizzlys-request-getpathinfo-returns-always-null
+        if (requestPath == null && servletRequest.getContextPath().isEmpty()) {
+            requestPath = servletRequest.getRequestURI();
+        }
 
         String id = null;
         if (requestPath != null) {
