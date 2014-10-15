@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import com.hp.hpl.jena.query.Dataset;
 import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -84,9 +83,6 @@ public class FedoraVersioningTest {
 
     @Mock
     private Variant mockVariant;
-
-    @Mock
-    private Dataset mockDataset;
 
     private String path = "/some/path";
 

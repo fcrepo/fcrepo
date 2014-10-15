@@ -26,7 +26,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 
 /**
@@ -81,7 +80,7 @@ public interface FedoraResource {
      */
     boolean hasType(final String type);
     /**
-     * Update the properties Dataset with a SPARQL Update query. The updated
+     * Update the provided properties with a SPARQL Update query. The updated
      * properties may be serialized to the JCR store.
      *
      * After applying the statement, clients SHOULD check the result
@@ -90,28 +89,10 @@ public interface FedoraResource {
      *
      * @param subjects
      * @param sparqlUpdateStatement
+     * @param originalTriples
      */
-    void updatePropertiesDataset(final IdentifierConverter<Resource,Node> subjects,
-            final String sparqlUpdateStatement);
-
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     *
-     * @param graphSubjects
-     * @param offset
-     * @param limit
-     * @return properties
-     */
-    Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> graphSubjects,
-       final int offset, final int limit);
-
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     * @param subjects
-     * @return properties
-     */
-    Dataset getPropertiesDataset(final IdentifierConverter<Resource,Node> subjects);
-
+    void updateProperties(final IdentifierConverter<Resource, Node> subjects,
+                          final String sparqlUpdateStatement, final RdfStream originalTriples);
 
     /**
      * Return the RDF properties of this object using the provided context

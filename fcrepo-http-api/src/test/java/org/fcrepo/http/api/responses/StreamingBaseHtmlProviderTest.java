@@ -60,7 +60,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
 
 /**
  * <p>BaseHtmlProviderTest class.</p>
@@ -92,6 +91,7 @@ public class StreamingBaseHtmlProviderTest {
 
 
         testData.session(mockSession);
+        testData.topic(createURI("test:subject"));
         testData.concat(
         new Triple(createURI("test:subject"),
                         createURI("test:predicate"),
@@ -111,7 +111,7 @@ public class StreamingBaseHtmlProviderTest {
                 testProvider.isWriteable(RdfStream.class, RdfStream.class,
                         null, TEXT_HTML_TYPE));
         assertFalse(
-                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than Dataset!",
+                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than a RdfStream!",
                 testProvider.isWriteable(StreamingBaseHtmlProvider.class,
                         StreamingBaseHtmlProvider.class, null, TEXT_HTML_TYPE));
         assertFalse(
@@ -144,7 +144,7 @@ public class StreamingBaseHtmlProviderTest {
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
         setField(testProvider, "templatesMap", singletonMap("nt:file",
                 mockTemplate));
-        testProvider.writeTo(testData, Dataset.class, mock(Type.class),
+        testProvider.writeTo(testData, RdfStream.class, mock(Type.class),
                 new Annotation[]{}, MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
@@ -172,7 +172,7 @@ public class StreamingBaseHtmlProviderTest {
                 of("some:file", mockTemplate));
         final HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
         when(mockAnnotation.value()).thenReturn("some:file");
-        testProvider.writeTo(testData, Dataset.class, mock(Type.class),
+        testProvider.writeTo(testData, RdfStream.class, mock(Type.class),
                 new Annotation[]{mockAnnotation}, MediaType
                         .valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);

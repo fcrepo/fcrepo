@@ -28,14 +28,14 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
-
-import com.hp.hpl.jena.query.Dataset;
 
 /**
  * <p>FedoraObjectImplIT class.</p>
@@ -69,24 +69,24 @@ public class FedoraObjectImplIT extends AbstractIT {
         final FedoraObject object =
             objectService.findOrCreateObject(session, "/graphObject");
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
-        final Dataset graphStore = object.getPropertiesDataset(subjects);
+        final Model model = object.getTriples(subjects, PropertiesRdfContext.class).asModel();
 
         final Resource graphSubject = subjects.reverse().convert(object.getNode());
 
         assertFalse("Graph store should not contain JCR prefixes",
-                    compile("jcr").matcher(graphStore.toString()).find());
+                    compile("jcr").matcher(model.toString()).find());
         assertFalse("Graph store should contain our fcrepo prefix",
                     compile("fcrepo")
-                    .matcher(graphStore.toString()).find());
+                    .matcher(model.toString()).find());
 
-        object.updatePropertiesDataset(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+        object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "INSERT { <http://example/egbook> dc:title " +
                 "\"This is an example of an update that will be " +
-                "ignored\" } WHERE {}");
+                "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
-        object.updatePropertiesDataset(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+        object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "INSERT { <" + graphSubject + "> dc:title " +
-                "\"This is an example title\" } WHERE {}");
+                "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
 
         final Value[] values = object.getNode().getProperty("dc:title").getValues();
@@ -98,9 +98,9 @@ public class FedoraObjectImplIT extends AbstractIT {
                           .getString().equals("This is an example title"));
 
 
-        object.updatePropertiesDataset(subjects, "PREFIX myurn: <info:myurn/>\n" +
+        object.updateProperties(subjects, "PREFIX myurn: <info:myurn/>\n" +
                 "INSERT { <" + graphSubject + "> myurn:info " +
-                "\"This is some example data\"} WHERE {}");
+                "\"This is some example data\"} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         final Value value =
             object.getNode().getProperty(object.getNode().getSession()
@@ -109,10 +109,10 @@ public class FedoraObjectImplIT extends AbstractIT {
 
         assertEquals("This is some example data", value.getString());
 
-        object.updatePropertiesDataset(subjects, "PREFIX fedora-rels-ext: <"
+        object.updateProperties(subjects, "PREFIX fedora-rels-ext: <"
                 + RELATIONS_NAMESPACE + ">\n" +
                 "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
-                "isPartOf <" + graphSubject + "> } WHERE {}");
+                "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf")
                    .getValues()[0].getString(),
@@ -121,18 +121,18 @@ public class FedoraObjectImplIT extends AbstractIT {
                    .equals(object.getNode().getIdentifier()));
 
 
-        object.updatePropertiesDataset(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+        object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "DELETE { <" + graphSubject + "> dc:title " +
-                "\"This is an example title\" } WHERE {}");
+                "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         assertFalse("Found unexpected dc:title",
                     object.getNode().hasProperty("dc:title"));
 
-        object.updatePropertiesDataset(subjects, "PREFIX fedora-rels-ext: <" +
+        object.updateProperties(subjects, "PREFIX fedora-rels-ext: <" +
                 RELATIONS_NAMESPACE + ">\n" +
                 "DELETE { <" + graphSubject + "> " +
                 "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
-                "} WHERE {}");
+                "} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
         assertFalse("found unexpected reference",
                     object.getNode().hasProperty("fedorarelsext:isPartOf"));
 
@@ -148,9 +148,9 @@ public class FedoraObjectImplIT extends AbstractIT {
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
         final Resource graphSubject = subjects.reverse().convert(object.getNode());
 
-        object.updatePropertiesDataset(subjects, "PREFIX some: <info:some#>\n" +
+        object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT { <" + graphSubject + "> some:urlProperty " +
-                "<" + graphSubject + "> } WHERE {}");
+                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
 
@@ -159,16 +159,17 @@ public class FedoraObjectImplIT extends AbstractIT {
         assertEquals(object.getNode(), session.getNodeByIdentifier(
                 object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
-        object.updatePropertiesDataset(subjects, "PREFIX some: <info:some#>\n" +
+        object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "DELETE { <" + graphSubject + "> some:urlProperty " +
-                "<" + graphSubject + "> } WHERE {}");
+                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         assertFalse(object.getNode().hasProperty(prefix + ":urlProperty_ref"));
 
 
-        object.updatePropertiesDataset(subjects, "PREFIX some: <info:some#>\n" +
-                         "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
-                         "       some:urlProperty <info:somewhere/else> . }");
+        object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
+                "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
+                "       some:urlProperty <info:somewhere/else> . }",
+                object.getTriples(subjects, PropertiesRdfContext.class));
 
         assertEquals(1, object.getNode().getProperty(prefix + ":urlProperty_ref").getValues().length);
         assertEquals(object.getNode(), session.getNodeByIdentifier(

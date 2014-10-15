@@ -39,7 +39,9 @@ import java.util.TreeMap;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.commons.api.rdf.QuadOrdering;
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Triple;
+import org.fcrepo.http.commons.api.rdf.TripleOrdering;
 import org.fcrepo.kernel.RdfLexicon;
 import org.slf4j.Logger;
 
@@ -53,8 +55,6 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.vocabulary.RDFS;
 
@@ -85,67 +85,67 @@ public class ViewHelpers {
     }
 
     /**
-     * Return an iterator of Quads that match the given subject and predicate
+     * Return an iterator of Triples that match the given subject and predicate
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @param predicate
      * @return iterator
      */
-    public Iterator<Quad> getObjects(final DatasetGraph dataset,
+    public Iterator<Triple> getObjects(final Graph graph,
         final Node subject, final Resource predicate) {
-        return dataset.find(ANY, subject, predicate.asNode(), ANY);
+        return graph.find(subject, predicate.asNode(), ANY);
     }
 
     /**
-     * Return an iterator of Quads for versions.
+     * Return an iterator of Triples for versions.
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @return iterator
      */
-    public Iterator<Node> getVersions(final DatasetGraph dataset,
+    public Iterator<Node> getVersions(final Graph graph,
         final Node subject) {
-        return getOrderedVersions(dataset, subject, HAS_VERSION);
+        return getOrderedVersions(graph, subject, HAS_VERSION);
     }
 
     /**
-     * Return an iterator of Quads for child versions.
+     * Return an iterator of Triples for child versions.
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @return iterator
      */
-    public Iterator<Node> getChildVersions(final DatasetGraph dataset,
+    public Iterator<Node> getChildVersions(final Graph graph,
         final Node subject) {
-        return getOrderedVersions(dataset, subject, HAS_CONTENT);
+        return getOrderedVersions(graph, subject, HAS_CONTENT);
     }
 
     /**
-     * Return an iterator of Quads for versions in order by the
+     * Return an iterator of Triples for versions in order by the
      * last modification date for the versioned content.  When
      * multiple versions exist with the same last modification
      * date, the order of those redundant versions is undefined.
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @return iterator
      */
-    public Iterator<Node> getOrderedVersions(final DatasetGraph dataset,
+    public Iterator<Node> getOrderedVersions(final Graph graph,
         final Node subject, final Resource predicate) {
-        final Iterator<Quad> versions = getObjects(dataset, subject, predicate);
+        final Iterator<Triple> versions = getObjects(graph, subject, predicate);
         final Map<String, Node> map = new TreeMap<>();
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        Quad quad;
+        Triple triple;
         String date;
         while (versions.hasNext()) {
-            quad = versions.next();
-            date = getVersionDate(dataset, quad.getObject());
+            triple = versions.next();
+            date = getVersionDate(graph, triple.getObject());
             String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
             while (map.containsKey(key)) {
                 key = key + "1";
             }
-            map.put(key, quad.getObject());
+            map.put(key, triple.getObject());
         }
         return map.values().iterator();
     }
@@ -172,17 +172,16 @@ public class ViewHelpers {
     /**
      * Gets a version label of a subject from the graph
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @param defaultValue a value to be returned if no label is present in the
      *                     graph
      * @return the label of the version if one has been provided; otherwise
      * the default is returned
      */
-    public String getVersionLabel(final DatasetGraph dataset,
+    public String getVersionLabel(final Graph graph,
                                  final Node subject, final String defaultValue) {
-        final Iterator<Quad> objects = getObjects(dataset, subject,
-                HAS_VERSION_LABEL);
+        final Iterator<Triple> objects = getObjects(graph, subject, HAS_VERSION_LABEL);
         if (objects.hasNext()) {
             return objects.next().getObject().getLiteralValue().toString();
         }
@@ -192,14 +191,13 @@ public class ViewHelpers {
     /**
      * Gets a modification date of a subject from the graph
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @return the modification date or null if none exists
      */
-    public String getVersionDate(final DatasetGraph dataset,
+    public String getVersionDate(final Graph graph,
                                  final Node subject) {
-        final Iterator<Quad>  objects = getObjects(dataset, subject,
-                LAST_MODIFIED_DATE);
+        final Iterator<Triple> objects = getObjects(graph, subject, LAST_MODIFIED_DATE);
         if (objects.hasNext()) {
             return objects.next().getObject().getLiteralValue().toString();
         }
@@ -209,17 +207,16 @@ public class ViewHelpers {
     /**
      * Get the canonical title of a subject from the graph
      *
-     * @param dataset
+     * @param graph
      * @param subject
-     * @return canonical title of the subject in the dataset graph
+     * @return canonical title of the subject in the graph
      */
-    public String getObjectTitle(final DatasetGraph dataset,
-            final Node subject) {
+    public String getObjectTitle(final Graph graph, final Node subject) {
 
         final Property[] properties = new Property[] {RDFS_LABEL, DC_TITLE};
 
         for (final Property p : properties) {
-            final Iterator<Quad> objects = getObjects(dataset, subject, p);
+            final Iterator<Triple> objects = getObjects(graph, subject, p);
 
             if (objects.hasNext()) {
                 return objects.next().getObject().getLiteralValue().toString();
@@ -239,15 +236,15 @@ public class ViewHelpers {
     /**
      * Take a HAS_SERIALIZATION node and find the RDFS_LABEL for the format it is associated with
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @return the label for the serialization format
      */
-    public String getSerializationTitle(final DatasetGraph dataset, final Node subject) {
+    public String getSerializationTitle(final Graph graph, final Node subject) {
         final Property dcFormat = createProperty(DC_NAMESPACE + "format");
-        final Iterator<Quad> formatRDFs = getObjects(dataset, subject, dcFormat);
+        final Iterator<Triple> formatRDFs = getObjects(graph, subject, dcFormat);
         if (formatRDFs.hasNext()) {
-            return getObjectTitle(dataset, formatRDFs.next().getObject());
+            return getObjectTitle(graph, formatRDFs.next().getObject());
         }
         return "";
     }
@@ -256,8 +253,8 @@ public class ViewHelpers {
      * Determines whether the subject is writable
      * true if node is writable
      */
-    public boolean isWritable(final DatasetGraph dataset, final Node subject) {
-        final Iterator<Quad> it = getObjects(dataset, subject, RdfLexicon.WRITABLE);
+    public boolean isWritable(final Graph graph, final Node subject) {
+        final Iterator<Triple> it = getObjects(graph, subject, RdfLexicon.WRITABLE);
         return it.hasNext() && it.next().getObject().getLiteralValue().toString().equals("true");
     }
 
@@ -265,10 +262,8 @@ public class ViewHelpers {
      * Determines whether the subject is of type nt:frozenNode.
      * true if node has type nt:frozen
      */
-    public boolean isFrozenNode(final DatasetGraph dataset,
-        final Node subject) {
-        final Iterator<Quad> objects
-            = getObjects(dataset, subject, RdfLexicon.HAS_PRIMARY_TYPE);
+    public boolean isFrozenNode(final Graph graph, final Node subject) {
+        final Iterator<Triple> objects = getObjects(graph, subject, RdfLexicon.HAS_PRIMARY_TYPE);
         return objects.hasNext()
                 && objects.next().getObject()
                 .getLiteralValue().toString().equals("nt:frozenNode");
@@ -278,14 +273,14 @@ public class ViewHelpers {
      * Get the string version of the object that matches the given subject and
      * predicate
      *
-     * @param dataset
+     * @param graph
      * @param subject
      * @param predicate
      * @return string version of the object
      */
-    public String getObjectsAsString(final DatasetGraph dataset,
+    public String getObjectsAsString(final Graph graph,
             final Node subject, final Resource predicate, final boolean uriAsLink) {
-        final Iterator<Quad> iterator = getObjects(dataset, subject, predicate);
+        final Iterator<Triple> iterator = getObjects(graph, subject, predicate);
 
         if (iterator.hasNext()) {
             final Node object = iterator.next().getObject();
@@ -360,17 +355,15 @@ public class ViewHelpers {
     }
 
     /**
-     * Sort a Iterator of Quads alphabetically by its subject, predicate, and
+     * Sort a Iterator of Triples alphabetically by its subject, predicate, and
      * object
      *
      * @param model
      * @param it
      * @return iterator of alphabetized triples
      */
-    public List<Quad> getSortedTriples(final Model model,
-            final Iterator<Quad> it) {
-        return Ordering.from(new QuadOrdering(model)).sortedCopy(
-                ImmutableList.copyOf(it));
+    public List<Triple> getSortedTriples(final Model model, final Iterator<Triple> it) {
+        return Ordering.from(new TripleOrdering(model)).sortedCopy(ImmutableList.copyOf(it));
     }
 
     /**
@@ -431,12 +424,11 @@ public class ViewHelpers {
     /**
      * Determines whether the subject is kind of RDF resource
      */
-    public boolean isRdfResource(final DatasetGraph dataset,
+    public boolean isRdfResource(final Graph graph,
                                  final Node subject,
                                  final String namespace,
                                  final String resource) {
-        final Iterator<Quad> it = dataset.find(ANY,
-                                               subject,
+        final Iterator<Triple> it = graph.find(subject,
                                                createResource(RDF_NAMESPACE + "type").asNode(),
                                                createResource(namespace + resource).asNode());
         return it.hasNext();
@@ -445,8 +437,8 @@ public class ViewHelpers {
     /**
      * Retrieve the uri for the locks
      */
-    public String getLockUrl(final DatasetGraph dataset, final Node subject) {
-        final Iterator<Quad> it = dataset.find(ANY, subject, RdfLexicon.HAS_LOCK.asNode(), ANY);
+    public String getLockUrl(final Graph graph, final Node subject) {
+        final Iterator<Triple> it = graph.find(subject, RdfLexicon.HAS_LOCK.asNode(), ANY);
         if (it.hasNext()) {
             return it.next().getObject().getURI();
         }

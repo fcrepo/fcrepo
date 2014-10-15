@@ -17,8 +17,8 @@ package org.fcrepo.http.commons.api.rdf;
 
 import java.util.Comparator;
 
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.shared.PrefixMapping;
-import com.hp.hpl.jena.sparql.core.Quad;
 
 /**
  * Comparator to sort a list of Quads by subject, predicate, and object
@@ -26,7 +26,7 @@ import com.hp.hpl.jena.sparql.core.Quad;
  *
  * @author awoods
  */
-public class QuadOrdering implements Comparator<Quad> {
+public class TripleOrdering implements Comparator<Triple> {
 
     private final PrefixMapping prefixMapping;
 
@@ -34,15 +34,14 @@ public class QuadOrdering implements Comparator<Quad> {
      * When sorting predicates, take into account the given PrefixMapping
      * @param prefixMapping
      */
-    public QuadOrdering(final PrefixMapping prefixMapping) {
+    public TripleOrdering(final PrefixMapping prefixMapping) {
         super();
 
         this.prefixMapping = prefixMapping;
     }
 
     @Override
-    public int compare(final com.hp.hpl.jena.sparql.core.Quad left,
-            final com.hp.hpl.jena.sparql.core.Quad right) {
+    public int compare(final Triple left, final Triple right) {
 
         final int s =
                 left.getSubject().toString(prefixMapping, false).compareTo(

@@ -16,7 +16,6 @@
 package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -24,7 +23,6 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static com.hp.hpl.jena.sparql.core.DatasetGraphFactory.createMem;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
@@ -49,20 +47,19 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Triple;
 import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.sparql.core.DatasetGraph;
-import com.hp.hpl.jena.sparql.core.Quad;
 
 /**
  * <p>ViewHelpersTest class.</p>
@@ -80,14 +77,12 @@ public class ViewHelpersTest {
 
     @Test
     public void testGetVersions() {
-        final DatasetGraph mem = createMem();
-        final Node anon = createAnon();
+        final Graph mem = createDefaultModel().getGraph();
         final Node version = createURI("http://localhost/fcrepo/abc/fcr:version/adcd");
         final String date = new Date().toString();
-        mem.add(anon, createURI("http://localhost/fcrepo/abc"), HAS_VERSION.asNode(),
-                version);
-        mem.add(anon, version, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(date));
+        mem.add(new Triple(createURI("http://localhost/fcrepo/abc"), HAS_VERSION.asNode(),
+                version));
+        mem.add(new Triple(version, LAST_MODIFIED_DATE.asNode(), createLiteral(date)));
         assertEquals("Version should be available.",
                      version, testObj.getVersions(mem, createURI("http://localhost/fcrepo/abc")).next());
     }
@@ -102,17 +97,16 @@ public class ViewHelpersTest {
         final Date later = new Date();
         later.setTime(later.getTime() + 10000l);
 
-        final DatasetGraph mem = createMem();
-        final Node anon = createAnon();
-        mem.add(anon, resource, HAS_VERSION.asNode(), v1);
-        mem.add(anon, v1, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(now.toString()));
-        mem.add(anon, resource, HAS_VERSION.asNode(), v2);
-        mem.add(anon, v2, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(now.toString()));
-        mem.add(anon, resource, HAS_VERSION.asNode(), v3);
-        mem.add(anon, v3, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(later.toString()));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(resource, HAS_VERSION.asNode(), v1));
+        mem.add(new Triple(v1, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(now.toString())));
+        mem.add(new Triple(resource, HAS_VERSION.asNode(), v2));
+        mem.add(new Triple(v2, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(now.toString())));
+        mem.add(new Triple(resource, HAS_VERSION.asNode(), v3));
+        mem.add(new Triple(v3, LAST_MODIFIED_DATE.asNode(),
+                createLiteral(later.toString())));
 
         final Iterator<Node> versions = testObj.getOrderedVersions(mem, resource, HAS_VERSION);
         versions.next();
@@ -122,17 +116,13 @@ public class ViewHelpersTest {
     }
     @Test
     public void testGetChildVersions() {
-        final DatasetGraph mem = createMem();
-        final Node anon = createAnon();
+        final Graph mem = createDefaultModel().getGraph();
         final Node version = createURI("http://localhost/fcrepo/abc/fcr:version/adcd");
         final Node contentVersion = createURI("http://localhost/fcrepo/abc/fcr:version/adcd/fcr:content");
         final String date = new Date().toString();
-        mem.add(anon, version, HAS_VERSION.asNode(),
-                version);
-        mem.add(anon, version, HAS_CONTENT.asNode(),
-                contentVersion);
-        mem.add(anon, contentVersion, LAST_MODIFIED_DATE.asNode(),
-                createLiteral(date));
+        mem.add(new Triple(version, HAS_VERSION.asNode(), version));
+        mem.add(new Triple(version, HAS_CONTENT.asNode(), contentVersion));
+        mem.add(new Triple(contentVersion, LAST_MODIFIED_DATE.asNode(), createLiteral(date)));
         assertEquals("Content version should be available.",
                      contentVersion, testObj.getChildVersions(mem, version).next());
     }
@@ -165,38 +155,36 @@ public class ViewHelpersTest {
 
     @Test
     public void testIsWritable() {
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.TRUE.toString()));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.TRUE.toString())));
         assertTrue("Node is should be writable.", testObj.isWritable(mem, createURI("a/b/c")));
     }
 
     @Test
     public void testIsWritableFalse() {
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.FALSE.toString()));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.FALSE.toString())));
         assertFalse("Node should not be writable.", testObj.isWritable(mem, createURI("a/b/c")));
     }
 
     @Test
     public void testIsWritableFalseJunk() {
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("a/b/c"), HAS_CONTENT.asNode(), createLiteral("junk"));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), HAS_CONTENT.asNode(), createLiteral("junk")));
         assertFalse("Node should not be writable.", testObj.isWritable(mem, createURI("a/b/c")));
     }
 
     @Test
     public void testIsFrozenNode() {
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(),
-                createLiteral("nt:frozenNode"));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(), createLiteral("nt:frozenNode")));
         assertTrue("Node is a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
     }
 
     @Test
     public void testIsNotFrozenNode() {
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(),
-                createLiteral("nt:file"));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(), createLiteral("nt:file")));
         assertFalse("Node is not a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
     }
 
@@ -204,11 +192,10 @@ public class ViewHelpersTest {
     public void testRdfResource() {
         final String ns = "http://any/namespace#";
         final String type = "anyType";
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(),
-                createURI("a/b"),
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b"),
                 createResource(RDF_NAMESPACE + "type").asNode(),
-                createResource(ns + type).asNode());
+                createResource(ns + type).asNode()));
 
         assertTrue("Node is a " + type + " node.",
                 testObj.isRdfResource(mem, createURI("a/b"), ns, type));
@@ -219,8 +206,8 @@ public class ViewHelpersTest {
     @Test
     public void testGetLockUrl() {
         final Node lockUrl = createURI("a/b/fcr:lock");
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("a/b"), RdfLexicon.HAS_LOCK.asNode(), lockUrl);
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b"), RdfLexicon.HAS_LOCK.asNode(), lockUrl));
 
         assertEquals("Wrong lock url returned!", lockUrl.getURI(),
                 testObj.getLockUrl(mem, createURI("a/b")));
@@ -238,47 +225,47 @@ public class ViewHelpersTest {
 
     @Test
     public void testGetLabeledVersion() {
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
         final String label = "testLabel";
-        mem.add(createAnon(), createURI("a/b/c"), HAS_VERSION_LABEL.asNode(),
-                createLiteral(label));
+        mem.add(new Triple(createURI("a/b/c"), HAS_VERSION_LABEL.asNode(),
+                createLiteral(label)));
         assertEquals("Version label should be available.", label, testObj.getVersionLabel(mem, createURI("a/b/c"), ""));
     }
 
     @Test
     public void testGetUnlabeledVersion() {
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
         assertEquals("Default version label should be used.",
                      testObj.getVersionLabel(mem, createURI("a/b/c"), "default"), "default");
     }
 
     @Test
     public void testGetVersionDate() {
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
         final String date = new Date().toString();
-        mem.add(createAnon(), createURI("a/b/c"), LAST_MODIFIED_DATE.asNode(),
-                createLiteral(date));
+        mem.add(new Triple(createURI("a/b/c"), LAST_MODIFIED_DATE.asNode(),
+                createLiteral(date)));
         assertEquals("Date should be available.", date, testObj.getVersionDate(mem, createURI("a/b/c")));
     }
 
     @Test
     public void testGetMissingVersionDate() {
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
         assertEquals("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")), "");
     }
 
     @Test
     public void shouldTryToExtractDublinCoreTitleFromNode() {
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("a/b/c"), DC_TITLE.asNode(),
-                createLiteral("abc"));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), DC_TITLE.asNode(),
+                createLiteral("abc")));
 
         assertEquals("abc", testObj.getObjectTitle(mem, createURI("a/b/c")));
     }
 
     @Test
     public void shouldUseTheObjectUriIfATitleIsNotAvailable() {
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
 
         assertEquals("a/b/c", testObj.getObjectTitle(mem, createURI("a/b/c")));
 
@@ -286,7 +273,7 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldUsetheBNodeIdIfItIsABNode() {
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
         final Node anon = createAnon();
         assertEquals(anon.getBlankNodeLabel(), testObj
                 .getObjectTitle(mem, anon));
@@ -294,7 +281,7 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldJustUseTheStringIfItIsALiteral() {
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
         final Node lit = createLiteral("xyz");
         assertEquals("\"xyz\"", testObj.getObjectTitle(mem, lit));
     }
@@ -304,11 +291,11 @@ public class ViewHelpersTest {
         final String serialKey = "jcr/xml";
         final Node formatRDF = createLiteral(REPOSITORY_NAMESPACE + serialKey);
         final Node subject = createLiteral("xyz");
-        final DatasetGraph mem = createMem();
+        final Graph mem = createDefaultModel().getGraph();
         final Property dcFormat = createProperty(DC_NAMESPACE + "format");
 
-        mem.add(createAnon(), formatRDF, RDFS_LABEL.asNode(), createLiteral(serialKey));
-        mem.add(createAnon(), subject, dcFormat.asNode(), formatRDF);
+        mem.add(new Triple(formatRDF, RDFS_LABEL.asNode(), createLiteral(serialKey)));
+        mem.add(new Triple(subject, dcFormat.asNode(), formatRDF));
 
         assertEquals("jcr/xml", testObj.getSerializationTitle(mem, subject));
     }
@@ -316,15 +303,15 @@ public class ViewHelpersTest {
     @Test
     public void shouldConvertRdfObjectsToStrings() {
 
-        final DatasetGraph mem = createMem();
-        mem.add(createAnon(), createURI("subject"), createURI("a/b/c"),
-                NodeFactory.createLiteral("abc"));
-        mem.add(createAnon(), createURI("subject"),
-                createURI("a-numeric-type"), createTypedLiteral(0).asNode());
-        mem.add(createAnon(), createURI("subject"),
-                createURI("an-empty-string"), createLiteral(""));
-        mem.add(createAnon(), createURI("subject"), createURI("a-uri"),
-                createURI("some-uri"));
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("subject"), createURI("a/b/c"),
+                NodeFactory.createLiteral("abc")));
+        mem.add(new Triple(createURI("subject"),
+                createURI("a-numeric-type"), createTypedLiteral(0).asNode()));
+        mem.add(new Triple(createURI("subject"),
+                createURI("an-empty-string"), createLiteral("")));
+        mem.add(new Triple( createURI("subject"), createURI("a-uri"),
+                createURI("some-uri")));
 
         assertEquals("abc", testObj.getObjectsAsString(mem,
                 createURI("subject"), createResource("a/b/c"), true));
@@ -375,21 +362,20 @@ public class ViewHelpersTest {
         model.add(a, propertyA, literalA);
         model.add(a, propertyA, literalB);
 
-        final Iterator<Quad> iterator =
-            DatasetFactory.create(model).asDatasetGraph().find();
+        final Iterator<Triple> iterator = model.getGraph().find(null, null, null);
 
-        final List<Quad> sortedTriples =
+        final List<Triple> sortedTriples =
             testObj.getSortedTriples(model, iterator);
 
-        sortedTriples.get(0).matches(ANY, a.asNode(), propertyA.asNode(),
+        sortedTriples.get(0).matches(a.asNode(), propertyA.asNode(),
                 literalA.asNode());
-        sortedTriples.get(1).matches(ANY, a.asNode(), propertyA.asNode(),
+        sortedTriples.get(1).matches(a.asNode(), propertyA.asNode(),
                 literalB.asNode());
-        sortedTriples.get(2).matches(ANY, a.asNode(), propertyB.asNode(),
+        sortedTriples.get(2).matches(a.asNode(), propertyB.asNode(),
                 literalA.asNode());
-        sortedTriples.get(3).matches(ANY, a.asNode(), propertyC.asNode(),
+        sortedTriples.get(3).matches(a.asNode(), propertyC.asNode(),
                 literalA.asNode());
-        sortedTriples.get(4).matches(ANY, resourceB.asNode(),
+        sortedTriples.get(4).matches(resourceB.asNode(),
                 propertyC.asNode(), literalA.asNode());
 
     }
