@@ -1026,7 +1026,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         verifyResource(model, nodeUri, rdfType, DC_NAMESPACE, "describable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
-        verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lockable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "simpleVersionable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "versionable");

@@ -307,12 +307,12 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String autoVersionedType = "[fedora:autoVersioned] mixin\n" +
                 "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated";
         final String autoVersionedResource = "[fedora:resource] > fedora:relations, mix:created, mix:lastModified, " +
-                "mix:lockable, mix:versionable, fedora:autoVersioned, dc:describable mixin\n" +
+                "mix:versionable, fedora:autoVersioned, dc:describable mixin\n" +
                 "- rdf:type (URI) multiple\n" +
                 "- * (undefined) multiple\n" +
                 "- * (undefined)";
         final String defaultResource = "[fedora:resource] > fedora:relations, mix:created, mix:lastModified, " +
-                "mix:lockable, mix:referenceable, dc:describable mixin\n" +
+                "mix:referenceable, dc:describable mixin\n" +
                 "- rdf:type (URI) multiple\n" +
                 "- * (undefined) multiple\n" +
                 "- * (undefined)";

@@ -435,17 +435,6 @@ public class ViewHelpers {
     }
 
     /**
-     * Retrieve the uri for the locks
-     */
-    public String getLockUrl(final Graph graph, final Node subject) {
-        final Iterator<Triple> it = graph.find(subject, RdfLexicon.HAS_LOCK.asNode(), ANY);
-        if (it.hasNext()) {
-            return it.next().getObject().getURI();
-        }
-        return "";
-    }
-
-    /**
      * Convert an RDF resource to an RDF node
      *
      * @param r
