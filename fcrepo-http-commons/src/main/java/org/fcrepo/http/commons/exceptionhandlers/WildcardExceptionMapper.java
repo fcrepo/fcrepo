@@ -20,7 +20,6 @@ import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.lock.LockException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -46,11 +45,6 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(final Exception e) {
-
-        if (e.getCause() instanceof LockException) {
-            return new LockExceptionMapper()
-                    .toResponse((LockException) e.getCause());
-        }
 
         if (e.getCause() instanceof TransactionMissingException) {
             return new TransactionMissingExceptionMapper()

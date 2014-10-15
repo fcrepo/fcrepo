@@ -49,7 +49,6 @@ import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -201,16 +200,6 @@ public class ViewHelpersTest {
                 testObj.isRdfResource(mem, createURI("a/b"), ns, type));
         assertFalse("Node is not a " + type + " node.",
                 testObj.isRdfResource(mem, createURI("a/b"), ns, "otherType"));
-    }
-
-    @Test
-    public void testGetLockUrl() {
-        final Node lockUrl = createURI("a/b/fcr:lock");
-        final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b"), RdfLexicon.HAS_LOCK.asNode(), lockUrl));
-
-        assertEquals("Wrong lock url returned!", lockUrl.getURI(),
-                testObj.getLockUrl(mem, createURI("a/b")));
     }
 
     @Test

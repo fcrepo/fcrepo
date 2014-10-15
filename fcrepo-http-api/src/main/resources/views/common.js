@@ -242,32 +242,6 @@ function deleteItem()
     return false;
 }
 
-function createLock()
-{
-    var uri = $('#main').attr('resource');
-    var isDeep = false;
-    if ($('#deep_id').prop('checked'))
-        isDeep = true;
-    $.ajax({
-    	type: "POST",
-    	url: uri + "/fcr:lock?deep=" + isDeep,
-    	success: function() {
-    		$('#div_create_lock').hide();
-    		$('#div_view_lock').show();
-        }
-    }).fail( ajaxErrorHandler);
-}
-
-function viewLock(lockUrl)
-{
-	$('#div_view_lock').hide();
-	if (!lockUrl || lockUrl.length === 0) {
-        var uri = $('#main').attr('resource');
-        lockUrl = uri + "/fcr:lock";
-    }
-	window.location.href = lockUrl;
-}
-
 function updateFile()
 {
     var update_file = document.getElementById("update_file").files[0];

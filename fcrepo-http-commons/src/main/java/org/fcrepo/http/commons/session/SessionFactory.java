@@ -31,7 +31,6 @@ import javax.ws.rs.ClientErrorException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.TransactionMissingException;
-import org.fcrepo.kernel.impl.LockReleasingSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
 import org.modeshape.jcr.api.ServletCredentials;
@@ -135,16 +134,7 @@ public class SessionFactory {
             throw new BadRequestException(e);
         }
 
-        try {
-            final String lockToken = servletRequest.getHeader("Lock-Token");
-            if (lockToken != null) {
-                session.getWorkspace().getLockManager().addLockToken(lockToken);
-            }
-        } catch (final RepositoryException e) {
-            throw new BadRequestException(e);
-        }
-
-        return LockReleasingSession.newInstance(session);
+        return session;
     }
 
     /**

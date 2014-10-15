@@ -21,7 +21,6 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_LOCK;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
@@ -35,7 +34,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraFixity;
-import org.fcrepo.http.api.FedoraLocks;
 import org.fcrepo.http.api.FedoraVersioning;
 import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
@@ -106,23 +104,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         final Map<String, String> pathMap =
                 singletonMap("path", resource.getPath().substring(1));
-
-        try {
-            // hasLock
-            if (resource.getNode().isLocked()) {
-                final String path = resource.getPath();
-                final Node lockHoldingNode
-                        = resource.getNode().getSession().getWorkspace()
-                        .getLockManager().getLock(path).getNode();
-                final Map<String, String> lockedNodePathMap =
-                        singletonMap("path", lockHoldingNode.getPath().substring(1));
-                model.add(s, HAS_LOCK, createResource(uriInfo
-                        .getBaseUriBuilder().path(FedoraLocks.class).buildFromMap(
-                                lockedNodePathMap, false).toASCIIString()));
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
 
         // fcr:versions
         if (resource.hasType(NodeType.MIX_VERSIONABLE)) {

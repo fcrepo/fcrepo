@@ -25,7 +25,6 @@ import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.BinaryService;
-import org.fcrepo.kernel.services.LockService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.RepositoryService;
@@ -81,12 +80,6 @@ public abstract class AbstractResource {
      */
     @Autowired
     protected RepositoryService repositoryService;
-
-    /**
-     * The fcrepo lock service
-     */
-    @Autowired
-    protected LockService lockService;
 
     @Inject
     @Optional

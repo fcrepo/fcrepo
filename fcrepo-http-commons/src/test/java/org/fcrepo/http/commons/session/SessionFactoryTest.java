@@ -18,13 +18,11 @@ package org.fcrepo.http.commons.session;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.lang.reflect.Proxy;
 import java.security.Principal;
 
 import javax.jcr.Credentials;
@@ -33,7 +31,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
-import org.fcrepo.kernel.impl.LockReleasingSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
@@ -125,22 +122,6 @@ public class SessionFactoryTest {
             assertTrue("TransactionMissionException expected",
                     rootCause instanceof TransactionMissingException);
         }
-    }
-
-    @Test
-    public void testGetAuthenticatedSessionWithTransaction()
-            throws RepositoryException {
-        final String fedoraUser = "fedoraUser";
-        when(mockRequest.getUserPrincipal()).thenReturn(mockUser);
-        when(mockUser.getName()).thenReturn(fedoraUser);
-        when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
-        when(mockTx.getSession()).thenReturn(txSession);
-        when(mockTx.isAssociatedWithUser(eq(fedoraUser))).thenReturn(true);
-        when(mockTxService.getTransaction("123", fedoraUser))
-                .thenReturn(mockTx);
-        final Session session = testObj.getSession(mockRequest);
-        assertEquals(txSession, ((LockReleasingSession) Proxy.getInvocationHandler(session)).getWrappedSession());
-        verify(mockTx).getSession();
     }
 
     @Test

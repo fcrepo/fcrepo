@@ -110,7 +110,6 @@ WHERE { }
 
 #if ($writable == true)
 #set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
-#set ($isLockable = $helpers.isRdfResource($rdf, $topic, $rdfLexicon.MIX_NAMESPACE, "lockable"))
 
 #if($serializations.hasNext())
 <form id="action_import" action="fcr:import" method="POST">
@@ -161,23 +160,6 @@ WHERE { }
 </form>
 #end
 
-#if($isLockable)
-    #set ($lockUrl = $helpers.getLockUrl($rdf, $topic))
-    #set ($viewDisplay = "none")
-    #set ($createDisplay = "block")
-    #if ($lockUrl && $lockUrl.length() > 0)
-        #set ($viewDisplay = "block")
-        #set ($createDisplay = "none")
-    #end
-    <div class="actions collapse visible-lg visible-md" id="div_lock">
-        <h3>Locks</h3>
-        <div class="form-group" id="div_view_lock" style="display:$viewDisplay">
-            <div class="control-label">Item is Locked!</div>
-            <button type="button" id="btn_view_lock" class="btn btn-primary" onClick="javascript:viewLock('$lockUrl');">View Lock</button>
-        </div>
-        <hr />
-    </div>
-#end
 #end
 
 #if ($writable == true)
