@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.responses;
 
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
@@ -60,7 +61,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         StreamingOutput {
 
     private static final Logger LOGGER =
-        getLogger(RdfStreamStreamingOutput.class);
+            getLogger(RdfStreamStreamingOutput.class);
 
     private static ValueFactory vfactory = getInstance();
 
@@ -109,8 +110,8 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     }
 
     private void write(final Iterable<Statement> model,
-                       final OutputStream output,
-                       final RDFFormat dataFormat)
+            final OutputStream output,
+            final RDFFormat dataFormat)
             throws RDFHandlerException {
         final WriterConfig settings = new WriterConfig();
         final RDFWriter writer = Rio.createWriter(dataFormat, output);
@@ -125,13 +126,13 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private Iterable<Map.Entry<String, String>> excludeProtectedNamespaces(final Map<String, String> namespaces) {
         return Iterables.filter(namespaces.entrySet(), new Predicate<Map.Entry<String, String>>() {
+
             @Override
             public boolean apply(final Map.Entry<String, String> input) {
                 return !input.getKey().equals("xmlns");
             }
         });
     }
-
 
     private Iterable<Statement> asStatements() {
         return new Iterable<Statement>() {
@@ -144,52 +145,62 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     }
 
     protected static final Function<? super Triple, Statement> toStatement =
-        new Function<Triple, Statement>() {
+            new Function<Triple, Statement>() {
 
-            @Override
-            public Statement apply(final Triple t) {
-                final Resource subject = getResourceForSubject(t.getSubject());
-                final URI predicate = vfactory.createURI(t.getPredicate().getURI());
-                final Value object = getValueForObject(t.getObject());
-                return vfactory.createStatement(subject, predicate, object);
-            }
+                @Override
+                public Statement apply(final Triple t) {
+                    final Resource subject = getResourceForSubject(t.getSubject());
+                    final URI predicate = vfactory.createURI(t.getPredicate().getURI());
+                    final Value object = getValueForObject(t.getObject());
+                    return vfactory.createStatement(subject, predicate, object);
+                }
 
-        };
+            };
 
     private static Resource getResourceForSubject(final Node subjectNode) {
-        final Resource subject;
-
-        if (subjectNode.isBlank()) {
-            subject = vfactory.createBNode(subjectNode.getBlankNodeLabel());
-        } else {
-            subject = vfactory.createURI(subjectNode.getURI());
+        switch (RdfNodeCategory.getType(subjectNode)) {
+        case BLANK:
+            return vfactory.createBNode(subjectNode.getBlankNodeLabel());
+        default:
+            return vfactory.createURI(subjectNode.getURI());
         }
-
-        return subject;
     }
 
     protected static Value getValueForObject(final Node object) {
-        final Value value;
-        if (object.isURI()) {
-            value = vfactory.createURI(object.getURI());
-        } else if (object.isBlank()) {
-            value = vfactory.createBNode(object.getBlankNodeLabel());
-        } else if (object.isLiteral()) {
+        switch (RdfNodeCategory.getType(object)) {
+        case BLANK:
+            return vfactory.createBNode(object.getBlankNodeLabel());
+        case URI:
+            return vfactory.createURI(object.getURI());
+        case LITERAL:
             final Object literalValue = object.getLiteralValue();
 
             final String literalDatatypeURI = object.getLiteralDatatypeURI();
 
             if (literalDatatypeURI != null) {
                 final URI uri = vfactory.createURI(literalDatatypeURI);
-                value = vfactory.createLiteral(literalValue.toString(), uri);
-            } else {
-                value = createLiteral(vfactory, literalValue);
+                return vfactory.createLiteral(literalValue.toString(), uri);
             }
-        } else {
-            // should not happen..
-            throw new AssertionError("Unable to convert " + object + " to a value");
+            return createLiteral(vfactory, literalValue);
+        default:
+            throw new AssertionError("Received an RDF object that was neither blank nor literal nor labeled!");
         }
+    }
 
-        return value;
+    private static enum RdfNodeCategory {
+        LITERAL, BLANK, URI;
+
+        public static RdfNodeCategory getType(final Node n) {
+            if (n.isURI()) {
+                return URI;
+            }
+            if (n.isBlank()) {
+                return BLANK;
+            }
+            if (n.isLiteral()) {
+                return LITERAL;
+            }
+            throw new AssertionError("Received an RDF node that was neither blank nor literal nor labeled!");
+        }
     }
 }
