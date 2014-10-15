@@ -653,6 +653,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
 
     @Test
+    @Ignore
     public void testDeleteObject() throws RepositoryException {
         final String pid = getRandomPid();
         objectService.findOrCreateObject(session, "/" + pid);
@@ -666,6 +667,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    @Ignore
     public void testDeleteObjectWithInboundReferences() throws RepositoryException {
 
         final String pid = getRandomPid();

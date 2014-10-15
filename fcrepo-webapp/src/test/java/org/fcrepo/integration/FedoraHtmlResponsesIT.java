@@ -18,9 +18,12 @@ package org.fcrepo.integration;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -171,8 +174,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 
         final Page page2 = webClient.getPage(serverAddress + pid);
-        assertEquals("Didn't get a 404!", 404, page2.getWebResponse()
-                .getStatusCode());
+
+        assertThat("Object wasn't really deleted!",  page2.getWebResponse().getStatusCode(), anyOf(is(404), is(410)));
 
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }

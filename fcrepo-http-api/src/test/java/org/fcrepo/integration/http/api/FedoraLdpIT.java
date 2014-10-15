@@ -131,10 +131,13 @@ import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -408,8 +411,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + pid;
         assertEquals(204, getStatus(new HttpDelete(location)));
-        assertEquals("Object wasn't really deleted!", 404,
-                getStatus(new HttpGet(location)));
+
+        assertThat("Object wasn't really deleted!", getStatus(new HttpGet(location)), anyOf(is(404), is(410)));
     }
 
 
@@ -421,8 +424,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + pid + "/x";
         assertEquals(204, getStatus(new HttpDelete(location)));
-        assertEquals("Object wasn't really deleted!", 404,
-                getStatus(new HttpGet(location)));
+        assertThat("Object wasn't really deleted!", getStatus(new HttpGet(location)), anyOf(is(404), is(410)));
     }
 
 
@@ -900,7 +902,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet method_test_get =
                 new HttpGet(serverAddress +  pid + "/ds1");
-        assertEquals(404, getStatus(method_test_get));
+        assertThat("Object wasn't really deleted!", getStatus(method_test_get), anyOf(is(404), is(410)));
     }
 
     @Test
