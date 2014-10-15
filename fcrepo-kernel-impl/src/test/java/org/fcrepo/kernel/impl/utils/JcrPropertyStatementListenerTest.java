@@ -36,6 +36,7 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeManager;
 
 import com.hp.hpl.jena.vocabulary.RDF;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
@@ -71,7 +72,7 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private Session mockSession;
 
-    private IdentifierConverter<Resource,Node> mockSubjects;
+    private IdentifierConverter<Resource, FedoraResource> mockSubjects;
 
     @Mock
     private Statement mockStatement;
@@ -110,6 +111,8 @@ public class JcrPropertyStatementListenerTest {
 
     private Resource mockResource;
 
+    private FedoraResource resource;
+
 
     @Before
     public void setUp() throws RepositoryException {
@@ -117,7 +120,7 @@ public class JcrPropertyStatementListenerTest {
 
         mockSubjects = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj = new JcrPropertyStatementListener(mockSubjects, mockSession);
+        testObj = new JcrPropertyStatementListener(mockSubjects, mockJcrRdfTools);
         mockResource = mockSubjects.toDomain("/xyz");
         when(mockStatement.getSubject()).thenReturn(mockResource);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
@@ -132,7 +135,8 @@ public class JcrPropertyStatementListenerTest {
         when(mockIrrelevantStatement.getObject()).thenReturn(mockValue);
 
         when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
-        mockSubjects = new DefaultIdentifierTranslator(mockSession);
+        resource = mockSubjects.convert(mockResource);
+        when(mockJcrRdfTools.skolemize(mockSubjects, mockStatement)).thenReturn(mockStatement);
     }
 
     @Test
@@ -145,7 +149,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getNode("/some/path")).thenReturn(mockSubjectNode);
         testObj.addedStatement(mockStatement);
         verify(mockJcrRdfTools)
-                .addProperty(mockSubjectNode, mockStatement.getPredicate(), mockStatement.getObject(), mockNsMapping);
+                .addProperty(resource, mockStatement.getPredicate(), mockStatement.getObject(), mockNsMapping);
         LOGGER.debug("Finished testAddedStatement()");
     }
 
@@ -154,7 +158,7 @@ public class JcrPropertyStatementListenerTest {
             throws RepositoryException {
 
         doThrow(new RepositoryRuntimeException("")).when(mockJcrRdfTools)
-                .addProperty(mockSubjectNode, mockPredicate, mockValue, mockNsMapping);
+                .addProperty(resource, mockPredicate, mockValue, mockNsMapping);
 
         testObj.addedStatement(mockStatement);
     }
@@ -163,7 +167,7 @@ public class JcrPropertyStatementListenerTest {
     public void testRemovedStatement() throws RepositoryException {
         testObj.removedStatement(mockStatement);
         verify(mockJcrRdfTools)
-                .removeProperty(mockSubjectNode,
+                .removeProperty(resource,
                         mockStatement.getPredicate(),
                         mockStatement.getObject(),
                         mockNsMapping);
@@ -174,7 +178,7 @@ public class JcrPropertyStatementListenerTest {
             throws RepositoryException {
 
         doThrow(new RepositoryRuntimeException("")).when(mockJcrRdfTools)
-                .removeProperty(mockSubjectNode, mockPredicate, mockValue, mockNsMapping);
+                .removeProperty(resource, mockPredicate, mockValue, mockNsMapping);
 
         testObj.removedStatement(mockStatement);
     }
@@ -198,10 +202,11 @@ public class JcrPropertyStatementListenerTest {
         final Model model = ModelFactory.createDefaultModel();
         final Resource type = model.createResource(RESTAPI_NAMESPACE
                 + "object");
-        model.add(mockResource, RDF.type, type);
+        final Statement statement = model.createStatement(mockResource, RDF.type, type);
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        testObj.addedStatements(model);
-        verify(mockJcrRdfTools).addMixin(mockSubjectNode, type, mockNsMapping);
+        when(mockJcrRdfTools.skolemize(mockSubjects, statement)).thenReturn(statement);
+        testObj.addedStatement(statement);
+        verify(mockJcrRdfTools).addMixin(resource, type, mockNsMapping);
     }
 
     @Test
@@ -217,7 +222,7 @@ public class JcrPropertyStatementListenerTest {
         final Resource type = model.createResource(RESTAPI_NAMESPACE + "object");
         model.add(mockResource, RDF.type, type);
         testObj.removedStatements(model);
-        verify(mockJcrRdfTools).removeMixin(mockSubjectNode, type, mockNsMapping);
+        verify(mockJcrRdfTools).removeMixin(resource, type, mockNsMapping);
     }
 
     @Test
@@ -235,9 +240,12 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
                 .thenReturn("fedora");
         final Model model = createDefaultModel();
-        model.add(mockResource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
+        final Statement statement = model.createStatement(mockResource,
+                type,
+                model.createResource(RESTAPI_NAMESPACE + "object"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        testObj.addedStatements(model);
+        when(mockJcrRdfTools.skolemize(mockSubjects, statement)).thenReturn(statement);
+        testObj.addedStatement(statement);
         verify(mockSubjectNode, never()).addMixin("fedora:object");
     }
 

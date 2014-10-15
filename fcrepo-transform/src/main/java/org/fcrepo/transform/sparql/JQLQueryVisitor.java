@@ -60,6 +60,7 @@ import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.transform.exception.JQLParsingException;
@@ -91,6 +92,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Sets.difference;
 import static com.google.common.primitives.Ints.checkedCast;
@@ -144,7 +146,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private Map<String, Source> joins;
     private Map<String, String> joinTypes;
     private Map<String, JoinCondition> joinConditions;
-    private IdentifierConverter<Resource,javax.jcr.Node> subjects;
+    private IdentifierConverter<Resource,FedoraResource> subjects;
 
     /**
      * Create a new query
@@ -155,10 +157,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     public JQLQueryVisitor(final Session session,
                            final JcrRdfTools jcrTools,
                            final QueryManager queryManager,
-                           final IdentifierConverter<Resource, javax.jcr.Node> subjects) {
-        if (null == subjects) {
-            throw new IllegalArgumentException("IdentifierTranslator is null!");
-        }
+                           final IdentifierConverter<Resource, FedoraResource> subjects) {
+        checkNotNull(subjects);
 
         this.session = session;
         this.jcrTools = jcrTools;

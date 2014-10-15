@@ -16,9 +16,9 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import java.security.AccessControlException;
 
@@ -35,13 +35,13 @@ public class AclRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public AclRdfContext(final Node node,
-                         final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
-        super(node, graphSubjects);
+    public AclRdfContext(final FedoraResource resource,
+                         final IdentifierConverter<Resource, FedoraResource> graphSubjects) throws RepositoryException {
+        super(resource, graphSubjects);
 
         // include writable status
         concatWritable();
@@ -50,7 +50,7 @@ public class AclRdfContext extends NodeRdfContext {
     private void concatWritable() throws RepositoryException {
         boolean writable = false;
         try {
-            node().getSession().checkPermission( node().getPath(), "add_node,set_property,remove" );
+            resource().getNode().getSession().checkPermission( resource().getPath(), "add_node,set_property,remove" );
             writable = true;
         } catch ( AccessControlException ex ) {
             writable = false;

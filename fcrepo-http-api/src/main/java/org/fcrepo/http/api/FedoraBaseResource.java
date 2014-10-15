@@ -18,22 +18,17 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.DatastreamImpl;
-import org.fcrepo.kernel.impl.FedoraBinaryImpl;
-import org.fcrepo.kernel.impl.FedoraObjectImpl;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
 import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -44,13 +39,13 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
-    protected IdentifierConverter<Resource,Node> identifierTranslator;
+    protected IdentifierConverter<Resource, FedoraResource> identifierTranslator;
 
     protected abstract Session session();
 
-    protected IdentifierConverter<Resource,Node> translator() {
+    protected IdentifierConverter<Resource, FedoraResource> translator() {
         if (identifierTranslator == null) {
-            identifierTranslator = new UriAwareIdentifierConverter(session(),
+            identifierTranslator = new HttpResourceConverter(session(),
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
 
@@ -64,26 +59,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        final FedoraResource resource;
-        final boolean metadata = externalPath != null
-                && externalPath.endsWith(FCR_METADATA);
-
-        final Node node = translator().convert(translator().toDomain(externalPath));
-
-        if (DatastreamImpl.hasMixin(node)) {
-            final DatastreamImpl datastream = new DatastreamImpl(node);
-
-            if (metadata) {
-                resource = datastream;
-            } else {
-                resource = datastream.getBinary();
-            }
-        } else if (FedoraBinaryImpl.hasMixin(node)) {
-            resource = new FedoraBinaryImpl(node);
-        } else {
-            resource = new FedoraObjectImpl(node);
-        }
-        return resource;
+        return translator().convert(translator().toDomain(externalPath));
     }
 
 

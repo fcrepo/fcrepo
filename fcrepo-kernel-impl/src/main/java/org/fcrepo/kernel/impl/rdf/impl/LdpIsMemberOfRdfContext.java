@@ -17,10 +17,10 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 
-import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
@@ -39,23 +39,24 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public LdpIsMemberOfRdfContext(final Node node,
-                                   final IdentifierConverter<Resource, Node> graphSubjects) throws RepositoryException {
-        super(node, graphSubjects);
+    public LdpIsMemberOfRdfContext(final FedoraResource resource,
+                                   final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+            throws RepositoryException {
+        super(resource, graphSubjects);
 
-        if (!isRoot(node)) {
-            final Node container = getContainer(node);
+        if (!isRoot(resource)) {
+            final FedoraResource container = getContainer(resource);
 
             if (container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
                 final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
 
                 final Resource memberRelation = ResourceFactory.createResource(property.getString());
 
-                final Resource membershipResource = getMemberResource(graphSubjects, container);
+                final Resource membershipResource = getMemberResource(container);
 
                 if (membershipResource != null) {
                     concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
@@ -65,41 +66,39 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
     }
 
     /**
-     * Check if the node is the root resource (and therefore can't be within a container)
-     * @param node
+     * Check if the resource is the root resource (and therefore can't be within a container)
+     * @param resource
      * @return
      * @throws RepositoryException
      */
-    private boolean isRoot(final Node node) throws RepositoryException {
-        return node.getDepth() == 0;
+    private boolean isRoot(final FedoraResource resource) throws RepositoryException {
+        return resource.getNode().getDepth() == 0;
     }
 
     /**
-     * Get the LDP container for this node
-     * @param node
+     * Get the LDP container for this resource
+     * @param resource
      * @return
      * @throws RepositoryException
      */
-    private Node getContainer(final Node node) throws RepositoryException {
-        final Node parent;
+    private FedoraResource getContainer(final FedoraResource resource) throws RepositoryException {
+        final FedoraResource parent;
 
-        if (FedoraBinaryImpl.hasMixin(node)) {
-            parent = node.getParent().getParent();
+        if (resource instanceof FedoraBinary) {
+            parent = ((FedoraBinary) resource).getDescription().getParent();
         } else {
-            parent = node.getParent();
+            parent = resource.getParent();
         }
         return parent;
     }
 
     /**
      * Get the membership resource relation asserted by the container
-     * @param graphSubjects
      * @param parent
      * @return
      * @throws RepositoryException
      */
-    private Resource getMemberResource(final IdentifierConverter<Resource, Node> graphSubjects,
-                                      final Node parent) throws RepositoryException {
+    private Resource getMemberResource(final FedoraResource parent) throws RepositoryException {
         final Resource membershipResource;
 
         if (parent.hasProperty(LDP_MEMBER_RESOURCE)) {
@@ -107,12 +106,12 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
 
             final int type = memberResource.getType();
             if ( type == REFERENCE || type == WEAKREFERENCE || type == PATH) {
-                membershipResource = graphSubjects.reverse().convert(memberResource.getNode());
+                membershipResource = nodeConverter().convert(memberResource.getNode());
             } else {
                 membershipResource = ResourceFactory.createResource(memberResource.getString());
             }
         } else {
-            membershipResource = graphSubjects.reverse().convert(parent);
+            membershipResource = graphSubjects().reverse().convert(parent);
         }
 
         return membershipResource;

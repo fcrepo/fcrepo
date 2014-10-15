@@ -127,7 +127,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     private Node createGraphSubjectNode(final FedoraResource obj) {
-        return subjects.reverse().convert(obj.getNode()).asNode();
+        return subjects.reverse().convert(obj).asNode();
     }
 
     @Test
@@ -135,7 +135,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             objectService.findOrCreateObject(session, "/testNodeGraph");
 
-        final Node s = subjects.reverse().convert(object.getNode()).asNode();
+        final Node s = subjects.reverse().convert(object).asNode();
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
         final Node o = createLiteral("nt:folder");
         assertTrue(object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph().contains(s, p, o));
@@ -516,9 +516,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model = object.getTriples(subjects, ReferencesRdfContext.class).asModel();
 
         assertTrue(
-            model.contains(subjects.reverse().convert(subject.getNode()),
+            model.contains(subjects.reverse().convert(subject),
                               ResourceFactory.createProperty("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
-                              subjects.reverse().convert(object.getNode()))
+                              subjects.reverse().convert(object))
         );
     }
 
@@ -531,7 +531,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model = triples.asModel();
 
         final Resource resource = model.createResource();
-        final Resource subject = subjects.reverse().convert(object.getNode());
+        final Resource subject = subjects.reverse().convert(object);
         final Property predicate = model.createProperty("info:xyz");
         model.add(subject, predicate, resource);
         model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");

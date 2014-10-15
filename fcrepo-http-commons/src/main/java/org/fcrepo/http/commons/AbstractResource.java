@@ -16,12 +16,12 @@
 package org.fcrepo.http.commons;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.BinaryService;
@@ -98,7 +98,7 @@ public abstract class AbstractResource {
      * @param originalPath
      * @return String jcr path
      */
-    public static final String toPath(final IdentifierConverter<Resource, Node> translator,
+    public static final String toPath(final IdentifierConverter<Resource, FedoraResource> translator,
                                       final String originalPath) {
 
         final Resource resource = translator.toDomain(originalPath);

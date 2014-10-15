@@ -20,10 +20,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 import org.glassfish.jersey.uri.UriTemplate;
@@ -50,6 +51,7 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -62,9 +64,9 @@ import static org.springframework.web.context.ContextLoader.getCurrentWebApplica
  * @author cabeer
  * @since 10/5/14
  */
-public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,Node> {
+public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraResource> {
 
-    private static final Logger LOGGER = getLogger(UriAwareIdentifierConverter.class);
+    private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
 
     protected List<Converter<String, String>> translationChain;
 
@@ -81,8 +83,8 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
      * @param session
      * @param uriBuilder
      */
-    public UriAwareIdentifierConverter(final Session session,
-                                       final UriBuilder uriBuilder) {
+    public HttpResourceConverter(final Session session,
+                                 final UriBuilder uriBuilder) {
 
         this.session = session;
         this.uriBuilder = uriBuilder;
@@ -96,7 +98,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
     }
 
     @Override
-    protected Node doForward(final Resource resource) {
+    protected FedoraResource doForward(final Resource resource) {
         try {
             final HashMap<String, String> values = new HashMap<>();
 
@@ -108,10 +110,12 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
                 final boolean metadata = values.containsKey("path")
                         && values.get("path").endsWith("/" + FCR_METADATA);
 
-                if (!metadata && DatastreamImpl.hasMixin(node)) {
-                    return node.getNode(JCR_CONTENT);
+                final FedoraResource fedoraResource = nodeConverter.convert(node);
+
+                if (!metadata && fedoraResource instanceof Datastream) {
+                    return ((Datastream)fedoraResource).getBinary();
                 } else {
-                    return node;
+                    return fedoraResource;
                 }
             } else {
                 throw new IdentifierConversionException("Asked to translate a resource " + resource
@@ -123,9 +127,9 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
     }
 
     @Override
-    protected Resource doBackward(final Node node) {
+    protected Resource doBackward(final FedoraResource resource) {
         try {
-            return toDomain(doBackwardPathOnly(node));
+            return toDomain(doBackwardPathOnly(resource));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -290,10 +294,10 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
         }
     }
 
-    private String getPath(final Node node) throws RepositoryException {
-        if (node.isNodeType("nt:frozenNode")) {
+    private String getPath(final FedoraResource resource) throws RepositoryException {
+        if (resource.hasType("nt:frozenNode")) {
             try {
-                Node versionableFrozenNode = node;
+                Node versionableFrozenNode = resource.getNode();
                 Node versionableNode = session.getNodeByIdentifier(
                         versionableFrozenNode.getProperty("jcr:frozenUuid").getString());
                 String pathWithinVersionable = "";
@@ -316,7 +320,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
                 throw new RepositoryRuntimeException(e);
             }
         } else {
-            return node.getPath();
+            return resource.getPath();
         }
     }
 
@@ -329,16 +333,16 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
     }
 
     /**
-     * Get only the resource path to this node, before embedding it in a full URI
-     * @param node
+     * Get only the resource path to this resource, before embedding it in a full URI
+     * @param resource
      * @return
      * @throws RepositoryException
      */
-    private String doBackwardPathOnly(final Node node) throws RepositoryException {
-        String path = reverse.convert(getPath(node));
+    private String doBackwardPathOnly(final FedoraResource resource) throws RepositoryException {
+        String path = reverse.convert(getPath(resource));
         if (path != null) {
 
-            if (DatastreamImpl.hasMixin(node)) {
+            if (resource instanceof Datastream) {
                 path = path + "/" + FCR_METADATA;
             }
 
@@ -347,7 +351,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
             }
             return path;
         } else {
-            throw new RuntimeException("Unable to process reverse chain for node " + node);
+            throw new RuntimeException("Unable to process reverse chain for resource " + resource);
         }
     }
 
@@ -361,7 +365,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
             setTranslationChain(ImmutableList.copyOf(
                     Iterables.concat(Lists.newArrayList(
                                     transactionIdentifierConverter),
-                                    translationChain)));
+                            translationChain)));
         }
     }
 
@@ -382,7 +386,7 @@ public class UriAwareIdentifierConverter extends IdentifierConverter<Resource,No
             Lists.newArrayList(
                     (Converter<String, String>) new NamespaceConverter(),
                     (Converter<String, String>) new HashConverter()
-                    );
+            );
 
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();

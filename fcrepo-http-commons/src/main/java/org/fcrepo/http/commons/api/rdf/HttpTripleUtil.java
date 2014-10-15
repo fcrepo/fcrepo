@@ -19,7 +19,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
 
-import javax.jcr.Node;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -60,7 +59,7 @@ public class HttpTripleUtil implements ApplicationContextAware {
      */
     public void addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
             final FedoraResource resource, final UriInfo uriInfo,
-            final IdentifierConverter<Resource,Node> graphSubjects) {
+            final IdentifierConverter<Resource,FedoraResource> graphSubjects) {
 
         LOGGER.debug("Adding additional HTTP context triples to stream");
         for (final Map.Entry<String, UriAwareResourceModelFactory> e : getUriAwareTripleFactories()

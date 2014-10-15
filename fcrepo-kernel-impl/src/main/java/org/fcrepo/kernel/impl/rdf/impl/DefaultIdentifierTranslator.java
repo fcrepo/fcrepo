@@ -19,14 +19,15 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.impl.identifiers.NodeResourceConverter;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.util.List;
@@ -41,7 +42,10 @@ import java.util.List;
  * @author ajs6f
  * @since May 15, 2013
  */
-public class DefaultIdentifierTranslator extends IdentifierConverter<Resource,Node> {
+public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, FedoraResource> {
+
+
+    private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
 
     /**
      * Default namespace to use for node URIs
@@ -79,27 +83,23 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource,No
             );
 
     @Override
-    protected Node doForward(final Resource subject) {
+    protected FedoraResource doForward(final Resource subject) {
         try {
             if (!inDomain(subject)) {
                 throw new RepositoryRuntimeException("Subject " + subject + " is not in this repository");
             }
 
-            return session.getNode(asString(subject));
+            return nodeResourceConverter.convert(session.getNode(asString(subject)));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
     @Override
-    protected Resource doBackward(final Node node) {
-        try {
-            final String absPath = node.getPath();
+    protected Resource doBackward(final FedoraResource resource) {
+        final String absPath = resource.getPath();
 
-            return toDomain(absPath);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return toDomain(absPath);
     }
 
     @Override
@@ -135,4 +135,5 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource,No
             return absPath;
         }
     }
+
 }

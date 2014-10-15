@@ -22,7 +22,6 @@ import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import javax.jcr.Binary;
-import javax.jcr.Node;
 import java.io.InputStream;
 import java.net.URI;
 
@@ -91,7 +90,7 @@ public interface FedoraBinary extends FedoraResource {
      * @param graphSubjects
      * @return
      */
-    RdfStream getFixity(IdentifierConverter<Resource,Node> graphSubjects);
+    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> graphSubjects);
 
     /**
      * Get the fixity of this datastream in a given repository's binary store.
@@ -100,6 +99,6 @@ public interface FedoraBinary extends FedoraResource {
      * @param size the expected size of the binary
      * @return
      */
-    RdfStream getFixity(IdentifierConverter<Resource,Node> graphSubjects,
+    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> graphSubjects,
                         URI contentDigest, long size);
 }

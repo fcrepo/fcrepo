@@ -143,7 +143,7 @@ public class FedoraVersions extends ContentExposingResource {
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
         final RdfStream rdfStream = new RdfStream().session(session).topic(
-                translator().reverse().convert(resource().getNode()).asNode());
+                translator().reverse().convert(resource()).asNode());
         return getContent(prefer, rangeValue, rdfStream);
     }
 

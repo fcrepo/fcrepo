@@ -43,6 +43,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
@@ -85,7 +86,7 @@ public class NodePropertiesToolsTest {
     private Value previousValue;
 
     @Mock
-    private IdentifierConverter<Resource,Node> subjects;
+    private IdentifierConverter<Resource, FedoraResource> subjects;
 
     @Mock
     private Session mockSession;

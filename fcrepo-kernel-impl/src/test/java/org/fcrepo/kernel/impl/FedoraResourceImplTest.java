@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.fcrepo.kernel.impl;
+
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -23,6 +24,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -77,6 +79,9 @@ public class FedoraResourceImplTest {
 
     @Mock
     private Node mockRoot;
+
+    @Mock
+    private Node mockChild;
 
     @Mock
     private Session mockSession;
@@ -321,6 +326,40 @@ public class FedoraResourceImplTest {
         assertEquals(shaHex("some-path"
                 + testObj.getLastModifiedDate().getTime()), testObj
                 .getEtagValue());
+    }
+
+    @Test
+    public void testGetParent() throws RepositoryException {
+        when(mockNode.getParent()).thenReturn(mockRoot);
+        final FedoraResource actual = testObj.getParent();
+        assertEquals(new FedoraResourceImpl(mockRoot), actual);
+    }
+
+    @Test
+    public void testGetChild() throws RepositoryException {
+        when(mockNode.getNode("xyz")).thenReturn(mockChild);
+        final FedoraResource actual = testObj.getChild("xyz");
+        assertEquals(new FedoraResourceImpl(mockChild), actual);
+    }
+
+    @Test
+    public void testHasProperty() throws RepositoryException {
+        when(mockNode.hasProperty("xyz")).thenReturn(true);
+        final boolean actual = testObj.hasProperty("xyz");
+        assertTrue("Expected same value as Node#hasProperty", actual);
+    }
+
+    @Test
+    public void testGetProperty() throws RepositoryException {
+        when(mockNode.getProperty("xyz")).thenReturn(mockProp);
+        final Property actual = testObj.getProperty("xyz");
+        assertEquals(mockProp, actual);
+    }
+
+    @Test
+    public void testEquals() throws RepositoryException {
+        assertEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockNode));
+        assertNotEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockRoot));
     }
 
 }

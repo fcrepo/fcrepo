@@ -19,6 +19,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
@@ -37,16 +38,18 @@ public class HashRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public HashRdfContext(final Node node, final IdentifierConverter<Resource, Node> graphSubjects)
+    public HashRdfContext(final FedoraResource resource,
+                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
             throws RepositoryException {
-        super(node, graphSubjects);
+        super(resource, graphSubjects);
 
-        if (node().hasNode("#")) {
-            concat(Iterators.concat(Iterators.transform(new NodeIterator(node().getNode("#").getNodes()),
+        final Node node = resource().getNode();
+        if (node.hasNode("#")) {
+            concat(Iterators.concat(Iterators.transform(new NodeIterator(node.getNode("#").getNodes()),
                     new Function<Node, Iterator<Triple>>() {
                         @Override
                         public Iterator<Triple> apply(final Node input) {

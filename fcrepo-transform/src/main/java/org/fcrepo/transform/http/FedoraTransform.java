@@ -152,7 +152,7 @@ public class FedoraTransform extends ContentExposingResource {
             throws RepositoryException, IOException {
 
         final RdfStream rdfStream = getResourceTriples(prefer).session(session)
-                .topic(translator().reverse().convert(resource().getNode()).asNode());
+                .topic(translator().reverse().convert(resource()).asNode());
 
         return getNodeTypeTransform(resource().getNode(), program).apply(rdfStream);
 
@@ -182,7 +182,7 @@ public class FedoraTransform extends ContentExposingResource {
         }
 
         final RdfStream rdfStream = getResourceTriples(prefer).session(session)
-                .topic(translator().reverse().convert(resource().getNode()).asNode());
+                .topic(translator().reverse().convert(resource()).asNode());
 
         return transformationFactory.getTransform(contentType, requestBodyStream).apply(rdfStream);
 
