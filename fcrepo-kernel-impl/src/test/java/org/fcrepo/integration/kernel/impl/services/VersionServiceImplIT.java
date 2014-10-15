@@ -15,8 +15,6 @@
  */
 package org.fcrepo.integration.kernel.impl.services;
 
-import static java.util.Collections.singleton;
-
 import static org.junit.Assert.assertEquals;
 
 import org.fcrepo.integration.kernel.impl.AbstractIT;
@@ -26,8 +24,6 @@ import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.VersionService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
-
-import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.jcr.PathNotFoundException;
@@ -70,7 +66,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        versionService.createVersion(session, "/" + pid);
         session.save();
         assertEquals(2L, countVersions(session, resource));
     }
@@ -83,17 +79,17 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        final Collection<String> label = versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        final String label = versionService.createVersion(session, "/" + pid);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
         // create another version
-        versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        versionService.createVersion(session, "/" + pid);
         session.save();
         assertEquals(3L, countVersions(session, resource));
 
         // remove the old version and make sure there two versions again
-        versionService.removeVersion( session.getWorkspace(), "/" + pid, label.iterator().next() );
+        versionService.removeVersion( session, "/" + pid, label );
         session.save();
         assertEquals(2L, countVersions(session, resource));
     }
@@ -106,19 +102,19 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        final Collection<String> label = versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        final String label = versionService.createVersion(session, "/" + pid);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
         // create another version
-        versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        versionService.createVersion(session, "/" + pid);
         session.save();
         assertEquals(3L, countVersions(session, resource));
 
         // revert to the old version and make sure there two versions again
-        versionService.revertToVersion( session.getWorkspace(), "/" + pid, label.iterator().next() );
+        versionService.revertToVersion( session, "/" + pid, label );
         session.save();
-        assertEquals(label.iterator().next(), currentVersion(session,resource));
+        assertEquals(label, currentVersion(session,resource));
     }
 
     @Test( expected = PathNotFoundException.class )
@@ -129,12 +125,12 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        versionService.createVersion(session, "/" + pid);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
         // revert to an invalid version
-        versionService.revertToVersion( session.getWorkspace(), "/" + pid, "invalid-version-label" );
+        versionService.revertToVersion( session, "/" + pid, "invalid-version-label" );
         session.save();
     }
 
@@ -146,12 +142,12 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session.getWorkspace(), singleton("/" + pid));
+        versionService.createVersion(session, "/" + pid);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
         // revert to an invalid version
-        versionService.removeVersion( session.getWorkspace(), "/" + pid, "invalid-version-label" );
+        versionService.removeVersion( session, "/" + pid, "invalid-version-label" );
         session.save();
     }
 

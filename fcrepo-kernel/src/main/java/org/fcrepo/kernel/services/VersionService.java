@@ -15,12 +15,8 @@
  */
 package org.fcrepo.kernel.services;
 
-import java.util.Collection;
-
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Workspace;
 
 /**
  * @author bbpennel
@@ -29,76 +25,37 @@ import javax.jcr.Workspace;
 public interface VersionService extends Service {
 
     /**
-     * Notifies the version manager that the node at a given path was updated so
-     * that if automatic versioning is set for that node, a version checkpoint
-     * will be made. When a node object is available, use of
-     * {@link #nodeUpdated(javax.jcr.Node)} will save the overhead of a
-     * redundant node lookup.
-     *
-     * @param session
-     * @param absPath the absolute path to the node that was created or modified
-     * @throws RepositoryException
-     */
-    void nodeUpdated(Session session, String absPath)
-        throws RepositoryException;
-
-    /**
-     * Notifies the version manager that the given node was updated so that if
-     * automatic versioning is set for that node, a version checkpoint will be
-     * made.
-     *
-     * @param n the node that was updated
-     * @throws RepositoryException
-     */
-    void nodeUpdated(Node n) throws RepositoryException;
-
-    /**
      * Explicitly creates a version for the nodes at each path provided.
      *
-     * @param workspace the workspace in which the node resides
-     * @param paths absolute paths to the nodes within the workspace
+     * @param session the session in which the node resides
+     * @param absPath absolute paths to the node
      * @throws RepositoryException
      */
-    Collection<String> createVersion(Workspace workspace, Collection<String> paths) throws RepositoryException;
+    String createVersion(Session session, String absPath) throws RepositoryException;
 
     /**
      * Reverts the node to the version identified by the label.  This method
      * will throw a PathNotFoundException if no version with the given label is
      * found.
      *
-     * @param workspace the workspace in which the node resides
+     * @param session the session in which the node resides
      * @param absPath the path to the node whose version is to be reverted
      * @param label identifies the historic version
      * @throws RepositoryException
      */
-    void revertToVersion(Workspace workspace, String absPath, String label)
+    void revertToVersion(Session session, String absPath, String label)
         throws RepositoryException;
 
     /**
      * Remove a version of a node.  This method will throw a PathNotFoundException
      * if no version with the given label is found.
      *
-     * @param workspace the workspace in which the node resides
+     * @param session the session in which the node resides
      * @param absPath the path to the node whose version is to be removed
      * @param label identifies the historic version by label or id
      * @throws RepositoryException
      */
-    void removeVersion(Workspace workspace, String absPath, String label)
+    void removeVersion(Session session, String absPath, String label)
         throws RepositoryException;
 
-    /**
-     * Creates a version checkpoint for the given node if versioning is enabled
-     * for that node type. When versioning is enabled this is the equivalent of
-     * VersionManager#checkpoint(node.getPath()), except that it is aware of
-     * TxSessions and queues these operations accordingly.
-     *
-     * @param node the node for whom a new version is to be minted
-     * @throws RepositoryException
-     */
-    void checkpoint(Node node) throws RepositoryException;
-
-    /**
-     * @param txService the txService to set
-     */
-    void setTxService(final TransactionService txService);
 }

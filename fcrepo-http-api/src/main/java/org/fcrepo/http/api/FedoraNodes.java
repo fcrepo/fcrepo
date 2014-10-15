@@ -125,7 +125,6 @@ public class FedoraNodes extends ContentExposingResource {
             nodeService.copyObject(session, source, destination);
 
             session.save();
-            versionService.nodeUpdated(session, destination);
 
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
@@ -177,7 +176,6 @@ public class FedoraNodes extends ContentExposingResource {
 
             nodeService.moveObject(session, resource().getPath(), destination);
             session.save();
-            versionService.nodeUpdated(session, destination);
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
             final Throwable cause = e.getCause();

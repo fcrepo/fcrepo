@@ -35,7 +35,6 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -134,9 +133,6 @@ public class FedoraLdpTest {
     @Mock
     private BinaryService mockBinaryService;
 
-    @Mock
-    private VersionService mockVersionService;
-
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -157,7 +153,6 @@ public class FedoraLdpTest {
         setField(testObj, "nodeService", mockNodeService);
         setField(testObj, "objectService", mockObjectService);
         setField(testObj, "binaryService", mockBinaryService);
-        setField(testObj, "versionService", mockVersionService);
 
         when(mockObject.getNode()).thenReturn(mockObjectNode);
         when(mockObject.getEtagValue()).thenReturn("");
@@ -535,7 +530,6 @@ public class FedoraLdpTest {
         final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockVersionService).nodeUpdated(mockObjectNode);
     }
 
     @Test
@@ -551,7 +545,6 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c ."), null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockVersionService).nodeUpdated(mockObjectNode);
         verify(mockObject).replaceProperties(eq(identifierConverter), any(Model.class), any(RdfStream.class));
     }
 
@@ -567,7 +560,6 @@ public class FedoraLdpTest {
                 toInputStream("xyz"), null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockVersionService).nodeUpdated(mockBinaryNode);
     }
 
     @Test
@@ -585,7 +577,6 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c ."), null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockVersionService).nodeUpdated(mockObject.getNode());
         verify(mockObject).replaceProperties(eq(identifierConverter), any(Model.class), any(RdfStream.class));
     }
 
@@ -595,7 +586,6 @@ public class FedoraLdpTest {
         final FedoraResource mockObject = setResource(FedoraObject.class);
 
         testObj.updateSparql(toInputStream("xyz"));
-        verify(mockVersionService).nodeUpdated(mockObject.getNode());
     }
 
     @Test
@@ -606,8 +596,6 @@ public class FedoraLdpTest {
         when(mockObject.getContentNode()).thenReturn(mockBinaryNode);
 
         testObj.updateSparql(toInputStream("xyz"));
-        verify(mockVersionService).nodeUpdated(mockObject.getNode());
-        verify(mockVersionService).nodeUpdated(mockObject.getContentNode());
     }
 
     @Test(expected = BadRequestException.class)

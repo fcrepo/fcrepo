@@ -37,9 +37,7 @@ import org.fcrepo.kernel.impl.TransactionImpl;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
-import org.fcrepo.kernel.services.VersionService;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -60,9 +58,6 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * A key for looking up the transaction id in a session key-value pair
      */
     static final String FCREPO4_TX_ID = "fcrepo4.tx.id";
-
-    @Autowired
-    private VersionService versionService;
 
     /**
      * TODO since transactions have to be available on all nodes, they have to
@@ -223,7 +218,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
             throw new TransactionMissingException("Transaction with id " + txid +
                     " is not available");
         }
-        tx.commit(versionService);
+        tx.commit();
         return tx;
     }
 
@@ -242,14 +237,6 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
         }
         tx.rollback();
         return tx;
-    }
-
-    /**
-     * @param versionService the versionService to set
-     */
-    @Override
-    public void setVersionService(final VersionService versionService) {
-        this.versionService = versionService;
     }
 
 }

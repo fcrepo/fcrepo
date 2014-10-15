@@ -18,8 +18,6 @@ package org.fcrepo.http.api;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -28,13 +26,10 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.util.Collection;
-
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -47,7 +42,6 @@ import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.VersionService;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 
 /**
@@ -104,21 +98,10 @@ public class FedoraVersionsTest {
     }
 
     @Test
-    public void testAddVersionLabel() throws RepositoryException {
-        doReturn(mockResource).when(testObj).unversionedResource();
-
-        final Response response = testObj.addVersion();
-        verify(mockResource).addVersionLabel(anyString());
-        verify(mockVersions).createVersion(any(Workspace.class),
-                Matchers.<Collection<String>>any());
-        assertNotNull(response);
-    }
-
-    @Test
     public void testRevertToVersion() throws RepositoryException {
         doReturn(mockResource).when(testObj).unversionedResource();
         final Response response = testObj.revertToVersion();
-        verify(mockVersions).revertToVersion(testObj.session.getWorkspace(), path, versionLabel);
+        verify(mockVersions).revertToVersion(mockSession, path, versionLabel);
         assertNotNull(response);
     }
 
@@ -132,7 +115,7 @@ public class FedoraVersionsTest {
     public void testRemoveVersion() throws RepositoryException {
         doReturn(mockResource).when(testObj).unversionedResource();
         final Response response = testObj.removeVersion();
-        verify(mockVersions).removeVersion(testObj.session.getWorkspace(), path, versionLabel);
+        verify(mockVersions).removeVersion(mockSession, path, versionLabel);
         assertNotNull(response);
     }
 

@@ -61,6 +61,8 @@ public interface FedoraJcrTypes {
 
     String JCR_MIXIN_TYPES = "jcr:mixinTypes";
 
+    String VERSIONABLE = "mix:versionable";
+
     String LDP_HAS_MEMBER_RELATION = "ldp:hasMemberRelation";
     String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
     String LDP_MEMBER_RESOURCE = "ldp:membershipResource";

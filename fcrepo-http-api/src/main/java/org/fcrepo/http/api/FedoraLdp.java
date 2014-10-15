@@ -261,7 +261,6 @@ public class FedoraLdp extends ContentExposingResource {
 
         try {
             session.save();
-            versionService.nodeUpdated(resource.getNode());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -304,11 +303,6 @@ public class FedoraLdp extends ContentExposingResource {
 
             try {
                 session.save();
-                versionService.nodeUpdated(resource().getNode());
-
-                if (resource() instanceof Datastream) {
-                    versionService.nodeUpdated(((Datastream) resource()).getContentNode());
-                }
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
@@ -390,7 +384,6 @@ public class FedoraLdp extends ContentExposingResource {
 
         try {
             session.save();
-            versionService.nodeUpdated(result.getNode());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
