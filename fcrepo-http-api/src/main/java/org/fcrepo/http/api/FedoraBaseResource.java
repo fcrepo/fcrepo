@@ -44,6 +44,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
+    /* global flag for baseURL status to avoid re-checking/re-setting */
+    private static boolean baseURLSet = false;
+
     protected IdentifierConverter<Resource,Node> identifierTranslator;
 
     protected abstract Session session();
@@ -91,12 +94,14 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * Set the baseURL for JMS events.
      **/
     protected void setUpJMSBaseURIs(final UriInfo uriInfo) {
+        if ( baseURLSet ) { return; }
         try {
             final URI baseURL = uriInfo.getBaseUri();
             LOGGER.debug("setting baseURL = " + baseURL.toString());
             final ObservationManager obs = session().getWorkspace().getObservationManager();
             final String json = "{\"baseURL\":\"" + baseURL.toString() + "\"}";
             obs.setUserData(json);
+            baseURLSet = true;
         } catch ( Exception ex ) {
             LOGGER.warn("Error setting baseURL", ex);
         }
