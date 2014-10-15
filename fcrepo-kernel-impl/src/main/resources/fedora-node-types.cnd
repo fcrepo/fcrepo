@@ -124,3 +124,5 @@
   - fedora:digest (URI) COPY
 
 [fedora:blanknode] > mix:referenceable mixin
+
+[fedora:pairtree] mixin
