@@ -54,7 +54,7 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
         LOGGER.trace("Executing findOrCreateObject() with path: {}", path);
 
         try {
-            final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, NT_FOLDER);
+            final Node node = findOrCreateNode(session, path, NT_FOLDER);
 
             if (node.isNew()) {
                 initializeNewObjectProperties(node);

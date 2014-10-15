@@ -55,6 +55,8 @@ public class BinaryServiceImplTest {
         testObj = new BinaryServiceImpl();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockNode);
+        when(mockDsNode.getParent()).thenReturn(mockRoot);
+        when(mockRoot.isNew()).thenReturn(false);
     }
 
     @Test

@@ -31,6 +31,8 @@ public interface FedoraJcrTypes {
 
     String FEDORA_BINARY = "fedora:binary";
 
+    String FEDORA_PAIRTREE = "fedora:pairtree";
+
     String LDP_CONTAINER = "ldp:Container";
 
     String JCR_LASTMODIFIED = "jcr:lastModified";

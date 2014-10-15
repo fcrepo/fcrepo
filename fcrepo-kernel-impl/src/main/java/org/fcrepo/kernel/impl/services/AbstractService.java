@@ -18,6 +18,13 @@ package org.fcrepo.kernel.impl.services;
 import org.fcrepo.kernel.services.Service;
 import org.modeshape.jcr.api.JcrTools;
 
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+
 
 /**
  * @author bbpennel
@@ -25,4 +32,51 @@ import org.modeshape.jcr.api.JcrTools;
  */
 public abstract class AbstractService implements Service {
     protected final static JcrTools jcrTools = new JcrTools();
+
+    protected Node findOrCreateNode(final Session session,
+                                    final String path,
+                                    final String finalNodeType) throws RepositoryException {
+
+        final Node preexistingNode = getClosestPreexistingNode(session, path);
+
+        final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, finalNodeType);
+
+        if (node.isNew()) {
+            tagHierarchyWithPairtreeMixin(preexistingNode, node);
+        }
+
+        return node;
+    }
+
+    private void tagHierarchyWithPairtreeMixin(final Node baseNode,
+                                               final Node createdNode) throws RepositoryException {
+        Node parent = createdNode.getParent();
+
+        while (parent.isNew() && !parent.equals(baseNode)) {
+            parent.addMixin(FEDORA_PAIRTREE);
+            parent = parent.getParent();
+        }
+    }
+
+    private Node getClosestPreexistingNode(final Session session,
+                                           final String path) throws RepositoryException {
+        final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
+
+        Node node = session.getRootNode();
+
+        final int len = pathSegments.length;
+        for (int i = 0; i != len; ++i) {
+            final String pathSegment = pathSegments[i];
+
+            if (node.hasNode(pathSegment)) {
+                // Find the existing node ...
+                node = node.getNode(pathSegment);
+            } else {
+                return node;
+            }
+
+        }
+
+        return node;
+    }
 }

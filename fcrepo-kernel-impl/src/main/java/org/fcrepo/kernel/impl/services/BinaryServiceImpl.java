@@ -32,7 +32,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -55,7 +54,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
     @Override
     public FedoraBinary findOrCreateBinary(final Session session, final String path) {
         try {
-            final Node dsNode = jcrTools.findOrCreateNode(session, path, NT_FOLDER, NT_FILE);
+            final Node dsNode = findOrCreateNode(session, path, NT_FILE);
 
             if (dsNode.isNew()) {
                 initializeNewDatastreamProperties(dsNode);
