@@ -20,24 +20,21 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.DatastreamImpl;
-import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
 
 import static com.google.common.base.Predicates.not;
-import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -51,16 +48,17 @@ public class ChildrenRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public ChildrenRdfContext(final Node node,
-                              final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
-        super(node, graphSubjects);
+    public ChildrenRdfContext(final FedoraResource resource,
+                              final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+            throws RepositoryException {
+        super(resource, graphSubjects);
 
-        if (node.hasNodes()) {
-            LOGGER.trace("Found children of this node.");
+        if (resource.getNode().hasNodes()) {
+            LOGGER.trace("Found children of this resource.");
             concat(childrenContext());
         }
     }
@@ -68,26 +66,22 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
     private Iterator<Triple> childrenContext() throws RepositoryException {
 
-        final Iterator<javax.jcr.Node> niceChildren =
-                Iterators.filter(new NodeIterator(node().getNodes()), not(nastyChildren));
+        final Iterator<FedoraResource> niceChildren =
+                Iterators.filter(resource().getChildren(), not(nastyChildren));
 
         return Iterators.concat(Iterators.transform(niceChildren, child2triples()));
     }
 
-    private Function<Node, Iterator<Triple>> child2triples() {
-        return new Function<javax.jcr.Node, Iterator<Triple>>() {
+    private Function<FedoraResource, Iterator<Triple>> child2triples() {
+        return new Function<FedoraResource, Iterator<Triple>>() {
 
             @Override
-            public Iterator<Triple> apply(final javax.jcr.Node child) {
+            public Iterator<Triple> apply(final FedoraResource child) {
 
                 final com.hp.hpl.jena.graph.Node childSubject;
 
-                if (DatastreamImpl.hasMixin(child)) {
-                    try {
-                        childSubject = graphSubjects().reverse().convert(child.getNode(JCR_CONTENT)).asNode();
-                    } catch (final RepositoryException e) {
-                        throw new RepositoryRuntimeException(e);
-                    }
+                if (child instanceof Datastream) {
+                    childSubject = graphSubjects().reverse().convert(((Datastream) child).getBinary()).asNode();
                 } else {
                     childSubject = graphSubjects().reverse().convert(child).asNode();
                 }
@@ -105,18 +99,13 @@ public class ChildrenRdfContext extends NodeRdfContext {
     /**
      * Children for whom we will not generate triples.
      */
-    private static Predicate<Node> nastyChildren =
-            new Predicate<javax.jcr.Node>() {
+    private static Predicate<FedoraResource> nastyChildren =
+            new Predicate<FedoraResource>() {
 
                 @Override
-                public boolean apply(final javax.jcr.Node n) {
+                public boolean apply(final FedoraResource n) {
                     LOGGER.trace("Testing child node {}", n);
-                    try {
-                        return (isInternalNode.apply(n) || n.getName().equals(
-                                JCR_CONTENT));
-                    } catch (final RepositoryException e) {
-                        throw propagate(e);
-                    }
+                    return (isInternalNode.apply(n.getNode()) || n instanceof FedoraBinary);
                 }
             };
 

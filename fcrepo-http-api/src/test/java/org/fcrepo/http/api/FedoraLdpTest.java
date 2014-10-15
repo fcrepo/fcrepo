@@ -25,7 +25,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
@@ -108,21 +108,12 @@ public class FedoraLdpTest {
     private FedoraObject mockObject;
 
     @Mock
-    private Node mockObjectNode;
-
-    @Mock
     private Datastream mockDatastream;
-
-    @Mock
-    private Node mockDatastreamNode;
 
     @Mock
     private FedoraBinary mockBinary;
 
-    @Mock
-    private Node mockBinaryNode;
-
-    private IdentifierConverter<Resource, Node> identifierConverter;
+    private IdentifierConverter<Resource, FedoraResource> identifierConverter;
 
     @Mock
     private NodeService mockNodeService;
@@ -143,7 +134,7 @@ public class FedoraLdpTest {
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
 
-        identifierConverter = new UriAwareIdentifierConverter(mockSession,
+        identifierConverter = new HttpResourceConverter(mockSession,
                 UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"));
 
         setField(testObj, "request", mockRequest);
@@ -154,18 +145,15 @@ public class FedoraLdpTest {
         setField(testObj, "objectService", mockObjectService);
         setField(testObj, "binaryService", mockBinaryService);
 
-        when(mockObject.getNode()).thenReturn(mockObjectNode);
         when(mockObject.getEtagValue()).thenReturn("");
-        when(mockObjectNode.getPath()).thenReturn(path);
+        when(mockObject.getPath()).thenReturn(path);
 
-        when(mockDatastream.getNode()).thenReturn(mockDatastreamNode);
         when(mockDatastream.getEtagValue()).thenReturn("");
-        when(mockDatastreamNode.getPath()).thenReturn(binaryDescriptionPath);
+        when(mockDatastream.getPath()).thenReturn(binaryDescriptionPath);
         when(mockDatastream.getBinary()).thenReturn(mockBinary);
 
-        when(mockBinary.getNode()).thenReturn(mockBinaryNode);
         when(mockBinary.getEtagValue()).thenReturn("");
-        when(mockBinaryNode.getPath()).thenReturn(binaryPath);
+        when(mockBinary.getPath()).thenReturn(binaryPath);
         when(mockBinary.getDescription()).thenReturn(mockDatastream);
     }
 
@@ -174,6 +162,7 @@ public class FedoraLdpTest {
 
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockResource.getPath()).thenReturn(path);
         when(mockNode.getPath()).thenReturn(path);
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getTriples(eq(identifierConverter), any(Class.class))).thenAnswer(new Answer<RdfStream>() {
@@ -224,7 +213,8 @@ public class FedoraLdpTest {
         assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath) + ">;rel=\"describedby\""));
+                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                                + ">;rel=\"describedby\""));
     }
 
     @Test
@@ -269,7 +259,8 @@ public class FedoraLdpTest {
         assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath) + ">;rel=\"describedby\""));
+                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                                + ">;rel=\"describedby\""));
     }
 
     @Test
@@ -470,7 +461,8 @@ public class FedoraLdpTest {
         assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath) + ">;rel=\"describedby\""));
+                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                                + ">;rel=\"describedby\""));
         assertTrue(IOUtils.toString((InputStream)actual.getEntity()).equals("xyz"));
     }
 
@@ -593,7 +585,6 @@ public class FedoraLdpTest {
 
         final Datastream mockObject = (Datastream)setResource(Datastream.class);
         doReturn(mockObject).when(testObj).resource();
-        when(mockObject.getContentNode()).thenReturn(mockBinaryNode);
 
         testObj.updateSparql(toInputStream("xyz"));
     }

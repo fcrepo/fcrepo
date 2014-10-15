@@ -32,6 +32,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -64,7 +65,7 @@ public class NodePropertiesTools {
      * @param newValue the JCR value to insert
      * @throws RepositoryException
      */
-    public void appendOrReplaceNodeProperty(final IdentifierConverter<Resource,Node> subjects,
+    public void appendOrReplaceNodeProperty(final IdentifierConverter<Resource,FedoraResource> subjects,
                                                    final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
@@ -126,7 +127,7 @@ public class NodePropertiesTools {
 
     }
 
-    private void addReferencePlaceholders(final IdentifierConverter<Resource,Node> subjects,
+    private void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> subjects,
                                           final Node node,
                                           final Property property,
                                           final Value newValue) throws RepositoryException {
@@ -138,7 +139,7 @@ public class NodePropertiesTools {
             }
 
             try {
-                final Node refNode = subjects.convert(resource);
+                final Node refNode = subjects.convert(resource).getNode();
 
                 if (isExternal.apply(refNode)) {
                     // we can't apply REFERENCE properties to external resources
@@ -160,7 +161,7 @@ public class NodePropertiesTools {
         }
     }
 
-    private void removeReferencePlaceholders(final IdentifierConverter<Resource,Node> subjects,
+    private void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> subjects,
                                              final Node node,
                                              final Property property,
                                              final Value newValue) throws RepositoryException {
@@ -173,7 +174,7 @@ public class NodePropertiesTools {
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
                     node.setProperty(referencePropertyName, (Value[])null);
                 } else {
-                    final Node refNode = subjects.convert(resource);
+                    final Node refNode = subjects.convert(resource).getNode();
                     final Value v = node.getSession().getValueFactory().createValue(refNode, true);
                     removeNodeProperty(subjects, node, referencePropertyName, v);
                 }
@@ -191,7 +192,7 @@ public class NodePropertiesTools {
      * @param valueToRemove the JCR value to remove
      * @throws RepositoryException
      */
-    public void removeNodeProperty(final IdentifierConverter<Resource, Node> subjects,
+    public void removeNodeProperty(final IdentifierConverter<Resource, FedoraResource> subjects,
                                           final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)

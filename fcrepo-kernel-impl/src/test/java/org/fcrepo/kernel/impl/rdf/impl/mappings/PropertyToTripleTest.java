@@ -27,6 +27,7 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -38,13 +39,13 @@ import java.util.Iterator;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
-import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
@@ -356,7 +357,7 @@ public class PropertyToTripleTest {
         when(mockSession.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
-        testSubject = mockGraphSubjects.reverse().convert(mockNode).asNode();
+        testSubject = nodeToResource(mockGraphSubjects).convert(mockNode).asNode();
     }
 
     private PropertyToTriple testPropertyToTriple;
@@ -364,7 +365,7 @@ public class PropertyToTripleTest {
     @Mock
     private Session mockSession;
 
-    private IdentifierConverter<Resource,Node> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
 
     @Mock
     private Property mockProperty;

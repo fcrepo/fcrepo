@@ -23,6 +23,7 @@ import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -44,6 +45,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -82,7 +84,7 @@ public class JcrRdfTools {
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
 
-    private final IdentifierConverter<Resource,Node> graphSubjects;
+    private final IdentifierConverter<Resource, FedoraResource> graphSubjects;
     private final ValueConverter valueConverter;
 
     private Session session;
@@ -102,7 +104,8 @@ public class JcrRdfTools {
      * @param graphSubjects
      * @param session
      */
-    public JcrRdfTools(final IdentifierConverter<Resource,Node> graphSubjects, final Session session) {
+    public JcrRdfTools(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+                       final Session session) {
         this.graphSubjects = graphSubjects;
         this.session = session;
         this.valueConverter = new ValueConverter(session, graphSubjects);
@@ -172,7 +175,7 @@ public class JcrRdfTools {
                 && (type == REFERENCE || type == WEAKREFERENCE)) {
             // reference to another node (by path)
             try {
-                final Node nodeFromGraphSubject = graphSubjects.convert(data.asResource());
+                final Node nodeFromGraphSubject = graphSubjects.convert(data.asResource()).getNode();
                 return valueFactory.createValue(nodeFromGraphSubject,
                         type == WEAKREFERENCE);
             } catch (final RepositoryRuntimeException e) {
@@ -192,14 +195,17 @@ public class JcrRdfTools {
 
     /**
      * Add a mixin to a node
-     * @param node
+     * @param resource
      * @param mixinResource
      * @param namespaces
      * @throws RepositoryException
      */
-    public void addMixin(final Node node, final Resource mixinResource, final Map<String,String> namespaces)
+    public void addMixin(final FedoraResource resource,
+                         final Resource mixinResource,
+                         final Map<String,String> namespaces)
             throws RepositoryException {
 
+        final Node node = resource.getNode();
         final Session session = node.getSession();
         final String mixinName = getPropertyNameFromPredicate(node, mixinResource, namespaces);
         if (!repositoryHasType(session, mixinName)) {
@@ -229,16 +235,18 @@ public class JcrRdfTools {
 
     /**
      * Add property to a node
-     * @param node
+     * @param resource
      * @param predicate
      * @param value
      * @param namespaces
      * @throws RepositoryException
      */
-    public void addProperty(final Node node,
+    public void addProperty(final FedoraResource resource,
                             final com.hp.hpl.jena.rdf.model.Property predicate,
                             final RDFNode value,
                             final Map<String,String> namespaces) throws RepositoryException {
+
+        final Node node = resource.getNode();
 
         if (isManagedPredicate.apply(predicate)) {
 
@@ -260,35 +268,37 @@ public class JcrRdfTools {
 
     /**
      * Remove a mixin from a node
-     * @param subjectNode
+     * @param resource
      * @param mixinResource
      * @param nsPrefixMap
      * @throws RepositoryException
      */
-    public void removeMixin(final Node subjectNode,
+    public void removeMixin(final FedoraResource resource,
                             final Resource mixinResource,
                             final Map<String, String> nsPrefixMap) throws RepositoryException {
 
-        final String mixinName = getPropertyNameFromPredicate(subjectNode, mixinResource, nsPrefixMap);
-        if (repositoryHasType(session, mixinName) && subjectNode.isNodeType(mixinName)) {
-            subjectNode.removeMixin(mixinName);
+        final Node node = resource.getNode();
+        final String mixinName = getPropertyNameFromPredicate(node, mixinResource, nsPrefixMap);
+        if (repositoryHasType(session, mixinName) && node.isNodeType(mixinName)) {
+            node.removeMixin(mixinName);
         }
 
     }
 
     /**
      * Remove a property from a node
-     * @param node
+     * @param resource
      * @param predicate
      * @param objectNode
      * @param nsPrefixMap
      * @throws RepositoryException
      */
-    public void removeProperty(final Node node,
+    public void removeProperty(final FedoraResource resource,
                                final com.hp.hpl.jena.rdf.model.Property predicate,
                                final RDFNode objectNode,
                                final Map<String, String> nsPrefixMap) throws RepositoryException {
 
+        final Node node = resource.getNode();
         final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
 
         if (isManagedPredicate.apply(predicate)) {
@@ -316,7 +326,7 @@ public class JcrRdfTools {
      * @return
      * @throws RepositoryException
      */
-    public Statement skolemize(final IdentifierConverter<Resource,Node> graphSubjects, final Statement t)
+    public Statement skolemize(final IdentifierConverter<Resource, FedoraResource> graphSubjects, final Statement t)
             throws RepositoryException {
 
         Statement skolemized = t;
@@ -351,14 +361,14 @@ public class JcrRdfTools {
         return skolemized;
     }
 
-    private Resource getSkolemizedResource(final IdentifierConverter<Resource, Node> graphSubjects,
+    private Resource getSkolemizedResource(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
                                            final RDFNode resource) throws RepositoryException {
         final AnonId id = resource.asResource().getId();
 
         if (!skolemizedBnodeMap.containsKey(id)) {
             final Node orCreateNode = jcrTools.findOrCreateNode(session, skolemizedId());
             orCreateNode.addMixin("fedora:blanknode");
-            final Resource skolemizedSubject = graphSubjects.reverse().convert(orCreateNode);
+            final Resource skolemizedSubject = nodeToResource(graphSubjects).convert(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }
 

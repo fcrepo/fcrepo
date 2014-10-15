@@ -20,11 +20,11 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -49,7 +49,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private final RdfStream stream;
 
-    private final IdentifierConverter<Resource,Node> idTranslator;
+    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private final Session session;
 
@@ -69,7 +69,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource,Node> graphSubjects,
+    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
             final Session session, final RdfStream stream) {
         this.idTranslator = graphSubjects;
         this.jcrRdfTools = new JcrRdfTools(graphSubjects, session);
@@ -114,7 +114,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             final Statement t = jcrRdfTools.skolemize(idTranslator, input);
 
             final Resource subject = t.getSubject();
-            final Node subjectNode = idTranslator().convert(subject);
+            final FedoraResource subjectNode = idTranslator().convert(subject);
 
             // if this is a user-managed RDF type assertion, update the node's
             // mixins. If it isn't, treat it as a "data" property.
@@ -138,10 +138,10 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     }
 
     protected abstract void operateOnProperty(final Statement t,
-        final Node subjectNode) throws RepositoryException;
+        final FedoraResource subjectNode) throws RepositoryException;
 
     protected abstract void operateOnMixin(final Resource mixinResource,
-        final Node subjectNode) throws RepositoryException;
+        final FedoraResource subjectNode) throws RepositoryException;
 
     @Override
     public ListenableFuture<Boolean> consumeAsync() {
@@ -170,7 +170,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * @return the idTranslator
      */
-    public IdentifierConverter<Resource,Node> idTranslator() {
+    public IdentifierConverter<Resource,FedoraResource> idTranslator() {
         return idTranslator;
     }
 

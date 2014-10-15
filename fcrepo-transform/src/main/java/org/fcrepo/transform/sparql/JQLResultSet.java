@@ -25,7 +25,9 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.slf4j.Logger;
 
 import javax.jcr.ItemNotFoundException;
@@ -41,17 +43,6 @@ import java.util.List;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterators.transform;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static javax.jcr.PropertyType.BOOLEAN;
-import static javax.jcr.PropertyType.DATE;
-import static javax.jcr.PropertyType.DECIMAL;
-import static javax.jcr.PropertyType.DOUBLE;
-import static javax.jcr.PropertyType.LONG;
-import static javax.jcr.PropertyType.PATH;
-import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.URI;
-import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -67,7 +58,7 @@ public class JQLResultSet implements ResultSet {
 
     private Session session;
 
-    private IdentifierConverter<Resource, javax.jcr.Node> subjects;
+    private IdentifierConverter<Resource, FedoraResource> subjects;
 
     private QueryResult queryResult;
 
@@ -80,7 +71,7 @@ public class JQLResultSet implements ResultSet {
      * @param queryResult
      * @throws RepositoryException
      */
-    public JQLResultSet(final Session session, final IdentifierConverter<Resource,javax.jcr.Node> subjects,
+    public JQLResultSet(final Session session, final IdentifierConverter<Resource,FedoraResource> subjects,
         final QueryResult queryResult) throws RepositoryException {
         this.session = session;
         this.subjects = subjects;
@@ -149,9 +140,11 @@ public class JQLResultSet implements ResultSet {
      * Maps a JCR Query's Row to a QuerySolution
      */
     private class JQLQuerySolution implements QuerySolution, Binding {
-        private IdentifierConverter<Resource, javax.jcr.Node> subjects;
+        private IdentifierConverter<Resource, FedoraResource> subjects;
         private Row row;
         private List<String> columns;
+        private final ValueConverter valueConverter;
+
 
         /**
          * Create a new query solution to translate a JCR Row to a SPARQL Binding
@@ -159,18 +152,19 @@ public class JQLResultSet implements ResultSet {
          * @param row
          * @param columns
          */
-        public JQLQuerySolution(final IdentifierConverter<Resource, javax.jcr.Node> subjects,
+        public JQLQuerySolution(final IdentifierConverter<Resource, FedoraResource> subjects,
                                 final Row row,
                                 final List<String> columns) {
             this.subjects = subjects;
             this.row = row;
             this.columns = columns;
+            valueConverter = new ValueConverter(session, subjects);
         }
 
         @Override
         public RDFNode get(final String varName) {
             try {
-                return getRDFNode(row.getValue(varName));
+                return valueConverter.convert(row.getValue(varName));
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
@@ -192,7 +186,7 @@ public class JQLResultSet implements ResultSet {
                 final Value value = row.getValue(varName);
                 return value != null;
             } catch (final ItemNotFoundException e) {
-                LOGGER.trace("Unabel to find var {} in result set", varName, e);
+                LOGGER.trace("Unable to find var {} in result set", varName, e);
                 return false;
             } catch (final RepositoryException e) {
                 throw propagate(e);
@@ -233,42 +227,6 @@ public class JQLResultSet implements ResultSet {
         @Override
         public boolean isEmpty() {
             return columns.isEmpty();
-        }
-
-        /**
-         * Copied from PropertyToTriple, but we need to return RDFNodes, and
-         * don't have Property nodes.
-         * @param v
-         * @return
-         */
-        private RDFNode getRDFNode(final Value v) {
-
-            try {
-                switch (v.getType()) {
-                    case BOOLEAN:
-                        return createTypedLiteral(v.getString());
-                    case DATE:
-                        return createTypedLiteral(v.getDate());
-                    case DECIMAL:
-                        return createTypedLiteral(v.getDecimal());
-                    case DOUBLE:
-                        return createTypedLiteral(v.getDouble());
-                    case LONG:
-                        return createTypedLiteral(v.getLong());
-                    case URI:
-                        return createResource(v.getString());
-                    case PATH:
-                        return subjects.reverse().convert(session.getNode(v.getString()));
-                    case REFERENCE:
-                    case WEAKREFERENCE:
-                        // cheat and just return the UUID syntax
-                        return subjects.reverse().convert(session.getNodeByIdentifier(v.getString()));
-                    default:
-                        return createTypedLiteral(v.getString());
-                }
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
         }
     }
 }

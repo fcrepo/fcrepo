@@ -77,7 +77,7 @@ public class TransformResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
-        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo,

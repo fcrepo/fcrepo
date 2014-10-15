@@ -36,6 +36,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -75,14 +76,14 @@ public class PersistingRdfStreamConsumerTest {
 
                 @Override
                 protected void operateOnProperty(final Statement s,
-                    final Node subjectNode) {
+                    final FedoraResource resource) {
                     rejectedStatements.remove(s);
                     acceptedStatements.add(s);
                 }
 
                 @Override
                 protected void operateOnMixin(final Resource mixinResource,
-                        final Node subjectNode) {
+                        final FedoraResource resource) {
                     rejectedMixins.remove(mixinResource);
                     acceptedMixins.add(mixinResource);
                 }
@@ -115,12 +116,12 @@ public class PersistingRdfStreamConsumerTest {
 
                     @Override
                     protected void operateOnProperty(final Statement s,
-                        final Node subjectNode) {
+                        final FedoraResource resource) {
                     }
 
                     @Override
                     protected void operateOnMixin(final Resource mixinResource,
-                            final Node subjectNode) {
+                            final FedoraResource resource) {
                     }
                 };
         // this should blow out when we try to retrieve the result
@@ -197,7 +198,7 @@ public class PersistingRdfStreamConsumerTest {
     @Mock
     private Node mockNode;
 
-    private IdentifierConverter<Resource,Node> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
 
     @Mock
     private Iterator<Triple> mockTriples;

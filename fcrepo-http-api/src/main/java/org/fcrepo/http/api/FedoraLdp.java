@@ -174,7 +174,7 @@ public class FedoraLdp extends ContentExposingResource {
         addResourceHttpHeaders(resource());
 
         final RdfStream rdfStream = new RdfStream().session(session)
-                    .topic(translator().reverse().convert(resource().getNode()).asNode());
+                    .topic(translator().reverse().convert(resource()).asNode());
 
         return getContent(prefer, rangeValue, rdfStream);
 
@@ -418,7 +418,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (getCurrentTransactionId(session) != null) {
             final String canonical = translator().reverse()
-                    .convert(resource.getNode())
+                    .convert(resource)
                     .toString()
                     .replaceFirst("/tx:[^/]+", "");
 

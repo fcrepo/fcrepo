@@ -46,7 +46,6 @@ import org.fcrepo.serialization.SerializerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriInfo;
@@ -66,12 +65,12 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-        final UriInfo uriInfo, final IdentifierConverter<Resource,Node> graphSubjects) {
+        final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> graphSubjects) {
 
         final Model model = createDefaultModel();
         try {
 
-            final Resource s = graphSubjects.reverse().convert(resource.getNode());
+            final Resource s = graphSubjects.reverse().convert(resource);
 
             if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
                 addRepositoryStatements(uriInfo, model, s);

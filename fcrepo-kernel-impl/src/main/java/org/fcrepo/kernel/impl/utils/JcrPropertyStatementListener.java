@@ -17,11 +17,11 @@ package org.fcrepo.kernel.impl.utils;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import com.google.common.base.Joiner;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -49,7 +49,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final JcrRdfTools jcrRdfTools;
 
-    private final IdentifierConverter<Resource,Node> subjects;
+    private final IdentifierConverter<Resource, FedoraResource> subjects;
 
     private final List<String> exceptions;
 
@@ -59,7 +59,8 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param subjects
      * @param session
      */
-    public JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects, final Session session) {
+    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> subjects,
+                                        final Session session) {
         this(subjects, new JcrRdfTools(subjects, session));
     }
 
@@ -68,7 +69,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      *
      * @param subjects
      */
-    public JcrPropertyStatementListener(final IdentifierConverter<Resource,Node> subjects,
+    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> subjects,
                                         final JcrRdfTools jcrRdfTools) {
         super();
         this.subjects = subjects;
@@ -95,7 +96,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             final Statement s = jcrRdfTools.skolemize(subjects, input);
 
-            final Node subjectNode = subjects.convert(s.getSubject());
+            final FedoraResource resource = subjects.convert(s.getSubject());
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -104,11 +105,11 @@ public class JcrPropertyStatementListener extends StatementListener {
             final RDFNode objectNode = s.getObject();
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                jcrRdfTools.addMixin(subjectNode, mixinResource, input.getModel().getNsPrefixMap());
+                jcrRdfTools.addMixin(resource, mixinResource, input.getModel().getNsPrefixMap());
                 return;
             }
 
-            jcrRdfTools.addProperty(subjectNode, property, objectNode, input.getModel().getNsPrefixMap());
+            jcrRdfTools.addProperty(resource, property, objectNode, input.getModel().getNsPrefixMap());
         } catch (final RepositoryException e) {
             exceptions.add(e.getMessage());
         }
@@ -132,7 +133,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 return;
             }
 
-            final Node subjectNode = subjects.convert(subject);
+            final FedoraResource resource = subjects.convert(subject);
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -143,14 +144,14 @@ public class JcrPropertyStatementListener extends StatementListener {
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
                 try {
-                    jcrRdfTools.removeMixin(subjectNode, mixinResource, s.getModel().getNsPrefixMap());
+                    jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());
                 } catch (final RepositoryException e) {
                     // TODO
                 }
                 return;
             }
 
-            jcrRdfTools.removeProperty(subjectNode, property, objectNode, s.getModel().getNsPrefixMap());
+            jcrRdfTools.removeProperty(resource, property, objectNode, s.getModel().getNsPrefixMap());
 
         } catch (final RepositoryException e) {
             exceptions.add(e.getMessage());

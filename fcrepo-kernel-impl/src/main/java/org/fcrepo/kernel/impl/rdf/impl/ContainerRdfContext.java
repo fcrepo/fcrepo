@@ -17,10 +17,10 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import java.util.Collection;
@@ -49,13 +49,14 @@ public class ContainerRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public ContainerRdfContext(final Node node,
-                               final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
-        super(node, graphSubjects);
+    public ContainerRdfContext(final FedoraResource resource,
+                               final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+            throws RepositoryException {
+        super(resource, graphSubjects);
 
         concat(containerContext());
         concat(membershipRelationContext());
@@ -66,11 +67,11 @@ public class ContainerRdfContext extends NodeRdfContext {
 
         final Set<Triple> triples1 = new HashSet<>();
 
-        if (!node().hasProperty(LDP_HAS_MEMBER_RELATION)) {
+        if (!resource().hasProperty(LDP_HAS_MEMBER_RELATION)) {
             triples1.add(create(subject(), HAS_MEMBER_RELATION.asNode(), LDP_MEMBER.asNode()));
         }
 
-        if (!node().hasProperty(LDP_MEMBER_RESOURCE)) {
+        if (!resource().hasProperty(LDP_MEMBER_RESOURCE)) {
             triples1.add(create(subject(), MEMBERSHIP_RESOURCE.asNode(), subject()));
         }
 
