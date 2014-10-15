@@ -20,8 +20,6 @@ import java.util.Date;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.services.VersionService;
-
 /**
  * @author bbpennel
  * @since Feb 18, 2014
@@ -65,21 +63,10 @@ public interface Transaction {
     Date getExpires();
 
     /**
-     * Adds a path at which a new version should be made upon successful
-     * completion of this transaction.  Subsequent calls with the same path
-     * have no effect, as the entire transaction is meant to be atomic and only
-     * one new version can result from it.
-     * @param absPath the object path to the resource to have a version
-     *                checkpoint made
-     */
-    void addPathToVersion(String absPath);
-
-    /**
      * "Commit" the transaction by saving the backing-session
-     * @param vService a versionService
      * @throws RepositoryException
      */
-    void commit(VersionService vService);
+    void commit();
 
     /**
      * End the session, and mark for reaping

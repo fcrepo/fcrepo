@@ -42,15 +42,14 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URISyntaxException;
-import java.util.Collection;
 
-import static java.util.Collections.singleton;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -145,14 +144,13 @@ public class FedoraVersioning extends FedoraBaseResource {
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
         final String path = toPath(translator(), externalPath);
-        final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
-                singleton(path));
+        final String versionIdentifier = versionService.createVersion(session, path);
 
-        if (slug != null) {
+        if (!isBlank(slug)) {
             resource().addVersionLabel(slug);
         }
 
-        final String version = (slug != null) ? slug : versions.iterator().next();
+        final String version = (slug != null) ? slug : versionIdentifier;
 
         return noContent().header("Location", uriInfo.getRequestUri() + "/" + version).build();
     }

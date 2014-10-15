@@ -24,14 +24,12 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.VERSIONING_POLICY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -253,92 +251,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void isAutoVersionedContentStillAccessible() throws Exception {
-        final String objName = getRandomUniquePid();
-        final String dsName = "some-datastream";
-        final String firstVersionText = "foo";
-        final String secondVersionText = "bar";
-
-        createObject(objName);
-        createDatastream(objName, dsName, firstVersionText);
-        enableVersioning(objName + "/" + dsName);
-        setAutoVersioning(serverAddress + objName + "/" + dsName + "/" + FCR_METADATA);
-        mutateDatastream(objName, dsName, secondVersionText);
-
-        final HttpGet retrieveMutatedDataStreamMethod =
-                new HttpGet(serverAddress +
-                        objName + "/" + dsName);
-        assertEquals("Datastream didn't accept mutation!", secondVersionText,
-                EntityUtils.toString(
-                        execute(
-                                retrieveMutatedDataStreamMethod).getEntity()));
-
-        final HttpGet getVersion =
-                new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        logger.debug("Retrieved version profile:");
-        final GraphStore results = getGraphStore(getVersion);
-        final Resource subject =
-                createResource(serverAddress + objName + "/" + dsName);
-        assertTrue("Didn't find a version triple!",
-                results.contains(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY));
-
-        verifyVersions(results, subject.asNode(), firstVersionText);
-    }
-
-    @Test
-    public void testAddMixinAutoVersioning() throws IOException {
-        postNodeTypeCNDSnippet("[fedora:autoVersioned] mixin\n" +
-                "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated");
-        final String objName = getRandomUniquePid();
-
-        createObject(objName);
-        addMixin(objName, "http://fedora.info/definitions/v4/rest-api#autoVersioned");
-
-        final GraphStore initialVersion = getContent(serverAddress + objName);
-        assertTrue("Should find auto-created versioning policy", initialVersion
-                .contains(ANY,
-                        createResource(serverAddress + objName).asNode(),
-                        VERSIONING_POLICY.asNode(),
-                        createLiteral("auto-version")));
-    }
-
-    @Test
-    public void testRepositoryWideAutoVersioning() throws IOException {
-        final String autoVersionedType = "[fedora:autoVersioned] mixin\n" +
-                "  - fedoraconfig:versioningPolicy (STRING) = \"auto-version\" autocreated";
-        final String autoVersionedResource = "[fedora:resource] > fedora:relations, mix:created, mix:lastModified, " +
-                "mix:versionable, fedora:autoVersioned, dc:describable mixin\n" +
-                "- rdf:type (URI) multiple\n" +
-                "- * (undefined) multiple\n" +
-                "- * (undefined)";
-        final String defaultResource = "[fedora:resource] > fedora:relations, mix:created, mix:lastModified, " +
-                "mix:referenceable, dc:describable mixin\n" +
-                "- rdf:type (URI) multiple\n" +
-                "- * (undefined) multiple\n" +
-                "- * (undefined)";
-
-        postNodeTypeCNDSnippet(autoVersionedType);
-        postNodeTypeCNDSnippet(autoVersionedResource);
-
-        final String objName = getRandomUniquePid();
-        final String dsName = "datastream";
-
-        createObject(objName);
-
-        final GraphStore initialVersion = getContent(serverAddress + objName);
-        assertTrue("Should find auto-created versioning policy",
-                initialVersion.contains(ANY,
-                                        createResource(serverAddress + objName).asNode(),
-                                        VERSIONING_POLICY.asNode(),
-                                        createLiteral("auto-version")));
-
-        testDatastreamContentUpdatesCreateNewVersions(objName, dsName);
-
-        // undo auto-versioning
-        postNodeTypeCNDSnippet(defaultResource);
-    }
-
-    @Test
     public void testInvalidVersionReversion() throws Exception {
         final String objId = getRandomUniquePid();
         createObject(objId);
@@ -465,24 +377,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testAutoVersionEventAddsVersionableMixin() throws Exception {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-
-        final GraphStore originalObjectProperties = getContent(serverAddress + pid);
-        assertFalse("Node must not have versionable mixin.",
-                originalObjectProperties.contains(ANY, createResource(serverAddress + pid).asNode(),
-                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
-
-        setAutoVersioning(serverAddress + pid);
-
-        final GraphStore updatedObjectProperties = getContent(serverAddress + pid);
-        assertTrue("Node is expected to have versionable mixin.",
-                updatedObjectProperties.contains(ANY, createResource(serverAddress + pid).asNode(),
-                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
-    }
-
-    @Test
     public void testIndexResponseContentTypes() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
@@ -540,41 +434,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     }
 
-    private void testDatastreamContentUpdatesCreateNewVersions(final String objName, final String dsName)
-            throws IOException {
-        final String firstVersionText = "foo";
-        final String secondVersionText = "bar";
-        createDatastream(objName, dsName, firstVersionText);
-        final GraphStore dsInitialVersion = getContent(serverAddress + objName + "/" + dsName + "/" + FCR_METADATA);
-        assertTrue("Should find auto-created versioning policy",
-                dsInitialVersion.contains(ANY,
-                                          createResource(serverAddress + objName + "/" + dsName + "/" + FCR_METADATA)
-                                                  .asNode(),
-                                          VERSIONING_POLICY.asNode(),
-                                          createLiteral("auto-version")));
-
-        mutateDatastream(objName, dsName, secondVersionText);
-        final HttpGet retrieveMutatedDataStreamMethod =
-                new HttpGet(serverAddress +
-                        objName + "/" + dsName);
-        assertEquals("Datastream didn't accept mutation!", secondVersionText,
-                EntityUtils.toString(
-                        execute(
-                                retrieveMutatedDataStreamMethod).getEntity()));
-
-        final HttpGet getVersion =
-                new HttpGet(serverAddress + objName + "/" + dsName + "/fcr:versions");
-        logger.debug("Retrieved version profile:");
-
-        final GraphStore results = getGraphStore(getVersion);
-        final Resource subject =
-                createResource(serverAddress + objName + "/" + dsName);
-        assertTrue("Didn't find a version triple!",
-                results.contains(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY));
-
-        verifyVersions(results, subject.asNode(), firstVersionText, secondVersionText);
-    }
-
     /**
      * Verifies that one version exists with each supplied value.  This method
      * makes assertions that each of the provided values is the content of a
@@ -596,22 +455,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         if (!remainingValues.isEmpty()) {
             fail(remainingValues.get(0) + " was not preserved in the version history!");
         }
-    }
-
-    public void postNodeTypeCNDSnippet(final String snippet) throws IOException {
-        final HttpPost httpPost = new HttpPost(serverAddress + "/fcr:nodetypes");
-        final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(new ByteArrayInputStream(snippet.getBytes()));
-        httpPost.setEntity(entity);
-        final HttpResponse response = execute(httpPost);
-
-        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
-    }
-
-    private static void setAutoVersioning(final String url) throws IOException {
-        patchLiteralProperty(url,
-                "http://fedora.info/definitions/v4/config#versioningPolicy",
-                "auto-version");
     }
 
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)
@@ -652,7 +495,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     public void postVersion(final String path, final String label) throws IOException {
         logger.debug("Posting version");
-        final HttpPost postVersion = postObjMethod(path + "/fcr:versions" + (label == null ? "" : "/" + label));
+        final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
+        postVersion.addHeader("Slug", label);
         final HttpResponse response = execute(postVersion);
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode() );
         final String locationHeader = response.getFirstHeader("Location").getValue();

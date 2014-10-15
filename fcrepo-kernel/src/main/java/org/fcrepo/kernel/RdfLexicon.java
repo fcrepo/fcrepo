@@ -256,8 +256,6 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "hasVersion");
     public static final Property HAS_VERSION_LABEL =
             createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
-    public static final Property VERSIONING_POLICY =
-            createProperty(FEDORA_CONFIG_NAMESPACE + "versioningPolicy");
 
     public static final Set<Property> versioningProperties = of(HAS_VERSION,
             HAS_VERSION_LABEL);

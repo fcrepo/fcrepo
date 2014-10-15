@@ -157,7 +157,7 @@ public class TransactionServiceImplTest {
     public void testCommitTx() {
         final Transaction tx = service.commit(IS_A_TX);
         assertNotNull(tx);
-        verify(mockTx).commit(null);
+        verify(mockTx).commit();
     }
 
     @Test(expected = TransactionMissingException.class)

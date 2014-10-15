@@ -30,15 +30,12 @@ import javax.jcr.Session;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Collection;
 
-import static java.util.Collections.singleton;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -103,27 +100,6 @@ public class FedoraVersions extends ContentExposingResource {
     }
 
     /**
-     * Create a new version checkpoint and tag it with the given label.  If
-     * that label already describes another version it will silently be
-     * reassigned to describe this version.
-     *
-     * @return response
-     * @throws RepositoryException
-     */
-    @POST
-    public Response addVersion() throws RepositoryException {
-        final Collection<String> versions = versionService.createVersion(session.getWorkspace(),
-                    singleton(unversionedResource().getPath()));
-        if (label != null) {
-            unversionedResource().addVersionLabel(label);
-        }
-
-        final String version = (label != null) ? label : versions.iterator().next();
-        return noContent().header("Location", translator().toDomain(
-                externalPath) + "/fcr:versions/" + version).build();
-    }
-
-    /**
      * Reverts the resource at the given path to the version specified by
      * the label.
      * @return response
@@ -133,7 +109,7 @@ public class FedoraVersions extends ContentExposingResource {
     public Response revertToVersion() throws RepositoryException {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
-        versionService.revertToVersion(session.getWorkspace(), unversionedResource().getPath(), label);
+        versionService.revertToVersion(session, unversionedResource().getPath(), label);
         return noContent().build();
     }
 
@@ -145,7 +121,7 @@ public class FedoraVersions extends ContentExposingResource {
     @DELETE
     public Response removeVersion() throws RepositoryException {
         LOGGER.info("Removing {} version {}.", path, label);
-        versionService.removeVersion(session.getWorkspace(), unversionedResource().getPath(), label);
+        versionService.removeVersion(session, unversionedResource().getPath(), label);
         return noContent().build();
     }
 
