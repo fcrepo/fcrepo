@@ -16,21 +16,29 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.kernel.utils.EventType.valueOf;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
+import static com.google.common.collect.Iterables.transform;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.fcrepo.kernel.observer.EventFilter;
 import org.slf4j.Logger;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -51,6 +59,12 @@ public class DefaultFilter implements EventFilter {
     private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
     private Session session;
+    private static final Function<NodeType, String> nodetype2string = new Function<NodeType, String>() {
+        @Override
+        public String apply(final NodeType input) {
+            return input.getName();
+        }
+    };;
 
     /**
      * Default constructor.
@@ -73,31 +87,28 @@ public class DefaultFilter implements EventFilter {
     @Override
     public boolean apply(final Event event) {
         try {
-            switch (valueOf(event.getType())) {
-                case NODE_REMOVED:
-                    final String path = event.getPath();
-                    // only propagate non-jcr node removals, a simple test, but
-                    // we cannot use the predicates we use below in the absence
-                    // of a node to test
-                    if (!path.startsWith("jcr:", path.lastIndexOf('/') + 1)) {
-                        return true;
-                    }
-                    break;
-                default:
-                    final String nodeId = event.getIdentifier();
-                    final Node n = session.getNodeByIdentifier(nodeId);
-                    if (isFedoraObject.apply(n) || isFedoraDatastream.apply(n)) {
-                        return true;
-                    }
-                    break;
-            }
+            final org.modeshape.jcr.api.observation.Event modeEvent = getJcr21Event(event);
+
+            final List<NodeType> nodeTypes = ImmutableList.copyOf(modeEvent.getMixinNodeTypes());
+            final Collection<String> mixinTypes = ImmutableSet.copyOf(transform(nodeTypes, nodetype2string));
+            return mixinTypes.contains(FEDORA_RESOURCE)
+                    || mixinTypes.contains(FEDORA_BINARY)
+                    || mixinTypes.contains(FEDORA_DATASTREAM)
+                    || mixinTypes.contains(FEDORA_OBJECT);
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-        return false;
+    }
+
+    private static org.modeshape.jcr.api.observation.Event getJcr21Event(final Event event) {
+        try {
+            return (org.modeshape.jcr.api.observation.Event) event;
+        } catch (final ClassCastException e) {
+            throw new ClassCastException(event + " is not a Modeshape Event");
+        }
     }
 
 }
