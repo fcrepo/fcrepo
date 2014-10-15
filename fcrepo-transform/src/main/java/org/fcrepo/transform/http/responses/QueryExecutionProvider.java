@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static org.fcrepo.transform.http.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -47,12 +48,14 @@ public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution>
 
     private static final Logger LOGGER = getLogger(QueryExecutionProvider.class);
 
+    private static final ResultSetStreamingOutput resultSetStreamingOutput = new ResultSetStreamingOutput();
+
     @Override
     public void writeTo(final QueryExecution qexec, final Class<?> type,
             final Type genericType, final Annotation[] annotations,
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) {
+            final OutputStream entityStream) throws IOException {
 
         LOGGER.debug("Writing a response for: {} with MIMEtype: {}", qexec,
                         mediaType);
@@ -61,8 +64,10 @@ public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution>
         httpHeaders.put("Content-type", singletonList((Object) mediaType.toString()));
 
         try {
-            final ResultSet results = qexec.execSelect();
-            new ResultSetStreamingOutput(results, mediaType).write(entityStream);
+            final ResultSet resultSet = qexec.execSelect();
+
+            resultSetStreamingOutput.writeTo(resultSet, type, genericType,
+                    annotations, mediaType, httpHeaders, entityStream);
         } finally {
             qexec.close();
         }

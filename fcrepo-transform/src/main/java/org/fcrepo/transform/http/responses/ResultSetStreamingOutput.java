@@ -46,52 +46,80 @@ import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
-import com.google.common.util.concurrent.AbstractFuture;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
+import org.apache.jena.riot.Lang;
 
 /**
  * Stream the results of a SPARQL Query
  *
  * @author cbeer
  */
-public class ResultSetStreamingOutput extends AbstractFuture<Void> implements StreamingOutput {
-    private final ResultSet results;
-    private final MediaType mediaType;
+@Provider
+@Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeSSE,
+        contentTypeTextPlain, contentTypeResultsJSON,
+        contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
+        contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
+public class ResultSetStreamingOutput implements MessageBodyWriter<ResultSet> {
 
-    /**
-     * Stream the results of a SPARQL Query with the given MediaType
-     * @param results
-     * @param mediaType
-     */
-    public ResultSetStreamingOutput(final ResultSet results, final MediaType mediaType) {
-        this.mediaType = mediaType;
-        this.results = results;
+
+
+    @Override
+    public boolean isWriteable(final Class<?> type,
+                               final Type genericType,
+                               final Annotation[] annotations,
+                               final MediaType mediaType) {
+        final ResultsFormat resultsFormat = getResultsFormat(mediaType);
+
+        if (resultsFormat == FMT_UNKNOWN) {
+            final Lang format = contentTypeToLang(mediaType.toString());
+
+            return format != null;
+        } else {
+            return true;
+        }
     }
 
-    /**
-     *
-     * @param entityStream
-     */
     @Override
-    public void write(final OutputStream entityStream) {
+    public long getSize(final ResultSet resultSet,
+                        final Class<?> type,
+                        final Type genericType,
+                        final Annotation[] annotations,
+                        final MediaType mediaType) {
+        return -1;
+    }
+
+    @Override
+    public void writeTo(final ResultSet resultSet,
+                        final Class<?> type,
+                        final Type genericType,
+                        final Annotation[] annotations,
+                        final MediaType mediaType,
+                        final MultivaluedMap<String, Object> httpHeaders,
+                        final OutputStream entityStream) throws IOException, WebApplicationException {
         final ResultsFormat resultsFormat = getResultsFormat(mediaType);
 
         if (resultsFormat == FMT_UNKNOWN) {
             final String format = contentTypeToLang(mediaType.toString()).getName().toUpperCase();
-            final Model model = toModel(results);
+            final Model model = toModel(resultSet);
             model.write(entityStream, format);
         } else {
-            output(entityStream, results, resultsFormat);
+            output(entityStream, resultSet, resultsFormat);
         }
-
     }
 
     /**
