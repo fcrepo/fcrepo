@@ -10,10 +10,10 @@ function addChild()
 
     var newURI = $('#main').attr('resource') + "/" + id;
 
+    var postURI = newURI;
+
     if ( mixin != '' ) {
-        var postURI = newURI + "?mixin=" + mixin;
-    } else {
-        var postURI = newURI;
+        postURI = postURI + "?mixin=" + mixin;
     }
 
     if (mixin == "fedora:datastream") {
@@ -24,8 +24,11 @@ function addChild()
             if (xhr.readyState == 4) {
                 if (xhr.status == 201) {
                     var loc = xhr.getResponseHeader('Location');
-
-                    if (loc != null) {
+                    var link = xhr.getResponseHeader('Link');
+                    if (link != null && link.match('rel="describedby"')) {
+                        var str = link.match(/<[^>]+>/)[0];
+                        window.location = str.slice(1, str.length - 1);
+                    } else if (loc != null) {
                         window.location = loc;
                     } else {
                         window.location.reload();
@@ -34,7 +37,7 @@ function addChild()
                     ajaxErrorHandler(xhr, "", "Error creating datastream");
                 }
             }
-        }
+        };
 
         if (id == "") {
             xhr.open( "POST", newURI );
