@@ -20,8 +20,10 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.impl.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -36,6 +38,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -84,6 +87,9 @@ public class FedoraResourceImplTest {
     private Node mockChild;
 
     @Mock
+    private Node mockContainer;
+
+    @Mock
     private Session mockSession;
 
     @Mock
@@ -130,7 +136,7 @@ public class FedoraResourceImplTest {
         when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate()
-                                                     .getTime());
+                .getTime());
     }
 
     @Test
@@ -329,10 +335,23 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetParent() throws RepositoryException {
-        when(mockNode.getParent()).thenReturn(mockRoot);
-        final FedoraResource actual = testObj.getParent();
-        assertEquals(new FedoraResourceImpl(mockRoot), actual);
+    public void testGetContainer() throws RepositoryException {
+        when(mockNode.getParent()).thenReturn(mockContainer);
+        when(mockNode.getDepth()).thenReturn(1);
+        final FedoraResource actual = testObj.getContainer();
+        assertEquals(new FedoraResourceImpl(mockContainer), actual);
+    }
+
+    @Test
+    public void testGetContainerForNestedResource() throws RepositoryException {
+        when(mockNode.getParent()).thenReturn(mockChild);
+        when(mockNode.getDepth()).thenReturn(3);
+        when(mockChild.getParent()).thenReturn(mockContainer);
+        when(mockChild.getDepth()).thenReturn(2);
+        when(mockChild.isNodeType(FEDORA_PAIRTREE)).thenReturn(true);
+        when(mockContainer.getDepth()).thenReturn(1);
+        final FedoraResource actual = testObj.getContainer();
+        assertEquals(new FedoraResourceImpl(mockContainer), actual);
     }
 
     @Test
@@ -340,6 +359,41 @@ public class FedoraResourceImplTest {
         when(mockNode.getNode("xyz")).thenReturn(mockChild);
         final FedoraResource actual = testObj.getChild("xyz");
         assertEquals(new FedoraResourceImpl(mockChild), actual);
+    }
+
+    @Test
+    public void testGetChildrenWithEmptyChildren() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator());
+        final Iterator<FedoraResource> children = testObj.getChildren();
+
+        assertFalse("Expected an empty iterator", children.hasNext());
+    }
+
+    @Test
+    public void testGetChildrenWithChildren() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.getName()).thenReturn("x");
+        final Iterator<FedoraResource> children = testObj.getChildren();
+
+        assertTrue("Expected an iterator with values", children.hasNext());
+        assertEquals("Expected to find the child", mockChild, children.next().getNode());
+    }
+
+    @Test
+    public void testGetChildrenExcludesModeSystem() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.isNodeType("mode:system")).thenReturn(true);
+        when(mockChild.getName()).thenReturn("x");
+        final Iterator<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty iterator", children.hasNext());
+    }
+
+    @Test
+    public void testGetChildrenExcludesJcrContent() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.getName()).thenReturn(JCR_CONTENT);
+        final Iterator<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty iterator", children.hasNext());
     }
 
     @Test

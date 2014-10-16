@@ -121,4 +121,5 @@ public class BinaryServiceImplIT extends AbstractIT {
         session.logout();
     }
 
+
 }

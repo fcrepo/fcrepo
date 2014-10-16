@@ -58,10 +58,10 @@ public interface FedoraResource {
     Iterator<FedoraResource> getChildren();
 
     /**
-     * Get the parent of this resource
+     * Get the container of this resource
      * @return
      */
-    FedoraResource getParent();
+    FedoraResource getContainer();
 
     /**
      * Get the child of this resource at the given path

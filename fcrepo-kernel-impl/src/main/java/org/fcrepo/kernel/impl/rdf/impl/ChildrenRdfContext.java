@@ -16,12 +16,10 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -31,10 +29,8 @@ import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
 
-import static com.google.common.base.Predicates.not;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -66,8 +62,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
     private Iterator<Triple> childrenContext() throws RepositoryException {
 
-        final Iterator<FedoraResource> niceChildren =
-                Iterators.filter(resource().getChildren(), not(nastyChildren));
+        final Iterator<FedoraResource> niceChildren = resource().getChildren();
 
         return Iterators.concat(Iterators.transform(niceChildren, child2triples()));
     }
@@ -95,18 +90,5 @@ public class ChildrenRdfContext extends NodeRdfContext {
             }
         };
     }
-
-    /**
-     * Children for whom we will not generate triples.
-     */
-    private static Predicate<FedoraResource> nastyChildren =
-            new Predicate<FedoraResource>() {
-
-                @Override
-                public boolean apply(final FedoraResource n) {
-                    LOGGER.trace("Testing child node {}", n);
-                    return (isInternalNode.apply(n.getNode()) || n instanceof FedoraBinary);
-                }
-            };
 
 }

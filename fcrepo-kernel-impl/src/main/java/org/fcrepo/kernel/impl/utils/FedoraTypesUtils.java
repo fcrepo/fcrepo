@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.jcr.PropertyType.REFERENCE;
@@ -139,9 +138,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         public boolean apply(final Node n) {
             checkNotNull(n, "null is neither internal nor not internal!");
             try {
-                final NodeType primaryNodeType = n.getPrimaryNodeType();
-                return primaryNodeType != null
-                        && primaryNodeType.isNodeType("mode:system");
+                return n.isNodeType("mode:system");
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }

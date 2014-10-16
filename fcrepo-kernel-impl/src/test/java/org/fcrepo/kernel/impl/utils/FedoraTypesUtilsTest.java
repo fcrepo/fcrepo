@@ -214,16 +214,16 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsInternalNode() throws RepositoryException {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.isNodeType("mode:system")).thenReturn(true);
+        when(mockNode.isNodeType("mode:system")).thenReturn(true);
         assertTrue("mode:system nodes should be treated as internal nodes!",
                 isInternalNode.apply(mockNode));
 
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.isNodeType("mode:system")).thenReturn(false);
+        when(mockNode.isNodeType("mode:system")).thenReturn(false);
         assertFalse("Nodes that are not mode:system types should not be "
                 + "treated as internal nodes!", isInternalNode.apply(mockNode));
 
-        when(mockNode.getPrimaryNodeType()).thenThrow(new RepositoryException());
+        when(mockNode.isNodeType("mode:system")).thenThrow(new RepositoryException());
         try {
             isInternalNode.apply(mockNode);
             fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
