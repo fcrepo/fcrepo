@@ -52,9 +52,6 @@ public class LdpContainerRdfContextTest {
     private FedoraResource mockResource;
 
     @Mock
-    private FedoraResource mockContainer;
-
-    @Mock
     private Node mockContainerNode;
 
     @Mock
@@ -82,7 +79,6 @@ public class LdpContainerRdfContextTest {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
         when(mockResource.getNode()).thenReturn(mockNode);
-        when(mockContainer.getNode()).thenReturn(mockContainerNode);
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
 
@@ -103,6 +99,7 @@ public class LdpContainerRdfContextTest {
 
         when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(new TestPropertyIterator(mockProperty));
         when(mockProperty.getParent()).thenReturn(mockContainerNode);
+        when(mockContainerNode.getNodes()).thenReturn(new TestNodeIterator());
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
         final Model model = testObj.asModel();
@@ -116,7 +113,6 @@ public class LdpContainerRdfContextTest {
 
         when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(new TestPropertyIterator(mockProperty));
         when(mockProperty.getParent()).thenReturn(mockContainerNode);
-        when(mockContainerNode.hasNodes()).thenReturn(true);
         when(mockContainerNode.getNodes()).thenReturn(new TestNodeIterator(mockChild));
         when(mockChild.getPath()).thenReturn("/b");
         testObj = new LdpContainerRdfContext(mockResource, subjects);
@@ -135,7 +131,6 @@ public class LdpContainerRdfContextTest {
 
         when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(new TestPropertyIterator(mockProperty));
         when(mockProperty.getParent()).thenReturn(mockContainerNode);
-        when(mockContainerNode.hasNodes()).thenReturn(true);
         when(mockContainerNode.getNodes()).thenReturn(new TestNodeIterator(mockChild));
         when(mockChild.getPath()).thenReturn("/b");
         final Property mockRelation = mock(Property.class);

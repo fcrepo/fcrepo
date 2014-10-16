@@ -110,25 +110,21 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             memberRelation = LDP_MEMBER.asNode();
         }
 
-        if (resource.getNode().hasNodes()) {
-            final Iterator<FedoraResource> memberNodes = resource.getChildren();
-            return Iterators.transform(memberNodes, new Function<FedoraResource, Triple>() {
+        final Iterator<FedoraResource> memberNodes = resource.getChildren();
+        return Iterators.transform(memberNodes, new Function<FedoraResource, Triple>() {
 
-                @Override
-                public Triple apply(final FedoraResource child) {
-                    final com.hp.hpl.jena.graph.Node childSubject;
-                    if (child instanceof Datastream) {
-                        childSubject = graphSubjects().reverse().convert(((Datastream) child).getBinary()).asNode();
-                    } else {
-                        childSubject = graphSubjects().reverse().convert(child).asNode();
-                    }
-                    return create(subject(), memberRelation, childSubject);
-
+            @Override
+            public Triple apply(final FedoraResource child) {
+                final com.hp.hpl.jena.graph.Node childSubject;
+                if (child instanceof Datastream) {
+                    childSubject = graphSubjects().reverse().convert(((Datastream) child).getBinary()).asNode();
+                } else {
+                    childSubject = graphSubjects().reverse().convert(child).asNode();
                 }
-            });
-        } else {
-            return Collections.emptyIterator();
-        }
+                return create(subject(), memberRelation, childSubject);
+
+            }
+        });
     }
 
 }

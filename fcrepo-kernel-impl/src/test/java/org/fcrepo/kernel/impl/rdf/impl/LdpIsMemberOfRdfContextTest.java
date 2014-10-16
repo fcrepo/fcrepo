@@ -88,7 +88,7 @@ public class LdpIsMemberOfRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
-        when(mockResource.getParent()).thenReturn(mockContainer);
+        when(mockResource.getContainer()).thenReturn(mockContainer);
         when(mockResource.getNode()).thenReturn(mockResourceNode);
         when(mockResourceNode.getDepth()).thenReturn(1);
 
@@ -101,9 +101,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
         when(mockBinary.getPath()).thenReturn("/a/jcr:content");
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
-        when(mockBinaryNode.getDepth()).thenReturn(3);
-        when(mockBinary.getDescription()).thenReturn(mockBinaryDescription);
-        when(mockBinaryDescription.getParent()).thenReturn(mockContainer);
+        when(mockBinary.getContainer()).thenReturn(mockContainer);
 
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
