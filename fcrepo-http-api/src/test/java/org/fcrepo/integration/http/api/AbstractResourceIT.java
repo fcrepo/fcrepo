@@ -22,7 +22,10 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
@@ -170,8 +173,7 @@ public abstract class AbstractResourceIT {
         }
     }
 
-
-    protected int getStatus(final HttpUriRequest method)
+    protected static int getStatus(final HttpUriRequest method)
         throws ClientProtocolException, IOException {
         final HttpResponse response = execute(method);
         final int result = response.getStatusLine().getStatusCode();
@@ -314,4 +316,7 @@ public abstract class AbstractResourceIT {
         return randomUUID().toString();
     }
 
+    protected static void assertDeleted(final String location) throws IOException {
+        assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), anyOf(is(404), is(410)));
+    }
 }

@@ -19,6 +19,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.Tombstone;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -28,6 +29,7 @@ import javax.jcr.RepositoryException;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -76,7 +78,14 @@ public class NodeResourceConverterTest {
         final FedoraResource actual = testObj.convert(mockNode);
         assertTrue(actual instanceof FedoraBinary);
         assertEquals(mockNode, actual.getNode());
+    }
 
+    @Test
+    public void testForwardTombstone() throws RepositoryException {
+        when(mockNode.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
+        final FedoraResource actual = testObj.convert(mockNode);
+        assertTrue(actual instanceof Tombstone);
+        assertEquals(mockNode, actual.getNode());
     }
 
     @Test

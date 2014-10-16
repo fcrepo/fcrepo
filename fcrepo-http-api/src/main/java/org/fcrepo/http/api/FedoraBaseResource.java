@@ -20,6 +20,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.Tombstone;
+import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
@@ -59,9 +61,15 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        return translator().convert(translator().toDomain(externalPath));
-    }
+        final Resource resource = translator().toDomain(externalPath);
+        final FedoraResource fedoraResource = translator().convert(resource);
 
+        if (fedoraResource instanceof Tombstone) {
+            throw new TombstoneException(fedoraResource, resource.getURI() + "/fcr:tombstone");
+        }
+
+        return fedoraResource;
+    }
 
     /**
      * Set the baseURL for JMS events.

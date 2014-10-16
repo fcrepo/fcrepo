@@ -126,3 +126,5 @@
 [fedora:blanknode] > mix:referenceable mixin
 
 [fedora:pairtree] mixin
+
+[fedora:tombstone] > nt:hierarchyNode

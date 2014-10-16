@@ -24,6 +24,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.LONG;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
@@ -576,7 +577,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        assertFalse(session.nodeExists("/" + pid));
+        assertTrue(session.getNode("/" + pid).isNodeType(FEDORA_TOMBSTONE));
     }
 
     @Test
@@ -597,7 +598,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        assertFalse(session.nodeExists("/" + pid + "/b"));
+        assertTrue(session.getNode("/" + pid + "/b").isNodeType(FEDORA_TOMBSTONE));
 
     }
 

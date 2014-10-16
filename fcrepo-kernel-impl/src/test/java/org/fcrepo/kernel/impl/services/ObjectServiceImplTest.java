@@ -29,6 +29,7 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Before;
 import org.junit.Test;
@@ -118,5 +119,22 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         final FedoraObject actual = testObj.findOrCreateObject(mockSession, "/foo");
         assertEquals(mockNode, actual.getNode());
     }
+
+    @Test(expected = TombstoneException.class)
+    public void testThrowsTombstoneExceptionOnCreateOnTombstone() throws RepositoryException {
+
+        when(mockNode.getParent()).thenReturn(mockParent);
+        when(mockParent.getParent()).thenReturn(mockRoot);
+        when(mockParent.isNew()).thenReturn(false);
+        when(mockParent.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
+        when(mockRoot.hasNode("foo")).thenReturn(true);
+        when(mockRoot.getNode("foo")).thenReturn(mockParent);
+        when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
+        when(mockNode.isNew()).thenReturn(true);
+
+        final FedoraObject actual = testObj.findOrCreateObject(mockSession, "/foo/bar");
+
+    }
+
 
 }

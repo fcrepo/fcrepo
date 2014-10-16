@@ -59,6 +59,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Variant;
 
@@ -408,10 +409,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + pid;
         assertEquals(204, getStatus(new HttpDelete(location)));
-        assertEquals("Object wasn't really deleted!", 404,
-                getStatus(new HttpGet(location)));
+        assertDeleted(location);
     }
-
 
     @Test
     public void testDeleteBinary() throws Exception {
@@ -421,10 +420,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + pid + "/x";
         assertEquals(204, getStatus(new HttpDelete(location)));
-        assertEquals("Object wasn't really deleted!", 404,
-                getStatus(new HttpGet(location)));
+        assertDeleted(location);
     }
 
+    @Test
+    public void testDeleteObjectAndTombstone() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+
+        final String location = serverAddress + pid;
+        assertEquals(204, getStatus(new HttpDelete(location)));
+        assertDeleted(location);
+        final HttpGet httpGet = new HttpGet(location);
+        final HttpResponse response = execute(httpGet);
+        final Link tombstone = Link.valueOf(response.getFirstHeader("Link").getValue());
+
+        assertEquals("hasTombstone", tombstone.getRel());
+
+        final HttpResponse tombstoneResponse = execute(new HttpDelete(tombstone.getUri()));
+        assertEquals(204, tombstoneResponse.getStatusLine().getStatusCode());
+
+        assertEquals(404, getStatus(httpGet));
+    }
 
     @Test
     public void testEmptyPatch() throws Exception {
@@ -898,9 +916,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 new HttpDelete(serverAddress + pid + "/ds1");
         assertEquals(204, getStatus(dmethod));
 
-        final HttpGet method_test_get =
-                new HttpGet(serverAddress +  pid + "/ds1");
-        assertEquals(404, getStatus(method_test_get));
+        assertDeleted(serverAddress + pid + "/ds1");
     }
 
     @Test
