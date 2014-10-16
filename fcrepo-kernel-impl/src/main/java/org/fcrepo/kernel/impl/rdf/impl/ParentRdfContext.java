@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
@@ -57,12 +58,10 @@ public class ParentRdfContext extends NodeRdfContext {
     }
 
     private Iterator<Triple> parentContext() throws RepositoryException {
-        final javax.jcr.Node parentNode = resource().getNode().getParent();
-        final com.hp.hpl.jena.graph.Node parentNodeSubject = nodeConverter().convert(parentNode).asNode();
-
         final RdfStream parentStream = new RdfStream();
 
-        parentStream.concat(create(subject(), HAS_PARENT.asNode(), parentNodeSubject));
+        final Node containerSubject = graphSubjects().reverse().convert(resource().getContainer()).asNode();
+        parentStream.concat(create(subject(), HAS_PARENT.asNode(), containerSubject));
 
         return parentStream;
     }

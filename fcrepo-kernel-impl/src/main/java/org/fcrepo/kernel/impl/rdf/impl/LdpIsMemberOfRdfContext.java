@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
@@ -48,48 +47,26 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, graphSubjects);
 
-        if (!isRoot(resource)) {
-            final FedoraResource container = getContainer(resource);
+        final FedoraResource container = resource.getContainer();
 
-            if (container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
-                final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
+        if (container != null) {
 
-                final Resource memberRelation = ResourceFactory.createResource(property.getString());
+            concatIsMemberOfRelation(container);
+        }
+    }
 
-                final Resource membershipResource = getMemberResource(container);
+    private void concatIsMemberOfRelation(final FedoraResource container) throws RepositoryException {
+        if (container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
+            final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
 
-                if (membershipResource != null) {
-                    concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
-                }
+            final Resource memberRelation = ResourceFactory.createResource(property.getString());
+
+            final Resource membershipResource = getMemberResource(container);
+
+            if (membershipResource != null) {
+                concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
             }
         }
-    }
-
-    /**
-     * Check if the resource is the root resource (and therefore can't be within a container)
-     * @param resource
-     * @return
-     * @throws RepositoryException
-     */
-    private boolean isRoot(final FedoraResource resource) throws RepositoryException {
-        return resource.getNode().getDepth() == 0;
-    }
-
-    /**
-     * Get the LDP container for this resource
-     * @param resource
-     * @return
-     * @throws RepositoryException
-     */
-    private FedoraResource getContainer(final FedoraResource resource) throws RepositoryException {
-        final FedoraResource parent;
-
-        if (resource instanceof FedoraBinary) {
-            parent = ((FedoraBinary) resource).getDescription().getParent();
-        } else {
-            parent = resource.getParent();
-        }
-        return parent;
     }
 
     /**

@@ -600,4 +600,49 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertFalse(session.nodeExists("/" + pid + "/b"));
 
     }
+
+    @Test
+    public void testGetContainer() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
+
+        assertEquals(container, resource.getContainer());
+    }
+
+    @Test
+    public void testGetChildren() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
+
+        assertEquals(resource, container.getChildren().next());
+    }
+
+    @Test
+    public void testGetContainerForBinary() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = binaryService.findOrCreateBinary(session, "/" + pid + "/a");
+
+        assertEquals(container, resource.getContainer());
+    }
+
+    @Test
+    public void testGetContainerWithHierarchy() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a/b/c/d");
+
+        assertEquals(container, resource.getContainer());
+    }
+
+    @Test
+    public void testGetChildrenWithHierarchy() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a/b/c/d");
+
+        assertEquals(resource, container.getChildren().next());
+    }
 }

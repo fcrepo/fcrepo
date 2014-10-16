@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
@@ -46,10 +47,12 @@ import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import com.google.common.base.Converter;
 import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -128,29 +131,74 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Iterator<FedoraResource> getChildren() {
         try {
-           return Iterators.transform(new NodeIterator(node.getNodes()), new Function<Node, FedoraResource>() {
-
-               @Override
-               public FedoraResource apply(final Node node) {
-                   final FedoraResource fedoraResource = nodeConverter.convert(node);
-
-                   if (fedoraResource instanceof Datastream) {
-                       return ((Datastream) fedoraResource).getBinary();
-                   } else {
-                       return fedoraResource;
-                   }
-               }
-           });
+            return Iterators.concat(nodeToGoodChildren(node));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
+    private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
+        return Iterators.transform(new NodeIterator(input.getNodes()), new Function<Node, Iterator<FedoraResource>>() {
+
+            @Override
+            public Iterator<FedoraResource> apply(final Node input) {
+                try {
+                    if (input.isNodeType(FEDORA_PAIRTREE)) {
+                        return Iterators.concat(nodeToGoodChildren(input));
+                    } else {
+                        return singletonIterator(nodeToObjectBinaryConverter.convert(input));
+                    }
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            }
+        });
+    }
+
+    private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
+            = new Converter<FedoraResource, FedoraResource>() {
+
+        @Override
+        protected FedoraResource doForward(final FedoraResource fedoraResource) {
+            if (fedoraResource instanceof Datastream) {
+                return ((Datastream) fedoraResource).getBinary();
+            } else {
+                return fedoraResource;
+            }
+        }
+
+        @Override
+        protected FedoraResource doBackward(final FedoraResource fedoraResource) {
+            if (fedoraResource instanceof FedoraBinary) {
+                return ((FedoraBinary) fedoraResource).getDescription();
+            } else {
+                return fedoraResource;
+            }
+        }
+    };
+
+    private static final Converter<Node, FedoraResource> nodeToObjectBinaryConverter
+            = nodeConverter.andThen(datastreamToBinary);
+
     @Override
-    public FedoraResource getParent() {
+    public FedoraResource getContainer() {
         try {
-            return nodeConverter.convert(getNode().getParent());
-        } catch (RepositoryException e) {
+
+            if (getNode().getDepth() == 0) {
+                return null;
+            }
+
+            Node container = getNode().getParent();
+            while (container.getDepth() > 0) {
+                if (container.isNodeType(FEDORA_PAIRTREE) || container.isNodeType(FEDORA_DATASTREAM)) {
+                    container = container.getParent();
+                } else {
+                    return nodeConverter.convert(container);
+                }
+            }
+
+            return nodeConverter.convert(container);
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
