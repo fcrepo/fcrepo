@@ -60,6 +60,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
