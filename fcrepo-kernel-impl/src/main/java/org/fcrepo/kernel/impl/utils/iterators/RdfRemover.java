@@ -17,10 +17,10 @@ package org.fcrepo.kernel.impl.utils.iterators;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -47,24 +47,24 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
      * @param session
      * @param stream
      */
-    public RdfRemover(final IdentifierConverter<Resource,Node> graphSubjects, final Session session,
+    public RdfRemover(final IdentifierConverter<Resource, FedoraResource> graphSubjects, final Session session,
         final RdfStream stream) {
         super(graphSubjects, session, stream);
     }
 
     @Override
     protected void operateOnMixin(final Resource mixinResource,
-        final Node subjectNode) throws RepositoryException {
+        final FedoraResource resource) throws RepositoryException {
 
-        jcrRdfTools().removeMixin(subjectNode, mixinResource, stream().namespaces());
+        jcrRdfTools().removeMixin(resource, mixinResource, stream().namespaces());
     }
 
     @Override
-    protected void operateOnProperty(final Statement t, final Node n)
+    protected void operateOnProperty(final Statement t, final FedoraResource resource)
         throws RepositoryException {
-        LOGGER.debug("Trying to remove property from triple: {} on node: {}.", t, n
+        LOGGER.debug("Trying to remove property from triple: {} on resource: {}.", t, resource
                 .getPath());
-        jcrRdfTools().removeProperty(n, t.getPredicate(), t.getObject(), stream().namespaces());
+        jcrRdfTools().removeProperty(resource, t.getPredicate(), t.getObject(), stream().namespaces());
 
     }
 }

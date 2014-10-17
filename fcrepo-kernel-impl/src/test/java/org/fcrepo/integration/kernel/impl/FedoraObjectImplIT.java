@@ -71,7 +71,7 @@ public class FedoraObjectImplIT extends AbstractIT {
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
         final Model model = object.getTriples(subjects, PropertiesRdfContext.class).asModel();
 
-        final Resource graphSubject = subjects.reverse().convert(object.getNode());
+        final Resource graphSubject = subjects.reverse().convert(object);
 
         assertFalse("Graph store should not contain JCR prefixes",
                     compile("jcr").matcher(model.toString()).find());
@@ -146,7 +146,7 @@ public class FedoraObjectImplIT extends AbstractIT {
         final FedoraObject object =
             objectService.findOrCreateObject(session, "/graphObject");
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
-        final Resource graphSubject = subjects.reverse().convert(object.getNode());
+        final Resource graphSubject = subjects.reverse().convert(object);
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT { <" + graphSubject + "> some:urlProperty " +

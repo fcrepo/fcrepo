@@ -42,6 +42,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
@@ -69,7 +70,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
-    private IdentifierConverter<Resource, Node> graphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> graphSubjects;
 
     @Before
     public void setUp() throws RepositoryException {

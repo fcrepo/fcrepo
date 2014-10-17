@@ -16,8 +16,14 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.DatastreamImpl;
+import org.fcrepo.kernel.impl.FedoraBinaryImpl;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -37,6 +43,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FROZEN_NODE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -44,7 +51,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 /**
  * @author cabeer
  */
-public class UriAwareIdentifierConverterTest {
+public class HttpResourceConverterTest {
 
     @Mock
     private Session session;
@@ -65,7 +72,7 @@ public class UriAwareIdentifierConverterTest {
     private Property mockProperty;
 
 
-    private UriAwareIdentifierConverter converter;
+    private HttpResourceConverter converter;
     private String uriTemplate = "http://localhost:8080/some/{path: .*}";
     private String path = "arbitrary/path";
     private Resource resource = createResource("http://localhost:8080/some/" + path);
@@ -88,7 +95,7 @@ public class UriAwareIdentifierConverterTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         final UriBuilder uriBuilder = UriBuilder.fromUri(uriTemplate);
-        converter = new UriAwareIdentifierConverter(session, uriBuilder);
+        converter = new HttpResourceConverter(session, uriBuilder);
         when(session.getNode("/" + path)).thenReturn(node);
         when(node.getPath()).thenReturn("/" + path);
         when(node.isNodeType(FROZEN_NODE)).thenReturn(false);
@@ -102,75 +109,77 @@ public class UriAwareIdentifierConverterTest {
 
     @Test
     public void testDoForward() throws Exception {
-        final Node converted = converter.convert(resource);
-        assertEquals(node, converted);
+        final FedoraResource converted = converter.convert(resource);
+        assertEquals(node, converted.getNode());
     }
 
     @Test
     public void testDoForwardWithDatastreamContent() throws Exception {
         when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
         when(node.getNode(JCR_CONTENT)).thenReturn(contentNode);
-        final Node converted = converter.convert(resource);
-        assertEquals(contentNode, converted);
+        final FedoraResource converted = converter.convert(resource);
+        assertTrue(converted instanceof FedoraBinary);
+        assertEquals(contentNode, converted.getNode());
     }
 
     @Test
     public void testDoForwardWithDatastreamMetadata() throws Exception {
         when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
-        final Node converted = converter.convert(metadataResource);
-        assertEquals(node, converted);
+        final FedoraResource converted = converter.convert(metadataResource);
+        assertTrue(converted instanceof Datastream);
+        assertEquals(node, converted.getNode());
     }
 
     @Test
     public void testDoForwardWithAHash() throws Exception {
         when(session.getNode("/" + path + "/#/with-a-hash")).thenReturn(node);
-        final Node converted = converter.convert(createResource("http://localhost:8080/some/" + path + "#with-a-hash"));
-        assertEquals(node, converted);
+        final FedoraResource converted =
+                converter.convert(createResource("http://localhost:8080/some/" + path + "#with-a-hash"));
+        assertEquals(node, converted.getNode());
     }
 
     @Test
     public void testDoForwardWithTransaction() throws Exception {
-        final UriAwareIdentifierConverter converter = new UriAwareIdentifierConverter(txSession,
+        final HttpResourceConverter converter = new HttpResourceConverter(txSession,
                 UriBuilder.fromUri(uriTemplate));
         when(txSession.getTxId()).thenReturn("xyz");
         when(txSession.getNode("/" + path)).thenReturn(node);
         when(txSession.getWorkspace()).thenReturn(mockWorkspace);
         final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
-        final Node converted = converter.convert(resource);
-        assertEquals(node, converted);
+        final FedoraResource converted = converter.convert(resource);
+        assertEquals(node, converted.getNode());
     }
 
     @Test
     public void testDoForwardWithUuid() throws Exception {
         final Resource resource = createResource("http://localhost:8080/some/[xyz]");
         when(session.getNode("/[xyz]")).thenReturn(node);
-        final Node converted = converter.convert(resource);
-        assertEquals(node, converted);
+        final FedoraResource converted = converter.convert(resource);
+        assertEquals(node, converted.getNode());
     }
 
     @Test
     public void testDoBackward() throws Exception {
-        final Resource converted = converter.reverse().convert(node);
+        final Resource converted = converter.reverse().convert(new FedoraResourceImpl(node));
         assertEquals(resource, converted);
     }
 
     @Test
     public void testDoBackwardWithDatastreamContent() throws Exception {
-        final Resource converted = converter.reverse().convert(contentNode);
+        final Resource converted = converter.reverse().convert(new FedoraBinaryImpl(contentNode));
         assertEquals(resource, converted);
     }
 
     @Test
     public void testDoBackwardWithDatastreamMetadata() throws Exception {
-        when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
-        final Resource converted = converter.reverse().convert(node);
+        final Resource converted = converter.reverse().convert(new DatastreamImpl(node));
         assertEquals(metadataResource, converted);
     }
 
     @Test
     public void testDoBackwardWithHash() throws Exception {
         when(node.getPath()).thenReturn(path + "/#/with-a-hash");
-        final Resource converted = converter.reverse().convert(node);
+        final Resource converted = converter.reverse().convert(new FedoraResourceImpl(node));
         assertEquals(createResource("http://localhost:8080/some/" + path + "#with-a-hash"), converted);
     }
 
@@ -180,8 +189,8 @@ public class UriAwareIdentifierConverterTest {
         when(versionedNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);
         when(mockProperty.getString()).thenReturn("some-identifier");
         when(node.getIdentifier()).thenReturn("some-identifier");
-        final Node converted = converter.convert(versionedResource);
-        assertEquals(versionedNode, converted);
+        final FedoraResource converted = converter.convert(versionedResource);
+        assertEquals(versionedNode, converted.getNode());
     }
 
     @Test
@@ -191,8 +200,8 @@ public class UriAwareIdentifierConverterTest {
         when(mockVersionHistory.hasVersionLabel("x")).thenReturn(true);
         when(mockVersionHistory.getVersionByLabel("x")).thenReturn(mockVersion);
         when(mockVersion.getFrozenNode()).thenReturn(versionedNode);
-        final Node converted = converter.convert(versionedResource);
-        assertEquals(versionedNode, converted);
+        final FedoraResource converted = converter.convert(versionedResource);
+        assertEquals(versionedNode, converted.getNode());
     }
 
     @Test(expected = RepositoryRuntimeException.class)
@@ -213,20 +222,20 @@ public class UriAwareIdentifierConverterTest {
         when(session.getNodeByIdentifier("some-identifier")).thenReturn(node);
         when(node.isNodeType("mix:versionable")).thenReturn(true);
 
-        final Resource converted = converter.reverse().convert(versionedNode);
+        final Resource converted = converter.reverse().convert(new FedoraResourceImpl(versionedNode));
         assertEquals(versionedResource, converted);
     }
 
     @Test
     public void testDoBackwardWithTransaction() throws Exception {
-        final UriAwareIdentifierConverter converter = new UriAwareIdentifierConverter(txSession,
+        final HttpResourceConverter converter = new HttpResourceConverter(txSession,
                 UriBuilder.fromUri(uriTemplate));
         when(txSession.getTxId()).thenReturn("xyz");
         when(txSession.getNode("/" + path)).thenReturn(node);
         when(txSession.getWorkspace()).thenReturn(mockWorkspace);
         when(node.getSession()).thenReturn(txSession);
         final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
-        final Resource converted = converter.reverse().convert(node);
+        final Resource converted = converter.reverse().convert(new FedoraResourceImpl(node));
         assertEquals(resource, converted);
     }
 

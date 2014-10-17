@@ -21,10 +21,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
 import java.util.Iterator;
@@ -47,13 +47,14 @@ public class TypeRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public TypeRdfContext(final Node node,
-                          final IdentifierConverter<Resource,Node> graphSubjects) throws RepositoryException {
-        super(node, graphSubjects);
+    public TypeRdfContext(final FedoraResource resource,
+                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+            throws RepositoryException {
+        super(resource, graphSubjects);
 
         //include rdf:type for primaryType, mixins, and their supertypes
         concatRdfTypes();
@@ -62,7 +63,7 @@ public class TypeRdfContext extends NodeRdfContext {
     private void concatRdfTypes() throws RepositoryException {
         final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
 
-        final NodeType primaryNodeType = node().getPrimaryNodeType();
+        final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();
         nodeTypesB.add(primaryNodeType);
 
         if (primaryNodeType != null && primaryNodeType.getSupertypes() != null) {
@@ -71,7 +72,7 @@ public class TypeRdfContext extends NodeRdfContext {
             nodeTypesB.addAll(primarySupertypes);
         }
 
-        final NodeType[] mixinNodeTypesArr = node().getMixinNodeTypes();
+        final NodeType[] mixinNodeTypesArr = resource().getNode().getMixinNodeTypes();
 
         if (mixinNodeTypesArr != null) {
             final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
@@ -117,7 +118,7 @@ public class TypeRdfContext extends NodeRdfContext {
     }
 
     private String getJcrUri(final String prefix) throws RepositoryException {
-        return node().getSession().getWorkspace().getNamespaceRegistry()
+        return resource().getNode().getSession().getWorkspace().getNamespaceRegistry()
                 .getURI(prefix);
     }
 

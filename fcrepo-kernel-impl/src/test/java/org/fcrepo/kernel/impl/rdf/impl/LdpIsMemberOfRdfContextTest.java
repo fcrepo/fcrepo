@@ -18,6 +18,9 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -34,6 +37,7 @@ import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -46,16 +50,28 @@ public class LdpIsMemberOfRdfContextTest {
     private LdpIsMemberOfRdfContext testObj;
 
     @Mock
-    private Node mockBinary;
+    private FedoraBinary mockBinary;
+
+    @Mock
+    private Datastream mockBinaryDescription;
+
+    @Mock
+    private Node mockBinaryNode;
+
+    @Mock
+    private FedoraResource mockResource;
+
+    @Mock
+    private Node mockResourceNode;
+
+    @Mock
+    private FedoraResource mockContainer;
+
+    @Mock
+    private Node mockContainerNode;
 
     @Mock
     private Node mockNode;
-
-    @Mock
-    private Node mockContainer;
-
-    @Mock
-    private Node mockResource;
 
     @Mock
     private Property mockRelationProperty;
@@ -71,18 +87,21 @@ public class LdpIsMemberOfRdfContextTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockNode.getPath()).thenReturn("/a");
-        when(mockNode.getParent()).thenReturn(mockContainer);
-        when(mockNode.getDepth()).thenReturn(1);
+        when(mockResource.getPath()).thenReturn("/a");
+        when(mockResource.getContainer()).thenReturn(mockContainer);
+        when(mockResource.getNode()).thenReturn(mockResourceNode);
+        when(mockResourceNode.getDepth()).thenReturn(1);
 
         when(mockContainer.getPath()).thenReturn("/");
+        when(mockContainer.getNode()).thenReturn(mockContainerNode);
+        when(mockContainerNode.getDepth()).thenReturn(0);
 
-        when(mockResource.getPath()).thenReturn("/some/path");
+        when(mockNode.getPath()).thenReturn("/some/path");
 
-        when(mockBinary.getParent()).thenReturn(mockNode);
-        when(mockBinary.getDepth()).thenReturn(2);
-        when(mockBinary.isNodeType(FEDORA_BINARY)).thenReturn(true);
+        when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
         when(mockBinary.getPath()).thenReturn("/a/jcr:content");
+        when(mockBinary.getNode()).thenReturn(mockBinaryNode);
+        when(mockBinary.getContainer()).thenReturn(mockContainer);
 
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
@@ -98,7 +117,7 @@ public class LdpIsMemberOfRdfContextTest {
 
     @Test
     public void testIsMemberOfRelationWithoutIsMemberOfResource() throws RepositoryException {
-        testObj = new LdpIsMemberOfRdfContext(mockNode, subjects);
+        testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
         final Model model = testObj.asModel();
 
@@ -112,20 +131,18 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
         when(mockContainer.getProperty(LDP_MEMBER_RESOURCE)).thenReturn(mockMembershipProperty);
         when(mockMembershipProperty.getType()).thenReturn(REFERENCE);
-        when(mockMembershipProperty.getNode()).thenReturn(mockResource);
+        when(mockMembershipProperty.getNode()).thenReturn(mockNode);
 
         final String property = "some:uri";
         when(mockRelationProperty.getString()).thenReturn(property);
-        testObj = new LdpIsMemberOfRdfContext(mockNode, subjects);
+        testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
         final Model model = testObj.asModel();
 
-        final Converter<Node, Resource> nodeSubjects = subjects.reverse();
-
         assertTrue("Expected stream to contain triple",
-                model.contains(nodeSubjects.convert(mockNode),
+                model.contains(subjects.reverse().convert(mockResource),
                         createProperty(property),
-                        nodeSubjects.convert(mockResource)));
+                        nodeToResource(subjects).convert(mockNode)));
     }
 
 
@@ -140,14 +157,14 @@ public class LdpIsMemberOfRdfContextTest {
 
         final String property = "some:uri";
         when(mockRelationProperty.getString()).thenReturn(property);
-        testObj = new LdpIsMemberOfRdfContext(mockNode, subjects);
+        testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
         final Model model = testObj.asModel();
 
-        final Converter<Node, Resource> nodeSubjects = subjects.reverse();
+        final Converter<FedoraResource, Resource> nodeSubjects = subjects.reverse();
 
         assertTrue("Expected stream to contain triple",
-                model.contains(nodeSubjects.convert(mockNode),
+                model.contains(nodeSubjects.convert(mockResource),
                         createProperty(property),
                         createResource("some:resource")));
     }
@@ -159,7 +176,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
         when(mockContainer.getProperty(LDP_MEMBER_RESOURCE)).thenReturn(mockMembershipProperty);
         when(mockMembershipProperty.getType()).thenReturn(REFERENCE);
-        when(mockMembershipProperty.getNode()).thenReturn(mockResource);
+        when(mockMembershipProperty.getNode()).thenReturn(mockNode);
 
         final String property = "some:uri";
 
@@ -168,11 +185,11 @@ public class LdpIsMemberOfRdfContextTest {
 
         final Model model = testObj.asModel();
 
-        final Converter<Node, Resource> nodeSubjects = subjects.reverse();
+        final Converter<FedoraResource, Resource> nodeSubjects = subjects.reverse();
 
         assertTrue("Expected stream to contain triple",
                 model.contains(nodeSubjects.convert(mockBinary),
                         createProperty(property),
-                        nodeSubjects.convert(mockResource)));
+                        nodeToResource(subjects).convert(mockNode)));
     }
 }

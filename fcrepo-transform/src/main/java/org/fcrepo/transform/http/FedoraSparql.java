@@ -18,14 +18,12 @@ package org.fcrepo.transform.http;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
 import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.sparql.JQLConverter;
@@ -34,7 +32,6 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.BadRequestException;
@@ -180,7 +177,7 @@ public class FedoraSparql extends FedoraBaseResource {
 
         final String sparqlQuery = IOUtils.toString(requestBodyStream);
 
-        return rexecSparql(sparqlQuery, translator());
+        return rexecSparql(sparqlQuery);
     }
 
     /**
@@ -208,7 +205,7 @@ public class FedoraSparql extends FedoraBaseResource {
             throw new BadRequestException("SPARQL must not be null. Please submit a query with parameter 'query'.");
         }
 
-        return rexecSparql(query, translator());
+        return rexecSparql(query);
     }
 
     @Override
@@ -216,12 +213,11 @@ public class FedoraSparql extends FedoraBaseResource {
         return session;
     }
 
-    private ResultSet rexecSparql(final String sparql,
-                                 final IdentifierConverter<Resource,Node> graphSubjects)
+    private ResultSet rexecSparql(final String sparql)
             throws RepositoryException {
         LOGGER.trace("Running SPARQL query: {}", sparql);
 
-        final JQLConverter jqlConverter = new JQLConverter(session, graphSubjects, sparql);
+        final JQLConverter jqlConverter = new JQLConverter(session, translator(), sparql);
 
         LOGGER.trace("Converted to JQL query: {}", jqlConverter.getStatement());
 

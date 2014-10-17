@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +52,9 @@ public class TypeRdfContextTest {
 
 
     @Mock
+    private FedoraResource mockResource;
+
+    @Mock
     private Node mockNode;
 
     @Mock
@@ -68,7 +72,7 @@ public class TypeRdfContextTest {
     @Mock
     private NodeType mockMixinSuperNodeType;
 
-    private IdentifierConverter<Resource,Node> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
 
     @Mock
     private Session mockSession;
@@ -94,19 +98,20 @@ public class TypeRdfContextTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
+        when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockPrimaryNodeType.getName()).thenReturn(
                 mockNodeTypePrefix + ":" + mockPrimaryNodeTypeName);
 
-        when(mockNode.getPath()).thenReturn("/" + mockNodeName);
+        when(mockResource.getPath()).thenReturn("/" + mockNodeName);
 
         when(mockNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockMixinNodeType});
+                new NodeType[]{mockMixinNodeType});
         when(mockMixinNodeType.getName()).thenReturn(
                 mockNodeTypePrefix + ":" + mockMixinNodeTypeName);
 
         when(mockPrimaryNodeType.getSupertypes()).thenReturn(
-                new NodeType[] {mockPrimarySuperNodeType});
+                new NodeType[]{mockPrimarySuperNodeType});
         when(mockPrimarySuperNodeType.getName()).thenReturn(
                 mockNodeTypePrefix + ":" + mockPrimarySuperNodeTypeName);
 
@@ -127,10 +132,10 @@ public class TypeRdfContextTest {
     public void testRdfTypesForNodetypes() throws RepositoryException,
             IOException {
 
-        final Resource mockNodeSubject = mockGraphSubjects.reverse().convert(mockNode);
+        final Resource mockNodeSubject = mockGraphSubjects.reverse().convert(mockResource);
 
         final Model actual =
-                new TypeRdfContext(mockNode, mockGraphSubjects).asModel();
+                new TypeRdfContext(mockResource, mockGraphSubjects).asModel();
         final Resource expectedRdfTypePrimary =
                 createResource(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName);
         final Resource expectedRdfTypeMixin =

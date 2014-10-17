@@ -86,7 +86,7 @@ public class FedoraTransformTest {
         setField(testObj, "session", mockSession);
 
         when(mockResource.getNode()).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/testObject");
+        when(mockResource.getPath()).thenReturn("/testObject");
         doReturn(mockResource).when(testObj).getResourceFromPath("testObject");
     }
 

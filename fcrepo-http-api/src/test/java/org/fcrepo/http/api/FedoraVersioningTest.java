@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
@@ -105,7 +105,7 @@ public class FedoraVersioningTest {
         doReturn(mockResource).when(testObj).resource();
 
         setField(testObj, "identifierTranslator",
-                new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
+                new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
 

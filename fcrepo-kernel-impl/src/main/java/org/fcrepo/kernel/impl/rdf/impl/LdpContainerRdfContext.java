@@ -21,14 +21,13 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.DatastreamImpl;
-import org.fcrepo.kernel.utils.iterators.NodeIterator;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import java.util.Collections;
@@ -40,7 +39,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -53,22 +52,23 @@ public class LdpContainerRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public LdpContainerRdfContext(final Node node, final IdentifierConverter<Resource,Node> graphSubjects)
+    public LdpContainerRdfContext(final FedoraResource resource,
+                                  final IdentifierConverter<Resource, FedoraResource> graphSubjects)
             throws RepositoryException {
-        super(node, graphSubjects);
-        final PropertyIterator properties = new PropertyIterator(node.getReferences(LDP_MEMBER_RESOURCE));
+        super(resource, graphSubjects);
+        final PropertyIterator properties = new PropertyIterator(resource.getNode().getReferences(LDP_MEMBER_RESOURCE));
 
         if (properties.hasNext()) {
-            LOGGER.trace("Found membership containers for {}", node);
+            LOGGER.trace("Found membership containers for {}", resource);
             concat(membershipContext(properties));
         }
 
-        if (!node.hasProperty(LDP_MEMBER_RESOURCE) && node.isNodeType(LDP_CONTAINER)) {
-            concat(memberRelations(node));
+        if (!resource.hasProperty(LDP_MEMBER_RESOURCE) && resource.hasType(LDP_CONTAINER)) {
+            concat(memberRelations(resource));
         }
     }
 
@@ -82,9 +82,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             @Override
             public Iterator<Triple> apply(final Property input) {
                 try {
-                    final Node inputNode = input.getParent();
+                    final FedoraResource resource = nodeConverter.convert(input.getParent());
 
-                    return memberRelations(inputNode);
+                    return memberRelations(resource);
                 } catch (RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }
@@ -94,45 +94,37 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
     /**
      * Get the member relations assert on the subject by the given node
-     * @param inputNode
+     * @param resource
      * @return
      * @throws RepositoryException
      */
-    private Iterator<Triple> memberRelations(final Node inputNode) throws RepositoryException {
+    private Iterator<Triple> memberRelations(final FedoraResource resource) throws RepositoryException {
         final com.hp.hpl.jena.graph.Node memberRelation;
 
-        if (inputNode.hasProperty(LDP_HAS_MEMBER_RELATION)) {
-            final Property property = inputNode.getProperty(LDP_HAS_MEMBER_RELATION);
+        if (resource.hasProperty(LDP_HAS_MEMBER_RELATION)) {
+            final Property property = resource.getProperty(LDP_HAS_MEMBER_RELATION);
             memberRelation = NodeFactory.createURI(property.getString());
-        } else if (inputNode.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
+        } else if (resource.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
             return Collections.emptyIterator();
         } else {
             memberRelation = LDP_MEMBER.asNode();
         }
 
-        if (inputNode.hasNodes()) {
-            final NodeIterator memberNodes = new NodeIterator(inputNode.getNodes());
-            return Iterators.transform(memberNodes, new Function<Node, Triple>() {
+        final Iterator<FedoraResource> memberNodes = resource.getChildren();
+        return Iterators.transform(memberNodes, new Function<FedoraResource, Triple>() {
 
-                @Override
-                public Triple apply(final Node child) {
-                    final com.hp.hpl.jena.graph.Node childSubject;
-                    if (DatastreamImpl.hasMixin(child)) {
-                        try {
-                            childSubject = graphSubjects().reverse().convert(child.getNode(JCR_CONTENT)).asNode();
-                        } catch (final RepositoryException e) {
-                            throw new RepositoryRuntimeException(e);
-                        }
-                    } else {
-                        childSubject = graphSubjects().reverse().convert(child).asNode();
-                    }
-                    return create(subject(), memberRelation, childSubject);
-
+            @Override
+            public Triple apply(final FedoraResource child) {
+                final com.hp.hpl.jena.graph.Node childSubject;
+                if (child instanceof Datastream) {
+                    childSubject = graphSubjects().reverse().convert(((Datastream) child).getBinary()).asNode();
+                } else {
+                    childSubject = graphSubjects().reverse().convert(child).asNode();
                 }
-            });
-        } else {
-            return Collections.emptyIterator();
-        }
+                return create(subject(), memberRelation, childSubject);
+
+            }
+        });
     }
 
 }

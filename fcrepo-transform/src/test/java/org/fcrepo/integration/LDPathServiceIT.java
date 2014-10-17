@@ -84,7 +84,7 @@ public class LDPathServiceIT {
         testObj = new LDPathTransform(stringReader);
 
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
-        final Resource topic = subjects.reverse().convert(object.getNode());
+        final Resource topic = subjects.reverse().convert(object);
         final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class)
                                         .topic(topic.asNode());
         final Map<String, Collection<Object>> stuff = testObj.apply(triples);

@@ -15,11 +15,18 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.filter;
+import static com.google.common.collect.Iterators.singletonIterator;
+import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
@@ -43,9 +50,13 @@ import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import com.google.common.base.Converter;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -60,7 +71,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -122,19 +132,124 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Iterator<FedoraResource> getChildren() {
         try {
-           return Iterators.transform(new NodeIterator(node.getNodes()), new Function<Node, FedoraResource>() {
+            return concat(nodeToGoodChildren(node));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
-               @Override
-               public FedoraResource apply(final Node node) {
-                   final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(node);
+    /**
+     * Get the "good" children for a node by skipping all pairtree nodes in the way.
+     * @param input
+     * @return
+     * @throws RepositoryException
+     */
+    private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
+        final Iterator<Node> children = filter(new NodeIterator(input.getNodes()), not(nastyChildren));
+        return transform(children, new Function<Node, Iterator<FedoraResource>>() {
 
-                   if (fedoraResource.hasContent()) {
-                       return new DatastreamImpl(node).getBinary();
-                   } else {
-                       return fedoraResource;
-                   }
-               }
-           });
+            @Override
+            public Iterator<FedoraResource> apply(final Node input) {
+                try {
+                    if (input.isNodeType(FEDORA_PAIRTREE)) {
+                        return concat(nodeToGoodChildren(input));
+                    } else {
+                        return singletonIterator(nodeToObjectBinaryConverter.convert(input));
+                    }
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            }
+        });
+    }
+    /**
+     * Children for whom we will not generate triples.
+     */
+    private static Predicate<Node> nastyChildren =
+            new Predicate<Node>() {
+
+                @Override
+                public boolean apply(final Node n) {
+                    LOGGER.trace("Testing child node {}", n);
+                    try {
+                        return (isInternalNode.apply(n) || n.getName().equals(JCR_CONTENT));
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                }
+            };
+
+
+    private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
+            = new Converter<FedoraResource, FedoraResource>() {
+
+        @Override
+        protected FedoraResource doForward(final FedoraResource fedoraResource) {
+            if (fedoraResource instanceof Datastream) {
+                return ((Datastream) fedoraResource).getBinary();
+            } else {
+                return fedoraResource;
+            }
+        }
+
+        @Override
+        protected FedoraResource doBackward(final FedoraResource fedoraResource) {
+            if (fedoraResource instanceof FedoraBinary) {
+                return ((FedoraBinary) fedoraResource).getDescription();
+            } else {
+                return fedoraResource;
+            }
+        }
+    };
+
+    private static final Converter<Node, FedoraResource> nodeToObjectBinaryConverter
+            = nodeConverter.andThen(datastreamToBinary);
+
+    @Override
+    public FedoraResource getContainer() {
+        try {
+
+            if (getNode().getDepth() == 0) {
+                return null;
+            }
+
+            Node container = getNode().getParent();
+            while (container.getDepth() > 0) {
+                if (container.isNodeType(FEDORA_PAIRTREE) || container.isNodeType(FEDORA_DATASTREAM)) {
+                    container = container.getParent();
+                } else {
+                    return nodeConverter.convert(container);
+                }
+            }
+
+            return nodeConverter.convert(container);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource getChild(final String relPath) {
+        try {
+            return nodeConverter.convert(getNode().getNode(relPath));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean hasProperty(final String relPath) {
+        try {
+            return getNode().hasProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public Property getProperty(final String relPath) {
+        try {
+            return getNode().getProperty(relPath);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -205,7 +320,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         try {
             if (isFrozen.apply(node) && node.hasProperty(FROZEN_MIXIN_TYPES)) {
                 final List<String> types = newArrayList(
-                    Iterators.transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
+                    transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
                 );
                 return types.contains(type);
             }
@@ -222,7 +337,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
-    public void updateProperties(final IdentifierConverter<Resource, Node> subjects,
+    public void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
                                  final String sparqlUpdateStatement, final RdfStream originalTriples) {
 
         final Model model = originalTriples.asModel();
@@ -232,7 +347,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         model.register(listener);
 
-        final UpdateRequest request = create(sparqlUpdateStatement, subjects.reverse().convert(getNode()).toString());
+        final UpdateRequest request = create(sparqlUpdateStatement, subjects.reverse().convert(this).toString());
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
@@ -240,22 +355,22 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierConverter<Resource,Node> graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
                                 final Class<? extends RdfStream> context) {
         return getTriples(graphSubjects, Collections.singleton(context));
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierConverter<Resource,Node> graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
                                 final Iterable<? extends Class<? extends RdfStream>> contexts) {
         final RdfStream stream = new RdfStream();
 
         for (final Class<? extends RdfStream> context : contexts) {
             try {
                 final Constructor<? extends RdfStream> declaredConstructor
-                        = context.getDeclaredConstructor(Node.class, IdentifierConverter.class);
+                        = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
 
-                final RdfStream rdfStream = declaredConstructor.newInstance(node, graphSubjects);
+                final RdfStream rdfStream = declaredConstructor.newInstance(this, graphSubjects);
 
                 stream.concat(rdfStream);
             } catch (final NoSuchMethodException |
@@ -327,7 +442,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
-    public void replaceProperties(final IdentifierConverter<Resource,Node> graphSubjects,
+    public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
         final Model inputModel, final RdfStream originalTriples) {
 
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
@@ -436,6 +551,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             throw new RepositoryRuntimeException(e);
         }
 
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (object instanceof FedoraResourceImpl) {
+            return ((FedoraResourceImpl) object).getNode().equals(this.getNode());
+        } else {
+            return false;
+        }
     }
 
     private Session getSession() {

@@ -34,7 +34,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.http.commons.api.rdf.UriAwareIdentifierConverter;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
@@ -71,7 +71,7 @@ public class HttpApiResourcesTest {
     @Mock
     private NodeType mockNodeType;
 
-    private UriAwareIdentifierConverter mockSubjects;
+    private HttpResourceConverter mockSubjects;
 
     @Mock
     private SerializerUtil mockSerializers;
@@ -94,7 +94,7 @@ public class HttpApiResourcesTest {
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getName()).thenReturn("default");
-        mockSubjects = new UriAwareIdentifierConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
+        mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
         setField(testObj, "serializers", mockSerializers);
     }
 
@@ -106,7 +106,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/");
 
-        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -124,7 +124,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
-        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -144,7 +144,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
-        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -160,7 +160,7 @@ public class HttpApiResourcesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
-        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -178,7 +178,7 @@ public class HttpApiResourcesTest {
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockNode.getPath()).thenReturn("/");
 
-        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo,
                         mockSubjects);
@@ -198,7 +198,7 @@ public class HttpApiResourcesTest {
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockNode.getPath()).thenReturn("/some/path/to/object");
 
-        final Resource graphSubject = mockSubjects.reverse().convert(mockNode);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo,
                         mockSubjects);

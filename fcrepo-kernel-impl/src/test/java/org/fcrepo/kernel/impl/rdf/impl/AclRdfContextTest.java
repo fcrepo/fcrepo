@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,9 +49,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class AclRdfContextTest {
 
     @Mock
-    private Node node;
+    private FedoraResource resource;
 
-    private IdentifierConverter<Resource, Node> mockGraphSubjects;
+    @Mock
+    private Node mockNode;
+
+    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
 
     @Mock
     private Session mockSession;
@@ -62,16 +66,17 @@ public class AclRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        // read-only node mocks
-        when(node.getSession()).thenReturn(mockSession);
-        when(node.getPath()).thenReturn(path);
+        // read-only resource mocks
+        when(resource.getNode()).thenReturn(mockNode);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(resource.getPath()).thenReturn(path);
         mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
-        nodeSubject = mockGraphSubjects.reverse().convert(node);
+        nodeSubject = mockGraphSubjects.reverse().convert(resource);
     }
 
     @Test
     public void testWritableNode() throws RepositoryException {
-        final Model actual = new AclRdfContext(node, mockGraphSubjects).asModel();
+        final Model actual = new AclRdfContext(resource, mockGraphSubjects).asModel();
         final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
         assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanTrue));
     }
@@ -81,7 +86,7 @@ public class AclRdfContextTest {
 
         doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
                 eq(path), eq("add_node,set_property,remove"));
-        final Model actual = new AclRdfContext(node, mockGraphSubjects).asModel();
+        final Model actual = new AclRdfContext(resource, mockGraphSubjects).asModel();
         logRdf("Constructed RDF: ", actual);
         final Literal booleanFalse = actual.createTypedLiteral(false, XSDboolean);
         assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanFalse));

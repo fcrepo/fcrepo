@@ -22,10 +22,11 @@ import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -43,6 +44,7 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -54,16 +56,17 @@ public class ValueConverter extends Converter<Value, RDFNode> {
     private static final Logger LOGGER = getLogger(ValueConverter.class);
 
     private final Session session;
-    private final IdentifierConverter<Resource, javax.jcr.Node> graphSubjects;
+    private final Converter<Node, Resource> graphSubjects;
 
     /**
      * Convert values between JCR values and RDF objects with the given session and subjects
      * @param session
      * @param graphSubjects
      */
-    public ValueConverter(final Session session, final IdentifierConverter<Resource,javax.jcr.Node> graphSubjects) {
+    public ValueConverter(final Session session,
+                          final Converter<Resource, FedoraResource> graphSubjects) {
         this.session = session;
-        this.graphSubjects = graphSubjects;
+        this.graphSubjects = nodeToResource(graphSubjects);
     }
 
     @Override
@@ -163,6 +166,6 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
     private RDFNode getGraphSubject(final javax.jcr.Node n)
             throws RepositoryException {
-        return graphSubjects.reverse().convert(n);
+        return graphSubjects.convert(n);
     }
 }

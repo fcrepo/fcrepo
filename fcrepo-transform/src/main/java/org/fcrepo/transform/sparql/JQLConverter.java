@@ -19,10 +19,10 @@ import static com.hp.hpl.jena.query.QueryFactory.create;
 
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.QueryManager;
@@ -37,7 +37,7 @@ import javax.jcr.query.qom.QueryObjectModel;
 public class JQLConverter {
     private final JcrRdfTools jcrTools;
     private Session session;
-    private IdentifierConverter<Resource,Node> subjects;
+    private IdentifierConverter<Resource,FedoraResource> subjects;
     private com.hp.hpl.jena.query.Query query;
 
     /**
@@ -47,7 +47,7 @@ public class JQLConverter {
      * @param sparqlQuery
      */
     public JQLConverter(final Session session,
-                        final IdentifierConverter<Resource,Node> subjects,
+                        final IdentifierConverter<Resource,FedoraResource> subjects,
                         final String sparqlQuery ) {
         this(session, subjects, create(sparqlQuery));
     }
@@ -58,8 +58,9 @@ public class JQLConverter {
      * @param subjects
      * @param query
      */
-    public JQLConverter(final Session session, final IdentifierConverter<Resource,Node> subjects,
-        final com.hp.hpl.jena.query.Query query) {
+    public JQLConverter(final Session session,
+                        final IdentifierConverter<Resource,FedoraResource> subjects,
+                        final com.hp.hpl.jena.query.Query query) {
         this.session = session;
         this.subjects = subjects;
         this.query = query;

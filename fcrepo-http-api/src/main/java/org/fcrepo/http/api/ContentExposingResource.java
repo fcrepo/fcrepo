@@ -51,7 +51,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.jcr.Binary;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
@@ -328,7 +327,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected URI getUri(final FedoraResource resource) {
         try {
-            final String uri = translator().reverse().convert(resource.getNode()).getURI();
+            final String uri = translator().reverse().convert(resource).getURI();
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);
@@ -346,7 +345,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void addResponseInformationToStream(
             final FedoraResource resource, final RdfStream dataset,
-            final UriInfo uriInfo, final IdentifierConverter<Resource,Node> subjects) {
+            final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> subjects) {
         if (httpTripleUtil != null) {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
                     uriInfo, subjects);

@@ -173,7 +173,7 @@ public class FedoraVersioning extends FedoraBaseResource {
 
         return resource().getTriples(translator(), VersionsRdfContext.class)
                 .session(session)
-                .topic(translator().reverse().convert(resource().getNode()).asNode());
+                .topic(translator().reverse().convert(resource()).asNode());
     }
 
     protected FedoraResource resource() {

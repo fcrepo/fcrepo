@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +43,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author cabeer
  */
 public class HashRdfContextTest {
+
+    @Mock
+    private FedoraResource mockResource;
 
     @Mock
     private Node mockNode;
@@ -71,7 +75,8 @@ public class HashRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        when(mockNode.getPath()).thenReturn("/a");
+        when(mockResource.getPath()).thenReturn("/a");
+        when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getNode("#")).thenReturn(mockContainer);
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
@@ -81,7 +86,7 @@ public class HashRdfContextTest {
 
         when(mockNode.hasNode("#")).thenReturn(false);
 
-        final Model actual = new HashRdfContext(mockNode, subjects).asModel();
+        final Model actual = new HashRdfContext(mockResource, subjects).asModel();
 
         assertTrue("Expected the result to be empty", actual.isEmpty());
     }
@@ -104,7 +109,7 @@ public class HashRdfContextTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn("x");
 
-        final Model actual = new HashRdfContext(mockNode, subjects).asModel();
+        final Model actual = new HashRdfContext(mockResource, subjects).asModel();
 
         assertFalse("Expected the result to not be empty", actual.isEmpty());
         assertTrue("Expected to find child properties",
