@@ -66,6 +66,7 @@ import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.After;
@@ -102,6 +103,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject
     BinaryService binaryService;
+
+    @Inject
+    VersionService versionService;
 
     private Session session;
 
@@ -386,11 +390,13 @@ public class FedoraResourceImplIT extends AbstractIT {
             objectService.findOrCreateObject(session, "/testObjectVersionGraph");
 
         object.getNode().addMixin("mix:versionable");
+        session.save();
 
+        // create a version and make sure there are 2 versions (root + created)
+        versionService.createVersion(session, object.getPath());
         session.save();
 
         object.addVersionLabel("v0.0.1");
-
         session.save();
 
         final Model graphStore = object.getTriples(subjects, VersionsRdfContext.class).asModel();
