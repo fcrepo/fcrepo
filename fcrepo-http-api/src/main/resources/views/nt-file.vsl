@@ -65,7 +65,7 @@
 
         ## output other nodes
 
-        <h2>Inlined Resources</h2>
+        <h2>Other Resources</h2>
         <div class="panel-group" id="accordion">
             #foreach($subject in $model.listSubjects())
                 #if ($subject.getURI() != $contentNode.getURI())
