@@ -265,6 +265,7 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
     public static final Property INBOUND_REFERENCES = createProperty(REPOSITORY_NAMESPACE + "InboundReferences");
     public static final Property EMBED_CONTAINS = createProperty(REPOSITORY_NAMESPACE + "EmbedResources");
+    public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     // IMPORTANT JCR PROPERTIES
     public static final Property HAS_PRIMARY_IDENTIFIER =
