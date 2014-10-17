@@ -72,6 +72,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         createObject(pid);
         enableVersioning(pid);
+        postObjectVersion(pid, "v0.0.1");
         final HttpGet getVersion =
             new HttpGet(serverAddress + pid + "/fcr:versions");
         logger.debug("Retrieved version profile:");
