@@ -27,6 +27,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.vocabulary.DC_11;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 import org.apache.commons.io.IOUtils;
@@ -576,6 +577,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 createPlainLiteral("asdfg")));
     }
 
+
     @Test
     public void testCreateGraph() throws Exception {
         final String pid = getRandomUniquePid();
@@ -621,7 +623,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
         getObjMethod.addHeader("Accept", "text/turtle");
-     //   getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
 
         final BasicHttpEntity e = new BasicHttpEntity();
@@ -1358,7 +1359,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI + "/" + FCR_METADATA);
         getObjMethod.addHeader("Accept", "text/turtle");
-   //     getObjMethod.addHeader("Prefer", "return=minimal");
         final HttpResponse getResponse = client.execute(getObjMethod);
 
         final BasicHttpEntity e = new BasicHttpEntity();
@@ -1920,6 +1920,42 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue(graphStore.contains(ANY, createResource(location + "#abc").asNode(),
                 createProperty("info:rubydora#label").asNode(), createLiteral("asdfg")));
 
+
+    }
+
+    @Test
+    public void testCreateAndReplaceGraphMinimal() throws Exception {
+
+        final String pid = getRandomUniquePid();
+
+        final HttpPost httpPost = postObjMethod("/");
+        httpPost.addHeader("Slug", pid);
+        httpPost.addHeader("Content-Type", "text/turtle");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(IOUtils.toInputStream("<> <" + DC_11.title.toString() + "> \"abc\""));
+        httpPost.setEntity(e);
+        final HttpResponse response = client.execute(httpPost);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                CREATED.getStatusCode(), status);
+
+        final String subjectURI = response.getFirstHeader("Location").getValue();
+
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "text/turtle");
+        replaceMethod.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+
+        final BasicHttpEntity replacement = new BasicHttpEntity();
+        replacement.setContent(IOUtils.toInputStream("<> <" + DC_11.title.toString() + "> \"xyz\""));
+        replaceMethod.setEntity(replacement);
+        final HttpResponse replaceResponse = client.execute(replaceMethod);
+        assertEquals(204, replaceResponse.getStatusLine().getStatusCode());
+
+        final HttpGet get = new HttpGet(subjectURI);
+        get.addHeader("Prefer", "return=minimal");
+        final GraphStore graphStore = getGraphStore(get);
+        assertTrue(graphStore.contains(ANY, ANY, DC_11.title.asNode(), createLiteral("xyz")));
 
     }
 

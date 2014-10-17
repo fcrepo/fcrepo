@@ -104,6 +104,7 @@ public class FedoraLdp extends ContentExposingResource {
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
     @PathParam("path") protected String externalPath;
+    @HeaderParam("Prefer") protected Prefer prefer;
 
     /**
      * Default JAX-RS entry point
@@ -167,8 +168,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
-    public Response describe(@HeaderParam("Prefer") final Prefer prefer,
-                             @HeaderParam("Range") final String rangeValue) throws IOException {
+    public Response describe(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         addResourceHttpHeaders(resource());
@@ -241,13 +241,21 @@ public class FedoraLdp extends ContentExposingResource {
 
         evaluateRequestPreconditions(request, servletResponse, resource, session);
 
+        final RdfStream resourceTriples;
+
+        if (resource.isNew()) {
+            resourceTriples = new RdfStream();
+        } else {
+            resourceTriples = getResourceTriples(prefer);
+        }
+
         if (requestBodyStream == null && !resource.isNew()) {
             throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
         } else if (requestBodyStream != null)  {
             if ((resource instanceof FedoraObject || resource instanceof Datastream)
                     && isRdfContentType(contentType.toString())) {
                 try {
-                    replaceResourceWithStream(resource, requestBodyStream, contentType);
+                    replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
                 } catch (final RiotException e) {
                     throw new BadRequestException("RDF was not parsable", e);
                 }
@@ -299,7 +307,15 @@ public class FedoraLdp extends ContentExposingResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
-            patchResourcewithSparql(resource(), requestBody);
+            final RdfStream resourceTriples;
+
+            if (resource().isNew()) {
+                resourceTriples = new RdfStream();
+            } else {
+                resourceTriples = getResourceTriples(prefer);
+            }
+
+            patchResourcewithSparql(resource(), requestBody, resourceTriples);
 
             try {
                 session.save();
@@ -358,6 +374,14 @@ public class FedoraLdp extends ContentExposingResource {
                 effectiveContentType,
                 newObjectPath, contentDisposition);
 
+        final RdfStream resourceTriples;
+
+        if (result.isNew()) {
+            resourceTriples = new RdfStream();
+        } else {
+            resourceTriples = getResourceTriples(prefer);
+        }
+
         if (requestBodyStream == null) {
             LOGGER.trace("No request body detected");
         } else {
@@ -365,7 +389,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             if ((result instanceof FedoraObject || result instanceof Datastream)
                     && isRdfContentType(contentTypeString)) {
-                replaceResourceWithStream(result, requestBodyStream, contentType);
+                replaceResourceWithStream(result, requestBodyStream, contentType, resourceTriples);
             } else if (result instanceof FedoraBinary) {
                 LOGGER.trace("Created a datastream and have a binary payload.");
 
@@ -374,7 +398,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                 LOGGER.trace("Found SPARQL-Update content, applying..");
-                patchResourcewithSparql(result, IOUtils.toString(requestBodyStream));
+                patchResourcewithSparql(result, IOUtils.toString(requestBodyStream), resourceTriples);
             } else {
                 if (requestBodyStream.read() != -1) {
                     throw new ClientErrorException("Invalid Content Type " + contentTypeString, UNSUPPORTED_MEDIA_TYPE);

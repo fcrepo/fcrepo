@@ -164,16 +164,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return Response.ok(rdfStream).build();
     }
 
-    protected RdfStream getResourceTriples() {
-        return getResourceTriples(null);
-    }
-
     protected RdfStream getResourceTriples(final Prefer prefer) {
 
         final PreferTag returnPreference;
 
         if (prefer != null && prefer.hasReturn()) {
             returnPreference = prefer.getReturn();
+        } else if (prefer != null && prefer.hasHandling()) {
+            returnPreference = prefer.getHandling();
         } else {
             returnPreference = new PreferTag("");
         }
@@ -515,31 +513,19 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
-                                             final MediaType contentType) {
+                                             final MediaType contentType,
+                                             final RdfStream resourceTriples) {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel = createDefaultModel()
                 .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
 
-        final RdfStream resourceTriples;
-
-        if (resource.isNew()) {
-            resourceTriples = new RdfStream();
-        } else {
-            resourceTriples = getResourceTriples();
-        }
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
-    protected void patchResourcewithSparql(final FedoraResource resource, final String requestBody) {
-        final RdfStream resourceTriples;
-
-        if (resource.isNew()) {
-            resourceTriples = new RdfStream();
-        } else {
-            resourceTriples = getResourceTriples();
-        }
-
+    protected void patchResourcewithSparql(final FedoraResource resource,
+                                           final String requestBody,
+                                           final RdfStream resourceTriples) {
         resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 

@@ -58,6 +58,7 @@ public class LdpPreferTag extends PreferTag {
 
         final Optional<String> include = fromNullable(preferTag.getParams().get("include"));
         final Optional<String> omit = fromNullable(preferTag.getParams().get("omit"));
+        final Optional<String> received = fromNullable(preferTag.getParams().get("received"));
 
         final List<String> includes = asList(include.or(" ").split(" "));
         final List<String> omits = asList(omit.or(" ").split(" "));

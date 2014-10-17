@@ -50,6 +50,14 @@ public class Prefer {
     }
 
     /**
+     * Does the Prefer: header have a return tag
+     * @return true if the header has a return tag
+     */
+    public Boolean hasHandling() {
+        return Iterators.any(preferTags.iterator(), getPreferTag("handling"));
+    }
+
+    /**
      * Get the return tag, or a blank default, if none exists.
      * @return return tag, or a blank default, if none exists
      */
@@ -61,6 +69,20 @@ public class Prefer {
         }
         return new PreferTag("");
     }
+
+    /**
+     * Get the return tag, or a blank default, if none exists.
+     * @return return tag, or a blank default, if none exists
+     */
+    public PreferTag getHandling() {
+        final Optional<PreferTag> handling = Iterators.tryFind(preferTags.iterator(), getPreferTag("handling"));
+
+        if (handling.isPresent()) {
+            return handling.get();
+        }
+        return new PreferTag("");
+    }
+
 
 
     private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =

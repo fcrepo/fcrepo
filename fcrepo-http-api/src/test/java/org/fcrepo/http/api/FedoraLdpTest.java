@@ -280,7 +280,7 @@ public class FedoraLdpTest {
     @Test
     public void testGet() throws Exception {
         setResource(FedoraResource.class);
-        final Response actual = testObj.describe(new Prefer(""), null);
+        final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have a Link header", mockResponse.containsHeader("Link"));
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
@@ -313,7 +313,7 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithObject() throws Exception {
         setResource(FedoraObject.class);
-        final Response actual = testObj.describe(new Prefer(""), null);
+        final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP DirectContainer",
                 mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\""));
@@ -346,7 +346,8 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithObjectPreferMinimal() throws Exception {
         setResource(FedoraObject.class);
-        final Response actual = testObj.describe(new Prefer("return=minimal"), null);
+        setField(testObj, "prefer", new Prefer("return=minimal"));
+        final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
         final RdfStream entity = (RdfStream) actual.getEntity();
@@ -374,8 +375,9 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithObjectOmitContainment() throws Exception {
         setResource(FedoraObject.class);
+        setField(testObj, "prefer",
+                new Prefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferContainment\""));
         final Response actual = testObj.describe(
-                new Prefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferContainment\""),
                 null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
@@ -399,9 +401,9 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithObjectOmitMembership() throws Exception {
         setResource(FedoraObject.class);
-        final Response actual = testObj.describe(
-                new Prefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferMembership\""),
-                null);
+        setField(testObj, "prefer",
+                new Prefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferMembership\""));
+        final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
         final RdfStream entity = (RdfStream) actual.getEntity();
@@ -426,9 +428,9 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithObjectOmitReferences() throws Exception {
         setResource(FedoraObject.class);
-        final Response actual = testObj.describe(
-                new Prefer("return=representation; omit=\"" + INBOUND_REFERENCES + "\""),
-                null);
+        setField(testObj, "prefer",
+                new Prefer("return=representation; omit=\"" + INBOUND_REFERENCES + "\""));
+        final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
         final RdfStream entity = (RdfStream) actual.getEntity();
@@ -452,7 +454,7 @@ public class FedoraLdpTest {
         when(mockResource.getDescription()).thenReturn(mockDatastream);
         when(mockResource.getMimeType()).thenReturn("text/plain");
         when(mockResource.getContent()).thenReturn(toInputStream("xyz"));
-        final Response actual = testObj.describe(new Prefer(""), null);
+        final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP NonRDFSource",
                 mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\""));
@@ -471,7 +473,7 @@ public class FedoraLdpTest {
         when(mockResource.getBinary()).thenReturn(mockBinary);
         when(mockBinary.getTriples(identifierConverter, PropertiesRdfContext.class)).thenReturn(
                 new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
-        final Response actual = testObj.describe(new Prefer(""), null);
+        final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource",
                 mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\""));
@@ -577,7 +579,7 @@ public class FedoraLdpTest {
     @Test
     public void testPatchObject() throws Exception {
 
-        final FedoraResource mockObject = setResource(FedoraObject.class);
+        setResource(FedoraObject.class);
 
         testObj.updateSparql(toInputStream("xyz"));
     }
