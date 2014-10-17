@@ -20,6 +20,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -30,6 +31,7 @@ import org.fcrepo.kernel.services.ObjectService;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.services.VersionService;
 import org.jvnet.hk2.annotations.Optional;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.eventbus.EventBus;
@@ -41,6 +43,13 @@ import com.google.common.eventbus.EventBus;
  * @author ajs6f
  */
 public abstract class AbstractResource {
+
+    static {
+        // the SLF4J to JUL bridge normally adds its attachments
+        // we want them to _replace_ the JUL loggers, to avoid logging outputs except those controlled by SLF4J
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+    }
 
     /**
      * Useful for constructing URLs

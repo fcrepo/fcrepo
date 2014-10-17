@@ -19,6 +19,9 @@
   <logger name="com.gargoylesoftware.htmlunit" additivity="false" level="ERROR">
     <appender-ref ref="STDOUT"/>
   </logger>
+  <logger name="org.glassfish" additivity="false" level="ERROR">
+    <appender-ref ref="STDOUT"/>
+  </logger>
   <root additivity="false" level="WARN">
     <appender-ref ref="STDOUT"/>
   </root>
