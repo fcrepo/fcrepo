@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
@@ -33,7 +32,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 
 import javax.jcr.ItemNotFoundException;
@@ -53,7 +51,7 @@ import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
+import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
@@ -62,9 +60,7 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -331,15 +327,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
-    public RdfStream replaceProperties(final IdentifierConverter<Resource,Node> graphSubjects,
+    public void replaceProperties(final IdentifierConverter<Resource,Node> graphSubjects,
         final Model inputModel, final RdfStream originalTriples) {
 
-        final RdfStream replacementStream = RdfStream.fromModel(inputModel);
+        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
 
-        final Set<Triple> replacementTriples = copyOf(replacementStream);
-
-        final DifferencingIterator<Triple> differencer =
-            new DifferencingIterator<>(replacementTriples, originalTriples);
+        final GraphDifferencingIterator differencer =
+            new GraphDifferencingIterator(inputModel, originalTriples);
 
         try {
             new RdfRemover(graphSubjects, getSession(), replacementStream
@@ -350,9 +344,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-
-        return replacementStream.withThisContext(Iterables.concat(differencer
-                .common(), differencer.notCommon()));
     }
 
     /* (non-Javadoc)

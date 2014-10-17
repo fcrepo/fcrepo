@@ -303,12 +303,11 @@ public class FedoraResourceImplTest {
                                 replacementModel.createProperty("j"),
                                "k");
 
-        final Model replacements = testObj.replaceProperties(defaultGraphSubjects,
+        testObj.replaceProperties(defaultGraphSubjects,
                 replacementModel,
-                propertiesStream).asModel();
-
-        assertTrue(replacements.containsAll(replacementModel));
+                propertiesStream);
     }
+
     @Test
     public void shouldGetEtagForAnObject() throws RepositoryException {
         final Property mockMod = mock(Property.class);

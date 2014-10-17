@@ -146,9 +146,8 @@ public interface FedoraResource {
      *
      * @param graphSubjects
      * @param inputModel
-     * @return RDFStream
      */
-    RdfStream replaceProperties(final IdentifierConverter<Resource,Node> graphSubjects,
+    void replaceProperties(final IdentifierConverter<Resource,Node> graphSubjects,
                                 final Model inputModel,
                                 final RdfStream originalTriples);
 
