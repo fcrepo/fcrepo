@@ -120,6 +120,9 @@ $(function() {
     $('#action_revert').submit(patchAndReload);
     $('#action_remove_version').submit(removeVersion);
 
+    var ldpContains = $('#childList li').length;
+    $('#badge').text(ldpContains);
+
 });
 
 function submitAndFollowLocation() {
