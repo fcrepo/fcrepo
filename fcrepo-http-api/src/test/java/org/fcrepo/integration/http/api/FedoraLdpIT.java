@@ -59,6 +59,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXParseException;
 
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Variant;
 
@@ -647,7 +648,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPutDatastream() throws Exception {
+    public void testPutBinary() throws Exception {
 
         final String pid = getRandomUniquePid();
         createObject(pid);
@@ -669,6 +670,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String lastmod = response.getFirstHeader("Last-Modified").getValue();
         assertNotNull("Should set Last-Modified for new nodes", lastmod);
         assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
+        final Link link = Link.valueOf(response.getFirstHeader("Link").getValue());
+        assertEquals("describedby", link.getRel());
     }
 
     @Test
@@ -820,6 +823,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertNotEquals(serverAddress + "/objects", location);
         assertEquals("Object wasn't created!", OK.getStatusCode(),
                 getStatus(new HttpGet(location)));
+
+        final Link link = Link.valueOf(response.getFirstHeader("Link").getValue());
+        assertEquals("describedby", link.getRel());
     }
 
     @Test
