@@ -52,13 +52,13 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  * @author ajs6f
  */
-public class PropertiesRdfContextTest {
+public class ContentRdfContextTest {
 
     @Test
     public void testForLowLevelStorageTriples() throws RepositoryException,
                                                IOException {
         final Model results =
-            new PropertiesRdfContext(mockResource, mockGraphSubjects).asModel();
+            new ContentRdfContext(mockResource, mockGraphSubjects).asModel();
         logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
         assertTrue("Didn't find triple showing node has content!", results
                 .contains(mockSubject, HAS_CONTENT, mockContentSubject));
@@ -143,5 +143,5 @@ public class PropertiesRdfContextTest {
     }
 
     private static final Logger LOGGER =
-        getLogger(PropertiesRdfContextTest.class);
+        getLogger(ContentRdfContextTest.class);
 }

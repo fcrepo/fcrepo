@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -32,6 +31,7 @@ import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -57,6 +57,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.io.InputStream;
 import java.util.List;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
@@ -168,10 +169,9 @@ public class FedoraLdpTest {
         when(mockResource.getTriples(eq(identifierConverter), any(Class.class))).thenAnswer(new Answer<RdfStream>() {
             @Override
             public RdfStream answer(final InvocationOnMock invocationOnMock) throws Throwable {
-                return new RdfStream(Triple.create(NodeFactory.createURI(invocationOnMock.getMock().toString()),
-                                                   NodeFactory.createURI("called"),
-                                                   NodeFactory.createLiteral(
-                                                           invocationOnMock.getArguments()[1].toString())
+                return new RdfStream(Triple.create(createURI(invocationOnMock.getMock().toString()),
+                                                   createURI("called"),
+                                                   createURI(invocationOnMock.getArguments()[1].toString())
                         ));
             }
         });
@@ -360,8 +360,7 @@ public class FedoraLdpTest {
                 });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.AclRdfContext"
+                "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext"
         )));
 
         assertFalse("Included non-minimal contexts",
@@ -470,6 +469,8 @@ public class FedoraLdpTest {
     public void testGetWithBinaryDescription() throws Exception {
         final Datastream mockResource = (Datastream)setResource(Datastream.class);
         when(mockResource.getBinary()).thenReturn(mockBinary);
+        when(mockBinary.getTriples(identifierConverter, PropertiesRdfContext.class)).thenReturn(
+                new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
         final Response actual = testObj.describe(new Prefer(""), null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource",
@@ -498,7 +499,8 @@ public class FedoraLdpTest {
                 "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext"
+                "class org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext",
+                "child:properties"
         )));
 
     }
@@ -584,6 +586,11 @@ public class FedoraLdpTest {
     public void testPatchBinaryDescription() throws Exception {
 
         final Datastream mockObject = (Datastream)setResource(Datastream.class);
+        when(mockObject.getBinary()).thenReturn(mockBinary);
+
+        when(mockBinary.getTriples(identifierConverter, PropertiesRdfContext.class)).thenReturn(
+                new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
+
         doReturn(mockObject).when(testObj).resource();
 
         testObj.updateSparql(toInputStream("xyz"));
