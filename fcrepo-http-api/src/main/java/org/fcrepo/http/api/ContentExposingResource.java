@@ -173,7 +173,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         } else if (prefer != null && prefer.hasHandling()) {
             returnPreference = prefer.getHandling();
         } else {
-            returnPreference = new PreferTag("");
+            returnPreference = PreferTag.emptyTag();
         }
 
         final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);

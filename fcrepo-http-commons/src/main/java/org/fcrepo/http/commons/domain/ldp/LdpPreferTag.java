@@ -54,7 +54,7 @@ public class LdpPreferTag extends PreferTag {
      * @param preferTag
      */
     public LdpPreferTag(final PreferTag preferTag) {
-        super(preferTag.getTag());
+        super(preferTag);
 
         final Optional<String> include = fromNullable(preferTag.getParams().get("include"));
         final Optional<String> omit = fromNullable(preferTag.getParams().get("omit"));
@@ -65,7 +65,7 @@ public class LdpPreferTag extends PreferTag {
 
         final boolean minimal = preferTag.getValue().equals("minimal") || received.or("").equals("minimal");
 
-        preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer");
+        preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer") || minimal;
 
         membership = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferMembership")) ||
                 includes.contains(LDP_NAMESPACE + "PreferMembership");

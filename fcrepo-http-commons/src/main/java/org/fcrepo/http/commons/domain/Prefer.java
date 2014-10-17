@@ -67,7 +67,7 @@ public class Prefer {
         if (aReturn.isPresent()) {
             return aReturn.get();
         }
-        return new PreferTag("");
+        return PreferTag.emptyTag();
     }
 
     /**
@@ -80,7 +80,7 @@ public class Prefer {
         if (handling.isPresent()) {
             return handling.get();
         }
-        return new PreferTag("");
+        return PreferTag.emptyTag();
     }
 
 
