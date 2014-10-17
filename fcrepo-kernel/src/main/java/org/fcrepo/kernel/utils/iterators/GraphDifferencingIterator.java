@@ -15,54 +15,69 @@
  */
 package org.fcrepo.kernel.utils.iterators;
 
-import static com.google.common.collect.Sets.newHashSet;
-
 import java.util.Iterator;
-import java.util.Set;
 
 import com.google.common.collect.AbstractIterator;
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.sparql.graph.GraphFactory.createDefaultGraph;
 
 /**
  * A wrapping {@link Iterator} that calculates two differences between a
- * {@link Set} A and a source Iterator B. The differences are (A - (A ∩ B)) and
+ * {@link Graph} A and a source Iterator B. The differences are (A - (A ∩ B)) and
  * (B - (A ∩ B)). The ordinary output of this iterator is (B - (A ∩ B)), and
  * after exhaustion, sets containing (A - (A ∩ B)) and (A ∩ B) are available.
  *
  * @author ajs6f
  * @since Oct 24, 2013
- * @param <E> The type of element common to both source and set.
  */
-public class DifferencingIterator<E> extends AbstractIterator<E> {
+public class GraphDifferencingIterator extends AbstractIterator<Triple> {
 
-    Set<? extends E> notCommon;
+    private Graph notCommon;
 
-    private Set<E> common;
+    private Graph common;
 
-    private Iterator<E> source;
+    private Iterator<Triple> source;
 
     /**
-     * Ordinary constructor.
+     * Diff a Model against a stream of triples
      *
+     * @param replacement
      * @param original
-     * @param source
      */
-    public DifferencingIterator(final Set<? extends E> original,
-            final Iterator<E> source) {
+    public GraphDifferencingIterator(final Model replacement,
+                                     final Iterator<Triple> original) {
+        this(replacement.getGraph(), original);
+    }
+
+    /**
+     * Diff a graph against a stream of triples
+     *
+     * @param replacement
+     * @param original
+     */
+    public GraphDifferencingIterator(final Graph replacement,
+                                     final Iterator<Triple> original) {
         super();
-        this.notCommon = newHashSet(original);
-        this.common = newHashSet();
-        this.source = source;
+        this.notCommon = replacement;
+        this.common = createDefaultGraph();
+        this.source = original;
+
     }
 
     @Override
-    protected E computeNext() {
+    protected Triple computeNext() {
         if (source.hasNext()) {
-            E next = source.next();
+            Triple next = source.next();
             // we only want to return this element if it is not common
             // to the two inputs
             while (common.contains(next) || notCommon.contains(next)) {
                 // it was common, so shift it to common
-                if (notCommon.remove(next)) {
+                if (notCommon.contains(next)) {
+                    notCommon.remove(next.getSubject(), next.getPredicate(), next.getObject());
                     common.add(next);
                 }
                 // move onto the next candidate
@@ -82,8 +97,8 @@ public class DifferencingIterator<E> extends AbstractIterator<E> {
      *
      * @return The elements that turned out to be common to the two inputs.
      */
-    public Set<E> common() {
-        return source.hasNext() ? null : common;
+    public Iterator<Triple> common() {
+        return source.hasNext() ? null : common.find(ANY, ANY, ANY);
     }
 
     /**
@@ -91,8 +106,8 @@ public class DifferencingIterator<E> extends AbstractIterator<E> {
      *
      * @return The elements that turned out not to be common to the two inputs.
      */
-    public Set<? extends E> notCommon() {
-        return source.hasNext() ? null : notCommon;
+    public Iterator<Triple> notCommon() {
+        return source.hasNext() ? null : notCommon.find(ANY, ANY, ANY);
     }
 
 }
