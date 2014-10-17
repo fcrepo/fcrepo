@@ -27,6 +27,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.vocabulary.DC_11;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 import org.apache.commons.io.IOUtils;
@@ -492,6 +493,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpResponse response = client.execute(patch);
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
                 .getStatusCode());
+    }
+
+    @Test
+    public void testPatchBinaryDescriptionWithBinaryProperties() throws Exception {
+        final String pid = getRandomUniquePid();
+
+
+        createDatastream(pid, "x", "some content");
+
+        final String location = serverAddress + pid + "/x/fcr:metadata";
+        final HttpPatch patch = new HttpPatch(location);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                ("INSERT { <" + serverAddress + pid + "/x>" +
+                        " <" + DC_11.identifier + "> \"this is an identifier\" } WHERE {}")
+                        .getBytes()));
+        patch.setEntity(e);
+        final HttpResponse response = client.execute(patch);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
+
+        final GraphStore graphStore = getGraphStore(new HttpGet(location));
+        assertTrue(graphStore.contains(ANY,
+                createURI(serverAddress + pid + "/x"),
+                DC_11.identifier.asNode(),
+                createLiteral("this is an identifier")));
     }
 
     @Test
