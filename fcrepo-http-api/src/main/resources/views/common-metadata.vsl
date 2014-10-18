@@ -7,10 +7,10 @@
     <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_DATE, true)
     by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_BY, true))</dd>
 
-    <dt>Children <span class="badge">$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CHILD_COUNT, true)</span></dt>
+    <dt>Children <span id="badge" class="badge"> </span></dt>
     <dd>
-        <ol>
-            #foreach($quad in $helpers.getObjects($rdf, $topic, $rdfLexicon.HAS_CHILD))
+        <ol id="childList">
+            #foreach($quad in $helpers.getObjects($rdf, $topic, $rdfLexicon.CONTAINS))
                 <li><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
             #end
         </ol>
