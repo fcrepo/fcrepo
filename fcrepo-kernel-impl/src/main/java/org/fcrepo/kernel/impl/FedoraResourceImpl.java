@@ -264,10 +264,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 inboundProperty.remove();
             }
 
+            final Node parent;
+
+            if (getNode().getDepth() > 0) {
+                parent = getNode().getParent();
+            } else {
+                parent = null;
+            }
+            final String name = getNode().getName();
+
             node.remove();
+
+            if (parent != null) {
+                createTombstone(parent, name);
+            }
+
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    private void createTombstone(final Node parent, final String path) throws RepositoryException {
+        findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
     }
 
     /* (non-Javadoc)

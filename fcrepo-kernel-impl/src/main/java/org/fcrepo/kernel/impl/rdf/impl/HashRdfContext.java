@@ -28,6 +28,8 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import java.util.Iterator;
 
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+
 /**
  * @author cabeer
  * @since 10/9/14
@@ -54,7 +56,7 @@ public class HashRdfContext extends NodeRdfContext {
                         @Override
                         public Iterator<Triple> apply(final Node input) {
                             try {
-                                return new PropertiesRdfContext(input, graphSubjects);
+                                return new PropertiesRdfContext(nodeConverter.convert(input), graphSubjects);
                             } catch (final RepositoryException e) {
                                 throw new RepositoryRuntimeException(e);
                             }

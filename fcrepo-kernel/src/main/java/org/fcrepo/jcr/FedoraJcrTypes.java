@@ -33,6 +33,8 @@ public interface FedoraJcrTypes {
 
     String FEDORA_PAIRTREE = "fedora:pairtree";
 
+    String FEDORA_TOMBSTONE = "fedora:tombstone";
+
     String LDP_CONTAINER = "ldp:Container";
 
     String JCR_LASTMODIFIED = "jcr:lastModified";

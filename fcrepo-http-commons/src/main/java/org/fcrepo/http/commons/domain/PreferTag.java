@@ -33,6 +33,28 @@ public class PreferTag {
     private Map<String, String> params = new HashMap<>();
 
     /**
+     * Create an empty PreferTag
+     * @return
+     */
+    public static PreferTag emptyTag() {
+        try {
+            return new PreferTag((String)null);
+        } catch (final ParseException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Create a new PreferTag from an existing tag
+     * @param preferTag
+     */
+    public PreferTag(final PreferTag preferTag) {
+        tag = preferTag.getTag();
+        value = preferTag.getValue();
+        params = preferTag.getParams();
+    }
+
+    /**
      * Parse the prefer tag and parameters out of the header
      * @param reader
      * @throws ParseException
@@ -42,16 +64,20 @@ public class PreferTag {
         // Skip any white space
         reader.hasNext();
 
-        tag = reader.nextToken();
-
-        if (reader.hasNextSeparator('=', true)) {
-            reader.next();
-
-            value = reader.nextTokenOrQuotedString();
-        }
-
         if (reader.hasNext()) {
-            params = HttpHeaderReader.readParameters(reader);
+            tag = reader.nextToken();
+
+            if (reader.hasNextSeparator('=', true)) {
+                reader.next();
+
+                value = reader.nextTokenOrQuotedString();
+            }
+
+            if (reader.hasNext()) {
+                params = HttpHeaderReader.readParameters(reader);
+            }
+        } else {
+            tag = "";
         }
     }
 
@@ -59,8 +85,8 @@ public class PreferTag {
      * Create a blank prefer tag
      * @param inputTag
      */
-    public PreferTag(final String inputTag) {
-        tag = inputTag;
+    public PreferTag(final String inputTag) throws ParseException {
+        this(HttpHeaderReader.newInstance(inputTag));
     }
 
     /**

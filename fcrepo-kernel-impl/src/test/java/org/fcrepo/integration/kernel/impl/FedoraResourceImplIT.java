@@ -20,12 +20,11 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.LONG;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -61,6 +60,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.RootRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.BinaryService;
@@ -158,17 +158,14 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testRepositoryRootGraph() {
 
         final FedoraResource object = nodeService.getObject(session, "/");
-        final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
+        final Graph graph = object.getTriples(subjects, RootRdfContext.class).asModel().getGraph();
 
         final Node s = createGraphSubjectNode(object);
-        Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
-        Node o = createLiteral("mode:root");
-        assertTrue(graph.contains(s, p, o));
 
-        p =
+        Node p =
             createURI(REPOSITORY_NAMESPACE
                     + "repository/jcr.repository.vendor.url");
-        o = createLiteral("http://www.modeshape.org");
+        Node o = createLiteral("http://www.modeshape.org");
         assertTrue(graph.contains(s, p, o));
 
         p = createURI(REPOSITORY_NAMESPACE + "hasNodeType");
@@ -301,7 +298,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
 
         // jcr property
-        Node s = createGraphSubjectNode(object);
+        final Node s = createGraphSubjectNode(object);
         Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
         Node o = createLiteral(object.getNode().getIdentifier());
 
@@ -328,19 +325,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         o = createGraphSubjectNode(parentObject);
         assertTrue(graph.contains(s, p, o));
 
-        p = createURI(REPOSITORY_NAMESPACE + "hasContent");
-        o = createGraphSubjectNode(object.getBinary());
-        assertTrue(graph.contains(s, p, o));
-
-        // content properties
-        s = createGraphSubjectNode(object.getBinary());
-        p = createURI(REPOSITORY_NAMESPACE + "mimeType");
-        o = createLiteral("text/plain");
-        assertTrue(graph.contains(s, p, o));
-
-        p = HAS_SIZE.asNode();
-        o = createLiteral("22", createTypedLiteral(22L).getDatatype());
-        assertTrue(graph.contains(s, p, o));
     }
 
     @Test
@@ -576,7 +560,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        assertFalse(session.nodeExists("/" + pid));
+        assertTrue(session.getNode("/" + pid).isNodeType(FEDORA_TOMBSTONE));
     }
 
     @Test
@@ -597,7 +581,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        assertFalse(session.nodeExists("/" + pid + "/b"));
+        assertTrue(session.getNode("/" + pid + "/b").isNodeType(FEDORA_TOMBSTONE));
 
     }
 

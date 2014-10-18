@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
@@ -70,9 +71,14 @@ public class RootRdfContext extends NodeRdfContext {
     public RootRdfContext(final FedoraResource resource,
                           final IdentifierConverter<Resource, FedoraResource> graphSubjects)
             throws RepositoryException {
-
         super(resource, graphSubjects);
 
+        if (resource().hasType(ROOT)) {
+            concatRepositoryTriples();
+        }
+    }
+
+    private void concatRepositoryTriples() throws RepositoryException {
         LOGGER.trace("Creating RDF triples for repository description");
         final Repository repository = resource().getNode().getSession().getRepository();
 
@@ -96,15 +102,15 @@ public class RootRdfContext extends NodeRdfContext {
                     createLiteral(nodeType.getName())));
         }
 
-        /*
-            FIXME: removing because performance problems, esp. w/ many files on federated filesystem
-            see: https://www.pivotaltracker.com/story/show/78647248
+            /*
+                FIXME: removing because performance problems, esp. w/ many files on federated filesystem
+                see: https://www.pivotaltracker.com/story/show/78647248
 
-        b.add(create(subject(), HAS_OBJECT_COUNT.asNode(), createLiteral(String
-                .valueOf(getRepositoryCount(repository)))));
-        b.add(create(subject(), HAS_OBJECT_SIZE.asNode(), createLiteral(String
-                .valueOf(getRepositorySize(repository)))));
-        */
+            b.add(create(subject(), HAS_OBJECT_COUNT.asNode(), createLiteral(String
+                    .valueOf(getRepositoryCount(repository)))));
+            b.add(create(subject(), HAS_OBJECT_SIZE.asNode(), createLiteral(String
+                    .valueOf(getRepositorySize(repository)))));
+            */
 
         // Get the cluster configuration, if available
         // this ugly test checks to see whether this is an ordinary JCR

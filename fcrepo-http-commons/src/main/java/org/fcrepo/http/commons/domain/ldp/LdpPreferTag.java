@@ -21,6 +21,7 @@ import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.SERVER_MANAGED;
 
 import java.util.List;
 
@@ -45,21 +46,26 @@ public class LdpPreferTag extends PreferTag {
 
     private final boolean embed;
 
+    private final boolean managedProperties;
+
     /**
      * Standard constructor.
      *
      * @param preferTag
      */
     public LdpPreferTag(final PreferTag preferTag) {
-        super(preferTag.getTag());
+        super(preferTag);
 
         final Optional<String> include = fromNullable(preferTag.getParams().get("include"));
         final Optional<String> omit = fromNullable(preferTag.getParams().get("omit"));
+        final Optional<String> received = fromNullable(preferTag.getParams().get("received"));
 
         final List<String> includes = asList(include.or(" ").split(" "));
         final List<String> omits = asList(omit.or(" ").split(" "));
 
-        preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer");
+        final boolean minimal = preferTag.getValue().equals("minimal") || received.or("").equals("minimal");
+
+        preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer") || minimal;
 
         membership = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferMembership")) ||
                 includes.contains(LDP_NAMESPACE + "PreferMembership");
@@ -67,9 +73,13 @@ public class LdpPreferTag extends PreferTag {
         containment = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferContainment")) ||
                 includes.contains(LDP_NAMESPACE + "PreferContainment");
 
-        references = !omits.contains(INBOUND_REFERENCES.toString());
+        references = includes.contains(INBOUND_REFERENCES.toString())
+                || !omits.contains(INBOUND_REFERENCES.toString()) && !minimal;
 
         embed = includes.contains(EMBED_CONTAINS.toString());
+
+        managedProperties = includes.contains(SERVER_MANAGED.toString())
+                || (!omits.contains(SERVER_MANAGED.toString()) && !minimal);
     }
 
     /**
@@ -93,9 +103,15 @@ public class LdpPreferTag extends PreferTag {
         return references;
     }
     /**
-     * @return Whether this prefer tag demands references triples.
+     * @return Whether this prefer tag demands embedded triples.
      */
     public boolean prefersEmbed() {
         return embed;
+    }
+    /**
+     * @return Whether this prefer tag demands server managed properties.
+     */
+    public boolean prefersServerManaged() {
+        return managedProperties;
     }
 }

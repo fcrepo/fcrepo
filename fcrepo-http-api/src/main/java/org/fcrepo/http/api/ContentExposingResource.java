@@ -16,10 +16,10 @@
 package org.fcrepo.http.api;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -28,19 +28,23 @@ import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
+import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.HashRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.RootRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
@@ -62,7 +66,6 @@ import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,7 +74,10 @@ import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Iterator;
 
+import static com.google.common.base.Predicates.alwaysTrue;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
@@ -82,6 +88,7 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -157,34 +164,70 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return Response.ok(rdfStream).build();
     }
 
-    protected RdfStream getResourceTriples() {
-        return getResourceTriples(null);
-    }
-
     protected RdfStream getResourceTriples(final Prefer prefer) {
 
         final PreferTag returnPreference;
 
         if (prefer != null && prefer.hasReturn()) {
             returnPreference = prefer.getReturn();
+        } else if (prefer != null && prefer.hasHandling()) {
+            returnPreference = prefer.getHandling();
         } else {
-            returnPreference = new PreferTag("");
+            returnPreference = PreferTag.emptyTag();
         }
+
+        final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
 
         final RdfStream rdfStream = new RdfStream();
 
-        rdfStream.concat(getTriples(PropertiesRdfContext.class));
-        rdfStream.concat(getTriples(AclRdfContext.class));
-        rdfStream.concat(getTriples(TypeRdfContext.class));
+        final Predicate<Triple> tripleFilter;
+        if (ldpPreferences.prefersServerManaged()) {
+            tripleFilter = alwaysTrue();
+        } else {
+            tripleFilter = not(ManagedRdf.isManagedTriple);
+        }
+
+        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter));
+
+
+        if (ldpPreferences.prefersServerManaged()) {
+            rdfStream.concat(getTriples(TypeRdfContext.class));
+        } else {
+            rdfStream.concat(filter(getTriples(TypeRdfContext.class), new Predicate<Triple>() {
+                @Override
+                public boolean apply(final Triple input) {
+                    return !isManagedNamespace.apply(input.getObject().getNameSpace());
+                }
+            }));
+        }
+
+
+        if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
+            httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());
+        }
 
         if (!returnPreference.getValue().equals("minimal")) {
-            final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);
+
+            if (ldpPreferences.prefersServerManaged()) {
+                rdfStream.concat(getTriples(AclRdfContext.class));
+                rdfStream.concat(getTriples(RootRdfContext.class));
+                rdfStream.concat(getTriples(ContentRdfContext.class));
+            }
+
+            rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter));
+
+            if (resource() instanceof Datastream) {
+                rdfStream.concat(filter(
+                        getTriples(((Datastream) resource()).getBinary(), PropertiesRdfContext.class), tripleFilter));
+            }
 
             if (ldpPreferences.prefersReferences()) {
                 rdfStream.concat(getTriples(ReferencesRdfContext.class));
             }
 
-            rdfStream.concat(getTriples(ParentRdfContext.class));
+            if (ldpPreferences.prefersServerManaged()) {
+                rdfStream.concat(getTriples(ParentRdfContext.class));
+            }
 
             if (ldpPreferences.prefersContainment()) {
                 rdfStream.concat(getTriples(ChildrenRdfContext.class));
@@ -199,22 +242,21 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
                 final Iterator<FedoraResource> children = resource().getChildren();
 
-                rdfStream.concat(concat(transform(children,
+                rdfStream.concat(filter(concat(transform(children,
                         new Function<FedoraResource, RdfStream>() {
 
                             @Override
                             public RdfStream apply(final FedoraResource child) {
                                 return child.getTriples(translator(), PropertiesRdfContext.class);
                             }
-                        })));
+                        })), tripleFilter));
 
             }
 
-            rdfStream.concat(getTriples(ContainerRdfContext.class));
+            if (ldpPreferences.prefersServerManaged()) {
+                rdfStream.concat(getTriples(ContainerRdfContext.class));
+            }
         }
-
-        addResponseInformationToStream(resource(), rdfStream, uriInfo,
-                translator());
 
         return rdfStream;
     }
@@ -339,16 +381,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         return resource;
-    }
-
-
-    protected void addResponseInformationToStream(
-            final FedoraResource resource, final RdfStream dataset,
-            final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> subjects) {
-        if (httpTripleUtil != null) {
-            httpTripleUtil.addHttpComponentModelsForResourceToStream(dataset, resource,
-                    uriInfo, subjects);
-        }
     }
 
     /**
@@ -480,31 +512,19 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
-                                             final MediaType contentType) {
+                                             final MediaType contentType,
+                                             final RdfStream resourceTriples) {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel = createDefaultModel()
                 .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
 
-        final RdfStream resourceTriples;
-
-        if (resource.isNew()) {
-            resourceTriples = new RdfStream();
-        } else {
-            resourceTriples = getResourceTriples();
-        }
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
-    protected void patchResourcewithSparql(final FedoraResource resource, final String requestBody) {
-        final RdfStream resourceTriples;
-
-        if (resource.isNew()) {
-            resourceTriples = new RdfStream();
-        } else {
-            resourceTriples = getResourceTriples();
-        }
-
+    protected void patchResourcewithSparql(final FedoraResource resource,
+                                           final String requestBody,
+                                           final RdfStream resourceTriples) {
         resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 

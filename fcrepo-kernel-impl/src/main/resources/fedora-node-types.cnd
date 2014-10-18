@@ -78,7 +78,7 @@
 /*
  *  Dublin Core terms
  */
-[dc:describable] mixin
+[fedora:DublinCoreDescribable] mixin
   - dc:contributor (STRING) multiple
   - dc:coverage (STRING) multiple
   - dc:creator (STRING) multiple
@@ -98,7 +98,7 @@
 /*
  * Any Fedora resource.
  */
-[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:referenceable, dc:describable mixin
+[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:referenceable, fedora:DublinCoreDescribable mixin
   - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)
@@ -126,3 +126,5 @@
 [fedora:blanknode] > mix:referenceable mixin
 
 [fedora:pairtree] mixin
+
+[fedora:tombstone] > nt:hierarchyNode

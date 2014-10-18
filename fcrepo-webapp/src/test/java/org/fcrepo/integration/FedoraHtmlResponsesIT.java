@@ -171,7 +171,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 
         final Page page2 = webClient.getPage(serverAddress + pid);
-        assertEquals("Didn't get a 404!", 404, page2.getWebResponse()
+        assertEquals("Didn't get a 410!", 410, page2.getWebResponse()
                 .getStatusCode());
 
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
