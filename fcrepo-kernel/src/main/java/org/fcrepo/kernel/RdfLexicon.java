@@ -48,6 +48,12 @@ public final class RdfLexicon {
      */
     public static final String JCR_NAMESPACE = "http://www.jcp.org/jcr/1.0";
 
+    public static final String MODE_NAMESPACE = "http://www.modeshape.org/1.0";
+
+    public static final String MIX_NAMESPACE = "http://www.jcp.org/jcr/mix/1.0";
+
+    public static final String JCR_NT_NAMESPACE = "http://www.jcp.org/jcr/nt/1.0";
+
 
     /**
      * REST API namespace "fedora", used for internal API links and node
@@ -87,7 +93,9 @@ public final class RdfLexicon {
      * The namespaces that the repository manages internally.
      */
     public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
-            REPOSITORY_NAMESPACE, JCR_NAMESPACE);
+            REPOSITORY_NAMESPACE, JCR_NAMESPACE,
+            MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE,
+            LDP_NAMESPACE);
 
     /**
      * Is this namespace one that the repository manages?
@@ -111,12 +119,6 @@ public final class RdfLexicon {
 
     public static final String DC_NAMESPACE =
             "http://purl.org/dc/elements/1.1/";
-
-    public static final String MIX_NAMESPACE =
-            "http://www.jcp.org/jcr/mix/1.0";
-
-    public static final String JCR_NT_NAMESPACE =
-            "http://www.jcp.org/jcr/nt/1.0";
 
     // MEMBERSHIP
     public static final Property HAS_PARENT =
@@ -265,6 +267,7 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
     public static final Property INBOUND_REFERENCES = createProperty(REPOSITORY_NAMESPACE + "InboundReferences");
     public static final Property EMBED_CONTAINS = createProperty(REPOSITORY_NAMESPACE + "EmbedResources");
+    public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     // IMPORTANT JCR PROPERTIES
     public static final Property HAS_PRIMARY_IDENTIFIER =

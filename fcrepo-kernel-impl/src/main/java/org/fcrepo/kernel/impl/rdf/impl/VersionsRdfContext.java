@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 
 import java.util.Iterator;
@@ -90,7 +91,8 @@ public class VersionsRdfContext extends RdfStream {
                     final com.hp.hpl.jena.graph.Node versionSubject
                             = nodeToResource(graphSubjects).convert(frozenNode).asNode();
 
-                    final RdfStream results = new PropertiesRdfContext(frozenNode, graphSubjects);
+                    final RdfStream results = new PropertiesRdfContext(nodeConverter.convert(frozenNode),
+                            graphSubjects);
 
                     results.concat(create(subject, HAS_VERSION.asNode(),
                             versionSubject));
