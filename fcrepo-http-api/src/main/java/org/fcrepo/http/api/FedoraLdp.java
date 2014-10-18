@@ -275,6 +275,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         addCacheControlHeaders(servletResponse, resource, session);
 
+        addResourceLinkHeaders(resource);
+
         return response.build();
 
     }
@@ -402,11 +404,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final URI location = getUri(result);
 
-        if (result instanceof FedoraBinary) {
-            final URI descriptionUri = getUri(((FedoraBinary) result).getDescription());
-            servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\";"
-                    + " anchor=\"" + location + "\"");
-        }
+        addResourceLinkHeaders(result);
 
         return created(location).entity(location.toString()).build();
 
@@ -465,9 +463,12 @@ public class FedoraLdp extends ContentExposingResource {
             options = "";
         }
 
-        final FedoraResource resource = resource();
+        addResourceLinkHeaders(resource());
 
+        servletResponse.addHeader("Allow", options);
+    }
 
+    private void addResourceLinkHeaders(final FedoraResource resource) {
         if (resource instanceof Datastream) {
             final URI binaryUri = getUri(((Datastream) resource).getBinary());
             servletResponse.addHeader("Link", "<" + binaryUri + ">;rel=\"describes\"");
@@ -475,8 +476,6 @@ public class FedoraLdp extends ContentExposingResource {
             final URI descriptionUri = getUri(((FedoraBinary) resource).getDescription());
             servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\"");
         }
-
-        servletResponse.addHeader("Allow", options);
     }
 
     private String getRequestedObjectType(final String mixin,
