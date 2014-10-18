@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.impl.testutilities.TestNodeIterator.nodeIterator;
@@ -41,6 +42,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -56,6 +58,7 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
@@ -414,6 +417,25 @@ public class FedoraResourceImplTest {
     public void testEquals() throws RepositoryException {
         assertEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockNode));
         assertNotEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockRoot));
+    }
+
+    @Test
+    public void testDelete() throws RepositoryException {
+        when(mockNode.getReferences()).thenReturn(new TestPropertyIterator());
+        testObj.delete();
+        verify(mockNode).remove();
+    }
+
+    @Test
+    public void testDeleteLeavesATombstone() throws RepositoryException {
+        when(mockNode.getReferences()).thenReturn(new TestPropertyIterator());
+        when(mockNode.getName()).thenReturn("a");
+        when(mockNode.getParent()).thenReturn(mockContainer);
+        when(mockNode.getDepth()).thenReturn(2);
+        when(mockContainer.getNode("a")).thenThrow(new PathNotFoundException());
+        testObj.delete();
+        verify(mockNode).remove();
+        verify(mockContainer).addNode("a", FEDORA_TOMBSTONE);
     }
 
 }

@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import org.fcrepo.kernel.exception.TombstoneException;
+import org.fcrepo.kernel.impl.TombstoneImpl;
 import org.fcrepo.kernel.services.Service;
 import org.modeshape.jcr.api.JcrTools;
 
@@ -38,6 +40,10 @@ public abstract class AbstractService implements Service {
                                     final String finalNodeType) throws RepositoryException {
 
         final Node preexistingNode = getClosestPreexistingNode(session, path);
+
+        if (TombstoneImpl.hasMixin(preexistingNode)) {
+            throw new TombstoneException(new TombstoneImpl(preexistingNode));
+        }
 
         final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, finalNodeType);
 

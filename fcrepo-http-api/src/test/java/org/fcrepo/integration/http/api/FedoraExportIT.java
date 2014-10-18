@@ -59,8 +59,9 @@ public class FedoraExportIT extends AbstractResourceIT {
 
         // delete it
         execute(new HttpDelete(serverAddress + objName));
-        response = execute(new HttpGet(serverAddress + objName));
-        assertEquals(404, response.getStatusLine().getStatusCode());
+        assertDeleted(serverAddress + objName);
+        final HttpResponse tombstoneResponse = execute(new HttpDelete(serverAddress + objName + "/fcr:tombstone"));
+        assertEquals(204, tombstoneResponse.getStatusLine().getStatusCode());
 
         // try to import it
         final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
@@ -96,8 +97,8 @@ public class FedoraExportIT extends AbstractResourceIT {
 
         // delete it
         execute(new HttpDelete(serverAddress + objName));
-        response = execute(new HttpGet(serverAddress + objName));
-        assertEquals(404, response.getStatusLine().getStatusCode());
+        assertDeleted(serverAddress + objName);
+        execute(new HttpDelete(serverAddress + objName + "/fcr:tombstone"));
 
         // try to import it
         final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");

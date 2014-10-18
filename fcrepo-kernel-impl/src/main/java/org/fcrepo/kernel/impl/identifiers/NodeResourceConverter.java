@@ -21,6 +21,7 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.FedoraObjectImpl;
+import org.fcrepo.kernel.impl.TombstoneImpl;
 
 import javax.jcr.Node;
 
@@ -49,6 +50,8 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
             fedoraResource = new DatastreamImpl(node);
         } else if (FedoraBinaryImpl.hasMixin(node)) {
             fedoraResource = new FedoraBinaryImpl(node);
+        } else if (TombstoneImpl.hasMixin(node)) {
+            fedoraResource = new TombstoneImpl(node);
         } else {
             fedoraResource = new FedoraObjectImpl(node);
         }
