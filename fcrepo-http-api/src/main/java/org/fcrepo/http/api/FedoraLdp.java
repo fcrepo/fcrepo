@@ -18,6 +18,7 @@ package org.fcrepo.http.api;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -104,6 +105,8 @@ public class FedoraLdp extends ContentExposingResource {
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
     @PathParam("path") protected String externalPath;
+
+    @Inject private FedoraHttpConfiguration httpConfiguration;
 
     /**
      * Default JAX-RS entry point
@@ -216,7 +219,8 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Content-Type") final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream,
             @QueryParam("checksum") final String checksum,
-            @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition)
+            @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
+            @HeaderParam("If-Match") final String ifMatch)
             throws InvalidChecksumException, IOException {
 
         final FedoraResource resource;
@@ -237,6 +241,10 @@ public class FedoraLdp extends ContentExposingResource {
             final URI location = getUri(resource);
 
             response = created(location).entity(location.toString());
+        }
+
+        if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
+            throw new ClientErrorException("An If-Match header is required", 428);
         }
 
         evaluateRequestPreconditions(request, servletResponse, resource, session);

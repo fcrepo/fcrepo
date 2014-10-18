@@ -124,6 +124,9 @@ public class FedoraLdpTest {
     @Mock
     private BinaryService mockBinaryService;
 
+    @Mock
+    private FedoraHttpConfiguration mockHttpConfiguration;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -144,6 +147,9 @@ public class FedoraLdpTest {
         setField(testObj, "nodeService", mockNodeService);
         setField(testObj, "objectService", mockObjectService);
         setField(testObj, "binaryService", mockBinaryService);
+        setField(testObj, "httpConfiguration", mockHttpConfiguration);
+
+        when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockObject.getPath()).thenReturn(path);
@@ -519,7 +525,7 @@ public class FedoraLdpTest {
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
         when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
 
-        final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null);
+        final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -534,7 +540,7 @@ public class FedoraLdpTest {
         when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c ."), null, null);
+                toInputStream("_:a <info:x> _:c ."), null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockObject).replaceProperties(eq(identifierConverter), any(Model.class), any(RdfStream.class));
@@ -549,7 +555,7 @@ public class FedoraLdpTest {
         when(mockBinaryService.findOrCreateBinary(mockSession, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
-                toInputStream("xyz"), null, null);
+                toInputStream("xyz"), null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -566,10 +572,26 @@ public class FedoraLdpTest {
         when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c ."), null, null);
+                toInputStream("_:a <info:x> _:c ."), null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockObject).replaceProperties(eq(identifierConverter), any(Model.class), any(RdfStream.class));
+    }
+
+    @Test(expected = ClientErrorException.class)
+    public void testPutWithStrictIfMatchHandling() throws Exception {
+
+        when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(true);
+        final FedoraObject mockObject = (FedoraObject)setResource(FedoraObject.class);
+        doReturn(mockObject).when(testObj).resource();
+        when(mockObject.isNew()).thenReturn(false);
+
+        when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(true);
+        when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
+
+        testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
+                toInputStream("_:a <info:x> _:c ."), null, null, null);
+
     }
 
     @Test
