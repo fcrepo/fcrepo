@@ -172,7 +172,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 public boolean apply(final Node n) {
                     LOGGER.trace("Testing child node {}", n);
                     try {
-                        return (isInternalNode.apply(n) || n.getName().equals(JCR_CONTENT));
+                        return isInternalNode.apply(n)
+                                || n.getName().equals(JCR_CONTENT)
+                                || TombstoneImpl.hasMixin(n);
                     } catch (final RepositoryException e) {
                         throw new RepositoryRuntimeException(e);
                     }
