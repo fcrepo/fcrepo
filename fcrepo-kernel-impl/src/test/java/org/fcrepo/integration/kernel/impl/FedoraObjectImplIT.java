@@ -29,11 +29,16 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -51,9 +56,19 @@ public class FedoraObjectImplIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
+    private Session session;
+
+    private DefaultIdentifierTranslator subjects;
+
+    @Before
+    public void setUp() throws RepositoryException {
+        session = repo.login();
+        subjects = new DefaultIdentifierTranslator(session);
+
+    }
+
     @Test
     public void testCreatedObject() throws RepositoryException {
-        Session session = repo.login();
         objectService.findOrCreateObject(session, "/testObject");
         session.save();
         session.logout();
@@ -65,10 +80,8 @@ public class FedoraObjectImplIT extends AbstractIT {
 
     @Test
     public void testObjectGraph() throws Exception {
-        final Session session = repo.login();
         final FedoraObject object =
             objectService.findOrCreateObject(session, "/graphObject");
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
         final Model model = object.getTriples(subjects, PropertiesRdfContext.class).asModel();
 
         final Resource graphSubject = subjects.reverse().convert(object);
@@ -142,10 +155,8 @@ public class FedoraObjectImplIT extends AbstractIT {
 
     @Test
     public void testObjectGraphWithUriProperty() throws RepositoryException {
-        final Session session = repo.login();
         final FedoraObject object =
             objectService.findOrCreateObject(session, "/graphObject");
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
         final Resource graphSubject = subjects.reverse().convert(object);
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
@@ -175,5 +186,47 @@ public class FedoraObjectImplIT extends AbstractIT {
         assertEquals(object.getNode(), session.getNodeByIdentifier(
                 object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
+    }
+
+    @Test
+    public void testUpdatingObjectGraphWithErrors() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject object = objectService.findOrCreateObject(session, pid);
+
+        MalformedRdfException e = null;
+        try {
+            object.updateProperties(subjects, "INSERT DATA { <> <info:some-property> <relative-url> . \n" +
+                    "<> <info:some-other-property> <another-relative-url> }", new RdfStream());
+        } catch (final MalformedRdfException ex) {
+            e = ex;
+        }
+
+        assertNotNull("Expected an exception to get thrown", e);
+        assertEquals("Excepted two nested exceptions", 2, e.getMessage().split("\n").length);
+        assertTrue(e.getMessage().contains("/relative-url"));
+        assertTrue(e.getMessage().contains("/another-relative-url"));
+    }
+
+    @Test
+    public void testReplaceObjectGraphWithErrors() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject object = objectService.findOrCreateObject(session, pid);
+
+        final Model model = ModelFactory.createDefaultModel().read(
+                IOUtils.toInputStream("<> <info:some-property> <relative-url> . \n" +
+                                      "<> <info:some-other-property> <another-relative-url>"),
+                subjects.reverse().convert(object).toString(),
+                "TTL");
+        MalformedRdfException e = null;
+        try {
+            object.replaceProperties(subjects, model, new RdfStream());
+        } catch (final MalformedRdfException ex) {
+            e = ex;
+        }
+
+        assertNotNull("Expected an exception to get thrown", e);
+        assertEquals("Excepted two nested exceptions", 2, e.getMessage().split("\n").length);
+        assertTrue(e.getMessage().contains("/relative-url"));
+        assertTrue(e.getMessage().contains("/another-relative-url"));
     }
 }

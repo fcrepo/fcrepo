@@ -58,6 +58,7 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -356,7 +357,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
-                                 final String sparqlUpdateStatement, final RdfStream originalTriples) {
+                                 final String sparqlUpdateStatement, final RdfStream originalTriples)
+            throws MalformedRdfException {
 
         final Model model = originalTriples.asModel();
 
@@ -461,21 +463,31 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
-        final Model inputModel, final RdfStream originalTriples) {
+        final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
 
         final GraphDifferencingIterator differencer =
             new GraphDifferencingIterator(inputModel, originalTriples);
 
+        final StringBuilder exceptions = new StringBuilder();
         try {
             new RdfRemover(graphSubjects, getSession(), replacementStream
                     .withThisContext(differencer)).consume();
+        } catch (final MalformedRdfException e) {
+            exceptions.append(e.getMessage());
+            exceptions.append("\n");
+        }
 
+        try {
             new RdfAdder(graphSubjects, getSession(), replacementStream
                     .withThisContext(differencer.notCommon())).consume();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        } catch (final MalformedRdfException e) {
+            exceptions.append(e.getMessage());
+        }
+
+        if (exceptions.length() > 0) {
+            throw new MalformedRdfException(exceptions.toString());
         }
     }
 

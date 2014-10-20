@@ -32,6 +32,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
@@ -513,7 +514,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
-                                             final RdfStream resourceTriples) {
+                                             final RdfStream resourceTriples) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel = createDefaultModel()
@@ -524,7 +525,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void patchResourcewithSparql(final FedoraResource resource,
                                            final String requestBody,
-                                           final RdfStream resourceTriples) {
+                                           final RdfStream resourceTriples) throws MalformedRdfException {
         resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 

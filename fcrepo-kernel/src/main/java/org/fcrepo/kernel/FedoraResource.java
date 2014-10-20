@@ -23,6 +23,7 @@ import javax.jcr.Property;import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -119,7 +120,8 @@ public interface FedoraResource {
      * @param originalTriples
      */
     void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
-                          final String sparqlUpdateStatement, final RdfStream originalTriples);
+                          final String sparqlUpdateStatement,
+                          final RdfStream originalTriples) throws MalformedRdfException;
 
     /**
      * Return the RDF properties of this object using the provided context
@@ -176,10 +178,10 @@ public interface FedoraResource {
      */
     void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
                                 final Model inputModel,
-                                final RdfStream originalTriples);
+                                final RdfStream originalTriples) throws MalformedRdfException;
 
     /**
-     * Construct an ETag value from the last modified date and path. JCR has a
+         * Construct an ETag value from the last modified date and path. JCR has a
      * mix:etag type, but it only takes into account binary properties. We
      * actually want whole-object etag data. TODO : construct and store an ETag
      * value on object modify
