@@ -580,6 +580,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
+    @Override
+    public int hashCode() {
+        return getNode().hashCode();
+    }
+
     protected Session getSession() {
         try {
             return getNode().getSession();
