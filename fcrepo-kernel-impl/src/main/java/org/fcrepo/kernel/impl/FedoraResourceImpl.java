@@ -441,7 +441,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public VersionHistory getVersionHistory() {
         try {
-            return getSession().getWorkspace().getVersionManager().getVersionHistory(getPath());
+            final String versionedPath = (FedoraBinaryImpl.hasMixin(node)) ? node.getParent().getPath() : getPath();
+            return getSession().getWorkspace().getVersionManager().getVersionHistory(versionedPath);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
