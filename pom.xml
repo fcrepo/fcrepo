@@ -43,7 +43,7 @@
     <mockito.version>1.10.8</mockito.version>
     <sesame.version>2.7.13</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <spring.version>4.0.3.RELEASE</spring.version>
+    <spring.version>4.1.1.RELEASE</spring.version>
     <grizzly.version>2.3.16</grizzly.version>
     <jena.version>2.12.1</jena.version>
     <jsonld.version>0.5.0</jsonld.version>
