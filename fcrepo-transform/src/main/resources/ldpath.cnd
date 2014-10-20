@@ -11,5 +11,5 @@
  */
 [fedora:configuration] > nt:folder 
 
-[fedora:node_type_configuration] > nt:folder 
+[fedora:nodeTypeConfiguration] > nt:folder 
 
