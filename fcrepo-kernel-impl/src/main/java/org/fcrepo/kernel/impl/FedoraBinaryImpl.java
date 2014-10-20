@@ -42,6 +42,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
+import javax.jcr.version.VersionHistory;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -345,6 +346,20 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
         }
     }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getVersionHistory()
+     */
+    @Override
+    public VersionHistory getVersionHistory() {
+        try {
+            return getSession().getWorkspace().getVersionManager().getVersionHistory(getDescription().getPath());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
 
     @Override
     public boolean isVersioned() {

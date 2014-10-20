@@ -441,8 +441,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public VersionHistory getVersionHistory() {
         try {
-            final String versionedPath = (FedoraBinaryImpl.hasMixin(node)) ? node.getParent().getPath() : getPath();
-            return getSession().getWorkspace().getVersionManager().getVersionHistory(versionedPath);
+            return getSession().getWorkspace().getVersionManager().getVersionHistory(getPath());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -581,7 +580,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
-    private Session getSession() {
+    protected Session getSession() {
         try {
             return getNode().getSession();
         } catch (final RepositoryException e) {

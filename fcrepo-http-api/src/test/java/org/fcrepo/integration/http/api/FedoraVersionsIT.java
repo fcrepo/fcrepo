@@ -377,7 +377,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testDatastreamAutoVersioning() throws IOException {
+    public void testDatastreamAutoMixin() throws IOException {
         final String pid = getRandomUniquePid();
         createObject(pid);
 
