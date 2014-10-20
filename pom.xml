@@ -40,6 +40,7 @@
     <logback.version>1.1.2</logback.version>
     <modeshape.version>4.0.0.Final</modeshape.version>
     <metrics.version>3.1.0</metrics.version>
+    <mockito.version>1.10.8</mockito.version>
     <sesame.version>2.7.13</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
     <spring.version>4.0.3.RELEASE</spring.version>
@@ -396,7 +397,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>1.9.5</version>
+        <version>${mockito.version}</version>
         <scope>test</scope>
         <exclusions>
           <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls 
