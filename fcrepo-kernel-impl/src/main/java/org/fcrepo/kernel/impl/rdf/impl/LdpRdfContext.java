@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
@@ -36,15 +37,16 @@ import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
  * @since 9/16/14
  */
-public class ContainerRdfContext extends NodeRdfContext {
+public class LdpRdfContext extends NodeRdfContext {
 
-    private static final Logger LOGGER = getLogger(ContainerRdfContext.class);
+    private static final Logger LOGGER = getLogger(LdpRdfContext.class);
 
     /**
      * Default constructor.
@@ -53,14 +55,21 @@ public class ContainerRdfContext extends NodeRdfContext {
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public ContainerRdfContext(final FedoraResource resource,
-                               final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+    public LdpRdfContext(final FedoraResource resource,
+                         final IdentifierConverter<Resource, FedoraResource> graphSubjects)
             throws RepositoryException {
         super(resource, graphSubjects);
 
-        concat(containerContext());
-        concat(membershipRelationContext());
+        concat(typeContext());
 
+        if (isContainer()) {
+            concat(membershipRelationContext());
+        }
+
+    }
+
+    private boolean isContainer() {
+        return resource() instanceof FedoraObject;
     }
 
     private Collection<Triple> membershipRelationContext() throws RepositoryException {
@@ -78,11 +87,18 @@ public class ContainerRdfContext extends NodeRdfContext {
         return triples1;
     }
 
-    private Triple[] containerContext() {
-        return new Triple[] {
-                create(subject(), type.asNode(), CONTAINER.asNode()),
-                create(subject(), type.asNode(), DIRECT_CONTAINER.asNode())
-        };
+    private Triple[] typeContext() {
+        final Triple rdfSource = create(subject(), type.asNode(), RDF_SOURCE.asNode());
+
+        if (isContainer()) {
+            return new Triple[]{
+                    create(subject(), type.asNode(), CONTAINER.asNode()),
+                    create(subject(), type.asNode(), DIRECT_CONTAINER.asNode()),
+                    rdfSource
+            };
+        } else {
+            return new Triple[] { rdfSource };
+        }
     }
 
 }

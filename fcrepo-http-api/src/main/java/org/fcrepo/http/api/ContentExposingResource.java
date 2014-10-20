@@ -36,7 +36,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.HashRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
@@ -254,7 +254,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             if (ldpPreferences.prefersServerManaged()) {
-                rdfStream.concat(getTriples(ContainerRdfContext.class));
+                rdfStream.concat(getTriples(LdpRdfContext.class));
             }
         }
 
