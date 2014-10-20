@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
@@ -136,6 +137,12 @@ public class FedoraTypesUtilsTest {
 
     @Mock
     private Property mockProperty;
+
+    @Mock
+    private Node mockRootNode;
+
+    @Mock
+    private Node mockContainer;
 
     @Before
     public void setUp() {
@@ -291,6 +298,37 @@ public class FedoraTypesUtilsTest {
         assertEquals("Found wrong Value!", testIterator.next(), mockValue);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue2);
 
+    }
+
+    @Test
+    public void testGetClosestExistingAncestorRoot() throws RepositoryException {
+        when(mockSession.getRootNode()).thenReturn(mockRootNode);
+        when(mockRootNode.hasNode(anyString())).thenReturn(false);
+
+        final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");
+        assertEquals(mockRootNode, closestExistingAncestor);
+    }
+
+    @Test
+    public void testGetClosestExistingAncestorContainer() throws RepositoryException {
+        when(mockSession.getRootNode()).thenReturn(mockRootNode);
+        when(mockRootNode.hasNode("some")).thenReturn(true);
+        when(mockRootNode.getNode("some")).thenReturn(mockContainer);
+
+        final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");
+        assertEquals(mockContainer, closestExistingAncestor);
+    }
+
+    @Test
+    public void testGetClosestExistingAncestorNode() throws RepositoryException {
+        when(mockSession.getRootNode()).thenReturn(mockRootNode);
+        when(mockRootNode.hasNode("some")).thenReturn(true);
+        when(mockRootNode.getNode("some")).thenReturn(mockContainer);
+        when(mockContainer.hasNode("path")).thenReturn(true);
+        when(mockContainer.getNode("path")).thenReturn(mockNode);
+
+        final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");
+        assertEquals(mockNode, closestExistingAncestor);
     }
 
 }

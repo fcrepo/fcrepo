@@ -174,7 +174,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     try {
                         return isInternalNode.apply(n)
                                 || n.getName().equals(JCR_CONTENT)
-                                || TombstoneImpl.hasMixin(n);
+                                || TombstoneImpl.hasMixin(n)
+                                || n.getName().equals("#");
                     } catch (final RepositoryException e) {
                         throw new RepositoryRuntimeException(e);
                     }
@@ -217,7 +218,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
             Node container = getNode().getParent();
             while (container.getDepth() > 0) {
-                if (container.isNodeType(FEDORA_PAIRTREE) || container.isNodeType(FEDORA_DATASTREAM)) {
+                if (container.isNodeType(FEDORA_PAIRTREE)
+                        || container.isNodeType(FEDORA_DATASTREAM)) {
                     container = container.getParent();
                 } else {
                     return nodeConverter.convert(container);
