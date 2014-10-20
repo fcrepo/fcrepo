@@ -34,7 +34,7 @@
     <infinispan.version>6.0.2.Final</infinispan.version>
     <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
     <jaxb.version>2.2.7</jaxb.version>
-    <jersey.version>2.12</jersey.version>
+    <jersey.version>2.13</jersey.version>
     <jgroups.version>3.5.0.Final</jgroups.version>
     <joda-time.version>2.4</joda-time.version>
     <logback.version>1.1.2</logback.version>
