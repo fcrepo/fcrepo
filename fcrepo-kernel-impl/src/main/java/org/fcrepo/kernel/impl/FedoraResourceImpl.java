@@ -580,7 +580,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
-    private Session getSession() {
+    protected Session getSession() {
         try {
             return getNode().getSession();
         } catch (final RepositoryException e) {

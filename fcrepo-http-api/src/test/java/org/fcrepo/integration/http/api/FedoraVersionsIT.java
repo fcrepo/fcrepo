@@ -377,6 +377,36 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDatastreamAutoMixin() throws IOException {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        createDatastream(pid, "ds1", "This is some datastream content");
+
+        // datastream should not have fcr:versions endpoint
+        assertEquals( 404, getStatus(new HttpGet(serverAddress + pid + "/ds1/fcr:versions")) );
+
+        // datastream should not be versionable
+        final GraphStore originalObjectProperties = getContent(serverAddress + pid + "/ds1/fcr:metadata");
+        assertFalse("Node must not have versionable mixin.",
+                originalObjectProperties.contains(ANY, createResource(serverAddress + pid + "/ds1").asNode(),
+                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
+
+        // creating a version should succeed
+        assertEquals( 204, getStatus(new HttpPost(serverAddress + pid + "/ds1/fcr:versions")) );
+
+        // datastream should then have versions endpoint
+        assertEquals( 200, getStatus(new HttpGet(serverAddress + pid + "/ds1/fcr:versions")) );
+
+        // datastream should then be versionable
+        final GraphStore updatedDSProperties = getContent(serverAddress + pid + "/ds1/fcr:metadata");
+        assertTrue("Node must have versionable mixin.",
+                updatedDSProperties.contains(ANY, createResource(serverAddress + pid + "/ds1/fcr:metadata").asNode(),
+                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
+    }
+
+
+    @Test
     public void testIndexResponseContentTypes() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
