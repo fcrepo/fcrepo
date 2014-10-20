@@ -87,7 +87,7 @@ public class RootRdfContext extends NodeRdfContext {
         for (final String key : repository.getDescriptorKeys()) {
             final String descriptor = repository.getDescriptor(key);
             if (descriptor != null) {
-                final String uri = REPOSITORY_NAMESPACE + "repository/" + key;
+                final String uri = REPOSITORY_NAMESPACE + "repository." + key;
                 b.add(create(subject(), createURI(uri),
                         createLiteral(descriptor)));
             }
