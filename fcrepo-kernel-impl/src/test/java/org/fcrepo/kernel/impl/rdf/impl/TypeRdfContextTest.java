@@ -72,7 +72,7 @@ public class TypeRdfContextTest {
     @Mock
     private NodeType mockMixinSuperNodeType;
 
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Session mockSession;
@@ -125,17 +125,17 @@ public class TypeRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
     public void testRdfTypesForNodetypes() throws RepositoryException,
             IOException {
 
-        final Resource mockNodeSubject = mockGraphSubjects.reverse().convert(mockResource);
+        final Resource mockNodeSubject = idTranslator.reverse().convert(mockResource);
 
         final Model actual =
-                new TypeRdfContext(mockResource, mockGraphSubjects).asModel();
+                new TypeRdfContext(mockResource, idTranslator).asModel();
         final Resource expectedRdfTypePrimary =
                 createResource(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName);
         final Resource expectedRdfTypeMixin =

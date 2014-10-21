@@ -72,7 +72,7 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private Session mockSession;
 
-    private IdentifierConverter<Resource, FedoraResource> mockSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Statement mockStatement;
@@ -118,10 +118,10 @@ public class JcrPropertyStatementListenerTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        mockSubjects = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj = new JcrPropertyStatementListener(mockSubjects, mockJcrRdfTools);
-        mockResource = mockSubjects.toDomain("/xyz");
+        testObj = new JcrPropertyStatementListener(idTranslator, mockJcrRdfTools);
+        mockResource = idTranslator.toDomain("/xyz");
         when(mockStatement.getSubject()).thenReturn(mockResource);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
         when(mockStatement.getModel()).thenReturn(mockModel);
@@ -135,8 +135,8 @@ public class JcrPropertyStatementListenerTest {
         when(mockIrrelevantStatement.getObject()).thenReturn(mockValue);
 
         when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
-        resource = mockSubjects.convert(mockResource);
-        when(mockJcrRdfTools.skolemize(mockSubjects, mockStatement)).thenReturn(mockStatement);
+        resource = idTranslator.convert(mockResource);
+        when(mockJcrRdfTools.skolemize(idTranslator, mockStatement)).thenReturn(mockStatement);
     }
 
     @Test
@@ -204,7 +204,7 @@ public class JcrPropertyStatementListenerTest {
                 + "object");
         final Statement statement = model.createStatement(mockResource, RDF.type, type);
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        when(mockJcrRdfTools.skolemize(mockSubjects, statement)).thenReturn(statement);
+        when(mockJcrRdfTools.skolemize(idTranslator, statement)).thenReturn(statement);
         testObj.addedStatement(statement);
         verify(mockJcrRdfTools).addMixin(resource, type, mockNsMapping);
     }
@@ -244,7 +244,7 @@ public class JcrPropertyStatementListenerTest {
                 type,
                 model.createResource(RESTAPI_NAMESPACE + "object"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        when(mockJcrRdfTools.skolemize(mockSubjects, statement)).thenReturn(statement);
+        when(mockJcrRdfTools.skolemize(idTranslator, statement)).thenReturn(statement);
         testObj.addedStatement(statement);
         verify(mockSubjectNode, never()).addMixin("fedora:object");
     }

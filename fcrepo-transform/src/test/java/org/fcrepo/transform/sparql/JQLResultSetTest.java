@@ -65,7 +65,7 @@ public class JQLResultSetTest {
     @Mock
     QueryResult mockQueryResult;
 
-    IdentifierConverter mockGraphSubjects;
+    IdentifierConverter idTranslator;
 
     @Mock
     private RowIterator mockRows;
@@ -85,10 +85,10 @@ public class JQLResultSetTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
 
         when(mockQueryResult.getRows()).thenReturn(mockRows);
-        testObj = new JQLResultSet(mockSession, mockGraphSubjects, mockQueryResult);
+        testObj = new JQLResultSet(mockSession, idTranslator, mockQueryResult);
         columnNames = new String[]{"a", "b"};
         when(mockQueryResult.getColumnNames()).thenReturn(columnNames);
         when(mockRows.nextRow()).thenReturn(mockRow);

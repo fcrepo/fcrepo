@@ -71,20 +71,20 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * Ordinary constructor.
      *
-     * @param graphSubjects
+     * @param idTranslator
      * @param session
      * @param stream
      */
-    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final Session session, final RdfStream stream) {
-        this.idTranslator = graphSubjects;
-        this.jcrRdfTools = new JcrRdfTools(graphSubjects, session);
+        this.idTranslator = idTranslator;
+        this.jcrRdfTools = new JcrRdfTools(idTranslator, session);
         this.isFedoraSubjectTriple = new Predicate<Triple>() {
 
             @Override
             public boolean apply(final Triple t) {
 
-                final boolean result = graphSubjects.inDomain(m.asStatement(t).getSubject())
+                final boolean result = idTranslator.inDomain(m.asStatement(t).getSubject())
                         || t.getSubject().isBlank();
                 if (result) {
                     LOGGER.debug(
@@ -129,7 +129,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             final Statement t = jcrRdfTools.skolemize(idTranslator, input);
 
             final Resource subject = t.getSubject();
-            final FedoraResource subjectNode = idTranslator().convert(subject);
+            final FedoraResource subjectNode = translator().convert(subject);
 
             // if this is a user-managed RDF type assertion, update the node's
             // mixins. If it isn't, treat it as a "data" property.
@@ -185,7 +185,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * @return the idTranslator
      */
-    public IdentifierConverter<Resource,FedoraResource> idTranslator() {
+    public IdentifierConverter<Resource,FedoraResource> translator() {
         return idTranslator;
     }
 

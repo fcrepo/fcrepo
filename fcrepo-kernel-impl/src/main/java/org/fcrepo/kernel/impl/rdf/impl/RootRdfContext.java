@@ -65,13 +65,13 @@ public class RootRdfContext extends NodeRdfContext {
      * Ordinary constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws RepositoryException
      */
     public RootRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         if (resource().hasType(ROOT)) {
             concatRepositoryTriples();

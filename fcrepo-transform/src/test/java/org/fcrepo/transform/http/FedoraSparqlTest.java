@@ -108,7 +108,7 @@ public class FedoraSparqlTest {
     private QueryResult mockResults;
 
     @Mock
-    private IdentifierConverter<Resource, Node> MockIdentifierTranslator;
+    private IdentifierConverter<Resource, Node> idTranslator;
 
     @Mock
     private Request mockRequest;

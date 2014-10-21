@@ -146,7 +146,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private Map<String, Source> joins;
     private Map<String, String> joinTypes;
     private Map<String, JoinCondition> joinConditions;
-    private IdentifierConverter<Resource,FedoraResource> subjects;
+    private IdentifierConverter<Resource,FedoraResource> idTranslator;
 
     /**
      * Create a new query
@@ -157,8 +157,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     public JQLQueryVisitor(final Session session,
                            final JcrRdfTools jcrTools,
                            final QueryManager queryManager,
-                           final IdentifierConverter<Resource, FedoraResource> subjects) {
-        checkNotNull(subjects);
+                           final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+        checkNotNull(idTranslator);
 
         this.session = session;
         this.jcrTools = jcrTools;
@@ -168,7 +168,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         this.joins = new HashMap<>();
         this.joinTypes = new HashMap<>();
         this.joinConditions = new HashMap<>();
-        this.subjects = subjects;
+        this.idTranslator = idTranslator;
     }
 
     /**
@@ -184,7 +184,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         this.variables = jqlQueryVisitor.variables;
         this.joins = jqlQueryVisitor.joins;
         this.joinConditions = jqlQueryVisitor.joinConditions;
-        this.subjects = jqlQueryVisitor.subjects;
+        this.idTranslator = jqlQueryVisitor.idTranslator;
     }
 
     /**
@@ -582,7 +582,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         final String subjectUri = subject.getURI();
 
         // Go through the IdentifierConverter for potential transparent hierarchy path conversion.
-        final String path = subjects.convert(model.createResource(subjectUri)).getPath();
+        final String path = idTranslator.convert(model.createResource(subjectUri)).getPath();
 
         final String subjectSelector = "fedoraResource_" + path.replace("/", "_");
 

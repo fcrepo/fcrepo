@@ -32,10 +32,10 @@ public class TestTriplesContext extends RdfStream {
     /**
      * Add a triple that says we've been there..
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      */
     public TestTriplesContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> graphSubjects) {
+                              final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         concat(Triple.create(createURI("MockTriplesContextClass"), createURI("isAThing"), createLiteral("n")));
     }
 }

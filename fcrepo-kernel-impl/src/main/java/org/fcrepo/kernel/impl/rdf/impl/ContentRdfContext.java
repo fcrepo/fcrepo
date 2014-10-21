@@ -37,20 +37,20 @@ public class ContentRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public ContentRdfContext(final FedoraResource resource,
-                             final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                             final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         // if there's an accessible jcr:content node, include information about
         // it
         if (resource() instanceof Datastream) {
             final FedoraResource contentNode = ((Datastream) resource()).getBinary();
-            final Node contentSubject = graphSubjects().reverse().convert(contentNode).asNode();
-            final Node subject = graphSubjects().reverse().convert(resource()).asNode();
+            final Node contentSubject = translator().reverse().convert(contentNode).asNode();
+            final Node subject = translator().reverse().convert(resource()).asNode();
             // add triples representing parent-to-content-child relationship
             concat(new Triple[] {
                     create(subject, HAS_CONTENT.asNode(), contentSubject),

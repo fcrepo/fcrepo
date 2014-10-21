@@ -43,13 +43,13 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     /**
      * Ordinary constructor.
      *
-     * @param graphSubjects
+     * @param idTranslator
      * @param session
      * @param stream
      */
-    public RdfRemover(final IdentifierConverter<Resource, FedoraResource> graphSubjects, final Session session,
+    public RdfRemover(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
         final RdfStream stream) {
-        super(graphSubjects, session, stream);
+        super(idTranslator, session, stream);
     }
 
     @Override

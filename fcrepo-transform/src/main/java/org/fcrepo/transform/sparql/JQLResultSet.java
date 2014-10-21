@@ -58,7 +58,7 @@ public class JQLResultSet implements ResultSet {
 
     private Session session;
 
-    private IdentifierConverter<Resource, FedoraResource> subjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private QueryResult queryResult;
 
@@ -67,14 +67,14 @@ public class JQLResultSet implements ResultSet {
     /**
      * Translate a JCR QueryResult to a SPARQL ResultSet, respecting any
      * IdentifierTranslator translation for JCR Paths
-     * @param subjects
+     * @param idTranslator
      * @param queryResult
      * @throws RepositoryException
      */
-    public JQLResultSet(final Session session, final IdentifierConverter<Resource,FedoraResource> subjects,
+    public JQLResultSet(final Session session, final IdentifierConverter<Resource,FedoraResource> idTranslator,
         final QueryResult queryResult) throws RepositoryException {
         this.session = session;
-        this.subjects = subjects;
+        this.idTranslator = idTranslator;
 
         this.queryResult = queryResult;
         this.iterator = queryResult.getRows();
@@ -101,7 +101,9 @@ public class JQLResultSet implements ResultSet {
     @Override
     public QuerySolution next() {
         rowNumber++;
-        final JQLQuerySolution jqlQuerySolution = new JQLQuerySolution(subjects, iterator.nextRow(), getResultVars());
+        final JQLQuerySolution jqlQuerySolution = new JQLQuerySolution(idTranslator,
+                iterator.nextRow(),
+                getResultVars());
         LOGGER.trace("Getting QuerySolution (#{}): {}", rowNumber, jqlQuerySolution);
 
         return jqlQuerySolution;
@@ -140,7 +142,7 @@ public class JQLResultSet implements ResultSet {
      * Maps a JCR Query's Row to a QuerySolution
      */
     private class JQLQuerySolution implements QuerySolution, Binding {
-        private IdentifierConverter<Resource, FedoraResource> subjects;
+        private IdentifierConverter<Resource, FedoraResource> idTranslator;
         private Row row;
         private List<String> columns;
         private final ValueConverter valueConverter;
@@ -148,17 +150,17 @@ public class JQLResultSet implements ResultSet {
 
         /**
          * Create a new query solution to translate a JCR Row to a SPARQL Binding
-         * @param subjects
+         * @param idTranslator
          * @param row
          * @param columns
          */
-        public JQLQuerySolution(final IdentifierConverter<Resource, FedoraResource> subjects,
+        public JQLQuerySolution(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Row row,
                                 final List<String> columns) {
-            this.subjects = subjects;
+            this.idTranslator = idTranslator;
             this.row = row;
             this.columns = columns;
-            valueConverter = new ValueConverter(session, subjects);
+            valueConverter = new ValueConverter(session, idTranslator);
         }
 
         @Override

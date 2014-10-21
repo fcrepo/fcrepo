@@ -70,11 +70,11 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Inject
     ObjectService objectService;
 
-    private IdentifierConverter<Resource, FedoraResource> graphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Before
     public void setUp() throws RepositoryException {
-        graphSubjects = new DefaultIdentifierTranslator(repo.login());
+        idTranslator = new DefaultIdentifierTranslator(repo.login());
     }
 
     @Test
@@ -253,7 +253,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final FedoraBinary ds = binaryService.findOrCreateBinary(session, "/testLLObject/"
                         + "testRepositoryContent");
 
-        final Model fixityResults = ds.getFixity(graphSubjects).asModel();
+        final Model fixityResults = ds.getFixity(idTranslator).asModel();
 
         assertNotEquals(0, fixityResults.size());
 
@@ -281,7 +281,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         final FedoraBinary ds = binaryService.findOrCreateBinary(session, "/testLLObject/testMemoryContent");
 
-        final Model fixityResults = ds.getFixity(graphSubjects).asModel();
+        final Model fixityResults = ds.getFixity(idTranslator).asModel();
 
         assertNotEquals(0, fixityResults.size());
 
@@ -309,7 +309,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         final FedoraBinary ds = binaryService.findOrCreateBinary(session, "/testLLObject/testRandomContent");
 
-        final Model fixityResults = ds.getFixity(graphSubjects).asModel();
+        final Model fixityResults = ds.getFixity(idTranslator).asModel();
 
         assertNotEquals(0, fixityResults.size());
 

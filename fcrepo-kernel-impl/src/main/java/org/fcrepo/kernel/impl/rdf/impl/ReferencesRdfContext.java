@@ -41,15 +41,15 @@ public class ReferencesRdfContext extends NodeRdfContext {
      * Add the inbound references from other nodes to this resource to the stream
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
 
     public ReferencesRdfContext(final FedoraResource resource,
-                                final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                                final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
-        super(resource, graphSubjects);
-        property2triple = new PropertyToTriple(resource.getNode().getSession(), graphSubjects);
+        super(resource, idTranslator);
+        property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
         concat(putStrongReferencePropertiesIntoContext());
         concat(putWeakReferencePropertiesIntoContext());
     }

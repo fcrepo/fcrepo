@@ -276,12 +276,12 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     }
 
     @Override
-    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> graphSubjects) {
-        return getFixity(graphSubjects, getContentDigest(), getContentSize());
+    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+        return getFixity(idTranslator, getContentDigest(), getContentSize());
     }
 
     @Override
-    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                final URI digestUri,
                                final long size) {
 
@@ -299,7 +299,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final Collection<FixityResult> fixityResults
                     = CacheEntryFactory.forProperty(repo, getNode().getProperty(JCR_DATA)).checkFixity(algorithm);
 
-            return new FixityRdfContext(this, graphSubjects, fixityResults, digestUri, size);
+            return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, size);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         } finally {

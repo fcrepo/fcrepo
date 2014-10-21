@@ -86,7 +86,7 @@ public class NodePropertiesToolsTest {
     private Value previousValue;
 
     @Mock
-    private IdentifierConverter<Resource, FedoraResource> subjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Session mockSession;
@@ -113,7 +113,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
 
-        subjects = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 
 
@@ -122,7 +122,7 @@ public class NodePropertiesToolsTest {
         when(mockDefinition.isMultiple()).thenReturn(false);
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(false);
         when(mockNode.setProperty(mockPropertyName, mockValue, 0)).thenReturn(mockProperty);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockNode).setProperty(mockPropertyName, mockValue, 0);
     }
 
@@ -139,7 +139,7 @@ public class NodePropertiesToolsTest {
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
         when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
                 .thenReturn(mockRefProperty);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode,
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode,
                 mockPropertyName, mockValue);
         verify(mockNode).setProperty(mockPropertyName, mockValue, 0);
 
@@ -153,7 +153,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(false);
         when(mockNode.setProperty(mockPropertyName, asList(mockValue).toArray(new Value[0]), 0))
                 .thenReturn(mockProperty);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode,
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode,
                 mockPropertyName, mockValue);
         verify(mockNode).setProperty(mockPropertyName,
                 asList(mockValue).toArray(new Value[0]), 0);
@@ -175,7 +175,7 @@ public class NodePropertiesToolsTest {
                 .thenReturn(mockProperty);
         when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
                 .thenReturn(mockRefProperty);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockNode).setProperty(mockPropertyName,
                                         asList(mockValue).toArray(new Value[0]), 0);
         verify(mockNode).setProperty("mockPropertyName_ref",
@@ -187,7 +187,7 @@ public class NodePropertiesToolsTest {
             throws RepositoryException {
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue(mockValue);
     }
 
@@ -206,7 +206,7 @@ public class NodePropertiesToolsTest {
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
         when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
                 .thenReturn(mockRefProperty);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue(mockValue);
         final InOrder inOrder = Mockito.inOrder(mockNode, mockNode);
         inOrder.verify(mockNode).setProperty("mockPropertyName_ref", (Value[])null);
@@ -222,7 +222,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         final Value[] values = new Value[] {previousValue};
         when(mockProperty.getValues()).thenReturn(values);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         final ArgumentCaptor<Value[]> valuesCaptor =
                 ArgumentCaptor.forClass(Value[].class);
         verify(mockProperty).setValue(valuesCaptor.capture());
@@ -258,7 +258,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         final Value[] values = new Value[] {previousValue};
         when(mockProperty.getValues()).thenReturn(values);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         final ArgumentCaptor<Value[]> valuesCaptor =
             ArgumentCaptor.forClass(Value[].class);
         verify(mockProperty).setValue(valuesCaptor.capture());
@@ -280,7 +280,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         final Value[] values = new Value[] {previousValue};
         when(mockProperty.getValues()).thenReturn(values);
-        testNodePropertiesTools.appendOrReplaceNodeProperty(subjects, mockNode, mockPropertyName, previousValue);
+        testNodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, mockNode, mockPropertyName, previousValue);
 
         verify(mockProperty, never()).setValue(any(Value[].class));
     }
@@ -289,7 +289,7 @@ public class NodePropertiesToolsTest {
     public void shouldBeANoopWhenRemovingPropertyThatDoesntExist()
             throws RepositoryException {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(false);
-        testNodePropertiesTools.removeNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.removeNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockNode).hasProperty(mockPropertyName);
         verifyNoMoreInteractions(mockNode);
         verifyZeroInteractions(mockProperty);
@@ -301,7 +301,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn("");
-        testNodePropertiesTools.removeNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.removeNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue((Value) null);
 
     }
@@ -316,7 +316,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         when(mockNode.hasProperty("mockPropertyName_ref")).thenReturn(true);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        testNodePropertiesTools.removeNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.removeNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue((Value) null);
         verify(mockNode).setProperty("mockPropertyName_ref", (Value[])null);
 
@@ -328,7 +328,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         final Value[] values = new Value[] {mockValue};
         when(mockProperty.getValues()).thenReturn(values);
-        testNodePropertiesTools.removeNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.removeNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue((Value[]) null);
     }
 
@@ -347,7 +347,7 @@ public class NodePropertiesToolsTest {
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         final Value[] values = new Value[] {mockValue};
         when(mockProperty.getValues()).thenReturn(values);
-        testNodePropertiesTools.removeNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.removeNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue((Value[]) null);
         verify(mockRefProperty).setValue((Value[])null);
     }
@@ -359,7 +359,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         final Value[] values = new Value[] {previousValue, mockValue};
         when(mockProperty.getValues()).thenReturn(values);
-        testNodePropertiesTools.removeNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.removeNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         final ArgumentCaptor<Value[]> valuesCaptor =
                 ArgumentCaptor.forClass(Value[].class);
         verify(mockProperty).setValue(valuesCaptor.capture());
@@ -380,7 +380,7 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         final Value[] values = new Value[] {mockValue, mockValue};
         when(mockProperty.getValues()).thenReturn(values);
-        testNodePropertiesTools.removeNodeProperty(subjects, mockNode, mockPropertyName, mockValue);
+        testNodePropertiesTools.removeNodeProperty(idTranslator, mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue((Value[]) null);
     }
 }

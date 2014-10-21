@@ -37,34 +37,34 @@ import javax.jcr.query.qom.QueryObjectModel;
 public class JQLConverter {
     private final JcrRdfTools jcrTools;
     private Session session;
-    private IdentifierConverter<Resource,FedoraResource> subjects;
+    private IdentifierConverter<Resource,FedoraResource> idTranslator;
     private com.hp.hpl.jena.query.Query query;
 
     /**
      *
      * @param session
-     * @param subjects
+     * @param idTranslator
      * @param sparqlQuery
      */
     public JQLConverter(final Session session,
-                        final IdentifierConverter<Resource,FedoraResource> subjects,
+                        final IdentifierConverter<Resource,FedoraResource> idTranslator,
                         final String sparqlQuery ) {
-        this(session, subjects, create(sparqlQuery));
+        this(session, idTranslator, create(sparqlQuery));
     }
 
     /**
      *
      * @param session
-     * @param subjects
+     * @param idTranslator
      * @param query
      */
     public JQLConverter(final Session session,
-                        final IdentifierConverter<Resource,FedoraResource> subjects,
+                        final IdentifierConverter<Resource,FedoraResource> idTranslator,
                         final com.hp.hpl.jena.query.Query query) {
         this.session = session;
-        this.subjects = subjects;
+        this.idTranslator = idTranslator;
         this.query = query;
-        this.jcrTools = new JcrRdfTools(subjects, session);
+        this.jcrTools = new JcrRdfTools(idTranslator, session);
     }
 
     /**
@@ -74,7 +74,7 @@ public class JQLConverter {
      */
     public ResultSet execute() throws RepositoryException {
         final QueryResult queryResult = getQuery().execute();
-        return new JQLResultSet(session, subjects, queryResult);
+        return new JQLResultSet(session, idTranslator, queryResult);
     }
 
     /**
@@ -88,7 +88,7 @@ public class JQLConverter {
 
     private QueryObjectModel getQuery() throws RepositoryException {
         final QueryManager queryManager = session.getWorkspace().getQueryManager();
-        final JQLQueryVisitor jqlVisitor = new JQLQueryVisitor(session, jcrTools, queryManager, subjects);
+        final JQLQueryVisitor jqlVisitor = new JQLQueryVisitor(session, jcrTools, queryManager, idTranslator);
         query.visit(jqlVisitor);
         return jqlVisitor.getQuery();
     }

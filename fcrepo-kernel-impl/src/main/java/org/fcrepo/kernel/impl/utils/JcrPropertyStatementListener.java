@@ -50,30 +50,30 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final JcrRdfTools jcrRdfTools;
 
-    private final IdentifierConverter<Resource, FedoraResource> subjects;
+    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private final List<String> exceptions;
 
     /**
      * Construct a statement listener within the given session
      *
-     * @param subjects
+     * @param idTranslator
      * @param session
      */
-    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> subjects,
+    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                         final Session session) {
-        this(subjects, new JcrRdfTools(subjects, session));
+        this(idTranslator, new JcrRdfTools(idTranslator, session));
     }
 
     /**
      * Construct a statement listener within the given session
      *
-     * @param subjects
+     * @param idTranslator
      */
-    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> subjects,
+    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                         final JcrRdfTools jcrRdfTools) {
         super();
-        this.subjects = subjects;
+        this.idTranslator = idTranslator;
         this.jcrRdfTools = jcrRdfTools;
         this.exceptions = new ArrayList<>();
     }
@@ -91,13 +91,13 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = input.getSubject();
 
             // if it's not about a node, ignore it.
-            if (!subjects.inDomain(subject) && !subject.isAnon()) {
+            if (!idTranslator.inDomain(subject) && !subject.isAnon()) {
                 return;
             }
 
-            final Statement s = jcrRdfTools.skolemize(subjects, input);
+            final Statement s = jcrRdfTools.skolemize(idTranslator, input);
 
-            final FedoraResource resource = subjects.convert(s.getSubject());
+            final FedoraResource resource = idTranslator.convert(s.getSubject());
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -130,11 +130,11 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Resource subject = s.getSubject();
 
             // if it's not about a node, we don't care.
-            if (!subjects.inDomain(subject)) {
+            if (!idTranslator.inDomain(subject)) {
                 return;
             }
 
-            final FedoraResource resource = subjects.convert(subject);
+            final FedoraResource resource = idTranslator.convert(subject);
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update

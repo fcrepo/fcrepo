@@ -348,8 +348,8 @@ public class PropertyToTripleTest {
     @Before
     public void setUp() throws ValueFormatException, RepositoryException {
         initMocks(this);
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
-        testPropertyToTriple = new PropertyToTriple(mockSession, mockGraphSubjects);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        testPropertyToTriple = new PropertyToTriple(mockSession, idTranslator);
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockProperty.getParent()).thenReturn(mockNode);
         when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
@@ -357,7 +357,7 @@ public class PropertyToTripleTest {
         when(mockSession.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
-        testSubject = nodeToResource(mockGraphSubjects).convert(mockNode).asNode();
+        testSubject = nodeToResource(idTranslator).convert(mockNode).asNode();
     }
 
     private PropertyToTriple testPropertyToTriple;
@@ -365,7 +365,7 @@ public class PropertyToTripleTest {
     @Mock
     private Session mockSession;
 
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Property mockProperty;

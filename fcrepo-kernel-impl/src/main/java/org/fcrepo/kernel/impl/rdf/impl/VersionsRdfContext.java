@@ -52,7 +52,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final VersionHistory versionHistory;
 
-    private final IdentifierConverter<Resource, FedoraResource> graphSubjects;
+    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
@@ -61,15 +61,15 @@ public class VersionsRdfContext extends RdfStream {
      * Ordinary constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws RepositoryException
      */
     public VersionsRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super();
-        this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.reverse().convert(resource).asNode();
+        this.idTranslator = idTranslator;
+        this.subject = idTranslator.reverse().convert(resource).asNode();
         versionHistory = resource.getVersionHistory();
 
         concat(versionTriples());
@@ -89,10 +89,10 @@ public class VersionsRdfContext extends RdfStream {
                 try {
                     final Node frozenNode = version.getFrozenNode();
                     final com.hp.hpl.jena.graph.Node versionSubject
-                            = nodeToResource(graphSubjects).convert(frozenNode).asNode();
+                            = nodeToResource(idTranslator).convert(frozenNode).asNode();
 
                     final RdfStream results = new PropertiesRdfContext(nodeConverter.convert(frozenNode),
-                            graphSubjects);
+                            idTranslator);
 
                     results.concat(create(subject, HAS_VERSION.asNode(),
                             versionSubject));

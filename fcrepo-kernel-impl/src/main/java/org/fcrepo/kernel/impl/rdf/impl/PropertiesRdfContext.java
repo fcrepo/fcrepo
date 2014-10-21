@@ -55,10 +55,10 @@ public class PropertiesRdfContext extends NodeRdfContext {
      */
 
     public PropertiesRdfContext(final FedoraResource resource,
-                                final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                                final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
-        super(resource, graphSubjects);
-        property2triple = new PropertyToTriple(resource.getNode().getSession(), graphSubjects);
+        super(resource, idTranslator);
+        property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
         concat(triplesFromProperties(resource()));
     }
 
