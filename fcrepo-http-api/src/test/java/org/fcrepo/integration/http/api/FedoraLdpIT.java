@@ -869,7 +869,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 getStatus(new HttpGet(location)));
 
         final Link link = Link.valueOf(response.getFirstHeader("Link").getValue());
+
         assertEquals("describedby", link.getRel());
+        assertTrue("Expected an anchor to the newly created resource", link.getParams().containsKey("anchor"));
+        assertEquals("Expected anchor to point at the newly created resource",
+                location, link.getParams().get("anchor"));
+        assertEquals("Expected describedby link to point at the description",
+                location + "/" + FCR_METADATA, link.getUri().toString());
     }
 
     @Test
@@ -933,7 +939,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final Collection<String> links = getLinkHeaders(response);
         assertTrue("Didn't find 'describedby' link header!",
-                links.contains("<" + serverAddress + pid + "/ds1/" + FCR_METADATA + ">;rel=\"describedby\""));
+                links.contains("<" + serverAddress + pid + "/ds1/" + FCR_METADATA + ">; rel=\"describedby\""));
 
     }
 

@@ -220,7 +220,7 @@ public class FedoraLdpTest {
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
                         .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
-                                + ">;rel=\"describedby\""));
+                                + ">; rel=\"describedby\""));
     }
 
     @Test
@@ -235,7 +235,7 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">;rel=\"describes\""));
+                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""));
     }
 
     @Test
@@ -266,7 +266,7 @@ public class FedoraLdpTest {
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
                         .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
-                                + ">;rel=\"describedby\""));
+                                + ">; rel=\"describedby\""));
     }
 
     @Test
@@ -279,7 +279,7 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">;rel=\"describes\""));
+                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""));
     }
 
 
@@ -469,7 +469,7 @@ public class FedoraLdpTest {
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
                         .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
-                                + ">;rel=\"describedby\""));
+                                + ">; rel=\"describedby\""));
         assertTrue(IOUtils.toString((InputStream)actual.getEntity()).equals("xyz"));
     }
 
@@ -487,7 +487,7 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">;rel=\"describes\""));
+                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""));
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();

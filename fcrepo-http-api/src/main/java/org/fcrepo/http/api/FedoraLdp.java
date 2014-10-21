@@ -53,6 +53,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -428,7 +429,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final URI location = getUri(result);
 
-        addResourceLinkHeaders(result);
+        addResourceLinkHeaders(result, true);
 
         return created(location).entity(location.toString()).build();
 
@@ -493,13 +494,25 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private void addResourceLinkHeaders(final FedoraResource resource) {
+        addResourceLinkHeaders(resource, false);
+    }
+
+    private void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
         if (resource instanceof Datastream) {
-            final URI binaryUri = getUri(((Datastream) resource).getBinary());
-            servletResponse.addHeader("Link", "<" + binaryUri + ">;rel=\"describes\"");
+            final URI uri = getUri(((Datastream) resource).getBinary());
+            final Link link = Link.fromUri(uri).rel("describes").build();
+            servletResponse.addHeader("Link", link.toString());
         } else if (resource instanceof FedoraBinary) {
-            final URI descriptionUri = getUri(((FedoraBinary) resource).getDescription());
-            servletResponse.addHeader("Link", "<" + descriptionUri + ">;rel=\"describedby\"");
+            final URI uri = getUri(((FedoraBinary) resource).getDescription());
+            final Link.Builder builder = Link.fromUri(uri).rel("describedby");
+
+            if (includeAnchor) {
+                builder.param("anchor", getUri(resource).toString());
+            }
+            servletResponse.addHeader("Link", builder.build().toString());
         }
+
+
     }
 
     private String getRequestedObjectType(final String mixin,
