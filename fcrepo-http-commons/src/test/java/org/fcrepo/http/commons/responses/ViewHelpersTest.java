@@ -36,6 +36,7 @@ import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -194,12 +195,10 @@ public class ViewHelpersTest {
         final Graph mem = createDefaultModel().getGraph();
         mem.add(new Triple(createURI("a/b"),
                 createResource(RDF_NAMESPACE + "type").asNode(),
-                createResource(ns + type).asNode()));
+                createResource(LDP_NAMESPACE + "RDFSource").asNode()));
 
         assertTrue("Node is a " + type + " node.",
-                testObj.isRdfResource(mem, createURI("a/b"), ns, type));
-        assertFalse("Node is not a " + type + " node.",
-                testObj.isRdfResource(mem, createURI("a/b"), ns, "otherType"));
+                testObj.isRdfResource(mem, createURI("a/b")));
     }
 
     @Test

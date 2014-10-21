@@ -11,7 +11,11 @@
     <dd>
         <ol id="childList">
             #foreach($quad in $helpers.getObjects($rdf, $topic, $rdfLexicon.CONTAINS))
-                <li><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
+                #if ($helpers.isRdfResource($rdf, $quad.getObject()) )
+                    <li><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
+                #else
+                    <li><a href="${quad.getObject().getURI()}/fcr:metadata">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
+                #end
             #end
         </ol>
     </dd>

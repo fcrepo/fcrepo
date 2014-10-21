@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.text.SimpleDateFormat;
@@ -424,13 +425,10 @@ public class ViewHelpers {
     /**
      * Determines whether the subject is kind of RDF resource
      */
-    public boolean isRdfResource(final Graph graph,
-                                 final Node subject,
-                                 final String namespace,
-                                 final String resource) {
+    public boolean isRdfResource(final Graph graph, final Node subject ) {
         final Iterator<Triple> it = graph.find(subject,
                                                createResource(RDF_NAMESPACE + "type").asNode(),
-                                               createResource(namespace + resource).asNode());
+                                               createResource(LDP_NAMESPACE + "RDFSource").asNode());
         return it.hasNext();
     }
 
