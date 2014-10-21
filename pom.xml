@@ -26,6 +26,7 @@
     <project.copyrightYear>2014</project.copyrightYear>
     <!-- Dependency version properties -->
     <activemq.version>5.10.0</activemq.version>
+    <commons-compress.version>1.9</commons-compress.version>
     <enunciate.version>1.27</enunciate.version>
     <hk2.version>2.2.0-b21</hk2.version>
     <htmlunit.version>2.15</htmlunit.version>
@@ -173,7 +174,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.8.1</version>
+        <version>${commons-compress.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.jena</groupId>
