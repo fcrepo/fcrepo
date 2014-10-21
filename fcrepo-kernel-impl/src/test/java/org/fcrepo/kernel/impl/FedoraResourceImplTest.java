@@ -392,6 +392,15 @@ public class FedoraResourceImplTest {
     }
 
     @Test
+    public void testGetChildrenExcludesTombstones() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.isNodeType("fedora:tombstone")).thenReturn(true);
+        when(mockChild.getName()).thenReturn("x");
+        final Iterator<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty iterator", children.hasNext());
+    }
+
+    @Test
     public void testGetChildrenExcludesJcrContent() throws RepositoryException {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.getName()).thenReturn(JCR_CONTENT);
