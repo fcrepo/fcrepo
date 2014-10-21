@@ -51,6 +51,8 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
+import static org.fcrepo.jcr.FedoraJcrTypes.FROZEN_NODE;
+import static org.fcrepo.jcr.FedoraJcrTypes.JCR_FROZEN_NODE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -295,7 +297,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
     private String getPath(final FedoraResource resource) throws RepositoryException {
-        if (resource.hasType("nt:frozenNode")) {
+        if (resource.hasType(FROZEN_NODE) || resource.getPath().contains(JCR_FROZEN_NODE)) {
             try {
                 Node versionableFrozenNode = resource.getNode();
                 Node versionableNode = session.getNodeByIdentifier(
