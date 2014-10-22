@@ -56,7 +56,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
@@ -328,7 +328,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraph() {
+    public void testUpdatingObjectGraph() throws MalformedRdfException {
 
         final FedoraResource object =
             objectService.findOrCreateObject(session, "/testObjectGraphUpdates");
@@ -433,8 +433,8 @@ public class FedoraResourceImplIT extends AbstractIT {
                 .getValues()[0].getLong());
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
-    public void testAddMissingReference() throws RepositoryException {
+    @Test(expected = MalformedRdfException.class)
+    public void testAddMissingReference() throws RepositoryException, MalformedRdfException {
         final FedoraResource object =
                 objectService.findOrCreateObject(session, "/testRefObject");
 

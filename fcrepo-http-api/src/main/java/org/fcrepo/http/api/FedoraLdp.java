@@ -28,6 +28,7 @@ import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -222,7 +223,7 @@ public class FedoraLdp extends ContentExposingResource {
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch)
-            throws InvalidChecksumException, IOException {
+            throws InvalidChecksumException, IOException, MalformedRdfException {
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
@@ -300,7 +301,8 @@ public class FedoraLdp extends ContentExposingResource {
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(@ContentLocation final InputStream requestBodyStream) throws IOException {
+    public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
+            throws IOException, MalformedRdfException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -365,7 +367,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream)
-            throws InvalidChecksumException, IOException {
+            throws InvalidChecksumException, IOException, MalformedRdfException {
 
         if (!(resource() instanceof FedoraObject)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);

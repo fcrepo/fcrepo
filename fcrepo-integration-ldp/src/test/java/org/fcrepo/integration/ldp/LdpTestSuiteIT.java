@@ -72,6 +72,7 @@ public class LdpTestSuiteIT {
         options.put("server", serverAddress + pid);
         options.put("direct", "true");
         options.put("non-rdf", "true");
+        options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
         final LdpTestSuite testSuite = new LdpTestSuite(options);
         testSuite.run();
         assertTrue("The LDP test suite is only informational", true);

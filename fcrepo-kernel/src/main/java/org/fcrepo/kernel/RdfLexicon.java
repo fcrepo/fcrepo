@@ -182,6 +182,8 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "RDFSource");
     public static final Property NON_RDF_SOURCE =
         createProperty(LDP_NAMESPACE + "NonRDFSource");
+    public static final Property CONSTRAINED_BY =
+            createProperty(LDP_NAMESPACE + "constrainedBy");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
             FIRST_PAGE, NEXT_PAGE, CONTAINS, LDP_MEMBER);

@@ -23,6 +23,7 @@ import javax.jcr.Session;
 import com.google.common.base.Joiner;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.slf4j.Logger;
@@ -110,7 +111,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             jcrRdfTools.addProperty(resource, property, objectNode, input.getModel().getNsPrefixMap());
-        } catch (final RepositoryException e) {
+        } catch (final RepositoryException | RepositoryRuntimeException e) {
             exceptions.add(e.getMessage());
         }
 
@@ -153,7 +154,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             jcrRdfTools.removeProperty(resource, property, objectNode, s.getModel().getNsPrefixMap());
 
-        } catch (final RepositoryException e) {
+        } catch (final RepositoryException | RepositoryRuntimeException e) {
             exceptions.add(e.getMessage());
         }
 
@@ -162,7 +163,7 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * Assert that no exceptions were thrown while this listener was processing change
      */
-    public void assertNoExceptions() {
+    public void assertNoExceptions() throws MalformedRdfException {
         if (!exceptions.isEmpty()) {
             throw new MalformedRdfException(Joiner.on("\n").join(exceptions));
         }
