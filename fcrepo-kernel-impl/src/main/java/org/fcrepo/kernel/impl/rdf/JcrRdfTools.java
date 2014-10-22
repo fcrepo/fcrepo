@@ -21,10 +21,13 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -32,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -336,12 +340,7 @@ public class JcrRdfTools {
                     t.getPredicate(),
                     t.getObject());
         } else if (graphSubjects.inDomain(t.getSubject()) && t.getSubject().getURI().contains("#")) {
-            final String absPath = graphSubjects.asString(t.getSubject());
-
-            if (!absPath.isEmpty() && !session.nodeExists(absPath)) {
-                final Node orCreateNode = jcrTools.findOrCreateNode(session, absPath, NT_FOLDER);
-                orCreateNode.addMixin("fedora:resource");
-            }
+            findOrCreateHashUri(graphSubjects, t.getSubject());
         }
 
         if (t.getObject().isAnon()) {
@@ -349,16 +348,38 @@ public class JcrRdfTools {
         } else if (t.getObject().isResource()
                 && graphSubjects.inDomain(t.getObject().asResource())
                 && t.getObject().asResource().getURI().contains("#")) {
-
-            final String absPath = graphSubjects.asString(t.getObject().asResource());
-
-            if (!absPath.isEmpty() && !session.nodeExists(absPath)) {
-                final Node orCreateNode = jcrTools.findOrCreateNode(session, absPath, NT_FOLDER);
-                orCreateNode.addMixin("fedora:resource");
-            }
+            findOrCreateHashUri(graphSubjects, t.getObject().asResource());
         }
 
         return skolemized;
+    }
+
+    private void findOrCreateHashUri(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+                                     final Resource s) throws RepositoryException {
+        final String absPath = graphSubjects.asString(s);
+
+        if (!absPath.isEmpty() && !session.nodeExists(absPath)) {
+            final Node closestExistingAncestor = getClosestExistingAncestor(session, absPath);
+
+            final Node orCreateNode = jcrTools.findOrCreateNode(session, absPath, NT_FOLDER);
+            orCreateNode.addMixin(FEDORA_RESOURCE);
+
+            final Node parent = orCreateNode.getParent();
+
+            if (!parent.getName().equals("#")) {
+                throw new AssertionError("Hash URI resource created with too much hierarchy: " + s);
+            }
+
+            // We require the closest node to be either "#" resource, or its parent.
+            if (!parent.equals(closestExistingAncestor)
+                    && !parent.getParent().equals(closestExistingAncestor)) {
+                throw new PathNotFoundException("Unexpected request to create new resource " + s);
+            }
+
+            if (parent.isNew()) {
+                parent.addMixin(FEDORA_PAIRTREE);
+            }
+        }
     }
 
     private Resource getSkolemizedResource(final IdentifierConverter<Resource, FedoraResource> graphSubjects,

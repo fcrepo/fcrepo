@@ -25,6 +25,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
 
@@ -39,7 +40,7 @@ public abstract class AbstractService implements Service {
                                     final String path,
                                     final String finalNodeType) throws RepositoryException {
 
-        final Node preexistingNode = getClosestPreexistingNode(session, path);
+        final Node preexistingNode = getClosestExistingAncestor(session, path);
 
         if (TombstoneImpl.hasMixin(preexistingNode)) {
             throw new TombstoneException(new TombstoneImpl(preexistingNode));
@@ -64,25 +65,4 @@ public abstract class AbstractService implements Service {
         }
     }
 
-    private Node getClosestPreexistingNode(final Session session,
-                                           final String path) throws RepositoryException {
-        final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
-
-        Node node = session.getRootNode();
-
-        final int len = pathSegments.length;
-        for (int i = 0; i != len; ++i) {
-            final String pathSegment = pathSegments[i];
-
-            if (node.hasNode(pathSegment)) {
-                // Find the existing node ...
-                node = node.getNode(pathSegment);
-            } else {
-                return node;
-            }
-
-        }
-
-        return node;
-    }
 }

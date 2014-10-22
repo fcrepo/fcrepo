@@ -646,6 +646,14 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
 
         resource.delete();
+        assertFalse(container.getChildren().hasNext());
+    }
+
+    @Test
+    public void testGetChildrenHidesHashUris() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().hasNext());
     }
