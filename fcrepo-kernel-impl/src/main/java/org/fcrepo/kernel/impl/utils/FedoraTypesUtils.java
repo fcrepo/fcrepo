@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.utils;
 
 import com.google.common.base.Predicate;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
@@ -64,6 +65,40 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      */
     public static Predicate<Node> isFedoraBinary =
             new AnyTypesPredicate(FEDORA_BINARY);
+
+    /**
+     * Predicate for determining whether this {@link FedoraResource} has a frozen node
+     */
+    public static Predicate<FedoraResource> isFrozenNode =
+            new Predicate<FedoraResource>() {
+
+                @Override
+                public boolean apply(final FedoraResource f) {
+                    try {
+
+                        if (f.hasType(FROZEN_NODE)) {
+                            return true;
+                        }
+
+                        final Node node = f.getNode();
+
+                        if (node != null) {
+                            final String path = node.getPath();
+
+                            if (path == null) {
+                                return false;
+                            }
+
+                            if (path.contains(JCR_FROZEN_NODE)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                }
+     };
 
     /**
      * Check if a property is a reference property.

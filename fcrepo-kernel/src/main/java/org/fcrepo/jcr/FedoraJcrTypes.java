@@ -57,6 +57,8 @@ public interface FedoraJcrTypes {
 
     String FROZEN_NODE = "nt:frozenNode";
 
+    String JCR_FROZEN_NODE = "jcr:frozenNode";
+
     String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
 
     String JCR_UUID = "jcr:uuid";
