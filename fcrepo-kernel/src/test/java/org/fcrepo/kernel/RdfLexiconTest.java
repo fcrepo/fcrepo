@@ -33,7 +33,7 @@ public class RdfLexiconTest {
     public void repoPredicatesAreManaged() {
         assertTrue( isManagedPredicateURI.apply( PREMIS_NAMESPACE + "hasSize") );
         assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "primaryType") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repository/custom.rep.name") );
+        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repository.custom.rep.name") );
     }
     @Test
     public void otherPredicatesAreNotManaged() {
