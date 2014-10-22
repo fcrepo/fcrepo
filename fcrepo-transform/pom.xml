@@ -6,6 +6,10 @@
     <version>4.0.0-beta-04-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <properties>
+    <ldpath.version>3.2.1</ldpath.version>
+  </properties>
+
 
   <artifactId>fcrepo-transform</artifactId>
   <name>Fedora Repository RDF Transformations Module</name>
@@ -206,7 +210,7 @@
       <dependency>
         <groupId>org.apache.marmotta</groupId>
         <artifactId>ldpath-core</artifactId>
-        <version>3.1.0-incubating</version>
+        <version>${ldpath.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -217,7 +221,7 @@
       <dependency>
         <groupId>org.apache.marmotta</groupId>
         <artifactId>ldpath-backend-jena</artifactId>
-        <version>3.1.0-incubating</version>
+        <version>${ldpath.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.apache.jena</groupId>

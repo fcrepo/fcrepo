@@ -26,25 +26,28 @@
     <project.copyrightYear>2014</project.copyrightYear>
     <!-- Dependency version properties -->
     <activemq.version>5.10.0</activemq.version>
+    <commons-compress.version>1.9</commons-compress.version>
     <enunciate.version>1.27</enunciate.version>
-    <hk2.version>2.2.0-b21</hk2.version>
+    <hk2.version>2.3.0</hk2.version>
     <htmlunit.version>2.15</htmlunit.version>
     <httpcomponents.version>4.3.2</httpcomponents.version>
     <httpclient.version>4.3.3</httpclient.version>
     <infinispan.version>6.0.2.Final</infinispan.version>
     <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
+    <jackson.version>1.9.11</jackson.version>
     <jaxb.version>2.2.7</jaxb.version>
-    <jersey.version>2.12</jersey.version>
+    <jersey.version>2.13</jersey.version>
     <jgroups.version>3.5.0.Final</jgroups.version>
     <joda-time.version>2.4</joda-time.version>
     <logback.version>1.1.2</logback.version>
     <modeshape.version>4.0.0.Final</modeshape.version>
     <metrics.version>3.1.0</metrics.version>
+    <mockito.version>1.10.8</mockito.version>
     <sesame.version>2.7.13</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
-    <spring.version>4.0.3.RELEASE</spring.version>
+    <spring.version>4.1.1.RELEASE</spring.version>
     <grizzly.version>2.3.16</grizzly.version>
-    <jena.version>2.12.0</jena.version>
+    <jena.version>2.12.1</jena.version>
     <jsonld.version>0.5.0</jsonld.version>
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
@@ -172,7 +175,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.8.1</version>
+        <version>${commons-compress.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.jena</groupId>
@@ -219,7 +222,7 @@
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-core-asl</artifactId>
-        <version>1.9.2</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -396,7 +399,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>1.9.5</version>
+        <version>${mockito.version}</version>
         <scope>test</scope>
         <exclusions>
           <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls 
