@@ -17,21 +17,16 @@ package org.fcrepo.integration.http.api;
 
 
 import com.hp.hpl.jena.update.GraphStore;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.BasicHttpEntity;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.RDFS.Class;
-import static com.hp.hpl.jena.vocabulary.RDFS.subClassOf;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -56,39 +51,6 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
                 + "object"), type.asNode(), Class.asNode()));
         assertTrue(graphStore.contains(ANY, createURI(RESTAPI_NAMESPACE
                 + "datastream"), type.asNode(), Class.asNode()));
-    }
-
-    @Test
-    public void itShouldAllowUpdatesUsingCNDDeclarations() throws IOException {
-        final HttpPost httpPost = new HttpPost(serverAddress + "/fcr:nodetypes");
-        final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(new ByteArrayInputStream(
-                ("<fedora = 'http://fedora.info/definitions/v4/rest-api#'>\n"
-                        + "<special = 'info:local#'>\n"
-                        + "[special:object] > fedora:object mixin").getBytes()));
-        httpPost.setEntity(entity);
-        final HttpResponse response = execute(httpPost);
-
-        assertEquals(204, response.getStatusLine().getStatusCode());
-
-
-        final HttpGet httpGet = new HttpGet(serverAddress + "/fcr:nodetypes");
-        httpGet.addHeader("Accept", "application/n-triples");
-
-        final GraphStore graphStore = getGraphStore(httpGet);
-
-        assertTrue(graphStore.contains(ANY, createURI("info:local#object"),
-                subClassOf.asNode(), createURI(RESTAPI_NAMESPACE + "object")));
-
-    }
-
-    @Test
-    public void itShouldRejectBogusCND() throws IOException {
-        final HttpPost httpPost = new HttpPost(serverAddress + "/fcr:nodetypes");
-        final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(new ByteArrayInputStream(("this is not CND").getBytes()));
-        httpPost.setEntity(entity);
-        assertEquals(400, getStatus(httpPost) );
     }
 
     @Test
