@@ -31,7 +31,6 @@ import javax.ws.rs.ClientErrorException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.TransactionMissingException;
-import org.fcrepo.kernel.impl.LockReleasingSession;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
 import org.modeshape.jcr.api.ServletCredentials;
@@ -40,7 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Factory for generating sessions for HTTP requests, taking
- * into account transactions, workspaces, and authentication.
+ * into account transactions and authentication.
  *
  * @author awoods
  * @author gregjan
@@ -49,7 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class SessionFactory {
 
     protected static enum Prefix{
-        WORKSPACE("workspace:"), TX("tx:");
+        TX("tx:");
 
         private final String prefix;
 
@@ -112,18 +111,6 @@ public class SessionFactory {
     }
 
     /**
-     * Get a new JCR session in the given workspace
-     *
-     * @param workspace the String containing the workspace name
-     * @return a Session for the workspace
-     * @throws RepositoryException
-     */
-    public Session getInternalSession(final String workspace)
-        throws RepositoryException {
-        return repo.login(workspace);
-    }
-
-    /**
      * Get a JCR session for the given HTTP servlet request with a
      * SecurityContext attached
      *
@@ -147,22 +134,12 @@ public class SessionFactory {
             throw new BadRequestException(e);
         }
 
-        try {
-            final String lockToken = servletRequest.getHeader("Lock-Token");
-            if (lockToken != null) {
-                session.getWorkspace().getLockManager().addLockToken(lockToken);
-            }
-        } catch (final RepositoryException e) {
-            throw new BadRequestException(e);
-        }
-
-        return LockReleasingSession.newInstance(session);
+        return session;
     }
 
     /**
      * Create a JCR session for the given HTTP servlet request with a
-     * SecurityContext attached. If a workspace id is part of the request,
-     * it will be used for the session.
+     * SecurityContext attached.
      *
      * @param servletRequest
      * @return a newly created JCR session
@@ -173,20 +150,8 @@ public class SessionFactory {
         final ServletCredentials creds =
                 new ServletCredentials(servletRequest);
 
-        final String workspace =
-                getEmbeddedId(servletRequest, Prefix.WORKSPACE);
-
-        final Session session;
-        if (workspace != null) {
-            LOGGER.debug(
-                    "Returning an authenticated session in the workspace {}",
-                    workspace);
-            session = repo.login(creds, workspace);
-        } else {
-            LOGGER.debug("Returning an authenticated session in the default workspace");
-            session = repo.login(creds);
-        }
-        return session;
+        LOGGER.debug("Returning an authenticated session in the default workspace");
+        return  repo.login(creds);
     }
 
     /**
@@ -224,7 +189,12 @@ public class SessionFactory {
      */
     protected String getEmbeddedId(
             final HttpServletRequest servletRequest, final Prefix prefix) {
-        final String requestPath = servletRequest.getRequestURI();
+        String requestPath = servletRequest.getPathInfo();
+
+        // http://stackoverflow.com/questions/18963562/grizzlys-request-getpathinfo-returns-always-null
+        if (requestPath == null && servletRequest.getContextPath().isEmpty()) {
+            requestPath = servletRequest.getRequestURI();
+        }
 
         String id = null;
         if (requestPath != null) {

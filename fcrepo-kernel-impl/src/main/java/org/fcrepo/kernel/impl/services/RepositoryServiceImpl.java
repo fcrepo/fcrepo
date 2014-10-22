@@ -17,11 +17,6 @@ package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterators.limit;
-import static com.hp.hpl.jena.query.DatasetFactory.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_MORE;
-import static org.fcrepo.kernel.RdfLexicon.SEARCH_HAS_TOTAL_RESULTS;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -29,36 +24,19 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
-import java.util.Iterator;
 
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
+import javax.inject.Inject;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.query.Query;
-import javax.jcr.query.QueryManager;
-import javax.jcr.query.QueryResult;
-import javax.jcr.query.qom.Constraint;
-import javax.jcr.query.qom.QueryObjectModelFactory;
-import javax.jcr.query.qom.Source;
 
-import org.fcrepo.kernel.rdf.GraphProperties;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
-import org.fcrepo.kernel.impl.utils.NamespaceChangedStatementListener;
 import org.fcrepo.kernel.services.RepositoryService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.Problems;
 import org.modeshape.jcr.api.RepositoryManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.Timer;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.sparql.util.Context;
 
 /**
  * Service for repository-wide management and querying
@@ -68,6 +46,9 @@ import com.hp.hpl.jena.sparql.util.Context;
  */
 @Component
 public class RepositoryServiceImpl extends AbstractService implements RepositoryService {
+
+    @Inject
+    private Repository repo;
 
     private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);
 
@@ -111,125 +92,6 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryDataset
-     * (javax.jcr.Session)
-     */
-    @Override
-    public Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator) {
-
-
-        final Model model;
-
-        try {
-            model = getNamespaceRegistryStream(session, idTranslator).asModel();
-
-            model.register(new NamespaceChangedStatementListener(session));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-        return create(model);
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.services.RepositoryService#getNamespaceRegistryStream
-     * (javax.jcr.Session)
-     */
-    @Override
-    public RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator) {
-
-        try {
-            return JcrRdfTools.withContext(idTranslator, session).getNamespaceTriples();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.services.RepositoryService#searchRepository(org.fcrepo
-     * .kernel.rdf.GraphSubjects, com.hp.hpl.jena.rdf.model.Resource,
-     * javax.jcr.Session, java.lang.String, int, long)
-     */
-    @Override
-    public Dataset searchRepository(final IdentifierTranslator subjectFactory,
-            final Resource searchSubject, final Session session,
-            final String terms, final int limit, final long offset) {
-
-        final Model model;
-
-        try {
-            if (terms != null && terms.trim().length() != 0) {
-                final QueryManager queryManager =
-                        session.getWorkspace().getQueryManager();
-
-                final QueryObjectModelFactory factory =
-                        queryManager.getQOMFactory();
-
-                final Source selector =
-                        factory.selector(FEDORA_RESOURCE, "resourcesSelector");
-                final Constraint constraints =
-                        factory.fullTextSearch("resourcesSelector", null, factory
-                                .literal(session.getValueFactory().createValue(
-                                        terms)));
-
-                final Query query =
-                        factory.createQuery(selector, constraints, null, null);
-
-                // include an extra document to determine if additional pagination
-                // is
-                // necessary
-                query.setLimit(limit + 1);
-                query.setOffset(offset);
-
-                final QueryResult queryResult = query.execute();
-
-                final NodeIterator nodeIterator = queryResult.getNodes();
-                final long size = nodeIterator.getSize();
-
-                // remove that extra document from the nodes we'll iterate over
-                final Iterator<Node> limitedIterator =
-                        limit(new org.fcrepo.kernel.utils.iterators.NodeIterator(nodeIterator),
-                                limit);
-
-                model =
-                        JcrRdfTools.withContext(subjectFactory, session)
-                                .getJcrPropertiesModel(limitedIterator, searchSubject)
-                                .asModel();
-
-            /* add the result description to the RDF model */
-
-                model.add(searchSubject, SEARCH_HAS_TOTAL_RESULTS, model
-                        .createTypedLiteral(size));
-                model.add(searchSubject, SEARCH_HAS_MORE, model
-                        .createTypedLiteral(nodeIterator.hasNext()));
-            } else {
-                model = createDefaultModel();
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-        final Dataset dataset = DatasetFactory.create(model);
-
-        final String uri = searchSubject.getURI();
-        final Context context =
-                dataset.getContext() != null ? dataset.getContext()
-                        : new Context();
-        context.set(GraphProperties.URI_SYMBOL, uri);
-
-        return dataset;
-
     }
 
     /*

@@ -24,7 +24,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraResource;
 import org.springframework.stereotype.Component;
 
 /**
@@ -55,7 +55,7 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
      * @throws RepositoryException
      * @throws IOException
      */
-    public void serialize(final FedoraObject obj,
+    public void serialize(final FedoraResource obj,
                           final OutputStream out,
                           final boolean skipBinary,
                           final boolean recurse)

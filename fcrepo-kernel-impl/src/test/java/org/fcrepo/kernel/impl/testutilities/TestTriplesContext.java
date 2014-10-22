@@ -16,7 +16,9 @@
 package org.fcrepo.kernel.impl.testutilities;
 
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -29,10 +31,11 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 public class TestTriplesContext extends RdfStream {
     /**
      * Add a triple that says we've been there..
-     * @param node
+     * @param resource
      * @param graphSubjects
      */
-    public TestTriplesContext(final javax.jcr.Node node, final IdentifierTranslator graphSubjects) {
+    public TestTriplesContext(final FedoraResource resource,
+                              final IdentifierConverter<Resource, FedoraResource> graphSubjects) {
         concat(Triple.create(createURI("MockTriplesContextClass"), createURI("isAThing"), createLiteral("n")));
     }
 }

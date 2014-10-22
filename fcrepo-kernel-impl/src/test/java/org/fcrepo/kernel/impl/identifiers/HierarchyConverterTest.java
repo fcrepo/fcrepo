@@ -19,11 +19,9 @@ import static com.google.common.base.Joiner.on;
 import static com.google.common.base.Strings.repeat;
 import static java.util.Collections.nCopies;
 import static java.util.regex.Pattern.compile;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.regex.Matcher;
@@ -130,19 +128,4 @@ public class HierarchyConverterTest {
                 .convert(result));
     }
 
-    @Test
-    public void testContentPaths() {
-        testTranslator.setLevels(0);
-        testTranslator.setLength(1);
-        String result;
-
-        final String externalTestId = on(separator).join(testId, FCR_CONTENT);
-        final String internalTestId = on(separator).join(testId, JCR_CONTENT);
-
-        result = testTranslator.reverse().convert(externalTestId);
-        assertEquals("Should have swapped content suffix to JCR!", internalTestId, result);
-
-        result = testTranslator.convert(internalTestId);
-        assertEquals("Should have swapped content suffix to FCR!", externalTestId, result);
-    }
 }

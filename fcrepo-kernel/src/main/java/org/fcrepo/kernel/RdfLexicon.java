@@ -48,6 +48,12 @@ public final class RdfLexicon {
      */
     public static final String JCR_NAMESPACE = "http://www.jcp.org/jcr/1.0";
 
+    public static final String MODE_NAMESPACE = "http://www.modeshape.org/1.0";
+
+    public static final String MIX_NAMESPACE = "http://www.jcp.org/jcr/mix/1.0";
+
+    public static final String JCR_NT_NAMESPACE = "http://www.jcp.org/jcr/nt/1.0";
+
 
     /**
      * REST API namespace "fedora", used for internal API links and node
@@ -87,7 +93,9 @@ public final class RdfLexicon {
      * The namespaces that the repository manages internally.
      */
     public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
-            REPOSITORY_NAMESPACE, JCR_NAMESPACE, LDP_NAMESPACE);
+            REPOSITORY_NAMESPACE, JCR_NAMESPACE,
+            MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE,
+            LDP_NAMESPACE);
 
     /**
      * Is this namespace one that the repository manages?
@@ -112,15 +120,7 @@ public final class RdfLexicon {
     public static final String DC_NAMESPACE =
             "http://purl.org/dc/elements/1.1/";
 
-    public static final String MIX_NAMESPACE =
-            "http://www.jcp.org/jcr/mix/1.0";
-
-    public static final String JCR_NT_NAMESPACE =
-            "http://www.jcp.org/jcr/nt/1.0";
-
     // MEMBERSHIP
-    public static final Property HAS_MEMBER_OF_RESULT =
-            createProperty(REPOSITORY_NAMESPACE + "hasMember");
     public static final Property HAS_PARENT =
             createProperty(REPOSITORY_NAMESPACE + "hasParent");
     public static final Property HAS_CHILD =
@@ -128,8 +128,7 @@ public final class RdfLexicon {
     public static final Property HAS_CHILD_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "numberOfChildren");
 
-    public static final Set<Property> membershipProperties = of(
-            HAS_MEMBER_OF_RESULT, HAS_PARENT, HAS_CHILD, HAS_CHILD_COUNT);
+    public static final Set<Property> membershipProperties = of(HAS_PARENT, HAS_CHILD, HAS_CHILD_COUNT);
 
     // FIXITY
 
@@ -155,34 +154,8 @@ public final class RdfLexicon {
             HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST, HAS_SIZE, HAS_FIXITY_STATE,
             HAS_FIXITY_CHECK_COUNT, HAS_FIXITY_ERROR_COUNT, HAS_FIXITY_REPAIRED_COUNT);
 
-    // SEARCH
-    public static final Property SEARCH_PAGE = createProperty("http://sindice.com/vocab/search#Page");
-    public static final Property SEARCH_HAS_TOTAL_RESULTS =
-            createProperty("http://sindice.com/vocab/search#totalResults");
-    public static final Property SEARCH_ITEMS_PER_PAGE =
-            createProperty("http://sindice.com/vocab/search#itemsPerPage");
-    public static final Property SEARCH_OFFSET =
-            createProperty("http://sindice.com/vocab/search#startIndex");
-    public static final Property SEARCH_TERMS =
-            createProperty("http://sindice.com/vocab/search#searchTerms");
-    public static final Property SEARCH_HAS_MORE =
-            createProperty(RESTAPI_NAMESPACE + "hasMoreResults");
     public static final Property WRITABLE =
             createProperty(RESTAPI_NAMESPACE + "writable");
-
-    public static final Set<Property> searchProperties = of(SEARCH_PAGE,
-            SEARCH_HAS_TOTAL_RESULTS, SEARCH_ITEMS_PER_PAGE, SEARCH_OFFSET,
-            SEARCH_OFFSET, SEARCH_TERMS, SEARCH_HAS_MORE);
-
-    // Locks
-    public static final Property LOCKS
-        = createProperty(REPOSITORY_NAMESPACE + "locks");
-    public static final Property HAS_LOCK
-        = createProperty(REPOSITORY_NAMESPACE + "hasLock");
-    public static final Property HAS_LOCK_TOKEN
-        = createProperty(REPOSITORY_NAMESPACE + "hasLockToken");
-    public static final Property IS_DEEP
-        = createProperty(REPOSITORY_NAMESPACE + "isDeep");
 
     // Linked Data Platform
     public static final Property PAGE =
@@ -203,12 +176,15 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "hasMemberRelation");
     public static final Property CONTAINS =
         createProperty(LDP_NAMESPACE + "contains");
+    public static final Property LDP_MEMBER =
+            createProperty(LDP_NAMESPACE + "member");
+    public static final Property RDF_SOURCE =
+            createProperty(LDP_NAMESPACE + "RDFSource");
     public static final Property NON_RDF_SOURCE =
         createProperty(LDP_NAMESPACE + "NonRDFSource");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
-            FIRST_PAGE, NEXT_PAGE, MEMBERSHIP_RESOURCE,
-            HAS_MEMBER_RELATION, CONTAINS);
+            FIRST_PAGE, NEXT_PAGE, CONTAINS, LDP_MEMBER);
     public static final Set<Resource> ldpResources = of(CONTAINER,
             DIRECT_CONTAINER);
 
@@ -219,22 +195,11 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "objectSize");
     public static final Property HAS_TRANSACTION_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasTransactionProvider");
-    public static final Property HAS_NAMESPACE_SERVICE =
-            createProperty(RESTAPI_NAMESPACE + "hasNamespaces");
-    public static final Property HAS_WORKSPACE_SERVICE =
-            createProperty(RESTAPI_NAMESPACE + "hasWorkspaces");
     public static final Property HAS_ACCESS_ROLES_SERVICE =
             createProperty(RESTAPI_NAMESPACE + "hasAccessRoles");
-    public static final Property HAS_SEARCH_SERVICE =
-            createProperty("http://www.whatwg.org/specs/web-apps/current-work/"
-                                   + "#link-type-search");
-    public static final Property HAS_SITEMAP =
-            createProperty("http://microformats.org/wiki/rel-sitemap");
 
     public static final Set<Property> repositoryProperties = of(
-            HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE,
-            HAS_NAMESPACE_SERVICE, HAS_WORKSPACE_SERVICE, HAS_SEARCH_SERVICE,
-            HAS_SITEMAP);
+            HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE);
 
     // NAMESPACES
     public static final Property HAS_NAMESPACE_PREFIX =
@@ -295,8 +260,6 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "hasVersion");
     public static final Property HAS_VERSION_LABEL =
             createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
-    public static final Property VERSIONING_POLICY =
-            createProperty(FEDORA_CONFIG_NAMESPACE + "versioningPolicy");
 
     public static final Set<Property> versioningProperties = of(HAS_VERSION,
             HAS_VERSION_LABEL);
@@ -305,6 +268,8 @@ public final class RdfLexicon {
     public static final Property COULD_NOT_STORE_PROPERTY =
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
     public static final Property INBOUND_REFERENCES = createProperty(REPOSITORY_NAMESPACE + "InboundReferences");
+    public static final Property EMBED_CONTAINS = createProperty(REPOSITORY_NAMESPACE + "EmbedResources");
+    public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     // IMPORTANT JCR PROPERTIES
     public static final Property HAS_PRIMARY_IDENTIFIER =
@@ -334,16 +299,11 @@ public final class RdfLexicon {
     public static final Property DC_TITLE =
             createProperty("http://purl.org/dc/elements/1.1/title");
 
-    public static final Resource WORKSPACE_TYPE = createResource(JCR_NAMESPACE + "#Workspace");
-    public static final Property HAS_WORKSPACE = createProperty(REPOSITORY_NAMESPACE + "hasWorkspace");
-    public static final Property HAS_DEFAULT_WORKSPACE = createProperty(REPOSITORY_NAMESPACE + "hasDefaultWorkspace");
-
     public static final Set<Property> managedProperties;
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
-        b.addAll(membershipProperties).addAll(fixityProperties).addAll(
-                searchProperties).addAll(ldpProperties).addAll(
+        b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
                 otherServiceProperties).addAll(contentProperties).addAll(
                 versioningProperties).addAll(jcrProperties);

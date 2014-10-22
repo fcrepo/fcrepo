@@ -16,9 +16,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
@@ -30,6 +29,7 @@ import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,47 +53,88 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
     private Node mockNode;
 
     @Mock
+    private Node mockParent;
+
+    @Mock
     private NodeType mockNodeType;
+
+    private ObjectService testObj;
+
+    @Mock
+    private JcrTools mockJcrTools;
+
+    private String testPath = "/foo";
 
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
+        testObj = new ObjectServiceImpl();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
+        when(mockNode.getParent()).thenReturn(mockRoot);
+        when(mockRoot.isNew()).thenReturn(false);
     }
 
     @Test
     public void testCreateObject() throws Exception {
-        final String testPath = "/foo";
-        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
-        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.getName()).thenReturn("nt:folder");
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockNodeType});
-
-        final ObjectService testObj = new ObjectServiceImpl();
-        final Node actual =
-                testObj.findOrCreateObject(mockSession, testPath).getNode();
+        final Node actual = testObj.findOrCreateObject(mockSession, testPath).getNode();
         assertEquals(mockNode, actual);
     }
 
     @Test
-    public void testGetObject() throws RepositoryException {
-        when(mockNodeType.getName()).thenReturn(FEDORA_OBJECT);
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.getName()).thenReturn("nt:folder");
-        when(mockNode.isNew()).thenReturn(false);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[] {mockNodeType});
+    public void testCreateObjectWithHierarchy() throws Exception {
+        when(mockNode.getParent()).thenReturn(mockParent);
+        when(mockParent.getParent()).thenReturn(mockRoot);
+        when(mockParent.isNew()).thenReturn(true);
+        when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
+        when(mockNode.isNew()).thenReturn(true);
 
+        final Node actual =
+                testObj.findOrCreateObject(mockSession, "/foo/bar").getNode();
+        assertEquals(mockNode, actual);
+        verify(mockParent).addMixin(FedoraJcrTypes.FEDORA_PAIRTREE);
+    }
+
+    @Test
+    public void testCreateObjectWithExistingHierarchy() throws Exception {
+        when(mockNode.getParent()).thenReturn(mockParent);
+        when(mockParent.getParent()).thenReturn(mockRoot);
+        when(mockParent.isNew()).thenReturn(false);
+        when(mockRoot.hasNode("foo")).thenReturn(true);
+        when(mockRoot.getNode("foo")).thenReturn(mockParent);
+        when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
+        when(mockNode.isNew()).thenReturn(true);
+
+        final Node actual = testObj.findOrCreateObject(mockSession, "/foo/bar").getNode();
+        assertEquals(mockNode, actual);
+        verify(mockParent, never()).addMixin(FedoraJcrTypes.FEDORA_PAIRTREE);
+    }
+
+
+    @Test
+    public void testGetObject() throws RepositoryException {
         final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
-        final ObjectService testObj = spy(new ObjectServiceImpl());
-        doReturn(mockNode).when((JcrTools) testObj).findOrCreateNode(mockSession, "/foo", NT_FOLDER, NT_FOLDER);
+        when(mockJcrTools.findOrCreateNode(mockSession, "/foo", NT_FOLDER, NT_FOLDER)).thenReturn(mockNode);
         final FedoraObject actual = testObj.findOrCreateObject(mockSession, "/foo");
         assertEquals(mockNode, actual.getNode());
     }
+
+    @Test(expected = TombstoneException.class)
+    public void testThrowsTombstoneExceptionOnCreateOnTombstone() throws RepositoryException {
+
+        when(mockNode.getParent()).thenReturn(mockParent);
+        when(mockParent.getParent()).thenReturn(mockRoot);
+        when(mockParent.isNew()).thenReturn(false);
+        when(mockParent.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
+        when(mockRoot.hasNode("foo")).thenReturn(true);
+        when(mockRoot.getNode("foo")).thenReturn(mockParent);
+        when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
+        when(mockNode.isNew()).thenReturn(true);
+
+        final FedoraObject actual = testObj.findOrCreateObject(mockSession, "/foo/bar");
+
+    }
+
 
 }

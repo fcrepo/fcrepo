@@ -28,6 +28,14 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
  * @since Feb 20, 2014
  */
 public interface NodeService extends Service {
+    /**
+     * Test whether a datastream or object exists at the given path in the
+     * repository
+     *
+     * @param path
+     * @return whether a datastream or object exists at the given path
+     */
+    public boolean exists(final Session session, final String path);
 
     /**
      * Retrieve an existing Fedora resource at the given path
@@ -66,5 +74,4 @@ public interface NodeService extends Service {
      * @throws IOException
      */
     void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException;
-
 }

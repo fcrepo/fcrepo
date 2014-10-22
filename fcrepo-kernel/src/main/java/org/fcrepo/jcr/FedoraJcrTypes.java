@@ -31,6 +31,12 @@ public interface FedoraJcrTypes {
 
     String FEDORA_BINARY = "fedora:binary";
 
+    String FEDORA_PAIRTREE = "fedora:pairtree";
+
+    String FEDORA_TOMBSTONE = "fedora:tombstone";
+
+    String LDP_CONTAINER = "ldp:Container";
+
     String JCR_LASTMODIFIED = "jcr:lastModified";
 
     String JCR_CREATED = "jcr:created";
@@ -43,11 +49,9 @@ public interface FedoraJcrTypes {
 
     String CONTENT_DIGEST = "fedora:digest";
 
-    String FCR_CONTENT = "fcr:content";
+    String FCR_METADATA = "fcr:metadata";
 
     String FCR_VERSIONS = "fcr:versions";
-
-    String FCR_LOCK = "fcr:lock";
 
     String ROOT = "mode:root";
 
@@ -60,6 +64,12 @@ public interface FedoraJcrTypes {
     String JCR_PRIMARY_TYPE = "jcr:primaryType";
 
     String JCR_MIXIN_TYPES = "jcr:mixinTypes";
+
+    String VERSIONABLE = "mix:versionable";
+
+    String LDP_HAS_MEMBER_RELATION = "ldp:hasMemberRelation";
+    String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
+    String LDP_MEMBER_RESOURCE = "ldp:membershipResource";
 
     String [] EXPOSED_PROTECTED_JCR_TYPES
         = new String[] { JCR_UUID, JCR_LASTMODIFIED, JCR_CREATED, JCR_CREATEDBY,

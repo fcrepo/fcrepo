@@ -20,6 +20,8 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 
 import java.util.Iterator;
 
@@ -27,9 +29,10 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.VersionIterator;
 
@@ -47,28 +50,27 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class VersionsRdfContext extends RdfStream {
 
-    private final VersionManager versionManager;
-
     private final VersionHistory versionHistory;
 
-    private final IdentifierTranslator graphSubjects;
+    private final IdentifierConverter<Resource, FedoraResource> graphSubjects;
 
     private final com.hp.hpl.jena.graph.Node subject;
+
 
     /**
      * Ordinary constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public VersionsRdfContext(final Node node, final IdentifierTranslator graphSubjects)
+    public VersionsRdfContext(final FedoraResource resource,
+                              final IdentifierConverter<Resource, FedoraResource> graphSubjects)
         throws RepositoryException {
         super();
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getSubject(node.getPath()).asNode();
-        versionManager = node.getSession().getWorkspace().getVersionManager();
-        versionHistory = versionManager.getVersionHistory(node.getPath());
+        this.subject = graphSubjects.reverse().convert(resource).asNode();
+        versionHistory = resource.getVersionHistory();
 
         concat(versionTriples());
     }
@@ -86,12 +88,11 @@ public class VersionsRdfContext extends RdfStream {
 
                 try {
                     final Node frozenNode = version.getFrozenNode();
-                    final com.hp.hpl.jena.graph.Node versionSubject =
-                        graphSubjects.getSubject(frozenNode.getPath()).asNode();
+                    final com.hp.hpl.jena.graph.Node versionSubject
+                            = nodeToResource(graphSubjects).convert(frozenNode).asNode();
 
-                    final RdfStream results =
-                            new RdfStream(new PropertiesRdfContext(frozenNode,
-                                    graphSubjects));
+                    final RdfStream results = new PropertiesRdfContext(nodeConverter.convert(frozenNode),
+                            graphSubjects);
 
                     results.concat(create(subject, HAS_VERSION.asNode(),
                             versionSubject));

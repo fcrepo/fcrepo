@@ -16,15 +16,20 @@
 package org.fcrepo.kernel.services.functions;
 
 import static com.google.common.base.Throwables.propagate;
+import static org.fcrepo.jcr.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 
 /**
  * Base class for matching sets of node types
@@ -52,9 +57,23 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
         }
         int matched = 0;
         try {
-            for (NodeType nodeType: input.getMixinNodeTypes()) {
-                if (nodeTypes.contains(nodeType.getName())) {
-                    matched++;
+
+            if (isFrozen.apply(input) && input.hasProperty(FROZEN_MIXIN_TYPES)) {
+                final Iterator<String> transform = Iterators.transform(
+                        property2values.apply(input.getProperty(FROZEN_MIXIN_TYPES)),
+                        value2string
+                );
+
+                while (transform.hasNext()) {
+                    if (nodeTypes.contains(transform.next())) {
+                        matched++;
+                    }
+                }
+            } else {
+                for (final String nodeType : nodeTypes) {
+                    if (input.isNodeType(nodeType)) {
+                        matched++;
+                    }
                 }
             }
         } catch (RepositoryException e) {

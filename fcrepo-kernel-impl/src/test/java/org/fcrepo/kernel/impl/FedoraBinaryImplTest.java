@@ -63,8 +63,6 @@ public class FedoraBinaryImplTest implements FedoraJcrTypes {
 
     private FedoraBinary testObj;
 
-    private String testObjPath;
-
     @Mock
     private Session mockSession;
 

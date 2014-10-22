@@ -22,15 +22,16 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
-
-import com.hp.hpl.jena.update.GraphStore;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -43,18 +44,18 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
@@ -62,6 +63,8 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.hp.hpl.jena.update.GraphStore;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -126,8 +129,7 @@ public abstract class AbstractResourceIT {
     protected static HttpPut putDSMethod(final String pid, final String ds,
         final String content) throws UnsupportedEncodingException {
         final HttpPut put =
-                new HttpPut(serverAddress + pid + "/" + ds +
-                        "/fcr:content");
+                new HttpPut(serverAddress + pid + "/" + ds);
 
         put.setEntity(new StringEntity(content));
         return put;
@@ -135,8 +137,7 @@ public abstract class AbstractResourceIT {
 
     protected static HttpGet getDSMethod(final String pid, final String ds) {
             final HttpGet get =
-                    new HttpGet(serverAddress + pid + "/" + ds +
-                            "/fcr:content");
+                    new HttpGet(serverAddress + pid + "/" + ds);
             return get;
         }
 
@@ -172,12 +173,12 @@ public abstract class AbstractResourceIT {
         }
     }
 
-
-    protected int getStatus(final HttpUriRequest method)
+    protected static int getStatus(final HttpUriRequest method)
         throws ClientProtocolException, IOException {
         final HttpResponse response = execute(method);
         final int result = response.getStatusLine().getStatusCode();
         if (!(result > 199) || !(result < 400)) {
+            logger.warn("Got status {}", result);
             logger.warn(EntityUtils.toString(response.getEntity()));
         }
         return result;
@@ -315,4 +316,7 @@ public abstract class AbstractResourceIT {
         return randomUUID().toString();
     }
 
+    protected static void assertDeleted(final String location) throws IOException {
+        assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), anyOf(is(404), is(410)));
+    }
 }

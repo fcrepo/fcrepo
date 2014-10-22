@@ -19,12 +19,7 @@ import java.io.File;
 
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.Problems;
-
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author bbpennel
@@ -45,37 +40,6 @@ public interface RepositoryService extends Service {
      * @return number of objects in the repository
      */
     Long getRepositoryObjectCount();
-
-    /**
-     * Serialize the JCR namespace information as an RDF Dataset
-     *
-     * @param session
-     * @return JCR namespace information as an RDF Dataset
-     */
-    Dataset getNamespaceRegistryDataset(final Session session, final IdentifierTranslator idTranslator);
-
-    /**
-     * Serialize the JCR namespace information as an {@link RdfStream}
-     *
-     * @param session
-     * @return JCR namespace information as an {@link RdfStream}
-     */
-    RdfStream getNamespaceRegistryStream(final Session session, final IdentifierTranslator idTranslator);
-
-    /**
-     * Perform a full-text search on the whole repository and return the
-     * information as an RDF Dataset
-     *
-     * @param subjectFactory
-     * @param searchSubject RDF resource to use as the subject of the search
-     * @param session
-     * @param terms
-     * @param limit
-     * @param offset
-     * @return full text search results as an RDF Dataset
-     */
-    Dataset searchRepository(IdentifierTranslator subjectFactory, Resource searchSubject, Session session, String terms,
-            int limit, long offset);
 
     /**
      * This method backups up a running repository

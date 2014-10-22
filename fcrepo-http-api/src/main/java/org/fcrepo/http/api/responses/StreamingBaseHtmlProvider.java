@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.ImmutableMap.builder;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
@@ -24,10 +23,6 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.setCachingHeaders;
-import static org.fcrepo.kernel.impl.rdf.SerializationUtils.getDatasetSubject;
-import static org.fcrepo.kernel.impl.rdf.SerializationUtils.subjectKey;
-import static org.fcrepo.kernel.impl.rdf.SerializationUtils.unifyDatasetModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -73,9 +68,6 @@ import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 
 /**
  * Simple HTML provider for RdfStreams
@@ -162,9 +154,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
             }
 
             final List<String> otherTemplates =
-                    ImmutableList.of("search:results", "jcr:namespaces",
-                            "jcr:workspaces", "jcr:nodetypes",
-                            "node", "fcr:versions", "fcr:lock", "fcr:fixity");
+                    ImmutableList.of("jcr:nodetypes", "node", "fcr:versions", "fcr:fixity");
 
             for (final String key : otherTemplates) {
                 final Template template =
@@ -178,8 +168,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            session.logout();
         }
         LOGGER.trace("Assembled template map.");
         LOGGER.trace("HtmlProvider initialization complete.");
@@ -193,28 +181,23 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                         final OutputStream entityStream) throws IOException {
 
         try {
-        final RdfStream nsRdfStream = new NamespaceRdfContext(rdfStream.session());
-        final Dataset rdf = DatasetFactory.create(rdfStream.namespaces(nsRdfStream.namespaces()).asModel());
-        rdf.getContext().set(subjectKey, rdfStream.topic());
+            final RdfStream nsRdfStream = new NamespaceRdfContext(rdfStream.session());
 
-        LOGGER.debug("Writing an HTML response for: {}", rdf);
-        LOGGER.trace("Attempting to discover our subject");
-        final Node subject = getDatasetSubject(rdf);
+            rdfStream.namespaces(nsRdfStream.namespaces());
 
-        // add standard headers
-        httpHeaders.put("Content-type", of((Object) TEXT_HTML));
-        setCachingHeaders(httpHeaders, rdf, uriInfo);
+            final Node subject = rdfStream.topic();
 
-        final Template nodeTypeTemplate =
-                getTemplate(rdf, subject, annotations);
+            final Model model = rdfStream.asModel();
 
-        final Context context = getContext(rdf, subject);
+            final Template nodeTypeTemplate = getTemplate(model, subject, annotations);
 
-        // the contract of MessageBodyWriter<T> is _not_ to close the stream
-        // after writing to it
-        final Writer outWriter = new OutputStreamWriter(entityStream);
-        nodeTypeTemplate.merge(context, outWriter);
-        outWriter.flush();
+            final Context context = getContext(model, subject);
+
+            // the contract of MessageBodyWriter<T> is _not_ to close the stream
+            // after writing to it
+            final Writer outWriter = new OutputStreamWriter(entityStream);
+            nodeTypeTemplate.merge(context, outWriter);
+            outWriter.flush();
 
         } catch (final RepositoryException e) {
             throw new WebApplicationException(e);
@@ -222,16 +205,14 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
     }
 
-    protected Context getContext(final Dataset rdf, final Node subject) {
+    protected Context getContext(final Model model, final Node subject) {
         final FieldTool fieldTool = new FieldTool();
 
         final Context context = new VelocityContext();
         context.put("rdfLexicon", fieldTool.in(RdfLexicon.class));
         context.put("helpers", ViewHelpers.getInstance());
         context.put("esc", escapeTool);
-        context.put("rdf", rdf.asDatasetGraph());
-
-        final Model model = unifyDatasetModel(rdf);
+        context.put("rdf", model.getGraph());
 
         context.put("model", model);
         context.put("subjects", model.listSubjects());
@@ -241,7 +222,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
         return context;
     }
 
-    private Template getTemplate(final Dataset rdf, final Node subject,
+    private Template getTemplate(final Model rdf, final Node subject,
                                  final Annotation[] annotations) {
         Template template = null;
 
@@ -257,8 +238,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
         if (template == null) {
             LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
             final String nodeType =
-                    getFirstValueForPredicate(rdf, subject,
-                            primaryTypePredicate);
+                    getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
 
             LOGGER.debug("Found primary node type: {}", nodeType);
             template = templatesMap.get(nodeType);

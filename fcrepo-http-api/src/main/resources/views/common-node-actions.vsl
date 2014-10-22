@@ -87,7 +87,7 @@ WHERE { }
 </form>
 #end
 
-#set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
+#set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
 #if($serializations.hasNext())
 <div class="btn-group">
@@ -109,8 +109,7 @@ WHERE { }
 
 
 #if ($writable == true)
-#set ($serializations = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
-#set ($isLockable = $helpers.isRdfResource($rdf, $topic, $rdfLexicon.MIX_NAMESPACE, "lockable"))
+#set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
 #if($serializations.hasNext())
 <form id="action_import" action="fcr:import" method="POST">
@@ -161,31 +160,10 @@ WHERE { }
 </form>
 #end
 
-#if($isLockable)
-    #set ($lockUrl = $helpers.getLockUrl($rdf, $topic))
-    #set ($viewDisplay = "none")
-    #set ($createDisplay = "block")
-    #if ($lockUrl && $lockUrl.length() > 0)
-        #set ($viewDisplay = "block")
-        #set ($createDisplay = "none")
-    #end
-    <div class="actions collapse visible-lg visible-md" id="div_lock">
-        <h3>Locks</h3>
-        <div class="form-group" id="div_view_lock" style="display:$viewDisplay">
-            <div class="control-label">Item is Locked!</div>
-            <button type="button" id="btn_view_lock" class="btn btn-primary" onClick="javascript:viewLock('$lockUrl');">View Lock</button>
-        </div>
-        <div class="form-group" id="div_create_lock" style="display:$createDisplay">
-            <div class="control-label"><input type="checkbox" id="deep_id" name="deep"/> Is Deep</div>
-            <button type="button" id="btn_create_lock" class="btn btn-primary" onClick="javascript:createLock();">Create Lock</button>
-        </div>     
-        <hr />
-    </div>
-#end
 #end
 
 #if ($writable == true)
-#set ($fedoraresc = $rdf.find($nodeany, $topic, $helpers.asNode($rdfLexicon.HAS_MIXIN_TYPE), $helpers.asLiteralStringNode("fedora:resource")))
+#set ($fedoraresc = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_MIXIN_TYPE), $helpers.asLiteralStringNode("fedora:resource")))
 #if($fedoraresc.hasNext())
 <h3>Access Roles</h3>
 <form id="update_rbacl" type="application/json" action="javascript:updateAccessRoles()" method="POST">

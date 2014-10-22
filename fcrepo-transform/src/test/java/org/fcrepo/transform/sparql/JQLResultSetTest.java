@@ -21,10 +21,10 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -65,8 +65,7 @@ public class JQLResultSetTest {
     @Mock
     QueryResult mockQueryResult;
 
-    @Mock
-    IdentifierTranslator mockGraphSubjects;
+    IdentifierConverter mockGraphSubjects;
 
     @Mock
     private RowIterator mockRows;
@@ -86,6 +85,8 @@ public class JQLResultSetTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
+        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+
         when(mockQueryResult.getRows()).thenReturn(mockRows);
         testObj = new JQLResultSet(mockSession, mockGraphSubjects, mockQueryResult);
         columnNames = new String[]{"a", "b"};
@@ -93,6 +94,8 @@ public class JQLResultSetTest {
         when(mockRows.nextRow()).thenReturn(mockRow);
 
         when(mockRow.getValue("a")).thenReturn(mockValue);
+
+        when(mockNode.getPath()).thenReturn("/xyz");
 
     }
 
@@ -168,12 +171,12 @@ public class JQLResultSetTest {
     @Test
     public void testNextWithResource() throws Exception {
         when(mockValue.getType()).thenReturn(PropertyType.PATH);
-        when(mockValue.getString()).thenReturn("/x");
-        when(mockGraphSubjects.getSubject("/x")).thenReturn(ResourceFactory.createResource("info:x"));
+        when(mockValue.getString()).thenReturn("/xyz");
+        when(mockSession.getNode("/xyz")).thenReturn(mockNode);
         final QuerySolution solution = testObj.next();
 
         assertTrue(solution.contains("a"));
-        assertEquals("info:x", solution.get("a").asResource().getURI());
+        assertEquals("info:fedora/xyz", solution.get("a").asResource().getURI());
         assertEquals(solution.get("a"), solution.getResource("a"));
     }
 
@@ -182,11 +185,9 @@ public class JQLResultSetTest {
         when(mockValue.getType()).thenReturn(PropertyType.REFERENCE);
         when(mockValue.getString()).thenReturn("uuid");
         when(mockSession.getNodeByIdentifier("uuid")).thenReturn(mockNode);
-        when(mockGraphSubjects.getSubject(mockNode.getPath())).thenReturn(ResourceFactory.createResource(
-                "http://localhost:8080/xyz"));
         final QuerySolution solution = testObj.next();
 
-        assertEquals("http://localhost:8080/xyz", solution.get("a").asResource().getURI());
+        assertEquals("info:fedora/xyz", solution.get("a").asResource().getURI());
     }
 
     @Test

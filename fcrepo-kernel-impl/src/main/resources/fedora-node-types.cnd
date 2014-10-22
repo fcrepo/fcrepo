@@ -26,6 +26,7 @@
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <rdfs = 'http://www.w3.org/2000/01/rdf-schema#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
+<ldp = 'http://www.w3.org/ns/ldp#'>
 
 /*
  * A fedora namespace for properties a user may set on a node that may
@@ -69,10 +70,15 @@
     - fedorarelsext:isExternalContentOf (URI) multiple COPY
 
 
+[ldp:Container] mixin
+    - ldp:membershipResource (REFERENCE)
+    - ldp:hasMemberRelation (URI)
+
+
 /*
  *  Dublin Core terms
  */
-[dc:describable] mixin
+[fedora:DublinCoreDescribable] mixin
   - dc:contributor (STRING) multiple
   - dc:coverage (STRING) multiple
   - dc:creator (STRING) multiple
@@ -92,7 +98,7 @@
 /*
  * Any Fedora resource.
  */
-[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:lockable, mix:referenceable, dc:describable mixin
+[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:referenceable, fedora:DublinCoreDescribable mixin
   - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)
@@ -100,7 +106,7 @@
 /*
  * A Fedora object.
  */
-[fedora:object] > fedora:resource mixin
+[fedora:object] > fedora:resource, ldp:Container mixin
 
 
 /*
@@ -112,9 +118,13 @@
 /*
  * Some content that can have a checksum
  */
-[fedora:binary] > mix:created mixin
+[fedora:binary] > fedora:resource mixin
   - premis:hasOriginalName (STRING)
   - premis:hasSize (LONG) COPY
   - fedora:digest (URI) COPY
 
 [fedora:blanknode] > mix:referenceable mixin
+
+[fedora:pairtree] mixin
+
+[fedora:tombstone] > nt:hierarchyNode

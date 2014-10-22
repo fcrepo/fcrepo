@@ -15,92 +15,74 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.fcrepo.kernel.exception.TombstoneException;
+import org.fcrepo.kernel.impl.TombstoneImpl;
+import org.fcrepo.kernel.services.Service;
+import org.modeshape.jcr.api.JcrTools;
 
-import javax.inject.Inject;
-import javax.jcr.NamespaceException;
-import javax.jcr.NamespaceRegistry;
-import javax.jcr.Repository;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.services.Service;
-
-import org.modeshape.jcr.api.JcrTools;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
 
 /**
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public abstract class AbstractService extends JcrTools implements FedoraJcrTypes, Service {
+public abstract class AbstractService implements Service {
+    protected final static JcrTools jcrTools = new JcrTools();
 
-    @Inject
-    protected Repository repo;
+    protected Node findOrCreateNode(final Session session,
+                                    final String path,
+                                    final String finalNodeType) throws RepositoryException {
 
-    /**
-     * Set the repository to back this RepositoryService
-     *
-     * @param repository
-     */
-    @Override
-    public void setRepository(final Repository repository) {
-        repo = repository;
+        final Node preexistingNode = getClosestPreexistingNode(session, path);
+
+        if (TombstoneImpl.hasMixin(preexistingNode)) {
+            throw new TombstoneException(new TombstoneImpl(preexistingNode));
+        }
+
+        final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, finalNodeType);
+
+        if (node.isNew()) {
+            tagHierarchyWithPairtreeMixin(preexistingNode, node);
+        }
+
+        return node;
     }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.services.Service#exists(javax.jcr.Session, java.lang.String)
-     */
-    @Override
-    public boolean exists(final Session session, final String path) {
-        try {
-            validatePath(session, path);
-            return session.nodeExists(path);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+    private void tagHierarchyWithPairtreeMixin(final Node baseNode,
+                                               final Node createdNode) throws RepositoryException {
+        Node parent = createdNode.getParent();
+
+        while (parent.isNew() && !parent.equals(baseNode)) {
+            parent.addMixin(FEDORA_PAIRTREE);
+            parent = parent.getParent();
         }
     }
 
+    private Node getClosestPreexistingNode(final Session session,
+                                           final String path) throws RepositoryException {
+        final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
 
-    /**
-     * Validate resource path for unregistered namespace prefixes
-     *
-     * @param session the JCR session to use
-     * @param path the absolute path to the object
-     * @throws FedoraInvalidNamespaceException on unregistered namespaces
-     * @throws RepositoryRuntimeException
-     */
-    private void validatePath(final Session session, final String path) {
+        Node node = session.getRootNode();
 
-        final NamespaceRegistry namespaceRegistry;
-        try {
-            namespaceRegistry =
-                session.getWorkspace().getNamespaceRegistry();
-            checkNotNull(namespaceRegistry,
-                "Couldn't find namespace registry in repository!");
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        final int len = pathSegments.length;
+        for (int i = 0; i != len; ++i) {
+            final String pathSegment = pathSegments[i];
 
-        final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
-        final String[] pathSegments = relPath.split("/");
-        for (final String segment : pathSegments) {
-            if (segment.length() > 0 && segment.contains(":") &&
-                segment.substring(0, segment.indexOf(":")) != "fedora") {
-                final String prefix = segment.substring(0, segment.indexOf(":"));
-                try {
-                    namespaceRegistry.getURI(prefix);
-                } catch (final NamespaceException e) {
-                    throw new FedoraInvalidNamespaceException(
-                        String.format("The namespace prefix (%s) has not been registered", prefix), e);
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
+            if (node.hasNode(pathSegment)) {
+                // Find the existing node ...
+                node = node.getNode(pathSegment);
+            } else {
+                return node;
             }
-        }
-    }
 
+        }
+
+        return node;
+    }
 }

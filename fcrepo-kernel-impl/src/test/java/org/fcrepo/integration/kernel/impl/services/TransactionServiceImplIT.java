@@ -91,7 +91,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         transactionService.removeAndRollbackExpired();
 
         final Session session2 = repository.login();
-        assertFalse( objectService.exists(session2,"/" + pid) );
+        assertFalse( nodeService.exists(session2,"/" + pid) );
     }
 
     @Test
@@ -107,7 +107,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         txSession.save();
 
         final Session session2 = repository.login();
-        assertFalse( objectService.exists(session2,"/" + pid) );
+        assertFalse( nodeService.exists(session2,"/" + pid) );
     }
 
     @Test
@@ -123,7 +123,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         txSession.save();
 
         final Session session2 = repository.login();
-        assertTrue( objectService.exists(session2,"/" + pid) );
+        assertTrue( nodeService.exists(session2,"/" + pid) );
     }
 
 }

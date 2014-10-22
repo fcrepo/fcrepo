@@ -19,13 +19,13 @@ import java.util.Date;
 import java.util.Iterator;
 
 import javax.jcr.Node;
-import javax.jcr.version.Version;
+import javax.jcr.Property;import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 
 /**
@@ -58,6 +58,33 @@ public interface FedoraResource {
     Iterator<FedoraResource> getChildren();
 
     /**
+     * Get the container of this resource
+     * @return
+     */
+    FedoraResource getContainer();
+
+    /**
+     * Get the child of this resource at the given path
+     * @param relPath
+     * @return
+     */
+    FedoraResource getChild(String relPath);
+
+    /**
+     * Does this resource have a property
+     * @param relPath
+     * @return
+     */
+    boolean hasProperty(String relPath);
+
+    /**
+     * Retrieve the given property value for this resource
+     * @param relPath
+     * @return
+     */
+    Property getProperty(String relPath);
+
+    /**
      * Delete this resource, and any inbound references to it
      */
     void delete();
@@ -80,7 +107,7 @@ public interface FedoraResource {
      */
     boolean hasType(final String type);
     /**
-     * Update the properties Dataset with a SPARQL Update query. The updated
+     * Update the provided properties with a SPARQL Update query. The updated
      * properties may be serialized to the JCR store.
      *
      * After applying the statement, clients SHOULD check the result
@@ -89,28 +116,10 @@ public interface FedoraResource {
      *
      * @param subjects
      * @param sparqlUpdateStatement
+     * @param originalTriples
      */
-    Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
-            final String sparqlUpdateStatement);
-
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     *
-     * @param graphSubjects
-     * @param offset
-     * @param limit
-     * @return properties
-     */
-    Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
-       final int offset, final int limit);
-
-    /**
-     * Return the JCR properties of this object as a Jena {@link Dataset}
-     * @param subjects
-     * @return properties
-     */
-    Dataset getPropertiesDataset(final IdentifierTranslator subjects);
-
+    void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
+                          final String sparqlUpdateStatement, final RdfStream originalTriples);
 
     /**
      * Return the RDF properties of this object using the provided context
@@ -118,7 +127,8 @@ public interface FedoraResource {
      * @param context
      * @return
      */
-    RdfStream getTriples(final IdentifierTranslator graphSubjects, final Class<? extends RdfStream> context);
+    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+                         final Class<? extends RdfStream> context);
 
     /**
      * Return the RDF properties of this object using the provided contexts
@@ -126,7 +136,8 @@ public interface FedoraResource {
      * @param contexts
      * @return
      */
-    RdfStream getTriples(IdentifierTranslator graphSubjects, Iterable<? extends Class<? extends RdfStream>> contexts);
+    RdfStream getTriples(IdentifierConverter<Resource, FedoraResource> graphSubjects,
+                         Iterable<? extends Class<? extends RdfStream>> contexts);
 
     /**
      * Tag the current version of the Node with a version label that
@@ -162,9 +173,8 @@ public interface FedoraResource {
      *
      * @param graphSubjects
      * @param inputModel
-     * @return RDFStream
      */
-    RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
+    void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
                                 final Model inputModel,
                                 final RdfStream originalTriples);
 
@@ -178,4 +188,26 @@ public interface FedoraResource {
      */
     String getEtagValue();
 
+    /**
+     * Enable versioning
+     */
+    void enableVersioning();
+
+    /**
+     * Disable versioning
+     */
+    void disableVersioning();
+
+    /**
+     * Check if a resource is versioned
+     * @return
+     */
+    boolean isVersioned();
+
+    /**
+     * Get the node for this object at the version provided.
+     * @param label
+     * @return
+     */
+    Node getNodeVersion(String label);
 }

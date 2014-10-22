@@ -22,7 +22,6 @@ import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -31,6 +30,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,7 +60,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
 
 /**
  * <p>BaseHtmlProviderTest class.</p>
@@ -92,6 +91,7 @@ public class StreamingBaseHtmlProviderTest {
 
 
         testData.session(mockSession);
+        testData.topic(createURI("test:subject"));
         testData.concat(
         new Triple(createURI("test:subject"),
                         createURI("test:predicate"),
@@ -111,7 +111,7 @@ public class StreamingBaseHtmlProviderTest {
                 testProvider.isWriteable(RdfStream.class, RdfStream.class,
                         null, TEXT_HTML_TYPE));
         assertFalse(
-                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than Dataset!",
+                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than a RdfStream!",
                 testProvider.isWriteable(StreamingBaseHtmlProvider.class,
                         StreamingBaseHtmlProvider.class, null, TEXT_HTML_TYPE));
         assertFalse(
@@ -144,7 +144,7 @@ public class StreamingBaseHtmlProviderTest {
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
         setField(testProvider, "templatesMap", singletonMap("nt:file",
                 mockTemplate));
-        testProvider.writeTo(testData, Dataset.class, mock(Type.class),
+        testProvider.writeTo(testData, RdfStream.class, mock(Type.class),
                 new Annotation[]{}, MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
@@ -172,7 +172,7 @@ public class StreamingBaseHtmlProviderTest {
                 of("some:file", mockTemplate));
         final HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
         when(mockAnnotation.value()).thenReturn("some:file");
-        testProvider.writeTo(testData, Dataset.class, mock(Type.class),
+        testProvider.writeTo(testData, RdfStream.class, mock(Type.class),
                 new Annotation[]{mockAnnotation}, MediaType
                         .valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);

@@ -35,10 +35,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomAttr;
 import com.gargoylesoftware.htmlunit.html.DomText;
@@ -80,7 +81,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage page = webClient.getPage(serverAddress);
 
         checkForHeaderBranding(page);
-        checkForHeaderSearch(page);
 
         final String namespaceLabel = page
             .getFirstByXPath("//span[@title='http://fedora.info/definitions/v4/repository#']/text()")
@@ -96,7 +96,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     private HtmlPage createAndVerifyObjectWithIdFromRootPage(final String pid) throws IOException {
-        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
+        final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = form.getSelectByName("mixin");
         type.getOptionByValue("fedora:object").setSelected(true);
@@ -120,24 +120,25 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     @Test
     public void testCreateNewNodeWithGeneratedId() throws IOException {
 
-        final HtmlPage page = webClient.getPage(serverAddress);
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = form.getSelectByName("mixin");
         type.getOptionByValue("fedora:object").setSelected(true);
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page1 = webClient.getPage(serverAddress);
+        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress);
         assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
     }
 
     @Test
+    @Ignore("The htmlunit web client can't handle the HTML5 file API")
     public void testCreateNewDatastream() throws IOException {
 
         final String pid = randomUUID().toString();
 
         // can't do this with javascript, because HTMLUnit doesn't speak the HTML5 file api
-        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
+        final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
 
         final HtmlInput slug = form.getInputByName("slug");
@@ -153,7 +154,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
+        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress + pid);
         assertEquals(serverAddress + pid, page1.getTitleText());
     }
 
@@ -170,7 +171,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 
         final Page page2 = webClient.getPage(serverAddress + pid);
-        assertEquals("Didn't get a 404!", 404, page2.getWebResponse()
+        assertEquals("Didn't get a 410!", 410, page2.getWebResponse()
                 .getStatusCode());
 
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
@@ -178,7 +179,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     @Test
     public void testNodeTypes() throws IOException {
-        final HtmlPage page = webClient.getPage(serverAddress + "fcr:nodetypes");
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress + "fcr:nodetypes");
         assertTrue(page.asText().contains("fedora:object"));
     }
 
@@ -199,7 +200,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 "INSERT DATA { <> fedoraconfig:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
 
-        final HtmlPage objectPage = webClient.getPage(serverAddress + pid);
+        final HtmlPage objectPage = javascriptlessWebClient.getPage(serverAddress + pid);
         assertEquals("Auto versioning should be set.", "auto-version",
                      objectPage.getFirstByXPath(
                              "//span[@property='http://fedora.info/definitions/v4/config#versioningPolicy']/text()")
@@ -216,7 +217,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         postSparqlUpdateUsingHttpClient(updateSparql2, pid);
 
         final HtmlPage versions =
-            webClient.getPage(serverAddress + pid + "/fcr:versions");
+                javascriptlessWebClient.getPage(serverAddress + pid + "/fcr:versions");
         final List<DomAttr> versionLinks =
             castList(versions.getByXPath("//a[@class='version_link']/@href"));
         assertEquals("There should be two revisions.", 2, versionLinks.size());
@@ -232,13 +233,13 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                      chronological ? "are" : "are not", labels.get(0).asText(), labels.get(1).asText());
 
         final HtmlPage firstRevision =
-            webClient.getPage(versionLinks.get(chronological ? 0 : 1)
+                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 0 : 1)
                     .getNodeValue());
         final List<DomText> v1Titles =
             castList(firstRevision
                     .getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()"));
         final HtmlPage secondRevision =
-            webClient.getPage(versionLinks.get(chronological ? 1 : 0)
+                javascriptlessWebClient.getPage(versionLinks.get(chronological ? 1 : 0)
                     .getNodeValue());
         final List<DomText> v2Titles =
             castList(secondRevision
@@ -267,7 +268,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     public void testCreateNewObjectAndSetProperties() throws IOException {
         final String pid = createNewObject();
 
-        final HtmlPage page = webClient.getPage(serverAddress + pid);
+        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress + pid);
         final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_update");
         final HtmlTextArea sparql_update_query = (HtmlTextArea)page.getElementById("sparql_update_query");
         sparql_update_query.setText("INSERT { <> <info:some-predicate> 'asdf' } WHERE { }");
@@ -275,64 +276,25 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
-        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
+        final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress + pid);
         assertTrue(page1.getElementById("metadata").asText().contains("some-predicate"));
     }
 
     @Test
-    public void testCreateNewNamespace() throws IOException {
-        final HtmlPage page1 = webClient.getPage(serverAddress + "fcr:namespaces");
-        final HtmlForm form = (HtmlForm) page1.getElementById("action_register_namespace");
-        final HtmlInput prefix = form.getInputByName("prefix");
-        final HtmlInput uri = form.getInputByName("uri");
-        final String prefix_value = "prefix" + randomUUID().toString();
-        final String uri_value = "http://example.com/" + prefix_value;
+    @Ignore("htmlunit can't see links in the HTML5 <nav> element..")
+    public void testSparqlSearch() throws IOException {
+        final HtmlPage page = webClient.getPage(serverAddress);
 
-        prefix.setValueAttribute(prefix_value);
-        uri.setValueAttribute(uri_value);
+        logger.error(page.toString());
+        page.getAnchorByText("Search").click();
 
+        final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_select");
+        final HtmlTextArea q = form.getTextAreaByName("q");
+        q.setText("SELECT ?subject WHERE { ?subject a <http://fedora.info/definitions/v4/rest-api#resource> }");
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
-
-        webClient.waitForBackgroundJavaScript(1000);
-        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
-
-        final HtmlPage page2 = webClient.getPage(serverAddress + "fcr:namespaces");
-
-        // Has namespace defined.
-        assertTrue("New prefix was not found", page2.asText().contains(prefix_value));
-        assertTrue("New uri was not found", page2.asText().contains(uri_value));
     }
 
-    /**
-     * This test create a lock from the object page and examine the lock created.
-     */
-    @Test
-    public void testLockCreationFromObjectPage() throws IOException {
-        final String pid = randomUUID().toString();
-        createAndVerifyObjectWithIdFromRootPage(pid);
-
-        final HtmlPage page = webClient.getPage(serverAddress + pid);
-        final HtmlButton createButton = (HtmlButton) page.getElementById("btn_create_lock");
-        assertTrue("Should have Create Lock button.", createButton != null);
-        createButton.click();
-
-        webClient.waitForBackgroundJavaScript(1000);
-        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
-
-        final HtmlPage page1 = webClient.getPage(serverAddress + pid);
-        assertTrue("Should have the View Lock button.", page1.getElementById("btn_view_lock") != null);
-
-        final HtmlPage lockPage = webClient.getPage(serverAddress + pid + "/fcr:lock");
-        assertTrue("Should have fedora:locks property.", lockPage.asText().contains("lock"));
-        assertTrue("Should have fedora:isDeep property.", lockPage.asText().contains("isDeep"));
-    }
-
-    private static void checkForHeaderSearch(final HtmlPage page) {
-        final HtmlForm form = page.getFirstByXPath("//form[@role='search']");
-        assertNotNull(form);
-        assertEquals(serverAddress + "fcr:search", form.getActionAttribute());
-    }
 
     private static void checkForHeaderBranding(final HtmlPage page) {
         assertNotNull(
@@ -343,7 +305,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final String pid = randomUUID().toString();
 
-        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
+        final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = page.getFormByName("action_create");
 
         final HtmlInput slug = form.getInputByName("slug");
@@ -351,6 +313,10 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
+
+        webClient.waitForBackgroundJavaScript(1000);
+        webClient.waitForBackgroundJavaScriptStartingBefore(10000);
+
 
         return pid;
     }
@@ -364,6 +330,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
         webClient.setAjaxController(new NicelyResynchronizingAjaxController());
+        //Suppress warning from IncorrectnessListener
+        webClient.setIncorrectnessListener(new SuppressWarningIncorrectnessListener());
+
+        //Suppress css warning with the silent error handler.
+        webClient.setCssErrorHandler(new SilentCssErrorHandler());
         return webClient;
 
     }
@@ -380,4 +351,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         });
     }
 
+    private static class SuppressWarningIncorrectnessListener
+            implements IncorrectnessListener {
+        @Override
+        public void notify(final String arg0, final Object arg1) {
+
+        }
+      }
 }

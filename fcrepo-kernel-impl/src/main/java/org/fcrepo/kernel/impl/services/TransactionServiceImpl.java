@@ -30,15 +30,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import com.google.common.collect.ImmutableSet;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.TransactionImpl;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
-import org.fcrepo.kernel.services.VersionService;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -60,9 +59,6 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      */
     static final String FCREPO4_TX_ID = "fcrepo4.tx.id";
 
-    @Autowired
-    private VersionService versionService;
-
     /**
      * TODO since transactions have to be available on all nodes, they have to
      * be either persisted or written to a distributed map or sth, not just this
@@ -71,6 +67,19 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     private static Map<String, Transaction> transactions = new ConcurrentHashMap<>();
 
     public static final long REAP_INTERVAL = 1000;
+
+    /**
+     * Check if a session is possibly within a transaction
+     * @param session
+     * @return
+     */
+    public static boolean isInTransaction(final Session session) {
+        try {
+            return ImmutableSet.copyOf(session.getNamespacePrefixes()).contains(FCREPO4_TX_ID);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     /**
      * Every REAP_INTERVAL milliseconds, check for expired transactions. If the
@@ -209,7 +218,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
             throw new TransactionMissingException("Transaction with id " + txid +
                     " is not available");
         }
-        tx.commit(versionService);
+        tx.commit();
         return tx;
     }
 
@@ -228,14 +237,6 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
         }
         tx.rollback();
         return tx;
-    }
-
-    /**
-     * @param versionService the versionService to set
-     */
-    @Override
-    public void setVersionService(final VersionService versionService) {
-        this.versionService = versionService;
     }
 
 }

@@ -14,25 +14,24 @@
  * limitations under the License.
  */
 package org.fcrepo.kernel.impl;
+
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraResource;
+import static org.fcrepo.kernel.impl.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -40,8 +39,10 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -56,8 +57,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -66,10 +68,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.sparql.util.Symbol;
 
 /**
  * <p>FedoraResourceImplTest class.</p>
@@ -87,9 +87,13 @@ public class FedoraResourceImplTest {
     private Node mockRoot;
 
     @Mock
-    private Session mockSession;
+    private Node mockChild;
 
-    private final Resource mockResource = createResource();
+    @Mock
+    private Node mockContainer;
+
+    @Mock
+    private Session mockSession;
 
     @Mock
     private Property mockProp;
@@ -100,28 +104,20 @@ public class FedoraResourceImplTest {
     @Mock
     private JcrRdfTools mockJcrRdfTools;
 
+    private IdentifierConverter mockSubjects;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getPath()).thenReturn("/some/path");
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         testObj = new FedoraResourceImpl(mockNode);
         assertEquals(mockNode, testObj.getNode());
-    }
 
-    @Test
-    public void testHasMixin() throws RepositoryException {
-        boolean actual;
-        final NodeType mockType = mock(NodeType.class);
-        final NodeType[] mockTypes = new NodeType[] {mockType};
-        when(mockNode.getMixinNodeTypes()).thenReturn(mockTypes);
-        actual = isFedoraResource.apply(mockNode);
-        assertEquals(false, actual);
-        when(mockType.getName()).thenReturn(FEDORA_RESOURCE);
-        actual = isFedoraResource.apply(mockNode);
-        assertEquals(true, actual);
+        mockSubjects = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
@@ -143,7 +139,7 @@ public class FedoraResourceImplTest {
         when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate()
-                                                     .getTime());
+                .getTime());
     }
 
     @Test
@@ -194,30 +190,8 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetPropertiesDataset() throws Exception {
-
-        final FedoraResource spy = spy(testObj);
-
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
-
-        when(mockSubjects.getSubject(mockNode.getPath())).thenReturn(mockResource);
-
-        final RdfStream propertiesStream = new RdfStream(mockTriple);
-
-        when(spy.getTriples(eq(mockSubjects), anyCollection())).thenReturn(propertiesStream);
-        final Dataset dataset = spy.getPropertiesDataset(mockSubjects, 0, -1);
-
-        assertTrue(dataset.getDefaultModel().containsAll(
-                propertiesStream.asModel()));
-        assertTrue(dataset.getDefaultModel().containsAll(
-                propertiesStream.asModel()));
-        assertEquals(mockResource, dataset.getContext().get(
-                Symbol.create("uri")));
-    }
-
-    @Test
     public void testGetTriples() {
-        final IdentifierTranslator mockSubjects = mock(IdentifierTranslator.class);
+        final IdentifierConverter mockSubjects = mock(IdentifierConverter.class);
 
         final RdfStream triples = testObj.getTriples(mockSubjects, TestTriplesContext.class);
 
@@ -312,7 +286,7 @@ public class FedoraResourceImplTest {
     @Test
     public void testReplacePropertiesDataset() throws Exception {
 
-        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator();
+        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);
 
         when(mockNode.getPath()).thenReturn("/xyz");
         when(mockSession.getNode("/xyz")).thenReturn(mockNode);
@@ -343,12 +317,11 @@ public class FedoraResourceImplTest {
                                 replacementModel.createProperty("j"),
                                "k");
 
-        final Model replacements = testObj.replaceProperties(defaultGraphSubjects,
+        testObj.replaceProperties(defaultGraphSubjects,
                 replacementModel,
-                propertiesStream).asModel();
-
-        assertTrue(replacements.containsAll(replacementModel));
+                propertiesStream);
     }
+
     @Test
     public void shouldGetEtagForAnObject() throws RepositoryException {
         final Property mockMod = mock(Property.class);
@@ -362,6 +335,116 @@ public class FedoraResourceImplTest {
         assertEquals(shaHex("some-path"
                 + testObj.getLastModifiedDate().getTime()), testObj
                 .getEtagValue());
+    }
+
+    @Test
+    public void testGetContainer() throws RepositoryException {
+        when(mockNode.getParent()).thenReturn(mockContainer);
+        when(mockNode.getDepth()).thenReturn(1);
+        final FedoraResource actual = testObj.getContainer();
+        assertEquals(new FedoraResourceImpl(mockContainer), actual);
+    }
+
+    @Test
+    public void testGetContainerForNestedResource() throws RepositoryException {
+        when(mockNode.getParent()).thenReturn(mockChild);
+        when(mockNode.getDepth()).thenReturn(3);
+        when(mockChild.getParent()).thenReturn(mockContainer);
+        when(mockChild.getDepth()).thenReturn(2);
+        when(mockChild.isNodeType(FEDORA_PAIRTREE)).thenReturn(true);
+        when(mockContainer.getDepth()).thenReturn(1);
+        final FedoraResource actual = testObj.getContainer();
+        assertEquals(new FedoraResourceImpl(mockContainer), actual);
+    }
+
+    @Test
+    public void testGetChild() throws RepositoryException {
+        when(mockNode.getNode("xyz")).thenReturn(mockChild);
+        final FedoraResource actual = testObj.getChild("xyz");
+        assertEquals(new FedoraResourceImpl(mockChild), actual);
+    }
+
+    @Test
+    public void testGetChildrenWithEmptyChildren() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator());
+        final Iterator<FedoraResource> children = testObj.getChildren();
+
+        assertFalse("Expected an empty iterator", children.hasNext());
+    }
+
+    @Test
+    public void testGetChildrenWithChildren() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.getName()).thenReturn("x");
+        final Iterator<FedoraResource> children = testObj.getChildren();
+
+        assertTrue("Expected an iterator with values", children.hasNext());
+        assertEquals("Expected to find the child", mockChild, children.next().getNode());
+    }
+
+    @Test
+    public void testGetChildrenExcludesModeSystem() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.isNodeType("mode:system")).thenReturn(true);
+        when(mockChild.getName()).thenReturn("x");
+        final Iterator<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty iterator", children.hasNext());
+    }
+
+    @Test
+    public void testGetChildrenExcludesTombstones() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.isNodeType("fedora:tombstone")).thenReturn(true);
+        when(mockChild.getName()).thenReturn("x");
+        final Iterator<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty iterator", children.hasNext());
+    }
+
+    @Test
+    public void testGetChildrenExcludesJcrContent() throws RepositoryException {
+        when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
+        when(mockChild.getName()).thenReturn(JCR_CONTENT);
+        final Iterator<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty iterator", children.hasNext());
+    }
+
+    @Test
+    public void testHasProperty() throws RepositoryException {
+        when(mockNode.hasProperty("xyz")).thenReturn(true);
+        final boolean actual = testObj.hasProperty("xyz");
+        assertTrue("Expected same value as Node#hasProperty", actual);
+    }
+
+    @Test
+    public void testGetProperty() throws RepositoryException {
+        when(mockNode.getProperty("xyz")).thenReturn(mockProp);
+        final Property actual = testObj.getProperty("xyz");
+        assertEquals(mockProp, actual);
+    }
+
+    @Test
+    public void testEquals() throws RepositoryException {
+        assertEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockNode));
+        assertNotEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockRoot));
+    }
+
+    @Test
+    public void testDelete() throws RepositoryException {
+        when(mockNode.getReferences()).thenReturn(new TestPropertyIterator());
+        testObj.delete();
+        verify(mockNode).remove();
+    }
+
+    @Test
+    public void testDeleteLeavesATombstone() throws RepositoryException {
+        when(mockNode.getReferences()).thenReturn(new TestPropertyIterator());
+        when(mockNode.getName()).thenReturn("a");
+        when(mockNode.getParent()).thenReturn(mockContainer);
+        when(mockNode.getDepth()).thenReturn(2);
+        when(mockContainer.getNode("a")).thenThrow(new PathNotFoundException());
+        testObj.delete();
+        verify(mockNode).remove();
+        verify(mockContainer).addNode("a", FEDORA_TOMBSTONE);
     }
 
 }

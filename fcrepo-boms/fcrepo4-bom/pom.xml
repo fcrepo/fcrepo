@@ -16,11 +16,6 @@
     <dependencies>
       <dependency>
         <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-audit</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-auth-common</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -47,11 +42,6 @@
       <dependency>
         <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-connector-file</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-generator-dc</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -94,11 +84,6 @@
       <dependency>
         <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-serialization</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-storage-policy</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

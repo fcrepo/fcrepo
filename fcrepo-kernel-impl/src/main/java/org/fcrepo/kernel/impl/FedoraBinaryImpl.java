@@ -15,16 +15,23 @@
  */
 package org.fcrepo.kernel.impl;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.metrics.RegistryService;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.ValueFactory;
@@ -35,12 +42,14 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
+import javax.jcr.version.VersionHistory;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
@@ -54,8 +63,16 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);
 
+
+    static final RegistryService registryService = RegistryService.getInstance();
+    static final Counter fixityCheckCounter
+            = registryService.getMetrics().counter(name(FedoraBinary.class, "fixity-check-counter"));
+
+    static final Timer timer = registryService.getMetrics().timer(
+            name(Datastream.class, "fixity-check-time"));
+
     static final Histogram contentSizeHistogram =
-            RegistryService.getInstance().getMetrics().histogram(name(DatastreamImpl.class, "content-size"));
+            registryService.getMetrics().histogram(name(FedoraBinary.class, "content-size"));
 
     /**
      * Wrap an existing Node as a Fedora Binary
@@ -258,25 +275,53 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
-    /**
-     * Get the fixity results for this datastream's bitstream, and compare it
-     * against the given checksum and size.
-     *
-     * @param repo
-     * @param algorithm the algorithm to use
-     * @return fixity results
-     */
     @Override
-    public Collection<FixityResult> getFixity(final Repository repo,
-                                              final String algorithm) {
+    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> graphSubjects) {
+        return getFixity(graphSubjects, getContentDigest(), getContentSize());
+    }
+
+    @Override
+    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+                               final URI digestUri,
+                               final long size) {
+
+        fixityCheckCounter.inc();
+
+        final Timer.Context context = timer.time();
+
         try {
+
+            final Repository repo = node.getSession().getRepository();
             LOGGER.debug("Checking resource: " + getPath());
 
-            return CacheEntryFactory.forProperty(repo, getNode().getProperty(JCR_DATA)).checkFixity(algorithm);
+            final String algorithm = ContentDigest.getAlgorithm(digestUri);
+
+            final Collection<FixityResult> fixityResults
+                    = CacheEntryFactory.forProperty(repo, getNode().getProperty(JCR_DATA)).checkFixity(algorithm);
+
+            return new FixityRdfContext(this, graphSubjects, fixityResults, digestUri, size);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
+        } finally {
+            context.stop();
         }
+    }
 
+    /**
+     * When deleting the binary, we also need to clean up the description document.
+     */
+    @Override
+    public void delete() {
+        final Datastream description = getDescription();
+
+        super.delete();
+
+        description.delete();
+    }
+
+    @Override
+    public void addVersionLabel(final String label) {
+        getDescription().addVersionLabel(label);
     }
 
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {
@@ -302,4 +347,43 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.FedoraResource#getVersionHistory()
+     */
+    @Override
+    public VersionHistory getVersionHistory() {
+        try {
+            return getSession().getWorkspace().getVersionManager().getVersionHistory(getDescription().getPath());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+
+    @Override
+    public boolean isVersioned() {
+        return getDescription().isVersioned();
+    }
+
+    @Override
+    public void enableVersioning() {
+        super.enableVersioning();
+        getDescription().enableVersioning();
+    }
+
+    @Override
+    public void disableVersioning() {
+        super.disableVersioning();
+        getDescription().disableVersioning();
+    }
+
+    /**
+     * Check if the given node is a Fedora binary
+     * @param node
+     * @return
+     */
+    public static boolean hasMixin(final Node node) {
+        return isFedoraBinary.apply(node);
+    }
 }

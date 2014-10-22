@@ -16,21 +16,22 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -40,74 +41,87 @@ import static org.mockito.MockitoAnnotations.initMocks;
  */
 public class ReferencesRdfContextTest {
 
-    public static final Resource NODE_A = ResourceFactory.createResource("info:a");
-    public static final Resource NODE_B = ResourceFactory.createResource("info:b");
-    @Mock
-    private Property mockProperty;
-
-    @Mock
-    private Value mockValue;
-
     @Mock
     private Session mockSession;
 
     @Mock
-    private Node mockOtherNode;
-
-    @Mock
-    private Node mockAnotherNode;
-
-    @Test
-    public void testForStrongReferencesTriples() throws RepositoryException {
-        when(mockNode.getReferences()).thenReturn(mockReferences);
-        when(mockNode.getWeakReferences()).thenReturn(emptyPropertyIterator);
-        when(mockReferences.hasNext()).thenReturn(true, true, false);
-        when(mockReferences.next()).thenReturn(mockProperty);
-        final ReferencesRdfContext triples = new ReferencesRdfContext(mockNode, mockGraphSubjects);
-        final Model model = triples.asModel();
-        assertTrue(model.contains(NODE_B, ResourceFactory.createProperty("some-property"), NODE_A));
-    }
-
-    @Test
-    public void testForWeakReferencesTriples() throws RepositoryException {
-        when(mockNode.getWeakReferences()).thenReturn(mockReferences);
-        when(mockNode.getReferences()).thenReturn(emptyPropertyIterator);
-        when(mockReferences.hasNext()).thenReturn(true, true, false);
-        when(mockReferences.next()).thenReturn(mockProperty);
-        final ReferencesRdfContext triples = new ReferencesRdfContext(mockNode, mockGraphSubjects);
-        final Model model = triples.asModel();
-        assertTrue(model.contains(NODE_B, ResourceFactory.createProperty("some-property"), NODE_A));
-    }
-
-    @Before
-    public void setUp() throws RepositoryException {
-        initMocks(this);
-
-        when(mockNode.getPath()).thenReturn("a");
-        when(mockOtherNode.getPath()).thenReturn("b");
-        when(mockProperty.getName()).thenReturn("some-property");
-        when(mockProperty.getParent()).thenReturn(mockOtherNode);
-        when(mockProperty.getNode()).thenReturn(mockNode);
-        when(mockProperty.getValue()).thenReturn(mockValue);
-        when(mockValue.getType()).thenReturn(REFERENCE);
-        when(mockValue.getString()).thenReturn("some-uuid");
-        when(mockProperty.getSession()).thenReturn(mockSession);
-        when(mockSession.getNodeByIdentifier("some-uuid")).thenReturn(mockNode);
-        when(mockGraphSubjects.getSubject("a")).thenReturn(NODE_A);
-        when(mockGraphSubjects.getSubject("b")).thenReturn(NODE_B);
-        when(emptyPropertyIterator.hasNext()).thenReturn(false);
-    }
+    private FedoraResource mockResource;
 
     @Mock
     private Node mockNode;
 
-    @Mock
-    private IdentifierTranslator mockGraphSubjects;
+    private DefaultIdentifierTranslator translator;
+
+    private ReferencesRdfContext testObj;
+    private javax.jcr.PropertyIterator weakReferencesProperties;
+    private javax.jcr.PropertyIterator strongReferencesProperties;
 
     @Mock
-    private PropertyIterator mockReferences;
+    private Property mockWeakProperty;
 
     @Mock
-    private PropertyIterator emptyPropertyIterator;
+    private Property mockStrongProperty;
+
+    @Mock
+    private Node mockPropertyParent;
+
+    @Mock
+    private Value mockWeakValue;
+
+    @Mock
+    private Value mockStrongValue;
+
+
+    @Before
+    public void setUp() throws RepositoryException {
+        initMocks(this);
+        translator = new DefaultIdentifierTranslator(mockSession);
+        when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockResource.getPath()).thenReturn("/a");
+        when(mockNode.getPath()).thenReturn("/a");
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getNodeByIdentifier("uuid")).thenReturn(mockNode);
+
+        when(mockPropertyParent.getPath()).thenReturn("/b");
+
+        when(mockWeakProperty.getName()).thenReturn("info:weak");
+        when(mockWeakProperty.getParent()).thenReturn(mockPropertyParent);
+        when(mockWeakProperty.getValue()).thenReturn(mockWeakValue);
+        when(mockWeakValue.getType()).thenReturn(WEAKREFERENCE);
+        when(mockWeakValue.getString()).thenReturn("uuid");
+
+        when(mockStrongProperty.getName()).thenReturn("info:strong");
+        when(mockStrongProperty.getParent()).thenReturn(mockPropertyParent);
+        when(mockStrongProperty.getValue()).thenReturn(mockStrongValue);
+        when(mockStrongValue.getType()).thenReturn(REFERENCE);
+        when(mockStrongValue.getString()).thenReturn("uuid");
+
+        weakReferencesProperties = new TestPropertyIterator(mockWeakProperty);
+        when(mockNode.getWeakReferences()).thenReturn(weakReferencesProperties);
+
+        strongReferencesProperties = new TestPropertyIterator(mockStrongProperty);
+        when(mockNode.getReferences()).thenReturn(strongReferencesProperties);
+
+        testObj = new ReferencesRdfContext(mockResource, translator);
+    }
+
+    @Test
+    public void testStrongReferences() {
+        final Model model = testObj.asModel();
+        assertTrue(model.contains(createResource("info:fedora/b"),
+                createProperty("info:strong"),
+                createResource("info:fedora/a")));
+    }
+
+    @Test
+    public void testWeakReferences() {
+
+        final Model model = testObj.asModel();
+        assertTrue(model.contains(createResource("info:fedora/b"),
+                createProperty("info:weak"),
+                createResource("info:fedora/a")));
+
+    }
+
 
 }

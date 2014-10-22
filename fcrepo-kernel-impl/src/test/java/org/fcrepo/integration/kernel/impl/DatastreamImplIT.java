@@ -18,7 +18,6 @@ package org.fcrepo.integration.kernel.impl;
 import javax.inject.Inject;
 import javax.jcr.Repository;
 
-import org.fcrepo.kernel.services.DatastreamService;
 import org.fcrepo.kernel.services.ObjectService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -35,9 +34,6 @@ public class DatastreamImplIT extends AbstractIT {
 
     @Inject
     Repository repo;
-
-    @Inject
-    DatastreamService datastreamService;
 
     @Inject
     ObjectService objectService;

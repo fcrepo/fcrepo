@@ -34,11 +34,12 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION_VALUE;
 import java.net.URI;
 import java.util.Calendar;
 import java.util.Iterator;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.FixityResult;
 
 import com.google.common.base.Function;
@@ -48,7 +49,7 @@ import com.hp.hpl.jena.graph.Triple;
 
 /**
  * An {@link org.fcrepo.kernel.utils.iterators.RdfStream} containing information about the fixity of a
- * {@link Node}.
+ * {@link org.fcrepo.kernel.FedoraBinary}.
  *
  * @author ajs6f
  * @since Oct 15, 2013
@@ -58,14 +59,17 @@ public class FixityRdfContext extends NodeRdfContext {
     /**
      * Ordinary constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @param blobs
      * @throws RepositoryException
      */
-    public FixityRdfContext(final Node node, final IdentifierTranslator graphSubjects,
-            final Iterable<FixityResult> blobs, final URI digest, final long size) throws RepositoryException {
-        super(node, graphSubjects);
+    public FixityRdfContext(final FedoraResource resource,
+                            final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+                            final Iterable<FixityResult> blobs,
+                            final URI digest,
+                            final long size) throws RepositoryException {
+        super(resource, graphSubjects);
 
         concat(Iterators.concat(Iterators.transform(blobs.iterator(),
                 new Function<FixityResult, Iterator<Triple>>() {
@@ -76,7 +80,7 @@ public class FixityRdfContext extends NodeRdfContext {
                         final ImmutableSet.Builder<Triple> b = builder();
                         try {
                             b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
-                            b.add(create(graphSubjects.getSubject(node.getPath()).asNode(),
+                            b.add(create(graphSubjects.reverse().convert(resource).asNode(),
                                     HAS_FIXITY_RESULT.asNode(), resultSubject));
                             final String storeIdentifier = blob.getStoreIdentifier();
                             final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)

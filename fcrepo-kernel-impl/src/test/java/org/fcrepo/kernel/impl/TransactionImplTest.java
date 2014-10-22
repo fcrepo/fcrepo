@@ -68,7 +68,7 @@ public class TransactionImplTest {
 
     @Test
     public void testCommit() throws RepositoryException {
-        testObj.commit(null);
+        testObj.commit();
         verify(mockSession).save();
         verify(mockSession).logout();
         assertEquals(COMMITED, testObj.getState());
@@ -102,7 +102,7 @@ public class TransactionImplTest {
         assertEquals(NEW, testObj.getState());
         when(mockSession.hasPendingChanges()).thenReturn(true, false);
         assertEquals(DIRTY, testObj.getState());
-        testObj.commit(null);
+        testObj.commit();
     }
 
     @Test

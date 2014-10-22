@@ -23,17 +23,14 @@ import static org.fcrepo.kernel.Transaction.State.DIRTY;
 import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
 
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.services.VersionService;
 
 /**
  * A Fedora Transaction wraps a JCR session with some expiration logic.
@@ -122,32 +119,13 @@ public class TransactionImpl implements Transaction {
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.Transaction#addPathToVersion(java.lang.String)
-     */
-    @Override
-    public void addPathToVersion(final String absPath) {
-        if (versionedPaths == null) {
-            versionedPaths = Collections.newSetFromMap(
-                    new ConcurrentHashMap<String, Boolean>());
-        }
-        versionedPaths.add(absPath);
-    }
-
-    /* (non-Javadoc)
      * @see org.fcrepo.kernel.Transaction#commit(org.fcrepo.kernel.services.VersionService)
      */
     @Override
-    public void commit(final VersionService vService) {
+    public void commit() {
 
         try {
             this.session.save();
-            if (this.versionedPaths != null) {
-                if (vService == null) {
-                    throw new IllegalStateException("Versioned Paths were added," +
-                            " but no VersionService was provided!");
-                }
-                vService.createVersion(session.getWorkspace(), versionedPaths);
-            }
             this.state = COMMITED;
             this.expire();
         } catch (final RepositoryException e) {

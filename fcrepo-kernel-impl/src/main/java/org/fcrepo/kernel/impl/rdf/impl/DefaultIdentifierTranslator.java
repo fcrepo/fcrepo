@@ -15,17 +15,25 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.google.common.base.Converter;
+import com.google.common.collect.Lists;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.impl.identifiers.HashConverter;
+import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.impl.identifiers.NodeResourceConverter;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import java.util.List;
 
 /**
- * A very simple {@link IdentifierTranslator} which translates JCR paths into
+ * A very simple {@link IdentifierConverter} which translates JCR paths into
  * un-dereference-able Fedora subjects (by replacing JCR-specific names with
  * Fedora names). Should not be used except in "embedded" deployments in which
  * no publication of translated identifiers is expected!
@@ -34,57 +42,98 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @since May 15, 2013
  */
-public class DefaultIdentifierTranslator implements IdentifierTranslator {
+public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, FedoraResource> {
+
+
+    private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
 
     /**
      * Default namespace to use for node URIs
      */
     public static final String RESOURCE_NAMESPACE = "info:fedora/";
-
-    private final Resource context;
+    private final Session session;
 
     /**
      * Construct the graph with a placeholder context resource
      */
-    public DefaultIdentifierTranslator() {
-        this.context = createResource();
+    public DefaultIdentifierTranslator(final Session session) {
+        this.session = session;
+        setTranslationChain();
     }
 
-    @Override
-    public Resource getSubject(final String absPath) {
-        if (absPath.endsWith(JCR_CONTENT)) {
-            return createResource(RESOURCE_NAMESPACE + absPath.replace(JCR_CONTENT, FCR_CONTENT).substring(1));
+
+    protected Converter<String, String> forward = identity();
+    protected Converter<String, String> reverse = identity();
+
+    private void setTranslationChain() {
+
+        for (final Converter<String, String> t : minimalTranslationChain) {
+            forward = forward.andThen(t);
         }
-        return createResource(RESOURCE_NAMESPACE + absPath.substring(1));
-    }
-
-    @Override
-    public Resource getContext() {
-        return context;
-    }
-
-    @Override
-    public String getPathFromSubject(final Resource subject) {
-        if (!isFedoraGraphSubject(subject)) {
-            return null;
+        for (final Converter<String, String> t : Lists.reverse(minimalTranslationChain)) {
+            reverse = reverse.andThen(t.reverse());
         }
+    }
 
-        final String absPath = subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
 
-        if (absPath.endsWith(FCR_CONTENT)) {
-            return absPath.replace(FCR_CONTENT, JCR_CONTENT);
+    private static final List<Converter<String,String>> minimalTranslationChain =
+            Lists.newArrayList(
+                    (Converter<String, String>) new NamespaceConverter(),
+                    (Converter<String, String>) new HashConverter()
+            );
+
+    @Override
+    protected FedoraResource doForward(final Resource subject) {
+        try {
+            if (!inDomain(subject)) {
+                throw new RepositoryRuntimeException("Subject " + subject + " is not in this repository");
+            }
+
+            return nodeResourceConverter.convert(session.getNode(asString(subject)));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return absPath;
     }
 
     @Override
-    public boolean isFedoraGraphSubject(final Resource subject) {
-        checkNotNull(subject, "null cannot be a Fedora object!");
+    protected Resource doBackward(final FedoraResource resource) {
+        final String absPath = resource.getPath();
+
+        return toDomain(absPath);
+    }
+
+    @Override
+    public boolean inDomain(final Resource subject) {
         return subject.isURIResource() && subject.getURI().startsWith(RESOURCE_NAMESPACE);
     }
 
     @Override
-    public String getBaseUri() {
-        return RESOURCE_NAMESPACE;
+    public Resource toDomain(final String absPath) {
+        final String relativePath;
+
+        if (absPath.startsWith("/")) {
+            relativePath = absPath.substring(1);
+        } else {
+            relativePath = absPath;
+        }
+        return createResource(RESOURCE_NAMESPACE + reverse.convert(relativePath));
     }
+
+    @Override
+    public String asString(final Resource subject) {
+        if (!inDomain(subject)) {
+            return null;
+        }
+
+        final String path = subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
+
+        final String absPath = forward.convert(path);
+
+        if (absPath.isEmpty()) {
+            return "/";
+        } else {
+            return absPath;
+        }
+    }
+
 }

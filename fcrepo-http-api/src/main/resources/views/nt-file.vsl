@@ -52,7 +52,7 @@
 
             ## output triples for the content node
 
-            #if ($rdf.find($nodeany, $contentNode, $nodeany, $nodeany).hasNext())
+            #if ($rdf.find($contentNode, $nodeany, $nodeany).hasNext())
                 <div class="panel-heading">
                     <a href="$contentNode" class="btn btn-success pull-right"><span class="glyphicon glyphicon-download"></span> Download</a>
                     <h4>Content Properties <br/><small><a href="$contentNode.getURI()">$esc.html($helpers.getObjectTitle($rdf, $contentNode))</a></small></h4>
@@ -65,7 +65,7 @@
 
         ## output other nodes
 
-        <h2>Inlined Resources</h2>
+        <h2>Other Resources</h2>
         <div class="panel-group" id="accordion">
             #foreach($subject in $model.listSubjects())
                 #if ($subject.getURI() != $contentNode.getURI())

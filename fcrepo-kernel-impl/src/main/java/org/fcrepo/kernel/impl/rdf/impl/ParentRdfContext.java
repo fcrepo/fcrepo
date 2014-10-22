@@ -15,12 +15,14 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
@@ -40,26 +42,26 @@ public class ParentRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws javax.jcr.RepositoryException
      */
-    public ParentRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
-        super(node, graphSubjects);
+    public ParentRdfContext(final FedoraResource resource,
+                            final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+            throws RepositoryException {
+        super(resource, graphSubjects);
 
-        if (node.getDepth() > 0) {
-            LOGGER.trace("Determined that this node has a parent.");
+        if (resource.getNode().getDepth() > 0) {
+            LOGGER.trace("Determined that this resource has a parent.");
             concat(parentContext());
         }
     }
 
     private Iterator<Triple> parentContext() throws RepositoryException {
-        final javax.jcr.Node parentNode = node().getParent();
-        final com.hp.hpl.jena.graph.Node parentNodeSubject = graphSubjects().getSubject(parentNode.getPath()).asNode();
-
         final RdfStream parentStream = new RdfStream();
 
-        parentStream.concat(create(subject(), HAS_PARENT.asNode(), parentNodeSubject));
+        final Node containerSubject = graphSubjects().reverse().convert(resource().getContainer()).asNode();
+        parentStream.concat(create(subject(), HAS_PARENT.asNode(), containerSubject));
 
         return parentStream;
     }

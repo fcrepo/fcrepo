@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.connector.file;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
@@ -24,6 +25,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -52,17 +54,18 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
-import org.fcrepo.kernel.services.DatastreamService;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -94,7 +97,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     protected ObjectService objectService;
 
     @Inject
-    protected DatastreamService datastreamService;
+    protected BinaryService binaryService;
 
     /**
      * Gets the path (relative to the filesystem federation) of a directory
@@ -199,7 +202,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_OBJECT);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_OBJECT);
         assertTrue("Mixin not found: " + FEDORA_OBJECT, found);
 
         session.save();
@@ -210,14 +213,14 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedDatastream() throws RepositoryException {
         final Session session = repo.login();
 
-        final Datastream datastream = datastreamService.findOrCreateDatastream(session, testFilePath());
+        final Datastream datastream = binaryService.findOrCreateBinary(session, testFilePath()).getDescription();
         assertNotNull(datastream);
 
         final Node node = datastream.getNode();
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_DATASTREAM);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_DATASTREAM);
         assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
 
         session.save();
@@ -234,7 +237,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins),FedoraTypesUtils.nodetype2name).contains(FEDORA_BINARY);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
         final File file = fileForNode(node);
@@ -250,7 +253,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(datastreamService.findOrCreateDatastream(session, testFilePath()).getBinary());
+        checkFixity(binaryService.findOrCreateBinary(session, testFilePath()));
 
         session.save();
         session.logout();
@@ -260,14 +263,14 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final Datastream ds = datastreamService.findOrCreateDatastream(session, testFilePath());
+        final FedoraBinary binary = binaryService.findOrCreateBinary(session, testFilePath());
 
-        final String originalFixity = checkFixity(ds.getBinary());
+        final String originalFixity = checkFixity(binary);
 
         final File file = fileForNode(null);
         appendToFile(file, " ");
 
-        final String newFixity = checkFixity(ds.getBinary());
+        final String newFixity = checkFixity(binary);
 
         assertNotEquals("Checksum is expected to have changed!", originalFixity, newFixity);
 
@@ -281,7 +284,8 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         }
     }
 
-    private String checkFixity(final FedoraBinary binary) throws IOException, NoSuchAlgorithmException {
+    private String checkFixity(final FedoraBinary binary)
+            throws IOException, NoSuchAlgorithmException, RepositoryException {
         assertNotNull(binary);
 
         final File file = fileForNode(null);
@@ -289,16 +293,18 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final Collection<FixityResult> results = binary.getFixity(repo, SHA_1.toString());
+        final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(repo.login());
+        final Model results = binary.getFixity(graphSubjects).asModel();
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());
 
-        final Iterator<FixityResult> resultIterator = results.iterator();
-        while (resultIterator.hasNext()) {
-            final FixityResult result = resultIterator.next();
-            assertTrue(result.matches(file.length(), calculatedChecksum));
-        }
+
+        assertTrue("Expected to find checksum",
+                results.contains(null,
+                        HAS_MESSAGE_DIGEST,
+                        createResource(calculatedChecksum.toString())));
+
         return calculatedChecksum.toString();
     }
 

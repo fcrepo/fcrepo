@@ -15,34 +15,18 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.base.Throwables.propagate;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.security.AccessControlException;
-
-import java.util.Iterator;
-import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import com.google.common.base.Converter;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
-
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
 
 /**
  * {@link RdfStream} that holds contexts related to a specific {@link Node}.
@@ -52,9 +36,9 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class NodeRdfContext extends RdfStream {
 
-    private final Node node;
+    private final FedoraResource resource;
 
-    private final IdentifierTranslator graphSubjects;
+    private final IdentifierConverter<Resource, FedoraResource> graphSubjects;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
@@ -63,35 +47,38 @@ public class NodeRdfContext extends RdfStream {
     /**
      * Default constructor.
      *
-     * @param node
+     * @param resource
      * @param graphSubjects
      * @throws RepositoryException
      */
-    public NodeRdfContext(final Node node, final IdentifierTranslator graphSubjects) throws RepositoryException {
+    public NodeRdfContext(final FedoraResource resource,
+                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+            throws RepositoryException {
         super();
-        this.node = node;
+        this.resource = resource;
         this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.getSubject(node.getPath()).asNode();
-
-        //include rdf:type for primaryType, mixins, and their supertypes
-        concatRdfTypes();
-
-        // include writable status
-        concatWritable();
+        this.subject = graphSubjects.reverse().convert(resource).asNode();
     }
 
     /**
      * @return The {@link Node} in question
      */
-    public Node node() {
-        return node;
+    public FedoraResource resource() {
+        return resource;
     }
 
     /**
-     * @return local {@link IdentifierTranslator}
+     * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
      */
-    public IdentifierTranslator graphSubjects() {
+    public IdentifierConverter<Resource, FedoraResource> graphSubjects() {
         return graphSubjects;
+    }
+
+    /**
+     * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
+     */
+    public Converter<Node, Resource> nodeConverter() {
+        return nodeToResource(graphSubjects);
     }
 
     /**
@@ -100,79 +87,4 @@ public class NodeRdfContext extends RdfStream {
     public com.hp.hpl.jena.graph.Node subject() {
         return subject;
     }
-
-    private Function<NodeType, Triple> nodetype2triple() {
-        return new Function<NodeType, Triple>() {
-
-            @Override
-            public Triple apply(final NodeType nodeType) {
-                try {
-                    final String fullTypeName = nodeType.getName();
-                    LOGGER.trace("Translating JCR mixin name: {}", fullTypeName);
-                    final String prefix = fullTypeName.split(":")[0];
-                    final String typeName = fullTypeName.split(":")[1];
-                    final String namespace = getJcrUri(prefix);
-                    LOGGER.trace("with JCR namespace: {}", namespace);
-                    final com.hp.hpl.jena.graph.Node rdfType =
-                        createURI(getRDFNamespaceForJcrNamespace(namespace)
-                                + typeName);
-                    LOGGER.trace("into RDF resource: {}", rdfType);
-                    return create(subject(), type.asNode(), rdfType);
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-
-        };
-    }
-
-    private String getJcrUri(final String prefix) throws RepositoryException {
-        return node().getSession().getWorkspace().getNamespaceRegistry()
-                .getURI(prefix);
-    }
-
-    private void concatRdfTypes() throws RepositoryException {
-        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
-
-        final NodeType primaryNodeType = node.getPrimaryNodeType();
-        nodeTypesB.add(primaryNodeType);
-
-        if (primaryNodeType != null && primaryNodeType.getSupertypes() != null) {
-            final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
-                    .add(primaryNodeType.getSupertypes()).build();
-            nodeTypesB.addAll(primarySupertypes);
-        }
-
-        final NodeType[] mixinNodeTypesArr = node.getMixinNodeTypes();
-
-        if (mixinNodeTypesArr != null) {
-            final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
-            nodeTypesB.addAll(mixinNodeTypes);
-
-            final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
-            for (final NodeType mixinNodeType : mixinNodeTypes) {
-                mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
-            }
-
-            nodeTypesB.addAll(mixinSupertypes.build());
-        }
-
-        final ImmutableList<NodeType> nodeTypes = nodeTypesB.build();
-        final Iterator<NodeType> nodeTypesIt = nodeTypes.iterator();
-
-        concat(Iterators.transform(nodeTypesIt,nodetype2triple()));
-    }
-
-    private void concatWritable() throws RepositoryException {
-        boolean writable = false;
-        try {
-            node.getSession().checkPermission( node.getPath(), "add_node,set_property,remove" );
-            writable = true;
-        } catch ( AccessControlException ex ) {
-            writable = false;
-        }
-
-        concat(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean)));
-    }
-
 }

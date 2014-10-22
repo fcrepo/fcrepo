@@ -52,4 +52,30 @@ public class PreferTest  {
         final String returnParams = prefer.getReturn().getParams().get("include");
         assertTrue(returnParams.contains("http://www.w3.org/ns/ldp#PreferMinimalContainer"));
     }
+
+    @Test
+    public void testHasHandling() throws ParseException {
+        final Prefer prefer = new Prefer("handling=strict");
+
+        assertTrue(prefer.hasHandling());
+    }
+
+    @Test
+    public void testGetHandling() throws ParseException {
+        final Prefer prefer = new Prefer("handling=lenient");
+
+        assertEquals("lenient", prefer.getHandling().getValue());
+    }
+
+    @Test
+    public void testGetHandlingParameters() throws ParseException {
+        final Prefer prefer =
+                new Prefer("handling=lenient; some=\"parameter\"");
+
+        assertTrue(prefer.hasHandling());
+        assertEquals("lenient", prefer.getHandling().getValue());
+
+        final String returnParams = prefer.getHandling().getParams().get("some");
+        assertTrue(returnParams.contains("parameter"));
+    }
 }

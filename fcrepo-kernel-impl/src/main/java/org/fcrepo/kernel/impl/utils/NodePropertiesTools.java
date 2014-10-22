@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.utils;
 
 import static com.google.common.collect.Iterables.toArray;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getDefinitionForPropertyName;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
@@ -28,12 +27,17 @@ import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
+import org.modeshape.jcr.IsExternal;
 import org.slf4j.Logger;
 
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -48,6 +52,7 @@ public class NodePropertiesTools {
 
     private static final Logger LOGGER = getLogger(NodePropertiesTools.class);
     public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
+    private static final IsExternal isExternal = new IsExternal();
 
     /**
      * Given a JCR node, property and value, either:
@@ -60,7 +65,7 @@ public class NodePropertiesTools {
      * @param newValue the JCR value to insert
      * @throws RepositoryException
      */
-    public void appendOrReplaceNodeProperty(final IdentifierTranslator subjects,
+    public void appendOrReplaceNodeProperty(final IdentifierConverter<Resource,FedoraResource> subjects,
                                                    final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
@@ -122,15 +127,25 @@ public class NodePropertiesTools {
 
     }
 
-    private void addReferencePlaceholders(final IdentifierTranslator subjects,
+    private void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> subjects,
                                           final Node node,
                                           final Property property,
                                           final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
-            if (subjects.isFedoraGraphSubject(resource)) {
-                final Node refNode = node.getSession().getNode(subjects.getPathFromSubject(resource));
+            if (!subjects.inDomain(resource)) {
+                return;
+            }
+
+            try {
+                final Node refNode = subjects.convert(resource).getNode();
+
+                if (isExternal.apply(refNode)) {
+                    // we can't apply REFERENCE properties to external resources
+                    return;
+                }
+
                 final String referencePropertyName = getReferencePropertyName(property);
 
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
@@ -139,24 +154,27 @@ public class NodePropertiesTools {
 
                 final Value v = node.getSession().getValueFactory().createValue(refNode, true);
                 appendOrReplaceNodeProperty(subjects, node, referencePropertyName, v);
+
+            } catch (final IdentifierConversionException e) {
+                // no-op
             }
         }
     }
 
-    private void removeReferencePlaceholders(final IdentifierTranslator subjects,
+    private void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> subjects,
                                              final Node node,
                                              final Property property,
                                              final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
-            if (subjects.isFedoraGraphSubject(resource)) {
+            if (subjects.inDomain(resource)) {
                 final String referencePropertyName = getReferencePropertyName(property);
 
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
                     node.setProperty(referencePropertyName, (Value[])null);
                 } else {
-                    final Node refNode = node.getSession().getNode(subjects.getPathFromSubject(resource));
+                    final Node refNode = subjects.convert(resource).getNode();
                     final Value v = node.getSession().getValueFactory().createValue(refNode, true);
                     removeNodeProperty(subjects, node, referencePropertyName, v);
                 }
@@ -174,7 +192,7 @@ public class NodePropertiesTools {
      * @param valueToRemove the JCR value to remove
      * @throws RepositoryException
      */
-    public void removeNodeProperty(final IdentifierTranslator subjects,
+    public void removeNodeProperty(final IdentifierConverter<Resource, FedoraResource> subjects,
                                           final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)
@@ -184,7 +202,7 @@ public class NodePropertiesTools {
 
             final Property property = node.getProperty(propertyName);
 
-            if (FedoraTypesUtils.isMultipleValuedProperty.apply(property)) {
+            if (JcrPropertyFunctions.isMultipleValuedProperty.apply(property)) {
 
                 final List<Value> newValues = new ArrayList<>();
 
@@ -285,7 +303,7 @@ public class NodePropertiesTools {
      * @return true if the property is (or could be) multivalued
      * @throws RepositoryException
      */
-    public static boolean isMultivaluedProperty(final Node node,
+    private static boolean isMultivaluedProperty(final Node node,
                                                 final String propertyName)
         throws RepositoryException {
         final PropertyDefinition def =
@@ -297,5 +315,39 @@ public class NodePropertiesTools {
 
         return def.isMultiple();
     }
+
+    /**
+     * Get the property definition information (containing type and multi-value
+     * information)
+     *
+     * @param node the node to use for inferring the property definition
+     * @param propertyName the property name to retrieve a definition for
+     * @return a JCR PropertyDefinition, if available, or null
+     * @throws javax.jcr.RepositoryException
+     */
+    private static PropertyDefinition getDefinitionForPropertyName(final Node node,
+                                                                  final String propertyName)
+            throws RepositoryException {
+
+        final NodeType primaryNodeType = node.getPrimaryNodeType();
+        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
+        LOGGER.debug("Looking for property name: {}", propertyName);
+        for (final PropertyDefinition p : propertyDefinitions) {
+            LOGGER.debug("Checking property: {}", p.getName());
+            if (p.getName().equals(propertyName)) {
+                return p;
+            }
+        }
+
+        for (final NodeType nodeType : node.getMixinNodeTypes()) {
+            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
+                if (p.getName().equals(propertyName)) {
+                    return p;
+                }
+            }
+        }
+        return null;
+    }
+
 
 }

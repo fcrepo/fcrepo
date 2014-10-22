@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
@@ -46,7 +45,6 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
-import org.fcrepo.kernel.impl.utils.LogoutCallback;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFWriterRegistry;
@@ -102,12 +100,12 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
 
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
         try {
-            final RdfStream namespaceRdfContext = new NamespaceRdfContext(rdfStream.session());
-            final RdfStreamStreamingOutput streamOutput =
-                new RdfStreamStreamingOutput(rdfStream
-                        .namespaces(namespaceRdfContext.namespaces()),
-                        mediaType);
-            addCallback(streamOutput, new LogoutCallback(rdfStream.session()));
+            if (rdfStream.namespaces().isEmpty()) {
+                final RdfStream namespaceRdfContext = new NamespaceRdfContext(rdfStream.session());
+                rdfStream.namespaces(namespaceRdfContext.namespaces());
+            }
+
+            final RdfStreamStreamingOutput streamOutput = new RdfStreamStreamingOutput(rdfStream, mediaType);
             streamOutput.write(entityStream);
         } catch (final RepositoryException e) {
             throw new WebApplicationException(e);

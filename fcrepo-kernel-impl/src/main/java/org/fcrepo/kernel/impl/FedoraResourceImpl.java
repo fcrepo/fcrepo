@@ -15,18 +15,21 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.filter;
+import static com.google.common.collect.Iterators.singletonIterator;
+import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
-import static org.fcrepo.kernel.rdf.GraphProperties.PROBLEMS_MODEL_NAME;
-import static org.fcrepo.kernel.rdf.GraphProperties.URI_SYMBOL;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozen;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.property2values;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.value2string;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -36,9 +39,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -47,19 +50,19 @@ import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
+import com.google.common.base.Converter;
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Predicate;
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ContainerRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.utils.iterators.DifferencingIterator;
+import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
@@ -68,11 +71,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateRequest;
 
@@ -134,13 +132,126 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Iterator<FedoraResource> getChildren() {
         try {
-           return Iterators.transform(new NodeIterator(node.getNodes()), new Function<Node, FedoraResource>() {
+            return concat(nodeToGoodChildren(node));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
-               @Override
-               public FedoraResource apply(final Node node) {
-                   return new FedoraResourceImpl(node);
-               }
-           });
+    /**
+     * Get the "good" children for a node by skipping all pairtree nodes in the way.
+     * @param input
+     * @return
+     * @throws RepositoryException
+     */
+    private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
+        final Iterator<Node> children = filter(new NodeIterator(input.getNodes()), not(nastyChildren));
+        return transform(children, new Function<Node, Iterator<FedoraResource>>() {
+
+            @Override
+            public Iterator<FedoraResource> apply(final Node input) {
+                try {
+                    if (input.isNodeType(FEDORA_PAIRTREE)) {
+                        return concat(nodeToGoodChildren(input));
+                    } else {
+                        return singletonIterator(nodeToObjectBinaryConverter.convert(input));
+                    }
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            }
+        });
+    }
+    /**
+     * Children for whom we will not generate triples.
+     */
+    private static Predicate<Node> nastyChildren =
+            new Predicate<Node>() {
+
+                @Override
+                public boolean apply(final Node n) {
+                    LOGGER.trace("Testing child node {}", n);
+                    try {
+                        return isInternalNode.apply(n)
+                                || n.getName().equals(JCR_CONTENT)
+                                || TombstoneImpl.hasMixin(n);
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                }
+            };
+
+
+    private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
+            = new Converter<FedoraResource, FedoraResource>() {
+
+        @Override
+        protected FedoraResource doForward(final FedoraResource fedoraResource) {
+            if (fedoraResource instanceof Datastream) {
+                return ((Datastream) fedoraResource).getBinary();
+            } else {
+                return fedoraResource;
+            }
+        }
+
+        @Override
+        protected FedoraResource doBackward(final FedoraResource fedoraResource) {
+            if (fedoraResource instanceof FedoraBinary) {
+                return ((FedoraBinary) fedoraResource).getDescription();
+            } else {
+                return fedoraResource;
+            }
+        }
+    };
+
+    private static final Converter<Node, FedoraResource> nodeToObjectBinaryConverter
+            = nodeConverter.andThen(datastreamToBinary);
+
+    @Override
+    public FedoraResource getContainer() {
+        try {
+
+            if (getNode().getDepth() == 0) {
+                return null;
+            }
+
+            Node container = getNode().getParent();
+            while (container.getDepth() > 0) {
+                if (container.isNodeType(FEDORA_PAIRTREE) || container.isNodeType(FEDORA_DATASTREAM)) {
+                    container = container.getParent();
+                } else {
+                    return nodeConverter.convert(container);
+                }
+            }
+
+            return nodeConverter.convert(container);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource getChild(final String relPath) {
+        try {
+            return nodeConverter.convert(getNode().getNode(relPath));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean hasProperty(final String relPath) {
+        try {
+            return getNode().hasProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public Property getProperty(final String relPath) {
+        try {
+            return getNode().getProperty(relPath);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -155,10 +266,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 inboundProperty.remove();
             }
 
+            final Node parent;
+
+            if (getNode().getDepth() > 0) {
+                parent = getNode().getParent();
+            } else {
+                parent = null;
+            }
+            final String name = getNode().getName();
+
             node.remove();
+
+            if (parent != null) {
+                createTombstone(parent, name);
+            }
+
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    private void createTombstone(final Node parent, final String path) throws RepositoryException {
+        findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
     }
 
     /* (non-Javadoc)
@@ -211,7 +340,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         try {
             if (isFrozen.apply(node) && node.hasProperty(FROZEN_MIXIN_TYPES)) {
                 final List<String> types = newArrayList(
-                    Iterators.transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
+                    transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
                 );
                 return types.contains(type);
             }
@@ -224,94 +353,57 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#updatePropertiesDataset
-     *     (org.fcrepo.kernel.rdf.IdentifierTranslator, java.lang.String)
+     * @see org.fcrepo.kernel.FedoraResource#updateProperties
+     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
-    public Dataset updatePropertiesDataset(final IdentifierTranslator subjects,
-            final String sparqlUpdateStatement) {
-        final Dataset dataset = getPropertiesDataset(subjects);
-        final UpdateRequest request =
-            create(sparqlUpdateStatement, dataset.getContext().getAsString(
-                    URI_SYMBOL));
-        dataset.getDefaultModel().setNsPrefixes(request.getPrefixMapping());
-        execute(request, dataset);
-        return dataset;
+    public void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
+                                 final String sparqlUpdateStatement, final RdfStream originalTriples) {
+
+        final Model model = originalTriples.asModel();
+
+        final JcrPropertyStatementListener listener =
+                new JcrPropertyStatementListener(subjects, getSession());
+
+        model.register(listener);
+
+        final UpdateRequest request = create(sparqlUpdateStatement, subjects.reverse().convert(this).toString());
+        model.setNsPrefixes(request.getPrefixMapping());
+        execute(request, model);
+
+        listener.assertNoExceptions();
     }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.IdentifierTranslator, int, int)
-     */
     @Override
-    public Dataset getPropertiesDataset(final IdentifierTranslator graphSubjects,
-        final int offset, final int limit) {
-        try {
-
-            final RdfStream propertiesStream = getTriples(graphSubjects, ImmutableSet.of(
-                    PropertiesRdfContext.class,
-                    ParentRdfContext.class,
-                    ChildrenRdfContext.class,
-                    ContainerRdfContext.class));
-
-            final Dataset dataset = DatasetFactory.create(propertiesStream.asModel());
-
-            final Model problemsModel = createDefaultModel();
-
-            final JcrPropertyStatementListener listener =
-                    JcrPropertyStatementListener.getListener(graphSubjects, getSession(), problemsModel);
-
-            dataset.getDefaultModel().register(listener);
-
-            dataset.addNamedModel(PROBLEMS_MODEL_NAME, problemsModel);
-
-            dataset.getContext().set(URI_SYMBOL, graphSubjects.getSubject(getPath()));
-
-
-            return dataset;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPropertiesDataset(org.fcrepo.kernel.rdf.IdentifierTranslator)
-     */
-    @Override
-    public Dataset getPropertiesDataset(final IdentifierTranslator subjects) {
-        return getPropertiesDataset(subjects, 0, -1);
-    }
-
-
-    @Override
-    public RdfStream getTriples(final IdentifierTranslator graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
                                 final Class<? extends RdfStream> context) {
         return getTriples(graphSubjects, Collections.singleton(context));
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierTranslator graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
                                 final Iterable<? extends Class<? extends RdfStream>> contexts) {
         final RdfStream stream = new RdfStream();
 
         for (final Class<? extends RdfStream> context : contexts) {
             try {
                 final Constructor<? extends RdfStream> declaredConstructor
-                        = context.getDeclaredConstructor(Node.class, IdentifierTranslator.class);
+                        = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
 
-                final RdfStream rdfStream = declaredConstructor.newInstance(node, graphSubjects);
+                final RdfStream rdfStream = declaredConstructor.newInstance(this, graphSubjects);
 
                 stream.concat(rdfStream);
             } catch (final NoSuchMethodException |
                     InstantiationException |
                     IllegalAccessException e) {
                 // Shouldn't happen.
-                propagate(e);
+                throw propagate(e);
             } catch (final InvocationTargetException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof RepositoryException) {
                     throw new RepositoryRuntimeException(cause);
                 }
-                propagate(cause);
+                throw propagate(cause);
             }
         }
 
@@ -367,18 +459,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#replaceProperties
-     *     (org.fcrepo.kernel.rdf.IdentifierTranslator, com.hp.hpl.jena.rdf.model.Model)
+     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
-    public RdfStream replaceProperties(final IdentifierTranslator graphSubjects,
+    public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
         final Model inputModel, final RdfStream originalTriples) {
 
-        final RdfStream replacementStream = RdfStream.fromModel(inputModel);
+        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
 
-        final Set<Triple> replacementTriples = copyOf(replacementStream);
-
-        final DifferencingIterator<Triple> differencer =
-            new DifferencingIterator<>(replacementTriples, originalTriples);
+        final GraphDifferencingIterator differencer =
+            new GraphDifferencingIterator(inputModel, originalTriples);
 
         try {
             new RdfRemover(graphSubjects, getSession(), replacementStream
@@ -389,9 +479,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-
-        return replacementStream.withThisContext(Iterables.concat(differencer
-                .common(), differencer.notCommon()));
     }
 
     /* (non-Javadoc)
@@ -407,7 +494,95 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return "";
     }
 
-    private Session getSession() {
+    @Override
+    public void enableVersioning() {
+        try {
+            node.addMixin("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void disableVersioning() {
+        try {
+            node.removeMixin("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+    }
+
+    @Override
+    public boolean isVersioned() {
+        try {
+            return node.isNodeType("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public Node getNodeVersion(final String label) {
+        try {
+            final Session session = getSession();
+            try {
+
+                final Node frozenNode = session.getNodeByIdentifier(label);
+
+                final String baseUUID = getNode().getIdentifier();
+
+            /*
+             * We found a node whose identifier is the "label" for the version.  Now
+             * we must do due dilligence to make sure it's a frozen node representing
+             * a version of the subject node.
+             */
+                final Property p = frozenNode.getProperty("jcr:frozenUuid");
+                if (p != null) {
+                    if (p.getString().equals(baseUUID)) {
+                        return frozenNode;
+                    }
+                }
+            /*
+             * Though a node with an id of the label was found, it wasn't the
+             * node we were looking for, so fall through and look for a labeled
+             * node.
+             */
+            } catch (final ItemNotFoundException ex) {
+            /*
+             * the label wasn't a uuid of a frozen node but
+             * instead possibly a version label.
+             */
+            }
+
+            if (isVersioned()) {
+                final VersionHistory hist =
+                        session.getWorkspace().getVersionManager().getVersionHistory(getPath());
+
+                if (hist.hasVersionLabel(label)) {
+                    LOGGER.debug("Found version for {} by label {}.", this, label);
+                    return hist.getVersionByLabel(label).getFrozenNode();
+                }
+            }
+
+            LOGGER.warn("Unknown version {} with label or uuid {}!", this, label);
+            return null;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (object instanceof FedoraResourceImpl) {
+            return ((FedoraResourceImpl) object).getNode().equals(this.getNode());
+        } else {
+            return false;
+        }
+    }
+
+    protected Session getSession() {
         try {
             return getNode().getSession();
         } catch (final RepositoryException e) {

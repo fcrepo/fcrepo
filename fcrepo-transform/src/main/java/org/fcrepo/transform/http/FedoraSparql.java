@@ -19,19 +19,13 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Strings;
 import com.hp.hpl.jena.query.ResultSet;
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFLanguages;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import org.fcrepo.http.api.FedoraBaseResource;
 import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
-import org.fcrepo.kernel.impl.utils.LogoutCallback;
-import org.fcrepo.transform.http.responses.ResultSetStreamingOutput;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.fcrepo.transform.sparql.SparqlServiceDescription;
 import org.slf4j.Logger;
@@ -40,6 +34,7 @@ import org.springframework.context.annotation.Scope;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -51,7 +46,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Variant;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,13 +55,10 @@ import java.io.Writer;
 import java.net.URL;
 import java.util.Properties;
 
-import static com.google.common.util.concurrent.Futures.addCallback;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
@@ -84,8 +75,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_SPARQL_RDF_VARIANTS;
-import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.api.responses.StreamingBaseHtmlProvider.templateFilenameExtension;
 import static org.fcrepo.http.api.responses.StreamingBaseHtmlProvider.templatesLocation;
 import static org.fcrepo.http.api.responses.StreamingBaseHtmlProvider.velocityPropertiesLocation;
@@ -102,7 +91,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @Scope("prototype")
 @Path("/fcr:sparql")
-public class FedoraSparql extends AbstractResource {
+public class FedoraSparql extends FedoraBaseResource {
 
     @Inject
     protected Session session;
@@ -117,31 +106,12 @@ public class FedoraSparql extends AbstractResource {
     @GET
     @Timed
     @Produces({RDF_XML + ";qs=20", TURTLE, N3, N3_ALT2, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD})
-    public Response sparqlServiceDescription(@Context final Request request,
+    public RdfStream sparqlServiceDescription(@Context final Request request,
                                              @Context final UriInfo uriInfo) {
 
         final SparqlServiceDescription sd = new SparqlServiceDescription(session, uriInfo);
-        final Variant bestPossibleResponse = request.selectVariant(POSSIBLE_RDF_VARIANTS);
 
-        LOGGER.debug("Getting sparql service description with media type {} ...", bestPossibleResponse);
-
-        Lang tmpLang;
-        if (bestPossibleResponse == null ||
-                (tmpLang = RDFLanguages.contentTypeToLang(bestPossibleResponse.getMediaType().toString())) == null) {
-            // set default format to rdf/xml
-            tmpLang = RDFLanguages.RDFXML;
-        }
-        final Lang rdfLang = tmpLang;
-        final StreamingOutput stream = new StreamingOutput() {
-            @Override
-            public void write(final OutputStream output) {
-
-                LOGGER.debug("Writting sparql service description with jena RdfLanguages name {}.", rdfLang.getName());
-                final Writer outWriter = new OutputStreamWriter(output);
-                sd.createServiceDescription().asModel().write(outWriter, rdfLang.getName());
-            }
-        };
-        return ok(stream).header("Content-Type", rdfLang.getContentType().getContentType()).build();
+        return sd.createServiceDescription();
     }
 
     /**
@@ -201,18 +171,13 @@ public class FedoraSparql extends AbstractResource {
             contentTypeTextPlain, contentTypeResultsJSON,
             contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
-    public Response runSparqlQuery(final InputStream requestBodyStream,
+    public ResultSet runSparqlQuery(final InputStream requestBodyStream,
         @Context final Request request, @Context final UriInfo uriInfo)
         throws IOException, RepositoryException {
 
-        final IdentifierTranslator graphSubjects = new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo);
-
-        final Variant bestPossibleResponse =
-            request.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS);
-
         final String sparqlQuery = IOUtils.toString(requestBodyStream);
 
-        return rexecSparql(sparqlQuery, bestPossibleResponse, graphSubjects);
+        return rexecSparql(sparqlQuery);
     }
 
     /**
@@ -229,39 +194,33 @@ public class FedoraSparql extends AbstractResource {
             contentTypeTextPlain, contentTypeResultsJSON,
             contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
-    public Response runSparqlQuery(@FormParam("query") final String query,
+    public ResultSet runSparqlQuery(@FormParam("query") final String query,
                                    @Context final Request request,
                                    @Context final UriInfo uriInfo)
             throws RepositoryException {
 
         LOGGER.trace("POST SPARQL query with {}: {}", contentTypeHTMLForm, query);
+
         if (Strings.isNullOrEmpty(query)) {
-            return status(BAD_REQUEST)
-                    .entity("SPARQL must not be null. Please submit a query with parameter 'query'.")
-                    .build();
+            throw new BadRequestException("SPARQL must not be null. Please submit a query with parameter 'query'.");
         }
-        return rexecSparql(query,
-                           request.selectVariant(POSSIBLE_SPARQL_RDF_VARIANTS),
-                           new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
+
+        return rexecSparql(query);
     }
 
-    private Response rexecSparql(final String sparql,
-                                 final Variant bestPossibleResponse,
-                                 final IdentifierTranslator graphSubjects)
+    @Override
+    protected Session session() {
+        return session;
+    }
+
+    private ResultSet rexecSparql(final String sparql)
             throws RepositoryException {
         LOGGER.trace("Running SPARQL query: {}", sparql);
 
-        final JQLConverter jqlConverter = new JQLConverter(session, graphSubjects, sparql);
+        final JQLConverter jqlConverter = new JQLConverter(session, translator(), sparql);
 
         LOGGER.trace("Converted to JQL query: {}", jqlConverter.getStatement());
 
-        final ResultSet resultSet = jqlConverter.execute();
-
-        final ResultSetStreamingOutput streamingOutput =
-            new ResultSetStreamingOutput(resultSet, bestPossibleResponse.getMediaType());
-
-        addCallback(streamingOutput, new LogoutCallback(session));
-
-        return ok(streamingOutput).build();
+        return jqlConverter.execute();
     }
 }

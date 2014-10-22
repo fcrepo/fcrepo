@@ -16,8 +16,9 @@
 package org.fcrepo.integration.connector.file;
 
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Test;
 
 import javax.jcr.PathNotFoundException;
@@ -69,7 +70,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
 
         // Write the properties
-        object.updatePropertiesDataset(new DefaultIdentifierTranslator(), sparql);
+        object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new RdfStream());
 
         // Verify
         final Property property = object.getNode().getProperty("fedora:name");
@@ -94,8 +95,8 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                 "'some-property-to-remove' }";
 
         // Write the properties
-        final IdentifierTranslator graphSubjects = new DefaultIdentifierTranslator();
-        object.updatePropertiesDataset(graphSubjects, sparql);
+        final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
+        object.updateProperties(graphSubjects, sparql, new RdfStream());
 
         // Verify property exists
         final Property property = object.getNode().getProperty("fedora:remove");
@@ -110,8 +111,9 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                 "}";
 
         // Remove the properties
-        final IdentifierTranslator graphSubjectsRemove = new DefaultIdentifierTranslator();
-        object.updatePropertiesDataset(graphSubjectsRemove, sparqlRemove);
+        object.updateProperties(graphSubjects,
+                sparqlRemove,
+                object.getTriples(graphSubjects, PropertiesRdfContext.class));
 
         // Persist the object (although the propery will be removed from memory without this.)
         session.save();

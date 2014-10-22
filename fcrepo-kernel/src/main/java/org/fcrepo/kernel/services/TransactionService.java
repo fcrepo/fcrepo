@@ -82,9 +82,4 @@ public interface TransactionService extends Service {
      */
     Transaction rollback(String txid);
 
-    /**
-     * @param versionService the versionService to set
-     */
-    void setVersionService(final VersionService versionService);
-
 }

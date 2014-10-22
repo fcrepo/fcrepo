@@ -38,7 +38,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -53,19 +52,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.PathSegment;
 
-import org.fcrepo.http.api.FedoraNodes;
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
+import com.google.common.annotations.VisibleForTesting;
+import org.fcrepo.http.api.ContentExposingResource;
+import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.TransformationFactory;
 import org.jvnet.hk2.annotations.Optional;
+import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
-import com.hp.hpl.jena.query.Dataset;
 
 /**
  * Endpoint for transforming object properties using stored
@@ -73,9 +72,9 @@ import com.hp.hpl.jena.query.Dataset;
  *
  * @author cbeer
  */
-@Scope("prototype")
+@Scope("request")
 @Path("/{path: .*}/fcr:transform")
-public class FedoraTransform extends AbstractResource {
+public class FedoraTransform extends ContentExposingResource {
 
     @Inject
     protected Session session;
@@ -85,6 +84,23 @@ public class FedoraTransform extends AbstractResource {
     @Inject
     @Optional
     private TransformationFactory transformationFactory;
+
+    @PathParam("path") protected String externalPath;
+
+    /**
+     * Default entry point
+     */
+    public FedoraTransform() { }
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param externalPath
+     */
+    @VisibleForTesting
+    public FedoraTransform(final String externalPath) {
+        this.externalPath = externalPath;
+    }
+
 
     /**
      * Register the LDPath configuration tree in JCR
@@ -96,6 +112,7 @@ public class FedoraTransform extends AbstractResource {
     @PostConstruct
     public void setUpRepositoryConfiguration() throws RepositoryException, IOException {
 
+        final JcrTools jcrTools = new JcrTools(true);
         final Session internalSession = sessions.getInternalSession();
         try {
             // register our CND
@@ -123,7 +140,6 @@ public class FedoraTransform extends AbstractResource {
     /**
      * Execute an LDpath program transform
      *
-     * @param pathList
      * @return Binary blob
      * @throws RepositoryException
      */
@@ -131,28 +147,20 @@ public class FedoraTransform extends AbstractResource {
     @Path("{program}")
     @Produces({APPLICATION_JSON})
     @Timed
-    public Object evaluateLdpathProgram(@PathParam("path")
-        final List<PathSegment> pathList, @PathParam("program")
-        final String program) throws RepositoryException {
+    public Object evaluateLdpathProgram(@PathParam("program") final String program,
+                                        @HeaderParam("Prefer") final Prefer prefer)
+            throws RepositoryException, IOException {
 
-        try {
-            final String path = toPath(pathList);
-            final FedoraResource object = nodeService.getObject(session, path);
+        final RdfStream rdfStream = getResourceTriples(prefer).session(session)
+                .topic(translator().reverse().convert(resource()).asNode());
 
-            final Dataset propertiesDataset =
-                object.getPropertiesDataset(new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
+        return getNodeTypeTransform(resource().getNode(), program).apply(rdfStream);
 
-            return getNodeTypeTransform(object.getNode(), program).apply(propertiesDataset);
-
-        } finally {
-            session.logout();
-        }
     }
 
     /**
      * Get the LDPath output as a JSON stream appropriate for e.g. Solr
      *
-     * @param pathList
      * @param requestBodyStream
      * @return LDPath as a JSON stream
      * @throws RepositoryException
@@ -164,25 +172,34 @@ public class FedoraTransform extends AbstractResource {
             contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
     @Timed
-    public Object evaluateTransform(@PathParam("path")
-        final List<PathSegment> pathList, @HeaderParam("Content-Type")
-        final MediaType contentType, final InputStream requestBodyStream)
-        throws RepositoryException {
+    public Object evaluateTransform(@HeaderParam("Content-Type") final MediaType contentType,
+                                    @HeaderParam("Prefer") final Prefer prefer,
+                                    final InputStream requestBodyStream)
+            throws RepositoryException, IOException {
 
         if (transformationFactory == null) {
             transformationFactory = new TransformationFactory();
         }
 
-        try {
-            final String path = toPath(pathList);
-            final FedoraResource object = nodeService.getObject(session, path);
-            final Dataset propertiesDataset =
-                object.getPropertiesDataset(new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo));
+        final RdfStream rdfStream = getResourceTriples(prefer).session(session)
+                .topic(translator().reverse().convert(resource()).asNode());
 
-            return transformationFactory.getTransform(contentType, requestBodyStream).apply(propertiesDataset);
+        return transformationFactory.getTransform(contentType, requestBodyStream).apply(rdfStream);
 
-        } finally {
-            session.logout();
-        }
+    }
+
+    @Override
+    protected Session session() {
+        return session;
+    }
+
+    @Override
+    protected String externalPath() {
+        return externalPath;
+    }
+
+    @Override
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+
     }
 }

@@ -15,10 +15,8 @@
  */
 package org.fcrepo.kernel.impl.identifiers;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_CONTENT;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.jcrNamespacesToRDFNamespaces;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.rdfNamespacesToJcrNamespaces;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.identifiers.InternalIdentifierConverter;
@@ -49,9 +47,6 @@ public class NamespaceConverter extends InternalIdentifierConverter {
             log.trace("Replacing namespace: {} with: {}", jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
             result = result.replace(jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
         }
-        if (result.endsWith(JCR_CONTENT)) {
-            result = result.replace(JCR_CONTENT, FCR_CONTENT);
-        }
         log.trace("Converted identifier {} from internal to external {}...", inputId, result);
         return result;
     }
@@ -69,9 +64,6 @@ public class NamespaceConverter extends InternalIdentifierConverter {
         for (final String rdfNamespace : rdfNamespacesToJcrNamespaces.keySet()) {
             log.trace("Replacing namespace: {} with: {}", rdfNamespace, rdfNamespacesToJcrNamespaces.get(rdfNamespace));
             result = result.replace(rdfNamespace, rdfNamespacesToJcrNamespaces.get(rdfNamespace));
-        }
-        if (result.endsWith(FCR_CONTENT)) {
-            result = result.replace(FCR_CONTENT, JCR_CONTENT);
         }
         return result;
     }

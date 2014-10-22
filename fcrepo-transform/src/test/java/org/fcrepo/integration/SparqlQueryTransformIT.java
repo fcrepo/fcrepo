@@ -19,7 +19,9 @@ import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,8 +66,9 @@ public class SparqlQueryTransformIT extends AbstractResourceIT {
 
         testObj = new SparqlQueryTransform(stringReader);
 
-        try (final QueryExecution qexec =
-                testObj.apply(object.getPropertiesDataset(new DefaultIdentifierTranslator()))) {
+        final RdfStream stream = object.getTriples(new DefaultIdentifierTranslator(session),
+                PropertiesRdfContext.class);
+        try (final QueryExecution qexec = testObj.apply(stream)) {
             assert (qexec != null);
             final ResultSet results = qexec.execSelect();
             assert (results != null);

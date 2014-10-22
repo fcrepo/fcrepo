@@ -24,6 +24,8 @@ import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryVisitor;
 import com.hp.hpl.jena.query.SortCondition;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.core.TriplePath;
 import com.hp.hpl.jena.sparql.expr.Expr;
@@ -58,10 +60,12 @@ import com.hp.hpl.jena.sparql.syntax.ElementUnion;
 import com.hp.hpl.jena.sparql.syntax.ElementVisitor;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.fcrepo.kernel.rdf.IdentifierTranslator;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.transform.exception.JQLParsingException;
 import org.modeshape.common.collection.Collections;
+import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.query.qom.Limit;
 import org.modeshape.jcr.api.query.qom.SelectQuery;
 import org.slf4j.Logger;
@@ -69,6 +73,8 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.PropertyDefinition;
 import javax.jcr.query.QueryManager;
 import javax.jcr.query.qom.Column;
 import javax.jcr.query.qom.Constraint;
@@ -86,13 +92,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Sets.difference;
 import static com.google.common.primitives.Ints.checkedCast;
 import static com.hp.hpl.jena.query.Query.ORDER_DESCENDING;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.lang.Integer.MAX_VALUE;
+import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_JOIN_TYPE_INNER;
@@ -105,6 +114,7 @@ import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LESS_TH
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_LIKE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_OPERATOR_NOT_EQUAL_TO;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyName;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -136,7 +146,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private Map<String, Source> joins;
     private Map<String, String> joinTypes;
     private Map<String, JoinCondition> joinConditions;
-    private IdentifierTranslator subjects;
+    private IdentifierConverter<Resource,FedoraResource> subjects;
 
     /**
      * Create a new query
@@ -147,10 +157,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     public JQLQueryVisitor(final Session session,
                            final JcrRdfTools jcrTools,
                            final QueryManager queryManager,
-                           final IdentifierTranslator subjects) {
-        if (null == subjects) {
-            throw new IllegalArgumentException("IdentifierTranslator is null!");
-        }
+                           final IdentifierConverter<Resource, FedoraResource> subjects) {
+        checkNotNull(subjects);
 
         this.session = session;
         this.jcrTools = jcrTools;
@@ -477,13 +485,13 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                     }
 
                     final String propertyName =
-                        jcrTools.getPropertyNameFromPredicate(defaultModel
+                            getPropertyName(defaultModel
                                 .createProperty(predicate.getURI()));
 
                     if (propertyName.equals("rdf:type") && object.isURI()) {
                         final String mixinName =
-                            jcrTools.getPropertyNameFromPredicate(defaultModel
-                                    .createProperty(object.getURI()));
+                                getPropertyName(defaultModel
+                                        .createProperty(object.getURI()));
 
                         if (session.getWorkspace().getNodeTypeManager()
                                 .hasNodeType(mixinName)) {
@@ -501,7 +509,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                         }
                     }
 
-                    final int propertyType = jcrTools.getPropertyType(FEDORA_RESOURCE, propertyName);
+                    final int propertyType = getPropertyType(getNodeType(FEDORA_RESOURCE), propertyName);
 
                     if (object.isVariable()) {
 
@@ -543,7 +551,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
                         if (!inOptional) {
                             final PropertyValue field = queryFactory.propertyValue(c.getSelectorName(), propertyName);
-                            final Value jcrValue = jcrTools.createValue(defaultModel.asRDFNode(object), propertyType);
+                            final Value jcrValue = createValue(defaultModel.asRDFNode(object), propertyType);
                             final Literal literal = queryFactory.literal(jcrValue);
                             appendConstraint(queryFactory.comparison(field, JCR_OPERATOR_EQUAL_TO, literal));
                         }
@@ -574,7 +582,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         final String subjectUri = subject.getURI();
 
         // Go through the IdentifierConverter for potential transparent hierarchy path conversion.
-        final String path = subjects.getPathFromSubject(model.createResource(subjectUri));
+        final String path = subjects.convert(model.createResource(subjectUri)).getPath();
 
         final String subjectSelector = "fedoraResource_" + path.replace("/", "_");
 
@@ -587,9 +595,9 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             throw new NotImplementedException("Element path may not contain a variable predicate");
         }
 
-        final String propertyName = jcrTools.getPropertyNameFromPredicate(model.createProperty(predicate.getURI()));
+        final String propertyName = getPropertyName(model.createProperty(predicate.getURI()));
         if (propertyName.equals("rdf:type") && object.isURI()) {
-            final String mixinName = jcrTools.getPropertyNameFromPredicate(model.createProperty(object.getURI()));
+            final String mixinName = getPropertyName(model.createProperty(object.getURI()));
 
             if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
                 final String selectorName = "ref_type_" + mixinName.replace(":", "_");
@@ -604,7 +612,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         }
 
         final Column objectColumn;
-        final int propertyType = jcrTools.getPropertyType(FEDORA_RESOURCE, propertyName);
+        final int propertyType = getPropertyType(getNodeType(FEDORA_RESOURCE), propertyName);
         if ((propertyType == REFERENCE || propertyType == WEAKREFERENCE || propertyType == URI)
                 && variables.containsKey(object.getName()))  {
 
@@ -949,10 +957,64 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private void addPathConstraint(final String selector, final Model model, final String path)
             throws RepositoryException {
         final PropertyValue fieldPath = queryFactory.propertyValue(selector, "jcr:path");
-        final Value jcrValuePath = jcrTools.createValue(model.createLiteral(path),
-                jcrTools.getPropertyType(FEDORA_RESOURCE, "jcr:path"));
+        final Value jcrValuePath = createValue(model.createLiteral(path),
+                getPropertyType(getNodeType(FEDORA_RESOURCE), "jcr:path"));
         final Literal literalPath = queryFactory.literal(jcrValuePath);
         appendConstraint(queryFactory.comparison(fieldPath, JCR_OPERATOR_EQUAL_TO, literalPath));
     }
+
+    /**
+     * Get a property name for an RDF predicate
+     * @param predicate
+     * @return property name from the given predicate
+     * @throws RepositoryException
+     */
+    private String getPropertyName(final com.hp.hpl.jena.rdf.model.Property predicate)
+            throws RepositoryException {
+
+        final NamespaceRegistry namespaceRegistry =
+                (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
+
+        final Map<String, String> namespaceMapping = emptyMap();
+        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
+    }
+
+    /**
+     * Create a JCR value from an RDFNode with the given JCR type
+     * @param data
+     * @param type
+     * @return created JCR value
+     * @throws RepositoryException
+     */
+    private Value createValue(final RDFNode data, final int type) throws RepositoryException {
+        return jcrTools.createValue(session.getValueFactory(), data, type);
+    }
+
+    private NodeType getNodeType(final String nodeType) throws RepositoryException {
+        return session.getWorkspace().getNodeTypeManager().getNodeType(nodeType);
+    }
+
+    /**
+     * Given a node type and a property name, figure out an appropriate jcr value type
+     * @param nodeType
+     * @param propertyName
+     * @return jcr value type
+     */
+    private int getPropertyType(final NodeType nodeType, final String propertyName) {
+        final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();
+        int type = UNDEFINED;
+        for (final PropertyDefinition propertyDefinition : propertyDefinitions) {
+            if (propertyDefinition.getName().equals(propertyName)) {
+                if (type != UNDEFINED) {
+                    return UNDEFINED;
+                }
+
+                type = propertyDefinition.getRequiredType();
+            }
+        }
+
+        return type;
+    }
+
 
 }

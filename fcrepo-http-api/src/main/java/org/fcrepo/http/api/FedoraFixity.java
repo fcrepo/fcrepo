@@ -27,23 +27,20 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 
-import java.util.List;
-
 import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierTranslator;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 
@@ -57,7 +54,7 @@ import com.codahale.metrics.annotation.Timed;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:fixity")
-public class FedoraFixity extends AbstractResource {
+public class FedoraFixity extends FedoraBaseResource {
 
     @Inject
     protected Session session;
@@ -67,7 +64,7 @@ public class FedoraFixity extends AbstractResource {
      *
      * GET /path/to/some/datastream/fcr:fixity
      *
-     * @param pathList
+     * @param externalPath
      * @param request
      * @param uriInfo
      * @return datastream fixity in the given format
@@ -78,19 +75,24 @@ public class FedoraFixity extends AbstractResource {
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     public RdfStream getDatastreamFixity(@PathParam("path")
-        final List<PathSegment> pathList,
+        final String externalPath,
         @Context
         final Request request,
         @Context
         final UriInfo uriInfo) {
 
-        final String path = toPath(pathList);
+        final FedoraResource resource = getResourceFromPath(externalPath);
 
-        final Datastream ds = datastreamService.findOrCreateDatastream(session, path);
+        if (!(resource instanceof FedoraBinary)) {
+            throw new NotFoundException(resource + " is not a binary");
+        }
 
-        return datastreamService.getFixityResultsModel(
-                new HttpIdentifierTranslator(session, FedoraNodes.class, uriInfo), ds.getBinary())
-                .session(session);
+        return ((FedoraBinary)resource).getFixity(translator()).session(session);
 
+    }
+
+    @Override
+    protected Session session() {
+        return session;
     }
 }

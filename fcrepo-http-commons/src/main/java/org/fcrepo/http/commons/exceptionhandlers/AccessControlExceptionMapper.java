@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 /**
  * Translate JCR AccessControlExceptions into HTTP 403 Forbidden errors
  *
+ * @author lsitu
  * @author awoods
  * @author gregjan
  */
@@ -46,16 +47,4 @@ public class AccessControlExceptionMapper implements
 
         return status(FORBIDDEN).build();
     }
-
-    /**
-     * @param e
-     * @return forbidden response
-     */
-    public Response toResponse(final java.security.AccessControlException e) {
-        LOGGER.debug("AccessControlExceptionMapper intercepted exception: \n",
-                        e);
-
-        return status(FORBIDDEN).build();
-    }
-
 }

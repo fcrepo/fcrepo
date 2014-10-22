@@ -10,10 +10,10 @@ function addChild()
 
     var newURI = $('#main').attr('resource') + "/" + id;
 
+    var postURI = newURI;
+
     if ( mixin != '' ) {
-        var postURI = newURI + "?mixin=" + mixin;
-    } else {
-        var postURI = newURI;
+        postURI = postURI + "?mixin=" + mixin;
     }
 
     if (mixin == "fedora:datastream") {
@@ -23,9 +23,12 @@ function addChild()
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
                 if (xhr.status == 201) {
-                    var loc = xhr.getResponseHeader('Location').replace("/fcr:content", "");
-
-                    if (loc != null) {
+                    var loc = xhr.getResponseHeader('Location');
+                    var link = xhr.getResponseHeader('Link');
+                    if (link != null && link.match('rel="describedby"')) {
+                        var str = link.match(/<[^>]+>/)[0];
+                        window.location = str.slice(1, str.length - 1);
+                    } else if (loc != null) {
                         window.location = loc;
                     } else {
                         window.location.reload();
@@ -34,12 +37,12 @@ function addChild()
                     ajaxErrorHandler(xhr, "", "Error creating datastream");
                 }
             }
-        }
+        };
 
         if (id == "") {
-            xhr.open( "POST", newURI + "/fcr:content" );
+            xhr.open( "POST", newURI );
         } else {
-            xhr.open( "PUT", newURI + "/fcr:content" );
+            xhr.open( "PUT", newURI );
         }
 
         xhr.setRequestHeader("Content-type", update_file.type || "application/octet-stream");
@@ -119,6 +122,9 @@ $(function() {
     $('#action_sparql_select').submit(sendSparqlQuery);
     $('#action_revert').submit(patchAndReload);
     $('#action_remove_version').submit(removeVersion);
+
+    var ldpContains = $('#childList li').length;
+    $('#badge').text(ldpContains);
 
 });
 
@@ -242,36 +248,10 @@ function deleteItem()
     return false;
 }
 
-function createLock()
-{
-    var uri = $('#main').attr('resource');
-    var isDeep = false;
-    if ($('#deep_id').prop('checked'))
-        isDeep = true;
-    $.ajax({
-    	type: "POST",
-    	url: uri + "/fcr:lock?deep=" + isDeep,
-    	success: function() {
-    		$('#div_create_lock').hide();
-    		$('#div_view_lock').show();
-        }
-    }).fail( ajaxErrorHandler);
-}
-
-function viewLock(lockUrl)
-{
-	$('#div_view_lock').hide();
-	if (!lockUrl || lockUrl.length === 0) {
-        var uri = $('#main').attr('resource');
-        lockUrl = uri + "/fcr:lock";
-    }
-	window.location.href = lockUrl;
-}
-
 function updateFile()
 {
     var update_file = document.getElementById("update_file").files[0];
-    var url = window.location + "/fcr:content";
+    var url = window.location.replace("fcr:metadata", "");
     var reader = new FileReader();
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {

@@ -20,11 +20,10 @@
     
     <!-- Identifier translation chain -->
     <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
+        <bean class="org.fcrepo.kernel.impl.identifiers.HashConverter"/>
         <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
     </util:list>
     
-    <bean class="org.fcrepo.storage.policy.StoragePolicyDecisionPointImpl"/>
-
     <context:component-scan base-package="org.fcrepo"/>
 
 </beans>
