@@ -344,7 +344,7 @@ public class JcrRdfTools {
         }
 
         if (t.getObject().isAnon()) {
-            skolemized = t.changeObject(getSkolemizedResource(idTranslator, skolemized.getObject()));
+            skolemized = skolemized.changeObject(getSkolemizedResource(idTranslator, t.getObject()));
         } else if (t.getObject().isResource()
                 && idTranslator.inDomain(t.getObject().asResource())
                 && t.getObject().asResource().getURI().contains("#")) {

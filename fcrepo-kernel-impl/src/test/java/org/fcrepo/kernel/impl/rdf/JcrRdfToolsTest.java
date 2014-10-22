@@ -390,6 +390,23 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     }
 
     @Test
+    public void shouldSkolemizeBlankNodeSubjectsAndObjects() throws RepositoryException {
+        final Model m = createDefaultModel();
+        final Resource resource = createResource();
+        final Statement x = m.createStatement(resource,
+                createProperty("info:x"),
+                resource);
+        testObj.jcrTools = mock(JcrTools.class);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn("/.well-known/x");
+        final Statement statement = testObj.skolemize(testSubjects, x);
+
+
+        assertEquals("info:fedora/.well-known/x", statement.getSubject().toString());
+        assertEquals("info:fedora/.well-known/x", statement.getObject().toString());
+    }
+
+    @Test
     public void shouldCreateHashUriSubjects() throws RepositoryException {
         final Model m = createDefaultModel();
         final Statement x = m.createStatement(testSubjects.toDomain("/some/#/abc"),
