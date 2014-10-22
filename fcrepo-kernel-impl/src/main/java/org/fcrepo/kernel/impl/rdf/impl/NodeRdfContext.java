@@ -38,7 +38,7 @@ public class NodeRdfContext extends RdfStream {
 
     private final FedoraResource resource;
 
-    private final IdentifierConverter<Resource, FedoraResource> graphSubjects;
+    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
@@ -48,16 +48,16 @@ public class NodeRdfContext extends RdfStream {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws RepositoryException
      */
     public NodeRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
         super();
         this.resource = resource;
-        this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.reverse().convert(resource).asNode();
+        this.idTranslator = idTranslator;
+        this.subject = idTranslator.reverse().convert(resource).asNode();
     }
 
     /**
@@ -70,15 +70,15 @@ public class NodeRdfContext extends RdfStream {
     /**
      * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
      */
-    public IdentifierConverter<Resource, FedoraResource> graphSubjects() {
-        return graphSubjects;
+    public IdentifierConverter<Resource, FedoraResource> translator() {
+        return idTranslator;
     }
 
     /**
      * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
      */
     public Converter<Node, Resource> nodeConverter() {
-        return nodeToResource(graphSubjects);
+        return nodeToResource(idTranslator);
     }
 
     /**

@@ -39,13 +39,13 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public LdpIsMemberOfRdfContext(final FedoraResource resource,
-                                   final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                                   final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         final FedoraResource container = resource.getContainer();
 
@@ -88,7 +88,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
                 membershipResource = ResourceFactory.createResource(memberResource.getString());
             }
         } else {
-            membershipResource = graphSubjects().reverse().convert(parent);
+            membershipResource = translator().reverse().convert(parent);
         }
 
         return membershipResource;

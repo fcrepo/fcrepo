@@ -54,7 +54,7 @@ public class AclRdfContextTest {
     @Mock
     private Node mockNode;
 
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Session mockSession;
@@ -70,13 +70,13 @@ public class AclRdfContextTest {
         when(resource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(resource.getPath()).thenReturn(path);
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
-        nodeSubject = mockGraphSubjects.reverse().convert(resource);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        nodeSubject = idTranslator.reverse().convert(resource);
     }
 
     @Test
     public void testWritableNode() throws RepositoryException {
-        final Model actual = new AclRdfContext(resource, mockGraphSubjects).asModel();
+        final Model actual = new AclRdfContext(resource, idTranslator).asModel();
         final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
         assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanTrue));
     }
@@ -86,7 +86,7 @@ public class AclRdfContextTest {
 
         doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
                 eq(path), eq("add_node,set_property,remove"));
-        final Model actual = new AclRdfContext(resource, mockGraphSubjects).asModel();
+        final Model actual = new AclRdfContext(resource, idTranslator).asModel();
         logRdf("Constructed RDF: ", actual);
         final Literal booleanFalse = actual.createTypedLiteral(false, XSDboolean);
         assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanFalse));

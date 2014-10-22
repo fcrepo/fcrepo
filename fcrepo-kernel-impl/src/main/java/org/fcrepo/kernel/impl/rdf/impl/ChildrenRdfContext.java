@@ -45,13 +45,13 @@ public class ChildrenRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public ChildrenRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         if (resource.getNode().hasNodes()) {
             LOGGER.trace("Found children of this resource.");
@@ -76,9 +76,9 @@ public class ChildrenRdfContext extends NodeRdfContext {
                 final com.hp.hpl.jena.graph.Node childSubject;
 
                 if (child instanceof Datastream) {
-                    childSubject = graphSubjects().reverse().convert(((Datastream) child).getBinary()).asNode();
+                    childSubject = translator().reverse().convert(((Datastream) child).getBinary()).asNode();
                 } else {
-                    childSubject = graphSubjects().reverse().convert(child).asNode();
+                    childSubject = translator().reverse().convert(child).asNode();
                 }
                 LOGGER.trace("Creating triples for child node: {}", child);
                 final RdfStream childStream = new RdfStream();

@@ -104,7 +104,7 @@ public class FedoraVersioningTest {
         when(mockSession.getNode(path)).thenReturn(mockNode);
         doReturn(mockResource).when(testObj).resource();
 
-        setField(testObj, "identifierTranslator",
+        setField(testObj, "idTranslator",
                 new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 

@@ -41,13 +41,13 @@ public class HashRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public HashRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         final Node node = resource().getNode();
         if (node.hasNode("#")) {
@@ -56,7 +56,7 @@ public class HashRdfContext extends NodeRdfContext {
                         @Override
                         public Iterator<Triple> apply(final Node input) {
                             try {
-                                return new PropertiesRdfContext(nodeConverter.convert(input), graphSubjects);
+                                return new PropertiesRdfContext(nodeConverter.convert(input), idTranslator);
                             } catch (final RepositoryException e) {
                                 throw new RepositoryRuntimeException(e);
                             }

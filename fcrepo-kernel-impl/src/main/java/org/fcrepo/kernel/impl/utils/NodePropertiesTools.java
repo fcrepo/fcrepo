@@ -65,7 +65,7 @@ public class NodePropertiesTools {
      * @param newValue the JCR value to insert
      * @throws RepositoryException
      */
-    public void appendOrReplaceNodeProperty(final IdentifierConverter<Resource,FedoraResource> subjects,
+    public void appendOrReplaceNodeProperty(final IdentifierConverter<Resource,FedoraResource> idTranslator,
                                                    final Node node,
                                                    final String propertyName,
                                                    final Value newValue)
@@ -91,14 +91,14 @@ public class NodePropertiesTools {
                     property.setValue(toArray(newValues, Value.class));
                 }
 
-                addReferencePlaceholders(subjects, node, property, newValue);
+                addReferencePlaceholders(idTranslator, node, property, newValue);
             } else {
                 // or we'll just overwrite it
                 LOGGER.debug("Overwriting {} property {} with new value {}",
                              PropertyType.nameFromValue(property.getType()),
                              propertyName, newValue);
                 property.setValue(newValue);
-                addReferencePlaceholders(subjects, node, property, newValue);
+                addReferencePlaceholders(idTranslator, node, property, newValue);
             }
         } else {
             boolean isMultiple = true;
@@ -114,32 +114,32 @@ public class NodePropertiesTools {
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
                 final Property property = node.setProperty(propertyName, new Value[]{newValue}, newValue.getType());
-                addReferencePlaceholders(subjects, node, property, newValue);
+                addReferencePlaceholders(idTranslator, node, property, newValue);
             } else {
                 LOGGER.debug("Creating new single-valued {} property {} with " +
                              "initial value {}",
                              PropertyType.nameFromValue(newValue.getType()),
                              propertyName, newValue);
                 final Property property = node.setProperty(propertyName, newValue, newValue.getType());
-                addReferencePlaceholders(subjects, node, property, newValue);
+                addReferencePlaceholders(idTranslator, node, property, newValue);
             }
         }
 
     }
 
-    private void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> subjects,
+    private void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
                                           final Node node,
                                           final Property property,
                                           final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
-            if (!subjects.inDomain(resource)) {
+            if (!idTranslator.inDomain(resource)) {
                 return;
             }
 
             try {
-                final Node refNode = subjects.convert(resource).getNode();
+                final Node refNode = idTranslator.convert(resource).getNode();
 
                 if (isExternal.apply(refNode)) {
                     // we can't apply REFERENCE properties to external resources
@@ -153,7 +153,7 @@ public class NodePropertiesTools {
                 }
 
                 final Value v = node.getSession().getValueFactory().createValue(refNode, true);
-                appendOrReplaceNodeProperty(subjects, node, referencePropertyName, v);
+                appendOrReplaceNodeProperty(idTranslator, node, referencePropertyName, v);
 
             } catch (final IdentifierConversionException e) {
                 // no-op
@@ -161,22 +161,22 @@ public class NodePropertiesTools {
         }
     }
 
-    private void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> subjects,
+    private void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
                                              final Node node,
                                              final Property property,
                                              final Value newValue) throws RepositoryException {
         if (property.getType() == URI) {
             final Resource resource = ResourceFactory.createResource(newValue.getString());
 
-            if (subjects.inDomain(resource)) {
+            if (idTranslator.inDomain(resource)) {
                 final String referencePropertyName = getReferencePropertyName(property);
 
                 if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
                     node.setProperty(referencePropertyName, (Value[])null);
                 } else {
-                    final Node refNode = subjects.convert(resource).getNode();
+                    final Node refNode = idTranslator.convert(resource).getNode();
                     final Value v = node.getSession().getValueFactory().createValue(refNode, true);
-                    removeNodeProperty(subjects, node, referencePropertyName, v);
+                    removeNodeProperty(idTranslator, node, referencePropertyName, v);
                 }
             }
         }
@@ -192,7 +192,7 @@ public class NodePropertiesTools {
      * @param valueToRemove the JCR value to remove
      * @throws RepositoryException
      */
-    public void removeNodeProperty(final IdentifierConverter<Resource, FedoraResource> subjects,
+    public void removeNodeProperty(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                           final Node node,
                                           final String propertyName,
                                           final Value valueToRemove)
@@ -227,7 +227,7 @@ public class NodePropertiesTools {
                         property
                             .setValue(toArray(newValues, Value.class));
                     }
-                    removeReferencePlaceholders(subjects, node, property, valueToRemove);
+                    removeReferencePlaceholders(idTranslator, node, property, valueToRemove);
                 }
 
             } else {
@@ -236,7 +236,7 @@ public class NodePropertiesTools {
                     property.setValue((Value)null);
 
                     if (property.getType() == URI && node.hasProperty(getReferencePropertyName(propertyName))) {
-                        removeReferencePlaceholders(subjects, node, property, valueToRemove);
+                        removeReferencePlaceholders(idTranslator, node, property, valueToRemove);
                     }
                 }
             }

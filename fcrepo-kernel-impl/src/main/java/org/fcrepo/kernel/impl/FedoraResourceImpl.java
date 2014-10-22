@@ -360,18 +360,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
-    public void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
+    public void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
             throws MalformedRdfException {
 
         final Model model = originalTriples.asModel();
 
         final JcrPropertyStatementListener listener =
-                new JcrPropertyStatementListener(subjects, getSession());
+                new JcrPropertyStatementListener(idTranslator, getSession());
 
         model.register(listener);
 
-        final UpdateRequest request = create(sparqlUpdateStatement, subjects.reverse().convert(this).toString());
+        final UpdateRequest request = create(sparqlUpdateStatement, idTranslator.reverse().convert(this).toString());
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
@@ -379,13 +379,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Class<? extends RdfStream> context) {
-        return getTriples(graphSubjects, Collections.singleton(context));
+        return getTriples(idTranslator, Collections.singleton(context));
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Iterable<? extends Class<? extends RdfStream>> contexts) {
         final RdfStream stream = new RdfStream();
 
@@ -394,7 +394,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 final Constructor<? extends RdfStream> declaredConstructor
                         = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
 
-                final RdfStream rdfStream = declaredConstructor.newInstance(this, graphSubjects);
+                final RdfStream rdfStream = declaredConstructor.newInstance(this, idTranslator);
 
                 stream.concat(rdfStream);
             } catch (final NoSuchMethodException |
@@ -466,7 +466,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
-    public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
@@ -476,7 +476,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         final StringBuilder exceptions = new StringBuilder();
         try {
-            new RdfRemover(graphSubjects, getSession(), replacementStream
+            new RdfRemover(idTranslator, getSession(), replacementStream
                     .withThisContext(differencer)).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
@@ -484,7 +484,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
 
         try {
-            new RdfAdder(graphSubjects, getSession(), replacementStream
+            new RdfAdder(idTranslator, getSession(), replacementStream
                     .withThisContext(differencer.notCommon())).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());

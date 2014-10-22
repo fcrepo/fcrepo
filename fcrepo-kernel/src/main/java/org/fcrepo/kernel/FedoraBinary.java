@@ -87,18 +87,18 @@ public interface FedoraBinary extends FedoraResource {
 
     /**
      * Get the fixity of this datastream compared to metadata stored in the repository
-     * @param graphSubjects
+     * @param idTranslator
      * @return
      */
-    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> graphSubjects);
+    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator);
 
     /**
      * Get the fixity of this datastream in a given repository's binary store.
-     * @param graphSubjects
+     * @param idTranslator
      * @param contentDigest the checksum to compare against
      * @param size the expected size of the binary
      * @return
      */
-    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
                         URI contentDigest, long size);
 }

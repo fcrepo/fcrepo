@@ -103,16 +103,16 @@ public abstract class AbstractResource {
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
      *
-     * @param translator
+     * @param idTranslator
      * @param originalPath
      * @return String jcr path
      */
-    public static final String toPath(final IdentifierConverter<Resource, FedoraResource> translator,
+    public static final String toPath(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                       final String originalPath) {
 
-        final Resource resource = translator.toDomain(originalPath);
+        final Resource resource = idTranslator.toDomain(originalPath);
 
-        final String path = translator.asString(resource);
+        final String path = idTranslator.asString(resource);
 
         if (path.isEmpty()) {
             return "/";

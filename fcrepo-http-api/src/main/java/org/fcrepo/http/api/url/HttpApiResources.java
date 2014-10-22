@@ -65,12 +65,12 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-        final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> graphSubjects) {
+        final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> idTranslator) {
 
         final Model model = createDefaultModel();
         try {
 
-            final Resource s = graphSubjects.reverse().convert(resource);
+            final Resource s = idTranslator.reverse().convert(resource);
 
             if (resource.getNode().getPrimaryNodeType().isNodeType(ROOT)) {
                 addRepositoryStatements(uriInfo, model, s);

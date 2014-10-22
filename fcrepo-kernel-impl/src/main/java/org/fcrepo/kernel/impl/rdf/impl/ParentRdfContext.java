@@ -43,13 +43,13 @@ public class ParentRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public ParentRdfContext(final FedoraResource resource,
-                            final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                            final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         if (resource.getNode().getDepth() > 0) {
             LOGGER.trace("Determined that this resource has a parent.");
@@ -60,7 +60,7 @@ public class ParentRdfContext extends NodeRdfContext {
     private Iterator<Triple> parentContext() throws RepositoryException {
         final RdfStream parentStream = new RdfStream();
 
-        final Node containerSubject = graphSubjects().reverse().convert(resource().getContainer()).asNode();
+        final Node containerSubject = translator().reverse().convert(resource().getContainer()).asNode();
         parentStream.concat(create(subject(), HAS_PARENT.asNode(), containerSubject));
 
         return parentStream;

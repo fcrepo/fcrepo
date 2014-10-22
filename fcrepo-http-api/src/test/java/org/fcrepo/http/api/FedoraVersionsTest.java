@@ -93,7 +93,7 @@ public class FedoraVersionsTest {
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
 
-        setField(testObj, "identifierTranslator",
+        setField(testObj, "idTranslator",
                 new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 

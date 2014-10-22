@@ -72,7 +72,7 @@ public class PersistingRdfStreamConsumerTest {
         final Set<Resource> acceptedMixins = newHashSet();
 
         testPersister =
-            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession, testStream) {
+            new PersistingRdfStreamConsumer(idTranslator, mockSession, testStream) {
 
                 @Override
                 protected void operateOnProperty(final Statement s,
@@ -111,7 +111,7 @@ public class PersistingRdfStreamConsumerTest {
         when(mockTriples.hasNext())
                 .thenThrow(new RuntimeException("Expected."));
         testPersister =
-            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession,
+            new PersistingRdfStreamConsumer(idTranslator, mockSession,
                     new RdfStream(mockTriples)) {
 
                     @Override
@@ -132,7 +132,7 @@ public class PersistingRdfStreamConsumerTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 
     private static final Model m = createDefaultModel();
@@ -198,7 +198,7 @@ public class PersistingRdfStreamConsumerTest {
     @Mock
     private Node mockNode;
 
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Iterator<Triple> mockTriples;

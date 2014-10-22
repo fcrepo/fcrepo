@@ -52,13 +52,13 @@ public class LdpRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public LdpRdfContext(final FedoraResource resource,
-                         final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                         final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         concat(typeContext());
 

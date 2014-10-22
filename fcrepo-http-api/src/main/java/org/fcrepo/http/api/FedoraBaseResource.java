@@ -41,17 +41,17 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
-    protected IdentifierConverter<Resource, FedoraResource> identifierTranslator;
+    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     protected abstract Session session();
 
     protected IdentifierConverter<Resource, FedoraResource> translator() {
-        if (identifierTranslator == null) {
-            identifierTranslator = new HttpResourceConverter(session(),
+        if (idTranslator == null) {
+            idTranslator = new HttpResourceConverter(session(),
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
 
-        return identifierTranslator;
+        return idTranslator;
     }
 
     /**
