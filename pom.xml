@@ -1433,6 +1433,83 @@
       </roles>
       <timezone>-5</timezone>
     </developer>
+    <developer>
+      <id>giuliah</id>
+      <name>Giulia Hill</name>
+      <email>giulia @ (domain of organization url)</email>
+      <organization>UC Berkeley</organization>
+      <organizationUrl>http://berkeley.edu</organizationUrl>
+      <roles>
+       <role>developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>mohideen</id>
+      <name>Mohamed Abdul Rasheed</name>
+      <email>mohideen @ (domain of organization url)</email>
+      <organization>University of Maryland</organization>
+      <organizationUrl>http://www.lib.umd.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>lsitu</id>
+      <name>Longshou Situ</name>
+      <email>lsitu @ (domain of organization url)</email>
+        <organization>UC San Diego</organization>
+        <organizationUrl>http://libraries.ucsd.edu</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-8</timezone>
+     </developer>
+    <developer>
+      <id>whikloj</id>
+      <name>Jared Whiklo</name>
+      <email>whikloj @ (domain of organization url)</email>
+      <organization>University of Maryland</organization>
+      <organizationUrl>http://www.lib.umd.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>robyj</id>
+      <name>Jon Roby</name>
+      <email>robyj @ (domain of organization url)</email>
+      <organization>University of Manitoba</organization>
+      <organizationUrl>http://umanitoba.ca/libraries</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-6</timezone>
+    </developer>
+    <developer>
+      <id>bbpennel</id>
+      <name>Ben Pennell</name>
+      <email>bbpennel @ (domain of organization url)</email>
+      <organization>UNC Chapel Hill</organization>
+      <organizationUrl>http://library.unc.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>daines</id>
+      <name>Mike Daines</name>
+      <email>daines @ (domain of organization url)</email>
+      <organization>UNC Chapel Hill</organization>
+      <organizationUrl>http://library.unc.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
   </developers>
   <issueManagement>
     <system>GitHub</system>
