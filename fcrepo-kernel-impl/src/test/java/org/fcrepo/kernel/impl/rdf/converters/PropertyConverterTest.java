@@ -30,6 +30,7 @@ import javax.jcr.Workspace;
 
 import java.util.Map;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.REFERENCE;
@@ -89,8 +90,18 @@ public class PropertyConverterTest {
     }
 
     @Test
+    public final void shouldMapLanguageTaggedPropertiesToPublicUris() throws RepositoryException {
+        when(mockNamespacedProperty.getNamespaceURI()).thenReturn("info:xyz#");
+        when(mockNamespacedProperty.getLocalName()).thenReturn("some_string@xyz");
+        final Property property = testObj.convert(mockNamespacedProperty);
+
+        assert(property != null);
+        assertEquals("some_string", property.getLocalName());
+
+    }
+
+    @Test
     public void testGetPredicateForProperty() throws RepositoryException {
-        testObj.convert(mockNamespacedProperty);
         when(mockNamespacedProperty.getNamespaceURI()).thenThrow(new RepositoryException());
         try {
             testObj.convert(mockNamespacedProperty);
@@ -122,6 +133,16 @@ public class PropertyConverterTest {
         final Property p = createProperty("not-registered-uri#", "uuid");
         assertEquals("ns001:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
     }
+
+    @Test
+    public final void shouldUseLiteralLanguageAsPartOfPropertyUri() throws RepositoryException {
+        final Property p = createProperty(REPOSITORY_NAMESPACE, "uuid");
+        assertEquals("jcr:uuid@de", PropertyConverter.getPropertyNameFromPredicate(mockNode,
+                p,
+                createLangLiteral("x", "de"),
+                EMPTY_NAMESPACE_MAP));
+    }
+
 
     private void mockNamespaceRegistry(final NamespaceRegistry mockRegistry) throws RepositoryException {
 

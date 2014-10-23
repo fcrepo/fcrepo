@@ -22,6 +22,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -915,6 +916,38 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(serverAddress + pid + "/x", location);
 
     }
+
+    @Test
+    public void testIngestWithRDFLang() throws Exception {
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "application/n3");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"this is a french title\"@fr ." +
+                "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content,
+                CREATED.getStatusCode(), status);
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        final HttpGet httpGet = new HttpGet(location);
+
+        final GraphStore graphStore = getGraphStore(httpGet);
+
+        assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
+                DC_TITLE.asNode(), createLangLiteral("this is an english title", "en")
+                        .asNode()));
+
+        assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
+                DC_TITLE.asNode(), createLangLiteral("this is a french title", "fr")
+                        .asNode()));
+
+    }
+
 
     @Test
     public void testCreateManyObjects() throws Exception {
