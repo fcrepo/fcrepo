@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.util.Set;
 
@@ -81,9 +82,8 @@ public class DefaultMessageFactoryTest {
     @Test
     public void testBuildMessageContent() throws RepositoryException, JMSException {
         final String testPath = "/path/to/resource";
-        final Message msg = doTestBuildMessage("base-url", testPath + "/jcr:content");
-        assertEquals("Got wrong identifier in message!", testPath + "/fcr:metadata",
-                msg.getStringProperty(IDENTIFIER_HEADER_NAME));
+        final Message msg = doTestBuildMessage("base-url", testPath + "/" + JCR_CONTENT);
+        assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
     private Message doTestBuildMessage(final String baseUrl, final String id) throws RepositoryException, JMSException {
