@@ -45,19 +45,21 @@ import com.google.gson.JsonParser;
  */
 public class DefaultMessageFactory implements JMSEventMessageFactory {
 
-    public static final String TIMESTAMP_HEADER_NAME = REPOSITORY_NAMESPACE
+    public static final String JMS_NAMESPACE = "org.fcrepo.jms.";
+
+    public static final String TIMESTAMP_HEADER_NAME = JMS_NAMESPACE
             + "timestamp";
 
-    public static final String IDENTIFIER_HEADER_NAME = REPOSITORY_NAMESPACE
+    public static final String IDENTIFIER_HEADER_NAME = JMS_NAMESPACE
             + "identifier";
 
-    public static final String EVENT_TYPE_HEADER_NAME = REPOSITORY_NAMESPACE
+    public static final String EVENT_TYPE_HEADER_NAME = JMS_NAMESPACE
             + "eventType";
 
-    public static final String BASE_URL_HEADER_NAME = REPOSITORY_NAMESPACE
+    public static final String BASE_URL_HEADER_NAME = JMS_NAMESPACE
             + "baseURL";
 
-    public static final String PROPERTIES_HEADER_NAME = REPOSITORY_NAMESPACE
+    public static final String PROPERTIES_HEADER_NAME = JMS_NAMESPACE
             + "properties";
 
     private String baseURL;
