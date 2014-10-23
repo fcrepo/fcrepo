@@ -35,6 +35,8 @@ public interface FedoraJcrTypes {
 
     String FEDORA_TOMBSTONE = "fedora:tombstone";
 
+    String FEDORA_BLANKNODE = "fedora:blanknode";
+
     String LDP_CONTAINER = "ldp:Container";
 
     String JCR_LASTMODIFIED = "jcr:lastModified";

@@ -21,6 +21,7 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BLANKNODE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
@@ -388,7 +389,7 @@ public class JcrRdfTools {
 
         if (!skolemizedBnodeMap.containsKey(id)) {
             final Node orCreateNode = jcrTools.findOrCreateNode(session, skolemizedId());
-            orCreateNode.addMixin("fedora:blanknode");
+            orCreateNode.addMixin(FEDORA_BLANKNODE);
             final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }

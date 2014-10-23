@@ -15,7 +15,9 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BLANKNODE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
@@ -216,6 +218,15 @@ public class FedoraTypesUtilsTest {
         when(mockProperty.getType()).thenReturn(PropertyType.STRING);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
         assertFalse(isBinaryContentProperty.apply(mockProperty));
+    }
+
+    @Test
+    public void testIsBlanknode() throws RepositoryException {
+        when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(true);
+        assertTrue("Expected to be a blank node", isBlankNode.apply(mockNode));
+
+        when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(false);
+        assertFalse("Expected to not be a blank node", isBlankNode.apply(mockNode));
     }
 
     @Test
