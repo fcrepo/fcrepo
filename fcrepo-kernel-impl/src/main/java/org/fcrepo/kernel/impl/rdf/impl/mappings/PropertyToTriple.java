@@ -30,10 +30,8 @@ import javax.jcr.Value;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.slf4j.Logger;
@@ -89,27 +87,13 @@ public class PropertyToTriple implements
      */
     @Override
     public Iterator<Triple> apply(final Property p) {
-        final UnmodifiableIterator<Value> valuesIterator;
-        try {
-            if (p.isMultiple()) {
-                LOGGER.debug("Found multi-valued property: {}", p);
-                valuesIterator = Iterators.forArray(p.getValues());
-            } else {
-                LOGGER.debug("Found single-valued property: {}", p);
-                valuesIterator =  Iterators.forArray(p.getValue());
+        return Iterators.transform(new PropertyValueIterator(p), new Function<Value, Triple>() {
+
+            @Override
+            public Triple apply(final Value v) {
+                return propertyvalue2triple(p, v);
             }
-
-
-            return Iterators.transform(valuesIterator, new Function<Value, Triple>() {
-
-                @Override
-                public Triple apply(final Value v) {
-                    return propertyvalue2triple(p, v);
-                }
-            });
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        });
     }
 
     /**
