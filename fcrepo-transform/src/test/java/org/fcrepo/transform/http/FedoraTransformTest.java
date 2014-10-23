@@ -102,7 +102,7 @@ public class FedoraTransformTest {
         when(mockTransformationFactory.getTransform(MediaType.valueOf(contentTypeSPARQLQuery), query)).thenReturn(
                 mockTransform);
 
-        testObj.evaluateTransform(MediaType.valueOf(contentTypeSPARQLQuery), null, query);
+        testObj.evaluateTransform(MediaType.valueOf(contentTypeSPARQLQuery), query);
 
         verify(mockTransform).apply(any(RdfStream.class));
     }

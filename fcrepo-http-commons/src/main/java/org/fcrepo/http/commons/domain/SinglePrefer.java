@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.domain;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
-import org.glassfish.jersey.message.internal.HttpHeaderReader;
+import static com.google.common.collect.Iterables.any;
+import static com.google.common.collect.Iterables.tryFind;
+import static org.fcrepo.http.commons.domain.PreferTag.emptyTag;
 
 import java.text.ParseException;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.glassfish.jersey.message.internal.HttpHeaderReader;
+
+import com.google.common.base.Predicate;
 
 /**
  * JAX-RS HTTP parameter parser for the Prefer header
+ *
  * @author cabeer
+ * @author ajs6f
  */
-public class Prefer {
+public class SinglePrefer {
 
-    private final List<PreferTag> preferTags;
+    private final Set<PreferTag> preferTags = new TreeSet<>();
 
     /**
      * Parse a Prefer: header
@@ -37,68 +44,66 @@ public class Prefer {
      * @param inputValue
      * @throws ParseException
      */
-    public Prefer(final String inputValue) throws ParseException {
-        preferTags = HttpHeaderReader.readList(PREFER_CREATOR, inputValue);
+    public SinglePrefer(final String header) throws ParseException {
+        preferTags.addAll(HttpHeaderReader.readList(PREFER_CREATOR, header));
     }
 
     /**
      * Does the Prefer: header have a return tag
+     *
      * @return true if the header has a return tag
      */
     public Boolean hasReturn() {
-        return Iterators.any(preferTags.iterator(), getPreferTag("return"));
+        return any(preferTags(), getPreferTag("return"));
     }
 
     /**
      * Does the Prefer: header have a return tag
+     *
      * @return true if the header has a return tag
      */
     public Boolean hasHandling() {
-        return Iterators.any(preferTags.iterator(), getPreferTag("handling"));
+        return any(preferTags(), getPreferTag("handling"));
     }
 
     /**
      * Get the return tag, or a blank default, if none exists.
+     *
      * @return return tag, or a blank default, if none exists
      */
     public PreferTag getReturn() {
-        final Optional<PreferTag> aReturn = Iterators.tryFind(preferTags.iterator(), getPreferTag("return"));
-
-        if (aReturn.isPresent()) {
-            return aReturn.get();
-        }
-        return PreferTag.emptyTag();
+        return tryFind(preferTags(), getPreferTag("return")).or(emptyTag());
     }
 
     /**
      * Get the return tag, or a blank default, if none exists.
+     *
      * @return return tag, or a blank default, if none exists
      */
     public PreferTag getHandling() {
-        final Optional<PreferTag> handling = Iterators.tryFind(preferTags.iterator(), getPreferTag("handling"));
-
-        if (handling.isPresent()) {
-            return handling.get();
-        }
-        return PreferTag.emptyTag();
+        return tryFind(preferTags(), getPreferTag("handling")).or(emptyTag());
     }
 
-
-
     private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
-        new HttpHeaderReader.ListElementCreator<PreferTag>() {
-            @Override
-            public PreferTag create(final HttpHeaderReader reader) throws ParseException {
-                return new PreferTag(reader);
-            }
-        };
+            new HttpHeaderReader.ListElementCreator<PreferTag>() {
 
-    private static Predicate<PreferTag> getPreferTag(final String tagName) {
-        return new Predicate<PreferTag>() {
+                @Override
+                public PreferTag create(final HttpHeaderReader reader) throws ParseException {
+                    return new PreferTag(reader);
+                }
+            };
+
+    private static <T extends PreferTag> Predicate<T> getPreferTag(final String tagName) {
+        return new Predicate<T>() {
+
             @Override
-            public boolean apply(final PreferTag tag) {
+            public boolean apply(final T tag) {
                 return tag.getTag().equals(tagName);
             }
         };
+    }
+
+    protected Set<PreferTag> preferTags() {
+        return preferTags;
     }
 }
