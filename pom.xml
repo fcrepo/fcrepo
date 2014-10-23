@@ -1447,7 +1447,7 @@
     <developer>
       <id>mohideen</id>
       <name>Mohamed Abdul Rasheed</name>
-      <email>mohideen@umd.edu</email>
+      <email>mohideen @ (domain of organization url)</email>
       <organization>University of Maryland</organization>
       <organizationUrl>http://www.lib.umd.edu/</organizationUrl>
       <roles>
@@ -1480,7 +1480,7 @@
     <developer>
       <id>robyj</id>
       <name>Jon Roby</name>
-      <email>robyj@cc.umanitoba.ca</email>
+      <email>robyj @ (domain of organization url)</email>
       <organization>University of Manitoba</organization>
       <organizationUrl>http://umanitoba.ca/libraries</organizationUrl>
       <roles>
