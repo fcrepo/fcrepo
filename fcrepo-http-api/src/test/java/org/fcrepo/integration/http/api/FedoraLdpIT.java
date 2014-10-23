@@ -134,6 +134,7 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
@@ -638,6 +639,44 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         assertTrue("Didn't find a triple we tried to create!", model.contains(
                 createResource(subjectURI),
+                createProperty("info:rubydora#label"),
+                createPlainLiteral("asdfg")));
+    }
+
+    @Test
+    public void testCreateGraphWithBlanknodes() throws Exception {
+        final String pid = getRandomUniquePid();
+        final String subjectURI = serverAddress + pid;
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "application/n3");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                ("<" + subjectURI + "> <info:some-predicate> _:a ." +
+                        "_:a <info:rubydora#label> \"asdfg\"").getBytes()));
+        replaceMethod.setEntity(e);
+        final HttpResponse response = client.execute(replaceMethod);
+        assertEquals(201, response.getStatusLine().getStatusCode());
+
+
+        final HttpGet getObjMethod = new HttpGet(subjectURI);
+
+        getObjMethod.addHeader("Accept", "application/rdf+xml");
+        final HttpResponse getResponse = client.execute(getObjMethod);
+        assertEquals(OK.getStatusCode(), getResponse.getStatusLine()
+                .getStatusCode());
+        final Model model = createDefaultModel();
+        model.read(getResponse.getEntity().getContent(), null);
+        try (final Writer w = new StringWriter()) {
+            model.write(w);
+            logger.trace("Retrieved object graph for testCreateGraph():\n {}",
+                    w);
+        }
+        final NodeIterator nodeIterator = model.listObjectsOfProperty(createResource(subjectURI),
+                createProperty("info:some-predicate"));
+        assertTrue("Didn't find skolemized blank node assertion", nodeIterator.hasNext());
+        final Resource skolemizedNode = nodeIterator.nextNode().asResource();
+        assertTrue("Didn't find a triple we tried to create!", model.contains(
+                skolemizedNode,
                 createProperty("info:rubydora#label"),
                 createPlainLiteral("asdfg")));
     }

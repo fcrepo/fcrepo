@@ -36,6 +36,7 @@ import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
@@ -216,6 +217,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter));
+            rdfStream.concat(filter(getTriples(BlankNodeRdfContext.class), tripleFilter));
 
             if (resource() instanceof Datastream) {
                 rdfStream.concat(filter(
