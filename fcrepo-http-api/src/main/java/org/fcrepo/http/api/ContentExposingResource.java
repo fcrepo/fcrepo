@@ -21,6 +21,7 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.Prefer;
@@ -77,6 +78,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import static com.google.common.base.Predicates.alwaysTrue;
+import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
@@ -186,22 +188,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (ldpPreferences.prefersServerManaged()) {
             tripleFilter = alwaysTrue();
         } else {
-            tripleFilter = not(ManagedRdf.isManagedTriple);
+            tripleFilter = and(not(ManagedRdf.isManagedTriple), not(new Predicate<Triple>() {
+                @Override
+                public boolean apply(final Triple input) {
+                    return input.getPredicate().equals(RDF.type.asNode())
+                            && isManagedNamespace.apply(input.getObject().getNameSpace());
+                }
+            }));
         }
 
         rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter));
 
-
-        if (ldpPreferences.prefersServerManaged()) {
-            rdfStream.concat(getTriples(TypeRdfContext.class));
-        } else {
-            rdfStream.concat(filter(getTriples(TypeRdfContext.class), new Predicate<Triple>() {
-                @Override
-                public boolean apply(final Triple input) {
-                    return !isManagedNamespace.apply(input.getObject().getNameSpace());
-                }
-            }));
-        }
+        rdfStream.concat(filter(getTriples(TypeRdfContext.class), tripleFilter));
 
 
         if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
