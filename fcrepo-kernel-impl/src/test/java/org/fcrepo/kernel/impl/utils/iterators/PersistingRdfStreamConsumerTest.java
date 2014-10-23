@@ -28,12 +28,12 @@ import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraResource;
@@ -44,6 +44,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
+
 import com.google.common.collect.ObjectArrays;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -129,9 +130,8 @@ public class PersistingRdfStreamConsumerTest {
     }
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
-
         idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 

@@ -147,7 +147,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         }
     }
 
-    private Literal literal2node(final Object literal) {
+    private static Literal literal2node(final Object literal) {
         final Literal result = ResourceFactory.createTypedLiteral(literal);
         LOGGER.trace("Converting {} into {}", literal, result);
         return result;
@@ -164,8 +164,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         return getGraphSubject(refNode);
     }
 
-    private RDFNode getGraphSubject(final javax.jcr.Node n)
-            throws RepositoryException {
+    private RDFNode getGraphSubject(final javax.jcr.Node n) {
         return graphSubjects.convert(n);
     }
 }

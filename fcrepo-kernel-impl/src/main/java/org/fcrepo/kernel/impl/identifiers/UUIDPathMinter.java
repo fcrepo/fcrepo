@@ -52,7 +52,7 @@ public class UUIDPathMinter extends BasePidMinter {
     /**
      * Configure the path minter for the length of the keys and depth of the
      * branch node prefix
-     * 
+     *
      * @param length how long the branch node identifiers should be
      * @param count how many branch nodes should be inserted
      */
@@ -64,15 +64,13 @@ public class UUIDPathMinter extends BasePidMinter {
 
     /**
      * Mint a unique identifier as a UUID
-     * 
+     *
      * @return uuid
      */
     @Override
     public String mintPid() {
 
-        final Timer.Context context = timer.time();
-
-        try {
+        try (final Timer.Context context = timer.time()) {
             final String s = randomUUID().toString();
 
             if (length == 0 || count == 0) {
@@ -83,8 +81,6 @@ public class UUIDPathMinter extends BasePidMinter {
                     fixedLength(length).split(s.substring(0, length * count));
 
             return on("/").join(split) + "/" + s;
-        } finally {
-            context.stop();
         }
     }
 }

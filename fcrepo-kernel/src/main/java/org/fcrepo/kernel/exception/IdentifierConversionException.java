@@ -20,6 +20,9 @@ package org.fcrepo.kernel.exception;
  * @since 10/7/14
  */
 public class IdentifierConversionException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
     /**
      * Ordinary constructor.
      *

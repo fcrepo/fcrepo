@@ -55,8 +55,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class ContentRdfContextTest {
 
     @Test
-    public void testForLowLevelStorageTriples() throws RepositoryException,
-                                               IOException {
+    public void testForLowLevelStorageTriples() throws IOException {
         final Model results =
             new ContentRdfContext(mockResource, idTranslator).asModel();
         logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);

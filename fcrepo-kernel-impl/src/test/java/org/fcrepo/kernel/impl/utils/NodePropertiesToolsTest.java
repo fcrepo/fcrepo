@@ -41,8 +41,6 @@ import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
@@ -54,6 +52,8 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import com.hp.hpl.jena.rdf.model.Resource;
+
 /**
  * <p>NodePropertiesToolsTest class.</p>
  *
@@ -62,7 +62,7 @@ import org.mockito.Mockito;
 @Ignore
 public class NodePropertiesToolsTest {
 
-    private NodePropertiesTools testNodePropertiesTools = new NodePropertiesTools();
+    private final NodePropertiesTools testNodePropertiesTools = new NodePropertiesTools();
 
     @Mock
     private PropertyDefinition mockDefinition;
@@ -94,7 +94,7 @@ public class NodePropertiesToolsTest {
     @Mock
     private ValueFactory mockValueFactory;
 
-    private String mockPropertyName = "mockPropertyName";
+    private final String mockPropertyName = "mockPropertyName";
 
     @Before
     public void setUp() throws RepositoryException {
@@ -134,7 +134,6 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(false);
         when(mockNode.setProperty(mockPropertyName, mockValue, 0)).thenReturn(mockProperty);
         when(mockValue.getString()).thenReturn("xyz");
-        final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
         when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
@@ -165,7 +164,6 @@ public class NodePropertiesToolsTest {
         when(mockProperty.getName()).thenReturn(mockPropertyName);
 
         when(mockValue.getString()).thenReturn("xyz");
-        final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
 
@@ -201,7 +199,6 @@ public class NodePropertiesToolsTest {
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         when(mockNode.hasProperty("mockPropertyName_ref")).thenReturn(true,false);
         when(mockValue.getString()).thenReturn("xyz");
-        final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
         when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
@@ -243,7 +240,6 @@ public class NodePropertiesToolsTest {
         when(mockProperty.getName()).thenReturn(mockPropertyName);
 
         when(mockValue.getString()).thenReturn("xyz");
-        final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
 
@@ -312,7 +308,6 @@ public class NodePropertiesToolsTest {
         when(mockProperty.getType()).thenReturn(URI);
         when(mockProperty.getName()).thenReturn(mockPropertyName);
         when(mockValue.getString()).thenReturn("xyz");
-        final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         when(mockNode.hasProperty("mockPropertyName_ref")).thenReturn(true);
         when(mockProperty.getValue()).thenReturn(mockValue);
@@ -343,7 +338,6 @@ public class NodePropertiesToolsTest {
         when(mockRefProperty.isMultiple()).thenReturn(true);
         when(mockRefProperty.getValues()).thenReturn(new Value[] { mockRefValue });
         when(mockValue.getString()).thenReturn("xyz");
-        final Resource resource = ResourceFactory.createResource(mockValue.getString());
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         final Value[] values = new Value[] {mockValue};
         when(mockProperty.getValues()).thenReturn(values);

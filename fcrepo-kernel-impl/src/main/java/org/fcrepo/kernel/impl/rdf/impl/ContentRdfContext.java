@@ -15,18 +15,17 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Resource;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
+
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
-import javax.jcr.RepositoryException;
-
-import static com.hp.hpl.jena.graph.Triple.create;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author cabeer
@@ -38,11 +37,9 @@ public class ContentRdfContext extends NodeRdfContext {
      *
      * @param resource
      * @param idTranslator
-     * @throws javax.jcr.RepositoryException
      */
     public ContentRdfContext(final FedoraResource resource,
-                             final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+                             final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
 
         // if there's an accessible jcr:content node, include information about

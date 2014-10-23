@@ -48,14 +48,11 @@ import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-
-import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * <p>RepositoryServiceImplTest class.</p>
@@ -122,9 +119,6 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
     private Row mockRow;
 
     @Mock
-    private IdentifierConverter mockSubjectFactory;
-
-    @Mock
     private QueryObjectModelFactory mockQOMFactory;
 
     @Mock
@@ -135,7 +129,6 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
 
     private Map<String, String> expectedNS;
 
-    private Resource subject;
 
     @Before
     public void setUp() {

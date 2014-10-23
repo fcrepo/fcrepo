@@ -592,7 +592,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetContainer() throws RepositoryException {
+    public void testGetContainer() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
@@ -601,7 +601,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildren() throws RepositoryException {
+    public void testGetChildren() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
@@ -610,7 +610,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenWithBinary() throws RepositoryException {
+    public void testGetChildrenWithBinary() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreateBinary(session, "/" + pid + "/a");
@@ -619,7 +619,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetContainerForBinary() throws RepositoryException {
+    public void testGetContainerForBinary() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreateBinary(session, "/" + pid + "/a");
@@ -628,7 +628,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetContainerWithHierarchy() throws RepositoryException {
+    public void testGetContainerWithHierarchy() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a/b/c/d");
@@ -637,7 +637,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenWithHierarchy() throws RepositoryException {
+    public void testGetChildrenWithHierarchy() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a/b/c/d");
@@ -646,7 +646,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenTombstonesAreHidden() throws RepositoryException {
+    public void testGetChildrenTombstonesAreHidden() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
@@ -656,10 +656,10 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenHidesHashUris() throws RepositoryException {
+    public void testGetChildrenHidesHashUris() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
-        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/#/a");
+        objectService.findOrCreateObject(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().hasNext());
     }

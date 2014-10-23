@@ -64,16 +64,13 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
     public Long getRepositorySize() {
         try {
 
-            final Timer.Context context = objectSizeCalculationTimer.time();
             LOGGER.debug("Calculating repository size from index");
 
-            try {
+            try (final Timer.Context context = objectSizeCalculationTimer.time()) {
                 // Differentiating between the local getRepositorySize and
                 // ServiceHelpers
                 return ServiceHelpers.getRepositorySize(repo);
 
-            } finally {
-                context.stop();
             }
         } catch (final RepositoryException e) {
             throw propagate(e);
