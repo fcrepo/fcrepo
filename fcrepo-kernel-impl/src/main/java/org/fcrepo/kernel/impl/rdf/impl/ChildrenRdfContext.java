@@ -60,7 +60,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
     }
 
 
-    private Iterator<Triple> childrenContext() throws RepositoryException {
+    private Iterator<Triple> childrenContext() {
 
         final Iterator<FedoraResource> niceChildren = resource().getChildren();
 

@@ -19,14 +19,14 @@ import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToRes
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 
-import com.google.common.base.Converter;
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
+
+import com.google.common.base.Converter;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * {@link RdfStream} that holds contexts related to a specific {@link Node}.
@@ -49,11 +49,9 @@ public class NodeRdfContext extends RdfStream {
      *
      * @param resource
      * @param idTranslator
-     * @throws RepositoryException
      */
     public NodeRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super();
         this.resource = resource;
         this.idTranslator = idTranslator;

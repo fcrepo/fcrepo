@@ -17,14 +17,13 @@ package org.fcrepo.kernel.impl;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.Transaction.State.NEW;
 import static org.fcrepo.kernel.Transaction.State.COMMITED;
 import static org.fcrepo.kernel.Transaction.State.DIRTY;
+import static org.fcrepo.kernel.Transaction.State.NEW;
 import static org.fcrepo.kernel.Transaction.State.ROLLED_BACK;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Set;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -56,8 +55,6 @@ public class TransactionImpl implements Transaction {
     private final Calendar expires;
 
     private State state = NEW;
-
-    private Set<String> versionedPaths;
 
     /**
      * Create a transaction for the given Session

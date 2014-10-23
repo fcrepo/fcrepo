@@ -154,9 +154,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 try {
                     if (input.isNodeType(FEDORA_PAIRTREE)) {
                         return concat(nodeToGoodChildren(input));
-                    } else {
-                        return singletonIterator(nodeToObjectBinaryConverter.convert(input));
                     }
+                    return singletonIterator(nodeToObjectBinaryConverter.convert(input));
                 } catch (final RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }
@@ -191,18 +190,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         protected FedoraResource doForward(final FedoraResource fedoraResource) {
             if (fedoraResource instanceof Datastream) {
                 return ((Datastream) fedoraResource).getBinary();
-            } else {
-                return fedoraResource;
             }
+            return fedoraResource;
         }
 
         @Override
         protected FedoraResource doBackward(final FedoraResource fedoraResource) {
             if (fedoraResource instanceof FedoraBinary) {
                 return ((FedoraBinary) fedoraResource).getDescription();
-            } else {
-                return fedoraResource;
             }
+            return fedoraResource;
         }
     };
 
@@ -591,9 +588,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public boolean equals(final Object object) {
         if (object instanceof FedoraResourceImpl) {
             return ((FedoraResourceImpl) object).getNode().equals(this.getNode());
-        } else {
-            return false;
         }
+        return false;
     }
 
     @Override

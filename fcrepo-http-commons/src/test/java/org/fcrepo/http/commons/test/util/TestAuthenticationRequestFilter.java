@@ -80,7 +80,7 @@ public class TestAuthenticationRequestFilter implements Filter {
      * @param containerRoles
      * @return
      */
-    private ServletRequest proxy(final HttpServletRequest request,
+    private static ServletRequest proxy(final HttpServletRequest request,
             final String username, final Set<String> containerRoles) {
         final Principal user = new GrizzlyPrincipal(username);
         final HttpServletRequest result =

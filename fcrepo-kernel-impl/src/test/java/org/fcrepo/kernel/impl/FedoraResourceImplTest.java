@@ -15,8 +15,6 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
-import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
@@ -52,23 +50,22 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.rdf.model.ResIterator;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
-import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
+import org.fcrepo.kernel.impl.testutilities.TestTriplesContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.hp.hpl.jena.graph.Triple;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -98,13 +95,11 @@ public class FedoraResourceImplTest {
     @Mock
     private Property mockProp;
 
-    private final Triple mockTriple =
-        create(createAnon(), createAnon(), createAnon());
-
     @Mock
     private JcrRdfTools mockJcrRdfTools;
 
-    private IdentifierConverter mockSubjects;
+    @Mock
+    private IdentifierConverter<Resource, FedoraResource> mockSubjects;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -191,7 +186,6 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testGetTriples() {
-        final IdentifierConverter mockSubjects = mock(IdentifierConverter.class);
 
         final RdfStream triples = testObj.getTriples(mockSubjects, TestTriplesContext.class);
 
@@ -423,7 +417,7 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testEquals() throws RepositoryException {
+    public void testEquals() {
         assertEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockNode));
         assertNotEquals(new FedoraResourceImpl(mockNode), new FedoraResourceImpl(mockRoot));
     }

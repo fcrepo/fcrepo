@@ -62,13 +62,12 @@ public class FixityRdfContext extends NodeRdfContext {
      * @param resource
      * @param idTranslator
      * @param blobs
-     * @throws RepositoryException
      */
     public FixityRdfContext(final FedoraResource resource,
                             final IdentifierConverter<Resource, FedoraResource> idTranslator,
                             final Iterable<FixityResult> blobs,
                             final URI digest,
-                            final long size) throws RepositoryException {
+                            final long size) {
         super(resource, idTranslator);
 
         concat(Iterators.concat(Iterators.transform(blobs.iterator(),

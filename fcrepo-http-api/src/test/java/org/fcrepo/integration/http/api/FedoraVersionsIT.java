@@ -82,10 +82,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 results.contains(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY));
     }
 
-    private void enableVersioning(final String pid) {
+    private static void enableVersioning(final String pid) {
         final HttpPut createTx = new HttpPut(serverAddress + pid + "/fcr:versions");
         try {
-            final HttpResponse response = execute(createTx);
+            execute(createTx);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -471,7 +471,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
      * version node and nothing else.  Order isn't important, and no assumption
      * is made about whether extra versions exist.
      */
-    private void verifyVersions(final GraphStore graph, final Node subject, final String ... values)
+    private static void verifyVersions(final GraphStore graph, final Node subject, final String ... values)
             throws IOException {
         final ArrayList<String> remainingValues = newArrayList(values);
         final Iterator<Quad> versionIt = graph.find(ANY, subject, HAS_VERSION.asNode(), ANY);
@@ -538,7 +538,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         }
     }
 
-    private void revertToVersion(final String objId, final String versionLabel) throws IOException {
+    private static void revertToVersion(final String objId, final String versionLabel) throws IOException {
         final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/" + versionLabel);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
     }

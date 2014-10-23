@@ -57,7 +57,7 @@ public class ParentRdfContext extends NodeRdfContext {
         }
     }
 
-    private Iterator<Triple> parentContext() throws RepositoryException {
+    private Iterator<Triple> parentContext() {
         final RdfStream parentStream = new RdfStream();
 
         final Node containerSubject = translator().reverse().convert(resource().getContainer()).asNode();

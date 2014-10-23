@@ -26,7 +26,6 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.POST;
@@ -65,7 +64,7 @@ public class FedoraTransactions extends FedoraBaseResource {
      *
      * @param externalPath
      * @return 201 with the transaction id and expiration date
-     * @throws RepositoryException
+     * @throws URISyntaxException
      */
     @POST
     public Response createTransaction(@PathParam("path") final String externalPath,
@@ -100,7 +99,6 @@ public class FedoraTransactions extends FedoraBaseResource {
      *
      * @param externalPath
      * @return 204
-     * @throws RepositoryException
      */
     @POST
     @Path("fcr:commit")
@@ -115,7 +113,7 @@ public class FedoraTransactions extends FedoraBaseResource {
      */
     @POST
     @Path("fcr:rollback")
-    public Response rollback(@PathParam("path") final String externalPath) throws RepositoryException {
+    public Response rollback(@PathParam("path") final String externalPath) {
 
         return finalizeTransaction(externalPath, false);
     }

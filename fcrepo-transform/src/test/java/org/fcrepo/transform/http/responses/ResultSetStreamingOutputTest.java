@@ -117,7 +117,7 @@ public class ResultSetStreamingOutputTest {
     }
 
     @Test
-    public void testGetResultsFormat() throws Exception {
+    public void testGetResultsFormat() {
         assertEquals(FMT_RS_TSV, getResultsFormat(MediaType
                         .valueOf(contentTypeTextTSV)));
         assertEquals(FMT_UNKNOWN, getResultsFormat(MediaType.valueOf("some/type")));

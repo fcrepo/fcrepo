@@ -251,9 +251,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         try {
             if (getNode().hasProperty(JCR_MIME_TYPE)) {
                 return getNode().getProperty(JCR_MIME_TYPE).getString();
-            } else {
-                return "application/octet-stream";
             }
+            return "application/octet-stream";
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -287,9 +286,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
         fixityCheckCounter.inc();
 
-        final Timer.Context context = timer.time();
-
-        try {
+        try (final Timer.Context context = timer.time()) {
 
             final Repository repo = node.getSession().getRepository();
             LOGGER.debug("Checking resource: " + getPath());
@@ -302,8 +299,6 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, size);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        } finally {
-            context.stop();
         }
     }
 

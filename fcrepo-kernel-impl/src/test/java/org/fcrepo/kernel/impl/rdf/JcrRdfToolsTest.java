@@ -43,9 +43,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Calendar;
 import java.util.NoSuchElementException;
 
@@ -75,7 +72,6 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
-import com.hp.hpl.jena.rdf.model.Statement;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
@@ -94,6 +90,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * <p>JcrRdfToolsTest class.</p>
@@ -250,7 +247,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     @Test
     public final void shouldMapLongValuesToJcrPropertyValues()
             throws RepositoryException {
-        when(mockValueFactory.createValue((long)5)).thenReturn(mockValue);
+        when(mockValueFactory.createValue(5)).thenReturn(mockValue);
         final RDFNode n = createTypedLiteral("5", XSDlong);
 
         testObj.createValue(mockValueFactory, n, 0);
@@ -493,15 +490,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         final Statement statement = testObj.skolemize(testSubjects, x);
         assertEquals(x, statement);
     }
-
-    private static void logRDF(final Model rdf) throws IOException {
-        try (final Writer writer = new StringWriter()) {
-            rdf.write(writer);
-            LOGGER.debug("Found model: {}", writer);
-        }
-    }
-
-    private static final NodeType[] emptyNodeTypes = new NodeType[] {};
 
     @Mock
     private Property mockPredicate;

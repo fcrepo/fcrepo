@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
@@ -47,7 +46,7 @@ public class SessionProviderTest {
     private HttpServletRequest mockHttpServletRequest;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
         when(

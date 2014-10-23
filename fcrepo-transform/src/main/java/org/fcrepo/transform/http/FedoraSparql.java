@@ -106,8 +106,7 @@ public class FedoraSparql extends FedoraBaseResource {
     @GET
     @Timed
     @Produces({RDF_XML + ";qs=20", TURTLE, N3, N3_ALT2, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD})
-    public RdfStream sparqlServiceDescription(@Context final Request request,
-                                             @Context final UriInfo uriInfo) {
+    public RdfStream sparqlServiceDescription(@Context final UriInfo uriInfo) {
 
         final SparqlServiceDescription sd = new SparqlServiceDescription(session, uriInfo);
 
@@ -172,7 +171,7 @@ public class FedoraSparql extends FedoraBaseResource {
             contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
     public ResultSet runSparqlQuery(final InputStream requestBodyStream,
-        @Context final Request request, @Context final UriInfo uriInfo)
+        @Context final UriInfo uriInfo)
         throws IOException, RepositoryException {
 
         final String sparqlQuery = IOUtils.toString(requestBodyStream);

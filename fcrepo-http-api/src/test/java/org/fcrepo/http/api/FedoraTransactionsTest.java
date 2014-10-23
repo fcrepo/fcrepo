@@ -23,23 +23,22 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import javax.jcr.RepositoryException;
+import java.net.URISyntaxException;
+import java.security.Principal;
+
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.impl.TxAwareSession;
 import org.fcrepo.kernel.TxSession;
+import org.fcrepo.kernel.impl.TxAwareSession;
 import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import java.net.URISyntaxException;
-import java.security.Principal;
 
 /**
  * <p>FedoraTransactionsTest class.</p>
@@ -87,7 +86,7 @@ public class FedoraTransactionsTest {
     }
 
     @Test
-    public void shouldStartANewTransaction() throws RepositoryException, URISyntaxException {
+    public void shouldStartANewTransaction() throws URISyntaxException {
         setField(testObj, "session", regularSession);
         when(mockTxService.beginTransaction(regularSession, USER_NAME)).thenReturn(mockTx);
         when(mockRequest.getUserPrincipal()).thenReturn(mockPrincipal);
@@ -97,52 +96,47 @@ public class FedoraTransactionsTest {
     }
 
     @Test
-    public void shouldUpdateExpiryOnExistingTransaction()
-            throws RepositoryException, URISyntaxException {
+    public void shouldUpdateExpiryOnExistingTransaction() throws URISyntaxException {
         when(mockTxService.getTransaction(Mockito.any(TxSession.class))).thenReturn(mockTx);
         testObj.createTransaction(null, mockRequest);
         verify(mockTx).updateExpiryDate();
     }
 
     @Test
-    public void shouldCommitATransaction() throws RepositoryException {
+    public void shouldCommitATransaction() {
         testObj.commit(null);
         verify(mockTxService).commit("123");
     }
 
     @Test
-    public void shouldErrorIfTheContextSessionIsNotATransaction()
-            throws RepositoryException {
+    public void shouldErrorIfTheContextSessionIsNotATransaction() {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.commit(null);
         assertEquals(400, commit.getStatus());
     }
 
     @Test
-    public void shouldErrorIfCommitIsNotCalledAtTheRepoRoot()
-            throws RepositoryException {
+    public void shouldErrorIfCommitIsNotCalledAtTheRepoRoot() {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.commit("a");
         assertEquals(400, commit.getStatus());
     }
 
     @Test
-    public void shouldRollBackATransaction() throws RepositoryException {
+    public void shouldRollBackATransaction() {
         testObj.commit(null);
         verify(mockTxService).commit("123");
     }
 
     @Test
-    public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback()
-            throws RepositoryException {
+    public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback() {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.rollback(null);
         assertEquals(400, commit.getStatus());
     }
 
     @Test
-    public void shouldErrorIfRollbackIsNotCalledAtTheRepoRoot()
-            throws RepositoryException {
+    public void shouldErrorIfRollbackIsNotCalledAtTheRepoRoot() {
         setField(testObj, "session", regularSession);
         final Response commit = testObj.rollback("a");
         assertEquals(400, commit.getStatus());

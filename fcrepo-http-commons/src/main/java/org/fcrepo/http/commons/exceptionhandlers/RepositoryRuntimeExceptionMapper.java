@@ -57,9 +57,8 @@ public class RepositoryRuntimeExceptionMapper implements
 
         if (exceptionMapper != null) {
             return exceptionMapper.toResponse(cause);
-        } else {
-            LOGGER.warn("Caught repository exception: {}", e.getMessage());
-            return serverError().entity(getStackTraceAsString(e)).build();
         }
+        LOGGER.warn("Caught repository exception: {}", e.getMessage());
+        return serverError().entity(getStackTraceAsString(e)).build();
     }
 }

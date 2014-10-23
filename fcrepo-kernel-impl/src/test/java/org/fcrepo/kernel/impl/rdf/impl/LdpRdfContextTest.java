@@ -15,18 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.vocabulary.RDF;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
@@ -39,6 +27,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraResource;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * @author cabeer
@@ -59,7 +59,7 @@ public class LdpRdfContextTest {
 
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
 
@@ -69,7 +69,7 @@ public class LdpRdfContextTest {
     }
 
     @Test
-    public void shouldIncludeRdfTypeAssertions() throws RepositoryException {
+    public void shouldIncludeRdfTypeAssertions() {
         testObj = new LdpRdfContext(mockResource, subjects);
         final Model model = testObj.asModel();
 
@@ -77,7 +77,7 @@ public class LdpRdfContextTest {
     }
 
     @Test
-    public void shouldIncludeRdfContainerAssertions() throws RepositoryException {
+    public void shouldIncludeRdfContainerAssertions() {
         testObj = new LdpRdfContext(mockContainer, subjects);
         final Model model = testObj.asModel();
 
@@ -87,7 +87,7 @@ public class LdpRdfContextTest {
     }
 
     @Test
-    public void shouldIncludeDefaultContainerProperties() throws RepositoryException {
+    public void shouldIncludeDefaultContainerProperties() {
         testObj = new LdpRdfContext(mockContainer, subjects);
         final Model model = testObj.asModel();
 
@@ -96,7 +96,7 @@ public class LdpRdfContextTest {
     }
 
     @Test
-    public void shouldNotIncludeDefaultContainerPropertiesWhenSet() throws RepositoryException {
+    public void shouldNotIncludeDefaultContainerPropertiesWhenSet() {
         when(mockContainer.hasProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(true);
         when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
 

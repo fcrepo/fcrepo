@@ -129,7 +129,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
     private static final Logger LOGGER = getLogger(JQLQueryVisitor.class);
 
-    private QueryObjectModelFactory queryFactory;
+    private final QueryObjectModelFactory queryFactory;
     private Source source;
     private ImmutableSet.Builder<Column> columns;
     private ImmutableList.Builder<Ordering>  orderings;
@@ -137,16 +137,16 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private boolean hasLimit = false;
     private long offset;
     private long limit;
-    private Session session;
-    private JcrRdfTools jcrTools;
+    private final Session session;
+    private final JcrRdfTools jcrTools;
     private Set<String> resultsVars;
-    private Map<String, Column> variables;
+    private final Map<String, Column> variables;
     private boolean distinct;
     private boolean inOptional;
-    private Map<String, Source> joins;
+    private final Map<String, Source> joins;
     private Map<String, String> joinTypes;
-    private Map<String, JoinCondition> joinConditions;
-    private IdentifierConverter<Resource,FedoraResource> idTranslator;
+    private final Map<String, JoinCondition> joinConditions;
+    private final IdentifierConverter<Resource,FedoraResource> idTranslator;
 
     /**
      * Create a new query
@@ -1000,7 +1000,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      * @param propertyName
      * @return jcr value type
      */
-    private int getPropertyType(final NodeType nodeType, final String propertyName) {
+    private static int getPropertyType(final NodeType nodeType, final String propertyName) {
         final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();
         int type = UNDEFINED;
         for (final PropertyDefinition propertyDefinition : propertyDefinitions) {

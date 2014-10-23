@@ -20,6 +20,9 @@ package org.fcrepo.kernel.exception;
  * @since 10/1/14
  */
 public class ServerManagedPropertyException extends RepositoryRuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
     /**
      *
      * @param msg

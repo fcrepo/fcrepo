@@ -104,14 +104,15 @@ public class PropertyConverterTest {
     public final void shouldMapRdfPredicatesToJcrProperties() throws RepositoryException {
 
         final Property p = createProperty(REPOSITORY_NAMESPACE, "uuid");
-        assertEquals("jcr:uuid", testObj.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
+        assertEquals("jcr:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
 
     }
 
     @Test
     public final void shouldReuseRegisteredNamespaces() throws RepositoryException {
         final Property p = createProperty(mockUri, "uuid");
-        assertEquals("some-prefix:uuid", testObj.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
+        assertEquals("some-prefix:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p,
+                EMPTY_NAMESPACE_MAP));
     }
 
     @Test
@@ -119,7 +120,7 @@ public class PropertyConverterTest {
         when(mockNsRegistry.registerNamespace("not-registered-uri#"))
                 .thenReturn("ns001");
         final Property p = createProperty("not-registered-uri#", "uuid");
-        assertEquals("ns001:uuid", testObj.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
+        assertEquals("ns001:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
     }
 
     private void mockNamespaceRegistry(final NamespaceRegistry mockRegistry) throws RepositoryException {

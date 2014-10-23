@@ -131,14 +131,13 @@ public class FedoraVersions extends ContentExposingResource {
      * constructed manually):
      * /versionable-node/fcr:versions/label/path/to/any/copied/unversionable/nodes
      * @return the version of the object as RDF in the requested format
-     * @throws RepositoryException
      */
     @GET
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
     public Response getVersion(@HeaderParam("Prefer") final Prefer prefer,
-                               @HeaderParam("Range") final String rangeValue) throws RepositoryException, IOException {
+                               @HeaderParam("Range") final String rangeValue) throws IOException {
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
