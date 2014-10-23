@@ -159,10 +159,8 @@ public class SessionFactory {
      *
      * @param servletRequest
      * @return a JCR session that is associated with the transaction
-     * @throws RepositoryException if the session could not be found for the given tx
      */
-    protected Session getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId)
-        throws RepositoryException {
+    protected Session getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
 
         final Principal userPrincipal = servletRequest.getUserPrincipal();
 

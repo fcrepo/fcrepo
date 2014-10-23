@@ -56,11 +56,11 @@ public class JQLResultSet implements ResultSet {
 
     private final RowIterator iterator;
 
-    private Session session;
+    private final Session session;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private QueryResult queryResult;
+    private final QueryResult queryResult;
 
     private int rowNumber = 0;
 
@@ -142,9 +142,8 @@ public class JQLResultSet implements ResultSet {
      * Maps a JCR Query's Row to a QuerySolution
      */
     private class JQLQuerySolution implements QuerySolution, Binding {
-        private IdentifierConverter<Resource, FedoraResource> idTranslator;
-        private Row row;
-        private List<String> columns;
+        private final Row row;
+        private final List<String> columns;
         private final ValueConverter valueConverter;
 
 
@@ -157,7 +156,6 @@ public class JQLResultSet implements ResultSet {
         public JQLQuerySolution(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Row row,
                                 final List<String> columns) {
-            this.idTranslator = idTranslator;
             this.row = row;
             this.columns = columns;
             valueConverter = new ValueConverter(session, idTranslator);

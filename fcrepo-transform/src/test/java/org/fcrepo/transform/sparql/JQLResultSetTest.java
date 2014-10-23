@@ -21,8 +21,11 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Var;
 import com.hp.hpl.jena.sparql.engine.binding.Binding;
+
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
@@ -57,15 +60,16 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author cbeer
  */
 public class JQLResultSetTest {
-    JQLResultSet testObj;
+
+    private JQLResultSet testObj;
 
     @Mock
-    Session mockSession;
+    private Session mockSession;
 
     @Mock
-    QueryResult mockQueryResult;
+    private QueryResult mockQueryResult;
 
-    IdentifierConverter idTranslator;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private RowIterator mockRows;

@@ -15,71 +15,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.vocabulary.DC_11;
-import nu.validator.htmlparser.sax.HtmlParser;
-import nu.validator.saxtree.TreeBuilder;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.annotation.NotThreadSafe;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpOptions;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
-import org.apache.http.util.EntityUtils;
-import org.apache.jena.riot.Lang;
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.RdfLexicon;
-import org.glassfish.grizzly.http.util.ContentType;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXParseException;
-
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Variant;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.URI;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.hp.hpl.jena.graph.Node.ANY;
@@ -139,6 +74,72 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Variant;
+
+import nu.validator.htmlparser.sax.HtmlParser;
+import nu.validator.saxtree.TreeBuilder;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.annotation.NotThreadSafe;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+import org.apache.jena.riot.Lang;
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
+import org.glassfish.grizzly.http.util.ContentType;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXParseException;
+
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.vocabulary.DC_11;
 
 /**
  * @author cabeer
@@ -249,7 +250,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertRdfOptionsHeaders(optionsResponse);
     }
 
-    private void assertContainerOptionsHeaders(final HttpResponse httpResponse) {
+    private static void assertContainerOptionsHeaders(final HttpResponse httpResponse) {
         assertRdfOptionsHeaders(httpResponse);
         final List<String> methods = headerValues(httpResponse,"Allow");
         assertTrue("Should allow POST", methods.contains(HttpPost.METHOD_NAME));
@@ -265,7 +266,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
     }
 
-    private void assertRdfOptionsHeaders(final HttpResponse httpResponse) {
+    private static void assertRdfOptionsHeaders(final HttpResponse httpResponse) {
         final List<String> methods = headerValues(httpResponse,"Allow");
         assertTrue("Should allow PATCH", methods.contains(HttpPatch.METHOD_NAME));
         assertTrue("Should allow MOVE", methods.contains(HttpMove.METHOD_NAME));
@@ -276,7 +277,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertResourceOptionsHeaders(httpResponse);
     }
 
-    private void assertResourceOptionsHeaders(final HttpResponse httpResponse) {
+    private static void assertResourceOptionsHeaders(final HttpResponse httpResponse) {
         final List<String> methods = headerValues(httpResponse,"Allow");
         assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
         assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
@@ -301,14 +302,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         public final static String METHOD_NAME = "COPY";
 
 
-        /**
-         * @throws IllegalArgumentException if the uri is invalid.
-         */
-        public HttpCopy(final String uri) {
-            super();
-            setURI(URI.create(uri));
-        }
-
         @Override
         public String getMethod() {
             return METHOD_NAME;
@@ -321,14 +314,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         public final static String METHOD_NAME = "MOVE";
 
-
-        /**
-         * @throws IllegalArgumentException if the uri is invalid.
-         */
-        public HttpMove(final String uri) {
-            super();
-            setURI(URI.create(uri));
-        }
 
         @Override
         public String getMethod() {
@@ -1568,9 +1553,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
             getObjMethod2.setHeader("If-Modified-Since", lastModed);
             getObjMethod2.setHeader("If-None-Match", etag);
             response = cachingClient.execute(getObjMethod2);
-
             assertEquals("Client didn't return a NOT_MODIFIED!", NOT_MODIFIED
                     .getStatusCode(), response.getStatusLine().getStatusCode());
+
         }
     }
 
@@ -1594,7 +1579,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         validateHTML(pid + "/ds/" + FCR_METADATA);
     }
 
-    private void validateHTML(final String path) throws Exception {
+    private static void validateHTML(final String path) throws Exception {
         final HttpGet getMethod = new HttpGet(serverAddress + path);
         getMethod.addHeader("Accept", "text/html");
         final HttpResponse response = client.execute(getMethod);

@@ -90,9 +90,9 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
  */
 public class FedoraLdpTest {
 
-    private String path = "/some/path";
-    private String binaryPath = "/some/binary/path";
-    private String binaryDescriptionPath = "/some/other/path";
+    private final String path = "/some/path";
+    private final String binaryPath = "/some/binary/path";
+    private final String binaryDescriptionPath = "/some/other/path";
     private FedoraLdp testObj;
 
     @Mock
@@ -129,7 +129,7 @@ public class FedoraLdpTest {
     private FedoraHttpConfiguration mockHttpConfiguration;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = spy(new FedoraLdp(path));
 
@@ -174,7 +174,7 @@ public class FedoraLdpTest {
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getTriples(eq(idTranslator), any(Class.class))).thenAnswer(new Answer<RdfStream>() {
             @Override
-            public RdfStream answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public RdfStream answer(final InvocationOnMock invocationOnMock) {
                 return new RdfStream(Triple.create(createURI(invocationOnMock.getMock().toString()),
                                                    createURI("called"),
                                                    createURI(invocationOnMock.getArguments()[1].toString())
@@ -687,12 +687,13 @@ public class FedoraLdpTest {
 
         when(mockBinaryService.findOrCreateBinary(mockSession, "/b")).thenReturn(mockBinary);
 
-        final InputStream content = toInputStream("x");
-        final Response actual = testObj.createObject(null, null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
-                content);
+        try (final InputStream content = toInputStream("x")) {
+            final Response actual = testObj.createObject(null, null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
+                    content);
 
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
+        }
     }
 
     @Test(expected = ClientErrorException.class)

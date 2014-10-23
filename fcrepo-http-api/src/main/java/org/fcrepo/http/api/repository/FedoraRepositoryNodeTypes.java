@@ -27,15 +27,11 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 
-
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -58,14 +54,13 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     /**
      * Retrieve all node types as RDF
      * @return All node types as RDF
-     * @throws RepositoryException
      */
     @GET
     @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     @Timed
     @HtmlTemplate("jcr:nodetypes")
-    public RdfStream getNodeTypes(@Context final UriInfo uriInfo) throws RepositoryException {
+    public RdfStream getNodeTypes() {
         return nodeService.getNodeTypes(session).session(session);
     }
 

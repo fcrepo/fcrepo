@@ -223,7 +223,7 @@ public class FedoraLdp extends ContentExposingResource {
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch)
-            throws InvalidChecksumException, IOException, MalformedRdfException {
+            throws InvalidChecksumException, MalformedRdfException {
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
@@ -437,6 +437,7 @@ public class FedoraLdp extends ContentExposingResource {
 
     }
 
+    @Override
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
 

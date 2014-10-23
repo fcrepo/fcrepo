@@ -101,7 +101,7 @@ public class SessionFactoryTest {
     }
 
     @Test
-    public void testGetSessionFromTransaction() throws RepositoryException {
+    public void testGetSessionFromTransaction() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123", null)).thenReturn(mockTx);
@@ -110,7 +110,7 @@ public class SessionFactoryTest {
     }
 
     @Test
-    public void testGetSessionThrowException() throws RepositoryException {
+    public void testGetSessionThrowException() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123", null)).thenThrow(

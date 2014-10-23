@@ -15,15 +15,21 @@
  */
 package org.fcrepo.http.api;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
-import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.slf4j.Logger;
-import org.springframework.context.annotation.Scope;
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -41,23 +47,17 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URISyntaxException;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author cabeer
@@ -102,10 +102,9 @@ public class FedoraVersioning extends FedoraBaseResource {
     /**
      * Enable versioning
      * @return
-     * @throws java.net.URISyntaxException
      */
     @PUT
-    public Response enableVersioning() throws URISyntaxException {
+    public Response enableVersioning() {
         resource().enableVersioning();
 
         try {

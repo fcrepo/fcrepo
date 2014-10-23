@@ -15,9 +15,14 @@
  */
 package org.fcrepo.integration;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.UUID;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -28,14 +33,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 
-import javax.jcr.RepositoryException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.UUID;
-
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
-import static org.junit.Assert.assertEquals;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 /**
@@ -47,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 public class FedoraTransformIT extends AbstractResourceIT {
 
-    private HttpResponse createObject(final String pid) throws IOException {
+    private static HttpResponse createObject(final String pid) throws IOException {
         final HttpPost httpPost =  new HttpPost(serverAddress + "/");
         if (pid.length() > 0) {
             httpPost.addHeader("Slug", pid);
@@ -58,7 +58,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testLdpathWithConfiguredProgram() throws RepositoryException, IOException {
+    public void testLdpathWithConfiguredProgram() throws IOException {
 
         final String pid = UUID.randomUUID().toString();
         createObject(pid);

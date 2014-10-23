@@ -17,6 +17,7 @@ package org.fcrepo.http.commons.test.util;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.net.URI.create;
+import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.junit.Assert.assertNotNull;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
@@ -89,10 +90,8 @@ public abstract class TestHelpers {
         final Answer<UriBuilder> answer = new Answer<UriBuilder>() {
 
             @Override
-            public UriBuilder
-                    answer(final InvocationOnMock invocation) throws Throwable {
-
-                return UriBuilder.fromUri("http://localhost/fcrepo");
+            public UriBuilder answer(final InvocationOnMock invocation) {
+                return fromUri("http://localhost/fcrepo");
             }
         };
 

@@ -73,11 +73,11 @@ public class HttpResourceConverterTest {
 
 
     private HttpResourceConverter converter;
-    private String uriTemplate = "http://localhost:8080/some/{path: .*}";
-    private String path = "arbitrary/path";
-    private Resource resource = createResource("http://localhost:8080/some/" + path);
-    private Resource versionedResource = createResource("http://localhost:8080/some/" + path + "/fcr:versions/x");
-    private Resource metadataResource = createResource(resource.toString() + "/fcr:metadata");
+    private final String uriTemplate = "http://localhost:8080/some/{path: .*}";
+    private final String path = "arbitrary/path";
+    private final Resource resource = createResource("http://localhost:8080/some/" + path);
+    private final Resource versionedResource = createResource("http://localhost:8080/some/" + path + "/fcr:versions/x");
+    private final Resource metadataResource = createResource(resource.toString() + "/fcr:metadata");
 
     @Mock
     private Workspace mockWorkspace;
@@ -108,7 +108,7 @@ public class HttpResourceConverterTest {
     }
 
     @Test
-    public void testDoForward() throws Exception {
+    public void testDoForward() {
         final FedoraResource converted = converter.convert(resource);
         assertEquals(node, converted.getNode());
     }
@@ -159,19 +159,19 @@ public class HttpResourceConverterTest {
     }
 
     @Test
-    public void testDoBackward() throws Exception {
+    public void testDoBackward() {
         final Resource converted = converter.reverse().convert(new FedoraResourceImpl(node));
         assertEquals(resource, converted);
     }
 
     @Test
-    public void testDoBackwardWithDatastreamContent() throws Exception {
+    public void testDoBackwardWithDatastreamContent() {
         final Resource converted = converter.reverse().convert(new FedoraBinaryImpl(contentNode));
         assertEquals(resource, converted);
     }
 
     @Test
-    public void testDoBackwardWithDatastreamMetadata() throws Exception {
+    public void testDoBackwardWithDatastreamMetadata() {
         final Resource converted = converter.reverse().convert(new DatastreamImpl(node));
         assertEquals(metadataResource, converted);
     }
@@ -240,7 +240,7 @@ public class HttpResourceConverterTest {
     }
 
     @Test
-    public void testToStringWithRoot() throws Exception {
+    public void testToStringWithRoot() {
         assertEquals("/", converter.asString(createResource("http://localhost:8080/some/")));
     }
 }
