@@ -75,6 +75,7 @@
     <module>fcrepo-connector-file</module>
     <module>fcrepo-configs</module>
     <module>fcrepo-integration-ldp</module>
+    <module>fcrepo-integration-rdf</module>
   </modules>
   <dependencyManagement>
     <dependencies>
