@@ -16,6 +16,7 @@
 package org.fcrepo.jms.headers;
 
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Set;
@@ -94,7 +95,11 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
-        message.setStringProperty(IDENTIFIER_HEADER_NAME, jcrEvent.getPath());
+        String path = jcrEvent.getPath();
+        if ( path.endsWith("/" + JCR_CONTENT) ) {
+            path = path.replaceAll("/" + JCR_CONTENT,"");
+        }
+        message.setStringProperty(IDENTIFIER_HEADER_NAME, path);
         message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent
                 .getTypes()));
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
