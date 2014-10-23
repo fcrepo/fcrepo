@@ -24,27 +24,33 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
-public class PreferTest  {
+public class SinglePreferTest  {
+
+    protected SinglePrefer createTestPreferTypeFromHeader(final String header) throws ParseException {
+        return new SinglePrefer(header);
+    }
 
     @Test
     public void testHasReturn() throws ParseException {
-        final Prefer prefer = new Prefer("return=representation");
+        final SinglePrefer prefer = createTestPreferTypeFromHeader("return=representation");
 
         assertTrue(prefer.hasReturn());
     }
 
     @Test
     public void testGetReturn() throws ParseException {
-        final Prefer prefer = new Prefer("return=representation");
+        final SinglePrefer prefer = createTestPreferTypeFromHeader("return=representation");
 
         assertEquals("representation", prefer.getReturn().getValue());
     }
 
     @Test
     public void testGetReturnParameters() throws ParseException {
-        final Prefer prefer =
-                new Prefer("return=representation; include=\"http://www.w3.org/ns/ldp#PreferMinimalContainer\"");
+        final SinglePrefer prefer =
+                createTestPreferTypeFromHeader("return=representation; "
+                        + "include=\"http://www.w3.org/ns/ldp#PreferMinimalContainer\"");
 
         assertTrue(prefer.hasReturn());
         assertEquals("representation", prefer.getReturn().getValue());
@@ -55,22 +61,22 @@ public class PreferTest  {
 
     @Test
     public void testHasHandling() throws ParseException {
-        final Prefer prefer = new Prefer("handling=strict");
+        final SinglePrefer prefer = createTestPreferTypeFromHeader("handling=strict");
 
         assertTrue(prefer.hasHandling());
     }
 
     @Test
     public void testGetHandling() throws ParseException {
-        final Prefer prefer = new Prefer("handling=lenient");
+        final SinglePrefer prefer = createTestPreferTypeFromHeader("handling=lenient");
 
         assertEquals("lenient", prefer.getHandling().getValue());
     }
 
     @Test
     public void testGetHandlingParameters() throws ParseException {
-        final Prefer prefer =
-                new Prefer("handling=lenient; some=\"parameter\"");
+        final SinglePrefer prefer =
+                createTestPreferTypeFromHeader("handling=lenient; some=\"parameter\"");
 
         assertTrue(prefer.hasHandling());
         assertEquals("lenient", prefer.getHandling().getValue());

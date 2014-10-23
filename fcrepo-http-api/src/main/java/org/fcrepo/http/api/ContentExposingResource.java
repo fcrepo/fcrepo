@@ -15,70 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.vocabulary.RDF;
-import org.apache.jena.riot.Lang;
-import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
-import org.fcrepo.http.commons.domain.Prefer;
-import org.fcrepo.http.commons.domain.PreferTag;
-import org.fcrepo.http.commons.domain.Range;
-import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
-import org.fcrepo.http.commons.responses.RangeRequestInputStream;
-import org.fcrepo.kernel.models.NonRdfSource;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.ManagedRdf;
-import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.HashRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.RootRdfContext;
-import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
-import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
-import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.jvnet.hk2.annotations.Optional;
-import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.jcr.Binary;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Date;
-import java.util.Iterator;
 
 import static com.google.common.base.Predicates.alwaysTrue;
 import static com.google.common.base.Predicates.and;
@@ -89,10 +25,10 @@ import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
-import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
+import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_BASIC_CONTAINER;
@@ -105,6 +41,73 @@ import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Date;
+import java.util.Iterator;
+
+import javax.inject.Inject;
+import javax.jcr.Binary;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+
+import org.apache.jena.riot.Lang;
+import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.PreferTag;
+import org.fcrepo.http.commons.domain.Range;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
+import org.fcrepo.http.commons.responses.RangeRequestInputStream;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.ManagedRdf;
+import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.HashRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.RootRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
+import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.jvnet.hk2.annotations.Optional;
+import org.slf4j.Logger;
+
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -124,6 +127,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Optional
     private HttpTripleUtil httpTripleUtil;
 
+    @BeanParam
+    protected MultiPrefer prefer;
+
     @Inject
     @Optional
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
@@ -134,8 +140,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected abstract String externalPath();
 
-    protected Response getContent(final Prefer prefer,
-                                  final String rangeValue,
+    protected Response getContent(final String rangeValue,
                                   final RdfStream rdfStream) throws IOException {
         if (resource() instanceof FedoraBinary) {
 
@@ -150,7 +155,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 final InputStream content = ((FedoraBinary) resource()).getContent();
 
                 final Model inputModel = createDefaultModel()
-                        .read(content, getUri(resource()).toString(), format);
+                        .read(content,  (resource()).toString(), format);
 
                 rdfStream.concat(Iterators.transform(inputModel.listStatements(),
                         new Function<Statement, Triple>() {
@@ -165,7 +170,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
         } else {
-            rdfStream.concat(getResourceTriples(prefer));
+            rdfStream.concat(getResourceTriples());
 
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
@@ -177,7 +182,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return Response.ok(rdfStream).build();
     }
 
-    protected RdfStream getResourceTriples(final Prefer prefer) {
+    protected RdfStream getResourceTriples() {
 
         final PreferTag returnPreference;
 

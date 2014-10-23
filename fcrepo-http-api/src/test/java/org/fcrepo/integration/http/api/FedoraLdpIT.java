@@ -46,6 +46,7 @@ import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
@@ -1128,7 +1129,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = createResponse.getFirstHeader("Location").getValue();
 
-        for (final Variant variant : RDFMediaType.POSSIBLE_RDF_VARIANTS) {
+        for (final Variant variant : POSSIBLE_RDF_VARIANTS) {
 
             final HttpGet getObjMethod =
                     new HttpGet(location);
@@ -2128,7 +2129,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testCreateAndReplaceGraphMinimal() throws Exception {
-
+        LOGGER.trace("Entering testCreateAndReplaceGraphMinimal()...");
         final String pid = getRandomUniquePid();
 
         final HttpPost httpPost = postObjMethod("/");
@@ -2159,7 +2160,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         get.addHeader("Prefer", "return=minimal");
         final GraphStore graphStore = getGraphStore(get);
         assertTrue(graphStore.contains(ANY, ANY, DC_11.title.asNode(), createLiteral("xyz")));
-
+        LOGGER.trace("Done with testCreateAndReplaceGraphMinimal().");
     }
 
     @Test
@@ -2190,9 +2191,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     }
 
-    private Date getDateFromModel( final Model model, final Resource subj, final Property pred ) throws Exception {
-        final StmtIterator stmts = model.listStatements( subj, pred, (String)null );
-        if ( stmts.hasNext() ) {
+    private Date getDateFromModel(final Model model, final Resource subj, final Property pred) throws Exception {
+        final StmtIterator stmts = model.listStatements(subj, pred, (String) null);
+        if (stmts.hasNext()) {
             return tripleFormat.parse(stmts.nextStatement().getString());
         }
         return null;

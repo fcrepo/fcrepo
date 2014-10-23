@@ -27,7 +27,7 @@ import java.util.Map;
  *
  * @author cabeer
  */
-public class PreferTag {
+public class PreferTag implements Comparable<PreferTag> {
     private final String tag;
     private String value = "";
     private Map<String, String> params = new HashMap<>();
@@ -124,5 +124,17 @@ public class PreferTag {
             servletResponse.addHeader("Preference-Applied", "return=minimal");
         }
         servletResponse.addHeader("Vary", "Prefer");
+    }
+
+    /**
+     * We consider tags with the same name to be equal, because <a
+     * href="http://tools.ietf.org/html/rfc7240#page-4">the definition of Prefer headers</a> does not permit that tags
+     * with the same name be consumed except by selecting for the first appearing tag.
+     *
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(final PreferTag otherTag) {
+        return getTag().compareTo(otherTag.getTag());
     }
 }

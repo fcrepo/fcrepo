@@ -15,47 +15,10 @@
  */
 package org.fcrepo.http.api;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import org.apache.commons.io.IOUtils;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.domain.Prefer;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.services.BinaryService;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.springframework.mock.web.MockHttpServletResponse;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-
-import java.io.InputStream;
-import java.util.List;
-
+import static com.google.common.base.Predicates.containsPattern;
+import static com.google.common.collect.Iterables.any;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -88,10 +51,58 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.ParseException;
+import java.util.List;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.services.BinaryService;
+import org.fcrepo.kernel.services.ContainerService;
+import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.springframework.mock.web.MockHttpServletResponse;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class FedoraLdpTest {
 
@@ -132,6 +143,9 @@ public class FedoraLdpTest {
 
     @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
+
+    private static final Logger log = getLogger(FedoraLdpTest.class);
+
 
     @Before
     public void setUp() {
@@ -423,8 +437,9 @@ public class FedoraLdpTest {
 
     @Test
     public void testGetWithObjectPreferMinimal() throws Exception {
+
         setResource(Container.class);
-        setField(testObj, "prefer", new Prefer("return=minimal"));
+        setField(testObj, "prefer", new MultiPrefer("return=minimal"));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
@@ -454,7 +469,7 @@ public class FedoraLdpTest {
     public void testGetWithObjectOmitContainment() throws Exception {
         setResource(Container.class);
         setField(testObj, "prefer",
-                new Prefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferContainment\""));
+                new MultiPrefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferContainment\""));
         final Response actual = testObj.describe(
                 null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -480,7 +495,7 @@ public class FedoraLdpTest {
     public void testGetWithObjectOmitMembership() throws Exception {
         setResource(Container.class);
         setField(testObj, "prefer",
-                new Prefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferMembership\""));
+                new MultiPrefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferMembership\""));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
@@ -504,26 +519,25 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testGetWithObjectIncludeReferences() throws Exception {
+    public void testGetWithObjectIncludeReferences() throws ParseException, IOException, RepositoryException {
         setResource(Container.class);
-        setField(testObj, "prefer",
-                new Prefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
+        setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()),
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()),
                 new Function<RDFNode, String>() {
+
                     @Override
                     public String apply(final RDFNode input) {
                         return input.toString();
                     }
                 });
-
-        assertTrue("Should include references contexts", rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl" +
-                ".ReferencesRdfContext"));
-
+        log.debug("Received RDF nodes: {}", rdfNodes);
+        final String referencesContextClassName = ReferencesRdfContext.class.getName();
+        assertTrue("Should include references contexts", any(rdfNodes, containsPattern(referencesContextClassName)));
     }
 
     @Test

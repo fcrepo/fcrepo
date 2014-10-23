@@ -15,25 +15,36 @@
  */
 package org.fcrepo.http.api;
 
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.jena.riot.RiotException;
-import org.fcrepo.http.commons.domain.ContentLocation;
-import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.commons.domain.Prefer;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.slf4j.Logger;
-import org.springframework.context.annotation.Scope;
+
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLDecoder;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -58,38 +69,29 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLDecoder;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.jena.riot.RiotException;
+import org.fcrepo.http.commons.domain.ContentLocation;
+import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
-import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.slf4j.LoggerFactory.getLogger;
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 9/25/14
  */
 
@@ -104,7 +106,6 @@ public class FedoraLdp extends ContentExposingResource {
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
     @PathParam("path") protected String externalPath;
-    @HeaderParam("Prefer") protected Prefer prefer;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
 
@@ -184,7 +185,7 @@ public class FedoraLdp extends ContentExposingResource {
         final RdfStream rdfStream = new RdfStream().session(session)
                     .topic(translator().reverse().convert(resource()).asNode());
 
-        return getContent(prefer, rangeValue, rdfStream);
+        return getContent(rangeValue, rdfStream);
 
     }
 
@@ -259,7 +260,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (resource.isNew()) {
             resourceTriples = new RdfStream();
         } else {
-            resourceTriples = getResourceTriples(prefer);
+            resourceTriples = getResourceTriples();
         }
 
         if (requestBodyStream == null && !resource.isNew()) {
@@ -328,7 +329,7 @@ public class FedoraLdp extends ContentExposingResource {
             if (resource().isNew()) {
                 resourceTriples = new RdfStream();
             } else {
-                resourceTriples = getResourceTriples(prefer);
+                resourceTriples = getResourceTriples();
             }
 
             patchResourcewithSparql(resource(), requestBody, resourceTriples);
@@ -395,7 +396,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (result.isNew()) {
             resourceTriples = new RdfStream();
         } else {
-            resourceTriples = getResourceTriples(prefer);
+            resourceTriples = getResourceTriples();
         }
 
         if (requestBodyStream == null) {

@@ -15,27 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.commons.domain.Prefer;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.slf4j.Logger;
-import org.springframework.context.annotation.Scope;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -52,6 +31,29 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * Endpoint for managing versions of nodes
  *
@@ -67,6 +69,7 @@ public class FedoraVersions extends ContentExposingResource {
     private static final Logger LOGGER = getLogger(FedoraVersions.class);
 
     @PathParam("path") protected String externalPath;
+
     @PathParam("labelAndOptionalPathIntoVersion") protected String pathListIntoVersion;
 
     protected String path;
@@ -137,14 +140,13 @@ public class FedoraVersions extends ContentExposingResource {
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
-    public Response getVersion(@HeaderParam("Prefer") final Prefer prefer,
-                               @HeaderParam("Range") final String rangeValue) throws IOException {
+    public Response getVersion(@HeaderParam("Range") final String rangeValue) throws IOException {
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
         final RdfStream rdfStream = new RdfStream().session(session).topic(
                 translator().reverse().convert(resource()).asNode());
-        return getContent(prefer, rangeValue, rdfStream);
+        return getContent(rangeValue, rdfStream);
     }
 
     protected String unversionedResourcePath() throws RepositoryException {

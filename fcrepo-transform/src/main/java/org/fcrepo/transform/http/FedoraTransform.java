@@ -53,9 +53,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.api.ContentExposingResource;
-import org.fcrepo.http.commons.domain.Prefer;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.TransformationFactory;
@@ -65,6 +63,7 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Endpoint for transforming object properties using stored
@@ -147,11 +146,10 @@ public class FedoraTransform extends ContentExposingResource {
     @Path("{program}")
     @Produces({APPLICATION_JSON})
     @Timed
-    public Object evaluateLdpathProgram(@PathParam("program") final String program,
-                                        @HeaderParam("Prefer") final Prefer prefer)
+    public Object evaluateLdpathProgram(@PathParam("program") final String program)
             throws RepositoryException {
 
-        final RdfStream rdfStream = getResourceTriples(prefer).session(session)
+        final RdfStream rdfStream = getResourceTriples().session(session)
                 .topic(translator().reverse().convert(resource()).asNode());
 
         return getNodeTypeTransform(resource().getNode(), program).apply(rdfStream);
@@ -172,14 +170,13 @@ public class FedoraTransform extends ContentExposingResource {
             contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
     @Timed
     public Object evaluateTransform(@HeaderParam("Content-Type") final MediaType contentType,
-                                    @HeaderParam("Prefer") final Prefer prefer,
                                     final InputStream requestBodyStream) {
 
         if (transformationFactory == null) {
             transformationFactory = new TransformationFactory();
         }
 
-        final RdfStream rdfStream = getResourceTriples(prefer).session(session)
+        final RdfStream rdfStream = getResourceTriples().session(session)
                 .topic(translator().reverse().convert(resource()).asNode());
 
         return transformationFactory.getTransform(contentType, requestBodyStream).apply(rdfStream);
