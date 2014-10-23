@@ -199,4 +199,35 @@
     </dependency>
   </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <configuration>
+                    <portNames>
+                        <portName>test.port</portName>
+                        <!-- reserves the stop port for jetty-maven-plugin -->
+                        <portName>jetty.port.stop</portName>
+                        <portName>jms.port</portName>
+                        <portName>stomp.port</portName>
+                    </portNames>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <test.port>${test.port}</test.port>
+                        <test.context.path>${test.context.path}</test.context.path>
+                        <jms.port>${jms.port}</jms.port>
+                        <stomp.port>${stomp.port}</stomp.port>
+                        <integration-test>true</integration-test>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
 </project>
