@@ -101,6 +101,13 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      };
 
     /**
+     * Predicate for determining whether this {@link Node} is a Fedora
+     * binary.
+     */
+    public static Predicate<Node> isBlankNode =
+            new AnyTypesPredicate(FEDORA_BLANKNODE);
+
+    /**
      * Check if a property is a reference property.
      */
     public static Predicate<Property> isReferenceProperty =
