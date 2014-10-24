@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.rdf;
 
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
@@ -111,8 +112,8 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             }
 
             if (replacement.getObject().isLiteral()
-                    && replacement.getObject().getLiteral().getDatatypeURI()
-                    .equals("http://www.w3.org/2001/XMLSchema#string")) {
+                    && replacement.getObject().getLiteral().getDatatype() != null
+                    && replacement.getObject().getLiteral().getDatatype().equals(XSDDatatype.XSDstring)) {
                 replacement = new Triple(replacement.getSubject(),
                         replacement.getPredicate(),
                         NodeFactory.createLiteral(replacement.getObject().getLiteral().getLexicalForm()));
