@@ -203,6 +203,16 @@ public class RdfStreamStreamingOutputTest {
 
     }
 
+
+    @Test
+    public void testWriteWithLanguageLiteral() throws IOException {
+
+        assertOutputContainsTriple(create(createURI("info:testSubject"),
+                createURI("info:testPredicate"),
+                NodeFactory.createLiteral("french string", "fr", XSDDatatype.XSDstring)));
+
+    }
+
     @Test(expected = WebApplicationException.class)
     public void testWriteWithException() {
 

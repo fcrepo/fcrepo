@@ -39,7 +39,6 @@ import java.util.Iterator;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -48,6 +47,7 @@ import javax.jcr.ValueFormatException;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.utils.JcrPropertyMock;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -128,6 +128,25 @@ public class PropertyToTripleTest {
         final Triple t = createSingleValuedLiteralTriple();
         assertEquals("Got wrong RDF object!", TEST_VALUE, t.getObject()
                 .getLiteralValue());
+        assertEquals("Got wrong RDF predicate!", createProperty(
+                TEST_PROPERTY_NAME).asNode(), t.getPredicate());
+        assertEquals("Got wrong RDF subject!", testSubject, t
+                .getSubject());
+    }
+
+    @Test
+    public void testSingleValuedStringLanguageLiteralTriple()
+            throws RepositoryException {
+
+        when(mockProperty.getType()).thenReturn(STRING);
+        when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME + "@en");
+        when(mockProperty.getLocalName()).thenReturn("predicate@en");
+        when(mockValue.getType()).thenReturn(STRING);
+        when(mockValue.getString()).thenReturn(TEST_VALUE);
+        final Triple t = createSingleValuedLiteralTriple();
+        assertEquals("Got wrong RDF object!", TEST_VALUE, t.getObject()
+                .getLiteralValue());
+        assertEquals("Get wrong RDF object literal language", "en", t.getObject().getLiteralLanguage());
         assertEquals("Got wrong RDF predicate!", createProperty(
                 TEST_PROPERTY_NAME).asNode(), t.getPredicate());
         assertEquals("Got wrong RDF subject!", testSubject, t
@@ -353,6 +372,8 @@ public class PropertyToTripleTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockProperty.getParent()).thenReturn(mockNode);
         when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME);
+        when(mockProperty.getNamespaceURI()).thenReturn("info:");
+        when(mockProperty.getLocalName()).thenReturn("predicate");
         when(mockProperty.getSession()).thenReturn(mockSession);
         when(mockSession.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
@@ -368,7 +389,7 @@ public class PropertyToTripleTest {
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
-    private Property mockProperty;
+    private JcrPropertyMock mockProperty;
 
     @Mock
     private Value mockValue;

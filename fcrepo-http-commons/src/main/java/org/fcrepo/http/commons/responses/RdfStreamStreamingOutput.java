@@ -185,7 +185,9 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
             final String literalDatatypeURI = object.getLiteralDatatypeURI();
 
-            if (literalDatatypeURI != null) {
+            if (!object.getLiteralLanguage().isEmpty()) {
+                value = vfactory.createLiteral(object.getLiteralLexicalForm(), object.getLiteralLanguage());
+            } else if (literalDatatypeURI != null) {
                 final URI uri = vfactory.createURI(literalDatatypeURI);
                 value = vfactory.createLiteral(literalValue.toString(), uri);
             } else {

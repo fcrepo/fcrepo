@@ -262,7 +262,7 @@ public class JcrRdfTools {
         }
 
         final String propertyName =
-                getPropertyNameFromPredicate(node, predicate, namespaces);
+                getPropertyNameFromPredicate(node, predicate, value, namespaces);
         final Value v = createValue(node, value, propertyName);
         nodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, node, propertyName, v);
     }
@@ -304,7 +304,7 @@ public class JcrRdfTools {
                                final Map<String, String> nsPrefixMap) throws RepositoryException {
 
         final Node node = resource.getNode();
-        final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
+        final String propertyName = getPropertyNameFromPredicate(node, predicate, objectNode, nsPrefixMap);
 
         if (isManagedPredicate.apply(predicate)) {
 

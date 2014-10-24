@@ -26,6 +26,7 @@ import com.hp.hpl.jena.query.SortCondition;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.core.TriplePath;
 import com.hp.hpl.jena.sparql.expr.Expr;
@@ -486,12 +487,12 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
                     final String propertyName =
                             getPropertyName(defaultModel
-                                .createProperty(predicate.getURI()));
+                                .createProperty(predicate.getURI()), object);
 
                     if (propertyName.equals("rdf:type") && object.isURI()) {
                         final String mixinName =
                                 getPropertyName(defaultModel
-                                        .createProperty(object.getURI()));
+                                        .createProperty(object.getURI()), object);
 
                         if (session.getWorkspace().getNodeTypeManager()
                                 .hasNodeType(mixinName)) {
@@ -595,9 +596,9 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             throw new NotImplementedException("Element path may not contain a variable predicate");
         }
 
-        final String propertyName = getPropertyName(model.createProperty(predicate.getURI()));
+        final String propertyName = getPropertyName(model.createProperty(predicate.getURI()), object);
         if (propertyName.equals("rdf:type") && object.isURI()) {
-            final String mixinName = getPropertyName(model.createProperty(object.getURI()));
+            final String mixinName = getPropertyName(model.createProperty(object.getURI()), object);
 
             if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
                 final String selectorName = "ref_type_" + mixinName.replace(":", "_");
@@ -969,14 +970,22 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      * @return property name from the given predicate
      * @throws RepositoryException
      */
-    private String getPropertyName(final com.hp.hpl.jena.rdf.model.Property predicate)
+    private String getPropertyName(final com.hp.hpl.jena.rdf.model.Property predicate, final Node object)
             throws RepositoryException {
 
         final NamespaceRegistry namespaceRegistry =
                 (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
 
         final Map<String, String> namespaceMapping = emptyMap();
-        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
+
+        final RDFNode objectNode;
+        if (object.isLiteral() && !object.getLiteralLanguage().isEmpty()) {
+            // stub to include the language tag
+            objectNode = ResourceFactory.createLangLiteral("", object.getLiteralLanguage());
+        } else {
+            objectNode = null;
+        }
+        return getPropertyNameFromPredicate(namespaceRegistry, predicate, objectNode, namespaceMapping);
     }
 
     /**
