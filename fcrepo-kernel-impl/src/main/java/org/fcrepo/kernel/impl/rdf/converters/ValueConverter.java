@@ -118,7 +118,10 @@ public class ValueConverter extends Converter<Value, RDFNode> {
             final RDFDatatype dataType = literal.getDatatype();
             final Object rdfValue = literal.getValue();
 
-            if (rdfValue instanceof Boolean) {
+            if (dataType == null && rdfValue instanceof String) {
+                // short-circuit the common case
+                return valueFactory.createValue(literal.getString(), STRING);
+            } else  if (rdfValue instanceof Boolean) {
                 return valueFactory.createValue((Boolean) rdfValue);
             } else if (rdfValue instanceof Byte
                     || (dataType != null && dataType.getJavaClass() == Byte.class)) {
