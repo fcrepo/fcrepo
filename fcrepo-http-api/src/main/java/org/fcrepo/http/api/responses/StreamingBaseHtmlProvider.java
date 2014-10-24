@@ -21,7 +21,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getAllValuesForPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstValueForPredicate;
+import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypesPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -40,6 +42,7 @@ import java.util.Properties;
 import javax.annotation.PostConstruct;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -131,10 +134,12 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
             for (final NodeTypeIterator primaryNodeTypes =
                          session.getWorkspace().getNodeTypeManager()
                                  .getPrimaryNodeTypes(); primaryNodeTypes.hasNext();) {
+                final NodeType primaryNodeType =
+                        primaryNodeTypes.nextNodeType();
                 final String primaryNodeTypeName =
-                        primaryNodeTypes.nextNodeType().getName();
+                        primaryNodeType.getName();
                 // for each node primary type, we try to find a template
-                final String templateLocation =
+                String templateLocation =
                         templatesLocation + "/" +
                                 primaryNodeTypeName.replace(':', '-') +
                                 templateFilenameExtension;
@@ -150,6 +155,33 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                     // No HTML representation available for that kind of node
                     LOGGER.debug("Didn't find template for nodes with primary type: {} in location: {}",
                             primaryNodeTypeName, templateLocation);
+
+                    // Look for templates of the primary type's parents
+                    boolean templateFound = false;
+                    for (NodeType superType : primaryNodeType.getSupertypes()) {
+                        // for each node primary type, we try to find a template
+                        templateLocation =
+                            templatesLocation + "/" +
+                                    superType.getName().replace(':', '-') +
+                                    templateFilenameExtension;
+                        if (velocity.resourceExists(templateLocation)) {
+                            final Template template =
+                                velocity.getTemplate(templateLocation);
+                            template.setName(templateLocation);
+                            LOGGER.debug("Found template: {}", templateLocation);
+                            templatesMapBuilder.put(primaryNodeTypeName, template);
+                            LOGGER.debug("which we will use for nodes with primary type: {}",
+                                         primaryNodeTypeName);
+                            templateFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!templateFound) {
+                        // No HTML representation available for that kind of node
+                      LOGGER.debug("Didn't find template for nodes with primary type: {} in location: {}",
+                                   primaryNodeTypeName, templateLocation);
+                    }
                 }
             }
 
@@ -242,6 +274,19 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
             LOGGER.debug("Found primary node type: {}", nodeType);
             template = templatesMap.get(nodeType);
+        }
+
+        if (template == null) {
+            LOGGER.trace("Attempting to discover the mixin types of the node for the resource in question...");
+            final List<String> mixinTypes =
+                    getAllValuesForPredicate(rdf, subject,
+                            mixinTypesPredicate);
+
+            for (String mixin : mixinTypes) {
+                LOGGER.debug("Found mixin type: {}", mixin);
+                template = templatesMap.get(mixin);
+                break;
+            }
         }
 
         if (template == null) {

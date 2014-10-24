@@ -21,8 +21,10 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstValueForPredicate;
+import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getAllValuesForPredicate;
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +54,12 @@ public class RdfSerializationUtilsTest {
         testData.add(createResource("test:subject"),
                 createProperty("test:predicate"),
                 createTypedLiteral("test:object"));
+        testData.add(createResource("test:subject"),
+                createProperty("test:anotherPredicate"),
+                createTypedLiteral("test:object1"));
+        testData.add(createResource("test:subject"),
+                createProperty("test:anotherPredicate"),
+                createTypedLiteral("test:object2"));
 
         final List<PathSegment> segments = new ArrayList<>();
         segment = Mockito.mock(PathSegment.class);
@@ -64,6 +72,15 @@ public class RdfSerializationUtilsTest {
         final String foundValue =
             getFirstValueForPredicate(testData, createURI("test:subject"), createURI("test:predicate"));
         assertEquals("Didn't find correct value for predicate!", "test:object", foundValue);
+    }
+
+    @Test
+    public void testGetAllValuesForPredicate() {
+        final List<String> foundValues =
+            getAllValuesForPredicate(testData, createURI("test:subject"), createURI("test:anotherPredicate"));
+
+        assertEquals("Didn't find correct value for predicate!", foundValues,
+                     Arrays.asList("test:object1", "test:object2"));
     }
 
 }

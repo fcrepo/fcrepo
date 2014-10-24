@@ -22,6 +22,9 @@ import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import org.slf4j.Logger;
@@ -50,6 +53,19 @@ public class RdfSerializationUtils {
             createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                     "primaryType");
 
+    /**
+     * The RDF predicate that will indicate the mixin types.
+     */
+    public static Node mixinTypesPredicate =
+            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
+                    "mixinTypes");
+
+    /**
+     * The RDF predicate that will indicate the last-modified date of the node.
+     */
+    public static Node lastModifiedPredicate =
+            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
+                    "lastModified");
 
     /**
      * Get the very first value for a predicate as a string, or null if the
@@ -70,6 +86,32 @@ public class RdfSerializationUtils {
         }
         LOGGER.trace("No value found for predicate: {}", predicate);
         return null;
+    }
+
+    /**
+     * Get all the values for a predicate as a string array, or null if the
+     * predicate is not used
+     *
+     * @param rdf
+     * @param subject
+     * @param predicate
+     * @return first value for the given predicate or null if not found
+     */
+    public static List<String> getAllValuesForPredicate(final Model rdf,
+            final Node subject, final Node predicate) {
+        final NodeIterator statements =
+                rdf.listObjectsOfProperty(createResource(subject.getURI()),
+                createProperty(predicate.getURI()));
+
+        final List<String> results = new ArrayList();
+        while (statements.hasNext()) {
+            results.add(statements.next().asLiteral().getLexicalForm());
+        }
+        if (results.isEmpty()) {
+            LOGGER.trace("No values found for predicate: {}", predicate);
+            return null;
+        }
+        return results;
     }
 
 }
