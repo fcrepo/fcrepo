@@ -70,13 +70,12 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         final String pid = getRandomUniquePid();
         createObject(pid);
-        createDatastream(pid, "ds1", "foo");
-        setProperty(pid + "/ds1", "fcrepo:primaryType", "some:type");
+        addMixin(pid, "http://fedora.info/definitions/v4/rest-api#resource");
 
-        final HttpGet method = new HttpGet(serverAddress + pid + "/ds1");
+        final HttpGet method = new HttpGet(serverAddress + pid);
         method.addHeader("Accept", "text/html");
         final HttpResponse response = execute(method);
         final String html = EntityUtils.toString(response.getEntity());
-        assertTrue(contains(html, "body class=\"nt_file\""));
+        assertTrue(contains(html, "class=\"nt_folder\""));
     }
 }

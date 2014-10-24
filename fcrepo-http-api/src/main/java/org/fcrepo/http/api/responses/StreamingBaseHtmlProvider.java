@@ -15,20 +15,19 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static com.google.common.collect.ImmutableMap.builder;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getAllValuesForPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypesPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.ImmutableMap.builder;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -159,7 +158,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
         final ImmutableMap.Builder<String, Template> templatesMapBuilder = builder();
         final Session session = sessionFactory.getInternalSession();
         try {
-            // we search all of the possible node primary types
+            // we search all of the possible node primary types and mixins
             for (final NodeTypeIterator primaryNodeTypes =
                          session.getWorkspace().getNodeTypeManager()
                                  .getPrimaryNodeTypes(); primaryNodeTypes.hasNext();) {
@@ -265,15 +264,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
         }
 
         if (template == null) {
-            LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
-            final String nodeType =
-                    getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
-
-            LOGGER.debug("Found primary node type: {}", nodeType);
-            template = templatesMap.get(nodeType);
-        }
-
-        if (template == null) {
             LOGGER.trace("Attempting to discover the mixin types of the node for the resource in question...");
             final Iterator<String> mixinTypes =
                     getAllValuesForPredicate(rdf, subject,
@@ -288,6 +278,15 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                     template = templatesMap.get(mixin);
                 }
             }
+        }
+
+        if (template == null) {
+            LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
+            final String nodeType =
+                    getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
+
+            LOGGER.debug("Found primary node type: {}", nodeType);
+            template = templatesMap.get(nodeType);
         }
 
         if (template == null) {

@@ -102,15 +102,11 @@ public class StreamingBaseHtmlProviderTest {
                         createLiteral("nt:file")));
 
         testData2.session(mockSession);
-        testData2.topic(createURI("test:subject"));
+        testData2.topic(createURI("test:subject2"));
         testData2.concat(
                 new Triple(createURI("test:subject2"),
                         primaryTypePredicate,
                         createLiteral("childOf:ntFile")));
-        testData2.concat(
-                new Triple(createURI("test:subject3"),
-                        primaryTypePredicate,
-                        createLiteral("grandchildOf:ntFile")));
 
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
@@ -212,7 +208,7 @@ public class StreamingBaseHtmlProviderTest {
         setField(testProvider, "templatesMap",
                  of("childOf:ntFile", mockTemplate,
                     "grandchildOf:ntFile", mockTemplate));
-        testProvider.writeTo(testData2, Dataset.class, mock(Type.class),
+        testProvider.writeTo(testData2, RdfStream.class, mock(Type.class),
                 new Annotation[] {}, MediaType
                         .valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);

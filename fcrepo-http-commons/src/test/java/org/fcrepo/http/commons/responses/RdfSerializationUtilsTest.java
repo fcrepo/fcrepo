@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.ImmutableList.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
@@ -24,7 +26,7 @@ import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstVa
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getAllValuesForPredicate;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,11 +79,11 @@ public class RdfSerializationUtilsTest {
     @Test
     public void testGetAllValuesForPredicate() {
         final Iterator<String> foundValues =
-            getAllValuesForPredicate(testData, ANY,
+            getAllValuesForPredicate(testData, createURI("test:subject"),
                     createURI("test:anotherPredicate"));
 
         assertEquals("Didn't find correct values for predicate!", copyOf(foundValues),
-                     of("test:object2", "test:object1"));
+                     of("test:object1", "test:object2"));
     }
 
 }

@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterables.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -22,14 +24,15 @@ import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import org.slf4j.Logger;
-
-import com.hp.hpl.jena.graph.Node;
 
 /**
  * Utilities to help with serializing a graph to an HTTP resource
@@ -60,12 +63,12 @@ public class RdfSerializationUtils {
             createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                     "mixinTypes");
 
-    /**
-     * The RDF predicate that will indicate the last-modified date of the node.
-     */
-    public static Node lastModifiedPredicate =
-            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
-                    "lastModified");
+    public static final Function<RDFNode, String> stringConverter = new Function<RDFNode, String>() {
+        public String apply(final RDFNode statement) {
+            return statement.asLiteral().getLexicalForm();
+        }
+    };
+
 
     /**
      * Get the very first value for a predicate as a string, or null if the
@@ -103,15 +106,8 @@ public class RdfSerializationUtils {
                 rdf.listObjectsOfProperty(createResource(subject.getURI()),
                 createProperty(predicate.getURI()));
 
-        final List<String> results = new ArrayList();
-        while (statements.hasNext()) {
-            results.add(statements.next().asLiteral().getLexicalForm());
-        }
-        if (results.isEmpty()) {
-            LOGGER.trace("No values found for predicate: {}", predicate);
-            return null;
-        }
-        return results.iterator();
+        final ImmutableList<RDFNode> copy = copyOf(statements);
+        return transform(copy, stringConverter).iterator();
     }
 
 }
