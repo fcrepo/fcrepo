@@ -33,6 +33,7 @@ import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
@@ -59,6 +60,7 @@ import static org.junit.Assert.assertTrue;
  */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @ContextConfiguration({"/spring-test/test-container.xml"})
+@Ignore
 public class FedoraSparqlIT  extends AbstractResourceIT {
 
     private Session session;

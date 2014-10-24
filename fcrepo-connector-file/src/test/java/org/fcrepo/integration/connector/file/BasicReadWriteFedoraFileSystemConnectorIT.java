@@ -15,7 +15,9 @@
  */
 package org.fcrepo.integration.connector.file;
 
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -25,6 +27,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -34,6 +37,8 @@ import static org.junit.Assert.assertTrue;
  * @author Mike Durbin
  */
 public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFileSystemConnectorIT {
+
+    private DefaultIdentifierTranslator subjects;
 
     @Override
     protected String federationName() {
@@ -58,6 +63,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
     @Test
     public void testWriteProperty() throws RepositoryException {
         final Session session = repo.login();
+        subjects = new DefaultIdentifierTranslator(session);
 
         final FedoraResource object = nodeService.getObject(session, testFilePath());
         assertNotNull(object);
@@ -75,7 +81,10 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         // Verify
         final Property property = object.getNode().getProperty("fedora:name");
         assertNotNull(property);
-        assertEquals("some-test-name", property.getValues()[0].toString());
+        final Value value = property.getValues()[0];
+
+        final RDFNode rdf = new ValueConverter(session, subjects).convert(value);
+        assertEquals("some-test-name", rdf.toString());
 
         session.save();
         session.logout();
@@ -84,6 +93,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
     @Test
     public void testRemoveProperty() throws RepositoryException {
         final Session session = repo.login();
+        subjects = new DefaultIdentifierTranslator(session);
 
         final FedoraResource object = nodeService.getObject(session, testFilePath());
         assertNotNull(object);
@@ -101,7 +111,9 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         // Verify property exists
         final Property property = object.getNode().getProperty("fedora:remove");
         assertNotNull(property);
-        assertEquals("some-property-to-remove", property.getValues()[0].getString());
+        final Value value = property.getValues()[0];
+        final RDFNode rdf = new ValueConverter(session, subjects).convert(value);
+        assertEquals("some-property-to-remove", rdf.toString());
 
         final String sparqlRemove = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
                 "DELETE {" +

@@ -19,6 +19,7 @@ import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.transform.sparql.JQLConverter;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.modeshape.jcr.api.JcrTools;
@@ -43,6 +44,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@Ignore
 public class JQLConverterIT {
 
 

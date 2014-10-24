@@ -17,12 +17,6 @@ package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static javax.jcr.PropertyType.BOOLEAN;
-import static javax.jcr.PropertyType.DATE;
-import static javax.jcr.PropertyType.DECIMAL;
-import static javax.jcr.PropertyType.DOUBLE;
-import static javax.jcr.PropertyType.LONG;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
@@ -33,8 +27,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.math.BigDecimal;
-import java.util.Calendar;
 import java.util.Iterator;
 
 import javax.jcr.AccessDeniedException;
@@ -128,111 +120,6 @@ public class PropertyToTripleTest {
         final Triple t = createSingleValuedLiteralTriple();
         assertEquals("Got wrong RDF object!", TEST_VALUE, t.getObject()
                 .getLiteralValue());
-        assertEquals("Got wrong RDF predicate!", createProperty(
-                TEST_PROPERTY_NAME).asNode(), t.getPredicate());
-        assertEquals("Got wrong RDF subject!", testSubject, t
-                .getSubject());
-    }
-
-    @Test
-    public void testSingleValuedStringLanguageLiteralTriple()
-            throws RepositoryException {
-
-        when(mockProperty.getType()).thenReturn(STRING);
-        when(mockProperty.getName()).thenReturn(TEST_PROPERTY_NAME + "@en");
-        when(mockProperty.getLocalName()).thenReturn("predicate@en");
-        when(mockValue.getType()).thenReturn(STRING);
-        when(mockValue.getString()).thenReturn(TEST_VALUE);
-        final Triple t = createSingleValuedLiteralTriple();
-        assertEquals("Got wrong RDF object!", TEST_VALUE, t.getObject()
-                .getLiteralValue());
-        assertEquals("Get wrong RDF object literal language", "en", t.getObject().getLiteralLanguage());
-        assertEquals("Got wrong RDF predicate!", createProperty(
-                TEST_PROPERTY_NAME).asNode(), t.getPredicate());
-        assertEquals("Got wrong RDF subject!", testSubject, t
-                .getSubject());
-    }
-
-    @Test
-    public void
-            testSingleValuedBooleanLiteralTriple() throws RepositoryException {
-
-        when(mockProperty.getType()).thenReturn(BOOLEAN);
-        when(mockValue.getType()).thenReturn(BOOLEAN);
-        when(mockValue.getBoolean()).thenReturn(true);
-        final Triple t = createSingleValuedLiteralTriple();
-        assertEquals("Got wrong RDF object!", true, t.getObject()
-                .getLiteralValue());
-        assertEquals("Got wrong RDF predicate!", createProperty(
-                TEST_PROPERTY_NAME).asNode(), t.getPredicate());
-        assertEquals("Got wrong RDF subject!", testSubject, t
-                .getSubject());
-    }
-
-    @Test
-    public void testSingleValuedDateLiteralTriple() throws RepositoryException {
-
-        final Calendar date = Calendar.getInstance();
-
-        when(mockProperty.getType()).thenReturn(DATE);
-        when(mockValue.getType()).thenReturn(DATE);
-        when(mockValue.getDate()).thenReturn(date);
-        final Triple t = createSingleValuedLiteralTriple();
-        assertEquals("Got wrong RDF object!", createTypedLiteral(date).asNode()
-                .getLiteral(), t.getObject().getLiteral());
-        assertEquals("Got wrong RDF predicate!", createProperty(
-                TEST_PROPERTY_NAME).asNode(), t.getPredicate());
-        assertEquals("Got wrong RDF subject!", testSubject, t
-                .getSubject());
-    }
-
-    @Test
-    public void
-            testSingleValuedDecimalLiteralTriple() throws RepositoryException {
-
-        final BigDecimal num = BigDecimal.valueOf(3.141);
-
-        when(mockProperty.getType()).thenReturn(DECIMAL);
-        when(mockValue.getType()).thenReturn(DECIMAL);
-        when(mockValue.getDecimal()).thenReturn(num);
-        final Triple t = createSingleValuedLiteralTriple();
-        assertEquals("Got wrong RDF object!", createTypedLiteral(num).asNode()
-                .getLiteral(), t.getObject().getLiteral());
-        assertEquals("Got wrong RDF predicate!", createProperty(
-                TEST_PROPERTY_NAME).asNode(), t.getPredicate());
-        assertEquals("Got wrong RDF subject!", testSubject, t
-                .getSubject());
-    }
-
-    @Test
-    public void testSingleValuedDoubleLiteralTriple()
-                                                     throws RepositoryException {
-
-        final Double num = 3.141;
-
-        when(mockProperty.getType()).thenReturn(DOUBLE);
-        when(mockValue.getType()).thenReturn(DOUBLE);
-        when(mockValue.getDouble()).thenReturn(num);
-        final Triple t = createSingleValuedLiteralTriple();
-        assertEquals("Got wrong RDF object!", createTypedLiteral(num).asNode()
-                .getLiteral(), t.getObject().getLiteral());
-        assertEquals("Got wrong RDF predicate!", createProperty(
-                TEST_PROPERTY_NAME).asNode(), t.getPredicate());
-        assertEquals("Got wrong RDF subject!", testSubject, t
-                .getSubject());
-    }
-
-    @Test
-    public void testSingleValuedLongLiteralTriple() throws RepositoryException {
-
-        final Long num = 3L;
-
-        when(mockProperty.getType()).thenReturn(LONG);
-        when(mockValue.getType()).thenReturn(LONG);
-        when(mockValue.getLong()).thenReturn(num);
-        final Triple t = createSingleValuedLiteralTriple();
-        assertEquals("Got wrong RDF object!", createTypedLiteral(num).asNode()
-                .getLiteral(), t.getObject().getLiteral());
         assertEquals("Got wrong RDF predicate!", createProperty(
                 TEST_PROPERTY_NAME).asNode(), t.getPredicate());
         assertEquals("Got wrong RDF subject!", testSubject, t

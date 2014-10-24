@@ -34,6 +34,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.ObjectService;
@@ -59,11 +60,14 @@ public class FedoraObjectImplIT extends AbstractIT {
     private Session session;
 
     private DefaultIdentifierTranslator subjects;
+    private ValueConverter valueConverter;
+
 
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
         subjects = new DefaultIdentifierTranslator(session);
+        valueConverter = new ValueConverter(session, subjects);
 
     }
 
@@ -105,10 +109,9 @@ public class FedoraObjectImplIT extends AbstractIT {
         final Value[] values = object.getNode().getProperty("dc:title").getValues();
         assertTrue(values.length > 0);
 
-        assertTrue(values[0]
-                       .getString(),
-                      values[0]
-                          .getString().equals("This is an example title"));
+        final Value value1 = values[0];
+
+        assertEquals("This is an example title", valueConverter.convert(value1).toString());
 
 
         object.updateProperties(subjects, "PREFIX myurn: <info:myurn/>\n" +
@@ -120,7 +123,7 @@ public class FedoraObjectImplIT extends AbstractIT {
                                          .getNamespacePrefix("info:myurn/") +
                                          ":info").getValues()[0];
 
-        assertEquals("This is some example data", value.getString());
+        assertEquals("This is some example data", valueConverter.convert(value).asLiteral().getLexicalForm());
 
         object.updateProperties(subjects, "PREFIX fedora-rels-ext: <"
                 + RELATIONS_NAMESPACE + ">\n" +

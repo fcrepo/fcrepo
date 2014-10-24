@@ -22,7 +22,6 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
-import static javax.jcr.PropertyType.LONG;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
@@ -57,6 +56,7 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
@@ -111,10 +111,13 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     private DefaultIdentifierTranslator subjects;
 
+    private ValueConverter valueConverter;
+
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
         subjects = new DefaultIdentifierTranslator(session);
+        valueConverter = new ValueConverter(session, subjects);
     }
 
     @After
@@ -433,10 +436,10 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + createGraphSubjectNode(object).getURI()
                         + "> example:int-property \"0\"^^xsd:long } "
                         + "WHERE { }", new RdfStream());
-        assertEquals(LONG, object.getNode().getProperty("example:int-property")
-                .getType());
-        assertEquals(0L, object.getNode().getProperty("example:int-property")
-                .getValues()[0].getLong());
+        final Value value = object.getNode().getProperty("example:int-property")
+                .getValues()[0];
+
+        assertEquals(0L, valueConverter.convert(value).asLiteral().getLong());
     }
 
     @Test(expected = MalformedRdfException.class)
@@ -551,7 +554,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
 
         assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
-        assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
+        final Value value = skolemizedNode.getProperty("dc:title").getValues()[0];
+        assertEquals("xyz", valueConverter.convert(value).asLiteral().getString());
 
     }
 

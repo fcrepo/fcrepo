@@ -53,6 +53,7 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -114,6 +115,7 @@ public class RdfAdderTest {
     private static final Statement mixinStmnt = m.asStatement(mixinTriple);
 
 
+    @Ignore
     @Test
     public void testAddingProperty() throws Exception {
         testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
