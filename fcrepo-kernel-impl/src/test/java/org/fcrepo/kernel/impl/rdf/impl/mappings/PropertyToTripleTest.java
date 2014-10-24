@@ -159,9 +159,9 @@ public class PropertyToTripleTest {
 
         when(mockProperty.getType()).thenReturn(BOOLEAN);
         when(mockValue.getType()).thenReturn(BOOLEAN);
-        when(mockValue.getString()).thenReturn("true");
+        when(mockValue.getBoolean()).thenReturn(true);
         final Triple t = createSingleValuedLiteralTriple();
-        assertEquals("Got wrong RDF object!", "true", t.getObject()
+        assertEquals("Got wrong RDF object!", true, t.getObject()
                 .getLiteralValue());
         assertEquals("Got wrong RDF predicate!", createProperty(
                 TEST_PROPERTY_NAME).asNode(), t.getPredicate());

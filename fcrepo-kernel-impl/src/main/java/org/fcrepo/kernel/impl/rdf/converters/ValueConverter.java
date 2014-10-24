@@ -74,7 +74,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         try {
             switch (value.getType()) {
                 case BOOLEAN:
-                    return literal2node(value.getString());
+                    return literal2node(value.getBoolean());
                 case DATE:
                     return literal2node(value.getDate());
                 case DECIMAL:
@@ -121,7 +121,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
             if (dataType == null && rdfValue instanceof String) {
                 // short-circuit the common case
                 return valueFactory.createValue(literal.getString(), STRING);
-            } else  if (rdfValue instanceof Boolean) {
+            } else if (rdfValue instanceof Boolean) {
                 return valueFactory.createValue((Boolean) rdfValue);
             } else if (rdfValue instanceof Byte
                     || (dataType != null && dataType.getJavaClass() == Byte.class)) {

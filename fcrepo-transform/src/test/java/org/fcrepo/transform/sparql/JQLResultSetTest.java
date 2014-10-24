@@ -128,7 +128,7 @@ public class JQLResultSetTest {
     @Test
     public void testNextWithLiteralBoolean() throws Exception {
         when(mockValue.getType()).thenReturn(PropertyType.BOOLEAN);
-        when(mockValue.getString()).thenReturn("true");
+        when(mockValue.getBoolean()).thenReturn(true);
         final QuerySolution solution = testObj.next();
 
         assertEquals("true", solution.get("a").asLiteral().getLexicalForm());
