@@ -19,8 +19,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -142,16 +144,13 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
-        final String path = toPath(translator(), externalPath);
-        final String versionIdentifier = versionService.createVersion(session, path);
-
         if (!isBlank(slug)) {
+            final String path = toPath(translator(), externalPath);
+            versionService.createVersion(session, path);
             resource().addVersionLabel(slug);
+            return noContent().header("Location", uriInfo.getRequestUri() + "/" + slug).build();
         }
-
-        final String version = (slug != null) ? slug : versionIdentifier;
-
-        return noContent().header("Location", uriInfo.getRequestUri() + "/" + version).build();
+        return status(BAD_REQUEST).entity("Specify label for version").build();
     }
 
 
