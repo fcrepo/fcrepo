@@ -19,14 +19,14 @@ import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToRes
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 
-import com.google.common.base.Converter;
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
+
+import com.google.common.base.Converter;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * {@link RdfStream} that holds contexts related to a specific {@link Node}.
@@ -38,7 +38,7 @@ public class NodeRdfContext extends RdfStream {
 
     private final FedoraResource resource;
 
-    private final IdentifierConverter<Resource, FedoraResource> graphSubjects;
+    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
@@ -48,16 +48,14 @@ public class NodeRdfContext extends RdfStream {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
-     * @throws RepositoryException
+     * @param idTranslator
      */
     public NodeRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
-            throws RepositoryException {
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super();
         this.resource = resource;
-        this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.reverse().convert(resource).asNode();
+        this.idTranslator = idTranslator;
+        this.subject = idTranslator.reverse().convert(resource).asNode();
     }
 
     /**
@@ -70,15 +68,15 @@ public class NodeRdfContext extends RdfStream {
     /**
      * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
      */
-    public IdentifierConverter<Resource, FedoraResource> graphSubjects() {
-        return graphSubjects;
+    public IdentifierConverter<Resource, FedoraResource> translator() {
+        return idTranslator;
     }
 
     /**
      * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
      */
     public Converter<Node, Resource> nodeConverter() {
-        return nodeToResource(graphSubjects);
+        return nodeToResource(idTranslator);
     }
 
     /**

@@ -104,6 +104,10 @@
        <scope>test</scope>
        <exclusions>
          <exclusion>
+           <groupId>org.apache.jena</groupId>
+           <artifactId>jena-arq</artifactId>
+         </exclusion>
+         <exclusion>
            <groupId>org.openrdf.sesame</groupId>
            <artifactId>sesame-sail-api</artifactId>
          </exclusion>
@@ -174,9 +178,56 @@
      <dependency>
        <groupId>org.apache.commons</groupId>
        <artifactId>commons-lang3</artifactId>
-       <version>3.3.2</version>
+       <version>3.1</version>
        <scope>test</scope>
      </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-arq</artifactId>
+      <version>${jena.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <configuration>
+                    <portNames>
+                        <portName>test.port</portName>
+                        <!-- reserves the stop port for jetty-maven-plugin -->
+                        <portName>jetty.port.stop</portName>
+                        <portName>jms.port</portName>
+                        <portName>stomp.port</portName>
+                    </portNames>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <test.port>${test.port}</test.port>
+                        <test.context.path>${test.context.path}</test.context.path>
+                        <jms.port>${jms.port}</jms.port>
+                        <stomp.port>${stomp.port}</stomp.port>
+                        <integration-test>true</integration-test>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 
 </project>

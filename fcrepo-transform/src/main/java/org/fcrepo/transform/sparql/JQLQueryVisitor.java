@@ -26,6 +26,7 @@ import com.hp.hpl.jena.query.SortCondition;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.sparql.core.Prologue;
 import com.hp.hpl.jena.sparql.core.TriplePath;
 import com.hp.hpl.jena.sparql.expr.Expr;
@@ -129,7 +130,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
     private static final Logger LOGGER = getLogger(JQLQueryVisitor.class);
 
-    private QueryObjectModelFactory queryFactory;
+    private final QueryObjectModelFactory queryFactory;
     private Source source;
     private ImmutableSet.Builder<Column> columns;
     private ImmutableList.Builder<Ordering>  orderings;
@@ -137,16 +138,16 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     private boolean hasLimit = false;
     private long offset;
     private long limit;
-    private Session session;
-    private JcrRdfTools jcrTools;
+    private final Session session;
+    private final JcrRdfTools jcrTools;
     private Set<String> resultsVars;
-    private Map<String, Column> variables;
+    private final Map<String, Column> variables;
     private boolean distinct;
     private boolean inOptional;
-    private Map<String, Source> joins;
+    private final Map<String, Source> joins;
     private Map<String, String> joinTypes;
-    private Map<String, JoinCondition> joinConditions;
-    private IdentifierConverter<Resource,FedoraResource> subjects;
+    private final Map<String, JoinCondition> joinConditions;
+    private final IdentifierConverter<Resource,FedoraResource> idTranslator;
 
     /**
      * Create a new query
@@ -157,8 +158,8 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
     public JQLQueryVisitor(final Session session,
                            final JcrRdfTools jcrTools,
                            final QueryManager queryManager,
-                           final IdentifierConverter<Resource, FedoraResource> subjects) {
-        checkNotNull(subjects);
+                           final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+        checkNotNull(idTranslator);
 
         this.session = session;
         this.jcrTools = jcrTools;
@@ -168,7 +169,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         this.joins = new HashMap<>();
         this.joinTypes = new HashMap<>();
         this.joinConditions = new HashMap<>();
-        this.subjects = subjects;
+        this.idTranslator = idTranslator;
     }
 
     /**
@@ -184,7 +185,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         this.variables = jqlQueryVisitor.variables;
         this.joins = jqlQueryVisitor.joins;
         this.joinConditions = jqlQueryVisitor.joinConditions;
-        this.subjects = jqlQueryVisitor.subjects;
+        this.idTranslator = jqlQueryVisitor.idTranslator;
     }
 
     /**
@@ -486,12 +487,12 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
                     final String propertyName =
                             getPropertyName(defaultModel
-                                .createProperty(predicate.getURI()));
+                                .createProperty(predicate.getURI()), object);
 
                     if (propertyName.equals("rdf:type") && object.isURI()) {
                         final String mixinName =
                                 getPropertyName(defaultModel
-                                        .createProperty(object.getURI()));
+                                        .createProperty(object.getURI()), object);
 
                         if (session.getWorkspace().getNodeTypeManager()
                                 .hasNodeType(mixinName)) {
@@ -582,7 +583,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
         final String subjectUri = subject.getURI();
 
         // Go through the IdentifierConverter for potential transparent hierarchy path conversion.
-        final String path = subjects.convert(model.createResource(subjectUri)).getPath();
+        final String path = idTranslator.convert(model.createResource(subjectUri)).getPath();
 
         final String subjectSelector = "fedoraResource_" + path.replace("/", "_");
 
@@ -595,9 +596,9 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             throw new NotImplementedException("Element path may not contain a variable predicate");
         }
 
-        final String propertyName = getPropertyName(model.createProperty(predicate.getURI()));
+        final String propertyName = getPropertyName(model.createProperty(predicate.getURI()), object);
         if (propertyName.equals("rdf:type") && object.isURI()) {
-            final String mixinName = getPropertyName(model.createProperty(object.getURI()));
+            final String mixinName = getPropertyName(model.createProperty(object.getURI()), object);
 
             if (session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName)) {
                 final String selectorName = "ref_type_" + mixinName.replace(":", "_");
@@ -969,14 +970,22 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      * @return property name from the given predicate
      * @throws RepositoryException
      */
-    private String getPropertyName(final com.hp.hpl.jena.rdf.model.Property predicate)
+    private String getPropertyName(final com.hp.hpl.jena.rdf.model.Property predicate, final Node object)
             throws RepositoryException {
 
         final NamespaceRegistry namespaceRegistry =
                 (org.modeshape.jcr.api.NamespaceRegistry) session.getWorkspace().getNamespaceRegistry();
 
         final Map<String, String> namespaceMapping = emptyMap();
-        return getPropertyNameFromPredicate(namespaceRegistry, predicate, namespaceMapping);
+
+        final RDFNode objectNode;
+        if (object.isLiteral() && !object.getLiteralLanguage().isEmpty()) {
+            // stub to include the language tag
+            objectNode = ResourceFactory.createLangLiteral("", object.getLiteralLanguage());
+        } else {
+            objectNode = null;
+        }
+        return getPropertyNameFromPredicate(namespaceRegistry, predicate, objectNode, namespaceMapping);
     }
 
     /**
@@ -1000,7 +1009,7 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
      * @param propertyName
      * @return jcr value type
      */
-    private int getPropertyType(final NodeType nodeType, final String propertyName) {
+    private static int getPropertyType(final NodeType nodeType, final String propertyName) {
         final PropertyDefinition[] propertyDefinitions = nodeType.getPropertyDefinitions();
         int type = UNDEFINED;
         for (final PropertyDefinition propertyDefinition : propertyDefinitions) {

@@ -67,7 +67,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
      * A JCR type for which we know no RDF equivalent.
      */
     private static Node UNMAPPED_TYPE = createURI(REPOSITORY_NAMESPACE
-            + "UNMAPPED_TYPE");
+            + "UnmappedType");
 
     /**
      * A map from JCR types to RDF types.

@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.utils;
 
 import com.google.common.base.Predicate;
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
@@ -25,6 +26,7 @@ import org.slf4j.Logger;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.jcr.PropertyType.REFERENCE;
@@ -63,6 +65,47 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      */
     public static Predicate<Node> isFedoraBinary =
             new AnyTypesPredicate(FEDORA_BINARY);
+
+    /**
+     * Predicate for determining whether this {@link FedoraResource} has a frozen node
+     */
+    public static Predicate<FedoraResource> isFrozenNode =
+            new Predicate<FedoraResource>() {
+
+                @Override
+                public boolean apply(final FedoraResource f) {
+                    try {
+
+                        if (f.hasType(FROZEN_NODE)) {
+                            return true;
+                        }
+
+                        final Node node = f.getNode();
+
+                        if (node != null) {
+                            final String path = node.getPath();
+
+                            if (path == null) {
+                                return false;
+                            }
+
+                            if (path.contains(JCR_FROZEN_NODE)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                }
+     };
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora
+     * binary.
+     */
+    public static Predicate<Node> isBlankNode =
+            new AnyTypesPredicate(FEDORA_BLANKNODE);
 
     /**
      * Check if a property is a reference property.
@@ -144,5 +187,35 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             }
         }
     };
+
+    /**
+     * Get the closest ancestor that current exists
+     *
+     * @param session
+     * @param path
+     * @return
+     * @throws RepositoryException
+     */
+    public static Node getClosestExistingAncestor(final Session session,
+                                                  final String path) throws RepositoryException {
+        final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
+
+        Node node = session.getRootNode();
+
+        final int len = pathSegments.length;
+        for (int i = 0; i != len; ++i) {
+            final String pathSegment = pathSegments[i];
+
+            if (node.hasNode(pathSegment)) {
+                // Find the existing node ...
+                node = node.getNode(pathSegment);
+            } else {
+                return node;
+            }
+
+        }
+
+        return node;
+    }
 
 }

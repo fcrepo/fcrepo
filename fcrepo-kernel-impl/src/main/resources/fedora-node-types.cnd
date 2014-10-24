@@ -60,11 +60,11 @@
 	- fedorarelsext:isDependentOf (REFERENCE) multiple COPY
 	- fedorarelsext:hasDependent (REFERENCE) multiple COPY
 	- fedorarelsext:isDescriptionOf (REFERENCE) multiple COPY
-	- fedorarelsext:HasDescription (REFERENCE) multiple COPY
+	- fedorarelsext:hasDescription (REFERENCE) multiple COPY
 	- fedorarelsext:isMetadataFor (REFERENCE) multiple COPY
-	- fedorarelsext:HasMetadata (REFERENCE) multiple COPY
+	- fedorarelsext:hasMetadata (REFERENCE) multiple COPY
 	- fedorarelsext:isAnnotationOf (REFERENCE) multiple COPY
-	- fedorarelsext:HasAnnotation (REFERENCE) multiple COPY
+	- fedorarelsext:hasAnnotation (REFERENCE) multiple COPY
 	- fedorarelsext:hasEquivalent (REFERENCE) multiple COPY
     - fedorarelsext:hasExternalContent (URI) multiple COPY
     - fedorarelsext:isExternalContentOf (URI) multiple COPY

@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 
@@ -39,6 +40,7 @@ import org.fcrepo.kernel.utils.iterators.VersionIterator;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
+import org.slf4j.Logger;
 
 
 /**
@@ -52,24 +54,25 @@ public class VersionsRdfContext extends RdfStream {
 
     private final VersionHistory versionHistory;
 
-    private final IdentifierConverter<Resource, FedoraResource> graphSubjects;
+    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private final com.hp.hpl.jena.graph.Node subject;
 
+    private final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
     /**
      * Ordinary constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws RepositoryException
      */
     public VersionsRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super();
-        this.graphSubjects = graphSubjects;
-        this.subject = graphSubjects.reverse().convert(resource).asNode();
+        this.idTranslator = idTranslator;
+        this.subject = idTranslator.reverse().convert(resource).asNode();
         versionHistory = resource.getVersionHistory();
 
         concat(versionTriples());
@@ -87,12 +90,17 @@ public class VersionsRdfContext extends RdfStream {
             public Iterator<Triple> apply(final Version version) {
 
                 try {
+                    /* Discard jcr:rootVersion */
+                    if (version.getName().equals(versionHistory.getRootVersion().getName())) {
+                        LOGGER.trace("Skipped root version from triples");
+                        return new RdfStream();
+                    }
                     final Node frozenNode = version.getFrozenNode();
                     final com.hp.hpl.jena.graph.Node versionSubject
-                            = nodeToResource(graphSubjects).convert(frozenNode).asNode();
+                            = nodeToResource(idTranslator).convert(frozenNode).asNode();
 
                     final RdfStream results = new PropertiesRdfContext(nodeConverter.convert(frozenNode),
-                            graphSubjects);
+                            idTranslator);
 
                     results.concat(create(subject, HAS_VERSION.asNode(),
                             versionSubject));

@@ -15,21 +15,25 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
+
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.impl.identifiers.NodeResourceConverter;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 import java.util.List;
 
 /**
@@ -76,9 +80,9 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
     }
 
 
-    private static final List<Converter<String,String>> minimalTranslationChain =
-            Lists.newArrayList(
-                    (Converter<String, String>) new NamespaceConverter(),
+    @SuppressWarnings("unchecked")
+    private static final List<Converter<String, String>> minimalTranslationChain =
+            newArrayList((Converter<String, String>) new NamespaceConverter(),
                     (Converter<String, String>) new HashConverter()
             );
 
@@ -131,9 +135,8 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
 
         if (absPath.isEmpty()) {
             return "/";
-        } else {
-            return absPath;
         }
+        return absPath;
     }
 
 }

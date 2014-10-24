@@ -53,13 +53,13 @@ public class LdpContainerRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public LdpContainerRdfContext(final FedoraResource resource,
-                                  final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                                  final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
         final PropertyIterator properties = new PropertyIterator(resource.getNode().getReferences(LDP_MEMBER_RESOURCE));
 
         if (properties.hasNext()) {
@@ -117,9 +117,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             public Triple apply(final FedoraResource child) {
                 final com.hp.hpl.jena.graph.Node childSubject;
                 if (child instanceof Datastream) {
-                    childSubject = graphSubjects().reverse().convert(((Datastream) child).getBinary()).asNode();
+                    childSubject = translator().reverse().convert(((Datastream) child).getBinary()).asNode();
                 } else {
-                    childSubject = graphSubjects().reverse().convert(child).asNode();
+                    childSubject = translator().reverse().convert(child).asNode();
                 }
                 return create(subject(), memberRelation, childSubject);
 

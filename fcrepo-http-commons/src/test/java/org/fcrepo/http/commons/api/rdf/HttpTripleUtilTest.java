@@ -24,10 +24,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Map;
 
-import javax.jcr.RepositoryException;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
@@ -38,6 +36,7 @@ import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * <p>HttpTripleUtilTest class.</p>
@@ -75,8 +74,7 @@ public class HttpTripleUtilTest {
     }
 
     @Test
-    public void shouldAddTriplesFromRegisteredBeans()
-            throws RepositoryException {
+    public void shouldAddTriplesFromRegisteredBeans() {
         final Map<String, UriAwareResourceModelFactory> mockBeans =
                 of("doesnt", mockBean1, "matter", mockBean2);
         when(mockContext.getBeansOfType(UriAwareResourceModelFactory.class))

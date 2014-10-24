@@ -90,9 +90,9 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
  */
 public class FedoraLdpTest {
 
-    private String path = "/some/path";
-    private String binaryPath = "/some/binary/path";
-    private String binaryDescriptionPath = "/some/other/path";
+    private final String path = "/some/path";
+    private final String binaryPath = "/some/binary/path";
+    private final String binaryDescriptionPath = "/some/other/path";
     private FedoraLdp testObj;
 
     @Mock
@@ -114,7 +114,7 @@ public class FedoraLdpTest {
     @Mock
     private FedoraBinary mockBinary;
 
-    private IdentifierConverter<Resource, FedoraResource> identifierConverter;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private NodeService mockNodeService;
@@ -129,7 +129,7 @@ public class FedoraLdpTest {
     private FedoraHttpConfiguration mockHttpConfiguration;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = spy(new FedoraLdp(path));
 
@@ -138,13 +138,13 @@ public class FedoraLdpTest {
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
 
-        identifierConverter = new HttpResourceConverter(mockSession,
+        idTranslator = new HttpResourceConverter(mockSession,
                 UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"));
 
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
         setField(testObj, "uriInfo", getUriInfoImpl());
-        setField(testObj, "identifierTranslator", identifierConverter);
+        setField(testObj, "idTranslator", idTranslator);
         setField(testObj, "nodeService", mockNodeService);
         setField(testObj, "objectService", mockObjectService);
         setField(testObj, "binaryService", mockBinaryService);
@@ -172,9 +172,9 @@ public class FedoraLdpTest {
         when(mockResource.getPath()).thenReturn(path);
         when(mockNode.getPath()).thenReturn(path);
         when(mockResource.getEtagValue()).thenReturn("");
-        when(mockResource.getTriples(eq(identifierConverter), any(Class.class))).thenAnswer(new Answer<RdfStream>() {
+        when(mockResource.getTriples(eq(idTranslator), any(Class.class))).thenAnswer(new Answer<RdfStream>() {
             @Override
-            public RdfStream answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public RdfStream answer(final InvocationOnMock invocationOnMock) {
                 return new RdfStream(Triple.create(createURI(invocationOnMock.getMock().toString()),
                                                    createURI("called"),
                                                    createURI(invocationOnMock.getArguments()[1].toString())
@@ -219,7 +219,7 @@ public class FedoraLdpTest {
         assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
     }
 
@@ -235,7 +235,7 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""));
+                        .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
     }
 
     @Test
@@ -265,7 +265,7 @@ public class FedoraLdpTest {
         assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
     }
 
@@ -279,7 +279,7 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""));
+                        .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
     }
 
 
@@ -468,7 +468,7 @@ public class FedoraLdpTest {
         assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
         assertTrue(IOUtils.toString((InputStream)actual.getEntity()).equals("xyz"));
     }
@@ -477,7 +477,7 @@ public class FedoraLdpTest {
     public void testGetWithBinaryDescription() throws Exception {
         final Datastream mockResource = (Datastream)setResource(Datastream.class);
         when(mockResource.getBinary()).thenReturn(mockBinary);
-        when(mockBinary.getTriples(identifierConverter, PropertiesRdfContext.class)).thenReturn(
+        when(mockBinary.getTriples(idTranslator, PropertiesRdfContext.class)).thenReturn(
                 new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -487,7 +487,7 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary",
                 mockResponse.getHeaders("Link")
-                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""));
+                        .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
@@ -547,7 +547,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c ."), null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockObject).replaceProperties(eq(identifierConverter), any(Model.class), any(RdfStream.class));
+        verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
 
     @Test
@@ -579,7 +579,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c ."), null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObject).replaceProperties(eq(identifierConverter), any(Model.class), any(RdfStream.class));
+        verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
 
     @Test(expected = ClientErrorException.class)
@@ -612,7 +612,7 @@ public class FedoraLdpTest {
         final Datastream mockObject = (Datastream)setResource(Datastream.class);
         when(mockObject.getBinary()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(identifierConverter, PropertiesRdfContext.class)).thenReturn(
+        when(mockBinary.getTriples(idTranslator, PropertiesRdfContext.class)).thenReturn(
                 new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
 
         doReturn(mockObject).when(testObj).resource();
@@ -662,7 +662,7 @@ public class FedoraLdpTest {
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"));
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockObject).updateProperties(eq(identifierConverter), eq("x"), any(RdfStream.class));
+        verify(mockObject).updateProperties(eq(idTranslator), eq("x"), any(RdfStream.class));
     }
 
     @Test
@@ -676,7 +676,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:b> _:c ."));
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockObject).replaceProperties(eq(identifierConverter), any(Model.class), any(RdfStream.class));
+        verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
 
 
@@ -687,12 +687,13 @@ public class FedoraLdpTest {
 
         when(mockBinaryService.findOrCreateBinary(mockSession, "/b")).thenReturn(mockBinary);
 
-        final InputStream content = toInputStream("x");
-        final Response actual = testObj.createObject(null, null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
-                content);
+        try (final InputStream content = toInputStream("x")) {
+            final Response actual = testObj.createObject(null, null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
+                    content);
 
-        assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
+        }
     }
 
     @Test(expected = ClientErrorException.class)

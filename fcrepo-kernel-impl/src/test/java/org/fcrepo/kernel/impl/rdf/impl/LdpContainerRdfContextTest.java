@@ -75,7 +75,7 @@ public class LdpContainerRdfContextTest {
 
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
         when(mockResource.getNode()).thenReturn(mockNode);

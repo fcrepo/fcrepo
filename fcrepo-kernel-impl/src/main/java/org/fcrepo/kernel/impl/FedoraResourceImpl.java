@@ -58,6 +58,7 @@ import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -153,9 +154,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 try {
                     if (input.isNodeType(FEDORA_PAIRTREE)) {
                         return concat(nodeToGoodChildren(input));
-                    } else {
-                        return singletonIterator(nodeToObjectBinaryConverter.convert(input));
                     }
+                    return singletonIterator(nodeToObjectBinaryConverter.convert(input));
                 } catch (final RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }
@@ -174,7 +174,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     try {
                         return isInternalNode.apply(n)
                                 || n.getName().equals(JCR_CONTENT)
-                                || TombstoneImpl.hasMixin(n);
+                                || TombstoneImpl.hasMixin(n)
+                                || n.getName().equals("#");
                     } catch (final RepositoryException e) {
                         throw new RepositoryRuntimeException(e);
                     }
@@ -189,18 +190,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         protected FedoraResource doForward(final FedoraResource fedoraResource) {
             if (fedoraResource instanceof Datastream) {
                 return ((Datastream) fedoraResource).getBinary();
-            } else {
-                return fedoraResource;
             }
+            return fedoraResource;
         }
 
         @Override
         protected FedoraResource doBackward(final FedoraResource fedoraResource) {
             if (fedoraResource instanceof FedoraBinary) {
                 return ((FedoraBinary) fedoraResource).getDescription();
-            } else {
-                return fedoraResource;
             }
+            return fedoraResource;
         }
     };
 
@@ -217,7 +216,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
             Node container = getNode().getParent();
             while (container.getDepth() > 0) {
-                if (container.isNodeType(FEDORA_PAIRTREE) || container.isNodeType(FEDORA_DATASTREAM)) {
+                if (container.isNodeType(FEDORA_PAIRTREE)
+                        || container.isNodeType(FEDORA_DATASTREAM)) {
                     container = container.getParent();
                 } else {
                     return nodeConverter.convert(container);
@@ -357,17 +357,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
-    public void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
-                                 final String sparqlUpdateStatement, final RdfStream originalTriples) {
+    public void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                                 final String sparqlUpdateStatement, final RdfStream originalTriples)
+            throws MalformedRdfException {
 
         final Model model = originalTriples.asModel();
 
         final JcrPropertyStatementListener listener =
-                new JcrPropertyStatementListener(subjects, getSession());
+                new JcrPropertyStatementListener(idTranslator, getSession());
 
         model.register(listener);
 
-        final UpdateRequest request = create(sparqlUpdateStatement, subjects.reverse().convert(this).toString());
+        final UpdateRequest request = create(sparqlUpdateStatement, idTranslator.reverse().convert(this).toString());
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
@@ -375,13 +376,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Class<? extends RdfStream> context) {
-        return getTriples(graphSubjects, Collections.singleton(context));
+        return getTriples(idTranslator, Collections.singleton(context));
     }
 
     @Override
-    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Iterable<? extends Class<? extends RdfStream>> contexts) {
         final RdfStream stream = new RdfStream();
 
@@ -390,7 +391,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 final Constructor<? extends RdfStream> declaredConstructor
                         = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
 
-                final RdfStream rdfStream = declaredConstructor.newInstance(this, graphSubjects);
+                final RdfStream rdfStream = declaredConstructor.newInstance(this, idTranslator);
 
                 stream.concat(rdfStream);
             } catch (final NoSuchMethodException |
@@ -462,22 +463,32 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
-    public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
-        final Model inputModel, final RdfStream originalTriples) {
+    public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+        final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
 
         final GraphDifferencingIterator differencer =
             new GraphDifferencingIterator(inputModel, originalTriples);
 
+        final StringBuilder exceptions = new StringBuilder();
         try {
-            new RdfRemover(graphSubjects, getSession(), replacementStream
+            new RdfRemover(idTranslator, getSession(), replacementStream
                     .withThisContext(differencer)).consume();
+        } catch (final MalformedRdfException e) {
+            exceptions.append(e.getMessage());
+            exceptions.append("\n");
+        }
 
-            new RdfAdder(graphSubjects, getSession(), replacementStream
+        try {
+            new RdfAdder(idTranslator, getSession(), replacementStream
                     .withThisContext(differencer.notCommon())).consume();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        } catch (final MalformedRdfException e) {
+            exceptions.append(e.getMessage());
+        }
+
+        if (exceptions.length() > 0) {
+            throw new MalformedRdfException(exceptions.toString());
         }
     }
 
@@ -577,9 +588,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public boolean equals(final Object object) {
         if (object instanceof FedoraResourceImpl) {
             return ((FedoraResourceImpl) object).getNode().equals(this.getNode());
-        } else {
-            return false;
         }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return getNode().hashCode();
     }
 
     protected Session getSession() {

@@ -15,27 +15,6 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.VersionService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.Variant;
-
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -48,6 +27,26 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import javax.jcr.Node;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.Variant;
+
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.services.VersionService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * @author cabeer
@@ -76,7 +75,7 @@ public class FedoraVersioningTest {
     @Mock
     private FedoraResourceImpl mockResource;
 
-    private RdfStream mockRdfStream = new RdfStream();
+    private final RdfStream mockRdfStream = new RdfStream();
 
     @Mock
     private Request mockRequest;
@@ -84,7 +83,7 @@ public class FedoraVersioningTest {
     @Mock
     private Variant mockVariant;
 
-    private String path = "/some/path";
+    private final String path = "/some/path";
 
     @Before
     public void setUp() throws Exception {
@@ -104,13 +103,13 @@ public class FedoraVersioningTest {
         when(mockSession.getNode(path)).thenReturn(mockNode);
         doReturn(mockResource).when(testObj).resource();
 
-        setField(testObj, "identifierTranslator",
+        setField(testObj, "idTranslator",
                 new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
 
     @Test
-    public void testGetVersionList() throws RepositoryException {
+    public void testGetVersionList() {
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
                 mockVariant);
         when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(

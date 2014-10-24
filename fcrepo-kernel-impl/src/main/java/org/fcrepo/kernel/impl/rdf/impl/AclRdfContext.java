@@ -36,12 +36,12 @@ public class AclRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public AclRdfContext(final FedoraResource resource,
-                         final IdentifierConverter<Resource, FedoraResource> graphSubjects) throws RepositoryException {
-        super(resource, graphSubjects);
+                         final IdentifierConverter<Resource, FedoraResource> idTranslator) throws RepositoryException {
+        super(resource, idTranslator);
 
         // include writable status
         concatWritable();

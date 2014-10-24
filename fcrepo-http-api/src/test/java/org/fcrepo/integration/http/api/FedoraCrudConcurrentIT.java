@@ -229,7 +229,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
 
     }
 
-    private long getTotalResponseTime(final int numThreads,
+    private static long getTotalResponseTime(final int numThreads,
                                       final List<HttpRunner> tasks) throws InterruptedException {
         Thread.sleep(1000);
         long totalResponseTime = 0;
@@ -239,7 +239,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         return totalResponseTime;
     }
 
-    private void startThreads(final List<HttpRunner> tasks) throws InterruptedException {
+    private static void startThreads(final List<HttpRunner> tasks) throws InterruptedException {
         final int taskSize = tasks.size();
         for (int i = 0; i < taskSize; i++) {
 

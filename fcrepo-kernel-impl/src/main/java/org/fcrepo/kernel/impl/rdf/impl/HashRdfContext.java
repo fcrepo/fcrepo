@@ -16,11 +16,11 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.NodeIterator;
 
@@ -41,13 +41,13 @@ public class HashRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws javax.jcr.RepositoryException
      */
     public HashRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         final Node node = resource().getNode();
         if (node.hasNode("#")) {
@@ -55,11 +55,11 @@ public class HashRdfContext extends NodeRdfContext {
                     new Function<Node, Iterator<Triple>>() {
                         @Override
                         public Iterator<Triple> apply(final Node input) {
-                            try {
-                                return new PropertiesRdfContext(nodeConverter.convert(input), graphSubjects);
-                            } catch (final RepositoryException e) {
-                                throw new RepositoryRuntimeException(e);
-                            }
+                            final FedoraResource resource = nodeConverter.convert(input);
+
+                            return resource.getTriples(idTranslator, ImmutableList.of(PropertiesRdfContext.class,
+                                    TypeRdfContext.class,
+                                    BlankNodeRdfContext.class));
                         }
                     })));
         }

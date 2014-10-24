@@ -55,10 +55,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 public class ContentRdfContextTest {
 
     @Test
-    public void testForLowLevelStorageTriples() throws RepositoryException,
-                                               IOException {
+    public void testForLowLevelStorageTriples() throws IOException {
         final Model results =
-            new ContentRdfContext(mockResource, mockGraphSubjects).asModel();
+            new ContentRdfContext(mockResource, idTranslator).asModel();
         logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
         assertTrue("Didn't find triple showing node has content!", results
                 .contains(mockSubject, HAS_CONTENT, mockContentSubject));
@@ -84,7 +83,7 @@ public class ContentRdfContextTest {
         when(mockBinaryNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockBinaryNode.hasProperties()).thenReturn(false);
         when(mockBinary.getPath()).thenReturn("/mockNode/jcr:content");
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockBinaryNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
@@ -92,8 +91,8 @@ public class ContentRdfContextTest {
                  mockNodeTypePrefix + ":" + mockNodeName);
 
         //when(mockNodeType.getName()).thenReturn("not:root");
-        mockSubject = mockGraphSubjects.reverse().convert(mockResource);
-        mockContentSubject = mockGraphSubjects.reverse().convert(mockBinary);
+        mockSubject = idTranslator.reverse().convert(mockResource);
+        mockContentSubject = idTranslator.reverse().convert(mockBinary);
     }
 
     private Resource mockContentSubject;
@@ -119,7 +118,7 @@ public class ContentRdfContextTest {
     @Mock
     private NodeType mockNodeType;
 
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Session mockSession;

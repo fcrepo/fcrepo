@@ -35,6 +35,8 @@ public interface FedoraJcrTypes {
 
     String FEDORA_TOMBSTONE = "fedora:tombstone";
 
+    String FEDORA_BLANKNODE = "fedora:blanknode";
+
     String LDP_CONTAINER = "ldp:Container";
 
     String JCR_LASTMODIFIED = "jcr:lastModified";
@@ -56,6 +58,8 @@ public interface FedoraJcrTypes {
     String ROOT = "mode:root";
 
     String FROZEN_NODE = "nt:frozenNode";
+
+    String JCR_FROZEN_NODE = "jcr:frozenNode";
 
     String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
 

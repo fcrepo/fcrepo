@@ -46,7 +46,6 @@ import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -58,11 +57,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
 
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
-import org.apache.jena.riot.Lang;
 
 /**
  * Stream the results of a SPARQL Query
@@ -89,9 +88,8 @@ public class ResultSetStreamingOutput implements MessageBodyWriter<ResultSet> {
             final Lang format = contentTypeToLang(mediaType.toString());
 
             return format != null;
-        } else {
-            return true;
         }
+        return true;
     }
 
     @Override
@@ -110,7 +108,7 @@ public class ResultSetStreamingOutput implements MessageBodyWriter<ResultSet> {
                         final Annotation[] annotations,
                         final MediaType mediaType,
                         final MultivaluedMap<String, Object> httpHeaders,
-                        final OutputStream entityStream) throws IOException, WebApplicationException {
+                        final OutputStream entityStream) throws WebApplicationException {
         final ResultsFormat resultsFormat = getResultsFormat(mediaType);
 
         if (resultsFormat == FMT_UNKNOWN) {

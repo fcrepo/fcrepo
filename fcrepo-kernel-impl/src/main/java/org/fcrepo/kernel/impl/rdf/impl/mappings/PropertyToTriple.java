@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,10 +31,10 @@ import javax.jcr.Value;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.graph.impl.LiteralLabel;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.slf4j.Logger;
@@ -89,27 +90,13 @@ public class PropertyToTriple implements
      */
     @Override
     public Iterator<Triple> apply(final Property p) {
-        final UnmodifiableIterator<Value> valuesIterator;
-        try {
-            if (p.isMultiple()) {
-                LOGGER.debug("Found multi-valued property: {}", p);
-                valuesIterator = Iterators.forArray(p.getValues());
-            } else {
-                LOGGER.debug("Found single-valued property: {}", p);
-                valuesIterator =  Iterators.forArray(p.getValue());
+        return Iterators.transform(new PropertyValueIterator(p), new Function<Value, Triple>() {
+
+            @Override
+            public Triple apply(final Value v) {
+                return propertyvalue2triple(p, v);
             }
-
-
-            return Iterators.transform(valuesIterator, new Function<Value, Triple>() {
-
-                @Override
-                public Triple apply(final Value v) {
-                    return propertyvalue2triple(p, v);
-                }
-            });
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        });
     }
 
     /**
@@ -122,15 +109,38 @@ public class PropertyToTriple implements
     private Triple propertyvalue2triple(final Property p, final Value v) {
         LOGGER.trace("Rendering triple for Property: {} with Value: {}", p, v);
         try {
-            final Triple triple =
-                create(graphSubjects.convert(p.getParent()).asNode(),
-                        propertyConverter.convert(p).asNode(),
-                        valueConverter.convert(v).asNode());
+
+            final Triple triple = create(graphSubjects.convert(p.getParent()).asNode(),
+                    propertyConverter.convert(p).asNode(),
+                    convertObject(p, v));
+
             LOGGER.trace("Created triple: {} ", triple);
             return triple;
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
+    }
+
+    private com.hp.hpl.jena.graph.Node convertObject(final Property p, final Value v) throws RepositoryException {
+        final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
+
+        if (object.isLiteral()) {
+            final String propertyName = p.getName();
+            final int i = propertyName.indexOf("@");
+
+            if (i > 0) {
+                final LiteralLabel literal = object.getLiteral();
+                final String datatypeURI = literal.getDatatypeURI();
+
+                if (datatypeURI.isEmpty() || datatypeURI.equals(XSDDatatype.XSDstring.getURI())) {
+
+                    final String lang = propertyName.substring(i + 1);
+                    return createLiteral(literal.getLexicalForm(), lang, literal.getDatatype());
+                }
+            }
+        }
+
+        return object;
     }
 
 }

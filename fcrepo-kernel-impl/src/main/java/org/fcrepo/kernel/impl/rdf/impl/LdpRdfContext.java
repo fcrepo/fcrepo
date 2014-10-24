@@ -15,19 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.slf4j.Logger;
-
-import javax.jcr.RepositoryException;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
@@ -39,6 +26,18 @@ import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.slf4j.Logger;
+
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author cabeer
@@ -52,13 +51,11 @@ public class LdpRdfContext extends NodeRdfContext {
      * Default constructor.
      *
      * @param resource
-     * @param graphSubjects
-     * @throws javax.jcr.RepositoryException
+     * @param idTranslator
      */
     public LdpRdfContext(final FedoraResource resource,
-                         final IdentifierConverter<Resource, FedoraResource> graphSubjects)
-            throws RepositoryException {
-        super(resource, graphSubjects);
+                         final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+        super(resource, idTranslator);
 
         concat(typeContext());
 
@@ -72,7 +69,7 @@ public class LdpRdfContext extends NodeRdfContext {
         return resource() instanceof FedoraObject;
     }
 
-    private Collection<Triple> membershipRelationContext() throws RepositoryException {
+    private Collection<Triple> membershipRelationContext() {
 
         final Set<Triple> triples1 = new HashSet<>();
 
@@ -96,9 +93,8 @@ public class LdpRdfContext extends NodeRdfContext {
                     create(subject(), type.asNode(), DIRECT_CONTAINER.asNode()),
                     rdfSource
             };
-        } else {
-            return new Triple[] { rdfSource };
         }
+        return new Triple[] { rdfSource };
     }
 
 }

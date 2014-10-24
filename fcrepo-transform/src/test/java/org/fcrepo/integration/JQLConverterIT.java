@@ -167,6 +167,18 @@ public class JQLConverterIT {
     }
 
     @Test
+    public void testSimpleFilterWithLanguageTag() throws RepositoryException {
+        final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT ?subject WHERE { ?subject " +
+                "dc:title \"xyz\"@it}";
+        final JQLConverter testObj = new JQLConverter(session, subjects, sparql);
+        assertEquals(
+                "SELECT [fedoraResource_subject].[jcr:path] AS subject FROM [fedora:resource] AS " +
+                        "[fedoraResource_subject] WHERE [fedoraResource_subject].[dc:title@it] = 'xyz'",
+                testObj.getStatement());
+
+    }
+
+    @Test
     public void testSecondOrderReturnValues() throws RepositoryException {
         final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>" +
                 "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>" +

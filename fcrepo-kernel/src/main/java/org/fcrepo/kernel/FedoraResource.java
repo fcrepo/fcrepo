@@ -23,6 +23,7 @@ import javax.jcr.Property;import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -114,29 +115,30 @@ public interface FedoraResource {
      * of #getDatasetProblems, which may include problems when attempting to
      * serialize the data to JCR.
      *
-     * @param subjects
+     * @param idTranslator
      * @param sparqlUpdateStatement
      * @param originalTriples
      */
-    void updateProperties(final IdentifierConverter<Resource, FedoraResource> subjects,
-                          final String sparqlUpdateStatement, final RdfStream originalTriples);
+    void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                          final String sparqlUpdateStatement,
+                          final RdfStream originalTriples) throws MalformedRdfException;
 
     /**
      * Return the RDF properties of this object using the provided context
-     * @param graphSubjects
+     * @param idTranslator
      * @param context
      * @return
      */
-    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                          final Class<? extends RdfStream> context);
 
     /**
      * Return the RDF properties of this object using the provided contexts
-     * @param graphSubjects
+     * @param idTranslator
      * @param contexts
      * @return
      */
-    RdfStream getTriples(IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    RdfStream getTriples(IdentifierConverter<Resource, FedoraResource> idTranslator,
                          Iterable<? extends Class<? extends RdfStream>> contexts);
 
     /**
@@ -149,7 +151,7 @@ public interface FedoraResource {
 
     /**
      * Get the JCR Base version for the node
-     * 
+     *
      * @return base version
      */
     public Version getBaseVersion();
@@ -171,15 +173,15 @@ public interface FedoraResource {
      * Replace the properties of this object with the properties from the given
      * model
      *
-     * @param graphSubjects
+     * @param idTranslator
      * @param inputModel
      */
-    void replaceProperties(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Model inputModel,
-                                final RdfStream originalTriples);
+                                final RdfStream originalTriples) throws MalformedRdfException;
 
     /**
-     * Construct an ETag value from the last modified date and path. JCR has a
+         * Construct an ETag value from the last modified date and path. JCR has a
      * mix:etag type, but it only takes into account binary properties. We
      * actually want whole-object etag data. TODO : construct and store an ETag
      * value on object modify

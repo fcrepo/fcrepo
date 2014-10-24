@@ -54,7 +54,7 @@ public class TombstoneImplTest {
     }
 
     @Test
-    public void testHasMixinForOtherTypes() throws RepositoryException {
+    public void testHasMixinForOtherTypes() {
         assertFalse(TombstoneImpl.hasMixin(mockContainer));
     }
 

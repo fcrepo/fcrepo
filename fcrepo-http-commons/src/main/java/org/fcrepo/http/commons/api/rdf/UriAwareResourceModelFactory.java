@@ -38,9 +38,9 @@ public interface UriAwareResourceModelFactory {
      *
      * @param resource
      * @param uriInfo
-     * @param graphSubjects
+     * @param idTranslator
      * @return model containing triples for the given resource
      */
     Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> graphSubjects);
+            final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> idTranslator);
 }

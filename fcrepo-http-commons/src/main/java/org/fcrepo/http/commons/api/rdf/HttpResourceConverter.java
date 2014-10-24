@@ -15,11 +15,36 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import com.google.common.base.Converter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.hp.hpl.jena.rdf.model.Resource;
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.apache.commons.lang.StringUtils.replaceOnce;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.jcr.ItemNotFoundException;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.version.VersionHistory;
+import javax.ws.rs.core.UriBuilder;
+
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
@@ -31,31 +56,10 @@ import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 
-import javax.jcr.ItemNotFoundException;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.version.VersionHistory;
-import javax.ws.rs.core.UriBuilder;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.commons.lang.StringUtils.EMPTY;
-import static org.apache.commons.lang.StringUtils.replaceOnce;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
-import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.slf4j.LoggerFactory.getLogger;
-import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
+import com.google.common.base.Converter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * Convert between Jena Resources and JCR Nodes using a JAX-RS UriBuilder to mediate the
@@ -114,13 +118,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 if (!metadata && fedoraResource instanceof Datastream) {
                     return ((Datastream)fedoraResource).getBinary();
-                } else {
-                    return fedoraResource;
                 }
-            } else {
-                throw new IdentifierConversionException("Asked to translate a resource " + resource
-                        + " that doesn't match the URI template");
+                return fedoraResource;
             }
+            throw new IdentifierConversionException("Asked to translate a resource " + resource
+                    + " that doesn't match the URI template");
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -128,11 +130,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     protected Resource doBackward(final FedoraResource resource) {
-        try {
-            return toDomain(doBackwardPathOnly(resource));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return toDomain(doBackwardPathOnly(resource));
     }
 
     @Override
@@ -206,12 +204,10 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             if (path.isEmpty()) {
                 return "/";
-            } else {
-                return path;
             }
-        } else {
-            return null;
+            return path;
         }
+        return null;
     }
 
 
@@ -239,9 +235,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             } else {
                 throw new PathNotFoundException("Unable to find versioned resource at " + path);
             }
-        } else {
-            return session.getNode(path);
         }
+        return session.getNode(path);
     }
 
     /**
@@ -294,8 +289,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         }
     }
 
-    private String getPath(final FedoraResource resource) throws RepositoryException {
-        if (resource.hasType("nt:frozenNode")) {
+    private String getPath(final FedoraResource resource) {
+        if (isFrozenNode.apply(resource)) {
             try {
                 Node versionableFrozenNode = resource.getNode();
                 Node versionableNode = session.getNodeByIdentifier(
@@ -319,9 +314,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
-        } else {
-            return resource.getPath();
         }
+        return resource.getPath();
     }
 
     private static String getRelativePath(final Node node, final Node ancestor) {
@@ -336,9 +330,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      * Get only the resource path to this resource, before embedding it in a full URI
      * @param resource
      * @return
-     * @throws RepositoryException
      */
-    private String doBackwardPathOnly(final FedoraResource resource) throws RepositoryException {
+    private String doBackwardPathOnly(final FedoraResource resource) {
         String path = reverse.convert(getPath(resource));
         if (path != null) {
 
@@ -350,9 +343,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                 path = replaceOnce(path, "/" + JCR_CONTENT, EMPTY);
             }
             return path;
-        } else {
-            throw new RuntimeException("Unable to process reverse chain for resource " + resource);
         }
+        throw new RuntimeException("Unable to process reverse chain for resource " + resource);
     }
 
 
@@ -362,10 +354,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             final Converter<String,String> transactionIdentifierConverter = new TransactionIdentifierConverter(session);
 
-            setTranslationChain(ImmutableList.copyOf(
-                    Iterables.concat(Lists.newArrayList(
-                                    transactionIdentifierConverter),
-                            translationChain)));
+            @SuppressWarnings("unchecked")
+            final ImmutableList<Converter<String, String>> chain = copyOf(
+                    concat(newArrayList(transactionIdentifierConverter),
+                            translationChain));
+            setTranslationChain(chain);
         }
     }
 
@@ -382,8 +375,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
 
-    private static final List<Converter<String,String>> minimalTranslationChain =
-            Lists.newArrayList(
+    @SuppressWarnings("unchecked")
+    private static final List<Converter<String, String>> minimalTranslationChain =
+            newArrayList(
                     (Converter<String, String>) new NamespaceConverter(),
                     (Converter<String, String>) new HashConverter()
             );
@@ -394,9 +388,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             final List<Converter<String,String>> tchain =
                     getApplicationContext().getBean("translationChain", List.class);
             return tchain;
-        } else {
-            return minimalTranslationChain;
         }
+        return minimalTranslationChain;
     }
 
     protected ApplicationContext getApplicationContext() {
@@ -437,9 +430,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             if (txId != null) {
                 return "/" + TX_PREFIX + txId;
-            } else {
-                return EMPTY;
             }
+            return EMPTY;
         }
     }
 }

@@ -25,6 +25,8 @@ import org.fcrepo.kernel.FedoraResource;
  */
 public class TombstoneException extends RepositoryRuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     private final FedoraResource fedoraResource;
     private final String uri;
 

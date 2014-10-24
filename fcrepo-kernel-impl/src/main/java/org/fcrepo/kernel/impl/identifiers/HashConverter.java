@@ -28,9 +28,8 @@ public class HashConverter extends InternalIdentifierConverter {
         final int i = externalId.indexOf("#");
         if (i >= 0) {
             return externalId.substring(0, i) + "/#/" + externalId.substring(i + 1).replace("/", "%2F");
-        } else {
-            return externalId;
         }
+        return externalId;
     }
 
     @Override
@@ -40,8 +39,7 @@ public class HashConverter extends InternalIdentifierConverter {
 
         if (i >= 0) {
             return internalId.substring(0, i) + "#" + internalId.substring(i + 3).replace("%2F", "/");
-        } else {
-            return internalId;
         }
+        return internalId;
     }
 }

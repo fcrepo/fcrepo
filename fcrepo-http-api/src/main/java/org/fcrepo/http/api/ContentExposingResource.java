@@ -21,6 +21,7 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.Prefer;
@@ -32,9 +33,11 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
@@ -75,6 +78,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import static com.google.common.base.Predicates.alwaysTrue;
+import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
@@ -184,22 +188,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (ldpPreferences.prefersServerManaged()) {
             tripleFilter = alwaysTrue();
         } else {
-            tripleFilter = not(ManagedRdf.isManagedTriple);
+            tripleFilter = and(not(ManagedRdf.isManagedTriple), not(new Predicate<Triple>() {
+                @Override
+                public boolean apply(final Triple input) {
+                    return input.getPredicate().equals(RDF.type.asNode())
+                            && isManagedNamespace.apply(input.getObject().getNameSpace());
+                }
+            }));
         }
 
         rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter));
 
-
-        if (ldpPreferences.prefersServerManaged()) {
-            rdfStream.concat(getTriples(TypeRdfContext.class));
-        } else {
-            rdfStream.concat(filter(getTriples(TypeRdfContext.class), new Predicate<Triple>() {
-                @Override
-                public boolean apply(final Triple input) {
-                    return !isManagedNamespace.apply(input.getObject().getNameSpace());
-                }
-            }));
-        }
+        rdfStream.concat(filter(getTriples(TypeRdfContext.class), tripleFilter));
 
 
         if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
@@ -215,6 +215,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter));
+            rdfStream.concat(filter(getTriples(BlankNodeRdfContext.class), tripleFilter));
 
             if (resource() instanceof Datastream) {
                 rdfStream.concat(filter(
@@ -513,7 +514,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
-                                             final RdfStream resourceTriples) {
+                                             final RdfStream resourceTriples) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel = createDefaultModel()
@@ -524,7 +525,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void patchResourcewithSparql(final FedoraResource resource,
                                            final String requestBody,
-                                           final RdfStream resourceTriples) {
+                                           final RdfStream resourceTriples) throws MalformedRdfException {
         resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 

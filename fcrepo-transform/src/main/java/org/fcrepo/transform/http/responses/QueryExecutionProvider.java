@@ -20,7 +20,6 @@ import static java.util.Collections.singletonList;
 import static org.fcrepo.transform.http.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -55,7 +54,7 @@ public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution>
             final Type genericType, final Annotation[] annotations,
             final MediaType mediaType,
             final MultivaluedMap<String, Object> httpHeaders,
-            final OutputStream entityStream) throws IOException {
+            final OutputStream entityStream) {
 
         LOGGER.debug("Writing a response for: {} with MIMEtype: {}", qexec,
                         mediaType);

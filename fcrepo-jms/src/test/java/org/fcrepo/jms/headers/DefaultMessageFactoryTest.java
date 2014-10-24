@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.util.Set;
 
@@ -67,15 +68,25 @@ public class DefaultMessageFactoryTest {
 
     @Test
     public void testBuildMessage() throws RepositoryException, JMSException {
-        doTestBuildMessage("base-url");
+        final String testPath = "/path/to/resource";
+        final Message msg = doTestBuildMessage("base-url", testPath);
+        assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
     @Test
     public void testBuildMessageNullUrl() throws RepositoryException, JMSException {
-        doTestBuildMessage(null);
+        final String testPath = "/path/to/resource";
+        final Message msg = doTestBuildMessage(null, testPath);
+        assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
+    }
+    @Test
+    public void testBuildMessageContent() throws RepositoryException, JMSException {
+        final String testPath = "/path/to/resource";
+        final Message msg = doTestBuildMessage("base-url", testPath + "/" + JCR_CONTENT);
+        assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
-    private void doTestBuildMessage(final String baseUrl) throws RepositoryException, JMSException {
+    private Message doTestBuildMessage(final String baseUrl, final String id) throws RepositoryException, JMSException {
         final Long testDate = 46647758568747L;
         when(mockEvent.getDate()).thenReturn(testDate);
 
@@ -84,8 +95,7 @@ public class DefaultMessageFactoryTest {
             url = "{\"baseURL\":\"" + baseUrl + "\"}";
         }
         when(mockEvent.getUserData()).thenReturn(url);
-        final String testPath = "super/calli/fragi/listic";
-        when(mockEvent.getPath()).thenReturn(testPath);
+        when(mockEvent.getPath()).thenReturn(id);
         final Set<Integer> testTypes = singleton(NODE_ADDED);
         final String testReturnType = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
         when(mockEvent.getTypes()).thenReturn(testTypes);
@@ -94,10 +104,10 @@ public class DefaultMessageFactoryTest {
 
         final Message msg = testDefaultMessageFactory.getMessage(mockEvent, mockSession);
         assertEquals("Got wrong date in message!", testDate, (Long) msg.getLongProperty(TIMESTAMP_HEADER_NAME));
-        assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
         assertEquals("Got wrong type in message!", testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME));
         assertEquals("Got wrong base-url in message", baseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
         assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
+        return msg;
     }
 
 }

@@ -65,13 +65,13 @@ public class RootRdfContext extends NodeRdfContext {
      * Ordinary constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @throws RepositoryException
      */
     public RootRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> graphSubjects)
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
-        super(resource, graphSubjects);
+        super(resource, idTranslator);
 
         if (resource().hasType(ROOT)) {
             concatRepositoryTriples();
@@ -87,7 +87,7 @@ public class RootRdfContext extends NodeRdfContext {
         for (final String key : repository.getDescriptorKeys()) {
             final String descriptor = repository.getDescriptor(key);
             if (descriptor != null) {
-                final String uri = REPOSITORY_NAMESPACE + "repository/" + key;
+                final String uri = REPOSITORY_NAMESPACE + "repository." + key;
                 b.add(create(subject(), createURI(uri),
                         createLiteral(descriptor)));
             }

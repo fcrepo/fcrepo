@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.google.common.base.Joiner;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -40,6 +41,9 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ajs6f
@@ -62,23 +66,25 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumer.class);
 
+    private final List<String> exceptions;
+
     /**
      * Ordinary constructor.
      *
-     * @param graphSubjects
+     * @param idTranslator
      * @param session
      * @param stream
      */
-    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final Session session, final RdfStream stream) {
-        this.idTranslator = graphSubjects;
-        this.jcrRdfTools = new JcrRdfTools(graphSubjects, session);
+        this.idTranslator = idTranslator;
+        this.jcrRdfTools = new JcrRdfTools(idTranslator, session);
         this.isFedoraSubjectTriple = new Predicate<Triple>() {
 
             @Override
             public boolean apply(final Triple t) {
 
-                final boolean result = graphSubjects.inDomain(m.asStatement(t).getSubject())
+                final boolean result = idTranslator.inDomain(m.asStatement(t).getSubject())
                         || t.getSubject().isBlank();
                 if (result) {
                     LOGGER.debug(
@@ -95,26 +101,35 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         this.stream =
                 stream.withThisContext(stream.filter(isFedoraSubjectTriple));
         this.session = session;
+
+        this.exceptions = new ArrayList<>();
     }
 
     @Override
-    public void consume() throws RepositoryException {
+    public void consume() throws MalformedRdfException {
         while (stream.hasNext()) {
             final Statement t = m.asStatement(stream.next());
             LOGGER.debug("Operating triple {}.", t);
 
-            operateOnTriple(t);
+            try {
+                operateOnTriple(t);
+            } catch (final MalformedRdfException e) {
+                exceptions.add(e.getMessage());
+            }
         }
 
+        if (!exceptions.isEmpty()) {
+            throw new MalformedRdfException(Joiner.on("\n").join(exceptions));
+        }
     }
 
-    protected void operateOnTriple(final Statement input) {
+    protected void operateOnTriple(final Statement input) throws MalformedRdfException {
         try {
 
             final Statement t = jcrRdfTools.skolemize(idTranslator, input);
 
             final Resource subject = t.getSubject();
-            final FedoraResource subjectNode = idTranslator().convert(subject);
+            final FedoraResource subjectNode = translator().convert(subject);
 
             // if this is a user-managed RDF type assertion, update the node's
             // mixins. If it isn't, treat it as a "data" property.
@@ -170,7 +185,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * @return the idTranslator
      */
-    public IdentifierConverter<Resource,FedoraResource> idTranslator() {
+    public IdentifierConverter<Resource,FedoraResource> translator() {
         return idTranslator;
     }
 

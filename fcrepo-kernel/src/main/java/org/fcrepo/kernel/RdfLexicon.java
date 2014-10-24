@@ -182,6 +182,8 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "RDFSource");
     public static final Property NON_RDF_SOURCE =
         createProperty(LDP_NAMESPACE + "NonRDFSource");
+    public static final Property CONSTRAINED_BY =
+            createProperty(LDP_NAMESPACE + "constrainedBy");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
             FIRST_PAGE, NEXT_PAGE, CONTAINS, LDP_MEMBER);
@@ -224,14 +226,12 @@ public final class RdfLexicon {
                     "feed0");
     public static final Property HAS_SUBSCRIPTION_SERVICE =
             createProperty("http://microformats.org/wiki/rel-subscription");
-    public static final Property NOT_IMPLEMENTED =
-            createProperty(REPOSITORY_NAMESPACE + "notImplemented");
     public static final Property HAS_SPARQL_ENDPOINT =
         createProperty(SPARQL_SD_NAMESPACE + "endpoint");
 
     public static final Set<Property> otherServiceProperties = of(
             HAS_SERIALIZATION, HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,
-            HAS_FEED, HAS_SUBSCRIPTION_SERVICE, NOT_IMPLEMENTED);
+            HAS_FEED, HAS_SUBSCRIPTION_SERVICE);
 
 
     // CONTENT

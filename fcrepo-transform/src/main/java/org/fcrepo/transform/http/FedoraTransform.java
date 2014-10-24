@@ -120,7 +120,7 @@ public class FedoraTransform extends ContentExposingResource {
 
             // create the configuration base path
             jcrTools.findOrCreateNode(internalSession, "/fedora:system/fedora:transform", "fedora:configuration",
-                    "fedora:node_type_configuration");
+                    "fedora:nodeTypeConfiguration");
             final Node node =
                 jcrTools.findOrCreateNode(internalSession, CONFIGURATION_FOLDER + "default", NT_FOLDER, NT_FOLDER);
             LOGGER.debug("Transforming node: {}", node.getPath());
@@ -149,7 +149,7 @@ public class FedoraTransform extends ContentExposingResource {
     @Timed
     public Object evaluateLdpathProgram(@PathParam("program") final String program,
                                         @HeaderParam("Prefer") final Prefer prefer)
-            throws RepositoryException, IOException {
+            throws RepositoryException {
 
         final RdfStream rdfStream = getResourceTriples(prefer).session(session)
                 .topic(translator().reverse().convert(resource()).asNode());
@@ -163,7 +163,6 @@ public class FedoraTransform extends ContentExposingResource {
      *
      * @param requestBodyStream
      * @return LDPath as a JSON stream
-     * @throws RepositoryException
      */
     @POST
     @Consumes({APPLICATION_RDF_LDPATH, contentTypeSPARQLQuery})
@@ -174,8 +173,7 @@ public class FedoraTransform extends ContentExposingResource {
     @Timed
     public Object evaluateTransform(@HeaderParam("Content-Type") final MediaType contentType,
                                     @HeaderParam("Prefer") final Prefer prefer,
-                                    final InputStream requestBodyStream)
-            throws RepositoryException, IOException {
+                                    final InputStream requestBodyStream) {
 
         if (transformationFactory == null) {
             transformationFactory = new TransformationFactory();

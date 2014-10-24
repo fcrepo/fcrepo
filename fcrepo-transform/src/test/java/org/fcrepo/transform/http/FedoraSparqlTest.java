@@ -108,7 +108,7 @@ public class FedoraSparqlTest {
     private QueryResult mockResults;
 
     @Mock
-    private IdentifierConverter<Resource, Node> MockIdentifierTranslator;
+    private IdentifierConverter<Resource, Node> idTranslator;
 
     @Mock
     private Request mockRequest;
@@ -148,7 +148,7 @@ public class FedoraSparqlTest {
 
     @Test
     public void testSparqlServiceDescription() {
-        final Model response = testObj.sparqlServiceDescription(mockRequest, uriInfo).asModel();
+        final Model response = testObj.sparqlServiceDescription(uriInfo).asModel();
         assertFalse(response.isEmpty());
         assertTrue(response.contains(null,
                 createProperty(SPARQL_SD_NAMESPACE + "resultFormat")));
@@ -165,7 +165,7 @@ public class FedoraSparqlTest {
     @Test
     public void testRunSparqlQuery() throws RepositoryException, IOException {
         final InputStream input = new ByteArrayInputStream(testSparql.getBytes());
-        final ResultSet resultSet = testObj.runSparqlQuery(input, mockRequest, uriInfo);
+        final ResultSet resultSet = testObj.runSparqlQuery(input, uriInfo);
         assertEquals(mockResults, ((JQLResultSet) resultSet).getQueryResult());
     }
 

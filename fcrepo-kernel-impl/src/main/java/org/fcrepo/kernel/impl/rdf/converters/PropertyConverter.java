@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.rdf.converters;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Namespaced;
@@ -60,6 +61,8 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
 
                 if (isReferenceProperty.apply(property)) {
                     rdfLocalName = getReferencePropertyOriginalName(localName);
+                } else if (localName.contains("@")) {
+                    rdfLocalName = localName.substring(0, localName.indexOf("@"));
                 } else {
                     rdfLocalName = localName;
                 }
@@ -90,11 +93,31 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
      * @throws RepositoryException
      */
     public static String getPropertyNameFromPredicate(final Node node,
+                                                      final Resource predicate,
+                                                      final Map<String,String> namespaceMapping)
+            throws RepositoryException {
+        return getPropertyNameFromPredicate(node, predicate, null, namespaceMapping);
+    }
+
+
+    /**
+     * Given an RDF predicate value (namespace URI + local name), figure out
+     * what JCR property to use
+     *
+     * @param node the JCR node we want a property for
+     * @param predicate the predicate to map to a property name
+     * @param namespaceMapping prefix to uri namespace mapping
+     * @return the JCR property name
+     * @throws RepositoryException
+     */
+    public static String getPropertyNameFromPredicate(final Node node,
                                                final Resource predicate,
+                                               final RDFNode object,
                                                final Map<String,String> namespaceMapping) throws RepositoryException {
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry.apply(node);
         return getPropertyNameFromPredicate(namespaceRegistry,
                 predicate,
+                object,
                 namespaceMapping);
     }
 
@@ -109,6 +132,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
      */
     public static String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
                                                       final Resource predicate,
+                                                      final RDFNode object,
                                                       final Map<String, String> namespaceMapping)
             throws RepositoryException {
 
@@ -138,7 +162,19 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
             }
         }
 
-        final String propertyName = prefix + ":" + rdfLocalname;
+        final StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append(prefix);
+        stringBuilder.append(":");
+        stringBuilder.append(rdfLocalname);
+
+
+        if (object != null && object.isLiteral() && !object.asLiteral().getLanguage().isEmpty()) {
+            stringBuilder.append("@");
+            stringBuilder.append(object.asLiteral().getLanguage());
+        }
+
+        final String propertyName = stringBuilder.toString();
 
         LOGGER.debug("Took RDF predicate {} and translated it to JCR property {}", namespace, propertyName);
 

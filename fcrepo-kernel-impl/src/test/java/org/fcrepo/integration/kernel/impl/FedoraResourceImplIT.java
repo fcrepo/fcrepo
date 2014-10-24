@@ -56,7 +56,7 @@ import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
@@ -66,6 +66,7 @@ import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.After;
@@ -102,6 +103,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject
     BinaryService binaryService;
+
+    @Inject
+    VersionService versionService;
 
     private Session session;
 
@@ -164,7 +168,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         Node p =
             createURI(REPOSITORY_NAMESPACE
-                    + "repository/jcr.repository.vendor.url");
+                    + "repository.jcr.repository.vendor.url");
         Node o = createLiteral("http://www.modeshape.org");
         assertTrue(graph.contains(s, p, o));
 
@@ -328,7 +332,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraph() {
+    public void testUpdatingObjectGraph() throws MalformedRdfException {
 
         final FedoraResource object =
             objectService.findOrCreateObject(session, "/testObjectGraphUpdates");
@@ -386,11 +390,13 @@ public class FedoraResourceImplIT extends AbstractIT {
             objectService.findOrCreateObject(session, "/testObjectVersionGraph");
 
         object.getNode().addMixin("mix:versionable");
+        session.save();
 
+        // create a version and make sure there are 2 versions (root + created)
+        versionService.createVersion(session, object.getPath());
         session.save();
 
         object.addVersionLabel("v0.0.1");
-
         session.save();
 
         final Model graphStore = object.getTriples(subjects, VersionsRdfContext.class).asModel();
@@ -433,8 +439,8 @@ public class FedoraResourceImplIT extends AbstractIT {
                 .getValues()[0].getLong());
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
-    public void testAddMissingReference() throws RepositoryException {
+    @Test(expected = MalformedRdfException.class)
+    public void testAddMissingReference() throws RepositoryException, MalformedRdfException {
         final FedoraResource object =
                 objectService.findOrCreateObject(session, "/testRefObject");
 
@@ -586,7 +592,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetContainer() throws RepositoryException {
+    public void testGetContainer() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
@@ -595,7 +601,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildren() throws RepositoryException {
+    public void testGetChildren() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
@@ -604,7 +610,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenWithBinary() throws RepositoryException {
+    public void testGetChildrenWithBinary() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreateBinary(session, "/" + pid + "/a");
@@ -613,7 +619,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetContainerForBinary() throws RepositoryException {
+    public void testGetContainerForBinary() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreateBinary(session, "/" + pid + "/a");
@@ -622,7 +628,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetContainerWithHierarchy() throws RepositoryException {
+    public void testGetContainerWithHierarchy() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a/b/c/d");
@@ -631,7 +637,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenWithHierarchy() throws RepositoryException {
+    public void testGetChildrenWithHierarchy() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a/b/c/d");
@@ -640,12 +646,20 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenTombstonesAreHidden() throws RepositoryException {
+    public void testGetChildrenTombstonesAreHidden() {
         final String pid = getRandomPid();
         final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
         final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid + "/a");
 
         resource.delete();
+        assertFalse(container.getChildren().hasNext());
+    }
+
+    @Test
+    public void testGetChildrenHidesHashUris() {
+        final String pid = getRandomPid();
+        final FedoraObject container = objectService.findOrCreateObject(session, "/" + pid);
+        objectService.findOrCreateObject(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().hasNext());
     }

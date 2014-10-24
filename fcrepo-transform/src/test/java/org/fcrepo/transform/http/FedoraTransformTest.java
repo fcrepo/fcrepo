@@ -15,25 +15,6 @@
  */
 package org.fcrepo.transform.http;
 
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.fcrepo.transform.Transformation;
-import org.fcrepo.transform.TransformationFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -44,6 +25,24 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
+import javax.jcr.Node;
+import javax.jcr.Session;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.transform.Transformation;
+import org.fcrepo.transform.TransformationFactory;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * <p>FedoraTransformTest class.</p>
@@ -74,7 +73,7 @@ public class FedoraTransformTest {
     Transformation<Object> mockTransform;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         testObj = spy(new FedoraTransform("testObject"));
         setField(testObj, "nodeService", mockNodeService);
@@ -91,7 +90,7 @@ public class FedoraTransformTest {
     }
 
     @Test
-    public void testEvaluateTransform() throws Exception {
+    public void testEvaluateTransform() {
         final RdfStream stream = new RdfStream();
         when(mockResource.getTriples(any(IdentifierConverter.class), any(Class.class))).thenReturn(stream);
 

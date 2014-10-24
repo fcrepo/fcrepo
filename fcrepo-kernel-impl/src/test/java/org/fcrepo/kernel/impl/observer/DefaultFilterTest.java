@@ -19,7 +19,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
-import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -58,10 +57,6 @@ public class DefaultFilterTest {
     @Mock
     private Property mockProperty;
 
-    private final static String testId = randomUUID().toString();
-
-    private final static String testPath = "/foo/bar";
-
     @Mock
     private NodeType fedoraResource;
     @Mock
@@ -72,7 +67,7 @@ public class DefaultFilterTest {
     private NodeType fedoraBinary;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         initMocks(this);
         testObj = new DefaultFilter();
         when(fedoraResource.getName()).thenReturn(FEDORA_RESOURCE);

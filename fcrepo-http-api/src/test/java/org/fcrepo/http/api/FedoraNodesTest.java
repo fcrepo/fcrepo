@@ -153,7 +153,7 @@ public class FedoraNodesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockSession.getNode(path)).thenReturn(mockNode);
 
-        setField(testObj, "identifierTranslator",
+        setField(testObj, "idTranslator",
                 new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 

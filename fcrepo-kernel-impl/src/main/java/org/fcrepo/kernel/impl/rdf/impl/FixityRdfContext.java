@@ -60,16 +60,15 @@ public class FixityRdfContext extends NodeRdfContext {
      * Ordinary constructor.
      *
      * @param resource
-     * @param graphSubjects
+     * @param idTranslator
      * @param blobs
-     * @throws RepositoryException
      */
     public FixityRdfContext(final FedoraResource resource,
-                            final IdentifierConverter<Resource, FedoraResource> graphSubjects,
+                            final IdentifierConverter<Resource, FedoraResource> idTranslator,
                             final Iterable<FixityResult> blobs,
                             final URI digest,
-                            final long size) throws RepositoryException {
-        super(resource, graphSubjects);
+                            final long size) {
+        super(resource, idTranslator);
 
         concat(Iterators.concat(Iterators.transform(blobs.iterator(),
                 new Function<FixityResult, Iterator<Triple>>() {
@@ -80,7 +79,7 @@ public class FixityRdfContext extends NodeRdfContext {
                         final ImmutableSet.Builder<Triple> b = builder();
                         try {
                             b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
-                            b.add(create(graphSubjects.reverse().convert(resource).asNode(),
+                            b.add(create(idTranslator.reverse().convert(resource).asNode(),
                                     HAS_FIXITY_RESULT.asNode(), resultSubject));
                             final String storeIdentifier = blob.getStoreIdentifier();
                             final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)

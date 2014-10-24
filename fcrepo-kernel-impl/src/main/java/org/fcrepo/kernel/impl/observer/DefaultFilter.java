@@ -58,13 +58,12 @@ public class DefaultFilter implements EventFilter {
 
     private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
-    private Session session;
     private static final Function<NodeType, String> nodetype2string = new Function<NodeType, String>() {
         @Override
         public String apply(final NodeType input) {
             return input.getName();
         }
-    };;
+    };
 
     /**
      * Default constructor.
@@ -76,7 +75,6 @@ public class DefaultFilter implements EventFilter {
      * @param session
      */
     private DefaultFilter(final Session session) {
-        this.session = session;
     }
 
     @Override

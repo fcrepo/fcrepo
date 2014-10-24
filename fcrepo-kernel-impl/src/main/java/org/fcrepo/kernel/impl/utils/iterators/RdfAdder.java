@@ -46,14 +46,14 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     /**
      * Ordinary constructor.
      *
-     * @param graphSubjects
+     * @param idTranslator
      * @param session
      * @param stream
      */
-    public RdfAdder(final IdentifierConverter<Resource, FedoraResource> graphSubjects, final Session session,
+    public RdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
         final RdfStream stream) {
-        super(graphSubjects, session, stream);
-        jcrRdfTools = new JcrRdfTools(graphSubjects, session);
+        super(idTranslator, session, stream);
+        jcrRdfTools = new JcrRdfTools(idTranslator, session);
     }
 
     @Override

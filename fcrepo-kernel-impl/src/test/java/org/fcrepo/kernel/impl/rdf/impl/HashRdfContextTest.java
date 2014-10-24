@@ -21,12 +21,18 @@ import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.Workspace;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
@@ -70,6 +76,14 @@ public class HashRdfContextTest {
     @Mock
     private Value mockValue;
 
+    @Mock
+    private NodeType mockNodeType;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -78,6 +92,11 @@ public class HashRdfContextTest {
         when(mockResource.getPath()).thenReturn("/a");
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getNode("#")).thenReturn(mockContainer);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockChildNode.getSession()).thenReturn(mockSession);
+        when(mockNodeType.getName()).thenReturn("some:type");
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
 
@@ -99,7 +118,13 @@ public class HashRdfContextTest {
 
         when(mockChildNode.getPath()).thenReturn("/a/#/123");
         when(mockChildNode.hasProperties()).thenReturn(true);
-        when(mockChildNode.getProperties()).thenReturn(new TestPropertyIterator(mockProperty));
+        when(mockChildNode.getProperties()).thenAnswer(new Answer<PropertyIterator>() {
+            @Override
+            public PropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+                return new TestPropertyIterator(mockProperty);
+            }
+        });
+        when(mockChildNode.getPrimaryNodeType()).thenReturn(mockNodeType);
 
         when(mockProperty.getParent()).thenReturn(mockChildNode);
         when(mockProperty.getType()).thenReturn(STRING);

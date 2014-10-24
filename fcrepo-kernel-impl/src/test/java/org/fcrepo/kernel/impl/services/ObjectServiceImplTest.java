@@ -63,7 +63,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
     @Mock
     private JcrTools mockJcrTools;
 
-    private String testPath = "/foo";
+    private final String testPath = "/foo";
 
     @Before
     public void setUp() throws RepositoryException {
@@ -76,7 +76,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
     }
 
     @Test
-    public void testCreateObject() throws Exception {
+    public void testCreateObject() {
         final Node actual = testObj.findOrCreateObject(mockSession, testPath).getNode();
         assertEquals(mockNode, actual);
     }
@@ -132,7 +132,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
 
-        final FedoraObject actual = testObj.findOrCreateObject(mockSession, "/foo/bar");
+        testObj.findOrCreateObject(mockSession, "/foo/bar");
 
     }
 

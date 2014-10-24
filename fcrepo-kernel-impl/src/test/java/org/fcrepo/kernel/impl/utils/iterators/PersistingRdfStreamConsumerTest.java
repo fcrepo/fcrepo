@@ -28,12 +28,12 @@ import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraResource;
@@ -44,6 +44,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
+
 import com.google.common.collect.ObjectArrays;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -72,7 +73,7 @@ public class PersistingRdfStreamConsumerTest {
         final Set<Resource> acceptedMixins = newHashSet();
 
         testPersister =
-            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession, testStream) {
+            new PersistingRdfStreamConsumer(idTranslator, mockSession, testStream) {
 
                 @Override
                 protected void operateOnProperty(final Statement s,
@@ -111,7 +112,7 @@ public class PersistingRdfStreamConsumerTest {
         when(mockTriples.hasNext())
                 .thenThrow(new RuntimeException("Expected."));
         testPersister =
-            new PersistingRdfStreamConsumer(mockGraphSubjects, mockSession,
+            new PersistingRdfStreamConsumer(idTranslator, mockSession,
                     new RdfStream(mockTriples)) {
 
                     @Override
@@ -129,10 +130,9 @@ public class PersistingRdfStreamConsumerTest {
     }
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
-
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 
     private static final Model m = createDefaultModel();
@@ -198,7 +198,7 @@ public class PersistingRdfStreamConsumerTest {
     @Mock
     private Node mockNode;
 
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
     private Iterator<Triple> mockTriples;
