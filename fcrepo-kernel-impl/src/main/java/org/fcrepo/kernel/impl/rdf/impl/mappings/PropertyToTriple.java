@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -31,8 +30,6 @@ import javax.jcr.Value;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
-import com.hp.hpl.jena.graph.impl.LiteralLabel;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.converters.PropertyConverter;
@@ -112,35 +109,13 @@ public class PropertyToTriple implements
 
             final Triple triple = create(graphSubjects.convert(p.getParent()).asNode(),
                     propertyConverter.convert(p).asNode(),
-                    convertObject(p, v));
+                    valueConverter.convert(v).asNode());
 
             LOGGER.trace("Created triple: {} ", triple);
             return triple;
         } catch (final RepositoryException e) {
             throw propagate(e);
         }
-    }
-
-    private com.hp.hpl.jena.graph.Node convertObject(final Property p, final Value v) throws RepositoryException {
-        final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
-
-        if (object.isLiteral()) {
-            final String propertyName = p.getName();
-            final int i = propertyName.indexOf("@");
-
-            if (i > 0) {
-                final LiteralLabel literal = object.getLiteral();
-                final String datatypeURI = literal.getDatatypeURI();
-
-                if (datatypeURI.isEmpty() || datatypeURI.equals(XSDDatatype.XSDstring.getURI())) {
-
-                    final String lang = propertyName.substring(i + 1);
-                    return createLiteral(literal.getLexicalForm(), lang, literal.getDatatype());
-                }
-            }
-        }
-
-        return object;
     }
 
 }

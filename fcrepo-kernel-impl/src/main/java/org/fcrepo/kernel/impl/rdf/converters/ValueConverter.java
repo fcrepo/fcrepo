@@ -16,13 +16,12 @@
 package org.fcrepo.kernel.impl.rdf.converters;
 
 import com.google.common.base.Converter;
-import com.hp.hpl.jena.datatypes.BaseDatatype;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
-import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
+import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -33,8 +32,10 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 
-import java.math.BigDecimal;
+import java.util.regex.Pattern;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.jcr.PropertyType.BOOLEAN;
@@ -94,6 +95,8 @@ public class ValueConverter extends Converter<Value, RDFNode> {
                 case WEAKREFERENCE:
                 case PATH:
                     return traverseLink(value);
+                case STRING:
+                    return stringliteral2node(value.getString());
                 default:
                     return stringliteral2node(value.getString());
             }
@@ -121,62 +124,39 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
             final Literal literal = resource.asLiteral();
             final RDFDatatype dataType = literal.getDatatype();
-            final Object rdfValue = literal.getValue();
 
-            if (dataType == null && rdfValue instanceof String
-                    || (dataType != null && dataType.equals(XSDDatatype.XSDstring))) {
-                // short-circuit the common case
-                return valueFactory.createValue(literal.getString(), STRING);
-            } else if (rdfValue instanceof Boolean) {
-                return valueFactory.createValue((Boolean) rdfValue);
-            } else if (rdfValue instanceof Byte
-                    || (dataType != null && dataType.getJavaClass() == Byte.class)) {
+            final String dataTypeUri;
 
-                return valueFactory.createValue(literal.getByte());
-            } else if (rdfValue instanceof Double) {
-                return valueFactory.createValue(literal.getDouble());
-            } else if (rdfValue instanceof BigDecimal) {
-                return valueFactory.createValue((BigDecimal)literal.getValue());
-            } else if (rdfValue instanceof Float) {
-                return valueFactory.createValue(literal.getFloat());
-            } else if (rdfValue instanceof Long
-                    || (dataType != null && dataType.getJavaClass() == Long.class)) {
-                return valueFactory.createValue(literal.getLong());
-            } else if (rdfValue instanceof Short
-                    || (dataType != null && dataType.getJavaClass() == Short.class)) {
-                return valueFactory.createValue(literal.getShort());
-            } else if (rdfValue instanceof Integer) {
-                return valueFactory.createValue(literal.getInt());
-            } else if (rdfValue instanceof XSDDateTime
-                    && ((XSDDateTime) rdfValue).getNarrowedDatatype().equals(XSDDatatype.XSDdateTime)) {
-                return valueFactory.createValue(((XSDDateTime) rdfValue).asCalendar());
+            if (dataType == null) {
+                dataTypeUri = "";
             } else {
-                if (dataType != null && !dataType.getURI().isEmpty()) {
-                    return valueFactory.createValue(literal.getString() + LITERAL_TYPE_SEP + dataType.getURI(), STRING);
-                } else {
-                    return valueFactory.createValue(literal.getString(), STRING);
-                }
+                dataTypeUri = dataType.getURI();
             }
+
+            return valueFactory.createValue(literal.getString()
+                    + LITERAL_TYPE_SEP + dataTypeUri
+                    + LITERAL_TYPE_SEP + literal.getLanguage(), STRING);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
-    private static Literal literal2node(final Object literal) {
-        final Literal result = createTypedLiteral(literal);
-        LOGGER.trace("Converting {} into {}", literal, result);
-        return result;
+
+    private static Literal literal2node(final Object o) {
+        return ResourceFactory.createTypedLiteral(o);
     }
 
-
     private static Literal stringliteral2node(final String literal) {
-        final int i = literal.indexOf(LITERAL_TYPE_SEP);
+        final String[] split = literal.split(Pattern.quote(LITERAL_TYPE_SEP), 3);
 
-        if (i < 0) {
-            return literal2node(literal);
+        if (split.length == 1) {
+            return literal2node(split[0]);
+        } else if (split.length == 3 && !split[2].isEmpty()) {
+            return createLangLiteral(split[0], split[2]);
+        } else if (split[1].isEmpty()) {
+            return createPlainLiteral(split[0]);
         } else {
-            return createTypedLiteral(literal.substring(0, i),
-                    new BaseDatatype(literal.substring(i + LITERAL_TYPE_SEP.length())));
+            return createTypedLiteral(split[0], NodeFactory.getType(split[1]));
         }
     }
 

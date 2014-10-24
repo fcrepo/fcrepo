@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.rdf;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.UUID.randomUUID;
 import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
@@ -174,7 +175,7 @@ public class JcrRdfTools {
         throws RepositoryException {
         assert (valueFactory != null);
 
-        if (type == UNDEFINED) {
+        if (type == UNDEFINED || type == STRING) {
             return valueConverter.reverse().convert(data);
         } else if (data.isURIResource()
                 && (type == REFERENCE || type == WEAKREFERENCE)) {

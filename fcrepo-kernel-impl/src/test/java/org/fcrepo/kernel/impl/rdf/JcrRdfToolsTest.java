@@ -15,15 +15,10 @@
  */
 package org.fcrepo.kernel.impl.rdf;
 
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbyte;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDshort;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static javax.jcr.PropertyType.NAME;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -33,7 +28,6 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -43,7 +37,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Calendar;
 import java.util.NoSuchElementException;
 
 import javax.jcr.Node;
@@ -186,123 +179,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
                 PropertyType.URI);
     }
 
-
-    @Test
-    public final void shouldMapBooleanValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue(true)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral(true);
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue(true);
-    }
-
-
-    @Test
-    public final void shouldMapByteValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue((byte)1)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral("1", XSDbyte);
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue((byte) 1);
-    }
-
-
-    @Test
-    public final void shouldMapDoubleValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue((double)2)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral((double) 2);
-
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue((double) 2);
-    }
-
-
-    @Test
-    public final void shouldMapFloatValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue((float)3)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral((float) 3);
-
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue((float) 3);
-    }
-
-
-    @Test
-    public final void shouldMapIntValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue(4)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral(4);
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue(4);
-    }
-
-
-    @Test
-    public final void shouldMapLongValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue(5)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral("5", XSDlong);
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue(5);
-    }
-
-
-    @Test
-    public final void shouldMapShortValuesToJcrPropertyValues()
-            throws RepositoryException {
-
-        when(mockValueFactory.createValue((short)6)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral("6", XSDshort);
-
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue((short) 6);
-    }
-
-
-    @Test
-    public final void shouldMapCalendarValuesToJcrPropertyValues()
-            throws RepositoryException {
-        final Calendar calendar = Calendar.getInstance();
-        final RDFNode n = createTypedLiteral(calendar);
-
-        when(mockValueFactory.createValue(any(Calendar.class))).thenReturn(mockValue);
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue(any(Calendar.class));
-    }
-
-
-    @Test
-    public final void shouldMapStringValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue("string", STRING)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral("string");
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue("string", STRING);
-    }
-
-
-    @Test
-    public final void shouldMapStringNameValuesToJcrPropertyValues()
-            throws RepositoryException {
-        when(mockValueFactory.createValue("string", NAME)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral("string");
-
-        testObj.createValue(mockValueFactory, n, NAME);
-        verify(mockValueFactory).createValue("string", NAME);
-
-    }
-
     @Test(expected = ValueFormatException.class)
     public final void shouldMapRdfValuesToJcrPropertyValuesError()
             throws RepositoryException {
@@ -310,19 +186,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         // non-uri references - error
         final RDFNode n = createResource();
         testObj.createValue(mockValueFactory, n, REFERENCE);
-    }
-
-    @Test
-    public void testCreateValueForNode() throws RepositoryException {
-        when(mockNode.getSession().getValueFactory()).thenReturn(mockValueFactory);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[]{});
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-
-        when(mockValueFactory.createValue(true)).thenReturn(mockValue);
-        final RDFNode n = createTypedLiteral(true);
-        testObj.createValue(mockNode, n, "some:boolean");
-        verify(mockValueFactory).createValue(true);
     }
 
     @Test

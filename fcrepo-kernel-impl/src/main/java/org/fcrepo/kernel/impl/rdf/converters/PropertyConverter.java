@@ -61,8 +61,6 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
 
                 if (isReferenceProperty.apply(property)) {
                     rdfLocalName = getReferencePropertyOriginalName(localName);
-                } else if (localName.contains("@")) {
-                    rdfLocalName = localName.substring(0, localName.indexOf("@"));
                 } else {
                     rdfLocalName = localName;
                 }
@@ -162,19 +160,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
             }
         }
 
-        final StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append(prefix);
-        stringBuilder.append(":");
-        stringBuilder.append(rdfLocalname);
-
-
-        if (object != null && object.isLiteral() && !object.asLiteral().getLanguage().isEmpty()) {
-            stringBuilder.append("@");
-            stringBuilder.append(object.asLiteral().getLanguage());
-        }
-
-        final String propertyName = stringBuilder.toString();
+        final String propertyName = prefix + ":" + rdfLocalname;
 
         LOGGER.debug("Took RDF predicate {} and translated it to JCR property {}", namespace, propertyName);
 
