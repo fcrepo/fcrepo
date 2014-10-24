@@ -30,9 +30,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFLanguages;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +74,26 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             final Graph tidiedGraph = getTidiedGraph(graphStore);
             final Model expected = ModelFactory.createDefaultModel().read(IOUtils.toInputStream(body), location, "TTL");
 
-            assertTrue(tidiedGraph.isIsomorphicWith(expected.getGraph()));
+            final boolean isomorphicWith = tidiedGraph.isIsomorphicWith(expected.getGraph());
+
+            final String description;
+
+            if (!isomorphicWith) {
+                final ByteArrayOutputStream o = new ByteArrayOutputStream();
+
+                final Model tidiedModel = ModelFactory.createModelForGraph(tidiedGraph);
+                tidiedModel.setNsPrefixes(expected.getNsPrefixMap());
+                o.write("Expected: ".getBytes());
+                RDFDataMgr.write(o, expected, RDFLanguages.TTL);
+                o.write("to be isomorphic with: ".getBytes());
+                RDFDataMgr.write(o, tidiedModel, RDFLanguages.TTL);
+                description = IOUtils.toString(o.toByteArray(), "UTF-8");
+            } else {
+                description = "";
+            }
+
+
+            assertTrue(description, isomorphicWith);
 
             return response;
         } catch (final IOException e) {
