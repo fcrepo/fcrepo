@@ -16,12 +16,13 @@
 package org.fcrepo.kernel.impl.rdf.converters;
 
 import com.google.common.base.Converter;
+import com.hp.hpl.jena.datatypes.BaseDatatype;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -32,7 +33,10 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 
+import java.math.BigDecimal;
+
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
 import static javax.jcr.PropertyType.DECIMAL;
@@ -54,6 +58,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ValueConverter extends Converter<Value, RDFNode> {
 
     private static final Logger LOGGER = getLogger(ValueConverter.class);
+    public static final String LITERAL_TYPE_SEP = "\30^^\30";
 
     private final Session session;
     private final Converter<Node, Resource> graphSubjects;
@@ -90,7 +95,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
                 case PATH:
                     return traverseLink(value);
                 default:
-                    return literal2node(value.getString());
+                    return stringliteral2node(value.getString());
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -118,7 +123,8 @@ public class ValueConverter extends Converter<Value, RDFNode> {
             final RDFDatatype dataType = literal.getDatatype();
             final Object rdfValue = literal.getValue();
 
-            if (dataType == null && rdfValue instanceof String) {
+            if (dataType == null && rdfValue instanceof String
+                    || (dataType != null && dataType.equals(XSDDatatype.XSDstring))) {
                 // short-circuit the common case
                 return valueFactory.createValue(literal.getString(), STRING);
             } else if (rdfValue instanceof Boolean) {
@@ -129,6 +135,8 @@ public class ValueConverter extends Converter<Value, RDFNode> {
                 return valueFactory.createValue(literal.getByte());
             } else if (rdfValue instanceof Double) {
                 return valueFactory.createValue(literal.getDouble());
+            } else if (rdfValue instanceof BigDecimal) {
+                return valueFactory.createValue((BigDecimal)literal.getValue());
             } else if (rdfValue instanceof Float) {
                 return valueFactory.createValue(literal.getFloat());
             } else if (rdfValue instanceof Long
@@ -139,11 +147,15 @@ public class ValueConverter extends Converter<Value, RDFNode> {
                 return valueFactory.createValue(literal.getShort());
             } else if (rdfValue instanceof Integer) {
                 return valueFactory.createValue(literal.getInt());
-            } else if (rdfValue instanceof XSDDateTime) {
-                return valueFactory.createValue(((XSDDateTime) rdfValue)
-                        .asCalendar());
+            } else if (rdfValue instanceof XSDDateTime
+                    && ((XSDDateTime) rdfValue).getNarrowedDatatype().equals(XSDDatatype.XSDdateTime)) {
+                return valueFactory.createValue(((XSDDateTime) rdfValue).asCalendar());
             } else {
-                return valueFactory.createValue(literal.getString(), STRING);
+                if (dataType != null && !dataType.getURI().isEmpty()) {
+                    return valueFactory.createValue(literal.getString() + LITERAL_TYPE_SEP + dataType.getURI(), STRING);
+                } else {
+                    return valueFactory.createValue(literal.getString(), STRING);
+                }
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -151,9 +163,21 @@ public class ValueConverter extends Converter<Value, RDFNode> {
     }
 
     private static Literal literal2node(final Object literal) {
-        final Literal result = ResourceFactory.createTypedLiteral(literal);
+        final Literal result = createTypedLiteral(literal);
         LOGGER.trace("Converting {} into {}", literal, result);
         return result;
+    }
+
+
+    private static Literal stringliteral2node(final String literal) {
+        final int i = literal.indexOf(LITERAL_TYPE_SEP);
+
+        if (i < 0) {
+            return literal2node(literal);
+        } else {
+            return createTypedLiteral(literal.substring(0, i),
+                    new BaseDatatype(literal.substring(i + LITERAL_TYPE_SEP.length())));
+        }
     }
 
     private RDFNode traverseLink(final Value v)
