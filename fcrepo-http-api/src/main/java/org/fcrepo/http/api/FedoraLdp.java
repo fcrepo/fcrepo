@@ -63,6 +63,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.text.ParseException;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
@@ -87,6 +88,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -171,8 +173,7 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @GET
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
-            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
+            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X, "*/*"})
     public Response describe(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -183,6 +184,22 @@ public class FedoraLdp extends ContentExposingResource {
 
         return getContent(prefer, rangeValue, rdfStream);
 
+    }
+
+    /**
+     * Retrieve the HTML version of the node profile
+     *
+     * @return triples for the specified node
+     * @throws RepositoryException
+     */
+    @GET
+    @Produces({TEXT_HTML, APPLICATION_XHTML_XML})
+    public Response describeHTML(@HeaderParam("Range") final String rangeValue) throws IOException, ParseException {
+        // if no prefer header is set, include child resources so they can be used for conditional link building
+        if ( prefer == null ) {
+            prefer = new Prefer("return=representation; include=\"" + EMBED_CONTAINS + "\"");
+        }
+        return describe(rangeValue);
     }
 
     /**

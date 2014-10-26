@@ -17,16 +17,16 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -66,6 +66,7 @@ import com.hp.hpl.jena.vocabulary.RDFS;
 public class ViewHelpers {
 
     private static final Logger LOGGER = getLogger(ViewHelpers.class);
+    private static final Node FEDORA_BINARY = createLiteral("fedora:binary");
 
     private static ViewHelpers instance = null;
 
@@ -422,16 +423,10 @@ public class ViewHelpers {
     }
 
     /**
-     * Determines whether the subject is kind of RDF resource
+     * Determines whether the subject is a binary (non-RDF resource)
      */
-    public boolean isRdfResource(final Graph graph,
-                                 final Node subject,
-                                 final String namespace,
-                                 final String resource) {
-        final Iterator<Triple> it = graph.find(subject,
-                                               createResource(RDF_NAMESPACE + "type").asNode(),
-                                               createResource(namespace + resource).asNode());
-        return it.hasNext();
+    public boolean isBinary(final Graph graph, final Node subject ) {
+        return graph.find(subject, HAS_MIXIN_TYPE.asNode(), FEDORA_BINARY).hasNext();
     }
 
     /**

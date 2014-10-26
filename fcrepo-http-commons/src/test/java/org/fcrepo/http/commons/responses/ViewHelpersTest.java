@@ -26,6 +26,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
@@ -35,7 +36,6 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
-import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -188,18 +188,10 @@ public class ViewHelpersTest {
     }
 
     @Test
-    public void testRdfResource() {
-        final String ns = "http://any/namespace#";
-        final String type = "anyType";
+    public void testIsBinary() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b"),
-                createResource(RDF_NAMESPACE + "type").asNode(),
-                createResource(ns + type).asNode()));
-
-        assertTrue("Node is a " + type + " node.",
-                testObj.isRdfResource(mem, createURI("a/b"), ns, type));
-        assertFalse("Node is not a " + type + " node.",
-                testObj.isRdfResource(mem, createURI("a/b"), ns, "otherType"));
+        mem.add(new Triple(createURI("a/b"), HAS_MIXIN_TYPE.asNode(), createLiteral("fedora:binary")));
+        assertTrue(testObj.isBinary(mem, createURI("a/b")));
     }
 
     @Test
