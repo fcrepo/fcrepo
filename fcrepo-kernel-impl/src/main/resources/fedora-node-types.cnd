@@ -36,69 +36,14 @@
 
 <test = 'info:fedora/test/'>
 
-/*
- * The following relationship properties are made available in support of legacy graph constructions from the
- * Fedora 3 era that use direct resource-to-resource relationships. New work would be best accomplished by 
- * using literal-valued properties with defined semantics and associated vocabularies, or by directly using
- * JCR technical idioms like hierarchy.
- */
-
-[fedora:relations] mixin
-
-	- fedorarelsext:isPartOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasPart (REFERENCE) multiple COPY
-	- fedorarelsext:isConstituentOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasConstituent (REFERENCE) multiple COPY
-	- fedorarelsext:isMemberOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasMember (REFERENCE) multiple COPY
-	- fedorarelsext:isSubsetOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasSubset (REFERENCE) multiple COPY
-	- fedorarelsext:isMemberOfCollection (REFERENCE) multiple COPY
-	- fedorarelsext:hasCollectionMember (REFERENCE) multiple COPY
-	- fedorarelsext:isDerivationOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasDerivation (REFERENCE) multiple COPY
-	- fedorarelsext:isDependentOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasDependent (REFERENCE) multiple COPY
-	- fedorarelsext:isDescriptionOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasDescription (REFERENCE) multiple COPY
-	- fedorarelsext:isMetadataFor (REFERENCE) multiple COPY
-	- fedorarelsext:hasMetadata (REFERENCE) multiple COPY
-	- fedorarelsext:isAnnotationOf (REFERENCE) multiple COPY
-	- fedorarelsext:hasAnnotation (REFERENCE) multiple COPY
-	- fedorarelsext:hasEquivalent (REFERENCE) multiple COPY
-    - fedorarelsext:hasExternalContent (URI) multiple COPY
-    - fedorarelsext:isExternalContentOf (URI) multiple COPY
-
-
 [ldp:Container] mixin
     - ldp:membershipResource (REFERENCE)
     - ldp:hasMemberRelation (URI)
 
-
-/*
- *  Dublin Core terms
- */
-[fedora:DublinCoreDescribable] mixin
-  - dc:contributor (STRING) multiple
-  - dc:coverage (STRING) multiple
-  - dc:creator (STRING) multiple
-  - dc:date (STRING) multiple
-  - dc:description (STRING) multiple
-  - dc:format (STRING) multiple
-  - dc:identifier (STRING) multiple
-  - dc:language (STRING) multiple
-  - dc:publisher (STRING) multiple
-  - dc:relation (STRING) multiple
-  - dc:rights (STRING) multiple
-  - dc:source (STRING) multiple
-  - dc:subject (STRING) multiple
-  - dc:title (STRING) multiple
-  - dc:type (STRING) multiple
-
 /*
  * Any Fedora resource.
  */
-[fedora:resource] > fedora:relations, mix:created, mix:lastModified, mix:referenceable, fedora:DublinCoreDescribable mixin
+[fedora:resource] > mix:created, mix:lastModified, mix:referenceable mixin
   - rdf:type (URI) multiple
   - * (undefined) multiple
   - * (undefined)
