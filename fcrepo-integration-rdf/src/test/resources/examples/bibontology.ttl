@@ -1,0 +1,47 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix bibo: <http://purl.org/ontology/bibo/> .
+
+<>
+    dcterms:date "2007-05-01" ;
+    dcterms:hasPart <#paper11> ;
+    dcterms:partOf <http://sunsite.informatik.rwth-aachen.de/Publications/CEUR-WS/> ;
+    dcterms:relation <#proceedings.pdf> ;
+    dcterms:title "SFSW '07 Scripting for the Semantic Web" ;
+    bibo:contributorList [
+        rdf:_1 <http://www.auer.cx/soeren> ;
+        rdf:_2 <http://www.bizer.de#chris> ;
+        rdf:_3 <http://kmi.open.ac.uk/people/tom/> ;
+        rdf:_4 <http://www.dfki.uni-kl.de/~grimnes/foaf.rdf#ggrimnes> ;
+        a rdf:Seq
+    ] ;
+    bibo:editor <http://kmi.open.ac.uk/people/tom/>, <http://www.auer.cx/soeren>, <http://www.bizer.de#chris>, <http://www.dfki.uni-kl.de/~grimnes/foaf.rdf#ggrimnes> ;
+    bibo:shortTitle "SFSW2007" ;
+    bibo:status <http://purl.org/ontology/bibo/status/published> ;
+    bibo:volume "248" ;
+    a bibo:Proceeding .
+
+<#paper11.pdf>
+    bibo:uri "http://ftp.informatik.rwth-aachen.de/Publications/CEUR-WS/Vol-248/paper11.pdf" ;
+    a bibo:Document .
+
+<#paper11>
+    dcterms:creator <http://captsolo.net/semweb/foaf-captsolo.rdf#Uldis_Bojars>, <http://fgiasson.com/me/>, <http://tmp.apassant.net/foaf.rdf#alex> ;
+    dcterms:date "2007-05-01" ;
+    dcterms:partOf <> ;
+    dcterms:relation <#paper11.pdf> ;
+    dcterms:title "An Architecture to Discover and Query Decentralized RDF Data" ;
+    bibo:authorList [
+        rdf:_1 <http://captsolo.net/semweb/foaf-captsolo.rdf#Uldis_Bojars> ;
+        rdf:_2 <http://tmp.apassant.net/foaf.rdf#alex> ;
+        rdf:_3 <http://fgiasson.com/me/> ;
+        a rdf:Seq
+    ] ;
+    bibo:status <http://purl.org/ontology/bibo/status/accepted>, <http://purl.org/ontology/bibo/status/peerReviwed>, <http://purl.org/ontology/bibo/status/published> ;
+    a bibo:Article .
+
+<#proceedings.pdf>
+    bibo:uri "http://ftp.informatik.rwth-aachen.de/Publications/CEUR-WS/Vol-248/proceedings.pdf" ;
+    a bibo:Document .

@@ -181,17 +181,17 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         } else if (object.isBlank()) {
             value = vfactory.createBNode(object.getBlankNodeLabel());
         } else if (object.isLiteral()) {
-            final Object literalValue = object.getLiteralValue();
+            final String literalValue = object.getLiteralLexicalForm();
 
             final String literalDatatypeURI = object.getLiteralDatatypeURI();
 
             if (!object.getLiteralLanguage().isEmpty()) {
-                value = vfactory.createLiteral(object.getLiteralLexicalForm(), object.getLiteralLanguage());
+                value = vfactory.createLiteral(literalValue, object.getLiteralLanguage());
             } else if (literalDatatypeURI != null) {
                 final URI uri = vfactory.createURI(literalDatatypeURI);
-                value = vfactory.createLiteral(literalValue.toString(), uri);
+                value = vfactory.createLiteral(literalValue, uri);
             } else {
-                value = createLiteral(vfactory, literalValue);
+                value = createLiteral(vfactory, object.getLiteralValue());
             }
         } else {
             // should not happen..

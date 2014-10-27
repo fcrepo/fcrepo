@@ -425,6 +425,7 @@ public class FedoraResourceImplTest {
     @Test
     public void testDelete() throws RepositoryException {
         when(mockNode.getReferences()).thenReturn(new TestPropertyIterator());
+        when(mockNode.getWeakReferences()).thenReturn(new TestPropertyIterator());
         testObj.delete();
         verify(mockNode).remove();
     }
@@ -432,6 +433,7 @@ public class FedoraResourceImplTest {
     @Test
     public void testDeleteLeavesATombstone() throws RepositoryException {
         when(mockNode.getReferences()).thenReturn(new TestPropertyIterator());
+        when(mockNode.getWeakReferences()).thenReturn(new TestPropertyIterator());
         when(mockNode.getName()).thenReturn("a");
         when(mockNode.getParent()).thenReturn(mockContainer);
         when(mockNode.getDepth()).thenReturn(2);

@@ -1,0 +1,31 @@
+@prefix mo: <http://purl.org/ontology/mo/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix tl: <http://purl.org/NET/c4dm/timeline.owl#> .
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>
+    a mo:MusicArtist ;
+    foaf:name "Johann Sebastian Bach" .
+<#composition>
+    a mo:Composition ;
+    rdfs:label "Composition of The Art of Fugue, BWV 1080: Contrapunctus IX, a 4, alla Duodecima" ;
+    mo:composer <http://dbpedia.org/resource/Johann_Sebastian_Bach> ;
+    event:time [ tl:start "1742"^^xsd:gYear ; tl:end "1749"^^xsd:gYear ] ;
+    mo:produced_work <#kunst-der-fuge> .
+<#kunst-der-fuge>
+    a mo:MusicalWork ;
+    dc:title "The Art of Fugue, BWV 1080: Contrapunctus IX, a 4, alla Duodecima" .
+<#performance>
+    a mo:Performance ;
+    mo:performance_of <#kunst-der-fuge> ;
+    event:time [ tl:at "2003"^^xsd:gYear ] ;
+    mo:performer <http://musicbrainz.org/artist/fd20e8ed-0736-44db-8d97-530fbf00e813#_> ;
+    mo:instrument [ a mo:Instrument ; rdfs:label "first violin" ],
+                  [ a mo:Instrument ; rdfs:label "second violin" ],
+                  [ a mo:Instrument ; rdfs:label "viola" ],
+                  [ a mo:Instrument ; rdfs:label "cello" ] ;
+    mo:recorded_as <http://musicbrainz.org/recording/93da082b-99c1-4469-9eb6-91e9fbeaeb2a#_> .
+

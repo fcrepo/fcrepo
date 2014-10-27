@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.modeshape.jcr;
+package org.fcrepo.integration.rdf;
 
-import com.google.common.base.Predicate;
+import org.junit.Test;
 
-import javax.jcr.Node;
+import java.io.IOException;
 
 /**
- * Break through Modeshape to find out if a node is external
- *
  * @author cabeer
- * @since 10/8/14
  */
-public class IsExternal implements Predicate<Node> {
-    @Override
-    public boolean apply(final Node input) {
-        return (input instanceof JcrNode) && ((JcrNode)input).isExternal();
-    }
+public class MiscExamplesIT extends AbstractIntegrationRdfIT {
 
+
+    @Test
+    public void testSyntacticallyInvalidDate() throws IOException {
+        createLDPRSAndCheckResponse(getRandomUniquePid(), "<> <info:some/property> \"dunno\"^^<http://www.w3" +
+                ".org/2001/XMLSchema#dateTime>");
+    }
 }

@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.rdf;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.UUID.randomUUID;
 import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
@@ -37,7 +38,7 @@ import java.util.Map;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.PropertyType;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -174,23 +175,26 @@ public class JcrRdfTools {
         throws RepositoryException {
         assert (valueFactory != null);
 
-        if (type == UNDEFINED) {
+        if (type == UNDEFINED
+                || type == STRING
+                || (data.isResource() && type != URI && type != REFERENCE && type != WEAKREFERENCE)) {
             return valueConverter.reverse().convert(data);
-        } else if (data.isURIResource()
-                && (type == REFERENCE || type == WEAKREFERENCE)) {
+        } else if (type == REFERENCE || type == WEAKREFERENCE) {
             // reference to another node (by path)
+            if (!data.isURIResource()) {
+                throw new ValueFormatException("Reference properties can only refer to URIs, not literals");
+            }
+
             try {
                 final Node nodeFromGraphSubject = idTranslator.convert(data.asResource()).getNode();
-                return valueFactory.createValue(nodeFromGraphSubject,
-                        type == WEAKREFERENCE);
+                return valueFactory.createValue(nodeFromGraphSubject, type == WEAKREFERENCE);
             } catch (final RepositoryRuntimeException e) {
                 throw new MalformedRdfException("Unable to find referenced node", e);
             }
-        } else if (!data.isURIResource() && (type == REFERENCE || type == WEAKREFERENCE)) {
-            throw new ValueFormatException("Reference properties can only refer to URIs, not literals");
-        } else if (type == URI) {
-            // some random opaque URI
-            return valueFactory.createValue(data.toString(), PropertyType.URI);
+        } else if (data.isResource()) {
+            LOGGER.debug("Using default JCR value creation for RDF resource: {}",
+                    data);
+            return valueFactory.createValue(data.asResource().getURI(), type);
         } else {
             LOGGER.debug("Using default JCR value creation for RDF literal: {}",
                     data);
@@ -264,7 +268,11 @@ public class JcrRdfTools {
         final String propertyName =
                 getPropertyNameFromPredicate(node, predicate, value, namespaces);
         final Value v = createValue(node, value, propertyName);
-        nodePropertiesTools.appendOrReplaceNodeProperty(idTranslator, node, propertyName, v);
+        final Property property = nodePropertiesTools.appendOrReplaceNodeProperty(node, propertyName, v);
+
+        if (value.isURIResource() && idTranslator.inDomain(value.asResource())) {
+            nodePropertiesTools.addReferencePlaceholders(idTranslator, node, property, value.asResource());
+        }
     }
 
     protected boolean repositoryHasType(final Session session, final String mixinName) throws RepositoryException {
@@ -318,7 +326,11 @@ public class JcrRdfTools {
         if (node.hasProperty(propertyName)) {
             final Value v = createValue(node, objectNode, propertyName);
 
-            nodePropertiesTools.removeNodeProperty(idTranslator, node, propertyName, v);
+            final Property property = nodePropertiesTools.removeNodeProperty(node, propertyName, v);
+
+            if (objectNode.isURIResource() && idTranslator.inDomain(objectNode.asResource())) {
+                nodePropertiesTools.removeReferencePlaceholders(idTranslator, node, property, objectNode.asResource());
+            }
         }
     }
 
