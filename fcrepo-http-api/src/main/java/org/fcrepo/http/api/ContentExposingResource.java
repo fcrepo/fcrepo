@@ -31,6 +31,7 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.Datastream;
 import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
@@ -92,6 +93,7 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -122,8 +124,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private static long MAX_BUFFER_SIZE = 10240000;
 
     protected abstract String externalPath();
-
-    protected abstract void addResourceHttpHeaders(FedoraResource resource);
 
     protected Response getContent(final Prefer prefer,
                                   final String rangeValue,
@@ -344,16 +344,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 builder = ok(content);
             }
 
-            final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
-                    .fileName(binary.getFilename())
-                    .creationDate(binary.getCreatedDate())
-                    .modificationDate(binary.getLastModifiedDate())
-                    .size(binary.getContentSize())
-                    .build();
 
+            // we set the content-type explicitly to avoid content-negotiation from getting in the way
             return builder.type(binary.getMimeType())
-                    .header("Accept-Ranges", "bytes")
-                    .header("Content-Disposition", contentDisposition)
                     .cacheControl(cc)
                     .build();
 
@@ -382,6 +375,40 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         return resource;
+    }
+
+
+    /**
+     * Add any resource-specific headers to the response
+     * @param resource
+     */
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+        if (resource instanceof FedoraBinary) {
+
+            final FedoraBinary binary = (FedoraBinary)resource;
+            final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
+                    .fileName(binary.getFilename())
+                    .creationDate(binary.getCreatedDate())
+                    .modificationDate(binary.getLastModifiedDate())
+                    .size(binary.getContentSize())
+                    .build();
+
+            servletResponse.addHeader("Content-Type", binary.getMimeType());
+            servletResponse.addHeader("Content-Length", String.valueOf(binary.getContentSize()));
+            servletResponse.addHeader("Accept-Ranges", "bytes");
+            servletResponse.addHeader("Content-Disposition", contentDisposition.toString());
+        }
+
+        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
+
+        if (resource instanceof Datastream) {
+            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
+        } else if (resource instanceof FedoraBinary) {
+            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
+        } else if (resource instanceof FedoraObject) {
+            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
+        }
+
     }
 
     /**
