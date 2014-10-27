@@ -37,7 +37,15 @@ public interface FedoraJcrTypes {
 
     String FEDORA_BLANKNODE = "fedora:blanknode";
 
-    String LDP_CONTAINER = "ldp:Container";
+    String FEDORA_CONTAINER = "fedora:Container";
+
+    String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
+
+    String LDP_DIRECT_CONTAINER = "ldp:DirectContainer";
+
+    String LDP_INDIRECT_CONTAINER = "ldp:IndirectContainer";
+
+    String LDP_INSERTED_CONTENT_RELATION = "ldp:insertedContentRelation";
 
     String JCR_LASTMODIFIED = "jcr:lastModified";
 

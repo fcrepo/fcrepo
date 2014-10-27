@@ -94,8 +94,7 @@ public final class RdfLexicon {
      */
     public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
             REPOSITORY_NAMESPACE, JCR_NAMESPACE,
-            MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE,
-            LDP_NAMESPACE);
+            MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE);
 
     /**
      * Is this namespace one that the repository manages?
@@ -168,8 +167,12 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "nextPage");
     public static final Resource CONTAINER =
             createResource(LDP_NAMESPACE + "Container");
+    public static final Resource BASIC_CONTAINER =
+            createResource(LDP_NAMESPACE + "BasicContainer");
     public static final Resource DIRECT_CONTAINER =
             createResource(LDP_NAMESPACE + "DirectContainer");
+    public static final Resource INDIRECT_CONTAINER =
+            createResource(LDP_NAMESPACE + "IndirectContainer");
     public static final Property MEMBERSHIP_RESOURCE =
             createProperty(LDP_NAMESPACE + "membershipResource");
     public static final Property HAS_MEMBER_RELATION =
@@ -184,6 +187,8 @@ public final class RdfLexicon {
         createProperty(LDP_NAMESPACE + "NonRDFSource");
     public static final Property CONSTRAINED_BY =
             createProperty(LDP_NAMESPACE + "constrainedBy");
+    public static final Property MEMBER_SUBJECT =
+            createProperty(LDP_NAMESPACE + "MemberSubject");
 
     public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
             FIRST_PAGE, NEXT_PAGE, CONTAINS, LDP_MEMBER);

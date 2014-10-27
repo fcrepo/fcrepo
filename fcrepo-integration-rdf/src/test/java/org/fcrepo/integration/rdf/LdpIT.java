@@ -40,7 +40,8 @@ public class LdpIT extends AbstractIntegrationRdfIT {
                 "@prefix ldp: <http://www.w3.org/ns/ldp#>.\n" +
                 "@prefix dcterms: <http://purl.org/dc/terms/>.\n" +
                 "@prefix o: <http://example.org/ontology#>.\n" +
-                "<> dcterms:title \"The liabilities of JohnZSmith\";\n" +
+                "<> a ldp:DirectContainer ;" +
+                "   dcterms:title \"The liabilities of JohnZSmith\";\n" +
                 "   ldp:membershipResource <" + location + ">;\n" +
                 "   ldp:hasMemberRelation o:liability;\n";
 

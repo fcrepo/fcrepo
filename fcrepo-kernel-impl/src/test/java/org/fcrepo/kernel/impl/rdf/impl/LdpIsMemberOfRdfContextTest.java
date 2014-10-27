@@ -24,17 +24,23 @@ import org.fcrepo.kernel.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.modeshape.jcr.api.NamespaceRegistry;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.Workspace;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
@@ -84,12 +90,25 @@ public class LdpIsMemberOfRdfContextTest {
 
     private DefaultIdentifierTranslator subjects;
 
+    @Mock
+    private Property mockInsertedContentRelationProperty;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
+
+    @Mock
+    private Value mockRelationValue;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
         when(mockResource.getContainer()).thenReturn(mockContainer);
         when(mockResource.getNode()).thenReturn(mockResourceNode);
+        when(mockResourceNode.getSession()).thenReturn(mockSession);
         when(mockResourceNode.getDepth()).thenReturn(1);
 
         when(mockContainer.getPath()).thenReturn("/");
@@ -102,6 +121,9 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockBinary.getPath()).thenReturn("/a/jcr:content");
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
         when(mockBinary.getContainer()).thenReturn(mockContainer);
+
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
 
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
@@ -126,6 +148,7 @@ public class LdpIsMemberOfRdfContextTest {
 
     @Test
     public void testIsMemberOfRelation() throws RepositoryException {
+        when(mockContainer.hasType(LDP_DIRECT_CONTAINER)).thenReturn(true);
         when(mockContainer.hasProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(true);
         when(mockContainer.getProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(mockRelationProperty);
         when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
@@ -148,6 +171,7 @@ public class LdpIsMemberOfRdfContextTest {
 
     @Test
     public void testIsMemberOfRelationToExternalResource() throws RepositoryException {
+        when(mockContainer.hasType(LDP_DIRECT_CONTAINER)).thenReturn(true);
         when(mockContainer.hasProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(true);
         when(mockContainer.getProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(mockRelationProperty);
         when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
@@ -171,6 +195,7 @@ public class LdpIsMemberOfRdfContextTest {
 
     @Test
     public void testIsMemberOfRelationForBinary() throws RepositoryException {
+        when(mockContainer.hasType(LDP_DIRECT_CONTAINER)).thenReturn(true);
         when(mockContainer.hasProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(true);
         when(mockContainer.getProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(mockRelationProperty);
         when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
@@ -192,4 +217,72 @@ public class LdpIsMemberOfRdfContextTest {
                         createProperty(property),
                         nodeToResource(subjects).convert(mockNode)));
     }
+
+    @Test
+    public void testIsMemberOfRelationWithIndirectContainer() throws RepositoryException {
+        when(mockContainer.hasType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
+        when(mockContainer.hasProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(true);
+        when(mockContainer.getProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(mockRelationProperty);
+        when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
+        when(mockContainer.getProperty(LDP_MEMBER_RESOURCE)).thenReturn(mockMembershipProperty);
+
+        when(mockContainer.hasProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn(true);
+        when(mockContainer.getProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn(mockInsertedContentRelationProperty);
+        when(mockInsertedContentRelationProperty.getString()).thenReturn("some:relation");
+        when(mockNamespaceRegistry.isRegisteredUri("some:")).thenReturn(true);
+        when(mockNamespaceRegistry.getPrefix("some:")).thenReturn("some");
+
+        when(mockResource.hasProperty("some:relation")).thenReturn(true);
+        when(mockResource.getProperty("some:relation")).thenReturn(mockRelationProperty);
+        when(mockRelationProperty.isMultiple()).thenReturn(false);
+        when(mockRelationProperty.getValue()).thenReturn(mockRelationValue);
+        when(mockRelationValue.getType()).thenReturn(URI);
+        when(mockRelationValue.getString()).thenReturn(subjects.toDomain("/a/#/hash-uri").getURI());
+
+        when(mockMembershipProperty.getType()).thenReturn(REFERENCE);
+        when(mockMembershipProperty.getNode()).thenReturn(mockNode);
+
+        final String property = "some:uri";
+        when(mockRelationProperty.getString()).thenReturn(property);
+        testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
+
+        final Model model = testObj.asModel();
+        assertTrue("Expected stream to contain triple",
+                model.contains(subjects.toDomain("/a/#/hash-uri"),
+                        createProperty(property),
+                        nodeToResource(subjects).convert(mockNode)));
+
+    }
+
+    @Test
+    public void testIsMemberOfRelationWithIndirectContainerAndRelationOutsideDomain() throws RepositoryException {
+        when(mockContainer.hasType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
+        when(mockContainer.hasProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(true);
+        when(mockContainer.getProperty(LDP_IS_MEMBER_OF_RELATION)).thenReturn(mockRelationProperty);
+        when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
+        when(mockContainer.getProperty(LDP_MEMBER_RESOURCE)).thenReturn(mockMembershipProperty);
+
+        when(mockContainer.hasProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn(true);
+        when(mockContainer.getProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn(mockInsertedContentRelationProperty);
+        when(mockInsertedContentRelationProperty.getString()).thenReturn("some:relation");
+        when(mockNamespaceRegistry.isRegisteredUri("some:")).thenReturn(true);
+        when(mockNamespaceRegistry.getPrefix("some:")).thenReturn("some");
+
+        when(mockResource.hasProperty("some:relation")).thenReturn(true);
+        when(mockResource.getProperty("some:relation")).thenReturn(mockRelationProperty);
+        when(mockRelationProperty.isMultiple()).thenReturn(false);
+        when(mockRelationProperty.getValue()).thenReturn(mockRelationValue);
+        when(mockRelationValue.getString()).thenReturn("x");
+
+        when(mockMembershipProperty.getType()).thenReturn(REFERENCE);
+        when(mockMembershipProperty.getNode()).thenReturn(mockNode);
+
+        final String property = "some:uri";
+        when(mockRelationProperty.getString()).thenReturn(property);
+        testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
+
+        final Model model = testObj.asModel();
+        assertTrue("Expected stream to be empty", model.isEmpty());
+    }
+
 }

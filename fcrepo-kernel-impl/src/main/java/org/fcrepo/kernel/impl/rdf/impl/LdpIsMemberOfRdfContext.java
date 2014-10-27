@@ -15,26 +15,42 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
+import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
+import java.util.Iterator;
+
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 
 /**
  * @author cabeer
  * @since 10/7/14
  */
 public class LdpIsMemberOfRdfContext extends NodeRdfContext {
+    private final ValueConverter valueConverter;
+
     /**
      * Default constructor.
      *
@@ -47,25 +63,67 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
+        valueConverter = new ValueConverter(session(), translator());
         final FedoraResource container = resource.getContainer();
 
-        if (container != null) {
-
+        if (container != null
+                && (container.hasType(LDP_DIRECT_CONTAINER) || container.hasType(LDP_INDIRECT_CONTAINER))
+                && container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
             concatIsMemberOfRelation(container);
         }
     }
 
     private void concatIsMemberOfRelation(final FedoraResource container) throws RepositoryException {
-        if (container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
-            final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
+        final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
 
-            final Resource memberRelation = ResourceFactory.createResource(property.getString());
+        final Resource memberRelation = createResource(property.getString());
+        final Resource membershipResource = getMemberResource(container);
 
-            final Resource membershipResource = getMemberResource(container);
+        if (membershipResource == null) {
+            return;
+        }
 
-            if (membershipResource != null) {
-                concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
+        final String insertedContainerProperty;
+
+        if (container.hasType(LDP_INDIRECT_CONTAINER)) {
+            if (container.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
+                insertedContainerProperty = container.getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
+            } else {
+                return;
             }
+        } else {
+            insertedContainerProperty = RdfLexicon.MEMBER_SUBJECT.getURI();
+        }
+
+        if (insertedContainerProperty.equals(RdfLexicon.MEMBER_SUBJECT.getURI())) {
+            concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
+        } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {
+            final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(), createResource
+                    (insertedContainerProperty), null);
+
+            if (!resource().hasProperty(insertedContentProperty)) {
+                return;
+            }
+
+            final PropertyValueIterator values
+                    = new PropertyValueIterator(resource().getProperty(insertedContentProperty));
+
+            final Iterator<RDFNode> insertedContentRelations = Iterators.filter(
+                    Iterators.transform(values, valueConverter),
+                    new Predicate<RDFNode>() {
+                        @Override
+                        public boolean apply(final RDFNode input) {
+                            return input.isURIResource() && translator().inDomain(input.asResource());
+                        }
+                    });
+
+            concat(Iterators.transform(insertedContentRelations, new Function<RDFNode, Triple>() {
+                @Override
+                public Triple apply(final RDFNode input) {
+                    return create(input.asNode(), memberRelation.asNode(), membershipResource.asNode());
+                }
+            }));
+
         }
     }
 
@@ -85,7 +143,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
             if ( type == REFERENCE || type == WEAKREFERENCE || type == PATH) {
                 membershipResource = nodeConverter().convert(memberResource.getNode());
             } else {
-                membershipResource = ResourceFactory.createResource(memberResource.getString());
+                membershipResource = createResource(memberResource.getString());
             }
         } else {
             membershipResource = translator().reverse().convert(parent);
