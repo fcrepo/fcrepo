@@ -90,6 +90,7 @@ public class ValueConverterTest {
                 {ResourceFactory.createTypedLiteral(true)},
                 {ResourceFactory.createResource("info:x")},
                 {ResourceFactory.createTypedLiteral("2014-10-24T01:23:45Z", XSDDatatype.XSDdateTime)},
+                {ResourceFactory.createTypedLiteral("some-invalid-data", XSDDatatype.XSDdateTime)},
                 // Types outside the JCR type system boundaries:
                 {ResourceFactory.createTypedLiteral("2014-10-24", XSDDatatype.XSDdate)},
                 {ResourceFactory.createTypedLiteral("01:02:03", XSDDatatype.XSDtime)},
