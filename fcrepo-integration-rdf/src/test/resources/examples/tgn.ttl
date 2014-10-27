@@ -1,0 +1,23 @@
+<> a <http://vocab.getty.edu/ontology#AdminPlaceConcept> ;
+	<http://www.w3.org/2000/01/rdf-schema#seeAlso> <http://www.getty.edu/vow/TGNFullDisplay?find=&place=&nation=&subjectid=7002252> ;
+	<http://purl.org/dc/terms/contributor> <http://vocab.getty.edu/tgn/contrib/10000000> , <http://vocab.getty.edu/tgn/contrib/10000003> ;
+	<http://www.w3.org/2004/02/skos/core#scopeNote> <http://vocab.getty.edu/tgn/scopeNote/33281> ;
+	<http://www.w3.org/2004/02/skos/core#inScheme> <http://vocab.getty.edu/tgn/> ;
+	<http://www.w3.org/2004/02/skos/core#changeNote> <http://vocab.getty.edu/tgn/rev/5000036050> , <http://vocab.getty.edu/tgn/rev/5019044159> , <http://vocab.getty.edu/tgn/rev/5019033264> , <http://vocab.getty.edu/tgn/rev/5019044150> , <http://vocab.getty.edu/tgn/rev/5019044153> , <http://vocab.getty.edu/tgn/rev/5019044161> , <http://vocab.getty.edu/tgn/rev/5019044168> , <http://vocab.getty.edu/tgn/rev/5019044170> , <http://vocab.getty.edu/tgn/rev/5019044176> , <http://vocab.getty.edu/tgn/rev/5019044145> , <http://vocab.getty.edu/tgn/rev/5019044160> ;
+	<http://www.w3.org/2008/05/skos-xl#prefLabel> <http://vocab.getty.edu/tgn/term/85877-en> ;
+	<http://www.w3.org/2008/05/skos-xl#altLabel> <http://vocab.getty.edu/tgn/term/85876> , <http://vocab.getty.edu/tgn/term/172152> , <http://vocab.getty.edu/tgn/term/140058> , <http://vocab.getty.edu/tgn/term/184279> , <http://vocab.getty.edu/tgn/term/139582> , <http://vocab.getty.edu/tgn/term/1002201915> , <http://vocab.getty.edu/tgn/term/1002201916> , <http://vocab.getty.edu/tgn/term/171894> , <http://vocab.getty.edu/tgn/term/1002201920> , <http://vocab.getty.edu/tgn/term/1002201914-ar> , <http://vocab.getty.edu/tgn/term/166090> , <http://vocab.getty.edu/tgn/term/324938> , <http://vocab.getty.edu/tgn/term/328505> , <http://vocab.getty.edu/tgn/term/328506> , <http://vocab.getty.edu/tgn/term/1002201919> ;
+	<http://purl.org/dc/terms/created> "1991-09-13T06:28:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+	<http://purl.org/dc/terms/modified> "2014-07-26T08:32:06"^^<http://www.w3.org/2001/XMLSchema#dateTime> , "2014-07-04T21:46:08"^^<http://www.w3.org/2001/XMLSchema#dateTime> , "2014-07-26T08:32:05"^^<http://www.w3.org/2001/XMLSchema#dateTime> , "2014-07-26T08:35:38"^^<http://www.w3.org/2001/XMLSchema#dateTime> , "2014-07-26T08:35:37"^^<http://www.w3.org/2001/XMLSchema#dateTime> ;
+	<http://vocab.getty.edu/ontology#parentString> "Ḩalab, Sūrīyah, Asia, World" ;
+	<http://vocab.getty.edu/ontology#parentStringAbbrev> "Ḩalab, Sūrīyah, ... World" ;
+	<http://vocab.getty.edu/ontology#displayOrder> "19"^^<http://www.w3.org/2001/XMLSchema#positiveInteger> ;
+	<http://vocab.getty.edu/ontology#broaderPartitive> <http://vocab.getty.edu/tgn/1002052> ;
+	<http://vocab.getty.edu/ontology#broaderPreferred> <http://vocab.getty.edu/tgn/1002052> ;
+	<http://vocab.getty.edu/ontology#prefLabelGVP> <http://vocab.getty.edu/tgn/term/85876> ;
+	<http://purl.org/dc/terms/source> <http://vocab.getty.edu/tgn/source/9006561> , <http://vocab.getty.edu/tgn/source/9005014-subject-7002252> , <http://vocab.getty.edu/tgn/source/9006253-subject-7002252> , <http://vocab.getty.edu/tgn/source/9006449-subject-7002252> , <http://vocab.getty.edu/tgn/source/9006549-subject-7002252> , <http://vocab.getty.edu/tgn/source/9005423-subject-7002252> , <http://vocab.getty.edu/tgn/source/9006447-subject-7002252> , <http://vocab.getty.edu/tgn/source/9006548-subject-7002252> ;
+	<http://vocab.getty.edu/ontology#placeTypeNonPreferred> <http://vocab.getty.edu/aat/300387218> , <http://vocab.getty.edu/aat/300008389> , <http://vocab.getty.edu/aat/300264742> , <http://vocab.getty.edu/aat/300387235> , <http://vocab.getty.edu/aat/300387220> , <http://vocab.getty.edu/aat/300000833> , <http://vocab.getty.edu/aat/300387285> , <http://vocab.getty.edu/aat/300387286> , <http://vocab.getty.edu/aat/300235101> , <http://vocab.getty.edu/aat/300000776> ;
+	<http://vocab.getty.edu/ontology#placeTypePreferred> <http://vocab.getty.edu/aat/300008347> ;
+	<http://purl.org/dc/elements/1.1/identifier> "7002252" ;
+	<http://vocab.getty.edu/ontology#tgn3101_adjacent_to> <http://vocab.getty.edu/tgn/7002266> ;
+	<http://www.w3.org/ns/prov#wasGeneratedBy> <http://vocab.getty.edu/tgn/rev/5000036050> ;
+	<http://xmlns.com/foaf/0.1/focus> <http://vocab.getty.edu/tgn/7002252-place> .

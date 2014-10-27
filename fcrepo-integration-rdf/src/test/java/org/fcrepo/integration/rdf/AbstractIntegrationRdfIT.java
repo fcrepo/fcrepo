@@ -151,5 +151,9 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
         assertEquals("Didn't get a CREATED response!", expected.getStatusCode(), actual);
     }
 
+    protected String getContentFromClasspath(final String path) throws IOException {
+        return IOUtils.toString(this.getClass().getResourceAsStream(path));
+    }
+
 
 }
