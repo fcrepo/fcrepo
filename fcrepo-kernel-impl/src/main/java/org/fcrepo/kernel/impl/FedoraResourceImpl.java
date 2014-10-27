@@ -53,6 +53,7 @@ import javax.jcr.version.VersionHistory;
 import com.google.common.base.Converter;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
 import org.fcrepo.kernel.Datastream;
@@ -260,10 +261,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public void delete() {
         try {
-            final PropertyIterator inboundProperties = new PropertyIterator(node.getReferences());
+            final Iterator<Property> inboundProperties = Iterators.concat(
+                    new PropertyIterator(node.getReferences()),
+                    new PropertyIterator(node.getWeakReferences()));
 
-            for (final Property inboundProperty : inboundProperties) {
-                inboundProperty.remove();
+            while (inboundProperties.hasNext()) {
+                inboundProperties.next().remove();
             }
 
             final Node parent;
