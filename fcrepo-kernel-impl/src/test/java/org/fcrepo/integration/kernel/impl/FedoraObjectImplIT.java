@@ -127,11 +127,8 @@ public class FedoraObjectImplIT extends AbstractIT {
                 "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
                 "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
-        assertTrue(object.getNode().getProperty("fedorarelsext:isPartOf")
-                   .getValues()[0].getString(),
-                   object.getNode().getProperty("fedorarelsext:isPartOf")
-                   .getValues()[0].getString()
-                   .equals(object.getNode().getIdentifier()));
+        final Value refValue = object.getNode().getProperty("fedorarelsext:isPartOf_ref").getValues()[0];
+        assertTrue(refValue.getString(), refValue.getString().equals(object.getNode().getIdentifier()));
 
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
