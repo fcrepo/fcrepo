@@ -19,7 +19,6 @@ import com.google.common.base.Converter;
 import com.hp.hpl.jena.datatypes.BaseDatatype;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
-import com.hp.hpl.jena.datatypes.xsd.XSDDateTime;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -59,6 +58,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
     private static final Logger LOGGER = getLogger(ValueConverter.class);
     public static final String LITERAL_TYPE_SEP = "\30^^\30";
+    public static final String URI_SUFFIX = "URI";
 
     private final Session session;
     private final Converter<Node, Resource> graphSubjects;
@@ -111,7 +111,8 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
             if (resource.isURIResource()) {
                 // some random opaque URI
-                return valueFactory.createValue(resource.toString(), URI);
+                return valueFactory.createValue(resource.toString() + LITERAL_TYPE_SEP + URI_SUFFIX, STRING);
+               // return valueFactory.createValue(resource.toString(), URI);
             }
 
             if (resource.isResource()) {
@@ -164,14 +165,20 @@ public class ValueConverter extends Converter<Value, RDFNode> {
     }
 
 
-    private static Literal stringliteral2node(final String literal) {
+    private static RDFNode stringliteral2node(final String literal) {
         final int i = literal.indexOf(LITERAL_TYPE_SEP);
 
         if (i < 0) {
             return literal2node(literal);
         } else {
-            return createTypedLiteral(literal.substring(0, i),
-                    new BaseDatatype(literal.substring(i + LITERAL_TYPE_SEP.length())));
+            final String value = literal.substring(0, i);
+            final String datatypeURI = literal.substring(i + LITERAL_TYPE_SEP.length());
+
+            if (datatypeURI.equals("URI")) {
+                return createResource(value);
+            } else {
+                return createTypedLiteral(value, new BaseDatatype(datatypeURI));
+            }
         }
     }
 

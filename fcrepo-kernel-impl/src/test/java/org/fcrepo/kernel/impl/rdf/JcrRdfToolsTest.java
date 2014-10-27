@@ -26,31 +26,30 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.jcr.PropertyType.NAME;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
-import static javax.jcr.PropertyType.UNDEFINED;
-import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Calendar;
+import java.util.Collections;
 import java.util.NoSuchElementException;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.PropertyIterator;
-import javax.jcr.PropertyType;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -73,6 +72,7 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.utils.CacheEntry;
@@ -80,6 +80,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.JcrTools;
+import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.value.BinaryValue;
 import org.slf4j.Logger;
 
@@ -124,6 +125,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNsRegistry);
         when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockParent.getPath()).thenReturn("/test");
         when(mockParent.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -144,7 +146,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
                 new TestPropertyIterator(mockProperty));
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getParent()).thenReturn(mockNode);
-        when(mockProperty.getName()).thenReturn(mockPredicateName);
+        when(mockProperty.getName()).thenReturn("some:property");
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockProperty.getType()).thenReturn(STRING);
         when(mockProperty.getParent()).thenReturn(mockNode);
@@ -157,6 +159,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
         when(mockHashNode.getName()).thenReturn("#");
+        when(mockFedoraResource.getNode()).thenReturn(mockNode);
     }
 
     @Test
@@ -173,19 +176,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         testObj.createValue(mockValueFactory, n, WEAKREFERENCE);
         verify(mockValueFactory).createValue(mockNode, true);
     }
-
-    @Test
-    public final void shouldMapUriValuesToJcrPropertyValues()
-            throws RepositoryException {
-        final RDFNode n = testSubjects.toDomain("/abc");
-
-        when(mockValueFactory.createValue(n.asResource().getURI(), URI)).thenReturn(mockValue);
-        // uris
-        testObj.createValue(mockValueFactory, n, UNDEFINED);
-        verify(mockValueFactory).createValue(n.asResource().getURI(),
-                PropertyType.URI);
-    }
-
 
     @Test
     public final void shouldMapBooleanValuesToJcrPropertyValues()
@@ -267,20 +257,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         verify(mockValueFactory).createValue((short) 6);
     }
 
-
-    @Test
-    public final void shouldMapCalendarValuesToJcrPropertyValues()
-            throws RepositoryException {
-        final Calendar calendar = Calendar.getInstance();
-        final RDFNode n = createTypedLiteral(calendar);
-
-        when(mockValueFactory.createValue(any(Calendar.class))).thenReturn(mockValue);
-
-        testObj.createValue(mockValueFactory, n, 0);
-        verify(mockValueFactory).createValue(any(Calendar.class));
-    }
-
-
     @Test
     public final void shouldMapStringValuesToJcrPropertyValues()
             throws RepositoryException {
@@ -310,6 +286,47 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         // non-uri references - error
         final RDFNode n = createResource();
         testObj.createValue(mockValueFactory, n, REFERENCE);
+    }
+
+    @Test
+    public void shouldAddReferencePropertyForDomainObject() throws RepositoryException {
+        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[]{});
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+
+        when(mockValueFactory.createValue(anyString(), eq(STRING))).thenReturn(mockValue);
+        when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockReferenceValue);
+
+        when(mockSession.getNode("/x")).thenReturn(mockNode);
+
+        when(mockNode.setProperty(anyString(), any(Value[].class), anyInt())).thenReturn(mockProperty);
+
+        testObj.addProperty(mockFedoraResource,
+                createProperty("some:property"),
+                testSubjects.toDomain("x"),
+                Collections.<String,String>emptyMap());
+
+        verify(mockNode).setProperty("some:property_ref", new Value[]{mockReferenceValue}, mockReferenceValue.getType
+                ());
+    }
+
+    @Test
+    public void shouldNotAddReferencePropertyForNonDomainObject() throws RepositoryException {
+        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[]{});
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+
+        when(mockValueFactory.createValue(anyString(), eq(STRING))).thenReturn(mockValue);
+        when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockReferenceValue);
+
+        when(mockSession.getNode("/x")).thenReturn(mockNode);
+
+        when(mockNode.setProperty(anyString(), any(Value[].class), anyInt())).thenReturn(mockProperty);
+
+        testObj.addProperty(mockFedoraResource,
+                createProperty("some:property"),
+                createResource("some:resource"),
+                Collections.<String,String>emptyMap());
+
+        verify(mockNode, never()).setProperty(eq("some:property_ref"), any(Value[].class), anyInt());
     }
 
     @Test
@@ -546,6 +563,9 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     private Value mockValue;
 
     @Mock
+    private Value mockReferenceValue;
+
+    @Mock
     private Repository mockRepository;
 
     @Mock
@@ -641,5 +661,10 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
     @Mock
     private NodeType mockPrimaryNodeType;
 
+    @Mock
+    private NamespaceRegistry mockNsRegistry;
+
+    @Mock
+    private FedoraResource mockFedoraResource;
 
 }
