@@ -28,7 +28,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -145,24 +144,6 @@ public class JQLConverterIT {
         final JQLConverter testObj = new JQLConverter(session, subjects, sparql);
         assertEquals("SELECT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_subject].[dc:title] AS " +
                              "title FROM [fedora:resource] AS [fedoraResource_subject]",
-                     testObj.getStatement());
-    }
-
-    @Test
-    public void testSimpleFilterReturningJcrPropertyValueWithCondition() throws RepositoryException {
-        final Node orCreateNode = new JcrTools().findOrCreateNode(session, "/xyz", "nt:folder");
-        orCreateNode.addMixin("fedora:resource");
-        session.save();
-
-        final String sparql = "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> " +
-                "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>" +
-                "SELECT ?title WHERE { ?subject dc:title ?title . ?subject fedorarelsext:isPartOf <" +
-                subjects.toDomain("/xyz") + "> }";
-        final JQLConverter testObj = new JQLConverter(session, subjects, sparql);
-        assertEquals("SELECT [fedoraResource_subject].[dc:title] AS title FROM [fedora:resource] AS " +
-                             "[fedoraResource_subject] WHERE ([fedoraResource_subject].[dc:title] IS NOT NULL AND " +
-                             "[fedoraResource_subject].[fedorarelsext:isPartOf] = CAST('" +
-                             orCreateNode.getIdentifier() + "' AS REFERENCE))",
                      testObj.getStatement());
     }
 
