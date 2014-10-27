@@ -121,7 +121,13 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
             final Literal literal = resource.asLiteral();
             final RDFDatatype dataType = literal.getDatatype();
-            final Object rdfValue = literal.getValue();
+            final Object rdfValue;
+
+            if (literal.asNode().getLiteral().isWellFormed()) {
+                rdfValue = literal.getValue();
+            } else {
+                rdfValue = literal.getLexicalForm();
+            }
 
             if (dataType == null && rdfValue instanceof String
                     || (dataType != null && dataType.equals(XSDDatatype.XSDstring))) {
