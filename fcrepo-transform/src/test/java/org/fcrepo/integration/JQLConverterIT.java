@@ -187,9 +187,9 @@ public class JQLConverterIT {
         final JQLConverter testObj = new JQLConverter(session, subjects, sparql);
         assertEquals("SELECT [fedoraResource_part].[dc:title] AS relatedTitle FROM [fedora:resource] AS " +
                              "[fedoraResource_subject] LEFT OUTER JOIN [fedora:resource] AS " +
-                             "[fedoraResource_part] ON [fedoraResource_subject].[fedorarelsext:hasPart] = " +
+                             "[fedoraResource_part] ON [fedoraResource_subject].[fedorarelsext:hasPart_ref] = " +
                              "[fedoraResource_part].[jcr:uuid] WHERE (" +
-                             "[fedoraResource_subject].[fedorarelsext:hasPart] IS NOT NULL AND " +
+                             "[fedoraResource_subject].[fedorarelsext:hasPart_ref] IS NOT NULL AND " +
                              "[fedoraResource_part].[dc:title] IS NOT NULL)",
                      testObj.getStatement());
     }
@@ -204,9 +204,9 @@ public class JQLConverterIT {
         assertEquals("SELECT [fedoraResource_subject].[jcr:path] AS subject, [fedoraResource_part].[dc:title] AS " +
                              "relatedTitle FROM [fedora:resource] AS [fedoraResource_subject] LEFT OUTER JOIN " +
                              "[fedora:resource] AS [fedoraResource_part] ON " +
-                             "[fedoraResource_subject].[fedorarelsext:hasPart] = " +
+                             "[fedoraResource_subject].[fedorarelsext:hasPart_ref] = " +
                              "[fedoraResource_part].[jcr:uuid] WHERE (" +
-                             "[fedoraResource_subject].[fedorarelsext:hasPart] IS NOT NULL AND " +
+                             "[fedoraResource_subject].[fedorarelsext:hasPart_ref] IS NOT NULL AND " +
                              "[fedoraResource_part].[dc:title] IS NOT NULL)",
                      testObj.getStatement());
     }
@@ -367,9 +367,9 @@ public class JQLConverterIT {
         final String expectedQuery =
                 "SELECT [fedoraResource_part].[dc:title] AS title FROM [fedora:resource] AS " +
                         "[" + selector + "] LEFT OUTER JOIN [fedora:resource] AS [fedoraResource_part] ON " +
-                        "[" + selector + "].[fedorarelsext:hasPart] = [fedoraResource_part].[jcr:uuid] " +
+                        "[" + selector + "].[fedorarelsext:hasPart_ref] = [fedoraResource_part].[jcr:uuid] " +
                         "WHERE (([" + selector + "].[jcr:path] = '" + path + "' AND " +
-                        "[" + selector + "].[fedorarelsext:hasPart] IS NOT NULL) AND " +
+                        "[" + selector + "].[fedorarelsext:hasPart_ref] IS NOT NULL) AND " +
                         "[fedoraResource_part].[dc:title] IS NOT NULL)";
         final JQLConverter testObj  = new JQLConverter(session, subjects, sparql);
         assertEquals(expectedQuery, testObj.getStatement());
