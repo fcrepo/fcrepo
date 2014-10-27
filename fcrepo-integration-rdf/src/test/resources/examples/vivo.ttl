@@ -1,0 +1,110 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix hr: <http://vivo.cornell.edu/ns/hr/0.9/hr.owl#> .
+@prefix c4o: <http://purl.org/spar/c4o/> .
+@prefix vitro-public: <http://vitro.mannlib.cornell.edu/ns/vitro/public#> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix ocrer: <http://purl.org/net/OCRe/research.owl#> .
+@prefix vivo: <http://vivoweb.org/ontology/core#> .
+@prefix cito: <http://purl.org/spar/cito/> .
+@prefix j.0: <http://vivoweb.org/ontology/newhr#> .
+@prefix aka: <http://vivoweb.org/ontology/aka#> .
+@prefix stars: <http://vitro.mannlib.cornell.edu/ns/cornell/stars/classes#> .
+@prefix ocresd: <http://purl.org/net/OCRe/study_design.owl#> .
+@prefix far: <http://vitro.mannlib.cornell.edu/ns/reporting#> .
+@prefix bibo: <http://purl.org/ontology/bibo/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix local: <http://vivo.cornell.edu/ontology/local#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix scires: <http://vivoweb.org/ontology/scientific-research#> .
+@prefix acti: <http://vivoweb.org/ontology/activity-insight#> .
+@prefix aktp: <http://www.aktors.org/ontology/portal#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo: <http://aims.fao.org/aos/geopolitical.owl#> .
+@prefix se: <http://vivoweb.org/ontology/sympele#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix event: <http://purl.org/NET/c4dm/event.owl#> .
+@prefix socsci: <http://vivo.library.cornell.edu/ns/vivo/socsci/0.1#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix ospcu: <http://vivoweb.org/ontology/cu-vivo-osp#> .
+@prefix sce: <http://vivoweb.org/ontology/SchoolOfContinuingEducation#> .
+@prefix vitro: <http://vitro.mannlib.cornell.edu/ns/vitro/0.7#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix vivoc: <http://vivo.library.cornell.edu/ns/0.1#> .
+@prefix pubmed: <http://vitro.mannlib.cornell.edu/ns/pubmed#> .
+@prefix cce: <http://vivoweb.org/ontology/cornell-cooperative-extension#> .
+@prefix mann: <http://vivo.cornell.edu/ns/mannadditions/0.1#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix fabio: <http://purl.org/spar/fabio/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<>
+    obo:ARG_2000028 <http://vivo.cornell.edu/individual/n5126119> ;
+    obo:RO_0000053 <http://vivo.cornell.edu/individual/grant56906-inv1747>, <http://vivo.cornell.edu/individual/grant70864-inv1747>, <http://vivo.cornell.edu/individual/grant71324-inv1747>, <http://vivo.cornell.edu/individual/grant71427-inv1747> ;
+    vitro:modTime "2011-08-01T11:49:50"^^xsd:dateTime ;
+    vitro:mostSpecificType local:InternalThing, vivoc:CornellAcademicStaff ;
+    vitro-public:mainImage <http://vivo.cornell.edu/individual/n1265> ;
+    hr:Address1 "Olin Library, Room 201" ;
+    hr:FirstName "Dean"^^xsd:string ;
+    hr:LastName "Krafft"^^xsd:string ;
+    hr:Name "Krafft, Dean Blackmar"^^xsd:string ;
+    hr:PrefName "Krafft, Dean B.", "Krafft, Dean Blackmar" ;
+    hr:WorkingTitle "Senior Research Associate" ;
+    hr:emplId "1014063" ;
+    hr:netId "dk15" ;
+    hr:preferredFirstName "Dean" ;
+    hr:preferredLastName "Krafft" ;
+    hr:preferredMiddleInitial "B" ;
+    hr:preferredMiddleName "Blackmar" ;
+    hr:preferredNameString "Dean B. Krafft" ;
+    hr:preferredSocialSuffix "" ;
+    hr:primaryJobcodeLdesc "Senior Research Associate" ;
+    hr:primaryUnitCode "LIBRARY"^^xsd:string ;
+    hr:primaryWorkingTitle "Senior Research Associate" ;
+    vivoc:CornellemailnetId "dk15@cornell.edu" ;
+    vivoc:affiliatedWithAsAcademicStaffMember <http://vivo.cornell.edu/individual/individual390> ;
+    vivoc:awardsAndDistinctions """<p>2006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Delos Best Paper Award, European Conference on Research and Advanced Technology for Digital Libraries (co-author)</p>
+<p>2006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Vannevar Bush Best Paper Award, Joint Conference on Digital Libraries (co-author)</p>"""^^xsd:string ;
+    vivoc:educationalBackground """<p>1976&nbsp;&nbsp; B.A.,&nbsp; Carleton College&nbsp;&nbsp;&nbsp;&nbsp; Mathematics</p>
+<p>1979&nbsp;&nbsp; M.S.,&nbsp; Cornell University&nbsp;&nbsp; Computer Science</p>
+<p>1981&nbsp;&nbsp; Ph.D., Cornell University&nbsp; Computer Science</p>"""^^xsd:string ;
+    vivoc:employeeOf <http://vivo.cornell.edu/individual/individual26106> ;
+    vivoc:presentations """<ol>
+<li><a href=\"http://www.cni.org/tfms/2010b.fall/Abstracts/PB-reimagining-krafft.html\" title=\"Reimagining IT at Cornell University\">Reimagining IT at Cornell University</a>, Coalition for Networked Information Fall 2010 Task Force Meeting, Arlington, VA, (December 2010).</li>
+<li><a href=\"http://www.cni.org/tfms/2010a.spring/Abstracts/PB-vivo-krafft.html\" title=\"VIVO: Enabling National Networking of Scientists\">VIVO: Enabling National Networking of Scientists</a>, Coalition for Networked Information Spring 2010 Task Force Meeting, Baltimore, MD (with Valrie Davis), (April 2010).</li>
+<li><a href=\"http://www.cni.org/tfms/2010a.spring/Abstracts/PB-taking-krafft.html\" title=\"Taking the Library Outside the Library: A Light-weight Innovation Model for Heavy-weight Economic Times\">Taking the Library Outside the Library: A Light-weight Innovation Model for Heavy-weight Economic Times</a>, Coalition for Networked Information Spring 2010 Task Force Meeting, Baltimore, MD (with Dianne Dietrich and Baseema B. Krkoska), (April 2010).</li>
+<li>Wrenching Change: Why a Research Library Needs a Chief Technology Strategist, Institute for Computer Policy and Law, Ithaca, NY, (June 2009)</li>
+<li>NSDL: Creating an Extensible, Collaborative, Community-based Digital Library for STEM Education, NSF EHR Cyberinfrastructure for Education Workshop Series, Arlington, VA, (February 2008)</li>
+<li><a href=\"http://www.delos.info/index.php?option=com_content&amp;task=view&amp;id=567&amp;Itemid=306#Organizing_the_Digital_Library\">Organizing the Digital Library</a>, Joint DELOS/NSDL Summer School on Digital Libraries, Florence, Italy, (May 2007).</li>
+<li><a href=\"http://www2007.org/tutorial-T9.php\">Semantic Digital Libraries</a>, WWW 2007, Banff, Alberta, Canada (with Sandy Payette, et al.), (May 2007).</li>
+<li><a href=\"http://www.cni.org/tfms/2007a.spring/abstracts/PB-nsdl-krafft.html\">NSDL 2.0: Creating a Collaborative Digital Library</a>, Coalition for Networked Information Spring 2007 Task Force Meeting, Phoenix, Arizona, (March 2007).</li>
+<li>NSDL 2.0: Building a Collaborative Digital Library, 2nd International Conference on Open Repositories, San Antonio, Texas, (January 2007).</li>
+<li><a href=\"http://nsdl.comm.nsdl.org/meeting/archives/2006/schedule/index.php?proposal_id=5083&amp;nsdl_annual_meeting=7e11f2651d3b1022a553c43a8d8d0071\">Building Collaborative Tools on the NSDL Data Repository</a>, NSDL 2007 Annual Meeting, AAAS, Washington, DC, (October 2006).</li>
+<li><a href=\"http://www.lib.virginia.edu/digital/fedoraconf/abstracts.shtml#3b1\">Building a National Science Digital Library on Fedora</a>, Fedora Users Conference 2006,  University of Virginia, Charlottesville, VA (June 2006).</li>
+<li>The Technical Infrastructure of the NSDL, EUNIS-CZ Seminar on Digital Libraries, &Scaron;pindlerův&nbsp; Ml&yacute;n, Czech Republic (May 2006)</li>
+<li><a href=\"http://www.educause.edu/LIVE069\">Building a National Science Digital Library</a>, Educause Live! Webcast (May 2006)</li>
+<li>Technical Vision for the NSDL, House STEM Caucus Luncheon, Rayburn House Office Building, Washington, DC (September 2005)</li>
+</ol>"""^^xsd:string ;
+    vivoc:professionalBackground """<p>2010-present&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Chief Technology Strategist and Director of IT, Cornell University Library</p>
+<p>2008-2010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Chief Technology Strategist, Cornell University Library</p>
+<p>2008-present&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Senior Research Associate, Information Science, Cornell University</p>
+<p>2005-2008&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Principal Investigator, National Science Digital Library Core Integration Project (<a href=\"http://nsdl.org/\">http://nsdl.org</a>)</p>
+<p>2005-2008&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Senior Research Associate and Director of Information Technology, Computing and Information Science, Cornell University</p>
+<p>1992-2005&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Senior Research Associate and Director of Computing Facilities, Computer Science Department, Cornell University</p>
+<p>1987-1992&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Research Associate and Director of Computing Facilities, Computer Science Department, Cornell University</p>
+<p>1981-1987&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Research Associate, Computer Science Department, Cornell University</p>
+<p>1974-1976&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Programmer/Analyst, Carleton College</p>"""^^xsd:string ;
+    vivo:featuredIn <http://vivo.cornell.edu/individual/CornellsVIVOconceptwillexpandtoconnectresearchersnationwide>, <http://vivo.cornell.edu/individual/LibrarynamesDeanKrafftchieftechnologystrategist> ;
+    vivo:overview "Dr. Krafft received his Ph.D. in Computer Science from Cornell University in 1981. Since the 1990s, he has been involved in digital library research, most recently heading the National Science Digital Library project at Cornell. In July 2008 he joined the Cornell University Library as Chief Technology Strategist, while retaining a Senior Research Associate appointment in Information Science. In August 2010, he became the Director of IT for the Cornell University Library in addition to continuing as Chief Technology Strategist.<br />" ;
+    vivo:relatedBy <http://vivo.cornell.edu/individual/grant56906>, <http://vivo.cornell.edu/individual/grant70864>, <http://vivo.cornell.edu/individual/grant71324>, <http://vivo.cornell.edu/individual/grant71427>, <http://vivo.cornell.edu/individual/n10038>, <http://vivo.cornell.edu/individual/n12220>, <http://vivo.cornell.edu/individual/n14015>, <http://vivo.cornell.edu/individual/n14040>, <http://vivo.cornell.edu/individual/n18247>, <http://vivo.cornell.edu/individual/n216258>, <http://vivo.cornell.edu/individual/n246417>, <http://vivo.cornell.edu/individual/n27836>, <http://vivo.cornell.edu/individual/n28406>, <http://vivo.cornell.edu/individual/n32740>, <http://vivo.cornell.edu/individual/n36795>, <http://vivo.cornell.edu/individual/n41103>, <http://vivo.cornell.edu/individual/n5585>, <http://vivo.cornell.edu/individual/n58757>, <http://vivo.cornell.edu/individual/n62927>, <http://vivo.cornell.edu/individual/n77371>, <http://vivo.cornell.edu/individual/n84406>, <http://vivo.cornell.edu/individual/n90614>, <http://vivo.cornell.edu/individual/n9217>, <http://vivo.cornell.edu/individual/posn-dk15-00121818> ;
+    vivo:scopusId "6505991280" ;
+    ospcu:invId "1747" ;
+    ospcu:invNetid "DK15" ;
+    a obo:BFO_0000001, obo:BFO_0000002, obo:BFO_0000004, local:InternalThing, vivoc:CornellAcademicEmployee, vivoc:CornellAcademicStaff, vivoc:CornellAffiliatedPerson, vivoc:CornellEmployee, vivo:NonFacultyAcademic, <http://vivoweb.org/ontology/newhr#WorkdayPerson>, owl:Thing, foaf:Agent, foaf:Person ;
+    rdfs:label "Krafft, Dean Blackmar" .
+
+<#meta>
+    dc:date "2014-10-27T11:24:22"^^xsd:dateTime ;
+    dc:publisher <http://vivo.cornell.edu> ;
+    dc:rights <http://vivo.cornell.edu/termsOfUse> ;
+    a foaf:Document ;
+    rdfs:label "RDF description of Krafft, Dean Blackmar - http://vivo.cornell.edu/individual/individual8772" .

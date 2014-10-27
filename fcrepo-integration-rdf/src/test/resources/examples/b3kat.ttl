@@ -1,0 +1,55 @@
+@prefix marcrel:  <http://id.loc.gov/vocabulary/relators/> .
+@prefix rdagr1:  <http://rdvocab.info/Elements/> .
+@prefix geonames:  <http://www.geonames.org/ontology#> .
+@prefix isbd:    <http://iflastandards.info/ns/isbd/elements/> .
+@prefix meta:    <http://example.org/metadata#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix blt:     <http://data.bl.uk/schema/bibliographic#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix prvTypes:  <http://purl.org/net/provenance/types#> .
+@prefix event:   <http://purl.org/NET/c4dm/event.owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix prv:     <http://purl.org/net/provenance/ns#> .
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix ir:      <http://www.ontologydesignpatterns.org/cp/owl/informationrealization.owl#> .
+@prefix wdrs:    <http://www.w3.org/2007/05/powder-s#> .
+@prefix geo:     <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix frbr:    <http://purl.org/vocab/frbr/core#> .
+@prefix dcmitype:  <http://purl.org/dc/dcmitype/> .
+@prefix void:    <http://rdfs.org/ns/void#> .
+@prefix units:   <http://dbpedia.org/units/> .
+@prefix rdamediatypes:  <http://rdvocab.info/termList/RDAMediaType/> .
+@prefix bibo:    <http://purl.org/ontology/bibo/> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix doap:    <http://usefulinc.com/ns/doap#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+
+<>
+      a       bibo:Document , dcmitype:Text , bibo:Book ;
+      marcrel:aut <http://d-nb.info/gnd/107225026> ;
+      isbd:P1006 "Beitr. zur Pädagogik aus 20-jähriger Mitarb. in d. Entwicklungshilfe" ;
+      isbd:P1053 "203 S." ;
+      dc:subject "Entwicklungsländer"@de , "Bildungshilfe"@de , "Didaktik"@de , "Technologietransfer"@de , "Pädagogik"@de ;
+      dc:title "Der Technologie-Transfer als Lehr- und Lernproblem" ;
+      dcterms:bibliographicCitation
+              "Sozialwissenschaftliche Studien zu internationalen Problemen : 65" ;
+      dcterms:creator <http://d-nb.info/gnd/107225026> ;
+      dcterms:description "Günther Schnuer" ;
+      dcterms:extent "203 S." ;
+      dcterms:isPartOf <http://lod.b3kat.de/title/BV000000042> ;
+      dcterms:issued "1982"^^xsd:int ;
+      dcterms:language <http://id.loc.gov/vocabulary/iso639-2/ger> ;
+      dcterms:publisher "Breitenbach" ;
+      dcterms:subject <http://lod.b3kat.de/ssg/5.3> , <http://d-nb.info/gnd/4044302-4> , <http://d-nb.info/gnd/4059277-7> , <http://lod.b3kat.de/rvk/DV3000> , <http://d-nb.info/gnd/4014954-7> , <http://d-nb.info/gnd/4006660-5> , <http://lod.b3kat.de/rvk/RB10918> , <http://lod.b3kat.de/rvk/MS8400> , <http://lod.b3kat.de/rvk/QC344> , <http://d-nb.info/gnd/4070463-4> ;
+      bibo:isbn "3881562044" ;
+      bibo:oclcnum "230244209" ;
+      frbr:exemplar <http://lod.b3kat.de/bib/DE-19/item/BV000023809> , <http://lod.b3kat.de/bib/DE-N2/item/BV000023809> , <http://lod.b3kat.de/bib/DE-83/item/BV000023809> , <http://lod.b3kat.de/bib/DE-11/item/BV000023809> , <http://lod.b3kat.de/bib/DE-703/item/BV000023809> , <http://lod.b3kat.de/bib/DE-355/item/BV000023809> , <http://lod.b3kat.de/bib/DE-384/item/BV000023809> , <http://lod.b3kat.de/bib/DE-473/item/BV000023809> , <http://lod.b3kat.de/bib/DE-29/item/BV000023809> , <http://lod.b3kat.de/bib/DE-12/item/BV000023809> ;
+      rdagr1:otherTitleInformation
+              "Beitr. zur Pädagogik aus 20-jähriger Mitarb. in d. Entwicklungshilfe" ;
+      rdagr1:placeOfPublication
+              "Saarbrücken u.a." ;
+      rdagr1:publicationStatement
+              "Saarbrücken u.a. : Breitenbach 1982" ;
+      owl:sameAs <http://hub.culturegraph.org/about/BVB-BV000023809> , <http://lod.b3kat.de/title/BV000000042/vol/65> .
