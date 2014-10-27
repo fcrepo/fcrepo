@@ -1111,10 +1111,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Property rdfType = createProperty(RDF_NAMESPACE + "type");
 
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
-        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "relations");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
         verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "DirectContainer");
-        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "DublinCoreDescribable");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
