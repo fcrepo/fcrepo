@@ -28,7 +28,7 @@ import javax.jcr.Node;
 public class IsExternal implements Predicate<Node> {
     @Override
     public boolean apply(final Node input) {
-        return ((JcrNode)input).isExternal();
+        return (input instanceof JcrNode) && ((JcrNode)input).isExternal();
     }
 
 }
