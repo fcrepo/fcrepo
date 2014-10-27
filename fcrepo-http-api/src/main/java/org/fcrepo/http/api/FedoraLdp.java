@@ -87,7 +87,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -149,7 +148,13 @@ public class FedoraLdp extends ContentExposingResource {
 
         addResourceHttpHeaders(resource());
 
-        return ok().build();
+        final Response.ResponseBuilder builder = ok();
+
+        if (resource() instanceof FedoraBinary) {
+            builder.type(((FedoraBinary) resource()).getMimeType());
+        }
+
+        return builder.build();
     }
 
     /**
@@ -439,16 +444,7 @@ public class FedoraLdp extends ContentExposingResource {
 
     @Override
     protected void addResourceHttpHeaders(final FedoraResource resource) {
-        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
-
-        if (resource instanceof Datastream) {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
-        } else if (resource instanceof FedoraBinary) {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
-        } else if (resource instanceof FedoraObject) {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
-        }
-
+        super.addResourceHttpHeaders(resource);
 
         if (getCurrentTransactionId(session) != null) {
             final String canonical = translator().reverse()

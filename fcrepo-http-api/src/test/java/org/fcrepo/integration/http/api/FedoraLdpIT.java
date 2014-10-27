@@ -119,7 +119,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.RdfLexicon;
-import org.glassfish.grizzly.http.util.ContentType;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -185,11 +185,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testHeadDatastream() throws Exception {
         final String pid = getRandomUniquePid();
 
-        createDatastream(pid, "x", pid);
+        createDatastream(pid, "x", "123");
 
         final String location = serverAddress + pid + "/x";
         final HttpHead headObjMethod = new HttpHead(location);
-        assertEquals(200, getStatus(headObjMethod));
+        final HttpResponse response = client.execute(headObjMethod);
+        assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        assertEquals(TEXT_PLAIN, response.getFirstHeader("Content-Type").getValue());
+        assertEquals("3", response.getFirstHeader("Content-Length").getValue());
+        assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
+        final ContentDisposition disposition
+                = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+        assertEquals("attachment", disposition.getType());
     }
 
     @Test
@@ -220,6 +228,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
 
         assertResourceOptionsHeaders(optionsResponse);
+
+        assertEquals("0", optionsResponse.getFirstHeader("Content-Length").getValue());
     }
 
     @Test
@@ -991,8 +1001,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(EntityUtils.toString(response.getEntity()), 200, response
                 .getStatusLine().getStatusCode());
 
-        assertEquals(TEXT_PLAIN,
-                ContentType.newContentType(response.getFirstHeader("Content-Type").getValue()).getMimeType());
+        assertEquals(TEXT_PLAIN, response.getFirstHeader("Content-Type").getValue());
+        assertEquals("3", response.getFirstHeader("Content-Length").getValue());
+        assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
+        final ContentDisposition disposition
+                = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+        assertEquals("attachment", disposition.getType());
 
         final Collection<String> links = getLinkHeaders(response);
         assertTrue("Didn't find 'describedby' link header!",
