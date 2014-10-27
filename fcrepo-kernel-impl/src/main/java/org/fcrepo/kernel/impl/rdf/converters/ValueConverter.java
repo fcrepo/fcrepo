@@ -147,15 +147,10 @@ public class ValueConverter extends Converter<Value, RDFNode> {
                 return valueFactory.createValue(literal.getShort());
             } else if (rdfValue instanceof Integer) {
                 return valueFactory.createValue(literal.getInt());
-            } else if (rdfValue instanceof XSDDateTime
-                    && ((XSDDateTime) rdfValue).getNarrowedDatatype().equals(XSDDatatype.XSDdateTime)) {
-                return valueFactory.createValue(((XSDDateTime) rdfValue).asCalendar());
+            } else if (dataType != null && !dataType.getURI().isEmpty()) {
+                return valueFactory.createValue(literal.getString() + LITERAL_TYPE_SEP + dataType.getURI(), STRING);
             } else {
-                if (dataType != null && !dataType.getURI().isEmpty()) {
-                    return valueFactory.createValue(literal.getString() + LITERAL_TYPE_SEP + dataType.getURI(), STRING);
-                } else {
-                    return valueFactory.createValue(literal.getString(), STRING);
-                }
+                return valueFactory.createValue(literal.getString(), STRING);
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
