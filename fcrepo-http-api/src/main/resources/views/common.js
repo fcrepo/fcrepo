@@ -125,8 +125,36 @@ $(function() {
 
     var ldpContains = $('#childList li').length;
     $('#badge').text(ldpContains);
+    $('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a').click(checkIfNonRdfResource);
 
 });
+
+function checkIfNonRdfResource(e) {
+
+    var url = this.href;
+
+    $.ajax({type: "HEAD", url: url}).success(function(data, status, xhr) {
+        var headers = xhr.getResponseHeader("Link").split(", ");
+
+        var types = $.grep(headers, function(h) {
+            return h.match(/rel="type"/);
+        });
+
+        if ($.grep(types, function(h) { return h.match(/NonRDFSource/)}).length > 0 ){
+            var description = $.grep(headers, function(h) { return h.match(/rel="describedby"/)});
+
+            if (description.length > 0) {
+                location.href = description[0].substr(1, description[0].indexOf(">") - 1);
+                return;
+            }
+        }
+
+        location.href = url;
+    });
+    e.preventDefault();
+    return false;
+}
+
 
 function submitAndFollowLocation() {
     var $form = $(this);
