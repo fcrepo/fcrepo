@@ -103,7 +103,6 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.UNDEFINED;
-import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_JOIN_TYPE_INNER;
 import static javax.jcr.query.qom.QueryObjectModelConstants.JCR_JOIN_TYPE_LEFT_OUTER;
@@ -516,23 +515,27 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
                         final Column objectColumn;
 
-                        if ((propertyType == REFERENCE || propertyType == WEAKREFERENCE || propertyType == URI)
-                                && variables.containsKey(object.getName()))  {
+                        if (joins.containsKey(object.getName()) && variables.containsKey(object.getName()))  {
 
                             objectColumn = variables.get(object.getName());
 
                             final String joinPropertyName;
 
-                            if (propertyType == URI) {
-                                joinPropertyName = getReferencePropertyName(propertyName);
-                            } else {
+                            if (propertyType == REFERENCE || propertyType ==
+                                    WEAKREFERENCE) {
                                 joinPropertyName = propertyName;
+                            } else {
+                                joinPropertyName = getReferencePropertyName(propertyName);
                             }
 
                             joinConditions.put(object.getName(),
                                                   queryFactory.equiJoinCondition(
                                                       c.getSelectorName(), joinPropertyName,
                                                       objectColumn.getSelectorName(), "jcr:uuid"));
+
+                            if (!inOptional) {
+                                appendConstraint(queryFactory.propertyExistence(c.getSelectorName(), joinPropertyName));
+                            }
                         } else {
                             objectColumn = queryFactory.column(c.getSelectorName(),
                                                                   propertyName,
@@ -543,11 +546,12 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
                             if (resultsVars.contains(object.getName())) {
                                 columns.add(objectColumn);
                             }
+
+                            if (!inOptional) {
+                                appendConstraint(queryFactory.propertyExistence(c.getSelectorName(), propertyName));
+                            }
                         }
 
-                        if (!inOptional) {
-                            appendConstraint(queryFactory.propertyExistence(c.getSelectorName(), propertyName));
-                        }
                     } else {
 
                         if (!inOptional) {
@@ -614,21 +618,25 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
 
         final Column objectColumn;
         final int propertyType = getPropertyType(getNodeType(FEDORA_RESOURCE), propertyName);
-        if ((propertyType == REFERENCE || propertyType == WEAKREFERENCE || propertyType == URI)
+        if (joins.containsKey(object.getName())
                 && variables.containsKey(object.getName()))  {
 
             objectColumn = variables.get(object.getName());
 
             final String joinPropertyName;
 
-            if (propertyType == URI) {
-                joinPropertyName = getReferencePropertyName(propertyName);
-            } else {
+            if (propertyType == REFERENCE || propertyType == WEAKREFERENCE) {
                 joinPropertyName = propertyName;
+            } else {
+                joinPropertyName = getReferencePropertyName(propertyName);
             }
 
             joinConditions.put(object.getName(), queryFactory.equiJoinCondition(
                     subjectSelector, joinPropertyName, objectColumn.getSelectorName(), "jcr:uuid"));
+
+            if (!inOptional) {
+                appendConstraint(queryFactory.propertyExistence(subjectSelector, joinPropertyName));
+            }
         } else {
             objectColumn = queryFactory.column(subjectSelector, propertyName, object.getName());
 
@@ -637,10 +645,10 @@ public class JQLQueryVisitor implements QueryVisitor, ElementVisitor, ExprVisito
             if (resultsVars.contains(object.getName())) {
                 columns.add(objectColumn);
             }
-        }
 
-        if (!inOptional) {
-            appendConstraint(queryFactory.propertyExistence(subjectSelector, propertyName));
+            if (!inOptional) {
+                appendConstraint(queryFactory.propertyExistence(subjectSelector, propertyName));
+            }
         }
     }
 
