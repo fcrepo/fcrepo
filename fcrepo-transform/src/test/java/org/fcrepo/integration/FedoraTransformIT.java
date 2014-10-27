@@ -15,7 +15,6 @@
  */
 package org.fcrepo.integration;
 
-import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
 import static org.junit.Assert.assertEquals;
 
@@ -46,16 +45,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ContextConfiguration({"/spring-test/test-container.xml"})
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 public class FedoraTransformIT extends AbstractResourceIT {
-
-    private static HttpResponse createObject(final String pid) throws IOException {
-        final HttpPost httpPost =  new HttpPost(serverAddress + "/");
-        if (pid.length() > 0) {
-            httpPost.addHeader("Slug", pid);
-        }
-        final HttpResponse response = client.execute(httpPost);
-        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
-        return response;
-    }
 
     @Test
     public void testLdpathWithConfiguredProgram() throws IOException {

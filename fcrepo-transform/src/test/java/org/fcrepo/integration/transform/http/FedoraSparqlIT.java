@@ -23,15 +23,13 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.RDFLanguages;
 import org.fcrepo.integration.AbstractResourceIT;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.annotation.DirtiesContext;
@@ -39,9 +37,6 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.ValueFactory;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -61,32 +56,44 @@ import static org.junit.Assert.assertTrue;
 @ContextConfiguration({"/spring-test/test-container.xml"})
 public class FedoraSparqlIT  extends AbstractResourceIT {
 
-    private Session session;
+    private static String baseResource;
+    private static String fedoraResource1;
+    private static String fedoraResource2;
+    private static String fedoraResource3;
 
     @Before
-    public void setUpTestData() throws RepositoryException {
-        session = repo.login();
-        session.setNamespacePrefix("zz", "http://zz.com/");
-        final ObjectServiceImpl objectService = new ObjectServiceImpl();
-        final ValueFactory valueFactory = session.getValueFactory();
-        final FedoraResource fedoraResource = objectService.findOrCreateObject(session, "/abc");
-        final FedoraResource fedoraResource2 = objectService.findOrCreateObject(session, "/xyz");
-        final FedoraResource fedoraResource3 = objectService.findOrCreateObject(session, "/anobject");
+    public void setUpTestData() throws RepositoryException, IOException {
 
-        fedoraResource.getNode().setProperty("dc:title", new Value[] { valueFactory.createValue("xyz") });
-        fedoraResource.getNode().setProperty("fedorarelsext:hasPart",
-                                             new Value[] { valueFactory.createValue(fedoraResource2.getNode()) });
-        fedoraResource2.getNode().setProperty("fedorarelsext:isPartOf",
-                                              new Value[] { valueFactory.createValue(fedoraResource.getNode()) });
-        fedoraResource3.getNode().setProperty("zz:name", new Value[] { valueFactory.createValue("junk") });
-        fedoraResource3.getNode().setProperty("rdf:type", new Value[] { valueFactory.createValue("info:some-type") });
-        session.save();
+        if (baseResource == null) {
+            final String baseUri = getRandomUniquePid();
+            baseResource = createObject(baseUri).getFirstHeader("Location").getValue();
 
+            fedoraResource1 = createObject(baseUri + "/collection").getFirstHeader("Location").getValue();
+            fedoraResource2 = createObject(baseUri + "/part").getFirstHeader("Location").getValue();
+            fedoraResource3 = createObject(baseUri + "/other").getFirstHeader("Location").getValue();
+
+            patchObject(fedoraResource1, "INSERT DATA { <> <http://purl.org/dc/elements/1.1/title> \"xyz\";" +
+                    "   <http://fedora.info/definitions/v4/rels-ext#hasPart> <" + fedoraResource2 + "> }");
+
+            patchObject(fedoraResource2,
+                    "INSERT DATA { " +
+                            "<> <http://fedora.info/definitions/v4/rels-ext#isPartOf> <" + fedoraResource1 + "> " +
+                            "} ");
+
+
+            patchObject(fedoraResource3,
+                    "INSERT DATA { <> a <info:some-type>;" + "   <http://zz.com/name> \"junk\"; }");
+        }
     }
 
-    @After
-    public void destroy() {
-        session.logout();
+    private static void patchObject(final String location, final String content) throws IOException {
+        final HttpPatch httpPatch = new HttpPatch(location);
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(IOUtils.toInputStream(content));
+        httpPatch.setEntity(entity);
+        httpPatch.setHeader("Content-Type", "application/sparql-update");
+        final HttpResponse execute = client.execute(httpPatch);
+        assertEquals(204, execute.getStatusLine().getStatusCode());
     }
 
     @Test
@@ -114,7 +121,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
 
         assertEquals("subject", resultSet.getResultVars().get(0));
 
-        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+        assertEquals(fedoraResource1, resultSet.next().get("subject").toString());
     }
 
     @Test
@@ -133,7 +140,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
 
         assertEquals("subject", resultSet.getResultVars().get(0));
 
-        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+        assertEquals(fedoraResource1, resultSet.next().get("subject").toString());
 
     }
 
@@ -149,7 +156,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
 
         assertEquals("subject", resultSet.getResultVars().get(0));
 
-        assertEquals(serverAddress + "/anobject", resultSet.next().get("subject").toString());
+        assertEquals(fedoraResource3, resultSet.next().get("subject").toString());
 
     }
 
@@ -169,8 +176,8 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         assertEquals("subject", resultSet.getResultVars().get(0));
 
         final QuerySolution row = resultSet.next();
-        assertEquals(serverAddress + "/abc", row.get("subject").toString());
-        assertEquals(serverAddress + "/xyz", row.get("part").toString());
+        assertEquals(fedoraResource1, row.get("subject").toString());
+        assertEquals(fedoraResource2, row.get("part").toString());
     }
 
     @Test
@@ -184,13 +191,10 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         final String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
 
-
-        assertTrue(resultSet.hasNext());
-
         assertEquals("part", resultSet.getResultVars().get(0));
-
+        assertTrue(resultSet.hasNext());
         final QuerySolution row = resultSet.next();
-        assertEquals(serverAddress + "/xyz", row.get("part").toString());
+        assertEquals(fedoraResource2, row.get("part").toString());
         assertEquals("xyz", row.get("collectionTitle").asLiteral().getLexicalForm());
     }
 
@@ -203,7 +207,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
         assertTrue(resultSet.hasNext());
         assertEquals("subject", resultSet.getResultVars().get(0));
-        assertEquals(serverAddress + "/anobject", resultSet.next().get("subject").toString());
+        assertEquals(fedoraResource3, resultSet.next().get("subject").toString());
     }
 
     private String getResponseContent(final String sparql) throws IOException {
@@ -261,7 +265,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
 
         assertEquals("subject", resultSet.getResultVars().get(0));
 
-        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+        assertEquals(fedoraResource1, resultSet.next().get("subject").toString());
     }
 
     @Test
@@ -280,7 +284,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
 
         assertEquals("subject", resultSet.getResultVars().get(0));
 
-        assertEquals(serverAddress + "/abc", resultSet.next().get("subject").toString());
+        assertEquals(fedoraResource1, resultSet.next().get("subject").toString());
 
     }
 
@@ -300,8 +304,8 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         assertEquals("subject", resultSet.getResultVars().get(0));
 
         final QuerySolution row = resultSet.next();
-        assertEquals(serverAddress + "/abc", row.get("subject").toString());
-        assertEquals(serverAddress + "/xyz", row.get("part").toString());
+        assertEquals(fedoraResource1, row.get("subject").toString());
+        assertEquals(fedoraResource2, row.get("part").toString());
     }
 
     @Test
@@ -321,7 +325,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         assertEquals("part", resultSet.getResultVars().get(0));
 
         final QuerySolution row = resultSet.next();
-        assertEquals(serverAddress + "/xyz", row.get("part").toString());
+        assertEquals(fedoraResource2, row.get("part").toString());
         assertEquals("xyz", row.get("collectionTitle").asLiteral().getLexicalForm());
     }
 

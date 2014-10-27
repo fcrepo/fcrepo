@@ -15,8 +15,10 @@
  */
 package org.fcrepo.integration;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.fcrepo.http.commons.test.util.SpringContextSingleton;
@@ -28,10 +30,13 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.jcr.Repository;
 import java.io.IOException;
+import java.util.UUID;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.junit.Assert.assertEquals;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -79,5 +84,28 @@ public abstract class AbstractResourceIT {
         logger.debug("Executing: " + method.getMethod() + " to " +
                              method.getURI());
         return client.execute(method).getStatusLine().getStatusCode();
+    }
+
+    /**
+     * Gets a random (but valid) pid for use in testing.  This pid
+     * is guaranteed to be unique within runs of this application.
+     */
+    protected static String getRandomUniquePid() {
+        return UUID.randomUUID().toString();
+    }
+
+
+    protected static HttpPost postObjMethod(final String pid) {
+        return new HttpPost(serverAddress + pid);
+    }
+
+    protected HttpResponse createObject(final String pid) throws IOException {
+        final HttpPost httpPost = postObjMethod("/");
+        if (pid.length() > 0) {
+            httpPost.addHeader("Slug", pid);
+        }
+        final HttpResponse response = client.execute(httpPost);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        return response;
     }
 }
