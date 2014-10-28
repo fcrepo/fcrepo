@@ -15,9 +15,11 @@
  */
 package org.fcrepo.integration.ldp;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +34,10 @@ import java.util.UUID;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -61,16 +67,75 @@ public class LdpTestSuiteIT {
                 .setMaxConnTotal(MAX_VALUE).build();
     }
 
-    @Test
-    public void runLDPTestSuite() throws IOException {
-        final String pid = "ldp-test-" + UUID.randomUUID().toString().substring(0,5);
 
-        final HttpResponse response = client.execute(new HttpPut(serverAddress + pid));
+    @Test
+    public void runLDPBasicContainerTestSuite() throws IOException {
+        final String pid = "ldp-test-basic-" + UUID.randomUUID().toString();
+
+        final HttpPut request = new HttpPut(serverAddress + pid);
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(IOUtils.toInputStream("<> a <" + BASIC_CONTAINER.getURI() + "> ."));
+        request.setEntity(entity);
+        request.setHeader("Content-Type", "text/turtle");
+        final HttpResponse response = client.execute(request);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+
+        final HashMap<String, String> options = new HashMap<>();
+        options.put("server", serverAddress + pid);
+        options.put("output", "report-basic");
+        options.put("basic", "true");
+        options.put("non-rdf", "true");
+        options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
+        final LdpTestSuite testSuite = new LdpTestSuite(options);
+        testSuite.run();
+        assertTrue("The LDP test suite is only informational", true);
+    }
+
+    @Test
+    public void runLDPDirectContainerTestSuite() throws IOException {
+        final String pid = "ldp-test-direct-" + UUID.randomUUID().toString();
+
+        final HttpPut request = new HttpPut(serverAddress + pid);
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(IOUtils.toInputStream("<> a <" + DIRECT_CONTAINER.getURI() + "> ;" +
+                "    <" + LDP_NAMESPACE + "membershipResource> <> ;" +
+                "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
+        request.setEntity(entity);
+        request.setHeader("Content-Type", "text/turtle");
+        final HttpResponse response = client.execute(request);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
         final HashMap<String, String> options = new HashMap<>();
         options.put("server", serverAddress + pid);
+        options.put("output", "report-direct");
         options.put("direct", "true");
+        options.put("non-rdf", "true");
+        options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
+        final LdpTestSuite testSuite = new LdpTestSuite(options);
+        testSuite.run();
+        assertTrue("The LDP test suite is only informational", true);
+    }
+
+    @Test
+    public void runLDPIndirectContainerTestSuite() throws IOException {
+        final String pid = "ldp-test-indirect-" + UUID.randomUUID().toString();
+
+        final HttpPut request = new HttpPut(serverAddress + pid);
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(IOUtils.toInputStream("<> a <" + INDIRECT_CONTAINER.getURI() + ">;" +
+                "    <" + LDP_NAMESPACE + "membershipResource> <> ;" +
+                "    <" + LDP_NAMESPACE + "insertedContentRelation> <" + LDP_NAMESPACE + "MemberSubject> ;" +
+                "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
+        request.setEntity(entity);
+        request.setHeader("Content-Type", "text/turtle");
+        final HttpResponse response = client.execute(request);
+        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        final HashMap<String, String> options = new HashMap<>();
+        options.put("server", serverAddress + pid);
+        options.put("output", "report-indirect");
+        options.put("indirect", "true");
         options.put("non-rdf", "true");
         options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
         final LdpTestSuite testSuite = new LdpTestSuite(options);

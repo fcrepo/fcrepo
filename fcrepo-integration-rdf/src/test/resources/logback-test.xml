@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>                                                           
+            <pattern>%p %d{HH:mm:ss.SSS} \(%c{0}\) %m%n</pattern>
+        </encoder>
+    </appender>
+
+  <logger name="org.fcrepo.auth" additivity="false" level="${log.fcrepo.auth:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.connector.file" additivity="false" level="${log.fcrepo.connector.file:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.http.api" additivity="false" level="${log.fcrepo.http.api:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.http.commons" additivity="false" level="${log.fcrepo.http.commons:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.jms" additivity="false" level="${log.fcrepo.jms:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.kernel" additivity="false" level="${log.fcrepo.kernel:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo.transform" additivity="false" level="${log.fcrepo.transform:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="org.fcrepo" additivity="false" level="${log.fcrepo:-INFO}">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+    <root additivity="false" level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

@@ -36,9 +36,13 @@
 
 <test = 'info:fedora/test/'>
 
-[ldp:Container] mixin
-    - ldp:membershipResource (REFERENCE)
-    - ldp:hasMemberRelation (URI)
+[fedora:Container] mixin
+
+[ldp:BasicContainer] > fedora:Container mixin
+
+[ldp:DirectContainer] > fedora:Container  mixin
+
+[ldp:IndirectContainer] > fedora:Container  mixin
 
 /*
  * Any Fedora resource.
@@ -51,7 +55,11 @@
 /*
  * A Fedora object.
  */
-[fedora:object] > fedora:resource, ldp:Container mixin
+[fedora:object] > fedora:resource mixin
+  - ldp:membershipResource (REFERENCE)
+  - ldp:hasMemberRelation (URI)
+  - ldp:isMemberOfRelation (URI)
+  - ldp:insertedContentRelation (URI)
 
 
 /*

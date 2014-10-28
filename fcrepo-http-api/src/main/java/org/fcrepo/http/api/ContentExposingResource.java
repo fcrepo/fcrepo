@@ -93,6 +93,14 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -406,7 +414,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         } else if (resource instanceof FedoraBinary) {
             servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
         } else if (resource instanceof FedoraObject) {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\"");
+            servletResponse.addHeader("Link", "<" + CONTAINER.getURI() + ">;rel=\"type\"");
+            if (resource.hasType(LDP_BASIC_CONTAINER)) {
+                servletResponse.addHeader("Link", "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
+            } else if (resource.hasType(LDP_DIRECT_CONTAINER)) {
+                servletResponse.addHeader("Link", "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
+            } else if (resource.hasType(LDP_INDIRECT_CONTAINER)) {
+                servletResponse.addHeader("Link", "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
+            } else if (!resource.hasType(FEDORA_CONTAINER)) {
+                servletResponse.addHeader("Link", "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
+            }
         }
 
     }

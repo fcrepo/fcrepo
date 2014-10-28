@@ -70,7 +70,13 @@ import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -201,10 +207,48 @@ public class FedoraLdpTest {
         setResource(FedoraObject.class);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP DirectContainer",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\""));
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
+    }
+
+    @Test
+    public void testHeadWithDefaultContainer() throws Exception {
+        setResource(FedoraObject.class);
+        final Response actual = testObj.head();
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP BasicContainer",
+                mockResponse.getHeaders("Link").contains("<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\""));
+    }
+
+
+    @Test
+    public void testHeadWithBasicContainer() throws Exception {
+        final FedoraResource resource = setResource(FedoraObject.class);
+        when(resource.hasType(LDP_BASIC_CONTAINER)).thenReturn(true);
+        final Response actual = testObj.head();
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP BasicContainer",
+                mockResponse.getHeaders("Link").contains("<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\""));
+    }
+
+    @Test
+    public void testHeadWithDirectContainer() throws Exception {
+        final FedoraResource resource = setResource(FedoraObject.class);
+        when(resource.hasType(LDP_DIRECT_CONTAINER)).thenReturn(true);
+        final Response actual = testObj.head();
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP DirectContainer",
+                mockResponse.getHeaders("Link").contains("<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
+    }
+
+    @Test
+    public void testHeadWithIndirectContainer() throws Exception {
+        final FedoraResource resource = setResource(FedoraObject.class);
+        when(resource.hasType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
+        final Response actual = testObj.head();
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP IndirectContainer",
+                mockResponse.getHeaders("Link").contains("<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
     }
 
     @Test
@@ -321,8 +365,6 @@ public class FedoraLdpTest {
         setResource(FedoraObject.class);
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP DirectContainer",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\""));
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
 
@@ -347,6 +389,37 @@ public class FedoraLdpTest {
                 "class org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext"
         )));
 
+    }
+
+
+    @Test
+    public void testGetWithBasicContainer() throws Exception {
+        final FedoraResource resource = setResource(FedoraObject.class);
+        when(resource.hasType(LDP_BASIC_CONTAINER)).thenReturn(true);
+        final Response actual = testObj.describe(null);
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP BasicContainer",
+                mockResponse.getHeaders("Link").contains("<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\""));
+    }
+
+    @Test
+    public void testGetWithDirectContainer() throws Exception {
+        final FedoraResource resource = setResource(FedoraObject.class);
+        when(resource.hasType(LDP_DIRECT_CONTAINER)).thenReturn(true);
+        final Response actual = testObj.describe(null);
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP DirectContainer",
+                mockResponse.getHeaders("Link").contains("<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
+    }
+
+    @Test
+    public void testGetWithIndirectContainer() throws Exception {
+        final FedoraResource resource = setResource(FedoraObject.class);
+        when(resource.hasType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
+        final Response actual = testObj.describe(null);
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP IndirectContainer",
+                mockResponse.getHeaders("Link").contains("<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
     }
 
     @Test

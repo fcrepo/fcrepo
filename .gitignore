@@ -13,5 +13,4 @@ ObjectStore/
 *~
 fcrepo4-data/
 *.iml
-fcrepo-integration-ldp/report
-fcrepo-integration-ldp/test-output
+fcrepo-integration-ldp/report-*
