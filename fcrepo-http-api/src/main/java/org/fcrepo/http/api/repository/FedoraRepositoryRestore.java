@@ -34,6 +34,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.services.RepositoryService;
 import org.modeshape.jcr.api.Problem;
 import org.modeshape.jcr.api.Problems;
 import org.slf4j.Logger;
@@ -52,6 +53,12 @@ public class FedoraRepositoryRestore extends AbstractResource {
 
     @Inject
     protected Session session;
+
+    /**
+     * The fcrepo repository service
+     */
+    @Inject
+    protected RepositoryService repositoryService;
 
     /**
      * This method runs a repository restore.

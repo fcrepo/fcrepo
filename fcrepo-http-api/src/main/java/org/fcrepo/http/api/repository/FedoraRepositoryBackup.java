@@ -28,8 +28,10 @@ import javax.jcr.Session;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
+
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.services.RepositoryService;
 import org.modeshape.jcr.api.Problem;
 import org.modeshape.jcr.api.Problems;
 import org.slf4j.Logger;
@@ -48,6 +50,12 @@ public class FedoraRepositoryBackup extends AbstractResource {
 
     @Inject
     protected Session session;
+
+    /**
+     * The fcrepo repository service
+     */
+    @Inject
+    protected RepositoryService repositoryService;
 
     /**
      * This method runs a repository backup.

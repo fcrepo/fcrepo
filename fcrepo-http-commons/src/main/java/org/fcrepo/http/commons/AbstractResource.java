@@ -28,7 +28,7 @@ import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.services.RepositoryService;
+//import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.services.VersionService;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -87,8 +87,8 @@ public abstract class AbstractResource {
     /**
      * The fcrepo repository service
      */
-    @Autowired
-    protected RepositoryService repositoryService;
+    //@Autowired
+    //protected RepositoryService repositoryService;
 
     @Inject
     @Optional
