@@ -37,9 +37,6 @@ import javax.jcr.query.QueryResult;
 import javax.jcr.query.RowIterator;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedExecutorService;
-import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.springframework.stereotype.Component;
 
 /**
@@ -137,21 +134,6 @@ public abstract class ServiceHelpers {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-    }
-
-    /**
-     * A static factory function to insulate services from the details of
-     * building a DistributedExecutorService
-     * 
-     * @param cacheStore
-     * @return new DistributedExecutorService instance
-     */
-    public static DistributedExecutorService getClusterExecutor(
-            final InfinispanBinaryStore cacheStore) {
-        // Watch out! This is trying to pluck out the blob cache store. This
-        // works as long as
-        // modeshape continues to be ordered..
-        return new DefaultExecutorService(cacheStore.getCaches().get(1));
     }
 
     /**

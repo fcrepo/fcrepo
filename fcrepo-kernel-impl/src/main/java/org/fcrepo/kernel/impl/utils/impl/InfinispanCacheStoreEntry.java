@@ -28,7 +28,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.jcr.Property;
 
-import org.fcrepo.kernel.impl.services.ServiceHelpers;
+import org.fcrepo.kernel.impl.services.functions.GetClusterExecutor;
 import org.fcrepo.kernel.utils.FixityResult;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.BinaryKey;
@@ -45,6 +45,7 @@ import com.google.common.collect.ImmutableSet;
 public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     private static final Logger LOGGER = getLogger(InfinispanCacheStoreEntry.class);
 
+    private static final GetClusterExecutor EXECUTOR_FACTORY = new GetClusterExecutor();
     /**
      *
      * @param store
@@ -90,6 +91,6 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     }
 
     private DistributedExecutorService clusterExecutor() {
-        return ServiceHelpers.getClusterExecutor((InfinispanBinaryStore)store());
+        return EXECUTOR_FACTORY.apply((InfinispanBinaryStore)store());
     }
 }
