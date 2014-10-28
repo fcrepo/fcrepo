@@ -349,7 +349,6 @@ public class FedoraLdpTest {
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
@@ -380,7 +379,6 @@ public class FedoraLdpTest {
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
@@ -505,10 +503,10 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testGetWithObjectOmitReferences() throws Exception {
+    public void testGetWithObjectIncludeReferences() throws Exception {
         setResource(FedoraObject.class);
         setField(testObj, "prefer",
-                new Prefer("return=representation; omit=\"" + INBOUND_REFERENCES + "\""));
+                new Prefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
@@ -522,7 +520,7 @@ public class FedoraLdpTest {
                     }
                 });
 
-        assertFalse("Should not include references contexts",
+        assertTrue("Should include references contexts",
                 rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext"));
 
     }
@@ -574,7 +572,6 @@ public class FedoraLdpTest {
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
