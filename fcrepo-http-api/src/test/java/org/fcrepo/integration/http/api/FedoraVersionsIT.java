@@ -394,34 +394,47 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testDatastreamAutoMixin() throws IOException {
+    public void testDatastreamAutoMixinAndRevert() throws IOException {
         final String pid = getRandomUniquePid();
+        final String dsid = "ds1";
         createObject(pid);
 
-        createDatastream(pid, "ds1", "This is some datastream content");
+        final String originalContent = "This is the original content";
+        final String versionLabel = "ver1";
+        createDatastream(pid, dsid, originalContent);
 
         // datastream should not have fcr:versions endpoint
-        assertEquals(404, getStatus(new HttpGet(serverAddress + pid + "/ds1/fcr:versions")));
+        assertEquals(404, getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
 
         // datastream should not be versionable
-        final GraphStore originalObjectProperties = getContent(serverAddress + pid + "/ds1/fcr:metadata");
+        final GraphStore originalObjectProperties = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata");
         assertFalse("Node must not have versionable mixin.",
-                originalObjectProperties.contains(ANY, createResource(serverAddress + pid + "/ds1").asNode(),
+                originalObjectProperties.contains(ANY, createResource(serverAddress + pid + "/" + dsid).asNode(),
                 createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
 
         // creating a version should succeed
-        final HttpPost httpPost = new HttpPost(serverAddress + pid + "/ds1/fcr:versions");
-        httpPost.setHeader("Slug", "label");
+        final HttpPost httpPost = new HttpPost(serverAddress + pid + "/" + dsid + "/fcr:versions");
+        httpPost.setHeader("Slug", versionLabel);
         assertEquals( 204, getStatus(httpPost));
 
         // datastream should then have versions endpoint
-        assertEquals( 200, getStatus(new HttpGet(serverAddress + pid + "/ds1/fcr:versions")) );
+        assertEquals( 200, getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")) );
 
         // datastream should then be versionable
-        final GraphStore updatedDSProperties = getContent(serverAddress + pid + "/ds1/fcr:metadata");
+        final GraphStore updatedDSProperties = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata");
         assertTrue("Node must have versionable mixin.",
-                updatedDSProperties.contains(ANY, createResource(serverAddress + pid + "/ds1/fcr:metadata").asNode(),
-                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
+                updatedDSProperties.contains(ANY,
+                        createResource(serverAddress + pid + "/" + dsid + "/fcr:metadata").asNode(),
+                        createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
+
+        // update the content
+        final String updatedContent = "This is the updated content";
+        execute(putDSMethod(pid,dsid,updatedContent));
+        assertEquals( updatedContent, EntityUtils.toString(execute(getDSMethod(pid, dsid)).getEntity()) );
+
+        // revert to the original content
+        revertToVersion(pid + "/" + dsid, versionLabel);
+        assertEquals( originalContent, EntityUtils.toString(execute(getDSMethod(pid, dsid)).getEntity()) );
     }
 
 
