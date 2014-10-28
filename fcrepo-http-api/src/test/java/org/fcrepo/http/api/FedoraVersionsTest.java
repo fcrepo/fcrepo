@@ -99,7 +99,7 @@ public class FedoraVersionsTest {
 
     @Test
     public void testRevertToVersion() throws RepositoryException {
-        doReturn(mockResource).when(testObj).unversionedResource();
+        doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.revertToVersion();
         verify(mockVersions).revertToVersion(mockSession, path, versionLabel);
         assertNotNull(response);
@@ -107,13 +107,13 @@ public class FedoraVersionsTest {
 
     @Test (expected = PathNotFoundException.class)
     public void testRevertToVersionFailure() throws RepositoryException {
-        doThrow(PathNotFoundException.class).when(testObj).unversionedResource();
+        doThrow(PathNotFoundException.class).when(testObj).unversionedResourcePath();
         testObj.revertToVersion();
     }
 
     @Test
     public void testRemoveVersion() throws RepositoryException {
-        doReturn(mockResource).when(testObj).unversionedResource();
+        doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.removeVersion();
         verify(mockVersions).removeVersion(mockSession, path, versionLabel);
         assertNotNull(response);
@@ -121,7 +121,7 @@ public class FedoraVersionsTest {
 
     @Test (expected = PathNotFoundException.class)
     public void testRemoveVersionFailure() throws RepositoryException {
-        doThrow(PathNotFoundException.class).when(testObj).unversionedResource();
+        doThrow(PathNotFoundException.class).when(testObj).unversionedResourcePath();
         testObj.removeVersion();
     }
 

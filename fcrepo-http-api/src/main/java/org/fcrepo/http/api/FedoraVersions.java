@@ -18,6 +18,7 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.Prefer;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -109,7 +110,7 @@ public class FedoraVersions extends ContentExposingResource {
     public Response revertToVersion() throws RepositoryException {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
-        versionService.revertToVersion(session, unversionedResource().getPath(), label);
+        versionService.revertToVersion(session, unversionedResourcePath(), label);
         return noContent().build();
     }
 
@@ -121,7 +122,7 @@ public class FedoraVersions extends ContentExposingResource {
     @DELETE
     public Response removeVersion() throws RepositoryException {
         LOGGER.info("Removing {} version {}.", path, label);
-        versionService.removeVersion(session, unversionedResource().getPath(), label);
+        versionService.removeVersion(session, unversionedResourcePath(), label);
         return noContent().build();
     }
 
@@ -146,13 +147,16 @@ public class FedoraVersions extends ContentExposingResource {
         return getContent(prefer, rangeValue, rdfStream);
     }
 
-    protected FedoraResource unversionedResource() {
+    protected String unversionedResourcePath() throws RepositoryException {
 
         if (baseResource == null) {
             baseResource = getResourceFromPath(externalPath);
+            if ( baseResource instanceof FedoraBinary ) {
+                baseResource = ((FedoraBinary)baseResource).getDescription();
+            }
         }
 
-        return baseResource;
+        return baseResource.getPath();
     }
 
     @Override
