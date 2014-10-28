@@ -2163,6 +2163,34 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    @Ignore("This test needs manual intervention to decide how \"good\" the graph looks")
+    public void testGraphShouldNotBeTooLumpy() throws Exception {
+
+        final String pid = getRandomUniquePid();
+
+        final HttpPut httpPut = putObjMethod(pid);
+        httpPut.addHeader("Content-Type", "text/turtle");
+        httpPut.setEntity(new StringEntity("<> a <" + DIRECT_CONTAINER.getURI() + ">;" +
+                "    <" + MEMBERSHIP_RESOURCE.getURI() + "> <> ;" +
+                "    <" + HAS_MEMBER_RELATION.getURI() + "> <" + LDP_NAMESPACE + "member> ;" +
+                "    <info:x> <#hash-uri> ;" +
+                "    <info:x> [ <" + DC_11.title + "> \"xyz\" ] . " +
+                "<#hash-uri>  <" + DC_11.title + "> \"some-hash-uri\" ."));
+
+        final HttpResponse response = client.execute(httpPut);
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), status);
+
+        final String subjectURI = response.getFirstHeader("Location").getValue();
+
+        final HttpGet get = new HttpGet(subjectURI);
+        final HttpResponse getResponse = client.execute(get);
+
+        final String s = EntityUtils.toString(getResponse.getEntity());
+
+    }
+
     private Date getDateFromModel( final Model model, final Resource subj, final Property pred ) throws Exception {
         final StmtIterator stmts = model.listStatements( subj, pred, (String)null );
         if ( stmts.hasNext() ) {

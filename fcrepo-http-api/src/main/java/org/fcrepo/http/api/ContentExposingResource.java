@@ -17,6 +17,7 @@ package org.fcrepo.http.api;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -205,48 +206,54 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }));
         }
 
-        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter));
+        if (ldpPreferences.prefersServerManaged()) {
+            rdfStream.concat(getTriples(LdpRdfContext.class));
+        }
 
         rdfStream.concat(filter(getTriples(TypeRdfContext.class), tripleFilter));
 
-
-        if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
-            httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());
-        }
+        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter));
 
         if (!returnPreference.getValue().equals("minimal")) {
 
+            // Additional server-managed triples about this resource
             if (ldpPreferences.prefersServerManaged()) {
                 rdfStream.concat(getTriples(AclRdfContext.class));
                 rdfStream.concat(getTriples(RootRdfContext.class));
                 rdfStream.concat(getTriples(ContentRdfContext.class));
-            }
-
-            rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter));
-            rdfStream.concat(filter(getTriples(BlankNodeRdfContext.class), tripleFilter));
-
-            if (resource() instanceof Datastream) {
-                rdfStream.concat(filter(
-                        getTriples(((Datastream) resource()).getBinary(), PropertiesRdfContext.class), tripleFilter));
-            }
-
-            if (ldpPreferences.prefersReferences()) {
-                rdfStream.concat(getTriples(ReferencesRdfContext.class));
-            }
-
-            if (ldpPreferences.prefersServerManaged()) {
                 rdfStream.concat(getTriples(ParentRdfContext.class));
             }
 
+            // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 rdfStream.concat(getTriples(ChildrenRdfContext.class));
             }
 
+            // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {
                 rdfStream.concat(getTriples(LdpContainerRdfContext.class));
                 rdfStream.concat(getTriples(LdpIsMemberOfRdfContext.class));
             }
 
+            // Include binary properties if this is a binary description
+            if (resource() instanceof Datastream) {
+                final FedoraBinary binary = ((Datastream) resource()).getBinary();
+                rdfStream.concat(filter(binary.getTriples(translator(), ImmutableList.of(
+                        TypeRdfContext.class,
+                        PropertiesRdfContext.class,
+                        ContentRdfContext.class)), tripleFilter));
+            }
+
+            // Embed all hash and blank nodes
+            rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter));
+            rdfStream.concat(filter(getTriples(BlankNodeRdfContext.class), tripleFilter));
+
+            // Include inbound references to this object
+            if (ldpPreferences.prefersReferences()) {
+                rdfStream.concat(getTriples(ReferencesRdfContext.class));
+            }
+
+            // Embed the children of this object
             if (ldpPreferences.prefersEmbed()) {
 
                 final Iterator<FedoraResource> children = resource().getChildren();
@@ -256,16 +263,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
                             @Override
                             public RdfStream apply(final FedoraResource child) {
-                                return child.getTriples(translator(), PropertiesRdfContext.class);
+                                return child.getTriples(translator(), ImmutableList.of(
+                                        TypeRdfContext.class,
+                                        PropertiesRdfContext.class,
+                                        BlankNodeRdfContext.class));
                             }
                         })), tripleFilter));
 
             }
-
-            if (ldpPreferences.prefersServerManaged()) {
-                rdfStream.concat(getTriples(LdpRdfContext.class));
-            }
         }
+
+        if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
+            httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());
+        }
+
 
         return rdfStream;
     }

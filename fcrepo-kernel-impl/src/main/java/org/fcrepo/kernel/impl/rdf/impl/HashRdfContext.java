@@ -57,8 +57,8 @@ public class HashRdfContext extends NodeRdfContext {
                         public Iterator<Triple> apply(final Node input) {
                             final FedoraResource resource = nodeConverter.convert(input);
 
-                            return resource.getTriples(idTranslator, ImmutableList.of(PropertiesRdfContext.class,
-                                    TypeRdfContext.class,
+                            return resource.getTriples(idTranslator, ImmutableList.of(TypeRdfContext.class,
+                                    PropertiesRdfContext.class,
                                     BlankNodeRdfContext.class));
                         }
                     })));

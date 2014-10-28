@@ -63,8 +63,8 @@ public class BlankNodeRdfContext extends NodeRdfContext {
             public RdfStream apply(final Node node) {
                 final FedoraResource resource = nodeConverter.convert(node);
 
-                return resource.getTriples(idTranslator, ImmutableList.of(PropertiesRdfContext.class,
-                        TypeRdfContext.class,
+                return resource.getTriples(idTranslator, ImmutableList.of(TypeRdfContext.class,
+                        PropertiesRdfContext.class,
                         BlankNodeRdfContext.class));
             }
         })));

@@ -48,7 +48,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * <p>PropertiesRdfContextTest class.</p>
+ * <p>ContentRdfContextTest class.</p>
  *
  * @author ajs6f
  */
@@ -61,6 +61,13 @@ public class ContentRdfContextTest {
         logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
         assertTrue("Didn't find triple showing node has content!", results
                 .contains(mockSubject, HAS_CONTENT, mockContentSubject));
+    }
+
+    @Test
+    public void testFedoraBinaryTriples() throws IOException {
+
+        final Model results =
+                new ContentRdfContext(mockBinary, idTranslator).asModel();
         assertTrue("Didn't find triple showing content has node!", results
                 .contains(mockContentSubject, IS_CONTENT_OF, mockSubject));
     }
@@ -69,6 +76,7 @@ public class ContentRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
+        when(mockBinary.getDescription()).thenReturn(mockResource);
         when(mockBinaryNode.getSession()).thenReturn(mockSession);
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);

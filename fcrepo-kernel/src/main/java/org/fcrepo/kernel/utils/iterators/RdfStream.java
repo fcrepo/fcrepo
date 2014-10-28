@@ -147,7 +147,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * @return This object for continued use.
      */
     public RdfStream concat(final Iterator<? extends Triple> newTriples) {
-        triples = Iterators.concat(newTriples, triples);
+        triples = Iterators.concat(triples, newTriples);
         return this;
     }
 
@@ -156,7 +156,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * @return This object for continued use.
      */
     public <T extends Triple> RdfStream concat(final T newTriple) {
-        triples = Iterators.concat(singletonIterator(newTriple), triples);
+        triples = Iterators.concat(triples, singletonIterator(newTriple));
         return this;
     }
 
@@ -165,7 +165,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * @return This object for continued use.
      */
     public <T extends Triple> RdfStream concat(@SuppressWarnings("unchecked") final T... newTriples) {
-        triples = Iterators.concat(Iterators.forArray(newTriples), triples);
+        triples = Iterators.concat(triples, Iterators.forArray(newTriples));
         return this;
     }
 
@@ -174,7 +174,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * @return This object for continued use.
      */
     public RdfStream concat(final Collection<? extends Triple> newTriples) {
-        triples = Iterators.concat(newTriples.iterator(), triples);
+        triples = Iterators.concat(triples, newTriples.iterator());
         return this;
     }
 
