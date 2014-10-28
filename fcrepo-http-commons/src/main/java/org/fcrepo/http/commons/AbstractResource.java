@@ -84,12 +84,6 @@ public abstract class AbstractResource {
     @Autowired
     protected VersionService versionService;
 
-    /**
-     * The fcrepo repository service
-     */
-    //@Autowired
-    //protected RepositoryService repositoryService;
-
     @Inject
     @Optional
     protected EventBus eventBus;

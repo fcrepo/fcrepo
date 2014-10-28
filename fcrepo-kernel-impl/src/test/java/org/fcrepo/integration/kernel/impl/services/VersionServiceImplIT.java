@@ -62,7 +62,7 @@ public class VersionServiceImplIT extends AbstractIT {
     public void testCreateVersion() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();
-        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid);
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
@@ -75,7 +75,7 @@ public class VersionServiceImplIT extends AbstractIT {
     public void testRemoveVersion() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();
-        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid);
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
@@ -98,7 +98,7 @@ public class VersionServiceImplIT extends AbstractIT {
     public void testRevertToVersion() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();
-        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid);
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
@@ -121,7 +121,7 @@ public class VersionServiceImplIT extends AbstractIT {
     public void testRevertToInvalidVersion() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();
-        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid);
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
@@ -138,7 +138,7 @@ public class VersionServiceImplIT extends AbstractIT {
     public void testRemoveInvalidVersion() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();
-        final FedoraResource resource = objectService.findOrCreateObject(session, "/" + pid);
+        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid);
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)

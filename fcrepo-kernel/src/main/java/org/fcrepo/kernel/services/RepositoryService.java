@@ -25,7 +25,7 @@ import org.modeshape.jcr.api.Problems;
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public interface RepositoryService extends Service {
+public interface RepositoryService {
 
     /**
      * Calculate the total size of all the binary properties in the repository

@@ -15,9 +15,9 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.impl.TombstoneImpl;
-import org.fcrepo.kernel.services.Service;
 import org.modeshape.jcr.api.JcrTools;
 
 import javax.jcr.Node;
@@ -33,7 +33,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public abstract class AbstractService implements Service {
+public abstract class AbstractService {
     protected final static JcrTools jcrTools = new JcrTools();
 
     protected Node findOrCreateNode(final Session session,
@@ -55,6 +55,14 @@ public abstract class AbstractService implements Service {
         return node;
     }
 
+    protected Node findNode(final Session session, final String path) {
+        try {
+            return session.getNode(path);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
     private void tagHierarchyWithPairtreeMixin(final Node baseNode,
                                                final Node createdNode) throws RepositoryException {
         Node parent = createdNode.getParent();
@@ -65,4 +73,17 @@ public abstract class AbstractService implements Service {
         }
     }
 
+    /** test node existence at path
+     *
+     * @param session
+     * @param path
+     * @return whether T exists at the given path
+     */
+    public boolean exists(final Session session, final String path) {
+        try {
+            return session.nodeExists(path);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 }

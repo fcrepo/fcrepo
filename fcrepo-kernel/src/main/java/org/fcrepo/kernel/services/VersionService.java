@@ -22,7 +22,7 @@ import javax.jcr.Session;
  * @author bbpennel
  * @since Feb 19, 2014
  */
-public interface VersionService extends Service {
+public interface VersionService {
 
     /**
      * Explicitly creates a version for the nodes at each path provided.

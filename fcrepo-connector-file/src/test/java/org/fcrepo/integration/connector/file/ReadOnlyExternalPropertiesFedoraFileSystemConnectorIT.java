@@ -54,7 +54,7 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
     @Test
     public void verifyThatPropertiesAreExternal() throws RepositoryException {
         final Session session = repo.login();
-        final FedoraResource object = nodeService.getObject(session, testFilePath());
+        final FedoraResource object = nodeService.find(session, testFilePath());
         assertEquals("There should be exactly as many visible nodes as actual files (ie, no hidden sidecar files).",
                 fileForNode(null).getParentFile().list().length,
                 getChildCount(object.getNode().getParent()));

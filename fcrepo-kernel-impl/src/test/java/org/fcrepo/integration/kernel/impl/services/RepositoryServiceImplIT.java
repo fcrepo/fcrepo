@@ -66,7 +66,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
         final double originalSize = repositoryService.getRepositorySize();
 
 
-        binaryService.findOrCreateBinary(session, "/testObjectServiceNode").setContent(
+        binaryService.findOrCreate(session, "/testObjectServiceNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -90,7 +90,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testBackupRepository() throws Exception {
         final Session session = repository.login();
 
-        binaryService.findOrCreateBinary(session, "/testObjectServiceNode0").setContent(
+        binaryService.findOrCreate(session, "/testObjectServiceNode0").setContent(
                 new ByteArrayInputStream("asdfx".getBytes()),
                 "application/octet-stream",
                 null,
@@ -112,7 +112,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     public void testRestoreRepository() throws Exception {
         final Session session = repository.login();
 
-        binaryService.findOrCreateBinary(session, "/testObjectServiceNode1").setContent(
+        binaryService.findOrCreate(session, "/testObjectServiceNode1").setContent(
                 new ByteArrayInputStream("asdfy".getBytes()),
                 "application/octet-stream",
                 null,

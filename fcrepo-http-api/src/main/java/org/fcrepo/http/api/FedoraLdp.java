@@ -546,10 +546,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         switch (objectType) {
             case FEDORA_OBJECT:
-                result = objectService.findOrCreateObject(session, path);
+                result = objectService.findOrCreate(session, path);
                 break;
             case FEDORA_DATASTREAM:
-                result = binaryService.findOrCreateBinary(session, path);
+                result = binaryService.findOrCreate(session, path);
                 break;
             default:
                 throw new ClientErrorException("Unknown object type " + objectType, BAD_REQUEST);

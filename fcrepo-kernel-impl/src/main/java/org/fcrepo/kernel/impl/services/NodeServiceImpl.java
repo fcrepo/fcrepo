@@ -23,6 +23,7 @@ import java.io.InputStream;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.NamespaceRegistry;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -71,7 +72,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws RepositoryException
      */
     @Override
-    public FedoraResource getObject(final Session session, final String path) {
+    public FedoraResource find(final Session session, final String path) {
         try {
             return new FedoraResourceImpl(session.getNode(path));
         } catch (final RepositoryException e) {
@@ -179,6 +180,23 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
                 }
             }
         }
+    }
+
+    /**
+     * @param session
+     * @param path
+     */
+    @Override
+    public FedoraResource findOrCreate(final Session session, final String path) {
+        throw new RepositoryRuntimeException("unimplemented");
+    }
+
+    /**
+     * @param node
+     */
+    @Override
+    public FedoraResource cast(final Node node) {
+        return new FedoraResourceImpl(node);
     }
 
 }

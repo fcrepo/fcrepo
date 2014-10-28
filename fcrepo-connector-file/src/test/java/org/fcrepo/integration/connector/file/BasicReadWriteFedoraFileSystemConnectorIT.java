@@ -59,7 +59,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
     public void testWriteProperty() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraResource object = nodeService.getObject(session, testFilePath());
+        final FedoraResource object = nodeService.find(session, testFilePath());
         assertNotNull(object);
 
         final String sparql = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
@@ -85,7 +85,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
     public void testRemoveProperty() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraResource object = nodeService.getObject(session, testFilePath());
+        final FedoraResource object = nodeService.find(session, testFilePath());
         assertNotNull(object);
 
         final String sparql = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +

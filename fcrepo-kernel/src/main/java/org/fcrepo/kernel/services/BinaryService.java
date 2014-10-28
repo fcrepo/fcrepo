@@ -17,28 +17,10 @@ package org.fcrepo.kernel.services;
 
 import org.fcrepo.kernel.FedoraBinary;
 
-import javax.jcr.Node;
-import javax.jcr.Session;
-
 /**
  * @author cabeer
  * @since 10/10/14
  */
-public interface BinaryService {
+public interface BinaryService extends Service<FedoraBinary> {
 
-    /**
-     * Retrieve a Binary instance by session and path
-     *
-     * @param path jcr path to the datastream
-     * @return retrieved Datastream
-     */
-    FedoraBinary findOrCreateBinary(final Session session, final String path);
-
-    /**
-     * Retrieve a Binary instance from a node
-     *
-     * @param node datastream node
-     * @return node as a Datastream
-     */
-    FedoraBinary asBinary(Node node);
 }

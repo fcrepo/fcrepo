@@ -15,8 +15,6 @@
  */
 package org.fcrepo.kernel.services;
 
-import javax.jcr.Session;
-
 import org.fcrepo.kernel.FedoraObject;
 
 /**
@@ -25,13 +23,6 @@ import org.fcrepo.kernel.FedoraObject;
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public interface ObjectService extends Service {
-
-    /**
-     * @param path
-     * @param session
-     * @return A FedoraObject with the proffered PID
-     */
-    FedoraObject findOrCreateObject(Session session, String path);
+public interface ObjectService extends Service<FedoraObject> {
 
 }

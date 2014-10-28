@@ -69,19 +69,19 @@ public class FedoraObjectImplIT extends AbstractIT {
 
     @Test
     public void testCreatedObject() throws RepositoryException {
-        objectService.findOrCreateObject(session, "/testObject");
+        objectService.findOrCreate(session, "/testObject");
         session.save();
         session.logout();
         session = repo.login();
         final FedoraObject obj =
-            objectService.findOrCreateObject(session, "/testObject");
+            objectService.findOrCreate(session, "/testObject");
         assertNotNull("Couldn't find object!", obj);
     }
 
     @Test
     public void testObjectGraph() throws Exception {
         final FedoraObject object =
-            objectService.findOrCreateObject(session, "/graphObject");
+            objectService.findOrCreate(session, "/graphObject");
         final Model model = object.getTriples(subjects, PropertiesRdfContext.class).asModel();
 
         final Resource graphSubject = subjects.reverse().convert(object);
@@ -153,7 +153,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     @Test
     public void testObjectGraphWithUriProperty() throws RepositoryException {
         final FedoraObject object =
-            objectService.findOrCreateObject(session, "/graphObject");
+            objectService.findOrCreate(session, "/graphObject");
         final Resource graphSubject = subjects.reverse().convert(object);
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
@@ -188,7 +188,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     @Test
     public void testUpdatingObjectGraphWithErrors() {
         final String pid = getRandomPid();
-        final FedoraObject object = objectService.findOrCreateObject(session, pid);
+        final FedoraObject object = objectService.findOrCreate(session, pid);
 
         MalformedRdfException e = null;
         try {
@@ -207,7 +207,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     @Test
     public void testReplaceObjectGraphWithErrors() {
         final String pid = getRandomPid();
-        final FedoraObject object = objectService.findOrCreateObject(session, pid);
+        final FedoraObject object = objectService.findOrCreate(session, pid);
 
         final Model model = ModelFactory.createDefaultModel().read(
                 IOUtils.toInputStream("<> <info:some-property> <relative-url> . \n" +

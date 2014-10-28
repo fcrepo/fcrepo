@@ -27,25 +27,7 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public interface NodeService extends Service {
-    /**
-     * Test whether a datastream or object exists at the given path in the
-     * repository
-     *
-     * @param path
-     * @return whether a datastream or object exists at the given path
-     */
-    public boolean exists(final Session session, final String path);
-
-    /**
-     * Retrieve an existing Fedora resource at the given path
-     *
-     * @param session
-     * @param path
-     * @return FedoraResource at the given path
-     */
-    FedoraResource getObject(Session session, String path);
-
+public interface NodeService extends Service<FedoraResource> {
     /**
      * Copy an existing object from the source path to the destination path
      * @param session

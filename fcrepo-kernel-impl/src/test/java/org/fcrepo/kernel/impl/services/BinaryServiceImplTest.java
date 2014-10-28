@@ -64,20 +64,20 @@ public class BinaryServiceImplTest {
         final String testPath = "/foo/bar";
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
-        testObj.findOrCreateBinary(mockSession, testPath);
+        testObj.findOrCreate(mockSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
     }
 
     @Test
     public void testAsBinary() throws Exception {
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
-        testObj.asBinary(mockNode);
+        testObj.cast(mockNode);
     }
 
     @Test(expected = ResourceTypeException.class)
     public void testAsBinaryWithNonbinary() throws Exception {
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(false);
-        testObj.asBinary(mockNode);
+        testObj.cast(mockNode);
     }
 
 }

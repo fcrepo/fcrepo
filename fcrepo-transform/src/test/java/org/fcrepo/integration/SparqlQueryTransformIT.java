@@ -58,7 +58,7 @@ public class SparqlQueryTransformIT extends AbstractResourceIT {
     public void shouldDoStuff() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.findOrCreateObject(session, "/testObject");
+        final FedoraObject object = objectService.findOrCreate(session, "/testObject");
 
         final String s = "SELECT ?x ?uuid\n" +
                 "WHERE { ?x  <" + REPOSITORY_NAMESPACE + "uuid> ?uuid }";
