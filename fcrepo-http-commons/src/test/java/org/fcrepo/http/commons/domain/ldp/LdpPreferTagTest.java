@@ -53,7 +53,7 @@ public class LdpPreferTagTest {
         testObj = new LdpPreferTag(prefer);
 
         assertTrue(testObj.prefersServerManaged());
-        assertTrue(testObj.prefersReferences());
+        assertFalse(testObj.prefersReferences());
         assertFalse(testObj.prefersContainment());
         assertFalse(testObj.prefersMembership());
         assertFalse(testObj.prefersEmbed());
@@ -111,12 +111,12 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testPreferOmitReference() throws ParseException {
+    public void testPreferReference() throws ParseException {
         final PreferTag prefer
-                = new PreferTag("return=representation; omit=\"" + INBOUND_REFERENCES + "\"");
+                = new PreferTag("return=representation; include=\"" + INBOUND_REFERENCES + "\"");
         testObj = new LdpPreferTag(prefer);
 
-        assertFalse(testObj.prefersReferences());
+        assertTrue(testObj.prefersReferences());
     }
 
 }
