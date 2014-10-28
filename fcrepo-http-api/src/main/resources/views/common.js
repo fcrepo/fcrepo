@@ -12,12 +12,8 @@ function addChild()
 
     var postURI = newURI;
 
-    if ( mixin != '' ) {
-        postURI = postURI + "?mixin=" + mixin;
-    }
-
-    if (mixin == "fedora:datastream") {
-        var update_file = document.getElementById("datastream_payload").files[0];
+    if (mixin == "binary") {
+        var update_file = document.getElementById("binary_payload").files[0];
         var reader = new FileReader();
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
@@ -34,7 +30,7 @@ function addChild()
                         window.location.reload();
                     }
                 } else {
-                    ajaxErrorHandler(xhr, "", "Error creating datastream");
+                    ajaxErrorHandler(xhr, "", "Error creating binary");
                 }
             }
         };
@@ -103,10 +99,10 @@ function sendImport() {
 
 $(function() {
     $('#new_mixin').change(function() {
-        if($('#new_mixin').val() == "fedora:datastream") {
-            $('#datastream_payload_container').show();
+        if($('#new_mixin').val() == "binary") {
+            $('#binary_payload_container').show();
         } else {
-            $('#datastream_payload_container').hide();
+            $('#binary_payload_container').hide();
         }
     });
 
@@ -293,7 +289,7 @@ function updateFile()
             if (xhr.status == 204 || xhr.status == 201) {
                 window.location.reload(true);
             } else {
-                ajaxErrorHandler(xhr, "", "Error creating datastream");
+                ajaxErrorHandler(xhr, "", "Error updating binary");
             }
         }
     }
@@ -320,7 +316,7 @@ function updateAccessRoles()
             if (xhr.status == 204 || xhr.status == 201) {
                 window.location.reload(true);
             } else {
-                ajaxErrorHandler(xhr, "", "Error creating datastream");
+                ajaxErrorHandler(xhr, "", "Error");
             }
         }
     }

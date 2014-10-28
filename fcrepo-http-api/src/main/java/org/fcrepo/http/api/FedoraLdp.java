@@ -69,7 +69,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.created;
@@ -84,7 +83,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -242,7 +241,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
-            resource = createFedoraResource(null, effectiveContentType, path, contentDisposition);
+            resource = createFedoraResource(path, effectiveContentType, contentDisposition);
 
             final URI location = getUri(resource);
 
@@ -365,8 +364,7 @@ public class FedoraLdp extends ContentExposingResource {
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
     @Timed
-    public Response createObject(@QueryParam("mixin") final String mixin,
-                                 @QueryParam("checksum") final String checksum,
+    public Response createObject(@QueryParam("checksum") final String checksum,
                                  @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
@@ -387,9 +385,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         final MediaType effectiveContentType
                 = requestBodyStream == null || requestContentType == null ? null : contentType;
-        final FedoraResource result = createFedoraResource(mixin,
+        final FedoraResource result = createFedoraResource(
+                newObjectPath,
                 effectiveContentType,
-                newObjectPath, contentDisposition);
+                contentDisposition);
 
         final RdfStream resourceTriples;
 
@@ -404,7 +403,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
 
-            if ((result instanceof FedoraObject || result instanceof Datastream)
+            if ((result instanceof FedoraObject)
                     && isRdfContentType(contentTypeString)) {
                 replaceResourceWithStream(result, requestBodyStream, contentType, resourceTriples);
             } else if (result instanceof FedoraBinary) {
@@ -429,7 +428,7 @@ public class FedoraLdp extends ContentExposingResource {
             throw new RepositoryRuntimeException(e);
         }
 
-        LOGGER.debug("Finished creating {} with path: {}", mixin, newObjectPath);
+        LOGGER.debug("Finished creating resource with path: {}", newObjectPath);
 
         addCacheControlHeaders(servletResponse, result, session);
 
@@ -513,46 +512,36 @@ public class FedoraLdp extends ContentExposingResource {
 
     }
 
-    private String getRequestedObjectType(final String mixin,
-                                          final MediaType requestContentType,
+    private String getRequestedObjectType(final MediaType requestContentType,
                                           final ContentDisposition contentDisposition) {
-        String objectType = FEDORA_OBJECT;
 
-        if (mixin != null) {
-            objectType = mixin;
-        } else {
-            if (requestContentType != null) {
-                final String s = requestContentType.toString();
-                if (!s.equals(contentTypeSPARQLUpdate) && !isRdfContentType(s) || s.equals(TEXT_PLAIN)) {
-                    objectType = FEDORA_DATASTREAM;
-                }
-            }
-
-            if (contentDisposition != null && contentDisposition.getType().equals("attachment")) {
-                objectType = FEDORA_DATASTREAM;
+        if (requestContentType != null) {
+            final String s = requestContentType.toString();
+            if (!s.equals(contentTypeSPARQLUpdate) && !isRdfContentType(s) || s.equals(TEXT_PLAIN)) {
+                return FEDORA_BINARY;
             }
         }
-        return objectType;
+
+        if (contentDisposition != null && contentDisposition.getType().equals("attachment")) {
+            return FEDORA_BINARY;
+        }
+
+        return FEDORA_OBJECT;
     }
 
-    private FedoraResource createFedoraResource(final String requestMixin,
+    private FedoraResource createFedoraResource(final String path,
                                                 final MediaType requestContentType,
-                                                final String path,
                                                 final ContentDisposition contentDisposition) {
-        final String objectType = getRequestedObjectType(requestMixin, requestContentType, contentDisposition);
+        final String objectType = getRequestedObjectType(requestContentType, contentDisposition);
 
         final FedoraResource result;
 
-        switch (objectType) {
-            case FEDORA_OBJECT:
-                result = objectService.findOrCreate(session, path);
-                break;
-            case FEDORA_DATASTREAM:
-                result = binaryService.findOrCreate(session, path);
-                break;
-            default:
-                throw new ClientErrorException("Unknown object type " + objectType, BAD_REQUEST);
+        if (objectType.equals(FEDORA_BINARY)) {
+            result = binaryService.findOrCreate(session, path);
+        } else {
+            result = objectService.findOrCreate(session, path);
         }
+
         return result;
     }
 

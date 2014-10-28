@@ -98,8 +98,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     private HtmlPage createAndVerifyObjectWithIdFromRootPage(final String pid) throws IOException {
         final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
-        final HtmlSelect type = form.getSelectByName("mixin");
-        type.getOptionByValue("fedora:object").setSelected(true);
+        final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
+        type.getOptionByValue("object").setSelected(true);
 
         final HtmlInput new_id = (HtmlInput)page.getElementById("new_id");
         new_id.setValueAttribute(pid);
@@ -122,8 +122,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
-        final HtmlSelect type = form.getSelectByName("mixin");
-        type.getOptionByValue("fedora:object").setSelected(true);
+        final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
+        type.getOptionByValue("object").setSelected(true);
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
@@ -144,8 +144,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlInput slug = form.getInputByName("slug");
         slug.setValueAttribute(pid);
 
-        final HtmlSelect type = form.getSelectByName("mixin");
-        type.getOptionByValue("fedora:datastream").setSelected(true);
+        final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
+        type.getOptionByValue("binary").setSelected(true);
 
         final HtmlFileInput fileInput = (HtmlFileInput)page.getElementById("datastream_payload");
         fileInput.setData("abcdef".getBytes());

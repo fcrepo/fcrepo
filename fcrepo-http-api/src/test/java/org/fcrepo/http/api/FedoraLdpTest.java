@@ -715,7 +715,7 @@ public class FedoraLdpTest {
 
         when(mockObjectService.findOrCreate(mockSession, "/b")).thenReturn(mockObject);
 
-        final Response actual = testObj.createObject(null, null, null, null, "b", null);
+        final Response actual = testObj.createObject(null, null, null, "b", null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -727,7 +727,7 @@ public class FedoraLdpTest {
 
         when(mockObjectService.findOrCreate(mockSession, "/b")).thenReturn(mockObject);
 
-        final Response actual = testObj.createObject(null, null, null,
+        final Response actual = testObj.createObject(null, null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"));
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -741,7 +741,7 @@ public class FedoraLdpTest {
 
         when(mockObjectService.findOrCreate(mockSession, "/b")).thenReturn(mockObject);
 
-        final Response actual = testObj.createObject(null, null, null, NTRIPLES_TYPE, "b",
+        final Response actual = testObj.createObject(null, null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c ."));
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -757,7 +757,7 @@ public class FedoraLdpTest {
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
 
         try (final InputStream content = toInputStream("x")) {
-            final Response actual = testObj.createObject(null, null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
+            final Response actual = testObj.createObject(null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
                     content);
 
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -770,7 +770,7 @@ public class FedoraLdpTest {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
 
-        testObj.createObject(null, null, null, null, null, null);
+        testObj.createObject(null, null, null, null, null);
 
     }
 
