@@ -162,8 +162,8 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
-    @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
+    @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8", N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN,
+            TURTLE_X, TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
     public RdfStream getVersionList() {
         if (!resource().isVersioned()) {
             throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
