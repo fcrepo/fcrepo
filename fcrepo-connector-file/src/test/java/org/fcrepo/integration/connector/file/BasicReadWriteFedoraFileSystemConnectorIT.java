@@ -55,7 +55,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         return getReadWriteFederationRoot();
     }
 
-    @Test
+    @Test(expected = RepositoryException.class)
     public void testWriteProperty() throws RepositoryException {
         final Session session = repo.login();
 
@@ -81,7 +81,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         session.logout();
     }
 
-    @Test
+    @Test(expected = RepositoryException.class)
     public void testRemoveProperty() throws RepositoryException {
         final Session session = repo.login();
 
