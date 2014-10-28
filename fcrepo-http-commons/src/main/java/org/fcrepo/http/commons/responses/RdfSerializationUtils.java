@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterables.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -22,11 +24,15 @@ import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Iterator;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import org.slf4j.Logger;
-
-import com.hp.hpl.jena.graph.Node;
 
 /**
  * Utilities to help with serializing a graph to an HTTP resource
@@ -50,6 +56,19 @@ public class RdfSerializationUtils {
             createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                     "primaryType");
 
+    /**
+     * The RDF predicate that will indicate the mixin types.
+     */
+    public static Node mixinTypesPredicate =
+            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
+                    "mixinTypes");
+
+    public static final Function<RDFNode, String> stringConverter = new Function<RDFNode, String>() {
+        public String apply(final RDFNode statement) {
+            return statement.asLiteral().getLexicalForm();
+        }
+    };
+
 
     /**
      * Get the very first value for a predicate as a string, or null if the
@@ -70,6 +89,25 @@ public class RdfSerializationUtils {
         }
         LOGGER.trace("No value found for predicate: {}", predicate);
         return null;
+    }
+
+    /**
+     * Get all the values for a predicate as a string array, or null if the
+     * predicate is not used
+     *
+     * @param rdf
+     * @param subject
+     * @param predicate
+     * @return first value for the given predicate or null if not found
+     */
+    public static Iterator<String> getAllValuesForPredicate(final Model rdf,
+            final Node subject, final Node predicate) {
+        final NodeIterator statements =
+                rdf.listObjectsOfProperty(createResource(subject.getURI()),
+                createProperty(predicate.getURI()));
+
+        final ImmutableList<RDFNode> copy = copyOf(statements);
+        return transform(copy, stringConverter).iterator();
     }
 
 }
