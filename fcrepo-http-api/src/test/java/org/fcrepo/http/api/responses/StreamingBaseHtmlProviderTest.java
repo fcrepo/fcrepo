@@ -22,6 +22,7 @@ import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypesPredicate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -71,6 +72,7 @@ public class StreamingBaseHtmlProviderTest {
     private final StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();
 
     private final RdfStream testData = new RdfStream();
+    private final RdfStream testData2 = new RdfStream();
 
     @Mock
     private Session mockSession;
@@ -93,13 +95,18 @@ public class StreamingBaseHtmlProviderTest {
         testData.session(mockSession);
         testData.topic(createURI("test:subject"));
         testData.concat(
-        new Triple(createURI("test:subject"),
+                new Triple(createURI("test:subject"),
                         createURI("test:predicate"),
                         createLiteral("test:object")));
         testData.concat(
                 new Triple(createURI("test:subject"), primaryTypePredicate,
                         createLiteral("nt:file")));
 
+        testData2.session(mockSession);
+        testData2.topic(createURI("test:subject2"));
+        testData2.concat(
+                new Triple(createURI("test:subject2"), mixinTypesPredicate,
+                        createLiteral("childOf:ntFile")));
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
     }
@@ -179,5 +186,32 @@ public class StreamingBaseHtmlProviderTest {
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    public void testWriteToWithParentTemplate() throws WebApplicationException,
+            IllegalArgumentException, IOException {
+        final Template mockTemplate = mock(Template.class);
+        final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+
+        doAnswer(new Answer<Object>() {
+
+            @Override
+                public Object answer(final InvocationOnMock invocation) {
+                outStream.write("abcdefighijk".getBytes(), 0, 10);
+                return "I am pretending to merge a template for you.";
+            }
+        }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
+
+        setField(testProvider, "templatesMap",
+                 of("childOf:ntFile", mockTemplate,
+                    "grandchildOf:ntFile", mockTemplate));
+        testProvider.writeTo(testData2, RdfStream.class, mock(Type.class),
+                new Annotation[] {}, MediaType
+                        .valueOf("text/html"),
+                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
+        final byte[] results = outStream.toByteArray();
+        assertTrue("Got no output from serialization!", results.length > 0);
     }
 }
