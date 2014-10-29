@@ -63,7 +63,7 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
         final Node node = obj.getNode();
         // jcr/xml export system view implemented for noRecurse:
         // exportSystemView(String absPath, OutputStream out, boolean skipBinary, boolean noRecurse)
-        node.getSession().exportSystemView(node.getPath(), out, skipBinary, !recurse);
+        node.getSession().exportSystemView(obj.getPath(), out, skipBinary, !recurse);
     }
 
     @Override
