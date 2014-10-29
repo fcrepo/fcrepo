@@ -152,7 +152,7 @@ public class FedoraVersions extends ContentExposingResource {
         if (baseResource == null) {
             baseResource = getResourceFromPath(externalPath);
             if ( baseResource instanceof FedoraBinary ) {
-                return baseResource.getNode().getParent().getPath();
+                baseResource = ((FedoraBinary)baseResource).getDescription();
             }
         }
 
