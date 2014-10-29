@@ -122,12 +122,6 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testHasContent() throws RepositoryException {
-        testObj.hasContent();
-        verify(mockNode).hasNode(JCR_CONTENT);
-    }
-
-    @Test
     public void testGetCreatedDate() throws RepositoryException {
         final Calendar someDate = Calendar.getInstance();
         when(mockProp.getDate()).thenReturn(someDate);

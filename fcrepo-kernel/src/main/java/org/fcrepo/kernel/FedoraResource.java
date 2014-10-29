@@ -36,12 +36,6 @@ import com.hp.hpl.jena.rdf.model.Model;
 public interface FedoraResource {
 
     /**
-     * Does the resource have a jcr:content child node?
-     * @return has content
-     */
-    boolean hasContent();
-
-    /**
      * @return The JCR node that backs this object.
      */
     Node getNode();

@@ -33,11 +33,12 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.api.FedoraExport;
-import org.fcrepo.http.api.FedoraFixity;
 import org.fcrepo.http.api.FedoraVersioning;
 import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.serialization.SerializerUtil;
@@ -74,21 +75,22 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
             addNodeStatements(resource, uriInfo, model, s);
         }
 
-        if (resource.hasContent()) {
-            addContentStatements(resource, uriInfo, model, s);
+        if (resource instanceof Datastream) {
+            addContentStatements(idTranslator, ((Datastream) resource).getBinary(), model);
+        } else if (resource instanceof FedoraBinary) {
+            addContentStatements(idTranslator, (FedoraBinary)resource, model);
         }
 
         return model;
     }
 
-    private static void addContentStatements(final FedoraResource resource, final UriInfo uriInfo,
-        final Model model, final Resource s) {
+    private static void addContentStatements(final IdentifierConverter<Resource,FedoraResource> idTranslator,
+                                             final FedoraBinary resource,
+                                             final Model model) {
         // fcr:fixity
-        final Map<String, String> pathMap =
-            singletonMap("path", resource.getPath().substring(1));
-        model.add(s, HAS_FIXITY_SERVICE, createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraFixity.class).buildFromMap(
-                        pathMap, false).toASCIIString()));
+        final Resource subject = idTranslator.reverse().convert(resource);
+        model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +
+                "/fcr:fixity"));
     }
 
     private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,

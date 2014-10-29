@@ -133,15 +133,6 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getContent()
-     */
-    @Override
-    public boolean hasContent() {
-        return true;
-    }
-
-    /*
-     * (non-Javadoc)
      * @see org.fcrepo.kernel.Datastream#setContent(java.io.InputStream,
      * java.lang.String, java.net.URI, java.lang.String,
      * org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint)

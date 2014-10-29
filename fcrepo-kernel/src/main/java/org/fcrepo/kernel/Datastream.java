@@ -15,18 +15,11 @@
  */
 package org.fcrepo.kernel;
 
-import javax.jcr.Node;
-
 /**
  * @author bbpennel
  * @since Feb 18, 2014
  */
 public interface Datastream extends FedoraResource {
-
-    /**
-     * @return The Node of content associated with this datastream.
-     */
-    Node getContentNode();
 
     /**
      * @return The binary stored in this datastream

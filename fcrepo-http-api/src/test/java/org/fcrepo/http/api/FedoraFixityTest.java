@@ -79,6 +79,7 @@ public class FedoraFixityTest {
 
         doReturn(mockBinary).when(testObj).getResourceFromPath(externalPath);
         when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
+        when(mockBinary.getPath()).thenReturn(externalPath);
 
         final RdfStream actual = testObj.getDatastreamFixity(externalPath, mockRequest, uriInfo);
 

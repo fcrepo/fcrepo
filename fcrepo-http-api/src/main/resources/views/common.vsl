@@ -1,6 +1,7 @@
 #* @vtlvariable name="quad" type="com.hp.hpl.jena.sparql.core.Quad" *#
 #* @vtlvariable name="rdf" type="com.hp.hpl.jena.graph.Graph" *#
 #* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
+#* @vtlvariable name="triple" type="com.hp.hpl.jena.graph.Triple" *#
 #macro( triples $sub )
         <dl>
 
@@ -31,7 +32,11 @@
                             <span property="$triple.getPredicate().toString()">$esc.html($triple.getObject())</span>
                         #end
                         #if( $triple.getPredicate().toString().equals("http://fedora.info/definitions/v4/rest-api#digest") )
-                            <a href="$topic/fcr:fixity">check fixity</a>
+                            #set ($fixity_service = $helpers.getObjects($rdf, $triple.getSubject(), $rdfLexicon.HAS_FIXITY_SERVICE))
+
+                            #if($fixity_service.hasNext())
+                                <a href="$fixity_service.next().getObject().getURI()">check fixity</a>
+                            #end
                         #end
                     </dd>
                 #set ($last_quad = $triple)

@@ -78,20 +78,12 @@ public class FixityRdfContext extends NodeRdfContext {
                         final com.hp.hpl.jena.graph.Node resultSubject = getTransientFixitySubject();
                         final ImmutableSet.Builder<Triple> b = builder();
                         try {
-                            b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
                             b.add(create(idTranslator.reverse().convert(resource).asNode(),
                                     HAS_FIXITY_RESULT.asNode(), resultSubject));
+                            b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
                             final String storeIdentifier = blob.getStoreIdentifier();
                             final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
                                                                      .asNode();
-                            b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),
-                                            contentLocation));
-                            b.add(create(contentLocation,
-                                            RDF.type.asNode(),
-                                            CONTENT_LOCATION_TYPE.asNode()));
-                            b.add(create(contentLocation,
-                                            HAS_CONTENT_LOCATION_VALUE.asNode(),
-                                            createLiteral(storeIdentifier)));
 
                             for (final FixityResult.FixityState state : blob.getStatus(size, digest)) {
                                 b.add(create(resultSubject, HAS_FIXITY_STATE
@@ -106,6 +98,15 @@ public class FixityRdfContext extends NodeRdfContext {
                                     createTypedLiteral(
                                             blob.getComputedSize())
                                     .asNode()));
+                            b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),
+                                    contentLocation));
+                            b.add(create(contentLocation,
+                                    RDF.type.asNode(),
+                                    CONTENT_LOCATION_TYPE.asNode()));
+                            b.add(create(contentLocation,
+                                    HAS_CONTENT_LOCATION_VALUE.asNode(),
+                                    createLiteral(storeIdentifier)));
+
                             return b.build().iterator();
                         } catch (final RepositoryException e) {
                             throw propagate(e);
