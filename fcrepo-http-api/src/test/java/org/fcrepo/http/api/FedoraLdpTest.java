@@ -31,7 +31,6 @@ import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ObjectService;
@@ -257,8 +256,8 @@ public class FedoraLdpTest {
         when(mockResource.getDescription()).thenReturn(mockDatastream);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP NonRDFSource",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\""));
+        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
+                "NonRDFSource>;rel=\"type\""));
         assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary description",
@@ -273,8 +272,8 @@ public class FedoraLdpTest {
         when(mockResource.getBinary()).thenReturn(mockBinary);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP RDFSource",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\""));
+        assertTrue("Should be an LDP RDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
+                "RDFSource>;rel=\"type\""));
         assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
         assertTrue("Should contain a link to the binary",
@@ -520,8 +519,8 @@ public class FedoraLdpTest {
                     }
                 });
 
-        assertTrue("Should include references contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext"));
+        assertTrue("Should include references contexts", rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl" +
+                ".ReferencesRdfContext"));
 
     }
 
@@ -548,8 +547,8 @@ public class FedoraLdpTest {
     public void testGetWithBinaryDescription() throws Exception {
         final Datastream mockResource = (Datastream)setResource(Datastream.class);
         when(mockResource.getBinary()).thenReturn(mockBinary);
-        when(mockBinary.getTriples(idTranslator, PropertiesRdfContext.class)).thenReturn(
-                new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
+        when(mockBinary.getTriples(eq(idTranslator), any(List.class))).thenReturn(new RdfStream(new Triple
+                (createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource",
@@ -682,7 +681,7 @@ public class FedoraLdpTest {
         final Datastream mockObject = (Datastream)setResource(Datastream.class);
         when(mockObject.getBinary()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(idTranslator, PropertiesRdfContext.class)).thenReturn(
+        when(mockBinary.getTriples(eq(idTranslator), any(List.class))).thenReturn(
                 new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
 
         doReturn(mockObject).when(testObj).resource();
