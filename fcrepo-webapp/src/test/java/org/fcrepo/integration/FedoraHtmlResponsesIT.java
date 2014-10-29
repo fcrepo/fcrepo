@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration;
 
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
@@ -120,7 +121,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     @Test
     public void testCreateNewNodeWithGeneratedId() throws IOException {
 
-        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress);
+        final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
         type.getOptionByValue("object").setSelected(true);
@@ -156,6 +157,29 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress + pid);
         assertEquals(serverAddress + pid, page1.getTitleText());
+    }
+
+    @Test
+    public void testCreateNewDatastreamWithNoFileAttached() throws IOException {
+
+        final String pid = randomUUID().toString();
+
+        // can't do this with javascript, because HTMLUnit doesn't speak the HTML5 file api
+        final HtmlPage page = webClient.getPage(serverAddress);
+        final HtmlForm form = (HtmlForm)page.getElementById("action_create");
+
+        final HtmlInput slug = form.getInputByName("slug");
+        slug.setValueAttribute(pid);
+
+        final HtmlSelect type = form.getSelectByName("mixin");
+        type.getOptionByValue("fedora:datastream").setSelected(true);
+
+        final HtmlButton button = form.getFirstByXPath("button");
+        button.click();
+
+        javascriptlessWebClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+        final int status = javascriptlessWebClient.getPage(serverAddress + pid).getWebResponse().getStatusCode();
+        assertEquals(NOT_FOUND.getStatusCode(), status);
     }
 
     @Test
