@@ -123,7 +123,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public javax.jcr.Binary getBinaryContent() {
         try {
-            return getNode().getProperty(JCR_DATA).getBinary();
+            return getProperty(JCR_DATA).getBinary();
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {
@@ -209,8 +209,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public long getContentSize() {
         try {
-            return getNode().getProperty(CONTENT_SIZE)
-                    .getLong();
+            if (hasProperty(CONTENT_SIZE)) {
+                return getProperty(CONTENT_SIZE).getLong();
+            }
         } catch (final RepositoryException e) {
             LOGGER.info("Could not get contentSize(): {}", e.getMessage());
         }
@@ -225,7 +226,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public URI getContentDigest() {
         try {
-            return new URI(getNode().getProperty(CONTENT_DIGEST).getString());
+            if (hasProperty(CONTENT_DIGEST)) {
+                return new URI(getProperty(CONTENT_DIGEST).getString());
+            }
         } catch (final RepositoryException | URISyntaxException e) {
             LOGGER.info("Could not get content digest: {}", e.getMessage());
         }
@@ -240,8 +243,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getMimeType() {
         try {
-            if (getNode().hasProperty(JCR_MIME_TYPE)) {
-                return getNode().getProperty(JCR_MIME_TYPE).getString();
+            if (hasProperty(JCR_MIME_TYPE)) {
+                return getProperty(JCR_MIME_TYPE).getString();
             }
             return "application/octet-stream";
         } catch (final RepositoryException e) {
@@ -256,8 +259,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getFilename() {
         try {
-            if (getNode().hasProperty(PREMIS_FILE_NAME)) {
-                return getNode().getProperty(PREMIS_FILE_NAME).getString();
+            if (hasProperty(PREMIS_FILE_NAME)) {
+                return getProperty(PREMIS_FILE_NAME).getString();
             }
             return node.getParent().getName();
         } catch (final RepositoryException e) {
@@ -285,7 +288,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final String algorithm = ContentDigest.getAlgorithm(digestUri);
 
             final Collection<FixityResult> fixityResults
-                    = CacheEntryFactory.forProperty(repo, getNode().getProperty(JCR_DATA)).checkFixity(algorithm);
+                    = CacheEntryFactory.forProperty(repo, getProperty(JCR_DATA)).checkFixity(algorithm);
 
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, size);
         } catch (final RepositoryException e) {

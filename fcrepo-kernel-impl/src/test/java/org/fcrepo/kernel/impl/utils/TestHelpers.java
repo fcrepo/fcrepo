@@ -82,6 +82,10 @@ public abstract class TestHelpers {
             when(mockProp.getBinary()).thenReturn(mockBin);
             when(mockDigest.getString()).thenReturn(digest);
             when(mockDigestType.getString()).thenReturn(digestType);
+            when(mock.hasProperty(JCR_DATA)).thenReturn(true);
+            when(mock.hasProperty(CONTENT_SIZE)).thenReturn(true);
+            when(mock.hasProperty(CONTENT_DIGEST)).thenReturn(true);
+            when(mock.hasProperty(JCR_CREATEDBY)).thenReturn(true);
             when(mock.getProperty(JCR_DATA)).thenReturn(mockProp);
             when(mock.getProperty(CONTENT_SIZE)).thenReturn(mockFedoraSize);
             when(mock.getProperty(CONTENT_DIGEST)).thenReturn(mockDigest);

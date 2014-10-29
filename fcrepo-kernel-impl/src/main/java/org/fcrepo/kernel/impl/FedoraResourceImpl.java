@@ -287,8 +287,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Date getCreatedDate() {
         try {
-            if (node.hasProperty(JCR_CREATED)) {
-                return new Date(node.getProperty(JCR_CREATED).getDate().getTimeInMillis());
+            if (hasProperty(JCR_CREATED)) {
+                return new Date(getProperty(JCR_CREATED).getDate().getTimeInMillis());
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -306,8 +306,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public Date getLastModifiedDate() {
 
         try {
-            if (node.hasProperty(JCR_LASTMODIFIED)) {
-                return new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+            if (hasProperty(JCR_LASTMODIFIED)) {
+                return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -329,9 +329,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public boolean hasType(final String type) {
         try {
-            if (isFrozen.apply(node) && node.hasProperty(FROZEN_MIXIN_TYPES)) {
+            if (isFrozen.apply(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
                 final List<String> types = newArrayList(
-                    transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
+                    transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), value2string)
                 );
                 return types.contains(type);
             }
