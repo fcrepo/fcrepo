@@ -53,28 +53,10 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
         return new FedoraBinaryImpl(getContentNode());
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getContent()
-     */
-    @Override
-    public Node getContentNode() {
+    private Node getContentNode() {
         LOGGER.trace("Retrieved datastream content node.");
         try {
             return node.getNode(JCR_CONTENT);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.Datastream#getContent()
-     */
-    @Override
-    public boolean hasContent() {
-        try {
-            return node.hasNode(JCR_CONTENT);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

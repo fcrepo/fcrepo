@@ -134,6 +134,11 @@ function checkIfNonRdfResource(e) {
     var url = this.href;
 
     $.ajax({type: "HEAD", url: url}).success(function(data, status, xhr) {
+        if (status != 200) {
+            location.href = url;
+            return;
+        }
+
         var headers = xhr.getResponseHeader("Link").split(", ");
 
         var types = $.grep(headers, function(h) {

@@ -97,18 +97,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#hasContent()
-     */
-    @Override
-    public boolean hasContent() {
-        try {
-            return node.hasNode(JCR_CONTENT);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /* (non-Javadoc)
      * @see org.fcrepo.kernel.FedoraResource#getNode()
      */
     @Override

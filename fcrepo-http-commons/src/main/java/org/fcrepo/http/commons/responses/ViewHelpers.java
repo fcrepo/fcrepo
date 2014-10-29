@@ -213,6 +213,10 @@ public class ViewHelpers {
      */
     public String getObjectTitle(final Graph graph, final Node subject) {
 
+        if (subject == null) {
+            return "";
+        }
+
         final Property[] properties = new Property[] {RDFS_LABEL, DC_TITLE};
 
         for (final Property p : properties) {

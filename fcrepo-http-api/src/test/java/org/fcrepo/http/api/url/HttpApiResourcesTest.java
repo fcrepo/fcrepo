@@ -33,7 +33,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +67,10 @@ public class HttpApiResourcesTest {
     private Session mockSession;
 
     @Mock
-    private FedoraResourceImpl mockResource;
+    private FedoraResource mockResource;
+
+    @Mock
+    private FedoraBinary mockBinary;
 
     @Before
     public void setUp() {
@@ -128,13 +132,12 @@ public class HttpApiResourcesTest {
     @Test
     public void shouldDecorateDatastreamsWithLinksToFixityChecks()
         throws RepositoryException {
-        when(mockResource.hasContent()).thenReturn(true);
-        when(mockResource.getPath()).thenReturn("/some/path/to/datastream");
+        when(mockBinary.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
-        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
+        final Resource graphSubject = mockSubjects.reverse().convert(mockBinary);
 
         final Model model =
-            testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
+            testObj.createModelForResource(mockBinary, uriInfo, mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_FIXITY_SERVICE));
     }
