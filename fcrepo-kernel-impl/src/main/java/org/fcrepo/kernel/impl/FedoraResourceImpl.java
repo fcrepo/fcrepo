@@ -26,6 +26,7 @@ import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
@@ -519,6 +520,51 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public boolean isVersioned() {
         try {
             return node.isNodeType("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource getVersionedAncestor() {
+
+        try {
+            if (!isFrozenNode.apply(this)) {
+                return null;
+            }
+
+            Node versionableFrozenNode = getNode();
+            FedoraResource unfrozenResource = getUnfrozenResource();
+
+            // traverse the frozen tree looking for a node whose unfrozen equivalent is versioned
+            while (!unfrozenResource.isVersioned()) {
+
+                if (versionableFrozenNode.getDepth() == 0) {
+                    return null;
+                }
+
+                // node in the frozen tree
+                versionableFrozenNode = versionableFrozenNode.getParent();
+
+                // unfrozen equivalent
+                unfrozenResource = new FedoraResourceImpl(versionableFrozenNode).getUnfrozenResource();
+            }
+
+            return new FedoraResourceImpl(versionableFrozenNode);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+    }
+
+    @Override
+    public FedoraResource getUnfrozenResource() {
+        if (!isFrozenNode.apply(this)) {
+            return this;
+        }
+
+        try {
+            return new FedoraResourceImpl(getSession().getNodeByIdentifier(getProperty("jcr:frozenUuid").getString()));
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

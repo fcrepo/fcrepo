@@ -46,6 +46,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.version.Version;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
@@ -57,6 +58,7 @@ import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
@@ -662,5 +664,38 @@ public class FedoraResourceImplIT extends AbstractIT {
         objectService.findOrCreate(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().hasNext());
+    }
+
+    @Test
+    public void testGetUnfrozenResource() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject object = objectService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+        object.addVersionLabel("some-label");
+        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
+        session.save();
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+
+        assertEquals(object, frozenResource.getUnfrozenResource());
+
+    }
+
+    @Test
+    public void testGetVersionedAncestor() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraObject object = objectService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+        objectService.findOrCreate(session, "/" + pid + "/a/b/c");
+        session.save();
+        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        object.addVersionLabel("some-label");
+        session.save();
+        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
+
+        assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
+
     }
 }
