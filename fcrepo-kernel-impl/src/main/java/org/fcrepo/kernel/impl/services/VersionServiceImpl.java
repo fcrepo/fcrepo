@@ -66,7 +66,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             throw new PathNotFoundException("Unknown version \"" + label + "\"!");
         }
         final VersionManager versionManager = workspace.getVersionManager();
-        versionManager.checkin(absPath);
+        final Version prevert = versionManager.checkin(absPath);
+        versionManager.getVersionHistory(absPath).addVersionLabel(prevert.getName(), prevert.getIdentifier(), false);
         versionManager.restore(v, true);
         versionManager.checkout(absPath);
     }

@@ -88,10 +88,13 @@ public class VersionServiceImplTest {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
         final Version mockVersion1 = mock(Version.class);
+        final Version mockVersion0 = mock(Version.class);
         when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
+        when(mockVersionManager.checkin(EXAMPLE_VERSIONED_PATH)).thenReturn(mockVersion0);
+        when(mockVersion0.getName()).thenReturn("1.0");
 
         testObj.revertToVersion(mockSession, EXAMPLE_VERSIONED_PATH, versionLabel);
         verify(mockVersionManager).restore(mockVersion1, true);
@@ -105,6 +108,7 @@ public class VersionServiceImplTest {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
         final Version mockVersion1 = mock(Version.class);
+        final Version mockVersion0 = mock(Version.class);
         when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(new VersionException());
         final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
@@ -115,6 +119,8 @@ public class VersionServiceImplTest {
         when(mockFrozenNode.getIdentifier()).thenReturn(versionUUID);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
+        when(mockVersionManager.checkin(EXAMPLE_VERSIONED_PATH)).thenReturn(mockVersion0);
+        when(mockVersion0.getName()).thenReturn("1.0");
 
         testObj.revertToVersion(mockSession, EXAMPLE_VERSIONED_PATH, versionUUID);
         verify(mockVersionManager).restore(mockVersion1, true);
