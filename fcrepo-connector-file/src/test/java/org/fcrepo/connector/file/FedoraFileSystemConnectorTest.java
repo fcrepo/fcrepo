@@ -253,4 +253,8 @@ public class FedoraFileSystemConnectorTest {
         verify(spy).touchParent(id);
     }
 
+    @Test
+    public void testFileSystemConnectorReadOnly() {
+        assertTrue("FedoraFileSystemConnector is not read-only!", connector.isReadonly());
+    }
 }

@@ -321,4 +321,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     protected DocumentReader readDocument( final Document document ) {
         return super.readDocument(document);
     }
+
+    /* Overriding to make the FedoraFileSystemConnector is always read-only. */
+    @Override
+    public boolean isReadonly() {
+        return true;
+    }
 }

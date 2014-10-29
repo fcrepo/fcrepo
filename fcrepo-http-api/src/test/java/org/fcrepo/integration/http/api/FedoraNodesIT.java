@@ -35,6 +35,7 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.BasicHttpEntity;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
@@ -196,7 +197,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     /**
      * I should be able to copy objects from the repository to a federated filesystem.
     **/
-    @Test
+    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testCopyToProjection() throws IOException {
         // create object in the repository
         final String pid = getRandomUniquePid();
@@ -253,7 +254,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
      * I should be able to move a node within a federated filesystem with
      * properties preserved.
     **/
-    @Test
+    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testFederatedMoveWithProperties() throws Exception {
         // create object on federation
         final String pid = getRandomUniquePid();

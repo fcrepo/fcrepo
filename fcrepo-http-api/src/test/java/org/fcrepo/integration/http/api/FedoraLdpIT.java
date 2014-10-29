@@ -1787,7 +1787,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * I should be able to create two subdirectories of a non-existent parent
      * directory.
      **/
-    @Test
+    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testBreakFederation() throws Exception {
         final String pid = getRandomUniquePid();
         testGetRepositoryGraph();
@@ -1799,7 +1799,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     /**
      * I should be able to upload a file to a read/write federated filesystem.
      **/
-    @Test
+    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testUploadToProjection() throws IOException {
         // upload file to federated filesystem using rest api
         final String pid = getRandomUniquePid();
