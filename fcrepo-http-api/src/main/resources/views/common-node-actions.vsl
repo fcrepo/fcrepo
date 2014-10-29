@@ -58,7 +58,7 @@
     </label>
     <input type="file" name="file" id="binary_payload"/>
     </div>
-    <button type="submit" class="btn btn-primary">Add</button>
+    <button id="btn_action_create" class="btn btn-primary">Add</button>
     <hr />
 </form>
 

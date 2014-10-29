@@ -106,7 +106,17 @@ $(function() {
         }
     });
 
-    $('#action_create').submit(addChild);
+    $('#btn_action_create').click(function (e) {
+  	    if ($("#new_mixin").val() == 'binary') {
+  		    var file = $("#binary_payload").val();
+  		    if (file.length == 0) {
+  			    $('#binary_payload').click();
+  			    return false;
+  		    }
+  	    }
+  	   $('#action_create').submit(addChild);
+    });
+    
     $('#action_sparql_update').submit(sendSparqlUpdate);
     $('#action_register_namespace').submit(registerNamespace);
     $('#action_delete').submit(deleteItem);
