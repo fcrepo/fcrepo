@@ -74,29 +74,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
                 @Override
                 public boolean apply(final FedoraResource f) {
-                    try {
-
-                        if (f.hasType(FROZEN_NODE)) {
-                            return true;
-                        }
-
-                        final Node node = f.getNode();
-
-                        if (node != null) {
-                            final String path = node.getPath();
-
-                            if (path == null) {
-                                return false;
-                            }
-
-                            if (path.contains(JCR_FROZEN_NODE)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    } catch (final RepositoryException e) {
-                        throw new RepositoryRuntimeException(e);
-                    }
+                    return f.hasType(FROZEN_NODE) || f.getPath().contains(JCR_FROZEN_NODE);
                 }
      };
 

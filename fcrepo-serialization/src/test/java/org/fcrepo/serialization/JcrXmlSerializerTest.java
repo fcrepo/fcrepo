@@ -58,9 +58,9 @@ public class JcrXmlSerializerTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
+        when(mockObject.getPath()).thenReturn(testPath);
         when(mockObject.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockNode.getPath()).thenReturn(testPath);
     }
 
     @Test

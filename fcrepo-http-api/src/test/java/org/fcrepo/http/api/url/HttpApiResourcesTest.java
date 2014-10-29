@@ -25,10 +25,8 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -41,12 +39,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.jcr.Node;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Workspace;
-import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -61,15 +55,7 @@ public class HttpApiResourcesTest {
 
     private HttpApiResources testObj;
 
-    @Mock
-    private Node mockNode;
-
-    private FedoraResourceImpl mockResource;
-
     private UriInfo uriInfo;
-
-    @Mock
-    private NodeType mockNodeType;
 
     private HttpResourceConverter mockSubjects;
 
@@ -80,20 +66,13 @@ public class HttpApiResourcesTest {
     private Session mockSession;
 
     @Mock
-    private Repository mockRepository;
-
-    @Mock
-    private Workspace mockWorkspace;
+    private FedoraResourceImpl mockResource;
 
     @Before
     public void setUp() {
         initMocks(this);
         testObj = new HttpApiResources();
-        mockResource = new FedoraResourceImpl(mockNode);
         uriInfo = getUriInfoImpl();
-        when(mockSession.getRepository()).thenReturn(mockRepository);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getName()).thenReturn("default");
         mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
         setField(testObj, "serializers", mockSerializers);
     }
@@ -101,10 +80,8 @@ public class HttpApiResourcesTest {
     @Test
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks()
         throws RepositoryException {
-        when(mockNodeType.isNodeType(ROOT)).thenReturn(true);
-        when(mockNodeType.getName()).thenReturn("nt:root");
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.getPath()).thenReturn("/");
+        when(mockResource.hasType(ROOT)).thenReturn(true);
+        when(mockResource.getPath()).thenReturn("/");
 
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 
@@ -118,10 +95,8 @@ public class HttpApiResourcesTest {
     public void shouldDecorateNodesWithLinksToVersionsAndExport()
         throws RepositoryException {
 
-        when(mockNodeType.getName()).thenReturn("nt:folder");
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.isNodeType(NodeType.MIX_VERSIONABLE)).thenReturn(true);
-        when(mockNode.getPath()).thenReturn("/some/path/to/object");
+        when(mockResource.isVersioned()).thenReturn(true);
+        when(mockResource.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
@@ -138,10 +113,8 @@ public class HttpApiResourcesTest {
     public void shouldNotDecorateNodesWithLinksToVersionsUnlessVersionable()
             throws RepositoryException {
 
-        when(mockNodeType.getName()).thenReturn("nt:folder");
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.isNodeType(NodeType.MIX_VERSIONABLE)).thenReturn(false);
-        when(mockNode.getPath()).thenReturn("/some/path/to/object");
+        when(mockResource.isVersioned()).thenReturn(false);
+        when(mockResource.getPath()).thenReturn("/some/path/to/object");
 
         when(mockSerializers.keySet()).thenReturn(of("a", "b"));
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
@@ -155,10 +128,8 @@ public class HttpApiResourcesTest {
     @Test
     public void shouldDecorateDatastreamsWithLinksToFixityChecks()
         throws RepositoryException {
-        when(mockNode.hasNode(JCR_CONTENT)).thenReturn(true);
-        when(mockNodeType.getName()).thenReturn("nt:file");
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNode.getPath()).thenReturn("/some/path/to/datastream");
+        when(mockResource.hasContent()).thenReturn(true);
+        when(mockResource.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
 
@@ -171,12 +142,9 @@ public class HttpApiResourcesTest {
     @Test
     public void shouldDecorateRootNodeWithCorrectResourceURI()
             throws RepositoryException {
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.isNodeType(ROOT)).thenReturn(true);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-
+        when(mockResource.hasType(ROOT)).thenReturn(true);
         when(mockSerializers.keySet()).thenReturn(of("a"));
-        when(mockNode.getPath()).thenReturn("/");
+        when(mockResource.getPath()).thenReturn("/");
 
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
         final Model model =
@@ -190,13 +158,8 @@ public class HttpApiResourcesTest {
     @Test
     public void shouldDecorateOtherNodesWithCorrectResourceURI()
             throws RepositoryException {
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockNodeType.isNodeType(ROOT)).thenReturn(false);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.getName()).thenReturn("not-frozen");
-
         when(mockSerializers.keySet()).thenReturn(of("a"));
-        when(mockNode.getPath()).thenReturn("/some/path/to/object");
+        when(mockResource.getPath()).thenReturn("/some/path/to/object");
 
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
         final Model model =
