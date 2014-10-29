@@ -63,7 +63,7 @@ public class RdfSerializationUtils {
         createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                   "mixinTypes");
 
-    public static final Function<RDFNode, String> stringConverter = new Function<RDFNode, String>() {
+    private static final Function<RDFNode, String> stringConverter = new Function<RDFNode, String>() {
         public String apply(final RDFNode statement) {
             return statement.asLiteral().getLexicalForm();
         }
@@ -97,15 +97,15 @@ public class RdfSerializationUtils {
      * @param rdf
      * @param subject
      * @param predicate
-     * @return first value for the given predicate or null if not found
+     * @return all values for the given predicate
      */
     public static Iterator<String> getAllValuesForPredicate(final Model rdf,
             final Node subject, final Node predicate) {
-        final NodeIterator statements =
+        final NodeIterator objects =
             rdf.listObjectsOfProperty(createResource(subject.getURI()),
                 createProperty(predicate.getURI()));
 
-        final ImmutableList<RDFNode> copy = copyOf(statements);
+        final ImmutableList<RDFNode> copy = copyOf(objects);
         return transform(copy, stringConverter).iterator();
     }
 

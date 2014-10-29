@@ -119,7 +119,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     private static final Logger LOGGER =
         getLogger(StreamingBaseHtmlProvider.class);
 
-    protected final Predicate<NodeType> acceptWhenTemplateExists = new Predicate<NodeType>() {
+    private final Predicate<NodeType> acceptWhenTemplateExists = new Predicate<NodeType>() {
         @Override
         public boolean apply(final NodeType nodeType) {
             final String nodeTypeName = nodeType.getName();
@@ -130,7 +130,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
         }
     };
 
-    protected final Predicate<String> acceptWhenTemplateMapContainsKey = new Predicate<String>() {
+    private final Predicate<String> acceptWhenTemplateMapContainsKey = new Predicate<String>() {
         @Override
         public boolean apply(final String key) {
             if (isBlank(key)) {
@@ -168,7 +168,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                     primaryNodeType.getName();
 
                 // Create a list of the primary type and all its parents
-                final List<NodeType> nodeTypesList = new ArrayList<NodeType>();
+                final List<NodeType> nodeTypesList = new ArrayList<>();
                 nodeTypesList.add(primaryNodeType);
                 nodeTypesList.addAll(Arrays.asList(primaryNodeType.getSupertypes()));
 

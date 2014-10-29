@@ -22,6 +22,7 @@ import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypesPredicate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -104,7 +105,7 @@ public class StreamingBaseHtmlProviderTest {
         testData2.session(mockSession);
         testData2.topic(createURI("test:subject2"));
         testData2.concat(
-                new Triple(createURI("test:subject2"), primaryTypePredicate,
+                new Triple(createURI("test:subject2"), mixinTypesPredicate,
                         createLiteral("childOf:ntFile")));
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
