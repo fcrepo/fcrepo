@@ -79,7 +79,6 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT1;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
@@ -479,7 +478,7 @@ public class FedoraLdp extends ContentExposingResource {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
-            final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT1 + ","
+            final String rdfTypes = TURTLE + "," + N3 + ","
                     + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES;
             servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
                     + "," + contentTypeSPARQLUpdate);
