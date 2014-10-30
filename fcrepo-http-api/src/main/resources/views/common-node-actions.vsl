@@ -38,9 +38,9 @@
     <label for="new_mixin" class="control-label">
         Type
     </label>
-    <select id="new_mixin" name="mixin" class="form-control">
-        <option value="fedora:object">object</option>
-        <option value="fedora:datastream">datastream</option>
+    <select id="new_mixin" class="form-control">
+        <option value="object">object</option>
+        <option value="binary">binary</option>
     </select>
         </div>
 
@@ -52,11 +52,11 @@
         </div>
 
 
-    <div  id="datastream_payload_container" class="form-group">
-    <label for="datastream_payload"  class="control-label">
+    <div  id="binary_payload_container" class="form-group">
+    <label for="binary_payload"  class="control-label">
         File
     </label>
-    <input type="file" name="file" id="datastream_payload"/>
+    <input type="file" name="file" id="binary_payload"/>
     </div>
     <button type="submit" class="btn btn-primary">Add</button>
     <hr />
