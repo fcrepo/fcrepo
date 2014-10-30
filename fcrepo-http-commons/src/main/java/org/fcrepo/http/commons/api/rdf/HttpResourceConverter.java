@@ -45,8 +45,8 @@ import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -116,8 +116,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 
-                if (!metadata && fedoraResource instanceof Datastream) {
-                    return ((Datastream)fedoraResource).getBinary();
+                if (!metadata && fedoraResource instanceof NonRdfSourceDescription) {
+                    return ((NonRdfSourceDescription)fedoraResource).getDescribedResource();
                 }
                 return fedoraResource;
             }
@@ -337,7 +337,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         String path = reverse.convert(getPath(resource));
         if (path != null) {
 
-            if (resource instanceof Datastream) {
+            if (resource instanceof NonRdfSourceDescription) {
                 path = path + "/" + FCR_METADATA;
             }
 

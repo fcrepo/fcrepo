@@ -23,6 +23,9 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.LONG;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
@@ -53,9 +56,9 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
@@ -67,7 +70,7 @@ import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.VersionService;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -101,7 +104,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     NodeService nodeService;
 
     @Inject
-    ObjectService objectService;
+    ContainerService containerService;
 
     @Inject
     BinaryService binaryService;
@@ -139,7 +142,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testRandomNodeGraph() {
         final FedoraResource object =
-            objectService.findOrCreate(session, "/testNodeGraph");
+            containerService.findOrCreate(session, "/testNodeGraph");
 
         final Node s = subjects.reverse().convert(object).asNode();
         final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
@@ -150,13 +153,13 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testLastModified() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
-        objectService.findOrCreate(session, "/" + pid);
+        containerService.findOrCreate(session, "/" + pid);
 
         session.save();
         session.logout();
         session = repo.login();
 
-        final FedoraObject obj2 = objectService.findOrCreate(session, "/" + pid);
+        final Container obj2 = containerService.findOrCreate(session, "/" + pid);
         assertFalse( obj2.getLastModifiedDate().before(obj2.getCreatedDate()) );
     }
 
@@ -175,7 +178,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertTrue(graph.contains(s, p, o));
 
         p = createURI(REPOSITORY_NAMESPACE + "hasNodeType");
-        o = createLiteral("fedora:resource");
+        o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
     }
@@ -185,7 +188,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final String pid = "/" + getRandomPid();
         final FedoraResource object =
-            objectService.findOrCreate(session, pid);
+            containerService.findOrCreate(session, pid);
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
 
         // jcr property
@@ -196,10 +199,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // multivalued property
         p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
-        o = createLiteral("fedora:resource");
+        o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
-        o = createLiteral("fedora:object");
+        o = createLiteral(FEDORA_CONTAINER);
         assertTrue(graph.contains(s, p, o));
 
     }
@@ -209,7 +212,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testObjectGraphWithCustomProperty() throws RepositoryException {
 
         FedoraResource object =
-            objectService.findOrCreate(session, "/testObjectGraph");
+            containerService.findOrCreate(session, "/testObjectGraph");
 
         final javax.jcr.Node node = object.getNode();
         node.setProperty("dc:title", "this-is-some-title");
@@ -221,7 +224,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session = repo.login();
 
-        object = objectService.findOrCreate(session, "/testObjectGraph");
+        object = containerService.findOrCreate(session, "/testObjectGraph");
 
 
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
@@ -263,7 +266,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         mgr.registerNodeTypes(nodeTypes2, true);
 
         //create object with inheriting type
-        FedoraResource object = objectService.findOrCreate(session, "/testNTTnheritanceObject");
+        FedoraResource object = containerService.findOrCreate(session, "/testNTTnheritanceObject");
         final javax.jcr.Node node = object.getNode();
         node.addMixin("test:testInher");
 
@@ -271,7 +274,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.logout();
         session = repo.login();
 
-        object = objectService.findOrCreate(session, "/testNTTnheritanceObject");
+        object = containerService.findOrCreate(session, "/testNTTnheritanceObject");
 
         //test that supertype has been inherited as rdf:type
         final Node s = createGraphSubjectNode(object);
@@ -284,7 +287,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException {
 
-        final FedoraObject parentObject = objectService.findOrCreate(session, "/testDatastreamGraphParent");
+        final Container parentObject = containerService.findOrCreate(session, "/testDatastreamGraphParent");
 
         binaryService.findOrCreate(session, "/testDatastreamGraph").setContent(
                 new ByteArrayInputStream("123456789test123456789".getBytes()),
@@ -294,7 +297,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 null
         );
 
-        final Datastream object =
+        final NonRdfSourceDescription object =
                 binaryService.findOrCreate(session, "/testDatastreamGraph").getDescription();
 
         object.getNode().setProperty("fedorarelsext:isPartOf",
@@ -312,10 +315,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // multivalued property
         p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
-        o = createLiteral("fedora:resource");
+        o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
-        o = createLiteral("fedora:datastream");
+        o = createLiteral(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         assertTrue(graph.contains(s, p, o));
 
         // structure
@@ -337,7 +340,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testUpdatingObjectGraph() throws MalformedRdfException {
 
         final FedoraResource object =
-            objectService.findOrCreate(session, "/testObjectGraphUpdates");
+            containerService.findOrCreate(session, "/testObjectGraphUpdates");
 
         object.updateProperties(subjects, "INSERT { " + "<"
                 + createGraphSubjectNode(object).getURI() + "> "
@@ -370,7 +373,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testAddVersionLabel() throws RepositoryException {
 
         final FedoraResource object =
-            objectService.findOrCreate(session, "/testObjectVersionLabel");
+            containerService.findOrCreate(session, "/testObjectVersionLabel");
 
         object.getNode().addMixin("mix:versionable");
 
@@ -389,7 +392,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testGetObjectVersionGraph() throws RepositoryException {
 
         final FedoraResource object =
-            objectService.findOrCreate(session, "/testObjectVersionGraph");
+            containerService.findOrCreate(session, "/testObjectVersionGraph");
 
         object.getNode().addMixin("mix:versionable");
         session.save();
@@ -425,7 +428,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testUpdatingRdfTypedValues() throws RepositoryException {
         final FedoraResource object =
-            objectService.findOrCreate(session, "/testObjectRdfType");
+            containerService.findOrCreate(session, "/testObjectRdfType");
 
         object.updateProperties(
                 subjects,
@@ -444,7 +447,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test(expected = MalformedRdfException.class)
     public void testAddMissingReference() throws RepositoryException, MalformedRdfException {
         final FedoraResource object =
-                objectService.findOrCreate(session, "/testRefObject");
+                containerService.findOrCreate(session, "/testRefObject");
 
         object.updateProperties(
                 subjects,
@@ -458,7 +461,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testUpdatingRdfType() throws RepositoryException {
         final FedoraResource object =
-            objectService.findOrCreate(session, "/testObjectRdfType");
+            containerService.findOrCreate(session, "/testObjectRdfType");
 
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
@@ -469,7 +472,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testRemoveRdfType() throws RepositoryException {
         final FedoraResource object =
-                objectService.findOrCreate(session, "/testRemoveObjectRdfType");
+                containerService.findOrCreate(session, "/testRemoveObjectRdfType");
 
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
@@ -485,7 +488,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testEtagValue() throws RepositoryException {
         final FedoraResource object =
-            objectService.findOrCreate(session, "/testEtagObject");
+            containerService.findOrCreate(session, "/testEtagObject");
 
         session.save();
 
@@ -497,9 +500,9 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetReferences() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
-        objectService.findOrCreate(session, pid);
-        final FedoraObject subject = objectService.findOrCreate(session, pid + "/a");
-        final FedoraObject object = objectService.findOrCreate(session, pid + "/b");
+        containerService.findOrCreate(session, pid);
+        final Container subject = containerService.findOrCreate(session, pid + "/a");
+        final Container object = containerService.findOrCreate(session, pid + "/b");
         final Value value = session.getValueFactory().createValue(object.getNode());
         subject.getNode().setProperty("fedorarelsext:isPartOf", new Value[] { value });
 
@@ -517,7 +520,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testReplaceProperties() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
-        final FedoraObject object = objectService.findOrCreate(session, pid);
+        final Container object = containerService.findOrCreate(session, pid);
 
         final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class);
         final Model model = triples.asModel();
@@ -561,10 +564,10 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDeleteObject() throws RepositoryException {
         final String pid = getRandomPid();
-        objectService.findOrCreate(session, "/" + pid);
+        containerService.findOrCreate(session, "/" + pid);
         session.save();
 
-        objectService.findOrCreate(session, "/" + pid).delete();
+        containerService.findOrCreate(session, "/" + pid).delete();
 
         session.save();
 
@@ -575,17 +578,17 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testDeleteObjectWithInboundReferences() throws RepositoryException {
 
         final String pid = getRandomPid();
-        final FedoraResource resourceA = objectService.findOrCreate(session, "/" + pid + "/a");
-        final FedoraResource resourceB = objectService.findOrCreate(session, "/" + pid + "/b");
+        final FedoraResource resourceA = containerService.findOrCreate(session, "/" + pid + "/a");
+        final FedoraResource resourceB = containerService.findOrCreate(session, "/" + pid + "/b");
 
         final Value value = session.getValueFactory().createValue(resourceB.getNode());
         resourceA.getNode().setProperty("fedorarelsext:hasMember", new Value[] { value });
 
         session.save();
-        objectService.findOrCreate(session, "/" + pid + "/a").delete();
+        containerService.findOrCreate(session, "/" + pid + "/a").delete();
 
         session.save();
-        objectService.findOrCreate(session, "/" + pid + "/b").delete();
+        containerService.findOrCreate(session, "/" + pid + "/b").delete();
 
         session.save();
 
@@ -596,8 +599,8 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetContainer() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
-        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid + "/a");
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a");
 
         assertEquals(container, resource.getContainer());
     }
@@ -605,8 +608,8 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetChildren() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
-        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid + "/a");
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a");
 
         assertEquals(resource, container.getChildren().next());
     }
@@ -614,7 +617,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetChildrenWithBinary() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
+        final Container container = containerService.findOrCreate(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid + "/a");
 
         assertEquals(resource, container.getChildren().next());
@@ -623,7 +626,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetContainerForBinary() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
+        final Container container = containerService.findOrCreate(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid + "/a");
 
         assertEquals(container, resource.getContainer());
@@ -632,8 +635,8 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetContainerWithHierarchy() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
-        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid + "/a/b/c/d");
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a/b/c/d");
 
         assertEquals(container, resource.getContainer());
     }
@@ -641,8 +644,8 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetChildrenWithHierarchy() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
-        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid + "/a/b/c/d");
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a/b/c/d");
 
         assertEquals(resource, container.getChildren().next());
     }
@@ -650,8 +653,8 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetChildrenTombstonesAreHidden() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
-        final FedoraResource resource = objectService.findOrCreate(session, "/" + pid + "/a");
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid + "/a");
 
         resource.delete();
         assertFalse(container.getChildren().hasNext());
@@ -660,8 +663,8 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetChildrenHidesHashUris() {
         final String pid = getRandomPid();
-        final FedoraObject container = objectService.findOrCreate(session, "/" + pid);
-        objectService.findOrCreate(session, "/" + pid + "/#/a");
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        containerService.findOrCreate(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().hasNext());
     }
@@ -669,7 +672,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetUnfrozenResource() throws RepositoryException {
         final String pid = getRandomPid();
-        final FedoraObject object = objectService.findOrCreate(session, "/" + pid);
+        final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
         session.save();
         object.addVersionLabel("some-label");
@@ -684,10 +687,10 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetVersionedAncestor() throws RepositoryException {
         final String pid = getRandomPid();
-        final FedoraObject object = objectService.findOrCreate(session, "/" + pid);
+        final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
         session.save();
-        objectService.findOrCreate(session, "/" + pid + "/a/b/c");
+        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
         session.save();
         session.getWorkspace().getVersionManager().checkpoint(object.getPath());
         object.addVersionLabel("some-label");

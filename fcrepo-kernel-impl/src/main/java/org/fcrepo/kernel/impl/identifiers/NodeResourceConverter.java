@@ -17,10 +17,10 @@ package org.fcrepo.kernel.impl.identifiers;
 
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.impl.DatastreamImpl;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.impl.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
-import org.fcrepo.kernel.impl.FedoraObjectImpl;
+import org.fcrepo.kernel.impl.ContainerImpl;
 import org.fcrepo.kernel.impl.TombstoneImpl;
 
 import javax.jcr.Node;
@@ -46,14 +46,14 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
 
         final FedoraResource fedoraResource;
 
-        if (DatastreamImpl.hasMixin(node)) {
-            fedoraResource = new DatastreamImpl(node);
+        if (NonRdfSourceDescriptionImpl.hasMixin(node)) {
+            fedoraResource = new NonRdfSourceDescriptionImpl(node);
         } else if (FedoraBinaryImpl.hasMixin(node)) {
             fedoraResource = new FedoraBinaryImpl(node);
         } else if (TombstoneImpl.hasMixin(node)) {
             fedoraResource = new TombstoneImpl(node);
         } else {
-            fedoraResource = new FedoraObjectImpl(node);
+            fedoraResource = new ContainerImpl(node);
         }
 
         return fedoraResource;

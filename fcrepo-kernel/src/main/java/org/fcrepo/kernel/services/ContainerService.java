@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel;
+package org.fcrepo.kernel.services;
+
+import org.fcrepo.kernel.models.Container;
 
 /**
- * @author cabeer
- * @since 10/16/14
+ * Service for creating and retrieving FedoraObjects
+ *
+ * @author bbpennel
+ * @since Feb 20, 2014
  */
-public interface Tombstone extends FedoraResource {
+public interface ContainerService extends Service<Container> {
+
 }

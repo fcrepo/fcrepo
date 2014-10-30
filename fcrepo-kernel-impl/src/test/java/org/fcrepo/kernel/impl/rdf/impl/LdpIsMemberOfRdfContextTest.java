@@ -18,9 +18,9 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -59,7 +59,7 @@ public class LdpIsMemberOfRdfContextTest {
     private FedoraBinary mockBinary;
 
     @Mock
-    private Datastream mockBinaryDescription;
+    private NonRdfSourceDescription mockBinaryDescription;
 
     @Mock
     private Node mockBinaryNode;

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.services;
-
-import org.fcrepo.kernel.FedoraObject;
+package org.fcrepo.kernel.models;
 
 /**
- * Service for creating and retrieving FedoraObjects
- *
  * @author bbpennel
- * @since Feb 20, 2014
+ * @since Feb 18, 2014
  */
-public interface ObjectService extends Service<FedoraObject> {
+public interface NonRdfSourceDescription extends FedoraResource {
 
+    /**
+     * @return The binary stored in this datastream
+     */
+    NonRdfSource getDescribedResource();
 }

@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.services;
 
-import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraBinary;
 
 /**
  * @author cabeer

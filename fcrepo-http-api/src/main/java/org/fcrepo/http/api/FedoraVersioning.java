@@ -51,7 +51,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;

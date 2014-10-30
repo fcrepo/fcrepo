@@ -17,7 +17,7 @@ package org.fcrepo.kernel.impl.utils;
 
 import com.google.common.base.Predicate;
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
@@ -48,15 +48,15 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Predicate for determining whether this {@link Node} is a Fedora object.
      */
-    public static Predicate<Node> isFedoraObject =
-            new AnyTypesPredicate(FEDORA_OBJECT);
+    public static Predicate<Node> isContainer =
+            new AnyTypesPredicate(FEDORA_CONTAINER);
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora
      * datastream.
      */
-    public static Predicate<Node> isFedoraDatastream =
-            new AnyTypesPredicate(FEDORA_DATASTREAM);
+    public static Predicate<Node> isNonRdfSourceDescription =
+            new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
 
 
     /**

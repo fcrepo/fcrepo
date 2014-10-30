@@ -52,7 +52,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
@@ -387,7 +387,7 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetChildrenExcludesTombstones() throws RepositoryException {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
-        when(mockChild.isNodeType("fedora:tombstone")).thenReturn(true);
+        when(mockChild.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
         when(mockChild.getName()).thenReturn("x");
         final Iterator<FedoraResource> children = testObj.getChildren();
         assertFalse("Expected an empty iterator", children.hasNext());

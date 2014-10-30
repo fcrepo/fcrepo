@@ -13,34 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.integration.kernel.impl;
-
-import javax.inject.Inject;
-import javax.jcr.Repository;
-
-import org.fcrepo.kernel.services.ContainerService;
-import org.junit.Test;
-import org.springframework.test.context.ContextConfiguration;
-
-import static org.junit.Assert.assertTrue;
+package org.fcrepo.kernel.models;
 
 /**
- * <p>DatastreamImplIT class.</p>
- *
- * @author ksclarke
+ * @author cabeer
+ * @since 10/16/14
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
-public class DatastreamImplIT extends AbstractIT {
-
-    @Inject
-    Repository repo;
-
-    @Inject
-    ContainerService containerService;
-
-    @Test
-    public void toDo() {
-        assertTrue(true);
-    }
-
+public interface Tombstone extends FedoraResource {
 }

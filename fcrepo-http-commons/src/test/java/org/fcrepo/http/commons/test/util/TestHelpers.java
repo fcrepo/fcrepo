@@ -58,8 +58,8 @@ import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.impl.identifiers.UUIDPidMinter;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -214,12 +214,12 @@ public abstract class TestHelpers {
         return mockRepo;
     }
 
-    public static Datastream mockDatastream(final String pid,
+    public static NonRdfSourceDescription mockDatastream(final String pid,
                                             final String dsId, final String content) {
         final FedoraBinary mockBinary = mockBinary(pid, dsId, content);
-        final Datastream mockDs = mock(Datastream.class);
-        when(mockDs.getBinary()).thenReturn(mockBinary);
-        when(mockDs.getBinary().getDescription()).thenReturn(mockDs);
+        final NonRdfSourceDescription mockDs = mock(NonRdfSourceDescription.class);
+        when(mockDs.getDescribedResource()).thenReturn(mockBinary);
+        when(mockDs.getDescribedResource().getDescription()).thenReturn(mockDs);
         when(mockDs.getPath()).thenReturn("/" + pid + "/" + dsId);
         when(mockDs.getCreatedDate()).thenReturn(new Date());
         when(mockDs.getLastModifiedDate()).thenReturn(new Date());

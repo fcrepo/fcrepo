@@ -18,7 +18,7 @@ package org.fcrepo.http.commons.api.rdf;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.rdf.model.Model;

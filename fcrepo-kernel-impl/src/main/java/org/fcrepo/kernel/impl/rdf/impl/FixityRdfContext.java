@@ -38,7 +38,7 @@ import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.FixityResult;
 
@@ -49,7 +49,7 @@ import com.hp.hpl.jena.graph.Triple;
 
 /**
  * An {@link org.fcrepo.kernel.utils.iterators.RdfStream} containing information about the fixity of a
- * {@link org.fcrepo.kernel.FedoraBinary}.
+ * {@link org.fcrepo.kernel.models.FedoraBinary}.
  *
  * @author ajs6f
  * @since Oct 15, 2013

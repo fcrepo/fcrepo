@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel;
+package org.fcrepo.kernel.models;
 
 /**
  * @author bbpennel
  * @since Feb 18, 2014
  */
-public interface Datastream extends FedoraResource {
+public interface Container extends FedoraResource {
 
-    /**
-     * @return The binary stored in this datastream
-     */
-    FedoraBinary getBinary();
 }

@@ -19,7 +19,7 @@ import org.fcrepo.integration.kernel.impl.AbstractIT;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.impl.TxAwareSession;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.TransactionService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -49,7 +49,7 @@ public class TransactionServiceImplIT extends AbstractIT {
     NodeService nodeService;
 
     @Inject
-    ObjectService objectService;
+    ContainerService containerService;
 
     @Inject
     TransactionService transactionService;
@@ -84,7 +84,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
         final String pid = getRandomPid();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
-        objectService.findOrCreate(txSession, "/" + pid);
+        containerService.findOrCreate(txSession, "/" + pid);
 
         // rollback and make sure the object doesn't exist
         t.expire();
@@ -100,7 +100,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
         final String pid = getRandomPid();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
-        objectService.findOrCreate(txSession, "/" + pid);
+        containerService.findOrCreate(txSession, "/" + pid);
 
         // rollback and make sure the object doesn't exist
         transactionService.rollback( t.getId() );
@@ -116,7 +116,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
         final String pid = getRandomPid();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
-        objectService.findOrCreate(txSession, "/" + pid);
+        containerService.findOrCreate(txSession, "/" + pid);
 
         // rollback and make sure the object doesn't exist
         transactionService.commit( t.getId() );

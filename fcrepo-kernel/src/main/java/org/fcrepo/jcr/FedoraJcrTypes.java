@@ -23,19 +23,17 @@ package org.fcrepo.jcr;
  */
 public interface FedoraJcrTypes {
 
-    String FEDORA_RESOURCE = "fedora:resource";
+    String FEDORA_RESOURCE = "fedora:Resource";
 
-    String FEDORA_DATASTREAM = "fedora:datastream";
+    String FEDORA_NON_RDF_SOURCE_DESCRIPTION = "fedora:NonRdfSourceDescription";
 
-    String FEDORA_OBJECT = "fedora:object";
+    String FEDORA_BINARY = "fedora:Binary";
 
-    String FEDORA_BINARY = "fedora:binary";
+    String FEDORA_PAIRTREE = "fedora:Pairtree";
 
-    String FEDORA_PAIRTREE = "fedora:pairtree";
+    String FEDORA_TOMBSTONE = "fedora:Tombstone";
 
-    String FEDORA_TOMBSTONE = "fedora:tombstone";
-
-    String FEDORA_BLANKNODE = "fedora:blanknode";
+    String FEDORA_BLANKNODE = "fedora:Blanknode";
 
     String FEDORA_CONTAINER = "fedora:Container";
 

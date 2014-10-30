@@ -47,6 +47,7 @@ import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
@@ -1169,7 +1170,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertTrue("Didn't find an expected triple!", model.contains(nodeUri,
                 createProperty(REPOSITORY_NAMESPACE + "mixinTypes"),
-                createPlainLiteral("fedora:object")));
+                createPlainLiteral(FEDORA_CONTAINER)));
 
         logger.debug("Leaving testGetObjectGraph()...");
     }
@@ -1191,8 +1192,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Resource nodeUri = createResource(serverAddress + pid);
         final Property rdfType = createProperty(RDF_NAMESPACE + "type");
 
-        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
-        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "Container");
+        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "Resource");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");

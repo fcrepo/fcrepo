@@ -32,7 +32,7 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.Container;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +45,7 @@ import com.google.common.base.Predicate;
  *
  * @author ksclarke
  */
-public class FedoraObjectImplTest implements FedoraJcrTypes {
+public class ContainerImplTest implements FedoraJcrTypes {
 
     private static final String testPid = "testObj";
 
@@ -66,7 +66,7 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
     @Mock
     private Predicate<Node> mockPredicate;
 
-    private FedoraObject testFedoraObject;
+    private Container testContainer;
 
     private NodeType[] mockNodetypes;
 
@@ -85,7 +85,7 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
             when(mockRootNode.getNode(relPath)).thenReturn(mockObjNode);
             when(mockSession.getUserID()).thenReturn(mockUser);
-            testFedoraObject = new FedoraObjectImpl(mockObjNode);
+            testContainer = new ContainerImpl(mockObjNode);
 
             mockNodetypes = new NodeType[2];
             mockNodetypes[0] = mock(NodeType.class);
@@ -113,7 +113,7 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
 
     @Test
     public void testGetNode() {
-        assertEquals(testFedoraObject.getNode(), mockObjNode);
+        assertEquals(testContainer.getNode(), mockObjNode);
     }
 
     @Test
@@ -121,7 +121,7 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
         when(mockProp.getDate()).thenReturn(Calendar.getInstance());
         when(mockObjNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockObjNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-        testFedoraObject.getCreatedDate();
+        testContainer.getCreatedDate();
         verify(mockObjNode).getProperty(JCR_CREATED);
     }
 
@@ -130,13 +130,13 @@ public class FedoraObjectImplTest implements FedoraJcrTypes {
         when(mockObjNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockObjNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
         when(mockProp.getDate()).thenReturn(Calendar.getInstance());
-        testFedoraObject.getLastModifiedDate();
+        testContainer.getLastModifiedDate();
         verify(mockObjNode).getProperty(JCR_LASTMODIFIED);
     }
 
     @Test
     public void testHasType() {
-        assertTrue(testFedoraObject.hasType("some:type"));
+        assertTrue(testContainer.hasType("some:type"));
     }
 
 }

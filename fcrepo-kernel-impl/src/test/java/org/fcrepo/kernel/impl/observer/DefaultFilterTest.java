@@ -16,8 +16,8 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -60,7 +60,7 @@ public class DefaultFilterTest {
     @Mock
     private NodeType fedoraResource;
     @Mock
-    private NodeType fedoraObject;
+    private NodeType fedoraContainer;
     @Mock
     private NodeType fedoraDatastream;
     @Mock
@@ -71,8 +71,8 @@ public class DefaultFilterTest {
         initMocks(this);
         testObj = new DefaultFilter();
         when(fedoraResource.getName()).thenReturn(FEDORA_RESOURCE);
-        when(fedoraObject.getName()).thenReturn(FEDORA_OBJECT);
-        when(fedoraDatastream.getName()).thenReturn(FEDORA_DATASTREAM);
+        when(fedoraContainer.getName()).thenReturn(FEDORA_CONTAINER);
+        when(fedoraDatastream.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         when(fedoraBinary.getName()).thenReturn(FEDORA_BINARY);
     }
 
@@ -84,7 +84,7 @@ public class DefaultFilterTest {
 
     @Test
     public void shouldApplyToObject() throws Exception {
-        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraObject });
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
         assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
     }
 

@@ -15,11 +15,11 @@
  */
 package org.fcrepo.kernel.impl.identifiers;
 
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
-import org.fcrepo.kernel.Tombstone;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.Tombstone;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -28,7 +28,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -59,15 +59,15 @@ public class NodeResourceConverterTest {
     @Test
     public void testForwardObject() {
         final FedoraResource actual = testObj.convert(mockNode);
-        assertTrue(actual instanceof FedoraObject);
+        assertTrue(actual instanceof Container);
         assertEquals(mockNode, actual.getNode());
     }
 
     @Test
     public void testForwardDatastream() throws RepositoryException {
-        when(mockNode.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
+        when(mockNode.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
         final FedoraResource actual = testObj.convert(mockNode);
-        assertTrue(actual instanceof Datastream);
+        assertTrue(actual instanceof NonRdfSourceDescription);
         assertEquals(mockNode, actual.getNode());
 
     }

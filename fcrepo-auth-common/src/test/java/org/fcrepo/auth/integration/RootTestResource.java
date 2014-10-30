@@ -18,7 +18,7 @@ package org.fcrepo.auth.integration;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;

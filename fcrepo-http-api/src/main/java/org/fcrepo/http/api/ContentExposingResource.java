@@ -30,10 +30,11 @@ import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -94,7 +95,6 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
@@ -236,10 +236,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             // Include binary properties if this is a binary description
-            if (resource() instanceof Datastream) {
-                final FedoraBinary binary = ((Datastream) resource()).getBinary();
-                rdfStream.concat(filter(binary.getTriples(translator(), ImmutableList.of(
-                        TypeRdfContext.class,
+            if (resource() instanceof NonRdfSourceDescription) {
+                final FedoraResource described = ((NonRdfSourceDescription) resource()).getDescribedResource();
+                rdfStream.concat(filter(described.getTriples(translator(), ImmutableList.of(TypeRdfContext.class,
                         PropertiesRdfContext.class,
                         ContentRdfContext.class)), tripleFilter));
             }
@@ -420,11 +419,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
 
-        if (resource instanceof Datastream) {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
-        } else if (resource instanceof FedoraBinary) {
+        if (resource instanceof NonRdfSource) {
             servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
-        } else if (resource instanceof FedoraObject) {
+        } else if (resource instanceof Container) {
             servletResponse.addHeader("Link", "<" + CONTAINER.getURI() + ">;rel=\"type\"");
             if (resource.hasType(LDP_BASIC_CONTAINER)) {
                 servletResponse.addHeader("Link", "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
@@ -432,9 +429,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 servletResponse.addHeader("Link", "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
             } else if (resource.hasType(LDP_INDIRECT_CONTAINER)) {
                 servletResponse.addHeader("Link", "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
-            } else if (!resource.hasType(FEDORA_CONTAINER)) {
+            } else {
                 servletResponse.addHeader("Link", "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
             }
+        } else {
+            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
         }
 
     }

@@ -18,7 +18,7 @@ package org.fcrepo.kernel.impl.services;
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
@@ -149,7 +149,7 @@ public abstract class ServiceHelpers {
 
             final String querystring =
                 "SELECT [" + JCR_PATH + "] FROM ["
-                        + FEDORA_OBJECT + "]";
+                        + FEDORA_CONTAINER + "]";
 
             final QueryResult queryResults =
                 queryManager.createQuery(querystring, JCR_SQL2).execute();

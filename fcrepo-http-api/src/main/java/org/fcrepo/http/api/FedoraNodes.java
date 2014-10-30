@@ -43,7 +43,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.domain.MOVE;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;

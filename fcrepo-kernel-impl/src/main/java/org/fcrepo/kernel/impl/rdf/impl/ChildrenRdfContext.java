@@ -19,8 +19,8 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
@@ -75,8 +75,10 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
                 final com.hp.hpl.jena.graph.Node childSubject;
 
-                if (child instanceof Datastream) {
-                    childSubject = translator().reverse().convert(((Datastream) child).getBinary()).asNode();
+                if (child instanceof NonRdfSourceDescription) {
+                    childSubject = translator().reverse()
+                            .convert(((NonRdfSourceDescription) child).getDescribedResource())
+                            .asNode();
                 } else {
                     childSubject = translator().reverse().convert(child).asNode();
                 }

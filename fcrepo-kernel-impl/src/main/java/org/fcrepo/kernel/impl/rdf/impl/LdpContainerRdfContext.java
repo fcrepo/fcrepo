@@ -23,8 +23,8 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
@@ -151,8 +151,10 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
                 try {
                     final com.hp.hpl.jena.graph.Node childSubject;
-                    if (child instanceof Datastream) {
-                        childSubject = translator().reverse().convert(((Datastream) child).getBinary()).asNode();
+                    if (child instanceof NonRdfSourceDescription) {
+                        childSubject = translator().reverse()
+                                .convert(((NonRdfSourceDescription) child).getDescribedResource())
+                                .asNode();
                     } else {
                         childSubject = translator().reverse().convert(child).asNode();
                     }

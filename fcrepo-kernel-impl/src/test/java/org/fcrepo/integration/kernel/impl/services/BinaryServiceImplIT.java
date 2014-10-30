@@ -30,9 +30,9 @@ import javax.jcr.Session;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.integration.kernel.impl.AbstractIT;
-import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.services.BinaryService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -48,7 +48,7 @@ public class BinaryServiceImplIT extends AbstractIT {
     private Repository repository;
 
     @Inject
-    ObjectService objectService;
+    ContainerService containerService;
 
     @Inject
     BinaryService binaryService;
@@ -100,7 +100,7 @@ public class BinaryServiceImplIT extends AbstractIT {
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
-        objectService.findOrCreate(session, "/testDatastreamServiceObject");
+        containerService.findOrCreate(session, "/testDatastreamServiceObject");
 
         binaryService.findOrCreate(session, "/testDatastreamServiceObject/" + "testDatastreamNode")
                 .setContent(

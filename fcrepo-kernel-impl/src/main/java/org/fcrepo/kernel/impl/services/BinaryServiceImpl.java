@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
@@ -28,7 +28,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
@@ -91,8 +91,8 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 node.addMixin(FEDORA_RESOURCE);
             }
 
-            if (node.canAddMixin(FEDORA_DATASTREAM)) {
-                node.addMixin(FEDORA_DATASTREAM);
+            if (node.canAddMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
+                node.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
             }
 
             final Node contentNode = jcrTools.findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);

@@ -15,12 +15,12 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.Container;
 import org.slf4j.Logger;
 
 /**
@@ -30,15 +30,15 @@ import org.slf4j.Logger;
  * @author ajs6f
  * @since Feb 21, 2013
  */
-public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject {
+public class ContainerImpl extends FedoraResourceImpl implements Container {
 
-    private static final Logger LOGGER = getLogger(FedoraObject.class);
+    private static final Logger LOGGER = getLogger(Container.class);
 
     /**
      * Construct a FedoraObject from an existing JCR Node
      * @param node an existing JCR node to treat as an fcrepo object
      */
-    public FedoraObjectImpl(final Node node) {
+    public ContainerImpl(final Node node) {
         super(node);
     }
 
@@ -48,7 +48,7 @@ public class FedoraObjectImpl extends FedoraResourceImpl implements FedoraObject
      * @return true if the node has the fedora object mixin
      */
     public static boolean hasMixin(final Node node) {
-        return isFedoraObject.apply(node);
+        return isContainer.apply(node);
     }
 
 }

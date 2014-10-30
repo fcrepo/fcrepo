@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel;
+
+package org.fcrepo.kernel.models;
 
 /**
- * @author bbpennel
- * @since Feb 18, 2014
+ * @author cabeer
+ * @since 10/30/14
  */
-public interface FedoraObject extends FedoraResource {
+public interface NonRdfSource extends FedoraResource {
+    /**
+     * Get the description for this binary
+     * @return
+     */
+    NonRdfSourceDescription getDescription();
 
 }

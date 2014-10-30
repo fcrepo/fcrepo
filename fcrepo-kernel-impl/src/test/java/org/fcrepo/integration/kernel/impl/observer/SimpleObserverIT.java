@@ -15,7 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl.observer;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.junit.Assert.assertEquals;
 
 import javax.inject.Inject;
@@ -53,8 +53,8 @@ public class SimpleObserverIT extends AbstractIT {
     public void TestEventBusPublishing() throws RepositoryException {
 
         final Session se = repository.login();
-        se.getRootNode().addNode("/object1").addMixin(FEDORA_OBJECT);
-        se.getRootNode().addNode("/object2").addMixin(FEDORA_OBJECT);
+        se.getRootNode().addNode("/object1").addMixin(FEDORA_CONTAINER);
+        se.getRootNode().addNode("/object2").addMixin(FEDORA_CONTAINER);
         se.save();
         se.logout();
 

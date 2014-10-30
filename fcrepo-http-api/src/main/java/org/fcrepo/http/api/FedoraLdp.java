@@ -23,10 +23,10 @@ import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.Prefer;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -84,7 +84,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -265,7 +265,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (requestBodyStream == null && !resource.isNew()) {
             throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
         } else if (requestBodyStream != null)  {
-            if ((resource instanceof FedoraObject || resource instanceof Datastream)
+            if ((resource instanceof Container || resource instanceof NonRdfSourceDescription)
                     && isRdfContentType(contentType.toString())) {
                 try {
                     replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
@@ -371,7 +371,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream)
             throws InvalidChecksumException, IOException, MalformedRdfException {
 
-        if (!(resource() instanceof FedoraObject)) {
+        if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
         }
 
@@ -403,7 +403,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
 
-            if ((result instanceof FedoraObject)
+            if ((result instanceof Container)
                     && isRdfContentType(contentTypeString)) {
                 replaceResourceWithStream(result, requestBodyStream, contentType, resourceTriples);
             } else if (result instanceof FedoraBinary) {
@@ -469,11 +469,11 @@ public class FedoraLdp extends ContentExposingResource {
         if (resource() instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
 
-        } else if (resource() instanceof Datastream) {
+        } else if (resource() instanceof NonRdfSourceDescription) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
-        } else if (resource() instanceof FedoraObject) {
+        } else if (resource() instanceof Container) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
@@ -495,8 +495,8 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
-        if (resource instanceof Datastream) {
-            final URI uri = getUri(((Datastream) resource).getBinary());
+        if (resource instanceof NonRdfSourceDescription) {
+            final URI uri = getUri(((NonRdfSourceDescription) resource).getDescribedResource());
             final Link link = Link.fromUri(uri).rel("describes").build();
             servletResponse.addHeader("Link", link.toString());
         } else if (resource instanceof FedoraBinary) {
@@ -526,7 +526,7 @@ public class FedoraLdp extends ContentExposingResource {
             return FEDORA_BINARY;
         }
 
-        return FEDORA_OBJECT;
+        return FEDORA_CONTAINER;
     }
 
     private FedoraResource createFedoraResource(final String path,
@@ -539,7 +539,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (objectType.equals(FEDORA_BINARY)) {
             result = binaryService.findOrCreate(session, path);
         } else {
-            result = objectService.findOrCreate(session, path);
+            result = containerService.findOrCreate(session, path);
         }
 
         return result;

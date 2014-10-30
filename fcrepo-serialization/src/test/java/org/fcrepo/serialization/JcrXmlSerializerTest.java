@@ -32,7 +32,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -51,15 +51,15 @@ public class JcrXmlSerializerTest {
     private Node mockNode;
 
     @Mock
-    private FedoraObject mockObject;
+    private FedoraResource mockResource;
 
     private String testPath = "/path/to/node";
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        when(mockObject.getPath()).thenReturn(testPath);
-        when(mockObject.getNode()).thenReturn(mockNode);
+        when(mockResource.getPath()).thenReturn(testPath);
+        when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
     }
 
@@ -68,7 +68,7 @@ public class JcrXmlSerializerTest {
 
         final OutputStream os = new ByteArrayOutputStream();
 
-        new JcrXmlSerializer().serialize(mockObject, os, false, false);
+        new JcrXmlSerializer().serialize(mockResource, os, false, false);
 
         verify(mockSession).exportSystemView(testPath, os, false, !false);
     }
@@ -79,7 +79,7 @@ public class JcrXmlSerializerTest {
         final boolean skipBinary = true;
         final OutputStream os = new ByteArrayOutputStream();
 
-        new JcrXmlSerializer().serialize(mockObject, os, skipBinary, false);
+        new JcrXmlSerializer().serialize(mockResource, os, skipBinary, false);
 
         verify(mockSession).exportSystemView(testPath, os, skipBinary, !false);
     }
@@ -91,7 +91,7 @@ public class JcrXmlSerializerTest {
         final boolean recurse = true;
         final OutputStream os = new ByteArrayOutputStream();
 
-        new JcrXmlSerializer().serialize(mockObject, os, skipBinary, recurse);
+        new JcrXmlSerializer().serialize(mockResource, os, skipBinary, recurse);
 
         verify(mockSession).exportSystemView(testPath, os, skipBinary, !recurse);
     }

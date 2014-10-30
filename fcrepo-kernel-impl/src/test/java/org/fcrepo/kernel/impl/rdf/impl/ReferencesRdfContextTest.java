@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;

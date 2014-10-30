@@ -21,7 +21,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
