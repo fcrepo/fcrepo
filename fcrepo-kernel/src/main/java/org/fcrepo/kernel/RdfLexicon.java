@@ -67,7 +67,9 @@ public final class RdfLexicon {
      * Fedora configuration namespace "fedora-config", used for user-settable
      * configuration properties.
      **/
-    public static final String FEDORA_CONFIG_NAMESPACE =
+    // TODO from UCDetector: Constant "RdfLexicon.FEDORA_CONFIG_NAMESPACE" has 0 references
+    // should be referenced again when versioning is back in REST api
+    public static final String FEDORA_CONFIG_NAMESPACE = // NO_UCD (unused code)
             "http://fedora.info/definitions/v4/config#";
 
     /**

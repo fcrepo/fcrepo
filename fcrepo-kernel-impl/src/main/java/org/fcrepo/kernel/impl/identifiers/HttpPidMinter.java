@@ -20,6 +20,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.slf4j.Logger;
+
 import com.codahale.metrics.annotation.Timed;
 
 import java.io.ByteArrayInputStream;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.w3c.dom.Document;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPathException;
@@ -42,11 +44,11 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
-
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.fcrepo.kernel.identifiers.PidMinter;
 
 
 /**
@@ -55,7 +57,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
  * @author escowles
  * @since 04/28/2014
  */
-public class HttpPidMinter extends BasePidMinter {
+public class HttpPidMinter implements PidMinter {
 
     private static final Logger log = getLogger(HttpPidMinter.class);
     protected final String url;

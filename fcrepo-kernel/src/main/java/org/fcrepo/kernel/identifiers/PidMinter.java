@@ -15,8 +15,6 @@
  */
 package org.fcrepo.kernel.identifiers;
 
-import com.google.common.base.Function;
-
 /**
  * Defines the behavior of a component that can accept responsibility
  * for the creation of Fedora PIDs. Do not implement this interface directly.
@@ -34,9 +32,4 @@ public interface PidMinter {
      */
     String mintPid();
 
-    /**
-     * Provide a helpful function to mint any number of PIDs
-     * @return a function for minting new identifiers
-     */
-    Function<Object, String> makePid();
 }

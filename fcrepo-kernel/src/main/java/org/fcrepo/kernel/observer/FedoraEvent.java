@@ -47,8 +47,6 @@ import com.google.common.collect.Iterables;
  */
 public class FedoraEvent {
 
-    public static final String NODE_TYPE_KEY = "fedora:nodeTypeKey";
-
     private Event e;
 
     private Set<Integer> eventTypes = new HashSet<>();

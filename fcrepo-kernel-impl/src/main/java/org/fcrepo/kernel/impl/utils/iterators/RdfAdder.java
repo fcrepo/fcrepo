@@ -22,7 +22,6 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
@@ -41,8 +40,6 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfAdder.class);
 
-    private final JcrRdfTools jcrRdfTools;
-
     /**
      * Ordinary constructor.
      *
@@ -53,13 +50,12 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     public RdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
         final RdfStream stream) {
         super(idTranslator, session, stream);
-        jcrRdfTools = new JcrRdfTools(idTranslator, session);
     }
 
     @Override
     protected void operateOnMixin(final Resource mixinResource, final FedoraResource resource)
             throws RepositoryException {
-        jcrRdfTools.addMixin(resource, mixinResource, stream().namespaces());
+        jcrRdfTools().addMixin(resource, mixinResource, stream().namespaces());
     }
 
 
@@ -68,6 +64,6 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         LOGGER.debug("Adding property from triple: {} to resource: {}.", t, resource
                 .getPath());
 
-        jcrRdfTools.addProperty(resource, t.getPredicate(), t.getObject(), stream().namespaces());
+        jcrRdfTools().addProperty(resource, t.getPredicate(), t.getObject(), stream().namespaces());
     }
 }
