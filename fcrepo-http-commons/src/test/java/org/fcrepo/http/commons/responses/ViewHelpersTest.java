@@ -31,7 +31,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
@@ -120,7 +120,7 @@ public class ViewHelpersTest {
         final Node contentVersion = createURI("http://localhost/fcrepo/abc/fcr:version/adcd/fcr:content");
         final String date = new Date().toString();
         mem.add(new Triple(version, HAS_VERSION.asNode(), version));
-        mem.add(new Triple(version, HAS_CONTENT.asNode(), contentVersion));
+        mem.add(new Triple(version, DESCRIBES.asNode(), contentVersion));
         mem.add(new Triple(contentVersion, LAST_MODIFIED_DATE.asNode(), createLiteral(date)));
         assertEquals("Content version should be available.",
                      contentVersion, testObj.getChildVersions(mem, version).next());
@@ -169,7 +169,7 @@ public class ViewHelpersTest {
     @Test
     public void testIsWritableFalseJunk() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), HAS_CONTENT.asNode(), createLiteral("junk")));
+        mem.add(new Triple(createURI("a/b/c"), DESCRIBES.asNode(), createLiteral("junk")));
         assertFalse("Node should not be writable.", testObj.isWritable(mem, createURI("a/b/c")));
     }
 
