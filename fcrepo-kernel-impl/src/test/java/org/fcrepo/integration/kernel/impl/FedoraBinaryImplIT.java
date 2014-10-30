@@ -125,6 +125,30 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
+    public void testDatastreamContentType() throws IOException,
+            RepositoryException,
+            InvalidChecksumException {
+        final Session session = repo.login();
+        containerService.findOrCreate(session, "/testDatastreamObject");
+
+        binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode1").setContent(
+                new ByteArrayInputStream("asdf".getBytes()),
+                "some/mime-type; with=params",
+                null,
+                null,
+                null
+        );
+
+        session.save();
+
+        final FedoraBinary ds = binaryService.findOrCreate(session,
+                "/testDatastreamObject/testDatastreamNode1");
+
+        assertEquals("some/mime-type; with=params", ds.getMimeType());
+
+    }
+
+    @Test
     public void testDatastreamContentDigestAndLength() throws IOException,
             RepositoryException,
             InvalidChecksumException {

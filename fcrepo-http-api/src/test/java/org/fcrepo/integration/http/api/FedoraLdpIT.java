@@ -36,6 +36,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
@@ -107,6 +108,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.annotation.NotThreadSafe;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -119,6 +121,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
@@ -2203,6 +2206,32 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String s = EntityUtils.toString(getResponse.getEntity());
 
+    }
+
+    @Test
+    public void testExternalMessageBody() throws Exception {
+
+        // we need a client that won't automatically follow redirects
+        final HttpClient client = HttpClientBuilder.create().disableRedirectHandling().build();
+
+        final String pid = getRandomUniquePid();
+
+        final HttpPut httpPut = putObjMethod(pid);
+        httpPut.addHeader("Content-Type", "message/external-body; access-type=URL; " +
+                "URL=\"http://www.example.com/file\"");
+
+        final HttpResponse response = client.execute(httpPut);
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), status);
+
+        final String subjectURI = response.getFirstHeader("Location").getValue();
+
+        final HttpGet get = new HttpGet(subjectURI);
+        final HttpResponse getResponse = client.execute(get);
+
+        LOGGER.error(EntityUtils.toString(getResponse.getEntity()));
+        assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getResponse.getStatusLine().getStatusCode());
+        assertEquals("http://www.example.com/file", getResponse.getFirstHeader("Location").getValue());
     }
 
     private Date getDateFromModel(final Model model, final Resource subj, final Property pred) throws Exception {
