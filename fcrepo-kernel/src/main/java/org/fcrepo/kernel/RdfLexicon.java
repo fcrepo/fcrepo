@@ -239,11 +239,15 @@ public final class RdfLexicon {
             HAS_FEED, HAS_SUBSCRIPTION_SERVICE);
 
 
+    // BINARY DESCRIPTIONS
+    public static final Property DESCRIBES =
+            createProperty("http://www.iana.org/assignments/relation/describes");
+    public static final Property DESCRIBED_BY =
+            createProperty("http://www.iana.org/assignments/relation/describedby");
+
+    public static final Set<Property> structProperties = of(DESCRIBES, DESCRIBED_BY);
+
     // CONTENT
-    public static final Property HAS_CONTENT =
-            createProperty(REPOSITORY_NAMESPACE + "hasContent");
-    public static final Property IS_CONTENT_OF =
-            createProperty(REPOSITORY_NAMESPACE + "isContentOf");
     public static final Resource CONTENT_LOCATION_TYPE =
             createResource(PREMIS_NAMESPACE + "ContentLocation");
     public static final Property HAS_CONTENT_LOCATION =
@@ -255,8 +259,7 @@ public final class RdfLexicon {
     public static final Property HAS_ORIGINAL_NAME =
             createProperty(PREMIS_NAMESPACE + "hasOriginalName");
 
-    public static final Set<Property> contentProperties = of(HAS_CONTENT,
-            IS_CONTENT_OF, HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
+    public static final Set<Property> contentProperties = of(HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
             HAS_MIME_TYPE, HAS_ORIGINAL_NAME, HAS_SIZE);
 
 
@@ -310,7 +313,7 @@ public final class RdfLexicon {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
         b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
-                otherServiceProperties).addAll(contentProperties).addAll(
+                otherServiceProperties).addAll(structProperties).addAll(contentProperties).addAll(
                 versioningProperties).addAll(jcrProperties);
         managedProperties = b.build();
     }

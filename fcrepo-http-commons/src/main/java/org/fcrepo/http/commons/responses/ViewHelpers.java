@@ -25,7 +25,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
+import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -118,7 +118,7 @@ public class ViewHelpers {
      */
     public Iterator<Node> getChildVersions(final Graph graph,
         final Node subject) {
-        return getOrderedVersions(graph, subject, HAS_CONTENT);
+        return getOrderedVersions(graph, subject, DESCRIBES);
     }
 
     /**

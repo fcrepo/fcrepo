@@ -1,4 +1,4 @@
-#set ($content = $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_CONTENT, false))
+#set ($content = $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.DESCRIBES, false))
 #set ($writable = $helpers.isWritable($rdf, $topic))
 #set ($frozen = $helpers.isFrozenNode($rdf, $topic))
 

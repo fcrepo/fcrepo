@@ -15,8 +15,8 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
-import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
+import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
+import static org.fcrepo.kernel.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -60,7 +60,7 @@ public class ContentRdfContextTest {
             new ContentRdfContext(mockResource, idTranslator).asModel();
         logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
         assertTrue("Didn't find triple showing node has content!", results
-                .contains(mockSubject, HAS_CONTENT, mockContentSubject));
+                .contains(mockSubject, DESCRIBES, mockContentSubject));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ContentRdfContextTest {
         final Model results =
                 new ContentRdfContext(mockBinary, idTranslator).asModel();
         assertTrue("Didn't find triple showing content has node!", results
-                .contains(mockContentSubject, IS_CONTENT_OF, mockSubject));
+                .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
     }
 
     @Before
