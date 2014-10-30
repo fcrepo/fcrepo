@@ -15,10 +15,42 @@
  */
 package org.fcrepo.kernel.services;
 
+import javax.jcr.Node;
+import javax.jcr.Session;
+
 /**
  * @author bbpennel
+ * @author barmintor
  * @since Feb 21, 2014
  */
-public interface Service {
-
+public interface Service<T> {
+    /**
+     * Test whether T exists at the given path in the
+     * repository
+     *
+     * @param path
+     * @return whether T exists at the given path
+     */
+    public boolean exists(final Session session, final String path);
+    /**
+     * Retrieve an existing T instance by session and path
+     *
+     * @param path jcr path to the node
+     * @return retrieved T
+     */
+    public T find(final Session session, final String path);
+    /**
+     * Retrieve a T instance by session and path
+     *
+     * @param path jcr path to the node
+     * @return retrieved T
+     */
+    public T findOrCreate(final Session session, final String path);
+    /**
+     * Retrieve a T instance from a node
+     *
+     * @param node
+     * @return node as T
+     */
+    public T cast(Node node);
 }

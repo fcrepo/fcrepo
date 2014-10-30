@@ -102,7 +102,7 @@ public class ModeShapeHonorsFADResponseIT {
             logger.debug("got priv: " + p.getName());
         }
         final ObjectService os = new ObjectServiceImpl();
-        os.findOrCreateObject(session, "/myobject");
+        os.findOrCreate(session, "/myobject");
         verify(fad, times(4)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 
@@ -124,7 +124,7 @@ public class ModeShapeHonorsFADResponseIT {
         final Session session = repo.login(credentials);
         final ObjectService os = new ObjectServiceImpl();
         try {
-            os.findOrCreateObject(session, "/myobject");
+            os.findOrCreate(session, "/myobject");
         } catch (final RepositoryRuntimeException e) {
             throw e.getCause();
         }

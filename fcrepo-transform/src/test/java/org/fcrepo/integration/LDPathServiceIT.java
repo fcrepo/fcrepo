@@ -71,7 +71,7 @@ public class LDPathServiceIT {
     public void shouldDoStuff() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.findOrCreateObject(session, "/testObject");
+        final FedoraObject object = objectService.findOrCreate(session, "/testObject");
         object.getNode().setProperty("dc:title", "some-title");
 
         final String s = "@prefix dces : <http://purl.org/dc/elements/1.1/>\n" +

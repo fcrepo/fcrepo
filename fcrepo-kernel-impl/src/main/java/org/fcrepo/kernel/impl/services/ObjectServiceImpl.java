@@ -27,6 +27,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.impl.FedoraObjectImpl;
 import org.fcrepo.kernel.services.ObjectService;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
      * @throws RepositoryException
      */
     @Override
-    public FedoraObject findOrCreateObject(final Session session, final String path) {
+    public FedoraObject findOrCreate(final Session session, final String path) {
         LOGGER.trace("Executing findOrCreateObject() with path: {}", path);
 
         try {
@@ -64,6 +65,20 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * Retrieve a FedoraObject instance by pid and dsid
+     *
+     * @param path
+     * @return A FedoraObject with the proffered PID
+     * @throws javax.jcr.RepositoryException
+     */
+    @Override
+    public FedoraObject find(final Session session, final String path) {
+        final Node node = findNode(session, path);
+
+        return cast(node);
     }
 
     private void initializeNewObjectProperties(final Node node) {
@@ -81,6 +96,18 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
         } catch (final RepositoryException e) {
             LOGGER.warn("Could not decorate {} with {} properties: {} ",
                     JCR_CONTENT, FEDORA_OBJECT, e);
+        }
+    }
+
+    @Override
+    public FedoraObject cast(final Node node) {
+        assertIsType(node);
+        return new FedoraObjectImpl(node);
+    }
+
+    private void assertIsType(final Node node) {
+        if (!FedoraObjectImpl.hasMixin(node)) {
+            throw new ResourceTypeException(node + " can not be used as a object");
         }
     }
 

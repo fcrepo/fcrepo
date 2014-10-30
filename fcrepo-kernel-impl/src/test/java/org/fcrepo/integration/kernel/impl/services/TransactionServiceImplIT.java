@@ -84,7 +84,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
         final String pid = getRandomPid();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
-        objectService.findOrCreateObject(txSession, "/" + pid);
+        objectService.findOrCreate(txSession, "/" + pid);
 
         // rollback and make sure the object doesn't exist
         t.expire();
@@ -100,7 +100,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
         final String pid = getRandomPid();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
-        objectService.findOrCreateObject(txSession, "/" + pid);
+        objectService.findOrCreate(txSession, "/" + pid);
 
         // rollback and make sure the object doesn't exist
         transactionService.rollback( t.getId() );
@@ -116,7 +116,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final Transaction t = transactionService.beginTransaction( session, "fedoraAdmin" );
         final String pid = getRandomPid();
         final Session txSession = TxAwareSession.newInstance(session, t.getId());
-        objectService.findOrCreateObject(txSession, "/" + pid);
+        objectService.findOrCreate(txSession, "/" + pid);
 
         // rollback and make sure the object doesn't exist
         transactionService.commit( t.getId() );

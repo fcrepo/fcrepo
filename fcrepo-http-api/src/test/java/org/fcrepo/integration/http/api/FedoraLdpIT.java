@@ -41,7 +41,6 @@ import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
@@ -340,7 +339,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("POST should support application/sparql-update", postTypes.contains(contentTypeSPARQLUpdate));
         assertTrue("POST should support text/turtle", postTypes.contains(contentTypeTurtle));
         assertTrue("POST should support text/rdf+n3", postTypes.contains(contentTypeN3));
-        assertTrue("POST should support application/n3", postTypes.contains(contentTypeN3Alt1));
         assertTrue("POST should support text/n3", postTypes.contains(contentTypeN3Alt2));
         assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));

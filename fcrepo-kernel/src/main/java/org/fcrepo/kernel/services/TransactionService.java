@@ -24,7 +24,7 @@ import org.fcrepo.kernel.exception.TransactionMissingException;
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public interface TransactionService extends Service {
+public interface TransactionService {
 
     /**
      * Check for expired transactions and remove them

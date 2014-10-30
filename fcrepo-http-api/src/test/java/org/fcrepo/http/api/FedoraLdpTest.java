@@ -596,7 +596,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
-        when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
+        when(mockObjectService.findOrCreate(mockSession, "/some/path")).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null);
 
@@ -610,7 +610,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
-        when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
+        when(mockObjectService.findOrCreate(mockSession, "/some/path")).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c ."), null, null, null);
@@ -625,7 +625,7 @@ public class FedoraLdpTest {
         when(mockBinary.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
-        when(mockBinaryService.findOrCreateBinary(mockSession, "/some/path")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(mockSession, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
                 toInputStream("xyz"), null, null, null);
@@ -642,7 +642,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(false);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(true);
-        when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
+        when(mockObjectService.findOrCreate(mockSession, "/some/path")).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c ."), null, null, null);
@@ -660,7 +660,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(false);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(true);
-        when(mockObjectService.findOrCreateObject(mockSession, "/some/path")).thenReturn(mockObject);
+        when(mockObjectService.findOrCreate(mockSession, "/some/path")).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c ."), null, null, null);
@@ -713,7 +713,7 @@ public class FedoraLdpTest {
 
         setResource(FedoraObject.class);
 
-        when(mockObjectService.findOrCreateObject(mockSession, "/b")).thenReturn(mockObject);
+        when(mockObjectService.findOrCreate(mockSession, "/b")).thenReturn(mockObject);
 
         final Response actual = testObj.createObject(null, null, null, null, "b", null);
 
@@ -725,7 +725,7 @@ public class FedoraLdpTest {
 
         setResource(FedoraObject.class);
 
-        when(mockObjectService.findOrCreateObject(mockSession, "/b")).thenReturn(mockObject);
+        when(mockObjectService.findOrCreate(mockSession, "/b")).thenReturn(mockObject);
 
         final Response actual = testObj.createObject(null, null, null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"));
@@ -739,7 +739,7 @@ public class FedoraLdpTest {
 
         setResource(FedoraObject.class);
 
-        when(mockObjectService.findOrCreateObject(mockSession, "/b")).thenReturn(mockObject);
+        when(mockObjectService.findOrCreate(mockSession, "/b")).thenReturn(mockObject);
 
         final Response actual = testObj.createObject(null, null, null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c ."));
@@ -754,7 +754,7 @@ public class FedoraLdpTest {
 
         setResource(FedoraObject.class);
 
-        when(mockBinaryService.findOrCreateBinary(mockSession, "/b")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
 
         try (final InputStream content = toInputStream("x")) {
             final Response actual = testObj.createObject(null, null, null, APPLICATION_OCTET_STREAM_TYPE, "b",

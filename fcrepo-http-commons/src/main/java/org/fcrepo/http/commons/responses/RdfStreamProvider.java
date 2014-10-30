@@ -134,7 +134,7 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
 
         private static final RDFFormat NTRIPLESWITHCORRECTMIMETYPE =
             new RDFFormat("N-Triples-with-correct-mimeType",
-                    "application/n-triples", Charset.forName("US-ASCII"), "nt",
+                    NTRIPLES, Charset.forName("US-ASCII"), "nt",
                     NO_NAMESPACES, NO_CONTEXTS);
 
         @Override

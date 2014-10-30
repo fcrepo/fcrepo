@@ -77,7 +77,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
 
     @Test
     public void testCreateObject() {
-        final Node actual = testObj.findOrCreateObject(mockSession, testPath).getNode();
+        final Node actual = testObj.findOrCreate(mockSession, testPath).getNode();
         assertEquals(mockNode, actual);
     }
 
@@ -90,7 +90,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         when(mockNode.isNew()).thenReturn(true);
 
         final Node actual =
-                testObj.findOrCreateObject(mockSession, "/foo/bar").getNode();
+                testObj.findOrCreate(mockSession, "/foo/bar").getNode();
         assertEquals(mockNode, actual);
         verify(mockParent).addMixin(FedoraJcrTypes.FEDORA_PAIRTREE);
     }
@@ -105,7 +105,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
 
-        final Node actual = testObj.findOrCreateObject(mockSession, "/foo/bar").getNode();
+        final Node actual = testObj.findOrCreate(mockSession, "/foo/bar").getNode();
         assertEquals(mockNode, actual);
         verify(mockParent, never()).addMixin(FedoraJcrTypes.FEDORA_PAIRTREE);
     }
@@ -116,7 +116,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         when(mockJcrTools.findOrCreateNode(mockSession, "/foo", NT_FOLDER, NT_FOLDER)).thenReturn(mockNode);
-        final FedoraObject actual = testObj.findOrCreateObject(mockSession, "/foo");
+        final FedoraObject actual = testObj.findOrCreate(mockSession, "/foo");
         assertEquals(mockNode, actual.getNode());
     }
 
@@ -132,7 +132,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
 
-        testObj.findOrCreateObject(mockSession, "/foo/bar");
+        testObj.findOrCreate(mockSession, "/foo/bar");
 
     }
 

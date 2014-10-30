@@ -45,14 +45,14 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
     private static final Logger LOGGER = getLogger(BinaryServiceImpl.class);
 
     /**
-     * Retrieve a Datastream instance by pid and dsid
+     * Retrieve or create a Datastream instance by pid and dsid
      *
      * @param path jcr path to the datastream
      * @return datastream
      * @throws javax.jcr.RepositoryException
      */
     @Override
-    public FedoraBinary findOrCreateBinary(final Session session, final String path) {
+    public FedoraBinary findOrCreate(final Session session, final String path) {
         try {
             final Node dsNode = findOrCreateNode(session, path, NT_FILE);
 
@@ -60,7 +60,25 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 initializeNewDatastreamProperties(dsNode);
             }
 
-            return asBinary(dsNode.getNode(JCR_CONTENT));
+            return cast(dsNode.getNode(JCR_CONTENT));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param path jcr path to the datastream
+     * @return datastream
+     * @throws javax.jcr.RepositoryException
+     */
+    @Override
+    public FedoraBinary find(final Session session, final String path) {
+        try {
+            final Node dsNode = findNode(session, path);
+
+            return cast(dsNode.getNode(JCR_CONTENT));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -94,7 +112,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      * @return node as datastream
      */
     @Override
-    public FedoraBinary asBinary(final Node node) {
+    public FedoraBinary cast(final Node node) {
         assertIsType(node);
         return new FedoraBinaryImpl(node);
     }

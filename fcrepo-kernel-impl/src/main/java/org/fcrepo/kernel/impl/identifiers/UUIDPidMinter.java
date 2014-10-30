@@ -35,5 +35,7 @@ public class UUIDPidMinter extends UUIDPathMinter {
     /**
      * Create a special kind of UUIDPathMinter with no prefixed segments
      */
-    public UUIDPidMinter() { super(0,0); }
+    public UUIDPidMinter() {
+        super(0,0);
+    }
 }

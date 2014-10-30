@@ -112,7 +112,7 @@ public class FedoraVersioningTest {
     public void testGetVersionList() {
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
                 mockVariant);
-        when(mockNodes.getObject(any(Session.class), anyString())).thenReturn(
+        when(mockNodes.find(any(Session.class), anyString())).thenReturn(
                 mockResource);
         when(mockResource.getTriples(any(IdentifierConverter.class), eq(VersionsRdfContext.class)))
                 .thenReturn(mockRdfStream);

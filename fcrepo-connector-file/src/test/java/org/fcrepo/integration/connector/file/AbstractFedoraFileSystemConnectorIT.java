@@ -195,7 +195,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedObject() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.findOrCreateObject(session, testDirPath());
+        final FedoraObject object = objectService.findOrCreate(session, testDirPath());
         assertNotNull(object);
 
         final Node node = object.getNode();
@@ -213,7 +213,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedDatastream() throws RepositoryException {
         final Session session = repo.login();
 
-        final Datastream datastream = binaryService.findOrCreateBinary(session, testFilePath()).getDescription();
+        final Datastream datastream = binaryService.findOrCreate(session, testFilePath()).getDescription();
         assertNotNull(datastream);
 
         final Node node = datastream.getNode();
@@ -231,7 +231,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedContent() throws RepositoryException {
         final Session session = repo.login();
 
-        final Node node = nodeService.getObject(session, testFilePath() + "/jcr:content").getNode();
+        final Node node = nodeService.find(session, testFilePath() + "/jcr:content").getNode();
         assertNotNull(node);
 
         final NodeType[] mixins = node.getMixinNodeTypes();
@@ -253,7 +253,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        checkFixity(binaryService.findOrCreateBinary(session, testFilePath()));
+        checkFixity(binaryService.findOrCreate(session, testFilePath()));
 
         session.save();
         session.logout();
@@ -263,7 +263,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testChangedFileFixity() throws RepositoryException, IOException, NoSuchAlgorithmException {
         final Session session = repo.login();
 
-        final FedoraBinary binary = binaryService.findOrCreateBinary(session, testFilePath());
+        final FedoraBinary binary = binaryService.findOrCreate(session, testFilePath());
 
         final String originalFixity = checkFixity(binary);
 

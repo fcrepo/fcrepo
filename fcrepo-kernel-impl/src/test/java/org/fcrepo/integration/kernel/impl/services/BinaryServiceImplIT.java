@@ -57,7 +57,7 @@ public class BinaryServiceImplIT extends AbstractIT {
     public void testCreateDatastreamNode() throws Exception {
         Session session = repository.login();
 
-        binaryService.findOrCreateBinary(session, "/testDatastreamNode").setContent(
+        binaryService.findOrCreate(session, "/testDatastreamNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -78,7 +78,7 @@ public class BinaryServiceImplIT extends AbstractIT {
     @Test
     public void testCreateDatastreamNodeWithfilename() throws Exception {
         Session session = repository.login();
-        binaryService.findOrCreateBinary(session, "/testDatastreamNode").setContent(
+        binaryService.findOrCreate(session, "/testDatastreamNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
                 null,
@@ -100,9 +100,9 @@ public class BinaryServiceImplIT extends AbstractIT {
     public void testGetDatastreamContentInputStream() throws Exception {
         Session session = repository.login();
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
-        objectService.findOrCreateObject(session, "/testDatastreamServiceObject");
+        objectService.findOrCreate(session, "/testDatastreamServiceObject");
 
-        binaryService.findOrCreateBinary(session, "/testDatastreamServiceObject/" + "testDatastreamNode")
+        binaryService.findOrCreate(session, "/testDatastreamServiceObject/" + "testDatastreamNode")
                 .setContent(
                         is,
                         "application/octet-stream",
@@ -115,7 +115,7 @@ public class BinaryServiceImplIT extends AbstractIT {
         session.logout();
         session = repository.login();
         final FedoraBinary binary =
-                binaryService.findOrCreateBinary(session,
+                binaryService.findOrCreate(session,
                     "/testDatastreamServiceObject/" + "testDatastreamNode");
         assertEquals("asdf", IOUtils.toString(binary.getContent(), "UTF-8"));
         session.logout();

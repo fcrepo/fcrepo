@@ -205,7 +205,7 @@ public class FedoraNodesTest {
     @Test
     public void testMoveObject() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
-        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+        when(mockNodes.find(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
         when(mockObject.getPath()).thenReturn(path);
@@ -222,7 +222,7 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, path)).thenReturn(false);
-        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+        when(mockNodes.find(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
 
@@ -234,7 +234,7 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, path)).thenReturn(true);
-        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+        when(mockNodes.find(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         when(mockObject.getEtagValue()).thenReturn("");
         doThrow(new RepositoryRuntimeException(new ItemExistsException()))
@@ -249,7 +249,7 @@ public class FedoraNodesTest {
     public void testMoveObjectWithBadDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.getObject(isA(Session.class), isA(String.class)))
+        when(mockNodes.find(isA(Session.class), isA(String.class)))
             .thenReturn(mockObject);
         when(mockNodes.exists(mockSession, path)).thenReturn(true);
         when(mockObject.getEtagValue()).thenReturn("");

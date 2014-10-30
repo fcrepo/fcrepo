@@ -17,17 +17,9 @@ package org.fcrepo.http.commons.domain;
 
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
-import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
-import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
-import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
-import static org.apache.jena.riot.WebContent.contentTypeSSE;
-import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
-import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
-import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 
@@ -48,10 +40,6 @@ public abstract class RDFMediaType extends MediaType {
     public static final String N3 = contentTypeN3;
 
     public static final MediaType N3_TYPE = typeFromString(N3);
-
-    public static final String N3_ALT1 = contentTypeN3Alt1;
-
-    public static final MediaType N3_ALT1_TYPE = typeFromString(N3_ALT1);
 
     public static final String N3_ALT2 = contentTypeN3Alt2;
 
@@ -78,39 +66,11 @@ public abstract class RDFMediaType extends MediaType {
     public final static MediaType JSON_LD_TYPE = typeFromString(JSON_LD);
 
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
-            RDF_XML_TYPE, TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, NTRIPLES_TYPE, APPLICATION_XML_TYPE, TEXT_PLAIN_TYPE,
-            TURTLE_X_TYPE, JSON_LD_TYPE).add().build();
+            RDF_XML_TYPE, TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, NTRIPLES_TYPE, APPLICATION_XML_TYPE,
+            TEXT_PLAIN_TYPE, TURTLE_X_TYPE, JSON_LD_TYPE).add().build();
 
     public static final String POSSIBLE_RDF_RESPONSE_VARIANTS_STRING[] = {
         TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD };
-
-    public static final String TSV = contentTypeTextTSV;
-
-    public static final MediaType TSV_TYPE = typeFromString(TSV);
-
-    public static final String CSV = contentTypeTextCSV;
-
-    public static final MediaType CSV_TYPE = typeFromString(CSV);
-
-    public static final String SSE = contentTypeSSE;
-
-    public static final MediaType SSE_TYPE = typeFromString(SSE);
-
-    public static final String PLAIN = contentTypeTextPlain;
-
-    public static final MediaType PLAIN_TYPE = typeFromString(PLAIN);
-
-    public static final String RESULTS_JSON = contentTypeResultsJSON;
-
-    public static final MediaType RESULTS_JSON_TYPE = typeFromString(RESULTS_JSON);
-
-    public static final String RESULTS_XML = contentTypeResultsXML;
-
-    public static final MediaType RESULTS_XML_TYPE = typeFromString(RESULTS_XML);
-
-    public static final String RESULTS_BIO = contentTypeResultsBIO;
-
-    public static final MediaType RESULTS_BIO_TYPE = typeFromString(RESULTS_BIO);
 
     private static MediaType typeFromString(final String type) {
         return new MediaType(type.split("/")[0], type.split("/")[1]);
