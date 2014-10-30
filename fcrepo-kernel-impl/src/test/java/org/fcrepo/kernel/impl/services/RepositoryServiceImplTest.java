@@ -217,7 +217,7 @@ public class RepositoryServiceImplTest implements FedoraJcrTypes {
         when(mockWorkspace.getQueryManager()).thenReturn(mockQueryManager);
         when(
                 mockQueryManager.createQuery("SELECT [" + JCR_PATH +
-                        "] FROM [" + FEDORA_OBJECT + "]", JCR_SQL2))
+                        "] FROM [" + FEDORA_CONTAINER + "]", JCR_SQL2))
                 .thenReturn(mockQuery);
         when(mockQuery.execute()).thenReturn(mockQueryResult);
         when(mockQueryResult.getRows()).thenReturn(mockRowIterator);

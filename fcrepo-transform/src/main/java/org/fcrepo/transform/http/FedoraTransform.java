@@ -56,7 +56,7 @@ import javax.ws.rs.core.MediaType;
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.api.ContentExposingResource;
 import org.fcrepo.http.commons.domain.Prefer;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.TransformationFactory;
 import org.jvnet.hk2.annotations.Optional;

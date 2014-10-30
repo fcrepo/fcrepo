@@ -20,7 +20,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.utils.iterators.RdfStream;

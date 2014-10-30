@@ -23,7 +23,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.springframework.beans.factory.annotation.Autowired;
 

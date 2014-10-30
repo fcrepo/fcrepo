@@ -26,8 +26,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -45,7 +45,7 @@ public class LdpRdfContextTest {
     private FedoraResource mockResource;
 
     @Mock
-    private FedoraObject mockContainer;
+    private Container mockContainer;
     @Mock
     private Session mockSession;
 

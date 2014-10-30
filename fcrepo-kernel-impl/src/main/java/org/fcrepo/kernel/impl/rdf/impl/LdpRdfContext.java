@@ -23,8 +23,8 @@ import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
@@ -51,7 +51,7 @@ public class LdpRdfContext extends NodeRdfContext {
 
         concat(typeContext());
 
-        if (resource instanceof FedoraObject) {
+        if (resource instanceof Container) {
             concat(containerContext());
 
             if (!resource.hasType(FEDORA_CONTAINER)) {

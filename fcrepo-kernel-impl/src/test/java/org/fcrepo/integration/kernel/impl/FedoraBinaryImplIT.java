@@ -17,7 +17,7 @@ package org.fcrepo.integration.kernel.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -40,14 +40,14 @@ import javax.jcr.Session;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraObject;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.BinaryService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,7 +68,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     BinaryService binaryService;
 
     @Inject
-    ObjectService objectService;
+    ContainerService containerService;
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
@@ -80,7 +80,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Test
     public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
         Session session = repo.login();
-        objectService.findOrCreate(session, "/testDatastreamObject");
+        containerService.findOrCreate(session, "/testDatastreamObject");
 
         binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode1").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -104,7 +104,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.findOrCreate(session, "/testDatastreamObject");
+        containerService.findOrCreate(session, "/testDatastreamObject");
 
         binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode1").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -129,7 +129,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.findOrCreate(session, "/testDatastreamObject");
+        containerService.findOrCreate(session, "/testDatastreamObject");
 
         binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode2").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -158,7 +158,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.findOrCreate(session, "/testDatastreamObject");
+        containerService.findOrCreate(session, "/testDatastreamObject");
 
         binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -189,7 +189,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             RepositoryException,
             InvalidChecksumException {
         final Session session = repo.login();
-        objectService.findOrCreate(session, "/testDatastreamObject");
+        containerService.findOrCreate(session, "/testDatastreamObject");
 
         binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode4").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -214,7 +214,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Test
     public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        objectService.findOrCreate(session, "/testDatastreamObject");
+        containerService.findOrCreate(session, "/testDatastreamObject");
 
         binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode5").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -238,7 +238,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     public void testChecksumBlobs() throws Exception {
 
         final Session session = repo.login();
-        objectService.findOrCreate(session, "/testLLObject");
+        containerService.findOrCreate(session, "/testLLObject");
 
         binaryService.findOrCreate(session, "/testLLObject/testRepositoryContent").setContent(
                 new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
@@ -268,7 +268,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     public void testChecksumBlobsForInMemoryValues() throws Exception {
 
         final Session session = repo.login();
-        objectService.findOrCreate(session, "/testLLObject");
+        containerService.findOrCreate(session, "/testLLObject");
         binaryService.findOrCreate(session, "/testLLObject/testMemoryContent").setContent(
                 new ByteArrayInputStream("0123456789".getBytes()),
                 "application/octet-stream",
@@ -296,10 +296,10 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         final Session session = repo.login();
         final javax.jcr.ValueFactory factory = session.getValueFactory();
-        final FedoraObject object = objectService.findOrCreate(session, "/testLLObject");
+        final Container object = containerService.findOrCreate(session, "/testLLObject");
 
         final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
-        testRandomContentNode.addMixin(FEDORA_DATASTREAM);
+        testRandomContentNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
         testRandomContent.addMixin(FEDORA_BINARY);
         testRandomContent.setProperty(JCR_DATA,

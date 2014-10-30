@@ -23,7 +23,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;

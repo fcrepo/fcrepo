@@ -28,9 +28,9 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.exception.TombstoneException;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -41,7 +41,7 @@ import org.modeshape.jcr.api.JcrTools;
  *
  * @author ksclarke
  */
-public class ObjectServiceImplTest implements FedoraJcrTypes {
+public class ContainerServiceImplTest implements FedoraJcrTypes {
 
     @Mock
     private Session mockSession;
@@ -58,7 +58,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
     @Mock
     private NodeType mockNodeType;
 
-    private ObjectService testObj;
+    private ContainerService testObj;
 
     @Mock
     private JcrTools mockJcrTools;
@@ -68,7 +68,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        testObj = new ObjectServiceImpl();
+        testObj = new ContainerServiceImpl();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNode.getParent()).thenReturn(mockRoot);
@@ -116,7 +116,7 @@ public class ObjectServiceImplTest implements FedoraJcrTypes {
         final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         when(mockJcrTools.findOrCreateNode(mockSession, "/foo", NT_FOLDER, NT_FOLDER)).thenReturn(mockNode);
-        final FedoraObject actual = testObj.findOrCreate(mockSession, "/foo");
+        final Container actual = testObj.findOrCreate(mockSession, "/foo");
         assertEquals(mockNode, actual.getNode());
     }
 

@@ -32,11 +32,11 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +54,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     Repository repo;
 
     @Inject
-    ObjectService objectService;
+    ContainerService containerService;
 
     private Session session;
 
@@ -69,19 +69,19 @@ public class FedoraObjectImplIT extends AbstractIT {
 
     @Test
     public void testCreatedObject() throws RepositoryException {
-        objectService.findOrCreate(session, "/testObject");
+        containerService.findOrCreate(session, "/testObject");
         session.save();
         session.logout();
         session = repo.login();
-        final FedoraObject obj =
-            objectService.findOrCreate(session, "/testObject");
+        final Container obj =
+            containerService.findOrCreate(session, "/testObject");
         assertNotNull("Couldn't find object!", obj);
     }
 
     @Test
     public void testObjectGraph() throws Exception {
-        final FedoraObject object =
-            objectService.findOrCreate(session, "/graphObject");
+        final Container object =
+            containerService.findOrCreate(session, "/graphObject");
         final Model model = object.getTriples(subjects, PropertiesRdfContext.class).asModel();
 
         final Resource graphSubject = subjects.reverse().convert(object);
@@ -152,8 +152,8 @@ public class FedoraObjectImplIT extends AbstractIT {
 
     @Test
     public void testObjectGraphWithUriProperty() throws RepositoryException {
-        final FedoraObject object =
-            objectService.findOrCreate(session, "/graphObject");
+        final Container object =
+            containerService.findOrCreate(session, "/graphObject");
         final Resource graphSubject = subjects.reverse().convert(object);
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
@@ -188,7 +188,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     @Test
     public void testUpdatingObjectGraphWithErrors() {
         final String pid = getRandomPid();
-        final FedoraObject object = objectService.findOrCreate(session, pid);
+        final Container object = containerService.findOrCreate(session, pid);
 
         MalformedRdfException e = null;
         try {
@@ -207,7 +207,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     @Test
     public void testReplaceObjectGraphWithErrors() {
         final String pid = getRandomPid();
-        final FedoraObject object = objectService.findOrCreate(session, pid);
+        final Container object = containerService.findOrCreate(session, pid);
 
         final Model model = ModelFactory.createDefaultModel().read(
                 IOUtils.toInputStream("<> <info:some-property> <relative-url> . \n" +

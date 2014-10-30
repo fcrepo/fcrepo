@@ -19,7 +19,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.testutilities.TestNodeIterator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.junit.Before;

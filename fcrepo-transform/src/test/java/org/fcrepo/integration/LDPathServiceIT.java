@@ -16,10 +16,10 @@
 package org.fcrepo.integration;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.junit.Before;
@@ -59,7 +59,7 @@ public class LDPathServiceIT {
     Repository repo;
 
     @Inject
-    ObjectService objectService;
+    ContainerService containerService;
     private LDPathTransform testObj;
 
     @Before
@@ -71,7 +71,7 @@ public class LDPathServiceIT {
     public void shouldDoStuff() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.findOrCreate(session, "/testObject");
+        final Container object = containerService.findOrCreate(session, "/testObject");
         object.getNode().setProperty("dc:title", "some-title");
 
         final String s = "@prefix dces : <http://purl.org/dc/elements/1.1/>\n" +

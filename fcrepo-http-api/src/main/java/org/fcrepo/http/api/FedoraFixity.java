@@ -39,8 +39,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 

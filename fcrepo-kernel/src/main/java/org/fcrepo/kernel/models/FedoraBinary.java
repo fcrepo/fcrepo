@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel;
+package org.fcrepo.kernel.models;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -29,13 +29,7 @@ import java.net.URI;
  * @author cabeer
  * @since 9/19/14
  */
-public interface FedoraBinary extends FedoraResource {
-
-    /**
-     * Get the description for this binary
-     * @return
-     */
-    Datastream getDescription();
+public interface FedoraBinary extends NonRdfSource {
 
     /**
      * @return The InputStream of content associated with this datastream.

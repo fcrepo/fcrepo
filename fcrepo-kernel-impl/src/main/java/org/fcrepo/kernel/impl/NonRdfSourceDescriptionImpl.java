@@ -15,19 +15,18 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isNonRdfSourceDescription;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import org.fcrepo.kernel.FedoraBinary;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.models.NonRdfSource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.slf4j.Logger;
-
 
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.
@@ -35,21 +34,21 @@ import org.slf4j.Logger;
  * @author ajs6f
  * @since Feb 21, 2013
  */
-public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
+public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements NonRdfSourceDescription {
 
-    private static final Logger LOGGER = getLogger(DatastreamImpl.class);
+    private static final Logger LOGGER = getLogger(NonRdfSourceDescriptionImpl.class);
 
     /**
      * The JCR node for this datastream
      *
      * @param n an existing {@link Node}
      */
-    public DatastreamImpl(final Node n) {
+    public NonRdfSourceDescriptionImpl(final Node n) {
         super(n);
     }
 
     @Override
-    public FedoraBinary getBinary() {
+    public NonRdfSource getDescribedResource() {
         return new FedoraBinaryImpl(getContentNode());
     }
 
@@ -68,7 +67,7 @@ public class DatastreamImpl extends FedoraResourceImpl implements Datastream {
      * @param node node to check
      */
     public static boolean hasMixin(final Node node) {
-        return isFedoraDatastream.apply(node);
+        return isNonRdfSourceDescription.apply(node);
     }
 
 }

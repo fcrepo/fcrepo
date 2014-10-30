@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
@@ -25,11 +25,11 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
-import org.fcrepo.kernel.impl.FedoraObjectImpl;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.impl.ContainerImpl;
+import org.fcrepo.kernel.services.ContainerService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -40,9 +40,9 @@ import org.springframework.stereotype.Component;
  * @since Feb 11, 2013
  */
 @Component
-public class ObjectServiceImpl extends AbstractService implements ObjectService {
+public class ContainerServiceImpl extends AbstractService implements ContainerService {
 
-    private static final Logger LOGGER = getLogger(ObjectServiceImpl.class);
+    private static final Logger LOGGER = getLogger(ContainerServiceImpl.class);
 
     /**
      * @param path
@@ -51,7 +51,7 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
      * @throws RepositoryException
      */
     @Override
-    public FedoraObject findOrCreate(final Session session, final String path) {
+    public Container findOrCreate(final Session session, final String path) {
         LOGGER.trace("Executing findOrCreateObject() with path: {}", path);
 
         try {
@@ -61,7 +61,7 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
                 initializeNewObjectProperties(node);
             }
 
-            return new FedoraObjectImpl(node);
+            return new ContainerImpl(node);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -75,7 +75,7 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
      * @throws javax.jcr.RepositoryException
      */
     @Override
-    public FedoraObject find(final Session session, final String path) {
+    public Container find(final Session session, final String path) {
         final Node node = findNode(session, path);
 
         return cast(node);
@@ -89,24 +89,24 @@ public class ObjectServiceImpl extends AbstractService implements ObjectService 
                 node.addMixin(FEDORA_RESOURCE);
             }
 
-            if (node.canAddMixin(FEDORA_OBJECT)) {
-                node.addMixin(FEDORA_OBJECT);
+            if (node.canAddMixin(FEDORA_CONTAINER)) {
+                node.addMixin(FEDORA_CONTAINER);
             }
 
         } catch (final RepositoryException e) {
             LOGGER.warn("Could not decorate {} with {} properties: {} ",
-                    JCR_CONTENT, FEDORA_OBJECT, e);
+                    JCR_CONTENT, FEDORA_CONTAINER, e);
         }
     }
 
     @Override
-    public FedoraObject cast(final Node node) {
+    public Container cast(final Node node) {
         assertIsType(node);
-        return new FedoraObjectImpl(node);
+        return new ContainerImpl(node);
     }
 
     private void assertIsType(final Node node) {
-        if (!FedoraObjectImpl.hasMixin(node)) {
+        if (!ContainerImpl.hasMixin(node)) {
             throw new ResourceTypeException(node + " can not be used as a object");
         }
     }

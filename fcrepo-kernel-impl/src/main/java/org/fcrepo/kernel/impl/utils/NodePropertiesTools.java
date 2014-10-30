@@ -31,7 +31,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;

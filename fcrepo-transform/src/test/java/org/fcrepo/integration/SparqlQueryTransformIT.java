@@ -17,10 +17,10 @@ package org.fcrepo.integration;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 import org.junit.Test;
@@ -51,14 +51,14 @@ import static org.junit.Assert.assertTrue;
 public class SparqlQueryTransformIT extends AbstractResourceIT {
 
     @Inject
-    ObjectService objectService;
+    ContainerService containerService;
     private SparqlQueryTransform testObj;
 
     @Test
     public void shouldDoStuff() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.findOrCreate(session, "/testObject");
+        final Container object = containerService.findOrCreate(session, "/testObject");
 
         final String s = "SELECT ?x ?uuid\n" +
                 "WHERE { ?x  <" + REPOSITORY_NAMESPACE + "uuid> ?uuid }";

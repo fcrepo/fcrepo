@@ -35,9 +35,9 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +85,7 @@ public class ContentRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
-        when(mockResource.getBinary()).thenReturn(mockBinary);
+        when(mockResource.getDescribedResource()).thenReturn(mockBinary);
         when(mockNode.hasProperties()).thenReturn(false);
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockBinaryNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
@@ -111,7 +111,7 @@ public class ContentRdfContextTest {
     private static final String mockNodeName = "mockNode";
 
     @Mock
-    private Datastream mockResource;
+    private NonRdfSourceDescription mockResource;
 
     @Mock
     private Node mockNode;

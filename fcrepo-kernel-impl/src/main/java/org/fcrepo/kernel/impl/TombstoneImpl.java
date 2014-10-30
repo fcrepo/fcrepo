@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl;
 
-import org.fcrepo.kernel.Tombstone;
+import org.fcrepo.kernel.models.Tombstone;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 

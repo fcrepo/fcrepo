@@ -25,8 +25,8 @@ import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.services.ObjectService;
-import org.fcrepo.kernel.impl.services.ObjectServiceImpl;
+import org.fcrepo.kernel.services.ContainerService;
+import org.fcrepo.kernel.impl.services.ContainerServiceImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -101,7 +101,7 @@ public class ModeShapeHonorsFADResponseIT {
         for (final Privilege p : rootPrivs) {
             logger.debug("got priv: " + p.getName());
         }
-        final ObjectService os = new ObjectServiceImpl();
+        final ContainerService os = new ContainerServiceImpl();
         os.findOrCreate(session, "/myobject");
         verify(fad, times(4)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
@@ -122,7 +122,7 @@ public class ModeShapeHonorsFADResponseIT {
 
         final ServletCredentials credentials = new ServletCredentials(request);
         final Session session = repo.login(credentials);
-        final ObjectService os = new ObjectServiceImpl();
+        final ContainerService os = new ContainerServiceImpl();
         try {
             os.findOrCreate(session, "/myobject");
         } catch (final RepositoryRuntimeException e) {

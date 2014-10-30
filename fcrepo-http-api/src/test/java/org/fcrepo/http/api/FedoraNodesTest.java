@@ -49,12 +49,11 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.FedoraObject;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.VersionService;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,7 +73,7 @@ public class FedoraNodesTest {
     FedoraNodes testObj;
 
     @Mock
-    private ObjectService mockObjects;
+    private ContainerService mockObjects;
 
     @Mock
     private NodeService mockNodes;
@@ -92,12 +91,12 @@ public class FedoraNodesTest {
     private Request mockRequest;
 
     @Mock
-    private FedoraResourceImpl mockResource;
+    private FedoraResource mockResource;
 
     Session mockSession;
 
     @Mock
-    private FedoraObject mockObject;
+    private FedoraResource mockContainer;
 
     @Mock
     private Model mockModel;
@@ -136,7 +135,7 @@ public class FedoraNodesTest {
         setField(testObj, "versionService", mockVersions);
         this.mockUriInfo = getUriInfoImpl();
         setField(testObj, "pidMinter", mockPidMinter);
-        setField(testObj, "objectService", mockObjects);
+        setField(testObj, "containerService", mockObjects);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
         final Workspace mockWorkspace = mock(Workspace.class);
@@ -146,9 +145,9 @@ public class FedoraNodesTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
         when(mockDate.getTime()).thenReturn(0L);
         when(mockNode.getPath()).thenReturn(path);
-        when(mockObject.getNode()).thenReturn(mockNode);
-        when(mockObject.getPath()).thenReturn(path);
-        when(mockObject.getEtagValue()).thenReturn("XYZ");
+        when(mockContainer.getNode()).thenReturn(mockNode);
+        when(mockContainer.getPath()).thenReturn(path);
+        when(mockContainer.getEtagValue()).thenReturn("XYZ");
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockSession.getNode(path)).thenReturn(mockNode);
@@ -163,7 +162,7 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, path)).thenReturn(true);
-        when(mockObject.getPath()).thenReturn(path);
+        when(mockContainer.getPath()).thenReturn(path);
 
         testObj.copyObject("http://localhost/fcrepo/bar");
         verify(mockNodes).copyObject(mockSession, path, "/bar");
@@ -206,9 +205,9 @@ public class FedoraNodesTest {
     public void testMoveObject() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockNodes.find(isA(Session.class), isA(String.class)))
-            .thenReturn(mockObject);
-        when(mockObject.getEtagValue()).thenReturn("");
-        when(mockObject.getPath()).thenReturn(path);
+            .thenReturn(mockContainer);
+        when(mockContainer.getEtagValue()).thenReturn("");
+        when(mockContainer.getPath()).thenReturn(path);
 
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, path)).thenReturn(true);
@@ -223,8 +222,8 @@ public class FedoraNodesTest {
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, path)).thenReturn(false);
         when(mockNodes.find(isA(Session.class), isA(String.class)))
-            .thenReturn(mockObject);
-        when(mockObject.getEtagValue()).thenReturn("");
+            .thenReturn(mockContainer);
+        when(mockContainer.getEtagValue()).thenReturn("");
 
         testObj.moveObject("http://localhost/fcrepo/bar");
     }
@@ -235,8 +234,8 @@ public class FedoraNodesTest {
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(mockSession, path)).thenReturn(true);
         when(mockNodes.find(isA(Session.class), isA(String.class)))
-            .thenReturn(mockObject);
-        when(mockObject.getEtagValue()).thenReturn("");
+            .thenReturn(mockContainer);
+        when(mockContainer.getEtagValue()).thenReturn("");
         doThrow(new RepositoryRuntimeException(new ItemExistsException()))
                 .when(mockNodes).moveObject(mockSession, path, "/baz");
 
@@ -250,9 +249,9 @@ public class FedoraNodesTest {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.find(isA(Session.class), isA(String.class)))
-            .thenReturn(mockObject);
+            .thenReturn(mockContainer);
         when(mockNodes.exists(mockSession, path)).thenReturn(true);
-        when(mockObject.getEtagValue()).thenReturn("");
+        when(mockContainer.getEtagValue()).thenReturn("");
 
         testObj.moveObject("http://somewhere/else/baz");
     }

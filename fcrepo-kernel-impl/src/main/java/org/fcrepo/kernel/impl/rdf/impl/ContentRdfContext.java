@@ -19,9 +19,9 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.IS_CONTENT_OF;
 
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.graph.Node;
@@ -44,8 +44,8 @@ public class ContentRdfContext extends NodeRdfContext {
 
         // if there's an accessible jcr:content node, include information about
         // it
-        if (resource instanceof Datastream) {
-            final FedoraResource contentNode = ((Datastream) resource()).getBinary();
+        if (resource instanceof NonRdfSourceDescription) {
+            final FedoraResource contentNode = ((NonRdfSourceDescription) resource()).getDescribedResource();
             final Node subject = translator().reverse().convert(resource()).asNode();
             final Node contentSubject = translator().reverse().convert(contentNode).asNode();
             // add triples representing parent-to-content-child relationship

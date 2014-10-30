@@ -22,12 +22,12 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 //import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.services.VersionService;
 import org.jvnet.hk2.annotations.Optional;
@@ -70,7 +70,7 @@ public abstract class AbstractResource {
      * The fcrepo object service
      */
     @Autowired
-    protected ObjectService objectService;
+    protected ContainerService containerService;
 
     /**
      * The fcrepo datastream service

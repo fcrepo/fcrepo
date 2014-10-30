@@ -16,12 +16,12 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.DatastreamImpl;
+import org.fcrepo.kernel.impl.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.junit.Before;
@@ -41,7 +41,7 @@ import javax.jcr.version.VersionManager;
 import javax.ws.rs.core.UriBuilder;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.jcr.FedoraJcrTypes.FROZEN_NODE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -100,7 +100,7 @@ public class HttpResourceConverterTest {
         when(session.getNode("/" + path)).thenReturn(node);
         when(node.getPath()).thenReturn("/" + path);
         when(node.isNodeType(FROZEN_NODE)).thenReturn(false);
-        when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(false);
+        when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(false);
         when(contentNode.getPath()).thenReturn("/" + path + "/jcr:content");
         when(session.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getName()).thenReturn("default");
@@ -116,7 +116,7 @@ public class HttpResourceConverterTest {
 
     @Test
     public void testDoForwardWithDatastreamContent() throws Exception {
-        when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
+        when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
         when(node.getNode(JCR_CONTENT)).thenReturn(contentNode);
         final FedoraResource converted = converter.convert(resource);
         assertTrue(converted instanceof FedoraBinary);
@@ -125,9 +125,9 @@ public class HttpResourceConverterTest {
 
     @Test
     public void testDoForwardWithDatastreamMetadata() throws Exception {
-        when(node.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
+        when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
         final FedoraResource converted = converter.convert(metadataResource);
-        assertTrue(converted instanceof Datastream);
+        assertTrue(converted instanceof NonRdfSourceDescription);
         assertEquals(node, converted.getNode());
     }
 
@@ -173,7 +173,7 @@ public class HttpResourceConverterTest {
 
     @Test
     public void testDoBackwardWithDatastreamMetadata() {
-        final Resource converted = converter.reverse().convert(new DatastreamImpl(node));
+        final Resource converted = converter.reverse().convert(new NonRdfSourceDescriptionImpl(node));
         assertEquals(metadataResource, converted);
     }
 

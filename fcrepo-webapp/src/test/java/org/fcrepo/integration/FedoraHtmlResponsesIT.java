@@ -180,7 +180,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     @Test
     public void testNodeTypes() throws IOException {
         final HtmlPage page = javascriptlessWebClient.getPage(serverAddress + "fcr:nodetypes");
-        assertTrue(page.asText().contains("fedora:object"));
+        assertTrue(page.asText().contains("fedora:Container"));
     }
 
     /**

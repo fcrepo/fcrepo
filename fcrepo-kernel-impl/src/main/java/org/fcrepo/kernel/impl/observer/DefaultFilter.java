@@ -18,8 +18,8 @@ package org.fcrepo.kernel.impl.observer;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.transform;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -91,8 +91,8 @@ public class DefaultFilter implements EventFilter {
             final Collection<String> mixinTypes = ImmutableSet.copyOf(transform(nodeTypes, nodetype2string));
             return mixinTypes.contains(FEDORA_RESOURCE)
                     || mixinTypes.contains(FEDORA_BINARY)
-                    || mixinTypes.contains(FEDORA_DATASTREAM)
-                    || mixinTypes.contains(FEDORA_OBJECT);
+                    || mixinTypes.contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION)
+                    || mixinTypes.contains(FEDORA_CONTAINER);
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;

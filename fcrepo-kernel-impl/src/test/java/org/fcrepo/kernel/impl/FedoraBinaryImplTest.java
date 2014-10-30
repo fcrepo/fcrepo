@@ -17,7 +17,7 @@ package org.fcrepo.kernel.impl;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.junit.After;
 import org.junit.Before;
@@ -89,7 +89,7 @@ public class FedoraBinaryImplTest implements FedoraJcrTypes {
         initMocks(this);
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         try {
-            when(mockDsNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
+            when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockContent.getSession()).thenReturn(mockSession);

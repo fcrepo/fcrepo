@@ -26,7 +26,7 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.utils.iterators.RdfStream;

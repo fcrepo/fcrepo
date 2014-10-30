@@ -23,8 +23,8 @@ import static java.util.Arrays.asList;
 import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
@@ -58,13 +58,13 @@ import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraObject;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ObjectService;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -94,7 +94,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     protected NodeService nodeService;
 
     @Inject
-    protected ObjectService objectService;
+    protected ContainerService containerService;
 
     @Inject
     protected BinaryService binaryService;
@@ -195,15 +195,15 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedObject() throws RepositoryException {
         final Session session = repo.login();
 
-        final FedoraObject object = objectService.findOrCreate(session, testDirPath());
+        final Container object = containerService.findOrCreate(session, testDirPath());
         assertNotNull(object);
 
         final Node node = object.getNode();
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_OBJECT);
-        assertTrue("Mixin not found: " + FEDORA_OBJECT, found);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_CONTAINER);
+        assertTrue("Mixin not found: " + FEDORA_CONTAINER, found);
 
         session.save();
         session.logout();
@@ -213,15 +213,17 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedDatastream() throws RepositoryException {
         final Session session = repo.login();
 
-        final Datastream datastream = binaryService.findOrCreate(session, testFilePath()).getDescription();
-        assertNotNull(datastream);
+        final NonRdfSourceDescription nonRdfSourceDescription
+                = binaryService.findOrCreate(session, testFilePath()).getDescription();
+        assertNotNull(nonRdfSourceDescription);
 
-        final Node node = datastream.getNode();
+        final Node node = nonRdfSourceDescription.getNode();
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_DATASTREAM);
-        assertTrue("Mixin not found: " + FEDORA_DATASTREAM, found);
+        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name)
+                .contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+        assertTrue("Mixin not found: " + FEDORA_NON_RDF_SOURCE_DESCRIPTION, found);
 
         session.save();
         session.logout();

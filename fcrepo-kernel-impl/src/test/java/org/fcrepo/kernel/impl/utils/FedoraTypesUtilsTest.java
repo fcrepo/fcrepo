@@ -21,8 +21,8 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraDatastream;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraObject;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isNonRdfSourceDescription;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isMultipleValuedProperty;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
@@ -257,15 +257,15 @@ public class FedoraTypesUtilsTest {
         when(mockNode.isNodeType(anyString())).thenThrow(new RepositoryException());
 
         try {
-            isFedoraObject.apply(mockNode);
-            fail("Unexpected FedoraTypesUtils.isFedoraObject" +
+            isContainer.apply(mockNode);
+            fail("Unexpected FedoraTypesUtils.isContainer" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {
             // expected
         }
         try {
-            isFedoraDatastream.apply(mockNode);
-            fail("Unexpected FedoraTypesUtils.isFedoraDatastream" +
+            isNonRdfSourceDescription.apply(mockNode);
+            fail("Unexpected FedoraTypesUtils.isNonRdfSourceDescription" +
                  " completion after RepositoryException!");
         } catch (final RuntimeException e) {
             // expected

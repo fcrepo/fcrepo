@@ -31,7 +31,7 @@ import javax.jcr.Session;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;

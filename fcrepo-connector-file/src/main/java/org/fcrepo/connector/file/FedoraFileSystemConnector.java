@@ -19,8 +19,8 @@ import static java.lang.System.currentTimeMillis;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_DATASTREAM;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
@@ -208,16 +208,16 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
 
     private static void decorateObjectNode(final DocumentReader docReader, final DocumentWriter docWriter) {
-        if (!docReader.getMixinTypeNames().contains(FEDORA_OBJECT)) {
-            LOGGER.trace("Adding mixin: {}, to {}", FEDORA_OBJECT, docReader.getDocumentId());
-            docWriter.addMixinType(FEDORA_OBJECT);
+        if (!docReader.getMixinTypeNames().contains(FEDORA_CONTAINER)) {
+            LOGGER.trace("Adding mixin: {}, to {}", FEDORA_CONTAINER, docReader.getDocumentId());
+            docWriter.addMixinType(FEDORA_CONTAINER);
         }
     }
 
     private static void decorateDatastreamNode(final DocumentReader docReader, final DocumentWriter docWriter) {
-        if (!docReader.getMixinTypeNames().contains(FEDORA_DATASTREAM)) {
-            LOGGER.trace("Adding mixin: {}, to {}", FEDORA_DATASTREAM, docReader.getDocumentId());
-            docWriter.addMixinType(FEDORA_DATASTREAM);
+        if (!docReader.getMixinTypeNames().contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
+            LOGGER.trace("Adding mixin: {}, to {}", FEDORA_NON_RDF_SOURCE_DESCRIPTION, docReader.getDocumentId());
+            docWriter.addMixinType(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         }
     }
 

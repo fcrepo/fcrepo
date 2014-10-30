@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.impl;
 
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.Datastream;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +33,7 @@ import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Date;
 
-import static org.fcrepo.kernel.impl.DatastreamImpl.hasMixin;
+import static org.fcrepo.kernel.impl.NonRdfSourceDescriptionImpl.hasMixin;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -51,7 +51,7 @@ public class DatastreamImplTest implements FedoraJcrTypes {
 
     private static final String testDsId = "testDs";
 
-    private Datastream testObj;
+    private NonRdfSourceDescription testObj;
 
     private String testObjPath;
 
@@ -78,14 +78,14 @@ public class DatastreamImplTest implements FedoraJcrTypes {
         initMocks(this);
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         try {
-            when(mockDsNodeType.getName()).thenReturn(FEDORA_DATASTREAM);
+            when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
             final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:file");
             when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-            testObj = new DatastreamImpl(mockDsNode);
+            testObj = new NonRdfSourceDescriptionImpl(mockDsNode);
         } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -133,14 +133,14 @@ public class DatastreamImplTest implements FedoraJcrTypes {
     @Test
     public void testHasDatastreamMixin() throws RepositoryException {
         final Node test = mock(Node.class);
-        when(test.isNodeType(FEDORA_DATASTREAM)).thenReturn(true);
+        when(test.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
         assertTrue("mockYes should have mixin", hasMixin(test));
     }
 
     @Test
     public void testHasNoMixin() throws RepositoryException {
         final Node test = mock(Node.class);
-        when(test.isNodeType(FEDORA_DATASTREAM)).thenReturn(false);
+        when(test.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(false);
         assertFalse("mockNo should not have mixin", hasMixin(test));
     }
 

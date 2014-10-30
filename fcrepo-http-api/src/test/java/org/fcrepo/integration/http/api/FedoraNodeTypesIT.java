@@ -46,11 +46,11 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
         final GraphStore graphStore = getGraphStore(httpGet);
 
         assertTrue(graphStore.contains(ANY, createURI(RESTAPI_NAMESPACE
-                + "resource"), type.asNode(), Class.asNode()));
+                + "Resource"), type.asNode(), Class.asNode()));
         assertTrue(graphStore.contains(ANY, createURI(RESTAPI_NAMESPACE
-                + "object"), type.asNode(), Class.asNode()));
+                + "Container"), type.asNode(), Class.asNode()));
         assertTrue(graphStore.contains(ANY, createURI(RESTAPI_NAMESPACE
-                + "datastream"), type.asNode(), Class.asNode()));
+                + "NonRdfSourceDescription"), type.asNode(), Class.asNode()));
     }
 
     @Test

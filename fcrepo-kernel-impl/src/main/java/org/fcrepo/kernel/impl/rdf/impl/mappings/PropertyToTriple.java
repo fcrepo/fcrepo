@@ -34,7 +34,7 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.impl.LiteralLabel;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.slf4j.Logger;

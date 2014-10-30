@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.exception;
 
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 
 /**
  * Exception when a Tombstone object is used where a real object is expected

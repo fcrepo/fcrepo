@@ -20,7 +20,7 @@ import static java.lang.System.currentTimeMillis;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_OBJECT;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
@@ -103,7 +103,7 @@ public class HeadersJMSIT implements MessageListener {
         final Session session = repository.login();
         try {
             final Node node = jcrTools.findOrCreateNode(session, pid);
-            node.addMixin(FEDORA_OBJECT);
+            node.addMixin(FEDORA_CONTAINER);
             session.save();
 
             final Long start = currentTimeMillis();
@@ -141,7 +141,7 @@ public class HeadersJMSIT implements MessageListener {
         final Session session = repository.login();
         try {
             final Node node = jcrTools.findOrCreateNode(session, pid);
-            node.addMixin(FEDORA_OBJECT);
+            node.addMixin(FEDORA_CONTAINER);
             session.save();
             node.remove();
             session.save();

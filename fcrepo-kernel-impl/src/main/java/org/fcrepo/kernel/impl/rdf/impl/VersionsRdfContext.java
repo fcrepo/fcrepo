@@ -32,7 +32,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.VersionIterator;

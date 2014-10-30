@@ -19,9 +19,9 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -69,7 +69,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             = registryService.getMetrics().counter(name(FedoraBinary.class, "fixity-check-counter"));
 
     static final Timer timer = registryService.getMetrics().timer(
-            name(Datastream.class, "fixity-check-time"));
+            name(NonRdfSourceDescription.class, "fixity-check-time"));
 
     static final Histogram contentSizeHistogram =
             registryService.getMetrics().histogram(name(FedoraBinary.class, "content-size"));
@@ -95,9 +95,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     }
 
     @Override
-    public Datastream getDescription() {
+    public NonRdfSourceDescription getDescription() {
         try {
-            return new DatastreamImpl(getNode().getParent());
+            return new NonRdfSourceDescriptionImpl(getNode().getParent());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -301,7 +301,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     @Override
     public void delete() {
-        final Datastream description = getDescription();
+        final NonRdfSourceDescription description = getDescription();
 
         super.delete();
 
@@ -338,7 +338,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getVersionHistory()
+     * @see org.fcrepo.kernel.models.FedoraResource#getVersionHistory()
      */
     @Override
     public VersionHistory getVersionHistory() {

@@ -21,7 +21,7 @@ import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.base.Joiner;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;

@@ -57,9 +57,9 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.jcr.FedoraJcrTypes;
-import org.fcrepo.kernel.Datastream;
-import org.fcrepo.kernel.FedoraBinary;
-import org.fcrepo.kernel.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -98,7 +98,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getNode()
+     * @see org.fcrepo.kernel.models.FedoraResource#getNode()
      */
     @Override
     public Node getNode() {
@@ -106,7 +106,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getPath()
+     * @see org.fcrepo.kernel.models.FedoraResource#getPath()
      */
     @Override
     public String getPath() {
@@ -118,7 +118,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getChildren()
+     * @see org.fcrepo.kernel.models.FedoraResource#getChildren()
      */
     @Override
     public Iterator<FedoraResource> getChildren() {
@@ -178,8 +178,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         @Override
         protected FedoraResource doForward(final FedoraResource fedoraResource) {
-            if (fedoraResource instanceof Datastream) {
-                return ((Datastream) fedoraResource).getBinary();
+            if (fedoraResource instanceof NonRdfSourceDescription) {
+                return ((NonRdfSourceDescription) fedoraResource).getDescribedResource();
             }
             return fedoraResource;
         }
@@ -207,7 +207,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             Node container = getNode().getParent();
             while (container.getDepth() > 0) {
                 if (container.isNodeType(FEDORA_PAIRTREE)
-                        || container.isNodeType(FEDORA_DATASTREAM)) {
+                        || container.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
                     container = container.getParent();
                 } else {
                     return nodeConverter.convert(container);
@@ -283,7 +283,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getCreatedDate()
+     * @see org.fcrepo.kernel.models.FedoraResource#getCreatedDate()
      */
     @Override
     public Date getCreatedDate() {
@@ -301,7 +301,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getLastModifiedDate()
+     * @see org.fcrepo.kernel.models.FedoraResource#getLastModifiedDate()
      */
     @Override
     public Date getLastModifiedDate() {
@@ -345,7 +345,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#updateProperties
+     * @see org.fcrepo.kernel.models.FedoraResource#updateProperties
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
@@ -404,7 +404,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#addVersionLabel(java.lang.String)
+     * @see org.fcrepo.kernel.models.FedoraResource#addVersionLabel(java.lang.String)
      */
     @Override
     public void addVersionLabel(final String label) {
@@ -418,7 +418,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getBaseVersion()
+     * @see org.fcrepo.kernel.models.FedoraResource#getBaseVersion()
      */
     @Override
     public Version getBaseVersion() {
@@ -431,7 +431,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getVersionHistory()
+     * @see org.fcrepo.kernel.models.FedoraResource#getVersionHistory()
      */
     @Override
     public VersionHistory getVersionHistory() {
@@ -443,7 +443,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#isNew()
+     * @see org.fcrepo.kernel.models.FedoraResource#isNew()
      */
     @Override
     public Boolean isNew() {
@@ -451,7 +451,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#replaceProperties
+     * @see org.fcrepo.kernel.models.FedoraResource#replaceProperties
      *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
@@ -485,7 +485,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.FedoraResource#getEtagValue()
+     * @see org.fcrepo.kernel.models.FedoraResource#getEtagValue()
      */
     @Override
     public String getEtagValue() {

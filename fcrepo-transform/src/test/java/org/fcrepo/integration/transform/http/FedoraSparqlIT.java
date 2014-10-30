@@ -130,7 +130,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         final String sparql =
                 "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT " +
                         "?subject WHERE { " +
-                        "?subject a <http://fedora.info/definitions/v4/rest-api#resource> . ?subject dc:title \"xyz\"}";
+                        "?subject a <http://fedora.info/definitions/v4/rest-api#Resource> . ?subject dc:title \"xyz\"}";
 
         final String content = getResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));
@@ -274,7 +274,7 @@ public class FedoraSparqlIT  extends AbstractResourceIT {
         final String sparql =
                 "PREFIX  dc:  <http://purl.org/dc/elements/1.1/> SELECT " +
                         "?subject WHERE { " +
-                        "?subject a <http://fedora.info/definitions/v4/rest-api#resource> . ?subject dc:title \"xyz\"}";
+                        "?subject a <http://fedora.info/definitions/v4/rest-api#Resource> . ?subject dc:title \"xyz\"}";
 
         final String content =  getFormRequestResponseContent(sparql);
         final ResultSet resultSet = ResultSetFactory.fromTSV(IOUtils.toInputStream(content));

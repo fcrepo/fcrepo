@@ -35,8 +35,22 @@
 <fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
 
 <test = 'info:fedora/test/'>
+/*
+ * Any Fedora resource.
+ */
+[fedora:Resource] > mix:created, mix:lastModified, mix:referenceable mixin
+  - rdf:type (URI) multiple
+  - * (undefined) multiple
+  - * (undefined)
 
-[fedora:Container] mixin
+/*
+ * A Fedora object.
+ */
+[fedora:Container] > fedora:Resource mixin
+  - ldp:membershipResource (REFERENCE)
+  - ldp:hasMemberRelation (URI)
+  - ldp:isMemberOfRelation (URI)
+  - ldp:insertedContentRelation (URI)
 
 [ldp:BasicContainer] > fedora:Container mixin
 
@@ -45,39 +59,20 @@
 [ldp:IndirectContainer] > fedora:Container  mixin
 
 /*
- * Any Fedora resource.
- */
-[fedora:resource] > mix:created, mix:lastModified, mix:referenceable mixin
-  - rdf:type (URI) multiple
-  - * (undefined) multiple
-  - * (undefined)
-
-/*
- * A Fedora object.
- */
-[fedora:object] > fedora:resource mixin
-  - ldp:membershipResource (REFERENCE)
-  - ldp:hasMemberRelation (URI)
-  - ldp:isMemberOfRelation (URI)
-  - ldp:insertedContentRelation (URI)
-
-
-/*
  * A Fedora datastream.
  */
-[fedora:datastream] > fedora:resource mixin
-   + image:metadata (nt:unstructured) SNS
+[fedora:NonRdfSourceDescription] > fedora:Resource mixin
 
 /*
  * Some content that can have a checksum
  */
-[fedora:binary] > fedora:resource mixin
+[fedora:Binary] > fedora:Resource mixin
   - premis:hasOriginalName (STRING)
   - premis:hasSize (LONG) COPY
   - fedora:digest (URI) COPY
 
-[fedora:blanknode] > mix:referenceable mixin
+[fedora:Blanknode] > mix:referenceable mixin
 
-[fedora:pairtree] mixin
+[fedora:Pairtree] mixin
 
-[fedora:tombstone] > nt:hierarchyNode
+[fedora:Tombstone] > nt:hierarchyNode
