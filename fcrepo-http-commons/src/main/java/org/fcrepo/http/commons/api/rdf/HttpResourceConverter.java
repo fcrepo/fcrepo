@@ -292,24 +292,30 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     private String getPath(final FedoraResource resource) {
         if (isFrozenNode.apply(resource)) {
             try {
-                Node versionableFrozenNode = resource.getNode();
-                Node versionableNode = session.getNodeByIdentifier(
-                        versionableFrozenNode.getProperty("jcr:frozenUuid").getString());
-                String pathWithinVersionable = "";
-                while (!versionableNode.isNodeType("mix:versionable")) {
-                    LOGGER.debug("node {} is not versionable, checking parent...", versionableNode.getIdentifier());
-                    pathWithinVersionable = "/" + getRelativePath(versionableNode,
-                            versionableNode.getParent()) + pathWithinVersionable;
-                    versionableFrozenNode = versionableFrozenNode.getParent();
-                    versionableNode = session.getNodeByIdentifier(
-                            versionableFrozenNode.getProperty("jcr:frozenUuid").getString());
+
+                // the versioned resource we're in
+                final FedoraResource versionableFrozenResource = resource.getVersionedAncestor();
+
+                // the unfrozen equivalent for the versioned resource
+                final FedoraResource unfrozenVersionableResource = versionableFrozenResource.getUnfrozenResource();
+
+                // the identifier for this version (by default, the UUID for the versioned resource)
+                final String versionIdentifier = versionableFrozenResource.getNode().getIdentifier();
+
+                // the path to this resource within the versioning tree
+                final String pathWithinVersionable;
+
+                if (!resource.equals(versionableFrozenResource)) {
+                    pathWithinVersionable = getRelativePath(resource, versionableFrozenResource);
+                } else {
+                    pathWithinVersionable = "";
                 }
 
-                pathWithinVersionable = versionableFrozenNode.getIdentifier()
-                        + (pathWithinVersionable.length() > 0 ? pathWithinVersionable : "");
-                final String pathToVersionable = versionableNode.getPath();
-                LOGGER.debug("frozen node found with id {}.", versionableFrozenNode.getIdentifier());
-                final String path = pathToVersionable + "/" + FCR_VERSIONS + "/" + pathWithinVersionable;
+                // and, finally, the path we want to expose in the URI
+                final String path = unfrozenVersionableResource.getPath()
+                        + "/" + FCR_VERSIONS
+                        + "/" + versionIdentifier
+                        + pathWithinVersionable;
                 return path.startsWith("/") ? path : "/" + path;
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
@@ -318,12 +324,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         return resource.getPath();
     }
 
-    private static String getRelativePath(final Node node, final Node ancestor) {
-        try {
-            return node.getPath().substring(ancestor.getPath().length() + 1);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+    private static String getRelativePath(final FedoraResource child, final FedoraResource ancestor) {
+        return child.getPath().substring(ancestor.getPath().length() + 1);
     }
 
     /**

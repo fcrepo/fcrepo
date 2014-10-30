@@ -25,6 +25,7 @@ import org.fcrepo.kernel.impl.DatastreamImpl;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -213,6 +214,7 @@ public class HttpResourceConverterTest {
     }
 
     @Test
+    @Ignore
     public void testDoBackwardWithVersionedNode() throws Exception {
 
         when(versionedNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);

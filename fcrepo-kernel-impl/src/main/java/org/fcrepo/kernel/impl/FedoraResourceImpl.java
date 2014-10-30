@@ -26,6 +26,7 @@ import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
@@ -287,8 +288,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public Date getCreatedDate() {
         try {
-            if (node.hasProperty(JCR_CREATED)) {
-                return new Date(node.getProperty(JCR_CREATED).getDate().getTimeInMillis());
+            if (hasProperty(JCR_CREATED)) {
+                return new Date(getProperty(JCR_CREATED).getDate().getTimeInMillis());
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -306,8 +307,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public Date getLastModifiedDate() {
 
         try {
-            if (node.hasProperty(JCR_LASTMODIFIED)) {
-                return new Date(node.getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+            if (hasProperty(JCR_LASTMODIFIED)) {
+                return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -329,9 +330,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public boolean hasType(final String type) {
         try {
-            if (isFrozen.apply(node) && node.hasProperty(FROZEN_MIXIN_TYPES)) {
+            if (isFrozen.apply(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
                 final List<String> types = newArrayList(
-                    transform(property2values.apply(node.getProperty(FROZEN_MIXIN_TYPES)), value2string)
+                    transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), value2string)
                 );
                 return types.contains(type);
             }
@@ -519,6 +520,51 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public boolean isVersioned() {
         try {
             return node.isNodeType("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource getVersionedAncestor() {
+
+        try {
+            if (!isFrozenNode.apply(this)) {
+                return null;
+            }
+
+            Node versionableFrozenNode = getNode();
+            FedoraResource unfrozenResource = getUnfrozenResource();
+
+            // traverse the frozen tree looking for a node whose unfrozen equivalent is versioned
+            while (!unfrozenResource.isVersioned()) {
+
+                if (versionableFrozenNode.getDepth() == 0) {
+                    return null;
+                }
+
+                // node in the frozen tree
+                versionableFrozenNode = versionableFrozenNode.getParent();
+
+                // unfrozen equivalent
+                unfrozenResource = new FedoraResourceImpl(versionableFrozenNode).getUnfrozenResource();
+            }
+
+            return new FedoraResourceImpl(versionableFrozenNode);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+    }
+
+    @Override
+    public FedoraResource getUnfrozenResource() {
+        if (!isFrozenNode.apply(this)) {
+            return this;
+        }
+
+        try {
+            return new FedoraResourceImpl(getSession().getNodeByIdentifier(getProperty("jcr:frozenUuid").getString()));
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

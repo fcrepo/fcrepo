@@ -201,6 +201,18 @@ public interface FedoraResource {
     boolean isVersioned();
 
     /**
+     * When this is a frozen node, get the ancestor that was explicitly versioned
+     * @return
+     */
+    FedoraResource getVersionedAncestor();
+
+    /**
+     * Get the unfrozen equivalent of a frozen versioned node
+     * @return
+     */
+    FedoraResource getUnfrozenResource();
+
+    /**
      * Get the node for this object at the version provided.
      * @param label
      * @return

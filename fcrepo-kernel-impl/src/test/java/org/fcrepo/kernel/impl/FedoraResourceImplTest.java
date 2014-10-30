@@ -20,12 +20,14 @@ import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.jcr.FedoraJcrTypes.FROZEN_NODE;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.impl.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -94,6 +96,9 @@ public class FedoraResourceImplTest {
 
     @Mock
     private Property mockProp;
+
+    @Mock
+    private Property mockContainerProperty;
 
     @Mock
     private JcrRdfTools mockJcrRdfTools;
@@ -436,5 +441,66 @@ public class FedoraResourceImplTest {
         verify(mockNode).remove();
         verify(mockContainer).addNode("a", FEDORA_TOMBSTONE);
     }
+
+    @Test
+    public void testGetUnfrozenResourceForFrozenNode() throws RepositoryException {
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
+        when(mockNode.getProperty("jcr:frozenUuid")).thenReturn(mockProp);
+        when(mockProp.getString()).thenReturn("frozen-id");
+        when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockChild);
+        final FedoraResource actual = testObj.getUnfrozenResource();
+        assertEquals(mockChild, actual.getNode());
+    }
+
+    @Test
+    public void testGetUnfrozenResourceForResource() throws RepositoryException {
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(false);
+        final FedoraResource actual = testObj.getUnfrozenResource();
+        assertEquals(testObj, actual);
+    }
+
+    @Test
+    public void testGetVersionedAncestorForResource() throws RepositoryException {
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(false);
+        final FedoraResource actual = testObj.getVersionedAncestor();
+        assertNull(actual);
+    }
+
+    @Test
+    public void testGetVersionedAncestorForVersionedResource() throws RepositoryException {
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
+
+        when(mockNode.getProperty("jcr:frozenUuid")).thenReturn(mockProp);
+        when(mockNode.isNodeType("mix:versionable")).thenReturn(true);
+        when(mockProp.getString()).thenReturn("frozen-id");
+        when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockNode);
+        final FedoraResource actual = testObj.getVersionedAncestor();
+        assertEquals(mockNode, actual.getNode());
+    }
+
+    @Test
+    public void testGetVersionedAncestorForVersionedResourceWithinTree() throws RepositoryException {
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
+
+        when(mockNode.getDepth()).thenReturn(2);
+        when(mockNode.getProperty("jcr:frozenUuid")).thenReturn(mockProp);
+        when(mockNode.isNodeType("mix:versionable")).thenReturn(false);
+        when(mockProp.getString()).thenReturn("frozen-id");
+        when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockNode);
+
+        when(mockNode.getParent()).thenReturn(mockContainer);
+        when(mockContainer.getSession()).thenReturn(mockSession);
+        when(mockContainer.getDepth()).thenReturn(1);
+        when(mockContainer.isNodeType(FROZEN_NODE)).thenReturn(true);
+        when(mockContainer.getProperty("jcr:frozenUuid")).thenReturn(mockContainerProperty);
+        when(mockContainerProperty.getString()).thenReturn("frozen-id-container");
+        when(mockSession.getNodeByIdentifier("frozen-id-container")).thenReturn(mockContainer);
+        when(mockContainer.isNodeType("mix:versionable")).thenReturn(true);
+
+        final FedoraResource actual = testObj.getVersionedAncestor();
+        assertEquals(mockContainer, actual.getNode());
+    }
+
+
 
 }
