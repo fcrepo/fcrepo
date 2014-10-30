@@ -55,8 +55,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private final Session session;
-
     // if it's not about a Fedora resource, we don't care.
     protected final Predicate<Triple> isFedoraSubjectTriple;
 
@@ -100,7 +98,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         // we knock out non-Fedora RDF
         this.stream =
                 stream.withThisContext(stream.filter(isFedoraSubjectTriple));
-        this.session = session;
 
         this.exceptions = new ArrayList<>();
     }
@@ -187,14 +184,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
      */
     public IdentifierConverter<Resource,FedoraResource> translator() {
         return idTranslator;
-    }
-
-
-    /**
-     * @return the session
-     */
-    public Session session() {
-        return session;
     }
 
 
