@@ -60,28 +60,28 @@ public class FedoraFixityTest {
     @Mock
     private FedoraBinary mockBinary;
 
+    private String externalPath = "objects/FedoraDatastreamsTest1/testDS";
+
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         initMocks(this);
-        testObj = spy(new FedoraFixity());
+        testObj = spy(new FedoraFixity(externalPath));
         this.uriInfo = getUriInfoImpl();
         setField(testObj, "uriInfo", uriInfo);
         mockSession = mockSession(testObj);
         setField(testObj, "session", mockSession);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockBinary.getPath()).thenReturn(externalPath);
+        doReturn(mockBinary).when(testObj).getResourceFromPath(externalPath);
     }
 
     @Test
     public void testGetDatastreamFixity() throws RepositoryException {
         final RdfStream expected = new RdfStream();
-        final String externalPath = "objects/FedoraDatastreamsTest1/testDS";
 
-        when(mockNode.getSession()).thenReturn(mockSession);
-
-        doReturn(mockBinary).when(testObj).getResourceFromPath(externalPath);
         when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
-        when(mockBinary.getPath()).thenReturn(externalPath);
 
-        final RdfStream actual = testObj.getDatastreamFixity(externalPath, mockRequest, uriInfo);
+        final RdfStream actual = testObj.getDatastreamFixity();
 
         assertEquals(expected, actual);
     }
