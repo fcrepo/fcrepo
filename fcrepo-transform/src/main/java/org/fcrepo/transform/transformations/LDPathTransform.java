@@ -55,7 +55,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @author cbeer
  */
-public class LDPathTransform implements Transformation<Map<String, Collection<Object>>>  {
+public class LDPathTransform implements Transformation<List<Map<String, Collection<Object>>>>  {
 
     public static final String CONFIGURATION_FOLDER = "/fedora:system/fedora:transform/fedora:ldpath/";
 
@@ -135,7 +135,7 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
     }
 
     @Override
-    public Map<String, Collection<Object>> apply(final RdfStream stream) {
+    public List<Map<String, Collection<Object>>> apply(final RdfStream stream) {
         try {
             final LDPath<RDFNode> ldpathForResource =
                 getLdpathResource(stream);
@@ -146,7 +146,7 @@ public class LDPathTransform implements Transformation<Map<String, Collection<Ob
                 ldpathForResource.programQuery(context, new InputStreamReader(
                         query));
 
-            return transformLdpathOutputToSomethingSerializable(wildcardCollection);
+            return ImmutableList.of(transformLdpathOutputToSomethingSerializable(wildcardCollection));
         } catch (final LDPathParseException e) {
             throw new RuntimeException(e);
         }
