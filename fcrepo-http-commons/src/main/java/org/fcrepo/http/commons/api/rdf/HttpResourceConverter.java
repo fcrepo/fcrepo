@@ -25,6 +25,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -49,7 +50,9 @@ import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.TombstoneImpl;
 import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
 import org.glassfish.jersey.uri.UriTemplate;
@@ -103,11 +106,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     protected FedoraResource doForward(final Resource resource) {
+        final HashMap<String, String> values = new HashMap<>();
+        final String path = asString(resource, values);
         try {
-            final HashMap<String, String> values = new HashMap<>();
-
-            final String path = asString(resource, values);
-
             if (path != null) {
                 final Node node = getNode(path);
 
@@ -124,6 +125,17 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             throw new IdentifierConversionException("Asked to translate a resource " + resource
                     + " that doesn't match the URI template");
         } catch (final RepositoryException e) {
+            try {
+                if ( e instanceof PathNotFoundException ) {
+                    final Node preexistingNode = getClosestExistingAncestor(session, path);
+                    if (TombstoneImpl.hasMixin(preexistingNode)) {
+                        throw new TombstoneException(new TombstoneImpl(preexistingNode));
+                    }
+                }
+            } catch (RepositoryException inner) {
+                LOGGER.debug("Error checking for parent tombstones", inner);
+            }
+
             throw new RepositoryRuntimeException(e);
         }
     }
