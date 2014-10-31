@@ -155,7 +155,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 final InputStream content = ((FedoraBinary) resource()).getContent();
 
                 final Model inputModel = createDefaultModel()
-                        .read(content, getUri(resource()).toString(), format);
+                        .read(content,  (resource()).toString(), format);
 
                 rdfStream.concat(Iterators.transform(inputModel.listStatements(),
                         new Function<Statement, Triple>() {
