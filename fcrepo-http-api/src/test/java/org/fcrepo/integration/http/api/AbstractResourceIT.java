@@ -22,7 +22,6 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
-import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -44,6 +43,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -179,7 +179,9 @@ public abstract class AbstractResourceIT {
         final int result = response.getStatusLine().getStatusCode();
         if (!(result > 199) || !(result < 400)) {
             logger.warn("Got status {}", result);
-            logger.warn(EntityUtils.toString(response.getEntity()));
+            if (response.getEntity() != null) {
+                logger.warn(EntityUtils.toString(response.getEntity()));
+            }
         }
         return result;
     }
@@ -317,6 +319,7 @@ public abstract class AbstractResourceIT {
     }
 
     protected static void assertDeleted(final String location) throws IOException {
-        assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), anyOf(is(404), is(410)));
+        assertThat("Expected object to be deleted", getStatus(new HttpHead(location)), is(410));
+        assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), is(410));
     }
 }
