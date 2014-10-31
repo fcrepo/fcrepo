@@ -72,7 +72,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
         final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createParser(content));
 
         assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/" + pid,
-                rootNode.get("id").elements().next().asText());
+                rootNode.get(0).get("id").elements().next().asText());
 
     }
 
@@ -99,7 +99,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
         final JsonNode rootNode = new ObjectMapper().readTree(new JsonFactory().createParser(content));
 
         assertEquals("Failed to retrieve correct identifier in JSON!", serverAddress + "/" + pid, rootNode
-                .get("id").elements().next().asText());
+                .get(0).get("id").elements().next().asText());
 
     }
 }

@@ -38,6 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
+import java.util.List;
 
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -87,9 +88,13 @@ public class LDPathServiceIT {
         final Resource topic = subjects.reverse().convert(object);
         final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class)
                                         .topic(topic.asNode());
-        final Map<String, Collection<Object>> stuff = testObj.apply(triples);
+        final List<Map<String, Collection<Object>>> list = testObj.apply(triples);
 
-        assertNotNull("Failed to retrieve results!", stuff);
+        assertNotNull("Failed to retrieve results!", list);
+
+        assertTrue("List didn't contain a result", list.size() == 1);
+
+        final Map<String, Collection<Object>> stuff = list.get(0);
 
         assertTrue("Results didn't contain an identifier!", stuff.containsKey("id"));
         assertTrue("Results didn't contain a title!", stuff.containsKey("title"));

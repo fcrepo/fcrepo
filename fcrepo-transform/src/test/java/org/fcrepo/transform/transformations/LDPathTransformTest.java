@@ -31,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
+import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -141,7 +142,8 @@ public class LDPathTransformTest {
         final InputStream testReader = new ByteArrayInputStream("title = dc:title :: xsd:string ;".getBytes());
 
         testObj = new LDPathTransform(testReader);
-        final Map<String,Collection<Object>> stringCollectionMap = testObj.apply(rdfStream);
+        final List<Map<String,Collection<Object>>> stringCollectionMapList = testObj.apply(rdfStream);
+        final Map<String,Collection<Object>> stringCollectionMap = stringCollectionMapList.get(0);
 
         assert(stringCollectionMap != null);
         assertEquals(1, stringCollectionMap.size());
