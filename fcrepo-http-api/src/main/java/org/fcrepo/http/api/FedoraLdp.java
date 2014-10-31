@@ -263,20 +263,26 @@ public class FedoraLdp extends ContentExposingResource {
             resourceTriples = getResourceTriples();
         }
 
-        if (requestBodyStream == null && !resource.isNew()) {
-            throw new ClientErrorException("No RDF provided and the resource already exists!", CONFLICT);
-        } else if (requestBodyStream != null)  {
-            if ((resource instanceof Container || resource instanceof NonRdfSourceDescription)
-                    && isRdfContentType(contentType.toString())) {
-                try {
-                    replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
-                } catch (final RiotException e) {
-                    throw new BadRequestException("RDF was not parsable", e);
-                }
-            } else if (resource instanceof FedoraBinary) {
-                replaceResourceBinaryWithStream((FedoraBinary) resource,
-                        requestBodyStream, contentDisposition, contentType.toString(), checksum);
-            } else if (!resource.isNew()) {
+        if (resource instanceof FedoraBinary) {
+            replaceResourceBinaryWithStream((FedoraBinary) resource,
+                    requestBodyStream, contentDisposition, contentType.toString(), checksum);
+        } else if (isRdfContentType(contentType.toString())) {
+            try {
+                replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
+            } catch (final RiotException e) {
+                throw new BadRequestException("RDF was not parsable", e);
+            }
+        } else if (!resource.isNew()) {
+            boolean emptyRequest = true;
+            try {
+                emptyRequest = requestBodyStream.read() == -1;
+            } catch (IOException ex) {
+                LOGGER.debug("Error checking for request body content", ex);
+            }
+
+            if (requestContentType == null && emptyRequest) {
+                throw new ClientErrorException("Resource Already Exists", CONFLICT);
+            } else {
                 throw new ClientErrorException("Invalid Content Type " + requestContentType, UNSUPPORTED_MEDIA_TYPE);
             }
         }

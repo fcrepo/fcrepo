@@ -116,6 +116,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
@@ -837,6 +838,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testEmptyPutToExistingObject() throws Exception {
+        final String content = "foo";
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPut put = new HttpPut(serverAddress + pid);
+        final HttpResponse response = execute(put);
+        assertEquals("Expected 409 response code when doing empty PUT on an existing object.",
+                409, response.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testPutMalformedRDFOnObject() throws Exception {
         final String content = "foo";
         final String pid = getRandomUniquePid();
@@ -1540,6 +1553,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObject(pid);
 
         final HttpPut httpPut = new HttpPut(serverAddress + pid);
+        httpPut.setEntity(new ByteArrayEntity("bogus content".getBytes()));
         assertEquals(415, getStatus(httpPut));
     }
 
