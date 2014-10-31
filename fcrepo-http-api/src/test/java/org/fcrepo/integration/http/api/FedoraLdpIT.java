@@ -480,6 +480,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDeleteHierarchy() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid + "/foo");
+
+        final String location = serverAddress + pid;
+        assertEquals(204, getStatus(new HttpDelete(location)));
+        assertDeleted(location);
+        assertDeleted(location + "/foo");
+    }
+
+    @Test
     public void testDeleteBinary() throws Exception {
         final String pid = getRandomUniquePid();
 
