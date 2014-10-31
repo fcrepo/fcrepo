@@ -265,7 +265,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (resource instanceof FedoraBinary) {
             replaceResourceBinaryWithStream((FedoraBinary) resource,
-                    requestBodyStream, contentDisposition, contentType.toString(), checksum);
+                    requestBodyStream, contentDisposition, requestContentType, checksum);
         } else if (isRdfContentType(contentType.toString())) {
             try {
                 replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
@@ -417,7 +417,7 @@ public class FedoraLdp extends ContentExposingResource {
                 LOGGER.trace("Created a datastream and have a binary payload.");
 
                 replaceResourceBinaryWithStream((FedoraBinary) result,
-                        requestBodyStream, contentDisposition, contentTypeString, checksum);
+                        requestBodyStream, contentDisposition, requestContentType, checksum);
 
             } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                 LOGGER.trace("Found SPARQL-Update content, applying..");

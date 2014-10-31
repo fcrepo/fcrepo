@@ -19,6 +19,7 @@ import static com.google.common.base.Predicates.containsPattern;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
+
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -26,6 +27,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
@@ -56,6 +58,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.text.ParseException;
 import java.util.List;
 
@@ -560,6 +563,21 @@ public class FedoraLdpTest {
     }
 
     @Test
+    public void testGetWithExternalMessageBinary() throws Exception {
+        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL; URL=\"some:uri\"");
+        when(mockResource.getContent()).thenReturn(toInputStream("xyz"));
+        final Response actual = testObj.describe(null);
+        assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
+                "NonRDFSource>;rel=\"type\""));
+        assertTrue("Should contain a link to the binary description", mockResponse.getHeaders("Link").contains("<" +
+                idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata") + ">; rel=\"describedby\""));
+        assertEquals(new URI("some:uri"), actual.getLocation());
+    }
+
+    @Test
     public void testGetWithBinaryDescription() throws Exception {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
@@ -779,6 +797,23 @@ public class FedoraLdpTest {
 
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
+        }
+    }
+
+    @Test
+    public void testCreateNewBinaryWithContentTypeWithParams() throws Exception {
+
+        setResource(Container.class);
+
+        when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
+
+        try (final InputStream content = toInputStream("x")) {
+            final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
+            final Response actual = testObj.createObject(null, null, requestContentType, "b",
+                    content);
+
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockBinary).setContent(content, requestContentType.toString(), null, "", null);
         }
     }
 

@@ -29,6 +29,7 @@ import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
+import static javax.ws.rs.core.Response.temporaryRedirect;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_BASIC_CONTAINER;
@@ -119,6 +120,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
+    public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -166,7 +168,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                             }
                         }));
             } else {
-                return getBinaryContent(rangeValue);
+
+                final MediaType mediaType = MediaType.valueOf(contentTypeString);
+                if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType)
+                        && mediaType.getParameters().containsKey("access-type")
+                        && mediaType.getParameters().get("access-type").equals("URL")
+                        && mediaType.getParameters().containsKey("URL") ) {
+                    try {
+                        return temporaryRedirect(new URI(mediaType.getParameters().get("URL"))).build();
+                    } catch (final URISyntaxException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                } else {
+                    return getBinaryContent(rangeValue);
+                }
             }
 
         } else {
@@ -558,13 +573,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void replaceResourceBinaryWithStream(final FedoraBinary result,
                                                    final InputStream requestBodyStream,
                                                    final ContentDisposition contentDisposition,
-                                                   final String contentTypeString,
+                                                   final MediaType contentType,
                                                    final String checksum) throws InvalidChecksumException {
         final URI checksumURI = checksumURI(checksum);
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+        final String originalContentType = contentType != null ? contentType.toString() : "";
 
         result.setContent(requestBodyStream,
-                contentTypeString,
+                originalContentType,
                 checksumURI,
                 originalFileName,
                 storagePolicyDecisionPoint);

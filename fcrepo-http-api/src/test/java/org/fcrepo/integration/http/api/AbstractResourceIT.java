@@ -18,6 +18,7 @@ package org.fcrepo.integration.http.api;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -132,6 +133,7 @@ public abstract class AbstractResourceIT {
                 new HttpPut(serverAddress + pid + "/" + ds);
 
         put.setEntity(new StringEntity(content));
+        put.setHeader("Content-Type", TEXT_PLAIN);
         return put;
     }
 
