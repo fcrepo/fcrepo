@@ -171,8 +171,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlInput slug = form.getInputByName("slug");
         slug.setValueAttribute(pid);
 
-        final HtmlSelect type = form.getSelectByName("mixin");
-        type.getOptionByValue("fedora:datastream").setSelected(true);
+        final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
+        type.getOptionByValue("binary").setSelected(true);
 
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
