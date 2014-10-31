@@ -536,7 +536,7 @@ public class FedoraLdpTest {
                     }
                 });
         log.debug("Received RDF nodes: {}", rdfNodes);
-        String referencesContextClassName = ReferencesRdfContext.class.getName();
+        final String referencesContextClassName = ReferencesRdfContext.class.getName();
         assertTrue("Should include references contexts", any(rdfNodes, containsPattern(referencesContextClassName)));
     }
 
