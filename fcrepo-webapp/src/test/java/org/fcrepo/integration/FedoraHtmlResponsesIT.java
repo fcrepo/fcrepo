@@ -45,6 +45,7 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomAttr;
 import com.gargoylesoftware.htmlunit.html.DomText;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlFileInput;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
@@ -80,9 +81,9 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     @Test
     public void testDescribeHtml() throws IOException {
         final HtmlPage page = webClient.getPage(serverAddress);
+        ((HtmlElement)page.getFirstByXPath("//h4[text()='Properties']")).click();
 
         checkForHeaderBranding(page);
-
         final String namespaceLabel = page
             .getFirstByXPath("//span[@title='http://fedora.info/definitions/v4/repository#']/text()")
             .toString();
