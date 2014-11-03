@@ -35,21 +35,23 @@
 
             #parse("views/common-metadata.vsl")
 
-
+        <div id="accordion">
         ## output triples for the topic node
-            <div class="panel panel-default">
-                <div class="panel-heading">
+            <div class="panel panel-default"> 
+                <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($topic.getURI())_triples">
                     <h4>Properties</h4>
                 </div>
-                <div class="panel-body">
-                    #triples($topic)
+                <div class="panel-collapse collapse" id="$helpers.parameterize($topic.getURI())_triples">
+	                <div class="panel-body">
+	                    #triples($topic)
+	                </div>
                 </div>
             </div>
 
         ## output other nodes
 
             <h2>Other Resources</h2>
-            <div class="panel-group" id="accordion">
+            <div class="panel-group">
             #foreach($subject in $model.listSubjects())
                 #if( $subject != $topic )
                     <div class="panel panel-default" resource="$subject.getURI()">
@@ -64,7 +66,8 @@
                     </div>
                 #end
             #end
-                </div>
+           </div>
+        </div>
 
         </div>
 
