@@ -19,6 +19,7 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getPropertyType;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -234,8 +235,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
 
 
-        when(mockPropertiesTools.getPropertyType(mockSubjectNode, "rdf:type"))
-                .thenReturn(URI);
+        when(getPropertyType(mockSubjectNode, "rdf:type")).thenReturn(URI);
 
         when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
                 .thenReturn("fedora");

@@ -222,6 +222,7 @@ public class RdfAdderTest {
         when(mockPropertyDefinition.isMultiple()).thenReturn(false);
         when(mockPropertyDefinition.getName()).thenReturn(propertyShortName);
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
+        when(mockProperty.getName()).thenReturn(propertyShortName);
         when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
         //TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
         when(mockTriples.hasNext()).thenReturn(true, true, false);

@@ -17,16 +17,17 @@ package org.fcrepo.kernel.impl.utils;
 
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BLANKNODE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
-import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isNonRdfSourceDescription;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isMultipleValuedProperty;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
-import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -184,24 +185,47 @@ public class FedoraTypesUtilsTest {
     }
 
     @Test
-    public void testIsReferenceProperty() throws RepositoryException {
+    public void testIsInternalReferenceProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
-        when(mockProperty.getName()).thenReturn("foo" + REFERENCE_PROPERTY_SUFFIX);
-        assertTrue(isReferenceProperty.apply(mockProperty));
+        when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
+        assertTrue(isInternalReferenceProperty.apply(mockProperty));
     }
+
     @Test
-    public void testIsReferencePropertyWeak() throws RepositoryException {
+    public void testIsInternalReferencePropertyWeak() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.WEAKREFERENCE);
-        when(mockProperty.getName()).thenReturn("foo" + REFERENCE_PROPERTY_SUFFIX);
-        assertTrue(isReferenceProperty.apply(mockProperty));
+        when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
+        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+    }
+
+    @Test
+    public void testIsReferenceProperty() throws RepositoryException {
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockPropertyDefinition });
+        when(mockPropertyDefinition.getName()).thenReturn("some:reference_property");
+        when(mockPropertyDefinition.getRequiredType()).thenReturn(PropertyType.REFERENCE);
+        assertTrue(isReferenceProperty(mockNode, "some:reference_property"));
+    }
+
+    @Test
+    public void testIsReferencePropertyForOtherPropertyTypes() throws RepositoryException {
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockPropertyDefinition });
+        when(mockPropertyDefinition.getName()).thenReturn("some:reference_property");
+        when(mockPropertyDefinition.getRequiredType()).thenReturn(PropertyType.BINARY);
+        assertFalse(isReferenceProperty(mockNode, "some:reference_property"));
+    }
+
+    @Test
+    public void testIsReferencePropertyForMissingTypes() throws RepositoryException {
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[] {  });
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { });
+        assertFalse(isReferenceProperty(mockNode, "some:reference_property"));
     }
 
     @Test
     public void testIsInternalProperty() throws RepositoryException {
-        when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
-        when(mockProperty.getName()).thenReturn("foo" + REFERENCE_PROPERTY_SUFFIX);
-        assertTrue(isInternalProperty.apply(mockProperty));
-
         when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
         assertTrue(isInternalProperty.apply(mockProperty));

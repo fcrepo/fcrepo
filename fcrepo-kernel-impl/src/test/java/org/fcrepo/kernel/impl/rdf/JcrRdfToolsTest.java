@@ -126,6 +126,8 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNsRegistry);
+        when(mockNsRegistry.isRegisteredUri("some:")).thenReturn(true);
+        when(mockNsRegistry.getPrefix("some:")).thenReturn("some");
         when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockParent.getPath()).thenReturn("/test");
         when(mockParent.getPrimaryNodeType()).thenReturn(mockNodeType);
