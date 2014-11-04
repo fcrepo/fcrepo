@@ -27,11 +27,13 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.PropertyDefinition;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.REFERENCE_PROPERTY_SUFFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -42,6 +44,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since Feb 14, 2013
  */
 public abstract class FedoraTypesUtils implements FedoraJcrTypes {
+
+    public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
 
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
@@ -88,7 +92,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Check if a property is a reference property.
      */
-    public static Predicate<Property> isReferenceProperty =
+    public static Predicate<Property> isInternalReferenceProperty =
         new Predicate<Property>() {
 
             @Override
@@ -111,7 +115,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
             @Override
             public boolean apply(final Property p) {
-                return isReferenceProperty.apply(p) || JcrPropertyFunctions.isBinaryContentProperty.apply(p)
+                return JcrPropertyFunctions.isBinaryContentProperty.apply(p)
                         || isProtectedAndShouldBeHidden.apply(p);
             }
         };
@@ -165,6 +169,125 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             }
         }
     };
+
+    /**
+     * Get the JCR property type ID for a given property name. If unsure, mark
+     * it as UNDEFINED.
+     *
+     * @param node the JCR node to add the property on
+     * @param propertyName the property name
+     * @return a PropertyType value
+     * @throws RepositoryException
+     */
+    public static int getPropertyType(final Node node, final String propertyName)
+            throws RepositoryException {
+        LOGGER.debug("Getting type of property: {} from node: {}",
+                propertyName, node);
+        final PropertyDefinition def =
+                getDefinitionForPropertyName(node, propertyName);
+
+        if (def == null) {
+            return UNDEFINED;
+        }
+
+        return def.getRequiredType();
+    }
+
+    /**
+     * Determine if a given JCR property name is single- or multi- valued.
+     * If unsure, choose the least restrictive
+     * option (multivalued)
+     *
+     * @param node the JCR node to check
+     * @param propertyName the property name
+     *   (which may or may not already exist)
+     * @return true if the property is (or could be) multivalued
+     * @throws RepositoryException
+     */
+    public static boolean isMultivaluedProperty(final Node node,
+                                                final String propertyName)
+            throws RepositoryException {
+        final PropertyDefinition def =
+                getDefinitionForPropertyName(node, propertyName);
+
+        if (def == null) {
+            return true;
+        }
+
+        return def.isMultiple();
+    }
+
+    /**
+     * Get the property definition information (containing type and multi-value
+     * information)
+     *
+     * @param node the node to use for inferring the property definition
+     * @param propertyName the property name to retrieve a definition for
+     * @return a JCR PropertyDefinition, if available, or null
+     * @throws javax.jcr.RepositoryException
+     */
+    public static PropertyDefinition getDefinitionForPropertyName(final Node node,
+                                                                  final String propertyName)
+            throws RepositoryException {
+
+        final NodeType primaryNodeType = node.getPrimaryNodeType();
+        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
+        LOGGER.debug("Looking for property name: {}", propertyName);
+        for (final PropertyDefinition p : propertyDefinitions) {
+            LOGGER.debug("Checking property: {}", p.getName());
+            if (p.getName().equals(propertyName)) {
+                return p;
+            }
+        }
+
+        for (final NodeType nodeType : node.getMixinNodeTypes()) {
+            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
+                if (p.getName().equals(propertyName)) {
+                    return p;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * When we add certain URI properties, we also want to leave a reference node
+     * @param propertyName
+     * @return property name as a reference
+     */
+    public static String getReferencePropertyName(final String propertyName) {
+        return propertyName + REFERENCE_PROPERTY_SUFFIX;
+    }
+
+    /**
+     * Given an internal reference node property, get the original name
+     * @param refPropertyName
+     * @return original property name of the reference property
+     */
+    public static String getReferencePropertyOriginalName(final String refPropertyName) {
+        final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);
+
+        if (i < 0) {
+            return refPropertyName;
+        }
+        return refPropertyName.substring(0, i);
+    }
+
+    /**
+     * Check if a property definition is a reference property
+     * @param node
+     * @param propertyName
+     * @return
+     * @throws RepositoryException
+     */
+    public static boolean isReferenceProperty(final Node node, final String propertyName) throws RepositoryException {
+        final PropertyDefinition propertyDefinition = getDefinitionForPropertyName(node, propertyName);
+
+        return propertyDefinition != null &&
+                (propertyDefinition.getRequiredType() == REFERENCE
+                        || propertyDefinition.getRequiredType() == WEAKREFERENCE);
+    }
+
 
     /**
      * Get the closest ancestor that current exists

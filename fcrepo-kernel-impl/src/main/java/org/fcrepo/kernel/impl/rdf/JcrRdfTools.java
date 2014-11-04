@@ -30,6 +30,8 @@ import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getPropertyType;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -38,7 +40,6 @@ import java.util.Map;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -160,7 +161,7 @@ public class JcrRdfTools {
                              final RDFNode data,
                              final String propertyName) throws RepositoryException {
         final ValueFactory valueFactory = node.getSession().getValueFactory();
-        return createValue(valueFactory, data, nodePropertiesTools.getPropertyType(node, propertyName));
+        return createValue(valueFactory, data, getPropertyType(node, propertyName));
     }
 
     /**
@@ -267,11 +268,14 @@ public class JcrRdfTools {
 
         final String propertyName =
                 getPropertyNameFromPredicate(node, predicate, value, namespaces);
-        final Value v = createValue(node, value, propertyName);
-        final Property property = nodePropertiesTools.appendOrReplaceNodeProperty(node, propertyName, v);
 
-        if (value.isURIResource() && idTranslator.inDomain(value.asResource())) {
-            nodePropertiesTools.addReferencePlaceholders(idTranslator, node, property, value.asResource());
+        if (value.isURIResource()
+                && idTranslator.inDomain(value.asResource())
+                && !isReferenceProperty(node, propertyName)) {
+            nodePropertiesTools.addReferencePlaceholders(idTranslator, node, propertyName, value.asResource());
+        } else {
+            final Value v = createValue(node, value, propertyName);
+            nodePropertiesTools.appendOrReplaceNodeProperty(node, propertyName, v);
         }
     }
 
@@ -322,15 +326,16 @@ public class JcrRdfTools {
                     + node.getPath());
         }
 
-        // if the property doesn't exist, we don't need to worry about it.
-        if (node.hasProperty(propertyName)) {
+        if (objectNode.isURIResource()
+                && idTranslator.inDomain(objectNode.asResource())
+                && !isReferenceProperty(node, propertyName)) {
+            nodePropertiesTools.removeReferencePlaceholders(idTranslator,
+                    node,
+                    propertyName,
+                    objectNode.asResource());
+        } else {
             final Value v = createValue(node, objectNode, propertyName);
-
-            final Property property = nodePropertiesTools.removeNodeProperty(node, propertyName, v);
-
-            if (objectNode.isURIResource() && idTranslator.inDomain(objectNode.asResource())) {
-                nodePropertiesTools.removeReferencePlaceholders(idTranslator, node, property, objectNode.asResource());
-            }
+            nodePropertiesTools.removeNodeProperty(node, propertyName, v);
         }
     }
 
@@ -350,14 +355,15 @@ public class JcrRdfTools {
 
         if (t.getSubject().isAnon()) {
             skolemized = m.createStatement(getSkolemizedResource(idTranslator, skolemized.getSubject()),
-                    t.getPredicate(),
-                    t.getObject());
+                    skolemized.getPredicate(),
+                    skolemized.getObject());
         } else if (idTranslator.inDomain(t.getSubject()) && t.getSubject().getURI().contains("#")) {
             findOrCreateHashUri(idTranslator, t.getSubject());
         }
 
         if (t.getObject().isAnon()) {
-            skolemized = skolemized.changeObject(getSkolemizedResource(idTranslator, t.getObject()));
+            skolemized = m.createStatement(skolemized.getSubject(), skolemized.getPredicate(), getSkolemizedResource
+                    (idTranslator, skolemized.getObject()));
         } else if (t.getObject().isResource()
                 && idTranslator.inDomain(t.getObject().asResource())
                 && t.getObject().asResource().getURI().contains("#")) {

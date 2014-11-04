@@ -17,6 +17,7 @@ package org.fcrepo.integration.kernel.impl;
 
 import static java.util.regex.Pattern.compile;
 import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -161,8 +162,11 @@ public class FedoraObjectImplIT extends AbstractIT {
                 "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
+        final String propertyName = prefix + ":urlProperty";
+        final String referencePropertyName = getReferencePropertyName(propertyName);
 
-        assertNotNull(object.getNode().getProperty(prefix + ":urlProperty"));
+        assertTrue(object.getNode().hasProperty(referencePropertyName));
+        assertFalse(object.getNode().hasProperty(propertyName));
 
         assertEquals(object.getNode(), session.getNodeByIdentifier(
                 object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
@@ -171,13 +175,18 @@ public class FedoraObjectImplIT extends AbstractIT {
                 "DELETE { <" + graphSubject + "> some:urlProperty " +
                 "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
-        assertFalse(object.getNode().hasProperty(prefix + ":urlProperty_ref"));
 
+        assertFalse(object.getNode().hasProperty(referencePropertyName));
+        assertFalse(object.getNode().hasProperty(propertyName));
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
                 "       some:urlProperty <info:somewhere/else> . }",
                 object.getTriples(subjects, PropertiesRdfContext.class));
+
+
+        assertTrue(object.getNode().hasProperty(referencePropertyName));
+        assertTrue(object.getNode().hasProperty(propertyName));
 
         assertEquals(1, object.getNode().getProperty(prefix + ":urlProperty_ref").getValues().length);
         assertEquals(object.getNode(), session.getNodeByIdentifier(

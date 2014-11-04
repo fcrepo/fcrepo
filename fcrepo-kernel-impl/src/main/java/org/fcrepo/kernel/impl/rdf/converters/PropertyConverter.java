@@ -34,8 +34,8 @@ import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
-import static org.fcrepo.kernel.impl.utils.NodePropertiesTools.getReferencePropertyOriginalName;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyOriginalName;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -59,7 +59,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
                 final String localName = nsProperty.getLocalName();
                 final String rdfLocalName;
 
-                if (isReferenceProperty.apply(property)) {
+                if (isInternalReferenceProperty.apply(property)) {
                     rdfLocalName = getReferencePropertyOriginalName(localName);
                 } else if (localName.contains("@")) {
                     rdfLocalName = localName.substring(0, localName.indexOf("@"));

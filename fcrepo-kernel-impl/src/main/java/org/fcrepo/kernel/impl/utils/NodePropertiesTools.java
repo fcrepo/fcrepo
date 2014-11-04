@@ -16,6 +16,9 @@
 package org.fcrepo.kernel.impl.utils;
 
 import static com.google.common.collect.Iterables.toArray;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalReferenceProperty;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isMultivaluedProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
@@ -27,8 +30,6 @@ import javax.jcr.Property;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import javax.jcr.nodetype.NodeType;
-import javax.jcr.nodetype.PropertyDefinition;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -39,8 +40,6 @@ import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.modeshape.jcr.IsExternal;
 import org.slf4j.Logger;
 
-import static javax.jcr.PropertyType.UNDEFINED;
-
 /**
  * Tools for replacing, appending and deleting JCR node properties
  * @author Chris Beer
@@ -49,7 +48,6 @@ import static javax.jcr.PropertyType.UNDEFINED;
 public class NodePropertiesTools {
 
     private static final Logger LOGGER = getLogger(NodePropertiesTools.class);
-    public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
     private static final IsExternal isExternal = new IsExternal();
 
     /**
@@ -116,6 +114,13 @@ public class NodePropertiesTools {
             }
         }
 
+        if (!property.isMultiple() && !isInternalReferenceProperty.apply(property)) {
+            final String referencePropertyName = getReferencePropertyName(propertyName);
+            if (node.hasProperty(referencePropertyName)) {
+                node.setProperty(referencePropertyName, (Value[]) null);
+            }
+        }
+
         return property;
     }
 
@@ -123,13 +128,13 @@ public class NodePropertiesTools {
      * Add a reference placeholder from one node to another in-domain resource
      * @param idTranslator
      * @param node
-     * @param property
+     * @param propertyName
      * @param resource
      * @throws RepositoryException
      */
     public void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
                                           final Node node,
-                                          final Property property,
+                                          final String propertyName,
                                           final Resource resource) throws RepositoryException {
 
         try {
@@ -140,10 +145,16 @@ public class NodePropertiesTools {
                 return;
             }
 
-            final String referencePropertyName = getReferencePropertyName(property);
+            final String referencePropertyName = getReferencePropertyName(propertyName);
 
-            if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
-                node.setProperty(referencePropertyName, (Value[])null);
+            if (!isMultivaluedProperty(node, propertyName)) {
+                if (node.hasProperty(referencePropertyName)) {
+                    node.setProperty(referencePropertyName, (Value[]) null);
+                }
+
+                if (node.hasProperty(propertyName)) {
+                    node.setProperty(propertyName, (Value) null);
+                }
             }
 
             final Value v = node.getSession().getValueFactory().createValue(refNode, true);
@@ -158,28 +169,20 @@ public class NodePropertiesTools {
      * Remove a reference placeholder that links one node to another in-domain resource
      * @param idTranslator
      * @param node
-     * @param property
+     * @param propertyName
      * @param resource
      * @throws RepositoryException
      */
     public void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
                                              final Node node,
-                                             final Property property,
+                                             final String propertyName,
                                              final Resource resource) throws RepositoryException {
 
-        if (property == null) {
-            return;
-        }
+        final String referencePropertyName = getReferencePropertyName(propertyName);
 
-        final String referencePropertyName = getReferencePropertyName(property);
-
-        if (!property.isMultiple() && node.hasProperty(referencePropertyName)) {
-            node.setProperty(referencePropertyName, (Value[])null);
-        } else {
-            final Node refNode = idTranslator.convert(resource).getNode();
-            final Value v = node.getSession().getValueFactory().createValue(refNode, true);
-            removeNodeProperty(node, referencePropertyName, v);
-        }
+        final Node refNode = idTranslator.convert(resource).getNode();
+        final Value v = node.getSession().getValueFactory().createValue(refNode, true);
+        removeNodeProperty(node, referencePropertyName, v);
     }
     /**
      * Given a JCR node, property and value, remove the value (if it exists)
@@ -240,112 +243,4 @@ public class NodePropertiesTools {
 
         return property;
     }
-
-    /**
-     * When we add certain URI properties, we also want to leave a reference node
-     * @param propertyName
-     * @return property name as a reference
-     */
-    public static String getReferencePropertyName(final String propertyName) {
-        return propertyName + REFERENCE_PROPERTY_SUFFIX;
-    }
-
-    /**
-     * Given an internal reference node property, get the original name
-     * @param refPropertyName
-     * @return original property name of the reference property
-     */
-    public static String getReferencePropertyOriginalName(final String refPropertyName) {
-        final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);
-
-        if (i < 0) {
-            return refPropertyName;
-        }
-        return refPropertyName.substring(0, i);
-    }
-
-    private static String getReferencePropertyName(final Property property) throws RepositoryException {
-        return getReferencePropertyName(property.getName());
-    }
-    /**
-     * Get the JCR property type ID for a given property name. If unsure, mark
-     * it as UNDEFINED.
-     *
-     * @param node the JCR node to add the property on
-     * @param propertyName the property name
-     * @return a PropertyType value
-     * @throws RepositoryException
-     */
-    public int getPropertyType(final Node node, final String propertyName)
-        throws RepositoryException {
-        LOGGER.debug("Getting type of property: {} from node: {}",
-                propertyName, node);
-        final PropertyDefinition def =
-            getDefinitionForPropertyName(node, propertyName);
-
-        if (def == null) {
-            return UNDEFINED;
-        }
-
-        return def.getRequiredType();
-    }
-
-    /**
-     * Determine if a given JCR property name is single- or multi- valued.
-     * If unsure, choose the least restrictive
-     * option (multivalued)
-     *
-     * @param node the JCR node to check
-     * @param propertyName the property name
-     *   (which may or may not already exist)
-     * @return true if the property is (or could be) multivalued
-     * @throws RepositoryException
-     */
-    private static boolean isMultivaluedProperty(final Node node,
-                                                final String propertyName)
-        throws RepositoryException {
-        final PropertyDefinition def =
-            getDefinitionForPropertyName(node, propertyName);
-
-        if (def == null) {
-            throw new NoSuchPropertyDefinitionException();
-        }
-
-        return def.isMultiple();
-    }
-
-    /**
-     * Get the property definition information (containing type and multi-value
-     * information)
-     *
-     * @param node the node to use for inferring the property definition
-     * @param propertyName the property name to retrieve a definition for
-     * @return a JCR PropertyDefinition, if available, or null
-     * @throws javax.jcr.RepositoryException
-     */
-    private static PropertyDefinition getDefinitionForPropertyName(final Node node,
-                                                                  final String propertyName)
-            throws RepositoryException {
-
-        final NodeType primaryNodeType = node.getPrimaryNodeType();
-        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
-        LOGGER.debug("Looking for property name: {}", propertyName);
-        for (final PropertyDefinition p : propertyDefinitions) {
-            LOGGER.debug("Checking property: {}", p.getName());
-            if (p.getName().equals(propertyName)) {
-                return p;
-            }
-        }
-
-        for (final NodeType nodeType : node.getMixinNodeTypes()) {
-            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
-                if (p.getName().equals(propertyName)) {
-                    return p;
-                }
-            }
-        }
-        return null;
-    }
-
-
 }
