@@ -501,7 +501,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public void enableVersioning() {
         try {
             node.addMixin("mix:versionable");
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -510,7 +510,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public void disableVersioning() {
         try {
             node.removeMixin("mix:versionable");
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
 
@@ -520,7 +520,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public boolean isVersioned() {
         try {
             return node.isNodeType("mix:versionable");
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -565,7 +565,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         try {
             return new FedoraResourceImpl(getSession().getNodeByIdentifier(getProperty("jcr:frozenUuid").getString()));
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -640,5 +640,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return getNode().toString();
     }
 }
