@@ -16,9 +16,9 @@
 package org.fcrepo.kernel.impl.rdf.converters;
 
 import com.google.common.base.Converter;
+import com.google.common.base.Splitter;
 import com.hp.hpl.jena.datatypes.BaseDatatype;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -32,8 +32,10 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 
-import java.math.BigDecimal;
+import java.util.Iterator;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.jcr.PropertyType.BOOLEAN;
@@ -57,8 +59,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ValueConverter extends Converter<Value, RDFNode> {
 
     private static final Logger LOGGER = getLogger(ValueConverter.class);
-    private static final String LITERAL_TYPE_SEP = "\30^^\30";
-    private static final String URI_SUFFIX = "URI";
 
     private final Session session;
     private final Converter<Node, Resource> graphSubjects;
@@ -109,55 +109,24 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
             final ValueFactory valueFactory = session.getValueFactory();
 
-            if (resource.isURIResource()) {
-                // some random opaque URI
-                return valueFactory.createValue(resource.toString() + LITERAL_TYPE_SEP + URI_SUFFIX, STRING);
-            }
-
-            if (resource.isResource()) {
+            if (resource.isAnon()) {
                 // a non-URI resource (e.g. a blank node)
                 return valueFactory.createValue(resource.toString(), UNDEFINED);
             }
 
-            final Literal literal = resource.asLiteral();
-            final RDFDatatype dataType = literal.getDatatype();
-            final Object rdfValue;
+            final RdfLiteralJcrValueBuilder rdfLiteralJcrValueBuilder = new RdfLiteralJcrValueBuilder();
 
-            if (literal.asNode().getLiteral().isWellFormed()) {
-                rdfValue = literal.getValue();
+            if (resource.isURIResource()) {
+                rdfLiteralJcrValueBuilder.value(resource.asResource().getURI()).datatype("URI");
             } else {
-                rdfValue = literal.getLexicalForm();
+
+                final Literal literal = resource.asLiteral();
+                final RDFDatatype dataType = literal.getDatatype();
+
+                rdfLiteralJcrValueBuilder.value(literal.getString()).datatype(dataType).lang(literal.getLanguage());
             }
 
-            if (dataType == null && rdfValue instanceof String
-                    || (dataType != null && dataType.equals(XSDDatatype.XSDstring))) {
-                // short-circuit the common case
-                return valueFactory.createValue(literal.getString(), STRING);
-            } else if (rdfValue instanceof Boolean) {
-                return valueFactory.createValue((Boolean) rdfValue);
-            } else if (rdfValue instanceof Byte
-                    || (dataType != null && dataType.getJavaClass() == Byte.class)) {
-
-                return valueFactory.createValue(literal.getByte());
-            } else if (rdfValue instanceof Double) {
-                return valueFactory.createValue(literal.getDouble());
-            } else if (rdfValue instanceof BigDecimal) {
-                return valueFactory.createValue((BigDecimal)literal.getValue());
-            } else if (rdfValue instanceof Float) {
-                return valueFactory.createValue(literal.getFloat());
-            } else if (rdfValue instanceof Long
-                    || (dataType != null && dataType.getJavaClass() == Long.class)) {
-                return valueFactory.createValue(literal.getLong());
-            } else if (rdfValue instanceof Short
-                    || (dataType != null && dataType.getJavaClass() == Short.class)) {
-                return valueFactory.createValue(literal.getShort());
-            } else if (rdfValue instanceof Integer) {
-                return valueFactory.createValue(literal.getInt());
-            } else if (dataType != null && !dataType.getURI().isEmpty()) {
-                return valueFactory.createValue(literal.getString() + LITERAL_TYPE_SEP + dataType.getURI(), STRING);
-            } else {
-                return valueFactory.createValue(literal.getString(), STRING);
-            }
+            return valueFactory.createValue(rdfLiteralJcrValueBuilder.toString(), STRING);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -171,19 +140,16 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
 
     private static RDFNode stringliteral2node(final String literal) {
-        final int i = literal.indexOf(LITERAL_TYPE_SEP);
+        final RdfLiteralJcrValueBuilder rdfLiteralJcrValueBuilder = new RdfLiteralJcrValueBuilder(literal);
 
-        if (i < 0) {
-            return literal2node(literal);
+        if (rdfLiteralJcrValueBuilder.hasLang()) {
+            return createLangLiteral(rdfLiteralJcrValueBuilder.value(), rdfLiteralJcrValueBuilder.lang());
+        } else if (rdfLiteralJcrValueBuilder.isResource()) {
+            return createResource(rdfLiteralJcrValueBuilder.value());
+        } else if (rdfLiteralJcrValueBuilder.hasDatatypeUri()) {
+            return createTypedLiteral(rdfLiteralJcrValueBuilder.value(), rdfLiteralJcrValueBuilder.datatype());
         } else {
-            final String value = literal.substring(0, i);
-            final String datatypeURI = literal.substring(i + LITERAL_TYPE_SEP.length());
-
-            if (datatypeURI.equals("URI")) {
-                return createResource(value);
-            } else {
-                return createTypedLiteral(value, new BaseDatatype(datatypeURI));
-            }
+            return createPlainLiteral(literal);
         }
     }
 
@@ -200,5 +166,106 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
     private RDFNode getGraphSubject(final javax.jcr.Node n) {
         return graphSubjects.convert(n);
+    }
+
+    protected static class RdfLiteralJcrValueBuilder {
+        private static final String FIELD_DELIMITER = "\30^^\30";
+        public static final Splitter JCR_VALUE_SPLITTER = Splitter.on(FIELD_DELIMITER);
+
+        private String value;
+        private String datatypeUri;
+        private String lang;
+
+        RdfLiteralJcrValueBuilder() {
+
+        }
+
+        public RdfLiteralJcrValueBuilder(final String literal) {
+            this();
+
+            final Iterator<String> tokenizer = JCR_VALUE_SPLITTER.split(literal).iterator();
+
+            value = tokenizer.next();
+
+            if (tokenizer.hasNext()) {
+                datatypeUri = tokenizer.next();
+            }
+
+            if (tokenizer.hasNext()) {
+                lang = tokenizer.next();
+            }
+        }
+
+        public String toString() {
+            final StringBuilder b = new StringBuilder();
+
+            b.append(value);
+
+            if (hasDatatypeUri()) {
+                b.append(FIELD_DELIMITER);
+                b.append(datatypeUri);
+            } else if (hasLang()) {
+                // if it has a language, but not a datatype, add a placeholder.
+                b.append(FIELD_DELIMITER);
+            }
+
+            if (hasLang()) {
+                b.append(FIELD_DELIMITER);
+                b.append(lang);
+            }
+
+            return b.toString();
+
+        }
+
+        public String value() {
+            return value;
+        }
+
+        public RDFDatatype datatype() {
+            if (hasDatatypeUri()) {
+                return new BaseDatatype(datatypeUri);
+            } else {
+                return null;
+            }
+        }
+
+        public String lang() {
+            return lang;
+        }
+
+        public RdfLiteralJcrValueBuilder value(final String value) {
+            this.value = value;
+            return this;
+        }
+
+        public RdfLiteralJcrValueBuilder datatype(final String datatypeUri) {
+            this.datatypeUri = datatypeUri;
+            return this;
+        }
+
+        public RdfLiteralJcrValueBuilder datatype(final RDFDatatype datatypeUri) {
+            if (datatypeUri != null && !datatypeUri.getURI().isEmpty()) {
+                this.datatypeUri = datatypeUri.getURI();
+            }
+            return this;
+        }
+
+        public RdfLiteralJcrValueBuilder lang(final String lang) {
+            this.lang = lang;
+            return this;
+        }
+
+        public boolean hasLang() {
+            return lang != null && !lang.isEmpty();
+        }
+
+        public boolean hasDatatypeUri() {
+            return datatypeUri != null && !datatypeUri.isEmpty();
+        }
+
+        public boolean isResource() {
+            return hasDatatypeUri() && datatypeUri.equals("URI");
+        }
     }
 }

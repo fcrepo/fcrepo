@@ -20,7 +20,6 @@ import static java.util.UUID.randomUUID;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
-import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BLANKNODE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
@@ -176,9 +175,8 @@ public class JcrRdfTools {
         throws RepositoryException {
         assert (valueFactory != null);
 
-        if (type == UNDEFINED
-                || type == STRING
-                || (data.isResource() && type != URI && type != REFERENCE && type != WEAKREFERENCE)) {
+
+        if (type == UNDEFINED || type == STRING) {
             return valueConverter.reverse().convert(data);
         } else if (type == REFERENCE || type == WEAKREFERENCE) {
             // reference to another node (by path)
@@ -267,7 +265,7 @@ public class JcrRdfTools {
         }
 
         final String propertyName =
-                getPropertyNameFromPredicate(node, predicate, value, namespaces);
+                getPropertyNameFromPredicate(node, predicate, namespaces);
 
         if (value.isURIResource()
                 && idTranslator.inDomain(value.asResource())
@@ -316,7 +314,7 @@ public class JcrRdfTools {
                                final Map<String, String> nsPrefixMap) throws RepositoryException {
 
         final Node node = resource.getNode();
-        final String propertyName = getPropertyNameFromPredicate(node, predicate, objectNode, nsPrefixMap);
+        final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
 
         if (isManagedPredicate.apply(predicate)) {
 

@@ -22,7 +22,6 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
-import static javax.jcr.PropertyType.LONG;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
@@ -423,25 +422,6 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         assertTrue(graphStore.contains(s, p, o));
 
-    }
-
-    @Test
-    public void testUpdatingRdfTypedValues() throws RepositoryException {
-        final FedoraResource object =
-            containerService.findOrCreate(session, "/testObjectRdfType");
-
-        object.updateProperties(
-                subjects,
-                "PREFIX example: <http://example.org/>\n"
-                        + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
-                        + "INSERT { <"
-                        + createGraphSubjectNode(object).getURI()
-                        + "> example:int-property \"0\"^^xsd:long } "
-                        + "WHERE { }", new RdfStream());
-        assertEquals(LONG, object.getNode().getProperty("example:int-property")
-                .getType());
-        assertEquals(0L, object.getNode().getProperty("example:int-property")
-                .getValues()[0].getLong());
     }
 
     @Test(expected = MalformedRdfException.class)

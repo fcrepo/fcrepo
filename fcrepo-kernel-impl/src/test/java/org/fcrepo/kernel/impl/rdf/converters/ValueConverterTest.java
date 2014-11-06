@@ -109,9 +109,9 @@ public class ValueConverterTest {
                 {ResourceFactory.createTypedLiteral("name", XSDDatatype.XSDNMTOKEN)},
                 {ResourceFactory.createTypedLiteral("some-id", XSDDatatype.XSDID)},
                 {ResourceFactory.createTypedLiteral("ncname", XSDDatatype.XSDNCName)},
+                {ResourceFactory.createTypedLiteral(2.0123f)},
+                {ResourceFactory.createLangLiteral("xyz", "de")},
                 // Problems
-                // float gets upconverted to a double, and loses the precision it never had
-                // {ResourceFactory.createTypedLiteral(2.0123f)}.
                 // These types can't be represented in isolation
                 // {ResourceFactory.createTypedLiteral("some-id", XSDDatatype.XSDENTITY)},
                 // {ResourceFactory.createTypedLiteral("#some-id", XSDDatatype.XSDIDREF)},
