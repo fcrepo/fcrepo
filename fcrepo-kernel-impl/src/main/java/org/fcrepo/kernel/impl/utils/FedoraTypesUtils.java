@@ -301,22 +301,29 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                                                   final String path) throws RepositoryException {
         final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
 
-        Node node = session.getRootNode();
+        final StringBuilder existingAncestorPath = new StringBuilder(path.length());
+        existingAncestorPath.append("/");
 
         final int len = pathSegments.length;
         for (int i = 0; i != len; ++i) {
             final String pathSegment = pathSegments[i];
 
-            if (node.hasNode(pathSegment)) {
-                // Find the existing node ...
-                node = node.getNode(pathSegment);
+            if (session.nodeExists(existingAncestorPath.toString() + pathSegment)) {
+                // Add to existingAncestorPath  ...
+                existingAncestorPath.append(pathSegment);
+                if (i != (len - 1)) {
+                existingAncestorPath.append("/");
+                }
             } else {
-                return node;
+                if (i != 0) {
+                    existingAncestorPath.deleteCharAt(existingAncestorPath.length() - 1);
+                }
+                break;
             }
 
         }
 
-        return node;
+        return session.getNode(existingAncestorPath.toString());
     }
 
 }
