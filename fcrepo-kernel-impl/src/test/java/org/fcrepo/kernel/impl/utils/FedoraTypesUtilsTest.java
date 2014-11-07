@@ -337,8 +337,8 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testGetClosestExistingAncestorRoot() throws RepositoryException {
-        when(mockSession.getRootNode()).thenReturn(mockRootNode);
-        when(mockRootNode.hasNode(anyString())).thenReturn(false);
+        when(mockSession.getNode("/")).thenReturn(mockRootNode);
+        when(mockSession.nodeExists(anyString())).thenReturn(false);
 
         final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");
         assertEquals(mockRootNode, closestExistingAncestor);
@@ -346,9 +346,9 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testGetClosestExistingAncestorContainer() throws RepositoryException {
-        when(mockSession.getRootNode()).thenReturn(mockRootNode);
-        when(mockRootNode.hasNode("some")).thenReturn(true);
-        when(mockRootNode.getNode("some")).thenReturn(mockContainer);
+        when(mockSession.getNode("/")).thenReturn(mockRootNode);
+        when(mockSession.nodeExists("/some")).thenReturn(true);
+        when(mockSession.getNode("/some")).thenReturn(mockContainer);
 
         final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");
         assertEquals(mockContainer, closestExistingAncestor);
@@ -356,11 +356,11 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testGetClosestExistingAncestorNode() throws RepositoryException {
-        when(mockSession.getRootNode()).thenReturn(mockRootNode);
-        when(mockRootNode.hasNode("some")).thenReturn(true);
-        when(mockRootNode.getNode("some")).thenReturn(mockContainer);
-        when(mockContainer.hasNode("path")).thenReturn(true);
-        when(mockContainer.getNode("path")).thenReturn(mockNode);
+        when(mockSession.getNode("/")).thenReturn(mockRootNode);
+        when(mockSession.nodeExists("/some")).thenReturn(true);
+        when(mockSession.getNode("/some")).thenReturn(mockContainer);
+        when(mockSession.nodeExists("/some/path")).thenReturn(true);
+        when(mockSession.getNode("/some/path")).thenReturn(mockNode);
 
         final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");
         assertEquals(mockNode, closestExistingAncestor);
