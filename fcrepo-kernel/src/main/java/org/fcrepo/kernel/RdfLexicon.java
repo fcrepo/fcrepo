@@ -54,15 +54,6 @@ public final class RdfLexicon {
 
     public static final String JCR_NT_NAMESPACE = "http://www.jcp.org/jcr/nt/1.0";
 
-
-    /**
-     * REST API namespace "fedora", used for internal API links and node
-     * paths.
-     * Was "info:fedora/".
-    **/
-    public static final String RESTAPI_NAMESPACE =
-            "http://fedora.info/definitions/v4/rest-api#";
-
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
      * configuration properties.
@@ -94,7 +85,7 @@ public final class RdfLexicon {
     /**
      * The namespaces that the repository manages internally.
      */
-    public static final Set<String> managedNamespaces = of(RESTAPI_NAMESPACE,
+    public static final Set<String> managedNamespaces = of(
             REPOSITORY_NAMESPACE, JCR_NAMESPACE,
             MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE);
 
@@ -103,14 +94,6 @@ public final class RdfLexicon {
      */
     public static final Predicate<String> isManagedNamespace =
         in(managedNamespaces);
-
-    /**
-     * Relations (RELS-EXT) namespace "fedorarelsext", used for linking
-     * between Fedora objects.
-     * Was "info:fedora/fedora-system:def/relations-external#".
-    **/
-    public static final String RELATIONS_NAMESPACE =
-            "http://fedora.info/definitions/v4/rels-ext#";
 
     public static final String RDF_NAMESPACE =
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
@@ -156,7 +139,7 @@ public final class RdfLexicon {
             HAS_FIXITY_CHECK_COUNT, HAS_FIXITY_ERROR_COUNT, HAS_FIXITY_REPAIRED_COUNT);
 
     public static final Property WRITABLE =
-            createProperty(RESTAPI_NAMESPACE + "writable");
+            createProperty(REPOSITORY_NAMESPACE + "writable");
 
     // Linked Data Platform
     public static final Property PAGE =
@@ -203,9 +186,9 @@ public final class RdfLexicon {
     public static final Property HAS_OBJECT_SIZE =
             createProperty(REPOSITORY_NAMESPACE + "objectSize");
     public static final Property HAS_TRANSACTION_SERVICE =
-            createProperty(RESTAPI_NAMESPACE + "hasTransactionProvider");
+            createProperty(REPOSITORY_NAMESPACE + "hasTransactionProvider");
     public static final Property HAS_ACCESS_ROLES_SERVICE =
-            createProperty(RESTAPI_NAMESPACE + "hasAccessRoles");
+            createProperty(REPOSITORY_NAMESPACE + "hasAccessRoles");
 
     public static final Set<Property> repositoryProperties = of(
             HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE);
@@ -222,11 +205,11 @@ public final class RdfLexicon {
 
     // OTHER SERVICES
     public static final Property HAS_SERIALIZATION =
-            createProperty(RESTAPI_NAMESPACE + "exportsAs");
+            createProperty(REPOSITORY_NAMESPACE + "exportsAs");
     public static final Property HAS_VERSION_HISTORY =
-            createProperty(RESTAPI_NAMESPACE + "hasVersions");
+            createProperty(REPOSITORY_NAMESPACE + "hasVersions");
     public static final Property HAS_FIXITY_SERVICE =
-            createProperty(RESTAPI_NAMESPACE + "hasFixityService");
+            createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
     public static final Property HAS_FEED =
             createProperty(
                     "http://www.whatwg.org/specs/web-apps/current-work/#",

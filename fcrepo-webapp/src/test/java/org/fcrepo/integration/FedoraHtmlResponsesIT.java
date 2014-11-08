@@ -19,6 +19,8 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.RdfLexicon.FEDORA_CONFIG_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -85,10 +87,10 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         checkForHeaderBranding(page);
         final String namespaceLabel = page
-            .getFirstByXPath("//span[@title='http://fedora.info/definitions/v4/repository#']/text()")
+            .getFirstByXPath("//span[@title='" + REPOSITORY_NAMESPACE + "']/text()")
             .toString();
 
-        assertEquals("Expected to find namespace URIs displayed as their prefixes", "fcrepo:",
+        assertEquals("Expected to find namespace URIs displayed as their prefixes", "fedora:",
                         namespaceLabel);
     }
 
@@ -220,7 +222,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         createAndVerifyObjectWithIdFromRootPage(pid);
 
         final String updateSparql = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
-                "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#>\n" +
+                "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n" +
                 "\n" +
                 "INSERT DATA { <> fedoraconfig:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
@@ -228,7 +230,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage objectPage = javascriptlessWebClient.getPage(serverAddress + pid);
         assertEquals("Auto versioning should be set.", "auto-version",
                      objectPage.getFirstByXPath(
-                             "//span[@property='http://fedora.info/definitions/v4/config#versioningPolicy']/text()")
+                             "//span[@property='" + FEDORA_CONFIG_NAMESPACE + "versioningPolicy']/text()")
                              .toString());
         assertEquals("Title should be set.", "Object Title",
                      objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()")
@@ -315,7 +317,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final HtmlForm form = (HtmlForm)page.getElementById("action_sparql_select");
         final HtmlTextArea q = form.getTextAreaByName("q");
-        q.setText("SELECT ?subject WHERE { ?subject a <http://fedora.info/definitions/v4/rest-api#resource> }");
+        q.setText("SELECT ?subject WHERE { ?subject a <" + REPOSITORY_NAMESPACE + "Resource> }");
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
     }

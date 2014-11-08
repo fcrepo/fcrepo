@@ -16,7 +16,6 @@
 package org.fcrepo.integration.kernel.impl;
 
 import static java.util.regex.Pattern.compile;
-import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -123,12 +122,11 @@ public class FedoraObjectImplIT extends AbstractIT {
 
         assertEquals("This is some example data", value.getString());
 
-        object.updateProperties(subjects, "PREFIX fedora-rels-ext: <"
-                + RELATIONS_NAMESPACE + ">\n" +
-                "INSERT { <" + graphSubject + "> fedora-rels-ext:" +
+        object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
+                "INSERT { <" + graphSubject + "> dcterms:" +
                 "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
-        final Value refValue = object.getNode().getProperty("fedorarelsext:isPartOf_ref").getValues()[0];
+        final Value refValue = object.getNode().getProperty("dcterms:isPartOf_ref").getValues()[0];
         assertTrue(refValue.getString(), refValue.getString().equals(object.getNode().getIdentifier()));
 
 
@@ -139,13 +137,12 @@ public class FedoraObjectImplIT extends AbstractIT {
         assertFalse("Found unexpected dc:title",
                     object.getNode().hasProperty("dc:title"));
 
-        object.updateProperties(subjects, "PREFIX fedora-rels-ext: <" +
-                RELATIONS_NAMESPACE + ">\n" +
+        object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
                 "DELETE { <" + graphSubject + "> " +
-                "fedora-rels-ext:isPartOf <" + graphSubject + "> " +
+                "dcterms:isPartOf <" + graphSubject + "> " +
                 "} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
         assertFalse("found unexpected reference",
-                    object.getNode().hasProperty("fedorarelsext:isPartOf"));
+                    object.getNode().hasProperty("dcterms:isPartOf"));
 
         session.save();
 

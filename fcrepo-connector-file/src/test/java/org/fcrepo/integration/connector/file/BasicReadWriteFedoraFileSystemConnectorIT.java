@@ -26,6 +26,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -62,7 +63,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         final FedoraResource object = nodeService.find(session, testFilePath());
         assertNotNull(object);
 
-        final String sparql = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
+        final String sparql = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
                 "INSERT DATA { " +
                 "<info:fedora" + testFilePath() + "> " +
                 "fedora:name " +
@@ -88,7 +89,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         final FedoraResource object = nodeService.find(session, testFilePath());
         assertNotNull(object);
 
-        final String sparql = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
+        final String sparql = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
                 "INSERT DATA { " +
                 "<info:fedora" + testFilePath() + "> " +
                 "fedora:remove " +
@@ -103,7 +104,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         assertNotNull(property);
         assertEquals("some-property-to-remove", property.getValues()[0].getString());
 
-        final String sparqlRemove = "PREFIX fedora: <http://fedora.info/definitions/v4/rest-api#> " +
+        final String sparqlRemove = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
                 "DELETE {" +
                 "  <info:fedora" + testFilePath() + "> fedora:remove ?s " +
                 "} WHERE { " +

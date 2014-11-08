@@ -31,7 +31,7 @@
                         #else
                             <span property="$triple.getPredicate().toString()">$esc.html($triple.getObject())</span>
                         #end
-                        #if( $triple.getPredicate().toString().equals("http://fedora.info/definitions/v4/rest-api#digest") )
+                        #if( $triple.getPredicate().toString().equals("http://fedora.info/definitions/v4/repository#digest") )
                             #set ($fixity_service = $helpers.getObjects($rdf, $triple.getSubject(), $rdfLexicon.HAS_FIXITY_SERVICE))
 
                             #if($fixity_service.hasNext())

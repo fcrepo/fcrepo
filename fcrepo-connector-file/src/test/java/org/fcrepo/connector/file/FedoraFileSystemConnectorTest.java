@@ -18,6 +18,7 @@ package org.fcrepo.connector.file;
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
 import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -155,7 +156,7 @@ public class FedoraFileSystemConnectorTest {
         setField(mockTranslator, "names", mockNameFactory);
         setField(connector, "readonly", true);
         connector.initialize(mockRegistry, mockNodeTypeManager);
-        mockContext.getNamespaceRegistry().register("fedora", "http://fedora.info/definitions/v4/repository#");
+        mockContext.getNamespaceRegistry().register("fedora", REPOSITORY_NAMESPACE);
         mockContext.getNamespaceRegistry().register("premis", "http://www.loc.gov/premis/rdf/v1#");
     }
 

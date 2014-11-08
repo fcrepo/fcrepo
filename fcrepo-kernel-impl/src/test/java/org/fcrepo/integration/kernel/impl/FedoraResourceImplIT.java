@@ -28,7 +28,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RELATIONS_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -299,7 +298,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final NonRdfSourceDescription object =
                 binaryService.findOrCreate(session, "/testDatastreamGraph").getDescription();
 
-        object.getNode().setProperty("fedorarelsext:isPartOf",
+        object.getNode().setProperty("fedora:isPartOf",
                 session.getNode("/testDatastreamGraphParent"));
 
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
@@ -329,7 +328,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         //assertTrue(datasetGraph.contains(ANY, s, p, o));
         // relations
-        p = createURI(RELATIONS_NAMESPACE + "isPartOf");
+        p = createURI(REPOSITORY_NAMESPACE + "isPartOf");
         o = createGraphSubjectNode(parentObject);
         assertTrue(graph.contains(s, p, o));
 
@@ -433,8 +432,8 @@ public class FedoraResourceImplIT extends AbstractIT {
                 subjects,
                 "PREFIX example: <http://example.org/>\n"
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
-                        + "PREFIX fedorarelsext: <http://fedora.info/definitions/v4/rels-ext#>\n"
-                        + "INSERT { <> fedorarelsext:isPartOf <" + subjects.toDomain("/some-path") + ">}"
+                        + "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n"
+                        + "INSERT { <> fedora:isPartOf <" + subjects.toDomain("/some-path") + ">}"
                         + "WHERE { }", new RdfStream());
     }
 
@@ -484,7 +483,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container subject = containerService.findOrCreate(session, pid + "/a");
         final Container object = containerService.findOrCreate(session, pid + "/b");
         final Value value = session.getValueFactory().createValue(object.getNode());
-        subject.getNode().setProperty("fedorarelsext:isPartOf", new Value[] { value });
+        subject.getNode().setProperty("fedora:isPartOf", new Value[] { value });
 
         session.save();
 
@@ -492,7 +491,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         assertTrue(
             model.contains(subjects.reverse().convert(subject),
-                              ResourceFactory.createProperty("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
+                              ResourceFactory.createProperty(REPOSITORY_NAMESPACE + "isPartOf"),
                               subjects.reverse().convert(object))
         );
     }
@@ -562,7 +561,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource resourceB = containerService.findOrCreate(session, "/" + pid + "/b");
 
         final Value value = session.getValueFactory().createValue(resourceB.getNode());
-        resourceA.getNode().setProperty("fedorarelsext:hasMember", new Value[] { value });
+        resourceA.getNode().setProperty("fedora:hasMember", new Value[] { value });
 
         session.save();
         containerService.findOrCreate(session, "/" + pid + "/a").delete();

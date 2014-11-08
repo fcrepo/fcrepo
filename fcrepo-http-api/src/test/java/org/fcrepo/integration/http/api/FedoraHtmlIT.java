@@ -16,6 +16,7 @@
 package org.fcrepo.integration.http.api;
 
 import static org.apache.commons.lang.StringUtils.contains;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -69,7 +70,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     public void testGetTemplate() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
-        addMixin(pid, "http://fedora.info/definitions/v4/rest-api#resource");
+        addMixin(pid, REPOSITORY_NAMESPACE + "Resource");
 
         final HttpGet method = new HttpGet(serverAddress + pid);
         method.addHeader("Accept", "text/html");

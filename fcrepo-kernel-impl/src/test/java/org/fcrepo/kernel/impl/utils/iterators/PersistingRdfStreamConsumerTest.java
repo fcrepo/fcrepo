@@ -24,7 +24,6 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -165,7 +164,7 @@ public class PersistingRdfStreamConsumerTest {
                 ResourceFactory.createResource());
 
     private static final Triple managedMixinTriple = create(subject, type
-            .asNode(), createURI(RESTAPI_NAMESPACE + "mixin"));
+            .asNode(), createURI(REPOSITORY_NAMESPACE + "mixin"));
 
     private static final Statement managedMixinStatement = m.asStatement(managedMixinTriple);
 

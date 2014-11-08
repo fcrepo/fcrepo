@@ -18,7 +18,7 @@ package org.fcrepo.kernel.impl.utils;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.URI;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getPropertyType;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -198,10 +198,10 @@ public class JcrPropertyStatementListenerTest {
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(true);
 
-        when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
+        when(mockSession.getNamespacePrefix(REPOSITORY_NAMESPACE))
                 .thenReturn("fedora");
         final Model model = ModelFactory.createDefaultModel();
-        final Resource type = model.createResource(RESTAPI_NAMESPACE
+        final Resource type = model.createResource(REPOSITORY_NAMESPACE
                 + "object");
         final Statement statement = model.createStatement(mockResource, RDF.type, type);
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
@@ -217,10 +217,10 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(true);
-        when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE)).thenReturn(
+        when(mockSession.getNamespacePrefix(REPOSITORY_NAMESPACE)).thenReturn(
                 "fedora");
         final Model model = createDefaultModel();
-        final Resource type = model.createResource(RESTAPI_NAMESPACE + "object");
+        final Resource type = model.createResource(REPOSITORY_NAMESPACE + "Container");
         model.add(mockResource, RDF.type, type);
         testObj.removedStatements(model);
         verify(mockJcrRdfTools).removeMixin(resource, type, mockNsMapping);
@@ -237,12 +237,12 @@ public class JcrPropertyStatementListenerTest {
 
         when(getPropertyType(mockSubjectNode, "rdf:type")).thenReturn(URI);
 
-        when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE))
+        when(mockSession.getNamespacePrefix(REPOSITORY_NAMESPACE))
                 .thenReturn("fedora");
         final Model model = createDefaultModel();
         final Statement statement = model.createStatement(mockResource,
                 type,
-                model.createResource(RESTAPI_NAMESPACE + "object"));
+                model.createResource(REPOSITORY_NAMESPACE + "Container"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
         when(mockJcrRdfTools.skolemize(idTranslator, statement)).thenReturn(statement);
         testObj.addedStatement(statement);
@@ -256,10 +256,10 @@ public class JcrPropertyStatementListenerTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNodeTypeManager);
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
-        when(mockSession.getNamespacePrefix(RESTAPI_NAMESPACE)).thenReturn("fedora");
+        when(mockSession.getNamespacePrefix(REPOSITORY_NAMESPACE)).thenReturn("fedora");
         final Model model = createDefaultModel();
-        model.add(mockResource, type, model.createResource(RESTAPI_NAMESPACE + "object"));
+        model.add(mockResource, type, model.createResource(REPOSITORY_NAMESPACE + "Container"));
         testObj.removedStatements(model);
-        verify(mockSubjectNode, never()).removeMixin("fedora:object");
+        verify(mockSubjectNode, never()).removeMixin("fedora:Container");
     }
 }

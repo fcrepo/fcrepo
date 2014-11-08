@@ -72,7 +72,6 @@ import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.RESTAPI_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1221,8 +1220,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Resource nodeUri = createResource(serverAddress + pid);
         final Property rdfType = createProperty(RDF_NAMESPACE + "type");
 
-        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "Container");
-        verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "Resource");
+        verifyResource(model, nodeUri, rdfType, REPOSITORY_NAMESPACE, "Container");
+        verifyResource(model, nodeUri, rdfType, REPOSITORY_NAMESPACE, "Resource");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
@@ -1403,7 +1402,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 new ByteArrayInputStream(
                         ("INSERT { " +
                                 "<" + serverAddress + pid + "/a"
-                                + "> <http://fedora.info/definitions/v4/rels-ext#isPartOf> <"
+                                + "> <http://purl.org/dc/terms/isPartOf> <"
                                 + serverAddress + pid + "/b" + "> . \n" +
                                 "<" + serverAddress + pid + "/a" + "> <info:xyz#some-other-property> <"
                                 + serverAddress + pid + "/b"
@@ -1421,7 +1420,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(Node.ANY,
                 NodeFactory.createURI(serverAddress + pid + "/a"),
-                NodeFactory.createURI("http://fedora.info/definitions/v4/rels-ext#isPartOf"),
+                NodeFactory.createURI("http://purl.org/dc/terms/isPartOf"),
                 NodeFactory.createURI(serverAddress + pid + "/b")
         ));
 
@@ -1465,7 +1464,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.addHeader("Content-Type", "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
-                ("INSERT { <> <http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> " +
+                ("INSERT { <> <http://some-vocabulary#isMemberOfCollection> " +
                         "<" + serverAddress + "non-existant> } WHERE {}").getBytes()));
         patch.setEntity(e);
         assertEquals(CONFLICT.getStatusCode(), getStatus(patch));
@@ -1867,7 +1866,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(201, getStatus(put));
 
         // link from the object to the content of the file on the federated filesystem
-        final String sparql = "insert data { <> <http://fedora.info/definitions/v4/rels-ext#hasExternalContent> "
+        final String sparql = "insert data { <> <http://some-vocabulary#hasExternalContent> "
                 + "<" + federationAddress + "> . }";
         final HttpPatch patch = new HttpPatch(serverAddress + repoObj);
         patch.addHeader("Content-Type", "application/sparql-update");
@@ -1964,7 +1963,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObject(linkedTo);
 
         final String sparql = "insert data { <" + serverAddress + linkedFrom + "> "
-                + "<http://fedora.info/definitions/v4/rels-ext#isMemberOfCollection> "
+                + "<http://some-vocabulary#isMemberOfCollection> "
                 + "<" + serverAddress + linkedTo + "> . }";
         final HttpPatch patch = new HttpPatch(serverAddress + linkedFrom);
         patch.addHeader("Content-Type", "application/sparql-update");
