@@ -64,6 +64,7 @@ public class BinaryServiceImplTest {
         final String testPath = "/foo/bar";
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
+        when(mockSession.getNode("/")).thenReturn(mockRoot);
         testObj.findOrCreate(mockSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
     }

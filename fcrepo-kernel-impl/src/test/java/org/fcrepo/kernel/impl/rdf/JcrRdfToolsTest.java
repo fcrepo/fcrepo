@@ -342,8 +342,8 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         testObj.jcrTools = mock(JcrTools.class);
         when(mockNode.getParent()).thenReturn(mockHashNode);
         when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockRootNode.hasNode("some")).thenReturn(true);
-        when(mockRootNode.getNode("some")).thenReturn(mockChildNode);
+        when(mockSession.nodeExists("/some")).thenReturn(true);
+        when(mockSession.getNode("/some")).thenReturn(mockChildNode);
         when(mockChildNode.isNew()).thenReturn(false);
         when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
         when(mockHashNode.isNew()).thenReturn(true);
@@ -363,8 +363,8 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         testObj.jcrTools = mock(JcrTools.class);
         when(mockNode.getParent()).thenReturn(mockHashNode);
         when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockRootNode.hasNode("some")).thenReturn(true);
-        when(mockRootNode.getNode("some")).thenReturn(mockChildNode);
+        when(mockSession.nodeExists("/some")).thenReturn(true);
+        when(mockSession.getNode("/some")).thenReturn(mockChildNode);
         when(mockChildNode.isNew()).thenReturn(false);
         when(mockChildNode.hasNode("#")).thenReturn(true);
         when(mockChildNode.getNode("#")).thenReturn(mockHashNode);
@@ -385,7 +385,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         testObj.jcrTools = mock(JcrTools.class);
         when(mockNode.getParent()).thenReturn(mockHashNode);
         when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockRootNode.hasNode("some")).thenReturn(false);
+        when(mockSession.nodeExists("/some")).thenReturn(false);
         when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
         testObj.skolemize(testSubjects, x);
     }
@@ -400,8 +400,8 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         testObj.jcrTools = mock(JcrTools.class);
         when(mockNode.getParent()).thenReturn(mockHashNode);
         when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockRootNode.hasNode("some")).thenReturn(true);
-        when(mockRootNode.getNode("some")).thenReturn(mockChildNode);
+        when(mockSession.nodeExists("/some")).thenReturn(true);
+        when(mockSession.getNode("/some")).thenReturn(mockChildNode);
         when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
         final Statement statement = testObj.skolemize(testSubjects, x);
         assertEquals(x, statement);

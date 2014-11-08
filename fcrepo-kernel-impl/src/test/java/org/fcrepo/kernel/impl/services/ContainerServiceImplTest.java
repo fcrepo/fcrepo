@@ -70,6 +70,8 @@ public class ContainerServiceImplTest implements FedoraJcrTypes {
         initMocks(this);
         testObj = new ContainerServiceImpl();
         when(mockSession.getRootNode()).thenReturn(mockRoot);
+        when(mockSession.nodeExists("/")).thenReturn(true);
+        when(mockSession.getNode("/")).thenReturn(mockRoot);
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNode.getParent()).thenReturn(mockRoot);
         when(mockRoot.isNew()).thenReturn(false);
@@ -127,8 +129,8 @@ public class ContainerServiceImplTest implements FedoraJcrTypes {
         when(mockParent.getParent()).thenReturn(mockRoot);
         when(mockParent.isNew()).thenReturn(false);
         when(mockParent.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
-        when(mockRoot.hasNode("foo")).thenReturn(true);
-        when(mockRoot.getNode("foo")).thenReturn(mockParent);
+        when(mockSession.nodeExists("/foo")).thenReturn(true);
+        when(mockSession.getNode("/foo")).thenReturn(mockParent);
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
 
