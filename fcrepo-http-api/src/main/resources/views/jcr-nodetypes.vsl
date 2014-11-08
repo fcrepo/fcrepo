@@ -40,21 +40,6 @@
             <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
                 <span>Toggle actions</span>
             </button>
-
-        ## output actions
-            <div class="actions collapse visible-lg visible-md" id="actions">
-
-                <form id="action_cnd_update" method="POST">
-                    <h3>Update CND</h3>
-                    <div class="form-group">
-                        <textarea rows="10" id="cnd_update_query" name="query" class="form-control"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                    <hr />
-                </form>
-
-
-            </div>
         </div>
 
         <div id="metadata" class="col-md-9 col-md-pull-3">
