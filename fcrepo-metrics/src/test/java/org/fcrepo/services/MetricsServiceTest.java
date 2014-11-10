@@ -18,6 +18,7 @@ package org.fcrepo.services;
 import java.io.PrintStream;
 
 import org.fcrepo.metrics.RegistryService;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -33,5 +34,15 @@ public class MetricsServiceTest {
     public void testDumpMetrics() {
       final RegistryService registryService = RegistryService.getInstance();
       registryService.dumpMetrics(mockPrintStream);
+    }
+
+    @Test
+    public void testSingletonBranch() {
+        //Create instance
+        final RegistryService serivce0 = RegistryService.getInstance();
+        //Fetches the created instance. Success indicated by branch coverage.
+        final RegistryService service1 = RegistryService.getInstance();
+
+        Assert.assertTrue(serivce0 == service1);
     }
 }
