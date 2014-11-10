@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>VersionServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">VersionServiceImpl.java</span></div><h1>VersionServiceImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import org.fcrepo.kernel.impl.FedoraBinaryImpl;
+import org.fcrepo.kernel.services.VersionService;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionException;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
+import javax.jcr.version.VersionManager;
+
+import static org.fcrepo.jcr.FedoraJcrTypes.VERSIONABLE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * This service exposes management of node versioning.  Instead of invoking
+ * the JCR VersionManager methods, this provides a level of indirection that
+ * allows for special handling of features built on top of JCR such as user
+ * transactions.
+ * @author Mike Durbin
+ */
+
+@Component
+<span class="fc" id="L46">public class VersionServiceImpl extends AbstractService implements VersionService {</span>
+
+<span class="fc" id="L48">    private static final Logger LOGGER = getLogger(VersionService.class);</span>
+
+    @Override
+    public String createVersion(final Session session,
+                              final String absPath) throws RepositoryException {
+<span class="fc" id="L53">        final Node node = session.getNode(absPath);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (!isVersioningEnabled(node)) {</span>
+<span class="fc" id="L55">            enableVersioning(node);</span>
+        }
+<span class="fc" id="L57">        return checkpoint(session, absPath);</span>
+    }
+
+    @Override
+    public void revertToVersion(final Session session, final String absPath,
+                                final String label) throws RepositoryException {
+<span class="fc" id="L63">        final Workspace workspace = session.getWorkspace();</span>
+<span class="fc" id="L64">        final Version v = getVersionForLabel(workspace, absPath, label);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (v == null) {</span>
+<span class="fc" id="L66">            throw new PathNotFoundException(&quot;Unknown version \&quot;&quot; + label + &quot;\&quot;!&quot;);</span>
+        }
+<span class="fc" id="L68">        final VersionManager versionManager = workspace.getVersionManager();</span>
+<span class="fc" id="L69">        versionManager.checkin(absPath);</span>
+<span class="fc" id="L70">        versionManager.restore(v, true);</span>
+<span class="fc" id="L71">        versionManager.checkout(absPath);</span>
+<span class="fc" id="L72">    }</span>
+
+    @Override
+    public void removeVersion(final Session session, final String absPath,
+                              final String label) throws RepositoryException {
+<span class="fc" id="L77">        final Workspace workspace = session.getWorkspace();</span>
+<span class="fc" id="L78">        final Version v = getVersionForLabel(workspace, absPath, label);</span>
+
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (v == null) {</span>
+<span class="fc" id="L81">            throw new PathNotFoundException(&quot;Unknown version \&quot;&quot; + label + &quot;\&quot;!&quot;);</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        } else if (workspace.getVersionManager().getBaseVersion(absPath).equals(v) ) {</span>
+<span class="nc" id="L83">            throw new VersionException(&quot;Cannot remove current version&quot;);</span>
+        } else {
+            // remove labels
+<span class="fc" id="L86">            final VersionHistory history = v.getContainingHistory();</span>
+<span class="fc" id="L87">            final String[] versionLabels = history.getVersionLabels(v);</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">            for ( final String versionLabel : versionLabels ) {</span>
+<span class="nc" id="L89">                LOGGER.debug(&quot;Removing label: {}&quot;, versionLabel);</span>
+<span class="nc" id="L90">                history.removeVersionLabel( versionLabel );</span>
+            }
+<span class="fc" id="L92">            history.removeVersion( v.getName() );</span>
+        }
+<span class="fc" id="L94">    }</span>
+
+
+    private static Version getVersionForLabel(final Workspace workspace, final String absPath,
+                                       final String label) throws RepositoryException {
+        // first see if there's a version label
+<span class="fc" id="L100">        final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);</span>
+
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        if (history.hasVersionLabel(label)) {</span>
+<span class="nc" id="L103">            return history.getVersionByLabel(label);</span>
+        }
+        // there was no version with the given JCR Version Label, check to see if
+        // there's a version whose UUID is equal to the label
+<span class="fc" id="L107">        final VersionIterator versionIt = history.getAllVersions();</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if (versionIt == null) {</span>
+<span class="nc" id="L109">            return null;</span>
+        }
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        while (versionIt.hasNext()) {</span>
+<span class="fc" id="L112">            final Version v = versionIt.nextVersion();</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">            if (v.getFrozenNode().getIdentifier().equals(label)) {</span>
+<span class="fc" id="L114">                return v;</span>
+            }
+<span class="fc" id="L116">        }</span>
+<span class="fc" id="L117">        return null;</span>
+    }
+
+    private static boolean isVersioningEnabled(final Node n) throws RepositoryException {
+<span class="pc bpc" id="L121" title="3 of 6 branches missed.">        return n.isNodeType(VERSIONABLE) || (FedoraBinaryImpl.hasMixin(n) &amp;&amp; isVersioningEnabled(n.getParent()));</span>
+    }
+
+    private static void enableVersioning(final Node node) throws RepositoryException {
+<span class="fc" id="L125">        node.addMixin(VERSIONABLE);</span>
+
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        if (FedoraBinaryImpl.hasMixin(node)) {</span>
+<span class="nc" id="L128">            node.getParent().addMixin(VERSIONABLE);</span>
+        }
+<span class="fc" id="L130">        node.getSession().save();</span>
+<span class="fc" id="L131">    }</span>
+
+    private static String checkpoint(final Session session, final String absPath) throws RepositoryException {
+<span class="fc" id="L134">        LOGGER.trace(&quot;Setting implicit version checkpoint set for {}&quot;, absPath);</span>
+<span class="fc" id="L135">        final Workspace workspace = session.getWorkspace();</span>
+<span class="fc" id="L136">        final Version v = workspace.getVersionManager().checkpoint(absPath);</span>
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        return ( v == null ) ? null : v.getFrozenNode().getIdentifier();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>

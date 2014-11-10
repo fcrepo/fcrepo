@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RootRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.rdf.impl</a> &gt; <span class="el_source">RootRdfContext.java</span></div><h1>RootRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.rdf.impl;
+
+import static com.google.common.collect.ImmutableSet.builder;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.metrics.RegistryService;
+
+import java.util.Map;
+import java.util.SortedMap;
+
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeIterator;
+import javax.jcr.nodetype.NodeTypeManager;
+
+import org.fcrepo.kernel.impl.services.functions.GetClusterConfiguration;
+import org.modeshape.jcr.JcrRepository;
+import org.slf4j.Logger;
+
+import com.codahale.metrics.Counter;
+import com.google.common.collect.ImmutableSet;
+import com.hp.hpl.jena.graph.Triple;
+
+/**
+ * Assemble {@link Triple}s derived from the root of a repository.
+ *
+ * @author ajs6f
+ * @since Oct 18, 2013
+ */
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">public class RootRdfContext extends NodeRdfContext {</span>
+
+<span class="fc" id="L61">    private static final Logger LOGGER = getLogger(RootRdfContext.class);</span>
+<span class="fc" id="L62">    static final RegistryService registryService = RegistryService.getInstance();</span>
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param resource
+     * @param idTranslator
+     * @throws RepositoryException
+     */
+    public RootRdfContext(final FedoraResource resource,
+                          final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator)
+            throws RepositoryException {
+<span class="fc" id="L74">        super(resource, idTranslator);</span>
+
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        if (resource().hasType(ROOT)) {</span>
+<span class="fc" id="L77">            concatRepositoryTriples();</span>
+        }
+<span class="fc" id="L79">    }</span>
+
+    private void concatRepositoryTriples() throws RepositoryException {
+<span class="fc" id="L82">        LOGGER.trace(&quot;Creating RDF triples for repository description&quot;);</span>
+<span class="fc" id="L83">        final Repository repository = resource().getNode().getSession().getRepository();</span>
+
+<span class="fc" id="L85">        final ImmutableSet.Builder&lt;Triple&gt; b = builder();</span>
+
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        for (final String key : repository.getDescriptorKeys()) {</span>
+<span class="fc" id="L88">            final String descriptor = repository.getDescriptor(key);</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">            if (descriptor != null) {</span>
+<span class="fc" id="L90">                final String uri = REPOSITORY_NAMESPACE + &quot;repository.&quot; + key;</span>
+<span class="fc" id="L91">                b.add(create(subject(), createURI(uri),</span>
+                        createLiteral(descriptor)));
+            }
+        }
+<span class="fc" id="L95">        final NodeTypeManager nodeTypeManager =</span>
+            resource().getNode().getSession().getWorkspace().getNodeTypeManager();
+
+<span class="fc" id="L98">        final NodeTypeIterator nodeTypes = nodeTypeManager.getAllNodeTypes();</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        while (nodeTypes.hasNext()) {</span>
+<span class="fc" id="L100">            final NodeType nodeType = nodeTypes.nextNodeType();</span>
+<span class="fc" id="L101">            b.add(create(subject(), HAS_NODE_TYPE.asNode(),</span>
+                    createLiteral(nodeType.getName())));
+<span class="fc" id="L103">        }</span>
+
+            /*
+                FIXME: removing because performance problems, esp. w/ many files on federated filesystem
+                see: https://www.pivotaltracker.com/story/show/78647248
+
+            b.add(create(subject(), HAS_OBJECT_COUNT.asNode(), createLiteral(String
+                    .valueOf(getRepositoryCount(repository)))));
+            b.add(create(subject(), HAS_OBJECT_SIZE.asNode(), createLiteral(String
+                    .valueOf(getRepositorySize(repository)))));
+            */
+
+        // Get the cluster configuration, if available
+        // this ugly test checks to see whether this is an ordinary JCR
+        // repository or a ModeShape repo, which will possess the extra info
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (JcrRepository.class.isAssignableFrom(repository.getClass())) {</span>
+<span class="fc" id="L119">            final Map&lt;String, String&gt; config =</span>
+                new GetClusterConfiguration().apply(repository);
+<span class="pc bpc" id="L121" title="2 of 4 branches missed.">            assert (config != null);</span>
+
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">            for (final Map.Entry&lt;String, String&gt; entry : config.entrySet()) {</span>
+<span class="nc" id="L124">                b.add(create(subject(), createURI(REPOSITORY_NAMESPACE + entry.getKey()),</span>
+                        createLiteral(entry.getValue())));
+<span class="nc" id="L126">            }</span>
+        }
+
+        // retrieve the metrics from the service
+<span class="fc" id="L130">        final SortedMap&lt;String, Counter&gt; counters = registryService.getMetrics().getCounters();</span>
+        // and add the repository metrics to the RDF model
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (counters.containsKey(&quot;LowLevelStorageService.fixity-check-counter&quot;)) {</span>
+<span class="nc" id="L133">            b.add(create(subject(), HAS_FIXITY_CHECK_COUNT.asNode(),</span>
+                    createTypedLiteral(
+                            counters.get(
+                                    &quot;org.fcrepo.services.&quot;
+                                            + &quot;LowLevelStorageService.&quot;
+                                            + &quot;fixity-check-counter&quot;)
+                                    .getCount()).asNode()));
+        }
+
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">        if (counters.containsKey(&quot;LowLevelStorageService.fixity-error-counter&quot;)) {</span>
+<span class="nc" id="L143">            b.add(create(subject(), HAS_FIXITY_ERROR_COUNT.asNode(),</span>
+                    createTypedLiteral(
+                            counters.get(
+                                    &quot;org.fcrepo.services.&quot;
+                                            + &quot;LowLevelStorageService.&quot;
+                                            + &quot;fixity-error-counter&quot;)
+                                    .getCount()).asNode()));
+        }
+
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">        if (counters</span>
+                .containsKey(&quot;LowLevelStorageService.fixity-repaired-counter&quot;)) {
+<span class="nc" id="L154">            b.add(create(subject(), HAS_FIXITY_REPAIRED_COUNT.asNode(),</span>
+                    createTypedLiteral(
+                            counters.get(
+                                    &quot;org.fcrepo.services.&quot;
+                                            + &quot;LowLevelStorageService.&quot;
+                                            + &quot;fixity-repaired-counter&quot;)
+                                    .getCount()).asNode()));
+        }
+
+        // offer all these accumulated triples
+<span class="fc" id="L164">        concat(b.build());</span>
+<span class="fc" id="L165">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>

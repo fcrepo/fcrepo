@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>LocalBinaryStoreEntry.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.utils.impl</a> &gt; <span class="el_source">LocalBinaryStoreEntry.java</span></div><h1>LocalBinaryStoreEntry.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.utils.impl;
+
+import static java.util.Objects.hash;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+
+import org.fcrepo.kernel.impl.services.functions.GetBinaryKey;
+import org.fcrepo.kernel.impl.utils.BasicCacheEntry;
+import org.modeshape.jcr.value.BinaryKey;
+import org.modeshape.jcr.value.binary.BinaryStore;
+
+/**
+ * A LowLevelCacheEntry within a local binary store
+ *
+ * @author awoods
+ */
+public class LocalBinaryStoreEntry extends BasicCacheEntry {
+
+<span class="fc" id="L39">    private GetBinaryKey getBinaryKey = new GetBinaryKey();</span>
+    private final BinaryStore store;
+    private final Property property;
+
+    /**
+     * @param store a Modeshape BinaryStore
+     * @param property the property we're interested in
+     */
+<span class="fc" id="L47">    public LocalBinaryStoreEntry(final BinaryStore store, final Property property) {</span>
+<span class="fc" id="L48">        this.property = property;</span>
+<span class="fc" id="L49">        this.store = store;</span>
+<span class="fc" id="L50">    }</span>
+
+    BinaryStore store() {
+<span class="fc" id="L53">        return store;</span>
+    }
+
+    /**
+     * Get a raw input stream from the underlying store
+     * @return the content for this entry
+     */
+    @Override
+    public InputStream getInputStream() throws RepositoryException {
+<span class="fc" id="L62">        return store.getInputStream(binaryKey());</span>
+    }
+
+    /**
+     * Generate a human-readable identifier for the location of this entry
+     *
+     * @return human-readable identifier for the location of this entry
+     */
+    @Override
+    public String getExternalIdentifier() {
+        try {
+<span class="nc" id="L73">            return new URI(&quot;info&quot;, store.toString(), null) + &quot;/&quot; + binaryKey();</span>
+<span class="nc" id="L74">        } catch (URISyntaxException e) {</span>
+<span class="nc" id="L75">            return binaryKey().toString();</span>
+        }
+    }
+
+    /**
+     * Two LowLevelCacheEntries are the same if they have the same key,
+     * come from the same BinaryStore,
+     * and have the same underlying store configuration
+     * @param other
+     * @return true if the given binary store entries have the same key
+     */
+    @Override
+    public boolean equals(final Object other) {
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (other instanceof LocalBinaryStoreEntry) {</span>
+<span class="nc" id="L89">            final LocalBinaryStoreEntry that = (LocalBinaryStoreEntry) other;</span>
+
+<span class="nc bnc" id="L91" title="All 10 branches missed.">            return property().equals(that.property()) &amp;&amp;</span>
+                   ((store == null &amp;&amp; that.store == null) ||
+                    (store != null &amp;&amp; store.equals(that.store)));
+        }
+<span class="nc" id="L95">        return false;</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L100">        return hash(store, property);</span>
+    }
+
+    protected Property property() {
+<span class="nc" id="L104">        return property;</span>
+    }
+
+    protected BinaryKey binaryKey() {
+<span class="fc" id="L108">        return getBinaryKey.apply(property);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodeRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.rdf.impl</a> &gt; <span class="el_source">NodeRdfContext.java</span></div><h1>NodeRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.rdf.impl;
+
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
+
+import com.google.common.base.Converter;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+/**
+ * {@link RdfStream} that holds contexts related to a specific {@link Node}.
+ *
+ * @author ajs6f
+ * @since Oct 10, 2013
+ */
+public class NodeRdfContext extends RdfStream {
+
+    private final FedoraResource resource;
+
+    private final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+
+    private final com.hp.hpl.jena.graph.Node subject;
+
+<span class="fc" id="L45">    private static final Logger LOGGER = getLogger(NodeRdfContext.class);</span>
+
+    /**
+     * Default constructor.
+     *
+     * @param resource
+     * @param idTranslator
+     */
+    public NodeRdfContext(final FedoraResource resource,
+                          final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="fc" id="L55">        super();</span>
+<span class="fc" id="L56">        this.resource = resource;</span>
+<span class="fc" id="L57">        this.idTranslator = idTranslator;</span>
+<span class="fc" id="L58">        this.subject = idTranslator.reverse().convert(resource).asNode();</span>
+<span class="fc" id="L59">    }</span>
+
+    /**
+     * @return The {@link Node} in question
+     */
+    public FedoraResource resource() {
+<span class="fc" id="L65">        return resource;</span>
+    }
+
+    /**
+     * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
+     */
+    public IdentifierConverter&lt;Resource, FedoraResource&gt; translator() {
+<span class="nc" id="L72">        return idTranslator;</span>
+    }
+
+    /**
+     * @return local {@link org.fcrepo.kernel.identifiers.IdentifierConverter}
+     */
+    public Converter&lt;Node, Resource&gt; nodeConverter() {
+<span class="nc" id="L79">        return nodeToResource(idTranslator);</span>
+    }
+
+    /**
+     * @return the RDF subject at the center of this context
+     */
+    public com.hp.hpl.jena.graph.Node subject() {
+<span class="fc" id="L86">        return subject;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>

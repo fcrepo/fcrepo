@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodeServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">NodeServiceImpl.java</span></div><h1>NodeServiceImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.jcr.NamespaceException;
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.impl.rdf.impl.NodeTypeRdfContext;
+import org.fcrepo.kernel.services.NodeService;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.modeshape.jcr.api.nodetype.NodeTypeManager;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+/**
+ * Service for managing access to Fedora 'nodes' (either datastreams or objects,
+ * we don't care.)
+ *
+ * @author Chris Beer
+ * @since May 9, 2013
+ */
+@Component
+<span class="fc" id="L49">public class NodeServiceImpl extends AbstractService implements NodeService {</span>
+
+<span class="fc" id="L51">    private static final Logger LOGGER = getLogger(NodeServiceImpl.class);</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.services.Service#exists(javax.jcr.Session, java.lang.String)
+     */
+    @Override
+    public boolean exists(final Session session, final String path) {
+        try {
+<span class="fc" id="L59">            validatePath(session, path);</span>
+<span class="fc" id="L60">            return session.nodeExists(path);</span>
+<span class="nc" id="L61">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L62">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Retrieve an existing Fedora resource at the given path
+     *
+     * @param session a JCR session
+     * @param path a JCR path
+     * @return Fedora resource at the given path
+     * @throws RepositoryException
+     */
+    @Override
+    public FedoraResource find(final Session session, final String path) {
+        try {
+<span class="fc" id="L77">            return new FedoraResourceImpl(session.getNode(path));</span>
+<span class="nc" id="L78">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L79">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Copy an existing object from the source path to the destination path
+     *
+     * @param session
+     * @param source
+     * @param destination
+     * @throws RepositoryException
+     */
+    @Override
+    public void copyObject(final Session session, final String source, final String destination) {
+        try {
+<span class="nc" id="L94">            session.getWorkspace().copy(source, destination);</span>
+<span class="nc" id="L95">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L96">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L97">        }</span>
+<span class="nc" id="L98">    }</span>
+
+    /**
+     * Move an existing object from the source path to the destination path
+     *
+     * @param session
+     * @param source
+     * @param destination
+     * @throws RepositoryException
+     */
+    @Override
+    public void moveObject(final Session session, final String source, final String destination) {
+        try {
+<span class="nc" id="L111">            session.getWorkspace().move(source, destination);</span>
+<span class="nc" id="L112">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L113">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L114">        }</span>
+<span class="nc" id="L115">    }</span>
+
+    /**
+     * @param session
+     * @return node types
+     * @throws RepositoryException
+     */
+    @Override
+    public RdfStream getNodeTypes(final Session session) {
+        try {
+<span class="nc" id="L125">            return new NodeTypeRdfContext(session.getWorkspace().getNodeTypeManager());</span>
+<span class="nc" id="L126">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L127">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * @param session
+     * @param cndStream
+     * @throws RepositoryException
+     * @throws IOException
+     */
+    @Override
+    public void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException {
+        try {
+<span class="nc" id="L140">            final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();</span>
+<span class="nc" id="L141">            nodeTypeManager.registerNodeTypes(cndStream, true);</span>
+<span class="nc" id="L142">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L143">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L144">        }</span>
+<span class="nc" id="L145">    }</span>
+
+    /**
+     * Validate resource path for unregistered namespace prefixes
+     *
+     * @param session the JCR session to use
+     * @param path the absolute path to the object
+     * @throws org.fcrepo.kernel.exception.FedoraInvalidNamespaceException on unregistered namespaces
+     * @throws RepositoryRuntimeException
+     */
+    private void validatePath(final Session session, final String path) {
+
+        final NamespaceRegistry namespaceRegistry;
+        try {
+<span class="fc" id="L159">            namespaceRegistry =</span>
+                    session.getWorkspace().getNamespaceRegistry();
+<span class="fc" id="L161">            checkNotNull(namespaceRegistry,</span>
+                    &quot;Couldn't find namespace registry in repository!&quot;);
+<span class="nc" id="L163">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L164">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L165">        }</span>
+
+<span class="fc" id="L167">        final String relPath = path.replaceAll(&quot;^/+&quot;, &quot;&quot;).replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+<span class="fc" id="L168">        final String[] pathSegments = relPath.split(&quot;/&quot;);</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        for (final String segment : pathSegments) {</span>
+<span class="pc bpc" id="L170" title="2 of 6 branches missed.">            if (segment.length() &gt; 0 &amp;&amp; segment.contains(&quot;:&quot;) &amp;&amp;</span>
+                    segment.substring(0, segment.indexOf(&quot;:&quot;)) != &quot;fedora&quot;) {
+<span class="fc" id="L172">                final String prefix = segment.substring(0, segment.indexOf(&quot;:&quot;));</span>
+                try {
+<span class="nc" id="L174">                    namespaceRegistry.getURI(prefix);</span>
+<span class="fc" id="L175">                } catch (final NamespaceException e) {</span>
+<span class="fc" id="L176">                    throw new FedoraInvalidNamespaceException(</span>
+                            String.format(&quot;The namespace prefix (%s) has not been registered&quot;, prefix), e);
+<span class="nc" id="L178">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L179">                    throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L180">                }</span>
+            }
+        }
+<span class="fc" id="L183">    }</span>
+
+    /**
+     * @param session
+     * @param path
+     */
+    @Override
+    public FedoraResource findOrCreate(final Session session, final String path) {
+<span class="nc" id="L191">        throw new RepositoryRuntimeException(&quot;unimplemented&quot;);</span>
+    }
+
+    /**
+     * @param node
+     */
+    @Override
+    public FedoraResource cast(final Node node) {
+<span class="nc" id="L199">        return new FedoraResourceImpl(node);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>
