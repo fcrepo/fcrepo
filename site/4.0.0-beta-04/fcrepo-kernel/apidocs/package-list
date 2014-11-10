@@ -1,0 +1,12 @@
+org.fcrepo.jcr
+org.fcrepo.kernel
+org.fcrepo.kernel.exception
+org.fcrepo.kernel.identifiers
+org.fcrepo.kernel.models
+org.fcrepo.kernel.observer
+org.fcrepo.kernel.observer.eventmappings
+org.fcrepo.kernel.services
+org.fcrepo.kernel.services.functions
+org.fcrepo.kernel.services.policy
+org.fcrepo.kernel.utils
+org.fcrepo.kernel.utils.iterators
