@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ContentExposingResource.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">ContentExposingResource.java</span></div><h1>ContentExposingResource.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+
+import static com.google.common.base.Predicates.alwaysTrue;
+import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.filter;
+import static com.google.common.collect.Iterators.transform;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
+import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
+import static javax.ws.rs.core.Response.temporaryRedirect;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.isManagedNamespace;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Date;
+import java.util.Iterator;
+
+import javax.inject.Inject;
+import javax.jcr.Binary;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+
+import org.apache.jena.riot.Lang;
+import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
+import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.PreferTag;
+import org.fcrepo.http.commons.domain.Range;
+import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
+import org.fcrepo.http.commons.responses.RangeRequestInputStream;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.ManagedRdf;
+import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ContentRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.HashRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.RootRdfContext;
+import org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext;
+import org.fcrepo.kernel.impl.services.TransactionServiceImpl;
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.jvnet.hk2.annotations.Optional;
+import org.slf4j.Logger;
+
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.vocabulary.RDF;
+
+/**
+ * An abstract class that sits between AbstractResource and any resource that
+ * wishes to share the routines for building responses containing binary
+ * content.
+ *
+ * @author Mike Durbin
+ */
+<span class="fc" id="L120">public abstract class ContentExposingResource extends FedoraBaseResource {</span>
+
+<span class="fc" id="L122">    private static final Logger LOGGER = getLogger(ContentExposingResource.class);</span>
+<span class="fc" id="L123">    public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf(&quot;message/external-body&quot;);</span>
+
+    @Context protected Request request;
+    @Context protected HttpServletResponse servletResponse;
+
+    @Inject
+    @Optional
+    private HttpTripleUtil httpTripleUtil;
+
+    @BeanParam
+    protected MultiPrefer prefer;
+
+    @Inject
+    @Optional
+    StoragePolicyDecisionPoint storagePolicyDecisionPoint;
+
+    protected FedoraResource resource;
+
+<span class="fc" id="L141">    private static long MAX_BUFFER_SIZE = 10240000;</span>
+
+    protected abstract String externalPath();
+
+    protected Response getContent(final String rangeValue,
+                                  final RdfStream rdfStream) throws IOException {
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        if (resource() instanceof FedoraBinary) {</span>
+
+<span class="fc" id="L149">            final String contentTypeString = ((FedoraBinary) resource()).getMimeType();</span>
+
+<span class="fc" id="L151">            final Lang lang = contentTypeToLang(contentTypeString);</span>
+
+<span class="pc bpc" id="L153" title="1 of 4 branches missed.">            if (!contentTypeString.equals(&quot;text/plain&quot;) &amp;&amp; lang != null) {</span>
+
+<span class="nc" id="L155">                final String format = lang.getName().toUpperCase();</span>
+
+<span class="nc" id="L157">                final InputStream content = ((FedoraBinary) resource()).getContent();</span>
+
+<span class="nc" id="L159">                final Model inputModel = createDefaultModel()</span>
+                        .read(content,  (resource()).toString(), format);
+
+<span class="nc" id="L162">                rdfStream.concat(Iterators.transform(inputModel.listStatements(),</span>
+<span class="nc" id="L163">                        new Function&lt;Statement, Triple&gt;() {</span>
+
+                            @Override
+                            public Triple apply(final Statement input) {
+<span class="nc" id="L167">                                return input.asTriple();</span>
+                            }
+                        }));
+<span class="nc" id="L170">            } else {</span>
+
+<span class="fc" id="L172">                final MediaType mediaType = MediaType.valueOf(contentTypeString);</span>
+<span class="pc bpc" id="L173" title="3 of 8 branches missed.">                if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType)</span>
+                        &amp;&amp; mediaType.getParameters().containsKey(&quot;access-type&quot;)
+                        &amp;&amp; mediaType.getParameters().get(&quot;access-type&quot;).equals(&quot;URL&quot;)
+                        &amp;&amp; mediaType.getParameters().containsKey(&quot;URL&quot;) ) {
+                    try {
+<span class="fc" id="L178">                        return temporaryRedirect(new URI(mediaType.getParameters().get(&quot;URL&quot;))).build();</span>
+<span class="nc" id="L179">                    } catch (final URISyntaxException e) {</span>
+<span class="nc" id="L180">                        throw new RepositoryRuntimeException(e);</span>
+                    }
+                } else {
+<span class="fc" id="L183">                    return getBinaryContent(rangeValue);</span>
+                }
+            }
+
+<span class="nc" id="L187">        } else {</span>
+<span class="fc" id="L188">            rdfStream.concat(getResourceTriples());</span>
+
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">            if (prefer != null) {</span>
+<span class="fc" id="L191">                prefer.getReturn().addResponseHeaders(servletResponse);</span>
+            }
+
+        }
+<span class="fc" id="L195">        servletResponse.addHeader(&quot;Vary&quot;, &quot;Accept, Range, Accept-Encoding, Accept-Language&quot;);</span>
+
+<span class="fc" id="L197">        return Response.ok(rdfStream).build();</span>
+    }
+
+    protected RdfStream getResourceTriples() {
+
+        final PreferTag returnPreference;
+
+<span class="pc bpc" id="L204" title="1 of 4 branches missed.">        if (prefer != null &amp;&amp; prefer.hasReturn()) {</span>
+<span class="fc" id="L205">            returnPreference = prefer.getReturn();</span>
+<span class="pc bpc" id="L206" title="1 of 4 branches missed.">        } else if (prefer != null &amp;&amp; prefer.hasHandling()) {</span>
+<span class="fc" id="L207">            returnPreference = prefer.getHandling();</span>
+        } else {
+<span class="fc" id="L209">            returnPreference = PreferTag.emptyTag();</span>
+        }
+
+<span class="fc" id="L212">        final LdpPreferTag ldpPreferences = new LdpPreferTag(returnPreference);</span>
+
+<span class="fc" id="L214">        final RdfStream rdfStream = new RdfStream();</span>
+
+        final Predicate&lt;Triple&gt; tripleFilter;
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        if (ldpPreferences.prefersServerManaged()) {</span>
+<span class="fc" id="L218">            tripleFilter = alwaysTrue();</span>
+        } else {
+<span class="fc" id="L220">            tripleFilter = and(not(ManagedRdf.isManagedTriple), not(new Predicate&lt;Triple&gt;() {</span>
+                @Override
+                public boolean apply(final Triple input) {
+<span class="fc bfc" id="L223" title="All 4 branches covered.">                    return input.getPredicate().equals(RDF.type.asNode())</span>
+                            &amp;&amp; isManagedNamespace.apply(input.getObject().getNameSpace());
+                }
+            }));
+        }
+
+<span class="fc bfc" id="L229" title="All 2 branches covered.">        if (ldpPreferences.prefersServerManaged()) {</span>
+<span class="fc" id="L230">            rdfStream.concat(getTriples(LdpRdfContext.class));</span>
+        }
+
+<span class="fc" id="L233">        rdfStream.concat(filter(getTriples(TypeRdfContext.class), tripleFilter));</span>
+
+<span class="fc" id="L235">        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter));</span>
+
+<span class="fc bfc" id="L237" title="All 2 branches covered.">        if (!returnPreference.getValue().equals(&quot;minimal&quot;)) {</span>
+
+            // Additional server-managed triples about this resource
+<span class="fc bfc" id="L240" title="All 2 branches covered.">            if (ldpPreferences.prefersServerManaged()) {</span>
+<span class="fc" id="L241">                rdfStream.concat(getTriples(AclRdfContext.class));</span>
+<span class="fc" id="L242">                rdfStream.concat(getTriples(RootRdfContext.class));</span>
+<span class="fc" id="L243">                rdfStream.concat(getTriples(ContentRdfContext.class));</span>
+<span class="fc" id="L244">                rdfStream.concat(getTriples(ParentRdfContext.class));</span>
+            }
+
+            // containment triples about this resource
+<span class="fc bfc" id="L248" title="All 2 branches covered.">            if (ldpPreferences.prefersContainment()) {</span>
+<span class="fc" id="L249">                rdfStream.concat(getTriples(ChildrenRdfContext.class));</span>
+            }
+
+            // LDP container membership triples for this resource
+<span class="fc bfc" id="L253" title="All 2 branches covered.">            if (ldpPreferences.prefersMembership()) {</span>
+<span class="fc" id="L254">                rdfStream.concat(getTriples(LdpContainerRdfContext.class));</span>
+<span class="fc" id="L255">                rdfStream.concat(getTriples(LdpIsMemberOfRdfContext.class));</span>
+            }
+
+            // Include binary properties if this is a binary description
+<span class="fc bfc" id="L259" title="All 2 branches covered.">            if (resource() instanceof NonRdfSourceDescription) {</span>
+<span class="fc" id="L260">                final FedoraResource described = ((NonRdfSourceDescription) resource()).getDescribedResource();</span>
+<span class="fc" id="L261">                rdfStream.concat(filter(described.getTriples(translator(), ImmutableList.of(TypeRdfContext.class,</span>
+                        PropertiesRdfContext.class,
+                        ContentRdfContext.class)), tripleFilter));
+            }
+
+            // Embed all hash and blank nodes
+<span class="fc" id="L267">            rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter));</span>
+<span class="fc" id="L268">            rdfStream.concat(filter(getTriples(BlankNodeRdfContext.class), tripleFilter));</span>
+
+            // Include inbound references to this object
+<span class="fc bfc" id="L271" title="All 2 branches covered.">            if (ldpPreferences.prefersReferences()) {</span>
+<span class="fc" id="L272">                rdfStream.concat(getTriples(ReferencesRdfContext.class));</span>
+            }
+
+            // Embed the children of this object
+<span class="fc bfc" id="L276" title="All 2 branches covered.">            if (ldpPreferences.prefersEmbed()) {</span>
+
+<span class="fc" id="L278">                final Iterator&lt;FedoraResource&gt; children = resource().getChildren();</span>
+
+<span class="fc" id="L280">                rdfStream.concat(filter(concat(transform(children,</span>
+<span class="fc" id="L281">                        new Function&lt;FedoraResource, RdfStream&gt;() {</span>
+
+                            @Override
+                            public RdfStream apply(final FedoraResource child) {
+<span class="nc" id="L285">                                return child.getTriples(translator(), ImmutableList.of(</span>
+                                        TypeRdfContext.class,
+                                        PropertiesRdfContext.class,
+                                        BlankNodeRdfContext.class));
+                            }
+                        })), tripleFilter));
+
+            }
+        }
+
+<span class="pc bpc" id="L295" title="1 of 4 branches missed.">        if (httpTripleUtil != null &amp;&amp; ldpPreferences.prefersServerManaged()) {</span>
+<span class="fc" id="L296">            httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());</span>
+        }
+
+
+<span class="fc" id="L300">        return rdfStream;</span>
+    }
+
+    /**
+     * Get the binary content of a datastream
+     *
+     * @return Binary blob
+     * @throws RepositoryException
+     */
+    protected Response getBinaryContent(final String rangeValue)
+            throws IOException {
+<span class="fc" id="L311">            final FedoraBinary binary = (FedoraBinary)resource();</span>
+
+            // we include an explicit etag, because the default behavior is to use the JCR node's etag, not
+            // the jcr:content node digest. The etag is only included if we are not within a transaction.
+<span class="fc" id="L315">            final String txId = TransactionServiceImpl.getCurrentTransactionId(session());</span>
+<span class="pc bpc" id="L316" title="1 of 2 branches missed.">            if (txId == null) {</span>
+<span class="fc" id="L317">                checkCacheControlHeaders(request, servletResponse, binary, session());</span>
+            }
+<span class="fc" id="L319">            final CacheControl cc = new CacheControl();</span>
+<span class="fc" id="L320">            cc.setMaxAge(0);</span>
+<span class="fc" id="L321">            cc.setMustRevalidate(true);</span>
+            Response.ResponseBuilder builder;
+
+<span class="pc bpc" id="L324" title="3 of 4 branches missed.">            if (rangeValue != null &amp;&amp; rangeValue.startsWith(&quot;bytes&quot;)) {</span>
+
+<span class="nc" id="L326">                final Range range = Range.convert(rangeValue);</span>
+
+<span class="nc" id="L328">                final long contentSize = binary.getContentSize();</span>
+
+                final String endAsString;
+
+<span class="nc bnc" id="L332" title="All 2 branches missed.">                if (range.end() == -1) {</span>
+<span class="nc" id="L333">                    endAsString = Long.toString(contentSize - 1);</span>
+                } else {
+<span class="nc" id="L335">                    endAsString = Long.toString(range.end());</span>
+                }
+
+<span class="nc" id="L338">                final String contentRangeValue =</span>
+                        String.format(&quot;bytes %s-%s/%s&quot;, range.start(),
+                                endAsString, contentSize);
+
+<span class="nc bnc" id="L342" title="All 6 branches missed.">                if (range.end() &gt; contentSize ||</span>
+                        (range.end() == -1 &amp;&amp; range.start() &gt; contentSize)) {
+
+<span class="nc" id="L345">                    builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)</span>
+                            .header(&quot;Content-Range&quot;, contentRangeValue);
+                } else {
+<span class="nc" id="L348">                    final long maxBufferSize = MAX_BUFFER_SIZE; // 10MB max buffer size?</span>
+<span class="nc" id="L349">                    final long rangeStart = range.start();</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">                    final long rangeSize = range.size() == -1 ? contentSize - rangeStart : range.size();</span>
+<span class="nc" id="L351">                    final long remainingBytes = contentSize - rangeStart;</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">                    final long bufSize = rangeSize &lt; remainingBytes ? rangeSize : remainingBytes;</span>
+
+<span class="nc bnc" id="L354" title="All 2 branches missed.">                    if (bufSize &lt; maxBufferSize) {</span>
+                        // Small size range content retrieval use javax.jcr.Binary to improve performance
+<span class="nc" id="L356">                        final byte[] buf = new byte[(int) bufSize];</span>
+
+<span class="nc" id="L358">                        final Binary binaryContent = binary.getBinaryContent();</span>
+                        try {
+<span class="nc" id="L360">                            binaryContent.read(buf, rangeStart);</span>
+<span class="nc" id="L361">                        } catch (RepositoryException e1) {</span>
+<span class="nc" id="L362">                            throw new RepositoryRuntimeException(e1);</span>
+<span class="nc" id="L363">                        }</span>
+<span class="nc" id="L364">                        binaryContent.dispose();</span>
+
+<span class="nc" id="L366">                        builder = status(PARTIAL_CONTENT).entity(buf)</span>
+                                .header(&quot;Content-Range&quot;, contentRangeValue);
+<span class="nc" id="L368">                    } else {</span>
+                        // For large range content retrieval, go with the InputStream class to balance
+                        // the memory usage, though this is a rare case in range content retrieval.
+<span class="nc" id="L371">                        final InputStream content = binary.getContent();</span>
+<span class="nc" id="L372">                        final RangeRequestInputStream rangeInputStream =</span>
+                                new RangeRequestInputStream(content, range.start(), range.size());
+
+<span class="nc" id="L375">                        builder = status(PARTIAL_CONTENT).entity(rangeInputStream)</span>
+                                .header(&quot;Content-Range&quot;, contentRangeValue);
+                    }
+                }
+
+<span class="nc" id="L380">            } else {</span>
+<span class="fc" id="L381">                final InputStream content = binary.getContent();</span>
+<span class="fc" id="L382">                builder = ok(content);</span>
+            }
+
+
+            // we set the content-type explicitly to avoid content-negotiation from getting in the way
+<span class="fc" id="L387">            return builder.type(binary.getMimeType())</span>
+                    .cacheControl(cc)
+                    .build();
+
+        }
+
+    protected RdfStream getTriples(final Class&lt;? extends RdfStream&gt; x) {
+<span class="fc" id="L394">        return getTriples(resource(), x);</span>
+    }
+
+    protected RdfStream getTriples(final FedoraResource resource, final Class&lt;? extends RdfStream&gt; x) {
+<span class="fc" id="L398">        return resource.getTriples(translator(), x);</span>
+    }
+
+    protected URI getUri(final FedoraResource resource) {
+        try {
+<span class="fc" id="L403">            final String uri = translator().reverse().convert(resource).getURI();</span>
+<span class="fc" id="L404">            return new URI(uri);</span>
+<span class="nc" id="L405">        } catch (final URISyntaxException e) {</span>
+<span class="nc" id="L406">            throw new BadRequestException(e);</span>
+        }
+    }
+
+    protected FedoraResource resource() {
+<span class="fc bfc" id="L411" title="All 2 branches covered.">        if (resource == null) {</span>
+<span class="fc" id="L412">            resource = getResourceFromPath(externalPath());</span>
+        }
+
+<span class="fc" id="L415">        return resource;</span>
+    }
+
+
+    /**
+     * Add any resource-specific headers to the response
+     * @param resource
+     */
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+<span class="fc bfc" id="L424" title="All 2 branches covered.">        if (resource instanceof FedoraBinary) {</span>
+
+<span class="fc" id="L426">            final FedoraBinary binary = (FedoraBinary)resource;</span>
+<span class="fc" id="L427">            final ContentDisposition contentDisposition = ContentDisposition.type(&quot;attachment&quot;)</span>
+                    .fileName(binary.getFilename())
+                    .creationDate(binary.getCreatedDate())
+                    .modificationDate(binary.getLastModifiedDate())
+                    .size(binary.getContentSize())
+                    .build();
+
+<span class="fc" id="L434">            servletResponse.addHeader(&quot;Content-Type&quot;, binary.getMimeType());</span>
+<span class="fc" id="L435">            servletResponse.addHeader(&quot;Content-Length&quot;, String.valueOf(binary.getContentSize()));</span>
+<span class="fc" id="L436">            servletResponse.addHeader(&quot;Accept-Ranges&quot;, &quot;bytes&quot;);</span>
+<span class="fc" id="L437">            servletResponse.addHeader(&quot;Content-Disposition&quot;, contentDisposition.toString());</span>
+        }
+
+<span class="fc" id="L440">        servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + LDP_NAMESPACE + &quot;Resource&gt;;rel=\&quot;type\&quot;&quot;);</span>
+
+<span class="fc bfc" id="L442" title="All 2 branches covered.">        if (resource instanceof NonRdfSource) {</span>
+<span class="fc" id="L443">            servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + LDP_NAMESPACE + &quot;NonRDFSource&gt;;rel=\&quot;type\&quot;&quot;);</span>
+<span class="fc bfc" id="L444" title="All 2 branches covered.">        } else if (resource instanceof Container) {</span>
+<span class="fc" id="L445">            servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + CONTAINER.getURI() + &quot;&gt;;rel=\&quot;type\&quot;&quot;);</span>
+<span class="fc bfc" id="L446" title="All 2 branches covered.">            if (resource.hasType(LDP_BASIC_CONTAINER)) {</span>
+<span class="fc" id="L447">                servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + BASIC_CONTAINER.getURI() + &quot;&gt;;rel=\&quot;type\&quot;&quot;);</span>
+<span class="fc bfc" id="L448" title="All 2 branches covered.">            } else if (resource.hasType(LDP_DIRECT_CONTAINER)) {</span>
+<span class="fc" id="L449">                servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + DIRECT_CONTAINER.getURI() + &quot;&gt;;rel=\&quot;type\&quot;&quot;);</span>
+<span class="fc bfc" id="L450" title="All 2 branches covered.">            } else if (resource.hasType(LDP_INDIRECT_CONTAINER)) {</span>
+<span class="fc" id="L451">                servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + INDIRECT_CONTAINER.getURI() + &quot;&gt;;rel=\&quot;type\&quot;&quot;);</span>
+            } else {
+<span class="fc" id="L453">                servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + BASIC_CONTAINER.getURI() + &quot;&gt;;rel=\&quot;type\&quot;&quot;);</span>
+            }
+        } else {
+<span class="fc" id="L456">            servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + LDP_NAMESPACE + &quot;RDFSource&gt;;rel=\&quot;type\&quot;&quot;);</span>
+        }
+
+<span class="fc" id="L459">    }</span>
+
+    /**
+     * Evaluate the cache control headers for the request to see if it can be served from
+     * the cache.
+     *
+     * @param request
+     * @param servletResponse
+     * @param resource
+     * @param session
+     * @throws javax.jcr.RepositoryException
+     */
+    protected static void checkCacheControlHeaders(final Request request,
+                                                   final HttpServletResponse servletResponse,
+                                                   final FedoraResource resource,
+                                                   final Session session) {
+<span class="fc" id="L475">        evaluateRequestPreconditions(request, servletResponse, resource, session, true);</span>
+<span class="fc" id="L476">        addCacheControlHeaders(servletResponse, resource, session);</span>
+<span class="fc" id="L477">    }</span>
+
+    /**
+     * Add ETag and Last-Modified cache control headers to the response
+     * @param servletResponse
+     * @param resource
+     */
+    protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
+                                                 final FedoraResource resource,
+                                                 final Session session) {
+
+<span class="fc" id="L488">        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);</span>
+<span class="fc bfc" id="L489" title="All 2 branches covered.">        if (txId != null) {</span>
+            // Do not add caching headers if in a transaction
+<span class="fc" id="L491">            return;</span>
+        }
+
+<span class="fc" id="L494">        final EntityTag etag = new EntityTag(resource.getEtagValue());</span>
+<span class="fc" id="L495">        final Date date = resource.getLastModifiedDate();</span>
+
+<span class="fc bfc" id="L497" title="All 2 branches covered.">        if (!etag.getValue().isEmpty()) {</span>
+<span class="fc" id="L498">            servletResponse.addHeader(&quot;ETag&quot;, etag.toString());</span>
+        }
+
+<span class="fc bfc" id="L501" title="All 2 branches covered.">        if (date != null) {</span>
+<span class="fc" id="L502">            servletResponse.addDateHeader(&quot;Last-Modified&quot;, date.getTime());</span>
+        }
+<span class="fc" id="L504">    }</span>
+
+    /**
+     * Evaluate request preconditions to ensure the resource is the expected state
+     * @param request
+     * @param resource
+     */
+    protected static void evaluateRequestPreconditions(final Request request,
+                                                       final HttpServletResponse servletResponse,
+                                                       final FedoraResource resource,
+                                                       final Session session) {
+<span class="fc" id="L515">        evaluateRequestPreconditions(request, servletResponse, resource, session, false);</span>
+<span class="fc" id="L516">    }</span>
+
+    private static void evaluateRequestPreconditions(final Request request,
+                                                     final HttpServletResponse servletResponse,
+                                                     final FedoraResource resource,
+                                                     final Session session,
+                                                     final boolean cacheControl) {
+
+<span class="fc" id="L524">        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);</span>
+<span class="fc bfc" id="L525" title="All 2 branches covered.">        if (txId != null) {</span>
+            // Force cache revalidation if in a transaction
+<span class="fc" id="L527">            servletResponse.addHeader(CACHE_CONTROL, &quot;must-revalidate&quot;);</span>
+<span class="fc" id="L528">            servletResponse.addHeader(CACHE_CONTROL, &quot;max-age=0&quot;);</span>
+<span class="fc" id="L529">            return;</span>
+        }
+
+<span class="fc" id="L532">        final EntityTag etag = new EntityTag(resource.getEtagValue());</span>
+<span class="fc" id="L533">        final Date date = resource.getLastModifiedDate();</span>
+<span class="fc" id="L534">        final Date roundedDate = new Date();</span>
+
+<span class="fc bfc" id="L536" title="All 2 branches covered.">        if (date != null) {</span>
+<span class="fc" id="L537">            roundedDate.setTime(date.getTime() - date.getTime() % 1000);</span>
+        }
+
+<span class="fc" id="L540">        Response.ResponseBuilder builder = request.evaluatePreconditions(etag);</span>
+<span class="fc bfc" id="L541" title="All 2 branches covered.">        if ( builder != null ) {</span>
+<span class="fc" id="L542">            builder = builder.entity(&quot;ETag mismatch&quot;);</span>
+        } else {
+<span class="fc" id="L544">            builder = request.evaluatePreconditions(roundedDate);</span>
+<span class="pc bpc" id="L545" title="1 of 2 branches missed.">            if ( builder != null ) {</span>
+<span class="nc" id="L546">                builder = builder.entity(&quot;Date mismatch&quot;);</span>
+            }
+        }
+
+<span class="fc bfc" id="L550" title="All 4 branches covered.">        if (builder != null &amp;&amp; cacheControl ) {</span>
+<span class="fc" id="L551">            final CacheControl cc = new CacheControl();</span>
+<span class="fc" id="L552">            cc.setMaxAge(0);</span>
+<span class="fc" id="L553">            cc.setMustRevalidate(true);</span>
+            // here we are implicitly emitting a 304
+            // the exception is not an error, it's genuinely
+            // an exceptional condition
+<span class="fc" id="L557">            builder = builder.cacheControl(cc).lastModified(date).tag(etag);</span>
+        }
+<span class="fc bfc" id="L559" title="All 2 branches covered.">        if (builder != null) {</span>
+<span class="fc" id="L560">            throw new WebApplicationException(builder.build());</span>
+        }
+<span class="fc" id="L562">    }</span>
+
+    protected static MediaType getSimpleContentType(final MediaType requestContentType) {
+<span class="fc bfc" id="L565" title="All 2 branches covered.">        return requestContentType != null ? new MediaType(requestContentType.getType(), requestContentType.getSubtype())</span>
+                : APPLICATION_OCTET_STREAM_TYPE;
+    }
+
+    protected static boolean isRdfContentType(final String contentTypeString) {
+<span class="fc bfc" id="L570" title="All 2 branches covered.">        return contentTypeToLang(contentTypeString) != null;</span>
+    }
+
+    protected void replaceResourceBinaryWithStream(final FedoraBinary result,
+                                                   final InputStream requestBodyStream,
+                                                   final ContentDisposition contentDisposition,
+                                                   final MediaType contentType,
+                                                   final String checksum) throws InvalidChecksumException {
+<span class="fc" id="L578">        final URI checksumURI = checksumURI(checksum);</span>
+<span class="pc bpc" id="L579" title="1 of 2 branches missed.">        final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : &quot;&quot;;</span>
+<span class="fc bfc" id="L580" title="All 2 branches covered.">        final String originalContentType = contentType != null ? contentType.toString() : &quot;&quot;;</span>
+
+<span class="fc" id="L582">        result.setContent(requestBodyStream,</span>
+                originalContentType,
+                checksumURI,
+                originalFileName,
+                storagePolicyDecisionPoint);
+<span class="fc" id="L587">    }</span>
+
+    protected void replaceResourceWithStream(final FedoraResource resource,
+                                             final InputStream requestBodyStream,
+                                             final MediaType contentType,
+                                             final RdfStream resourceTriples) throws MalformedRdfException {
+<span class="fc" id="L593">        final Lang format = contentTypeToLang(contentType.toString());</span>
+
+<span class="fc" id="L595">        final Model inputModel = createDefaultModel()</span>
+                .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+
+<span class="fc" id="L598">        resource.replaceProperties(translator(), inputModel, resourceTriples);</span>
+<span class="fc" id="L599">    }</span>
+
+    protected void patchResourcewithSparql(final FedoraResource resource,
+                                           final String requestBody,
+                                           final RdfStream resourceTriples) throws MalformedRdfException {
+<span class="fc" id="L604">        resource.updateProperties(translator(), requestBody, resourceTriples);</span>
+<span class="fc" id="L605">    }</span>
+
+    /**
+     * Create a checksum URI object.
+     **/
+    private static URI checksumURI( final String checksum ) {
+<span class="pc bpc" id="L611" title="1 of 2 branches missed.">        if (!isBlank(checksum)) {</span>
+<span class="nc" id="L612">            return URI.create(checksum);</span>
+        }
+<span class="fc" id="L614">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>

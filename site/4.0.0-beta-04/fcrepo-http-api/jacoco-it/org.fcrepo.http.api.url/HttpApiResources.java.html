@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>HttpApiResources.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.url</a> &gt; <span class="el_source">HttpApiResources.java</span></div><h1>HttpApiResources.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2014 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api.url;
+
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static java.util.Collections.singletonMap;
+import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
+import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.http.api.FedoraExport;
+import org.fcrepo.http.api.FedoraVersioning;
+import org.fcrepo.http.api.repository.FedoraRepositoryExport;
+import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
+import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.models.NonRdfSource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.serialization.SerializerUtil;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.core.UriInfo;
+
+import java.util.Map;
+
+/**
+ * Inject our HTTP API methods into the object graphs
+ *
+ * @author awoods
+ */
+@Component
+<span class="fc" id="L60">public class HttpApiResources implements UriAwareResourceModelFactory {</span>
+
+    @Autowired
+    protected SerializerUtil serializers;
+
+    @Override
+    public Model createModelForResource(final FedoraResource resource,
+        final UriInfo uriInfo, final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator) {
+
+<span class="fc" id="L69">        final Model model = createDefaultModel();</span>
+
+<span class="fc" id="L71">        final Resource s = idTranslator.reverse().convert(resource);</span>
+
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (resource.hasType(ROOT)) {</span>
+<span class="fc" id="L74">            addRepositoryStatements(uriInfo, model, s);</span>
+        } else {
+<span class="fc" id="L76">            addNodeStatements(resource, uriInfo, model, s);</span>
+        }
+
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (resource instanceof NonRdfSourceDescription) {</span>
+<span class="fc" id="L80">            final NonRdfSource describedResource = ((NonRdfSourceDescription) resource).getDescribedResource();</span>
+
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">            if (describedResource instanceof FedoraBinary) {</span>
+<span class="fc" id="L83">                addContentStatements(idTranslator, (FedoraBinary)describedResource, model);</span>
+            }
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        } else if (resource instanceof FedoraBinary) {</span>
+<span class="fc" id="L86">            addContentStatements(idTranslator, (FedoraBinary)resource, model);</span>
+        }
+
+<span class="fc" id="L89">        return model;</span>
+    }
+
+    private static void addContentStatements(final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator,
+                                             final FedoraBinary resource,
+                                             final Model model) {
+        // fcr:fixity
+<span class="fc" id="L96">        final Resource subject = idTranslator.reverse().convert(resource);</span>
+<span class="fc" id="L97">        model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +</span>
+                &quot;/fcr:fixity&quot;));
+<span class="fc" id="L99">    }</span>
+
+    private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
+        final Model model, final Resource s) {
+
+<span class="fc" id="L104">        final Map&lt;String, String&gt; pathMap =</span>
+                singletonMap(&quot;path&quot;, resource.getPath().substring(1));
+
+        // fcr:versions
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        if (resource.isVersioned()) {</span>
+<span class="fc" id="L109">            model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo</span>
+                    .getBaseUriBuilder().path(FedoraVersioning.class).buildFromMap(
+                            pathMap, false).toASCIIString()));
+        }
+
+<span class="fc" id="L114">        final Property dcFormat = createProperty(DC_NAMESPACE + &quot;format&quot;);</span>
+        // fcr:exports?format=xyz
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        for (final String key : serializers.keySet()) {</span>
+<span class="fc" id="L117">            final Resource format =</span>
+                    createResource(uriInfo.getBaseUriBuilder().path(
+                            FedoraExport.class).queryParam(&quot;format&quot;, key)
+                            .buildFromMap(pathMap, false).toASCIIString());
+<span class="fc" id="L121">            model.add(s, HAS_SERIALIZATION, format);</span>
+
+            //RDF the serialization
+<span class="fc" id="L124">            final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);</span>
+
+<span class="fc" id="L126">            model.add(formatRDF, RDFS_LABEL, key);</span>
+<span class="fc" id="L127">            model.add(format, dcFormat, formatRDF);</span>
+<span class="fc" id="L128">        }</span>
+<span class="fc" id="L129">    }</span>
+
+    private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
+        final Resource s) {
+        // fcr:tx
+<span class="fc" id="L134">        model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo</span>
+                .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)
+                .build().toASCIIString()));
+
+<span class="fc" id="L138">        final Property dcFormat = createProperty(DC_NAMESPACE + &quot;format&quot;);</span>
+        // fcr:export?format=xyz
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        for (final String key : serializers.keySet()) {</span>
+<span class="fc" id="L141">            final Resource format = createResource(uriInfo</span>
+                .getBaseUriBuilder().path(FedoraRepositoryExport.class)
+                .queryParam(&quot;format&quot;, key).build().toASCIIString());
+<span class="fc" id="L144">            model.add(s, HAS_SERIALIZATION, format);</span>
+<span class="fc" id="L145">            final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);</span>
+
+<span class="fc" id="L147">            model.add(formatRDF, RDFS_LABEL, key);</span>
+<span class="fc" id="L148">            model.add(format, dcFormat, formatRDF);</span>
+<span class="fc" id="L149">        }</span>
+<span class="fc" id="L150">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>
