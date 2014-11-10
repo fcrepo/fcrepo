@@ -34,4 +34,12 @@ public class MetricsServiceTest {
       final RegistryService registryService = RegistryService.getInstance();
       registryService.dumpMetrics(mockPrintStream);
     }
+
+    @Test
+    public void testSingletonBranch() {
+        //Create instance
+        RegistryService.getInstance();
+        //Fetches the created instance. Success indicated by branch coverage.
+        RegistryService.getInstance();
+    }
 }

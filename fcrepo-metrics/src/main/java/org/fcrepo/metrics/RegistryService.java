@@ -43,18 +43,11 @@ public class RegistryService {
 
     /**
      * Create the instance
-     * Inspired by: http://en.wikipedia.org/wiki/Double-checked_locking
      */
-    public static RegistryService getInstance() {
+    public synchronized static RegistryService getInstance() {
         RegistryService local = instance;
         if (null == local) {
-
-            synchronized (METRICS) {
-                local = instance;
-                if (null == local) {
-                    instance = local = new RegistryService();
-                }
-            }
+             instance = local = new RegistryService();
         }
         return local;
     }
