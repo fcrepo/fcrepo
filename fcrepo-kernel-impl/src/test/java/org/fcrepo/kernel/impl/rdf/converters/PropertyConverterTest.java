@@ -17,6 +17,7 @@
 package org.fcrepo.kernel.impl.rdf.converters;
 
 import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.shared.InvalidPropertyURIException;
 import org.fcrepo.kernel.impl.utils.JcrPropertyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -122,6 +124,17 @@ public class PropertyConverterTest {
         assertEquals("ns001:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
     }
 
+    @Test (expected = InvalidPropertyURIException.class)
+    public void shouldThrowOnForward() throws RepositoryException {
+        final javax.jcr.Property p = mock(javax.jcr.Property.class);
+        testObj.convert(p);
+    }
+
+    @Test (expected = UnsupportedOperationException.class)
+    public void shouldThrowOnBackward() {
+        final Property property = testObj.convert(mockNamespacedProperty);
+        testObj.doBackward(property);
+    }
 
     private void mockNamespaceRegistry(final NamespaceRegistry mockRegistry) throws RepositoryException {
 
