@@ -56,16 +56,20 @@
                 <div class="panel-body">
                     #triples($subject.asNode())
 
-
-                    <h4>Properties</h4>
-                    #foreach($propertySubject in $model.listSubjectsWithProperty($helpers.rdfsDomain(), $subject))
-                        <div resource="$propertySubject.getURI()">
-                            <h5>$propertySubject.getURI()</h5>
-                            <div>
-                            #triples($propertySubject.asNode())
+                    <div class="nodetype-properties">
+                        #set($properties = $model.listSubjectsWithProperty($helpers.rdfsDomain(), $subject))
+                        #if ($properties.hasNext())
+                            <h4>Properties</h4>
+                        #end
+                        #foreach($propertySubject in $properties)
+                            <div resource="$propertySubject.getURI()">
+                                <h5>$propertySubject.getURI()</h5>
+                                <div>
+                                #triples($propertySubject.asNode())
+                                </div>
                             </div>
-                        </div>
-                    #end
+                        #end
+                    </div>
                 </div>
                 </div>
             #end
