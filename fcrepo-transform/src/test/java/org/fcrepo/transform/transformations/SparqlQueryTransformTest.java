@@ -28,6 +28,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -35,6 +36,8 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -78,5 +81,13 @@ public class SparqlQueryTransformTest {
             assertTrue(resultSet.hasNext());
             assertEquals("some-title", resultSet.nextSolution().get("title").asLiteral().getValue());
         }
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void testApplyException() {
+        final RdfStream model = mock(RdfStream.class);
+        testObj = new SparqlQueryTransform(null);
+        doThrow(IOException.class).when(model).asModel();
+        testObj.apply(model);
     }
 }
