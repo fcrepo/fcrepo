@@ -16,17 +16,22 @@
 package org.fcrepo.kernel.utils;
 
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.kernel.utils.NamespaceTools.validatePath;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.modeshape.jcr.api.NamespaceRegistry;
 
 /**
  * <p>NamespaceToolsTest class.</p>
@@ -44,15 +49,56 @@ public class NamespaceToolsTest {
     @Mock
     private Workspace mockWork;
 
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
+
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         initMocks(this);
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getWorkspace()).thenReturn(mockWork);
     }
 
     @Test
     public void testFunction() throws RepositoryException {
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getWorkspace()).thenReturn(mockWork);
         getNamespaceRegistry.apply(mockNode);
     }
+
+    @Test (expected = NullPointerException.class)
+    public void testNullNamespaceRegistry() {
+        validatePath(mockSession, "irrelevant");
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testWrapsRepositoryException() {
+        when(mockSession.getWorkspace()).thenThrow(new RepositoryRuntimeException(""));
+        validatePath(mockSession, "irrelevant");
+    }
+
+    @Test
+    public void testValidatePathWithValidNamespace() throws RepositoryException {
+        when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        validatePath(mockSession, "easy/valid:test");
+    }
+
+    @Test (expected = FedoraInvalidNamespaceException.class)
+    public void testValidatePathWithUnregisteredNamespace() throws RepositoryException {
+        when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getURI("invalid")).thenThrow(new NamespaceException());
+        validatePath(mockSession, "easy/invalid:test");
+    }
+
+    @Test (expected = FedoraInvalidNamespaceException.class)
+    public void testValidatePathWithNoNamespace() throws RepositoryException {
+        when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        validatePath(mockSession, "easy/:test");
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testWrapsRepositoryExceptionFromNamespaceRegistry() throws RepositoryException {
+        when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getURI("broken")).thenThrow(new RepositoryException());
+        validatePath(mockSession, "test/a/broken:namespace-registry");
+    }
+
 }
