@@ -17,8 +17,13 @@ package org.fcrepo.kernel.utils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import javax.jcr.NamespaceException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
 import com.google.common.base.Function;
@@ -47,4 +52,46 @@ public abstract class NamespaceTools {
         }
 
     };
+
+    /**
+     * Validate resource path for unregistered namespace prefixes
+     *
+     * @param session the JCR session to use
+     * @param path the absolute path to the object
+     * @throws org.fcrepo.kernel.exception.FedoraInvalidNamespaceException on unregistered namespaces
+     * @throws org.fcrepo.kernel.exception.RepositoryRuntimeException
+     */
+    public static void validatePath(final Session session, final String path) {
+
+        final javax.jcr.NamespaceRegistry namespaceRegistry;
+        try {
+            namespaceRegistry =
+                    session.getWorkspace().getNamespaceRegistry();
+            checkNotNull(namespaceRegistry,
+                    "Couldn't find namespace registry in repository!");
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+        final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
+        final String[] pathSegments = relPath.split("/");
+        for (final String segment : pathSegments) {
+            if (segment.length() > 0 && segment.contains(":") &&
+                    segment.substring(0, segment.indexOf(":")) != "fedora") {
+                final String prefix = segment.substring(0, segment.indexOf(":"));
+                if (prefix.length() == 0) {
+                    throw new FedoraInvalidNamespaceException(
+                            String.format("Unable to identify namespace for (%s)", segment));
+                }
+                try {
+                    namespaceRegistry.getURI(prefix);
+                } catch (final NamespaceException e) {
+                    throw new FedoraInvalidNamespaceException(
+                            String.format("The namespace prefix (%s) has not been registered", prefix), e);
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            }
+        }
+    }
 }
