@@ -128,7 +128,7 @@ WHERE { }
         #end
     </select>
         </div>
-    <button type="submit" class="btn">Import</button>
+    <button type="submit" class="btn btn-primary">Import</button>
     <hr />
 </form>
 
