@@ -26,7 +26,6 @@ import static org.fcrepo.jcr.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
@@ -265,14 +264,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     private static BinaryValue getBinaryValue(final DocumentReader docReader) {
         final Property binaryProperty = docReader.getProperty(JCR_DATA);
         return (BinaryValue) binaryProperty.getFirstValue();
-    }
-
-    private void saveProperties(final DocumentReader docReader) {
-        LOGGER.trace("Persisting properties for {}", docReader.getDocumentId());
-        final Map<Name, Property> properties = docReader.getProperties();
-        final ExtraProperties extraProperties = extraPropertiesFor(docReader.getDocumentId(), true);
-        extraProperties.addAll(properties).except(JCR_PRIMARY_TYPE, JCR_DATA, CONTENT_SIZE);
-        extraProperties.save();
     }
 
     /* Override write operations to also update the parent file's timestamp, so
