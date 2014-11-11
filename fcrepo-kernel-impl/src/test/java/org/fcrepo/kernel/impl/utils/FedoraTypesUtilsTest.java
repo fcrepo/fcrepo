@@ -63,6 +63,7 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -188,6 +189,12 @@ public class FedoraTypesUtilsTest {
     public void testIsInternalReferenceProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
         when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
+        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testIsInternalReferencePropertyException() throws RepositoryException {
+        when(mockProperty.getType()).thenThrow(RepositoryException.class);
         assertTrue(isInternalReferenceProperty.apply(mockProperty));
     }
 

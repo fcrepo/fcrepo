@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -25,6 +26,7 @@ import javax.jcr.RepositoryException;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -62,6 +64,18 @@ public class TombstoneImplTest {
     public void testDelete() throws RepositoryException {
         testObj.delete();
         verify(mockNode).remove();
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testDeleteException() throws RepositoryException {
+      doThrow(new RepositoryException()).when(mockNode).remove();
+      testObj.delete();
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testHasMixinException() throws RepositoryException {
+        doThrow(new RepositoryException()).when(mockNode).isNodeType(FEDORA_TOMBSTONE);
+        assertTrue(TombstoneImpl.hasMixin(mockNode));
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,6 +68,27 @@ public class BinaryServiceImplTest {
         when(mockSession.getNode("/")).thenReturn(mockRoot);
         testObj.findOrCreate(mockSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
+    }
+
+    @Test
+    public void testFindOrCreateBinary2() throws Exception {
+        when(mockDsNode.isNew()).thenReturn(true);
+        final String testPath = "/foo/bar";
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
+        when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
+        when(mockSession.getNode("/")).thenReturn(mockRoot);
+        testObj.findOrCreate(mockSession, testPath);
+        verify(mockRoot).getNode(testPath.substring(1));
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testFindOrCreateBinary3() throws Exception {
+        when(mockDsNode.getNode(JCR_CONTENT)).thenThrow(RepositoryException.class);
+        final String testPath = "/foo/bar";
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
+        when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
+        when(mockSession.getNode("/")).thenReturn(mockRoot);
+        testObj.findOrCreate(mockSession, testPath);
     }
 
     @Test

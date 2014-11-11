@@ -15,14 +15,8 @@
  */
 package org.fcrepo.metrics;
 
-import static com.codahale.metrics.ConsoleReporter.forRegistry;
-import static com.codahale.metrics.MetricFilter.ALL;
 import static com.codahale.metrics.SharedMetricRegistries.getOrCreate;
 
-import java.io.PrintStream;
-
-import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 
 /**
@@ -43,18 +37,11 @@ public class RegistryService {
 
     /**
      * Create the instance
-     * Inspired by: http://en.wikipedia.org/wiki/Double-checked_locking
      */
-    public static RegistryService getInstance() {
+    public synchronized static RegistryService getInstance() {
         RegistryService local = instance;
         if (null == local) {
-
-            synchronized (METRICS) {
-                local = instance;
-                if (null == local) {
-                    instance = local = new RegistryService();
-                }
-            }
+             instance = local = new RegistryService();
         }
         return local;
     }
@@ -69,21 +56,4 @@ public class RegistryService {
         return METRICS;
     }
 
-    /**
-     * Immediately dump the current metrics to the console
-     * 
-     * @param os
-     */
-    public void dumpMetrics(final PrintStream os) {
-
-        final MetricRegistry registry = getMetrics();
-
-        final MetricFilter filter = ALL;
-        final ConsoleReporter reporter = forRegistry(registry).build();
-
-        reporter.report(registry.getGauges(filter), registry
-                .getCounters(filter), registry.getHistograms(filter), registry
-                .getMeters(filter), registry.getTimers(filter));
-
-    }
 }
