@@ -20,17 +20,32 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_TSV;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_N3;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_NT;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_TTL;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_BIO;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_CSV;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_JSON;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_SSE;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_TEXT;
+import static javax.ws.rs.core.MediaType.valueOf;
+import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
+import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
+import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
+import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
+import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
 import static org.fcrepo.transform.http.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayOutputStream;
-
-import javax.ws.rs.core.MediaType;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +59,8 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.sparql.core.DatasetImpl;
+
+import javax.ws.rs.core.MediaType;
 
 /**
  * <p>ResultSetStreamingOutputTest class.</p>
@@ -88,8 +105,8 @@ public class ResultSetStreamingOutputTest {
 
 
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                testObj.writeTo(resultSet, null, null, null, MediaType
-                        .valueOf(contentTypeTextTSV), null, out);
+                testObj.writeTo(resultSet, null, null, null,
+                        valueOf(contentTypeTextTSV), null, out);
 
                 final String serialized = out.toString();
                 assertTrue(serialized.contains("test:subject"));
@@ -108,8 +125,8 @@ public class ResultSetStreamingOutputTest {
             final ResultSet resultSet = testResult.execSelect();
 
             try (final ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-                testObj.writeTo(resultSet, null, null, null, MediaType
-                        .valueOf(contentTypeRDFXML), null, out);
+                testObj.writeTo(resultSet, null, null, null,
+                        valueOf(contentTypeRDFXML), null, out);
                 final String serialized = out.toString();
                 assertTrue(serialized.contains("rs:ResultSet"));
             }
@@ -118,8 +135,27 @@ public class ResultSetStreamingOutputTest {
 
     @Test
     public void testGetResultsFormat() {
-        assertEquals(FMT_RS_TSV, getResultsFormat(MediaType
-                        .valueOf(contentTypeTextTSV)));
-        assertEquals(FMT_UNKNOWN, getResultsFormat(MediaType.valueOf("some/type")));
+        assertEquals(FMT_RS_TSV, getResultsFormat(valueOf(contentTypeTextTSV)));
+        assertEquals(FMT_UNKNOWN, getResultsFormat(valueOf("some/type")));
+        assertEquals(FMT_RS_CSV, getResultsFormat(valueOf(contentTypeTextCSV)));
+        assertEquals(FMT_RS_SSE, getResultsFormat(valueOf("text/sse")));
+        assertEquals(FMT_TEXT, getResultsFormat(valueOf(contentTypeTextPlain)));
+        assertEquals(FMT_RS_JSON, getResultsFormat(valueOf(contentTypeResultsJSON)));
+        assertEquals(FMT_RS_BIO, getResultsFormat(valueOf(contentTypeResultsBIO)));
+        assertEquals(FMT_RDF_TTL, getResultsFormat(valueOf(contentTypeTurtleAlt2)));
+        assertEquals(FMT_RDF_N3, getResultsFormat(valueOf(contentTypeN3Alt2)));
+        assertEquals(FMT_RDF_NT, getResultsFormat(valueOf(contentTypeNTriples)));
+    }
+
+    @Test
+    public void testNonWriteable() {
+        assertFalse(testObj.isWriteable(null, null, null,
+                MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+    }
+
+    @Test
+    public void testNegativeSize() {
+        assertTrue(testObj.getSize(null, null, null, null,
+                MediaType.APPLICATION_FORM_URLENCODED_TYPE) == -1);
     }
 }
