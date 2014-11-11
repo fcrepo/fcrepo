@@ -27,6 +27,7 @@ import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConve
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
+import static org.fcrepo.kernel.utils.NamespaceTools.validatePath;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
@@ -125,6 +126,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             throw new IdentifierConversionException("Asked to translate a resource " + resource
                     + " that doesn't match the URI template");
         } catch (final RepositoryException e) {
+            validatePath(session, path);
             try {
                 if ( e instanceof PathNotFoundException ) {
                     final Node preexistingNode = getClosestExistingAncestor(session, path);
