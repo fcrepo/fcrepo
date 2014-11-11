@@ -25,6 +25,7 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
@@ -71,6 +72,12 @@ public class DefaultMessageFactoryTest {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage("base-url", testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
+    }
+
+    @Test (expected = Exception.class)
+    public void testBuildMessageException() throws RepositoryException, JMSException {
+        doThrow(Exception.class).when(mockEvent).getUserData();
+        testDefaultMessageFactory.getMessage(mockEvent, mockSession);
     }
 
     @Test
