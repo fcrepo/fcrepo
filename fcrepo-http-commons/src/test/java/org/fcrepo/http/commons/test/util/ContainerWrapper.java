@@ -34,7 +34,10 @@ import org.fcrepo.http.commons.webxml.bind.InitParam;
 import org.fcrepo.http.commons.webxml.bind.Listener;
 import org.fcrepo.http.commons.webxml.bind.Servlet;
 import org.fcrepo.http.commons.webxml.bind.ServletMapping;
+import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.servlet.FilterRegistration;
 import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
@@ -66,6 +69,10 @@ public class ContainerWrapper implements ApplicationContextAware {
 
     public void setPort(final int port) {
         this.port = port;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     @PostConstruct
@@ -131,6 +138,18 @@ public class ContainerWrapper implements ApplicationContextAware {
 
         logger.debug("started grizzly webserver endpoint at " +
                 server.getHttpHandler().getName());
+    }
+
+    public void addHandler(final String data) {
+        final HttpHandler httpHandler = new HttpHandler() {
+
+            public void service(final Request request, final Response response)
+                    throws Exception {
+                response.getWriter().write(data);
+            }
+        };
+
+        server.getServerConfiguration().addHttpHandler(httpHandler, "/");
     }
 
     @PreDestroy
