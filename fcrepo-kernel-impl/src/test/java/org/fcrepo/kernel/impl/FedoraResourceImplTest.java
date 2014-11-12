@@ -30,6 +30,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,6 +53,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -124,6 +126,12 @@ public class FedoraResourceImplTest {
     public void testGetPath() throws RepositoryException {
         testObj.getPath();
         verify(mockNode).getPath();
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testGetPathException() throws RepositoryException {
+        doThrow(RepositoryException.class).when(mockNode).getPath();
+        testObj.getPath();
     }
 
     @Test
