@@ -33,7 +33,7 @@
 
 #if ($writable == true)
 <form id="action_create" name="action_create" method="POST" enctype="multipart/form-data">
-    <h3>Create New Node</h3>
+    <h3>Create New Child Resource</h3>
     <div class="form-group">
     <label for="new_mixin" class="control-label">
         Type
@@ -81,7 +81,7 @@ WHERE { }
 
 <form id="action_delete" name="action_delete" action="javascript:deleteItem()" method="POST">
     <input type="hidden" name="_method" value="DELETE" />
-    <h3>Delete Object</h3>
+    <h3>Delete Resource</h3>
     <button name="delete-button" type="submit" class="btn btn-danger">Delete</button>
     <hr />
 </form>
