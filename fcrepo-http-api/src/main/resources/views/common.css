@@ -99,3 +99,7 @@ dd {
 .panel-title > a {
     color: #428bca;
 }
+
+.nav-form {
+    text-align: center;
+}
