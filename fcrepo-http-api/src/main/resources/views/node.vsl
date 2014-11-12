@@ -39,7 +39,7 @@
         ## output triples for the topic node
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h4>Properties</h4>
+                    <h4 class="panel-title">Properties</h4>
                 </div>
                 <div class="panel-body">
                     #triples($topic)
@@ -54,11 +54,11 @@
             #foreach($subject in $model.listSubjects())
                 #if( $subject != $topic )
                     <div class="panel panel-default" resource="$subject.getURI()">
-                        <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
+                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
                             #if( $subject.getURI() && $subject.getURI().startsWith("http") )
-                                <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                                <h3 class="ctitle panel-title"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
                             #else
-                                <h3>$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</h3>
+                                <h3 class="ctitle panel-title">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</h3>
                             #end
                         </div>
                         <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">

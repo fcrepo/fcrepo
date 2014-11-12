@@ -44,7 +44,7 @@
         ## output triples for the topic node
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h4>Properties</h4>
+                    <h4 class="panel-title">Properties</h4>
                 </div>
                 <div class="panel-body">
                     #triples($topic)
@@ -55,7 +55,7 @@
             #if ($rdf.find($contentNode, $nodeany, $nodeany).hasNext())
                 <div class="panel-heading">
                     <a href="$contentNode" class="btn btn-success pull-right"><span class="glyphicon glyphicon-download"></span> Download</a>
-                    <h4>Content Properties <br/><small><a href="$contentNode.getURI()">$esc.html($helpers.getObjectTitle($rdf, $contentNode))</a></small></h4>
+                    <h4 class="panel-title">Content Properties <br/><small><a href="$contentNode.getURI()">$esc.html($helpers.getObjectTitle($rdf, $contentNode))</a></small></h4>
                 </div>
                 <div class="panel-body">
                     #triples($contentNode)
@@ -72,8 +72,8 @@
                     #if( $subject != $topic)
                         #if ( $subject.getURI() )
                         <div class="panel panel-default" resource="$subject.getURI()">
-                            <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
-                                <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                            <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
+                                <h3 class="panel-title ctitle"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
                             </div>
                             <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
                                 <div class="panel-body">
@@ -83,8 +83,8 @@
                         </div>
                         #else
                             <div class="panel panel-default" resource="$subject.getId()">
-                                <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getId())_triples" >
-                                    <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                                <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getId())_triples" >
+                                    <h3 class="panel-title ctitle"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
                                 </div>
                                 <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getId())_triples">
                                     <div class="panel-body">

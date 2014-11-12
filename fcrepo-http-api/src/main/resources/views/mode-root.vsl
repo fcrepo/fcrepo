@@ -38,8 +38,8 @@
         <div id="accordion">
         ## output triples for the topic node
             <div class="panel panel-default"> 
-                <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($topic.getURI())_triples">
-                    <h4>Properties</h4>
+                <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($topic.getURI())_triples">
+                    <h4 class="panel-title ctitle">Properties</h4>
                 </div>
                 <div class="panel-collapse collapse" id="$helpers.parameterize($topic.getURI())_triples">
 	                <div class="panel-body">
@@ -55,8 +55,8 @@
             #foreach($subject in $model.listSubjects())
                 #if( $subject != $topic )
                     <div class="panel panel-default" resource="$subject.getURI()">
-                        <div class="panel-heading" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples">
-                            <h3><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples">
+                            <h3 class="panel-title ctitle"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
                         </div>
                         <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
                             <div class="panel-body">

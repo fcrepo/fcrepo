@@ -79,3 +79,23 @@ dd {
 .panel-content .panel-heading {
 	font-size: 16px;
 }
+
+.ctitle:after {
+    content: "-";
+    color: grey;
+    float: right;
+    font-size: 0.8em;
+    line-height: normal;
+}
+
+.collapsed .ctitle:after {
+    color: grey;
+    content: "+";
+    float: right;
+    font-size: 0.8em;
+    line-height: normal;
+}
+
+.panel-title > a {
+    color: #428bca;
+}

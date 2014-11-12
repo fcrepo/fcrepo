@@ -42,7 +42,7 @@
         ## output triples for the topic node
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h4>Properties</h4>
+                    <h4 class="panel-title">Properties</h4>
                 </div>
                 <div class="panel-body">
                     #triples($topic)
@@ -56,7 +56,7 @@
 	            	#set($triple = $fixities.next())
 	            	#set($sub = $nodeany.createURI($triple.getObject().getURI()))
 	                <div class="panel-heading">
-	                    <h4>Fixity Properties <br/><small><a href="$triple.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $sub))</a></small></h4>
+	                    <h4 class="panel-title">Fixity Properties <br/><small><a href="$triple.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $sub))</a></small></h4>
 	                </div>
 	                <div class="panel-body">
 	                    #triples($sub)
