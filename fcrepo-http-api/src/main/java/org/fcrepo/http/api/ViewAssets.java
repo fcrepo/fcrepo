@@ -39,7 +39,7 @@ public class ViewAssets {
      */
     @GET
     @Path("common.css")
-    @Produces("text/css")
+    @Produces({"text/css", "*/*"})
     public Response getViewCss() {
         return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonCssLocation)).build();
     }
@@ -50,7 +50,7 @@ public class ViewAssets {
      */
     @GET
     @Path("common.js")
-    @Produces("text/javascript")
+    @Produces({"text/javascript", "*/*"})
     public Response getViewJs() {
         return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonJsLocation)).build();
     }
