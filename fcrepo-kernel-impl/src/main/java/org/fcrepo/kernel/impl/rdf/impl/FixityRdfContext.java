@@ -22,6 +22,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.RdfLexicon.CONTENT_LOCATION_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.FIXITY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
@@ -34,10 +35,11 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_CONTENT_LOCATION_VALUE;
 import java.net.URI;
 import java.util.Calendar;
 import java.util.Iterator;
+
 import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.vocabulary.RDF;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -80,7 +82,7 @@ public class FixityRdfContext extends NodeRdfContext {
                         try {
                             b.add(create(idTranslator.reverse().convert(resource).asNode(),
                                     HAS_FIXITY_RESULT.asNode(), resultSubject));
-                            b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
+                            b.add(create(resultSubject, type.asNode(), FIXITY_TYPE.asNode()));
                             final String storeIdentifier = blob.getStoreIdentifier();
                             final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
                                                                      .asNode();
@@ -90,21 +92,14 @@ public class FixityRdfContext extends NodeRdfContext {
                                         .asNode(), createLiteral(state
                                         .toString())));
                             }
-                            final String checksum =
-                                    blob.getComputedChecksum().toString();
-                            b.add(create(resultSubject, HAS_MESSAGE_DIGEST
-                                    .asNode(), createURI(checksum)));
+                            final String checksum = blob.getComputedChecksum().toString();
+                            b.add(create(resultSubject, HAS_MESSAGE_DIGEST.asNode(), createURI(checksum)));
                             b.add(create(resultSubject, HAS_SIZE.asNode(),
-                                    createTypedLiteral(
-                                            blob.getComputedSize())
-                                    .asNode()));
+                                    createTypedLiteral(blob.getComputedSize()).asNode()));
                             b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),
                                     contentLocation));
-                            b.add(create(contentLocation,
-                                    RDF.type.asNode(),
-                                    CONTENT_LOCATION_TYPE.asNode()));
-                            b.add(create(contentLocation,
-                                    HAS_CONTENT_LOCATION_VALUE.asNode(),
+                            b.add(create(contentLocation, type.asNode(), CONTENT_LOCATION_TYPE.asNode()));
+                            b.add(create(contentLocation, HAS_CONTENT_LOCATION_VALUE.asNode(),
                                     createLiteral(storeIdentifier)));
 
                             return b.build().iterator();

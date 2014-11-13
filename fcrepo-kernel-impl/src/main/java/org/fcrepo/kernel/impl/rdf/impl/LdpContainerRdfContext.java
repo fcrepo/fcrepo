@@ -23,6 +23,7 @@ import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -30,12 +31,14 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
 import org.fcrepo.kernel.utils.iterators.PropertyIterator;
+
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
+
 import java.util.Iterator;
 
 import static com.google.common.collect.Iterators.singletonIterator;
@@ -56,10 +59,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 9/25/14
  */
 public class LdpContainerRdfContext extends NodeRdfContext {
+
     private static final Logger LOGGER = getLogger(ChildrenRdfContext.class);
+
 
     /**
      * Default constructor.
@@ -145,7 +151,14 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
         final Iterator<FedoraResource> memberNodes = container.getChildren();
 
-        return Iterators.concat(Iterators.transform(memberNodes, new Function<FedoraResource, Iterator<Triple>>() {
+        return Iterators.concat(Iterators.transform(memberNodes, childTriples(memberRelation,
+                insertedContainerProperty)));
+    }
+
+    private final Function<FedoraResource, Iterator<Triple>> childTriples(
+            final com.hp.hpl.jena.graph.Node memberRelation, final String insertedContainerProperty) {
+        return new Function<FedoraResource, Iterator<Triple>>() {
+
             @Override
             public Iterator<Triple> apply(final FedoraResource child) {
 
@@ -171,10 +184,11 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                         return emptyIterator();
                     }
 
-                    final PropertyValueIterator values
-                            = new PropertyValueIterator(child.getProperty(insertedContentProperty));
+                    final PropertyValueIterator values =
+                            new PropertyValueIterator(child.getProperty(insertedContentProperty));
 
                     return Iterators.transform(values, new Function<Value, Triple>() {
+
                         @Override
                         public Triple apply(final Value input) {
                             final RDFNode membershipResource = new ValueConverter(session(), translator())
@@ -186,7 +200,6 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                     throw new RepositoryRuntimeException(e);
                 }
             }
-        }));
+        };
     }
-
 }

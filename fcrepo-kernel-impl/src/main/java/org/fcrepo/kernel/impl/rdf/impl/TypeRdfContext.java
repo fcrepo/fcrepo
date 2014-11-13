@@ -16,24 +16,29 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
-import java.util.Iterator;
+
+import java.util.Collections;
 import java.util.Set;
 
 import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.ImmutableSet.builder;
+import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -61,35 +66,31 @@ public class TypeRdfContext extends NodeRdfContext {
     }
 
     private void concatRdfTypes() throws RepositoryException {
-        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
+        final ImmutableSet.Builder<NodeType> nodeTypesB = builder();
 
         final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();
         nodeTypesB.add(primaryNodeType);
 
-        if (primaryNodeType != null && primaryNodeType.getSupertypes() != null) {
-            final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
-                    .add(primaryNodeType.getSupertypes()).build();
-            nodeTypesB.addAll(primarySupertypes);
-        }
+        final Set<NodeType> primarySupertypes = setOf(primaryNodeType.getSupertypes());
+        nodeTypesB.addAll(primarySupertypes);
+
 
         final NodeType[] mixinNodeTypesArr = resource().getNode().getMixinNodeTypes();
 
-        if (mixinNodeTypesArr != null) {
-            final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
-            nodeTypesB.addAll(mixinNodeTypes);
 
-            final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
-            for (final NodeType mixinNodeType : mixinNodeTypes) {
-                mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
-            }
+        final Set<NodeType> mixinNodeTypes = setOf(mixinNodeTypesArr);
+        nodeTypesB.addAll(mixinNodeTypes);
 
-            nodeTypesB.addAll(mixinSupertypes.build());
+        final ImmutableSet.Builder<NodeType> mixinSupertypes = builder();
+        for (final NodeType mixinNodeType : mixinNodeTypes) {
+            mixinSupertypes.addAll(asList(mixinNodeType.getSupertypes()));
         }
 
-        final ImmutableList<NodeType> nodeTypes = nodeTypesB.build();
-        final Iterator<NodeType> nodeTypesIt = nodeTypes.iterator();
+        nodeTypesB.addAll(mixinSupertypes.build());
 
-        concat(Iterators.transform(nodeTypesIt, nodetype2triple()));
+        final Set<NodeType> nodeTypes = nodeTypesB.build();
+
+        concat(Iterables.transform(nodeTypes, nodetype2triple()).iterator());
     }
 
     private Function<NodeType, Triple> nodetype2triple() {
@@ -115,6 +116,10 @@ public class TypeRdfContext extends NodeRdfContext {
             }
 
         };
+    }
+
+    private static Set<NodeType> setOf(final NodeType[] types) {
+        return types == null ? Collections.<NodeType>emptySet() : copyOf(types);
     }
 
     private String getJcrUri(final String prefix) throws RepositoryException {
