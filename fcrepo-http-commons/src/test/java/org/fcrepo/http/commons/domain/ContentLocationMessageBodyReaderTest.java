@@ -17,7 +17,6 @@ package org.fcrepo.http.commons.domain;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -25,13 +24,17 @@ import java.net.URI;
 import org.fcrepo.kernel.services.ExternalContentService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ContentLocationMessageBodyReaderTest {
 
 
@@ -45,7 +48,6 @@ public class ContentLocationMessageBodyReaderTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = new ContentLocationMessageBodyReader();
         testObj.setContentService(mockContentService);
     }

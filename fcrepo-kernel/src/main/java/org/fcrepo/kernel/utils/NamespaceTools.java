@@ -32,6 +32,7 @@ import com.google.common.base.Function;
  * Tools for working with the JCR Namespace Registry
  * (wrapping some non-standard Modeshape machinery)
  * @author Benjamin Armintor
+ * @author ajs6f
  * @since May 13, 2013
  */
 public abstract class NamespaceTools {
@@ -59,7 +60,6 @@ public abstract class NamespaceTools {
      * @param session the JCR session to use
      * @param path the absolute path to the object
      * @throws org.fcrepo.kernel.exception.FedoraInvalidNamespaceException on unregistered namespaces
-     * @throws org.fcrepo.kernel.exception.RepositoryRuntimeException
      */
     public static void validatePath(final Session session, final String path) {
 

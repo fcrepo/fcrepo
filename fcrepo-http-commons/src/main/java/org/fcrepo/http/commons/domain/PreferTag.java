@@ -15,9 +15,12 @@
  */
 package org.fcrepo.http.commons.domain;
 
+import static java.util.Objects.hash;
+
 import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
 import javax.servlet.http.HttpServletResponse;
+
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +29,7 @@ import java.util.Map;
  * Parse a single prefer tag, value and any optional parameters
  *
  * @author cabeer
+ * @author ajs6f
  */
 public class PreferTag implements Comparable<PreferTag> {
     private final String tag;
@@ -137,4 +141,25 @@ public class PreferTag implements Comparable<PreferTag> {
     public int compareTo(final PreferTag otherTag) {
         return getTag().compareTo(otherTag.getTag());
     }
+
+    /**
+     * We consider tags with the same name to be equal, because <a
+     * href="http://tools.ietf.org/html/rfc7240#page-4">the definition of Prefer headers</a> does not permit that tags
+     * with the same name be consumed except by selecting for the first appearing tag.
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(final Object other) {
+        if (other instanceof PreferTag) {
+            return getTag().equals(((PreferTag) other).getTag());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return hash(tag, value, params);
+    }
+
 }

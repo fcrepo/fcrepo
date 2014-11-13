@@ -15,9 +15,13 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.filter;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
+import static org.openrdf.rio.Rio.createWriter;
+import static org.openrdf.rio.Rio.getWriterFormatForMIMEType;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
@@ -29,7 +33,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
+
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
@@ -59,8 +63,15 @@ import com.hp.hpl.jena.graph.Triple;
 public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         StreamingOutput {
 
-    private static final Logger LOGGER =
-        getLogger(RdfStreamStreamingOutput.class);
+    private static final Logger LOGGER = getLogger(RdfStreamStreamingOutput.class);
+
+    private static final Predicate<Map.Entry<String,String>> notXMLNS = new Predicate<Map.Entry<String, String>>() {
+            @Override
+            public boolean apply(final Map.Entry<String, String> entry) {
+                checkNotNull(entry);
+                return !entry.getKey().equals("xmlns");
+            }
+        };
 
     private static ValueFactory vfactory = getInstance();
 
@@ -85,7 +96,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                                 .join(writeableFormats.getMIMETypes()));
             }
         }
-        final RDFFormat format = Rio.getWriterFormatForMIMEType(mediaType.toString());
+        final RDFFormat format = getWriterFormatForMIMEType(mediaType.toString());
         if (format != null) {
             this.format = format;
             LOGGER.debug("Setting up to serialize to: {}", format);
@@ -113,7 +124,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                        final RDFFormat dataFormat)
             throws RDFHandlerException {
         final WriterConfig settings = new WriterConfig();
-        final RDFWriter writer = Rio.createWriter(dataFormat, output);
+        final RDFWriter writer = createWriter(dataFormat, output);
         writer.setWriterConfig(settings);
 
         for (final Map.Entry<String, String> namespace : excludeProtectedNamespaces(rdfStream.namespaces())) {
@@ -130,12 +141,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
          *  - xmlns, which Sesame helpfully serializes, but normal parsers may complain
          *     about in some serializations (e.g. RDF/XML where xmlns:xmlns is forbidden by XML);
          */
-        return Iterables.filter(namespaces.entrySet(), new Predicate<Map.Entry<String, String>>() {
-            @Override
-            public boolean apply(final Map.Entry<String, String> input) {
-                return !input.getKey().equals("xmlns");
-            }
-        });
+        return filter(namespaces.entrySet(), notXMLNS);
     }
 
 
@@ -149,11 +155,12 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         };
     }
 
-    protected static final Function<? super Triple, Statement> toStatement =
+    protected static final Function<Triple, Statement> toStatement =
         new Function<Triple, Statement>() {
 
             @Override
             public Statement apply(final Triple t) {
+                checkNotNull(t);
                 final Resource subject = getResourceForSubject(t.getSubject());
                 final URI predicate = vfactory.createURI(t.getPredicate().getURI());
                 final Value object = getValueForObject(t.getObject());

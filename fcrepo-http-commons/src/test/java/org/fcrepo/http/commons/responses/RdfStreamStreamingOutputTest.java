@@ -77,12 +77,12 @@ public class RdfStreamStreamingOutputTest {
     @Mock
     private Node mockNode;
 
-    private RdfStream testRdfStream = new RdfStream(triple);
+    private final RdfStream testRdfStream = new RdfStream(triple);
 
     @Mock
     private RdfStream mockRdfStream;
 
-    private MediaType testMediaType = valueOf("application/rdf+xml");
+    private final MediaType testMediaType = valueOf("application/rdf+xml");
 
     private static final ValueFactory vf = getInstance();
 
@@ -214,7 +214,7 @@ public class RdfStreamStreamingOutputTest {
     }
 
     @Test(expected = WebApplicationException.class)
-    public void testWriteWithException() {
+    public void testWriteWithException() throws IOException {
 
         final FutureCallback<Void> callback = new FutureCallback<Void>() {
 
@@ -232,17 +232,18 @@ public class RdfStreamStreamingOutputTest {
 
         };
         addCallback(testRdfStreamStreamingOutput, callback);
-        final OutputStream mockOutputStream =
-            mock(OutputStream.class, new Answer<Object>() {
+        try (final OutputStream mockOutputStream =
+                mock(OutputStream.class, new Answer<Object>() {
 
-                @Override
-                public Object answer(final InvocationOnMock invocation)
-                    throws IOException {
-                    throw new IOException("Expected.");
-                }
-            });
+                    @Override
+                    public Object answer(final InvocationOnMock invocation)
+                            throws IOException {
+                        throw new IOException("Expected.");
+                    }
+                })) {
 
-        testRdfStreamStreamingOutput.write(mockOutputStream);
+            testRdfStreamStreamingOutput.write(mockOutputStream);
+        }
     }
 
 }

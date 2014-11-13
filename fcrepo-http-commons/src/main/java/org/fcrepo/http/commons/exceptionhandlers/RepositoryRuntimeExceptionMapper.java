@@ -53,7 +53,8 @@ public class RepositoryRuntimeExceptionMapper implements
     @Override
     public Response toResponse(final RepositoryRuntimeException e) {
         final Throwable cause = e.getCause();
-        final ExceptionMapper exceptionMapper = providers.getExceptionMapper(cause.getClass());
+        final ExceptionMapper<Throwable> exceptionMapper =
+                (ExceptionMapper<Throwable>) providers.getExceptionMapper(cause.getClass());
 
         if (exceptionMapper != null) {
             return exceptionMapper.toResponse(cause);
