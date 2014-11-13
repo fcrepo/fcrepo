@@ -223,7 +223,7 @@ public class ViewHelpers {
             final Iterator<Triple> objects = getObjects(graph, subject, p);
 
             if (objects.hasNext()) {
-                return objects.next().getObject().getLiteralValue().toString();
+                return objects.next().getObject().getLiteral().getLexicalForm();
             }
         }
 
