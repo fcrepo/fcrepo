@@ -15,6 +15,7 @@
  */
 package org.modeshape.jcr;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.bus.ChangeBus;
 import org.slf4j.Logger;
 
@@ -48,6 +49,7 @@ public class SessionUtils {
             getChangeBus(session).unregister(getObservationManager(session));
         } catch (final RepositoryException e) {
             LOGGER.info("Unable to dispose observation manager: {}", e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 
