@@ -106,7 +106,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                     final FedoraResource resource = nodeConverter.convert(input.getParent());
 
                     return memberRelations(resource);
-                } catch (RepositoryException e) {
+                } catch (final RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }
             }
@@ -162,28 +162,26 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                     if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
 
                         return singletonIterator(create(subject(), memberRelation, childSubject));
-                    } else {
-
-                        final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
-                                createResource(insertedContainerProperty),
-                                null);
-
-                        if (!child.hasProperty(insertedContentProperty)) {
-                            return emptyIterator();
-                        }
-
-                        final PropertyValueIterator values
-                                = new PropertyValueIterator(child.getProperty(insertedContentProperty));
-
-                        return Iterators.transform(values, new Function<Value, Triple>() {
-                            @Override
-                            public Triple apply(final Value input) {
-                                final RDFNode membershipResource = new ValueConverter(session(), translator())
-                                        .convert(input);
-                                return create(subject(), memberRelation, membershipResource.asNode());
-                            }
-                        });
                     }
+                    final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
+                            createResource(insertedContainerProperty),
+                            null);
+
+                    if (!child.hasProperty(insertedContentProperty)) {
+                        return emptyIterator();
+                    }
+
+                    final PropertyValueIterator values
+                            = new PropertyValueIterator(child.getProperty(insertedContentProperty));
+
+                    return Iterators.transform(values, new Function<Value, Triple>() {
+                        @Override
+                        public Triple apply(final Value input) {
+                            final RDFNode membershipResource = new ValueConverter(session(), translator())
+                                    .convert(input);
+                            return create(subject(), memberRelation, membershipResource.asNode());
+                        }
+                    });
                 } catch (final RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }

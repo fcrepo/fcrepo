@@ -63,9 +63,9 @@ public abstract class AbstractService {
         }
     }
 
-    private void tagHierarchyWithPairtreeMixin(final Node baseNode,
-                                               final Node createdNode) throws RepositoryException {
-        Node parent = createdNode.getParent();
+    private static void tagHierarchyWithPairtreeMixin(final Node baseNode,
+            final Node createdNode) throws RepositoryException {
+       Node parent = createdNode.getParent();
 
         while (parent.isNew() && !parent.equals(baseNode)) {
             parent.addMixin(FEDORA_PAIRTREE);

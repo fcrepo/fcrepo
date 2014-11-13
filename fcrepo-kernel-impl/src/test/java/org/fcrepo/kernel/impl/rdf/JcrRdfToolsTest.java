@@ -37,7 +37,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -76,7 +75,9 @@ import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.value.BinaryValue;
@@ -95,7 +96,9 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * <p>JcrRdfToolsTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class JcrRdfToolsTest implements FedoraJcrTypes {
 
     private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
@@ -113,7 +116,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
 
     @Before
     public final void setUp() throws RepositoryException {
-        initMocks(this);
         testSubjects = new DefaultIdentifierTranslator(mockSession);
         buildMockNodeAndSurroundings();
         testObj = new JcrRdfTools(testSubjects, mockSession);

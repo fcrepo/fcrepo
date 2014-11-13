@@ -81,7 +81,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
         return cast(node);
     }
 
-    private void initializeNewObjectProperties(final Node node) {
+    private static void initializeNewObjectProperties(final Node node) {
         try {
             LOGGER.debug("Setting object properties on node {}...", node.getPath());
 
@@ -105,7 +105,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
         return new ContainerImpl(node);
     }
 
-    private void assertIsType(final Node node) {
+    private static void assertIsType(final Node node) {
         if (!ContainerImpl.hasMixin(node)) {
             throw new ResourceTypeException(node + " can not be used as a object");
         }

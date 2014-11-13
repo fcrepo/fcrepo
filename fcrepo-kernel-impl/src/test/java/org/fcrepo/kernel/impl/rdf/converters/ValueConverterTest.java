@@ -16,10 +16,9 @@
 package org.fcrepo.kernel.impl.rdf.converters;
 
 import com.google.common.base.Converter;
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.hamcrest.BaseMatcher;
@@ -31,6 +30,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 import org.modeshape.jcr.ModeShapeEngine;
 import org.modeshape.jcr.RepositoryConfiguration;
 
@@ -38,12 +39,41 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Calendar;
 
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDID;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDNCName;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDNMTOKEN;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDName;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDQName;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDanyURI;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDbase64Binary;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdate;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDgDay;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDgMonth;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDgMonthDay;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDgYear;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDhexBinary;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlanguage;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDnegativeInteger;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDnonNegativeInteger;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDnonPositiveInteger;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDnormalizedString;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDpositiveInteger;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDtime;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDtoken;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDunsignedByte;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDunsignedInt;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDunsignedLong;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDunsignedShort;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -59,67 +89,67 @@ public class ValueConverterTest {
     private Converter<Resource, FedoraResource> subjects;
     private Converter<Value, RDFNode> testObj;
 
-    @Parameterized.Parameter(value = 0)
+    @Parameter(value = 0)
     public RDFNode externalValue;
 
     @Test
-    public void test() throws IOException {
+    public void test() {
         assertThat(testObj.convert(testObj.reverse().convert(externalValue)), sameValueAs(externalValue));
     }
 
-    @Parameterized.Parameters
+    @Parameters
     public static Iterable<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {ResourceFactory.createTypedLiteral("x")},
-                {ResourceFactory.createTypedLiteral(0)},
-                {ResourceFactory.createTypedLiteral(1L)},
-                {ResourceFactory.createTypedLiteral(new BigDecimal("2.123"))},
-                {ResourceFactory.createTypedLiteral((double)3)},
-                {ResourceFactory.createTypedLiteral(3.1415)},
-                {ResourceFactory.createTypedLiteral(Calendar.getInstance())},
-                {ResourceFactory.createTypedLiteral((byte)1)},
-                {ResourceFactory.createTypedLiteral((short)42)},
-                {ResourceFactory.createTypedLiteral("255", XSDDatatype.XSDunsignedByte)},
-                {ResourceFactory.createTypedLiteral("255", XSDDatatype.XSDunsignedShort)},
-                {ResourceFactory.createTypedLiteral("255", XSDDatatype.XSDunsignedInt)},
-                {ResourceFactory.createTypedLiteral("255", XSDDatatype.XSDunsignedLong)},
-                {ResourceFactory.createTypedLiteral("-255", XSDDatatype.XSDnonPositiveInteger)},
-                {ResourceFactory.createTypedLiteral("255", XSDDatatype.XSDnonNegativeInteger)},
-                {ResourceFactory.createTypedLiteral("255", XSDDatatype.XSDpositiveInteger)},
-                {ResourceFactory.createTypedLiteral("-255", XSDDatatype.XSDnegativeInteger)},
-                {ResourceFactory.createTypedLiteral(true)},
-                {ResourceFactory.createResource("info:x")},
-                {ResourceFactory.createTypedLiteral("2014-10-24T01:23:45Z", XSDDatatype.XSDdateTime)},
-                {ResourceFactory.createTypedLiteral("some-invalid-data", XSDDatatype.XSDdateTime)},
+        return asList(new Object[][]{
+                {createTypedLiteral("x")},
+                {createTypedLiteral(0)},
+                {createTypedLiteral(1L)},
+                {createTypedLiteral(new BigDecimal("2.123"))},
+                {createTypedLiteral((double)3)},
+                {createTypedLiteral(3.1415)},
+                {createTypedLiteral(Calendar.getInstance())},
+                {createTypedLiteral((byte)1)},
+                {createTypedLiteral((short)42)},
+                {createTypedLiteral("255", XSDunsignedByte)},
+                {createTypedLiteral("255", XSDunsignedShort)},
+                {createTypedLiteral("255", XSDunsignedInt)},
+                {createTypedLiteral("255", XSDunsignedLong)},
+                {createTypedLiteral("-255", XSDnonPositiveInteger)},
+                {createTypedLiteral("255", XSDnonNegativeInteger)},
+                {createTypedLiteral("255", XSDpositiveInteger)},
+                {createTypedLiteral("-255", XSDnegativeInteger)},
+                {createTypedLiteral(true)},
+                {createResource("info:x")},
+                {createTypedLiteral("2014-10-24T01:23:45Z", XSDdateTime)},
+                {createTypedLiteral("some-invalid-data", XSDdateTime)},
                 // Types outside the JCR type system boundaries:
-                {ResourceFactory.createTypedLiteral("2014-10-24", XSDDatatype.XSDdate)},
-                {ResourceFactory.createTypedLiteral("01:02:03", XSDDatatype.XSDtime)},
-                {ResourceFactory.createTypedLiteral("---31", XSDDatatype.XSDgDay)},
-                {ResourceFactory.createTypedLiteral("--10", XSDDatatype.XSDgMonth)},
-                {ResourceFactory.createTypedLiteral("--02-29", XSDDatatype.XSDgMonthDay)},
-                {ResourceFactory.createTypedLiteral("2001", XSDDatatype.XSDgYear)},
-                {ResourceFactory.createTypedLiteral("ABCDEF", XSDDatatype.XSDhexBinary)},
-                {ResourceFactory.createTypedLiteral("eHl6", XSDDatatype.XSDbase64Binary)},
-                {ResourceFactory.createTypedLiteral("eHl6", XSDDatatype.XSDnormalizedString)},
-                {ResourceFactory.createTypedLiteral("some:uri", XSDDatatype.XSDanyURI)},
-                {ResourceFactory.createTypedLiteral("tokenize this", XSDDatatype.XSDtoken)},
-                {ResourceFactory.createTypedLiteral("name", XSDDatatype.XSDName)},
-                {ResourceFactory.createTypedLiteral("qname", XSDDatatype.XSDQName)},
-                {ResourceFactory.createTypedLiteral("en-us", XSDDatatype.XSDlanguage)},
-                {ResourceFactory.createTypedLiteral("name", XSDDatatype.XSDNMTOKEN)},
-                {ResourceFactory.createTypedLiteral("some-id", XSDDatatype.XSDID)},
-                {ResourceFactory.createTypedLiteral("ncname", XSDDatatype.XSDNCName)},
-                {ResourceFactory.createTypedLiteral(2.0123f)},
-                {ResourceFactory.createLangLiteral("xyz", "de")},
+                {createTypedLiteral("2014-10-24", XSDdate)},
+                {createTypedLiteral("01:02:03", XSDtime)},
+                {createTypedLiteral("---31", XSDgDay)},
+                {createTypedLiteral("--10", XSDgMonth)},
+                {createTypedLiteral("--02-29", XSDgMonthDay)},
+                {createTypedLiteral("2001", XSDgYear)},
+                {createTypedLiteral("ABCDEF", XSDhexBinary)},
+                {createTypedLiteral("eHl6", XSDbase64Binary)},
+                {createTypedLiteral("eHl6", XSDnormalizedString)},
+                {createTypedLiteral("some:uri", XSDanyURI)},
+                {createTypedLiteral("tokenize this", XSDtoken)},
+                {createTypedLiteral("name", XSDName)},
+                {createTypedLiteral("qname", XSDQName)},
+                {createTypedLiteral("en-us", XSDlanguage)},
+                {createTypedLiteral("name", XSDNMTOKEN)},
+                {createTypedLiteral("some-id", XSDID)},
+                {createTypedLiteral("ncname", XSDNCName)},
+                {createTypedLiteral(2.0123f)},
+                {createLangLiteral("xyz", "de")},
                 // Problems
                 // These types can't be represented in isolation
-                // {ResourceFactory.createTypedLiteral("some-id", XSDDatatype.XSDENTITY)},
-                // {ResourceFactory.createTypedLiteral("#some-id", XSDDatatype.XSDIDREF)},
+                // {createTypedLiteral("some-id", XSDDatatype.XSDENTITY)},
+                // {createTypedLiteral("#some-id", XSDDatatype.XSDIDREF)},
         });
     }
 
     @Before
-    public void setUp() throws IOException, RepositoryException {
+    public void setUp() throws RepositoryException {
 
         session = repo.login();
         subjects = new DefaultIdentifierTranslator(session);
@@ -133,7 +163,7 @@ public class ValueConverterTest {
 
     class SameValueAsMatcher extends BaseMatcher<RDFNode> {
 
-        private RDFNode expected;
+        private final RDFNode expected;
 
 
         SameValueAsMatcher(final RDFNode expected) {
@@ -156,9 +186,8 @@ public class ValueConverterTest {
             if (expected.isLiteral() && object.isLiteral()) {
                 return expected.asLiteral().sameValueAs(object.asLiteral())
                         || expected.toString().equals(object.toString());
-            } else {
-                return object.equals(expected);
             }
+            return object.equals(expected);
         }
     }
 

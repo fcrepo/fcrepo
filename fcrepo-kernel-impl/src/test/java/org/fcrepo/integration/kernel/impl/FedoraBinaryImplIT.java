@@ -125,9 +125,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamContentType() throws IOException,
-            RepositoryException,
-            InvalidChecksumException {
+    public void testDatastreamContentType() throws RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
         containerService.findOrCreate(session, "/testDatastreamObject");
 
