@@ -37,6 +37,14 @@ dd {
     padding-left: 35px;
 }
 
+#metadata .panel-body .nodetype-properties {
+    text-indent: 0px;
+}
+
+#metadata .panel-body .nodetype-properties h5 {
+    font-weight: bold;
+}
+
 #binary_payload_container {
     display: none;
 }
@@ -70,4 +78,28 @@ dd {
 
 .panel-content .panel-heading {
 	font-size: 16px;
+}
+
+.ctitle:after {
+    content: "-";
+    color: grey;
+    float: right;
+    font-size: 0.8em;
+    line-height: normal;
+}
+
+.collapsed .ctitle:after {
+    color: grey;
+    content: "+";
+    float: right;
+    font-size: 0.8em;
+    line-height: normal;
+}
+
+.panel-title > a {
+    color: #428bca;
+}
+
+.nav-form {
+    text-align: center;
 }
