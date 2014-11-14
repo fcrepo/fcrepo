@@ -26,6 +26,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.jcr.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -33,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -54,6 +56,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -679,5 +682,101 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
 
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testNullBaseVersionLabel() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        session.save();
+        final FedoraResourceImpl resource = new FedoraResourceImpl(object.getNode());
+        resource.addVersionLabel("noop");
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testNullBaseVersion() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        session.save();
+        object.getBaseVersion();
+    }
+
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testNullVersionHistory() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        session.save();
+        object.getVersionHistory();
+    }
+
+    @Test
+    public void testGetNodeVersion() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
+        session.save();
+        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        object.addVersionLabel("some-label");
+        session.save();
+        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+        assertNull(frozenResource.getNodeVersion("some-label"));
+
+    }
+
+    @Test
+    public void testGetNullNodeVersion() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
+        session.save();
+        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        object.addVersionLabel("some-label");
+        session.save();
+        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
+        assertNull(frozenResource.getNodeVersion("some-label"));
+
+    }
+
+    @Test
+    public void testNullLastModifiedDate() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        assertFalse(object.hasProperty(JCR_LASTMODIFIED));
+        assertNull(object.getLastModifiedDate());
+    }
+
+    @Test
+    public void testDisableVersioning() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+        assertTrue(object.isVersioned());
+        object.disableVersioning();
+        assertFalse(object.isVersioned());
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    public void testDisableVersioningException() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.disableVersioning();
+    }
+
+    @Test
+    public void testHash() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(object.getNode());
+        assertFalse(frozenResource.hashCode() == 0);
     }
 }
