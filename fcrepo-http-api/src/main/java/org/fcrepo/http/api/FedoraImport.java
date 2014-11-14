@@ -39,6 +39,7 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.serialization.InvalidSerializationFormatException;
 import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +93,8 @@ public class FedoraImport extends FedoraBaseResource {
         } catch ( ItemExistsException ex ) {
             return status(CONFLICT).entity("Item already exists").build();
         } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        } catch (InvalidSerializationFormatException e) {
             throw new RepositoryRuntimeException(e);
         }
     }

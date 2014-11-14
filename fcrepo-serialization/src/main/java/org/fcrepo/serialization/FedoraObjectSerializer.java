@@ -78,6 +78,6 @@ public interface FedoraObjectSerializer {
      */
     void deserialize(final Session session, final String path,
             final InputStream stream) throws IOException, RepositoryException,
-        InvalidChecksumException;
+            InvalidChecksumException, InvalidSerializationFormatException;
 
 }

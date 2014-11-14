@@ -24,6 +24,12 @@
       <artifactId>spring-context</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>xml-apis</groupId>
+      <artifactId>xml-apis</artifactId>
+      <version>1.4.01</version>
+    </dependency>
+
     <!-- test gear -->
     <dependency>
       <groupId>junit</groupId>
@@ -33,6 +39,13 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   
