@@ -69,10 +69,9 @@ import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
  * @author cbeer
  */
 @Provider
-@Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeSSE,
-        contentTypeTextPlain, contentTypeResultsJSON,
+@Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeResultsJSON,
         contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
-        contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
+        contentTypeNTriples, contentTypeRDFXML})
 public class ResultSetStreamingOutput implements MessageBodyWriter<ResultSet> {
 
 
