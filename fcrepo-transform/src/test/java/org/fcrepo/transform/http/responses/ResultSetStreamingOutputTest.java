@@ -18,24 +18,22 @@ package org.fcrepo.transform.http.responses;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_XML;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_TSV;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_XML;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
-import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_N3;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_NT;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_TTL;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_BIO;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_CSV;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_JSON;
-import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_SSE;
-import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_TEXT;
 import static javax.ws.rs.core.MediaType.valueOf;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
 import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
+import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
 import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
-import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
@@ -138,13 +136,12 @@ public class ResultSetStreamingOutputTest {
         assertEquals(FMT_RS_TSV, getResultsFormat(valueOf(contentTypeTextTSV)));
         assertEquals(FMT_UNKNOWN, getResultsFormat(valueOf("some/type")));
         assertEquals(FMT_RS_CSV, getResultsFormat(valueOf(contentTypeTextCSV)));
-        assertEquals(FMT_RS_SSE, getResultsFormat(valueOf("text/sse")));
-        assertEquals(FMT_TEXT, getResultsFormat(valueOf(contentTypeTextPlain)));
         assertEquals(FMT_RS_JSON, getResultsFormat(valueOf(contentTypeResultsJSON)));
         assertEquals(FMT_RS_BIO, getResultsFormat(valueOf(contentTypeResultsBIO)));
         assertEquals(FMT_RDF_TTL, getResultsFormat(valueOf(contentTypeTurtleAlt2)));
-        assertEquals(FMT_RDF_N3, getResultsFormat(valueOf(contentTypeN3Alt2)));
         assertEquals(FMT_RDF_NT, getResultsFormat(valueOf(contentTypeNTriples)));
+        assertEquals(FMT_RDF_XML, getResultsFormat(valueOf(contentTypeRDFXML)));
+        assertEquals(FMT_RS_XML, getResultsFormat(valueOf(contentTypeResultsXML)));
     }
 
     @Test
