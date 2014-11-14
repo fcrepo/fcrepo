@@ -140,7 +140,7 @@ function checkIfNonRdfResource(e) {
     var url = this.href;
 
     $.ajax({type: "HEAD", url: url}).success(function(data, status, xhr) {
-        if (status != 200) {
+        if (status != "success") {
             location.href = url;
             return;
         }
