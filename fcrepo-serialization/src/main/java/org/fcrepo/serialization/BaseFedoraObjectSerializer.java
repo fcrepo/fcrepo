@@ -47,6 +47,6 @@ public abstract class BaseFedoraObjectSerializer implements
     @Override
     public abstract void deserialize(final Session session, final String path,
             final InputStream stream) throws IOException, RepositoryException,
-        InvalidChecksumException;
+            InvalidChecksumException, InvalidSerializationFormatException;
 
 }
