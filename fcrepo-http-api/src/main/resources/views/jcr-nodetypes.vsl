@@ -43,7 +43,7 @@
         </div>
 
         <div id="metadata" class="col-md-9 col-md-pull-3">
-            <h1>Node Types</h1>
+            <h1>RDF Types</h1>
 
             #foreach($subject in $model.listSubjectsWithProperty($helpers.rdfType(), $helpers.rdfsClass()))
             <div class="panel panel-default">
