@@ -39,7 +39,7 @@
         Type
     </label>
     <select id="new_mixin" class="form-control">
-        <option value="object">object</option>
+        <option value="container">container</option>
         <option value="binary">binary</option>
     </select>
         </div>

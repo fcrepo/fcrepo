@@ -103,7 +103,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
-        type.getOptionByValue("object").setSelected(true);
+        type.getOptionByValue("container").setSelected(true);
 
         final HtmlInput new_id = (HtmlInput)page.getElementById("new_id");
         new_id.setValueAttribute(pid);
@@ -127,7 +127,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
-        type.getOptionByValue("object").setSelected(true);
+        type.getOptionByValue("container").setSelected(true);
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
