@@ -17,30 +17,22 @@ package org.fcrepo.transform.http.responses;
 
 import static com.hp.hpl.jena.query.ResultSetFormatter.output;
 import static com.hp.hpl.jena.query.ResultSetFormatter.toModel;
-import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_N3;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_NT;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_TTL;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_XML;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_BIO;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_CSV;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_JSON;
-import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_SSE;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_TSV;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_XML;
-import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_TEXT;
 import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.apache.jena.riot.WebContent.contentTypeN3;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt1;
-import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
 import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
 import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
 import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
-import static org.apache.jena.riot.WebContent.contentTypeSSE;
 import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
-import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
@@ -132,12 +124,6 @@ public class ResultSetStreamingOutput implements MessageBodyWriter<ResultSet> {
             case contentTypeTextCSV:
                 return FMT_RS_CSV;
 
-            case contentTypeSSE:
-                return FMT_RS_SSE;
-
-            case contentTypeTextPlain:
-                return FMT_TEXT;
-
             case contentTypeResultsJSON:
                 return FMT_RS_JSON;
 
@@ -151,11 +137,6 @@ public class ResultSetStreamingOutput implements MessageBodyWriter<ResultSet> {
             case contentTypeTurtleAlt1:
             case contentTypeTurtleAlt2:
                 return FMT_RDF_TTL;
-
-            case contentTypeN3:
-            case contentTypeN3Alt1:
-            case contentTypeN3Alt2:
-                return FMT_RDF_N3;
 
             case contentTypeNTriples:
                 return FMT_RDF_NT;
