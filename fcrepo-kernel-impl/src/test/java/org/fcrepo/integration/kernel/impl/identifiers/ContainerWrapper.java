@@ -59,8 +59,6 @@ public class ContainerWrapper implements ApplicationContextAware {
     public void start() throws Exception {
         server = new HttpServer();
         final NetworkListener listener = new NetworkListener("grizzly", "localhost", new PortRange(port));
-        //final Transport transport = listener.getTransport();
-        //transport.setReadBufferSize(100000);
         server.addListener(listener);
 
         try {

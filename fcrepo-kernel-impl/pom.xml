@@ -128,9 +128,9 @@
 
   <build>
     <plugins>
-        <plugin>
+      <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
-        </plugin>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -155,10 +155,10 @@
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
-        <plugin>
+      <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-        </plugin>
+      </plugin>
     </plugins>
   </build>
 </project>
