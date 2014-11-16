@@ -129,7 +129,7 @@
   <build>
     <plugins>
       <plugin>
-            <artifactId>maven-failsafe-plugin</artifactId>
+        <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -156,8 +156,8 @@
         <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
       <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
