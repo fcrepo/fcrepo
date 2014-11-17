@@ -15,17 +15,27 @@
  */
 package org.fcrepo.serialization;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.springframework.stereotype.Component;
 
 import javax.jcr.ImportUUIDBehavior;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
-import org.fcrepo.kernel.models.FedoraResource;
-import org.springframework.stereotype.Component;
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Serialize a FedoraObject using the modeshape-provided JCR/XML format
@@ -68,11 +78,81 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
 
     @Override
     public void deserialize(final Session session, final String path,
-            final InputStream stream) throws RepositoryException, IOException {
+            final InputStream stream) throws RepositoryException, IOException, InvalidSerializationFormatException {
 
-        session.importXML(path, stream,
-                ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
-
+        final File temp = File.createTempFile("fcrepo-unsanitized-input", ".xml");
+        final FileOutputStream fos = new FileOutputStream(temp);
+        try {
+            IOUtils.copy(stream, fos);
+        } finally {
+            IOUtils.closeQuietly(stream);
+            IOUtils.closeQuietly(fos);
+        }
+        validateJCRXML(temp);
+        try {
+            session.importXML(path, new TempFileInputStream(temp), ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW);
+        } catch (UnsupportedOperationException | IllegalArgumentException e) {
+            // These come from ModeShape when there's various problems in the formatting of the XML
+            // that are not caught by JCRXMLValidatingInputStreamBridge.
+            throw new InvalidSerializationFormatException("Invalid JCR/XML."
+                    + (e.getMessage() != null ? " (" + e.getMessage() + ")" : ""));
+        }
     }
 
+    private void validateJCRXML(final File file) throws InvalidSerializationFormatException, IOException {
+        final FileInputStream fis = new FileInputStream(file);
+        try {
+            final XMLEventReader reader = XMLInputFactory.newFactory().createXMLEventReader(fis);
+            while (reader.hasNext()) {
+                final XMLEvent event = reader.nextEvent();
+                if (event.isStartElement()) {
+                    final StartElement startElement = event.asStartElement();
+                    final QName name = startElement.getName();
+                    if (!(name.getNamespaceURI().equals("http://www.jcp.org/jcr/sv/1.0")
+                            && (name.getLocalPart().equals("node") || name.getLocalPart().equals("property")
+                            || name.getLocalPart().equals("value")))) {
+                        throw new InvalidSerializationFormatException(
+                                "Unrecognized element \"" + name.toString() + "\", in import XML.");
+                    }
+                }
+            }
+            reader.close();
+        } catch (XMLStreamException e) {
+            throw new InvalidSerializationFormatException("Unable to parse XML"
+                    + e.getMessage() != null ? " (" + e.getMessage() + ")." : ".");
+        } finally {
+            fis.close();
+        }
+    }
+
+    /**
+     * A FileInputStream that deletes the file when closed.
+     */
+    private static final class TempFileInputStream extends FileInputStream {
+
+        private File f;
+
+        /**
+         * A constructor whose passed file's content is exposed by this
+         * TempFileInputStream, and which will be deleted when this
+         * InputStream is closed.
+         * @param f
+         * @throws FileNotFoundException
+         */
+        public TempFileInputStream(final File f) throws FileNotFoundException {
+            super(f);
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                super.close();
+            } finally {
+                if (f != null) {
+                    f.delete();
+                    f = null;
+                }
+            }
+        }
+    }
 }

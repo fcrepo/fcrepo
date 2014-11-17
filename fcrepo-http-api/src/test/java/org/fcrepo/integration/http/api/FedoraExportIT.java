@@ -214,4 +214,26 @@ public class FedoraExportIT extends AbstractResourceIT {
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertTrue(EntityUtils.toString(response.getEntity()).indexOf("sv:name=\"" + childName + "\"") > 0);
     }
+
+    @Test
+    public void importNonJCRXMLShouldFail() throws IOException {
+        final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
+        importMethod.setEntity(new StringEntity("<test><this></this></this>"));
+        assertEquals("Should not have been able to import non JCR/XML.", 400, getStatus(importMethod));
+    }
+
+    @Test
+    public void importMalformedXMLShouldFail() throws IOException {
+        final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
+        importMethod.setEntity(new StringEntity("this isn't xml at all."));
+        assertEquals("Should not have been able to import malformed XML.", 400, getStatus(importMethod));
+    }
+
+    @Test
+    public void importNonsensicalJCRXMLShouldFail() throws IOException {
+        final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
+        importMethod.setEntity(
+                new StringEntity("<sv:value xmlns:sv=\"http://www.jcp.org/jcr/sv/1.0\">just a value?</sv:value>"));
+        assertEquals("Should not have been able to import nonsensical JCR/XML..", 400, getStatus(importMethod));
+    }
 }

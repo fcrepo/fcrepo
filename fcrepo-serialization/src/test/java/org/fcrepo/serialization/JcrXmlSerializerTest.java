@@ -18,6 +18,8 @@ package org.fcrepo.serialization;
 import static javax.jcr.ImportUUIDBehavior.IMPORT_UUID_COLLISION_THROW;
 import static org.fcrepo.serialization.FedoraObjectSerializer.JCR_XML;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -97,13 +99,11 @@ public class JcrXmlSerializerTest {
     }
 
     @Test
-    public void testDeserialize() throws IOException, RepositoryException {
+    public void testDeserialize() throws IOException, RepositoryException, InvalidSerializationFormatException {
+        final InputStream is = getClass().getClassLoader().getResourceAsStream("valid-jcr-xml.xml");
         final Session mockSession = mock(Session.class);
-        try (final InputStream mockIS = mock(InputStream.class)) {
-            new JcrXmlSerializer().deserialize(mockSession, "/objects", mockIS);
-            verify(mockSession).importXML("/objects", mockIS,
-                    IMPORT_UUID_COLLISION_THROW);
-        }
+        new JcrXmlSerializer().deserialize(mockSession, "/objects", is);
+        verify(mockSession).importXML(eq("/objects"), any(InputStream.class), eq(IMPORT_UUID_COLLISION_THROW));
     }
 
     @Test
@@ -115,4 +115,21 @@ public class JcrXmlSerializerTest {
     public void testGetMediaType() {
         assertEquals("application/xml", new JcrXmlSerializer().getMediaType());
     }
+
+    @Test
+    public void testValidJCRXMLValidation() throws IOException,
+            InvalidSerializationFormatException, RepositoryException {
+        final Session mockSession = mock(Session.class);
+        new JcrXmlSerializer().deserialize(mockSession, "/objects",
+                getClass().getClassLoader().getResourceAsStream("valid-jcr-xml.xml"));
+    }
+
+    @Test (expected = InvalidSerializationFormatException.class)
+    public void testInvalidJCRXMLValidation() throws IOException,
+            InvalidSerializationFormatException, RepositoryException {
+        final Session mockSession = mock(Session.class);
+        new JcrXmlSerializer().deserialize(mockSession, "/objects",
+                getClass().getClassLoader().getResourceAsStream("invalid-jcr-xml.xml"));
+    }
+
 }
