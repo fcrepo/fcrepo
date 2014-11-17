@@ -19,6 +19,7 @@ import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.created;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -27,6 +28,7 @@ import java.net.URISyntaxException;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -43,6 +45,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.domain.MOVE;
+import org.fcrepo.kernel.impl.FedoraResourceImpl;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -174,8 +177,17 @@ public class FedoraNodes extends ContentExposingResource {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
+            final FedoraResource srcResource = nodeService.find(session, source);
+            final Node sourceNode = srcResource.getNode();
+            final Node parent = sourceNode.getDepth() > 0 ? sourceNode.getParent() : null;
+
             nodeService.moveObject(session, resource().getPath(), destination);
             session.save();
+
+            if (parent != null) {
+                createTombstone(parent, source);
+            }
+
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
             final Throwable cause = e.getCause();
@@ -191,6 +203,13 @@ public class FedoraNodes extends ContentExposingResource {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    private void createTombstone(final Node parent, final String path) throws RepositoryException {
+        final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(parent);
+        final Node n  = fedoraResource.findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
+        session.save();
+        LOGGER.info("Created tombstone at {} ", n.getPath());
     }
 
     @Override
