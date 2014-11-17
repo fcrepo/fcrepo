@@ -54,6 +54,24 @@ public class HttpPidMinterTest {
     }
 
     @Test
+    public void testMintPidNullHttpMethod() throws Exception {
+        final HttpPidMinter testMinter = new HttpPidMinter(
+                "http://localhost/minter", null, "", "", ".*/", "");
+
+        final HttpClient mockClient = mock(HttpClient.class);
+        final HttpResponse mockResponse = mock(HttpResponse.class);
+        final ByteArrayEntity entity = new ByteArrayEntity("/foo/bar/baz".getBytes());
+        testMinter.client = mockClient;
+
+        when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
+        when(mockResponse.getEntity()).thenReturn(entity);
+
+        final String pid = testMinter.mintPid();
+        verify(mockClient).execute(isA(HttpUriRequest.class));
+        assertEquals( pid, "baz" );
+    }
+
+    @Test
     public void testMintPidXPath() throws Exception {
         final HttpPidMinter testMinter = new HttpPidMinter(
             "http://localhost/minter","POST", "", "", "", "/test/id");
@@ -68,7 +86,7 @@ public class HttpPidMinterTest {
 
         final String pid = testMinter.mintPid();
         verify(mockClient).execute(isA(HttpUriRequest.class));
-        assertEquals( pid, "baz" );
+        assertEquals(pid, "baz");
     }
 
     @Test

@@ -89,15 +89,16 @@ public class HttpPidMinter implements PidMinter {
         checkArgument( !isBlank(url), "Minter URL must be specified!" );
 
         this.url = url;
-        this.method = method;
+        this.method = (method == null ? "post" : method);
         this.username = username;
         this.password = password;
         this.regex = regex;
-        if ( xpath != null ) {
+        if ( !isBlank(xpath) ) {
             try {
                 this.xpath = XPathFactory.newInstance().newXPath().compile(xpath);
             } catch ( XPathException ex ) {
                 log.warn("Error parsing xpath ({}): {}", xpath, ex );
+                throw new IllegalArgumentException("Error parsing xpath" + xpath, ex);
             }
         }
         this.client = buildClient();
@@ -123,12 +124,13 @@ public class HttpPidMinter implements PidMinter {
      * Instantiate a request object based on the method variable.
     **/
     private HttpUriRequest minterRequest() {
-        if ( method != null && method.equalsIgnoreCase("GET") ) {
-            return new HttpGet(url);
-        } else if ( method != null && method.equalsIgnoreCase("PUT") ) {
-            return new HttpPut(url);
-        } else {
-            return new HttpPost(url);
+        switch (method) {
+            case "GET": case "get":
+                return new HttpGet(url);
+            case "PUT": case "put":
+                return new HttpPut(url);
+            default:
+                return new HttpPost(url);
         }
     }
 
