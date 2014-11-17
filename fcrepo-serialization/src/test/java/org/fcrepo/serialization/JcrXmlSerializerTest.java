@@ -33,9 +33,7 @@ import java.io.OutputStream;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.xml.stream.XMLStreamException;
 
-import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
@@ -102,12 +100,10 @@ public class JcrXmlSerializerTest {
 
     @Test
     public void testDeserialize() throws IOException, RepositoryException, InvalidSerializationFormatException {
+        final InputStream is = getClass().getClassLoader().getResourceAsStream("valid-jcr-xml.xml");
         final Session mockSession = mock(Session.class);
-        try (final InputStream mockIS = mock(InputStream.class)) {
-            new JcrXmlSerializer().deserialize(mockSession, "/objects", mockIS);
-            verify(mockSession).importXML(eq("/objects"), any(JcrXmlSerializer.JCRXMLValidatingInputStreamBridge.class),
-                    eq(IMPORT_UUID_COLLISION_THROW));
-        }
+        new JcrXmlSerializer().deserialize(mockSession, "/objects", is);
+        verify(mockSession).importXML(eq("/objects"), any(InputStream.class), eq(IMPORT_UUID_COLLISION_THROW));
     }
 
     @Test
@@ -121,17 +117,19 @@ public class JcrXmlSerializerTest {
     }
 
     @Test
-    public void testValidJCRXMLValidation() throws XMLStreamException, IOException {
-        final InputStream vis = new JcrXmlSerializer.JCRXMLValidatingInputStreamBridge(
+    public void testValidJCRXMLValidation() throws IOException,
+            InvalidSerializationFormatException, RepositoryException {
+        final Session mockSession = mock(Session.class);
+        new JcrXmlSerializer().deserialize(mockSession, "/objects",
                 getClass().getClassLoader().getResourceAsStream("valid-jcr-xml.xml"));
-        IOUtils.toString(vis);
     }
 
-    @Test (expected = IOException.class)
-    public void testInvalidJCRXMLValidation() throws XMLStreamException, IOException {
-        final InputStream vis = new JcrXmlSerializer.JCRXMLValidatingInputStreamBridge(
+    @Test (expected = InvalidSerializationFormatException.class)
+    public void testInvalidJCRXMLValidation() throws IOException,
+            InvalidSerializationFormatException, RepositoryException {
+        final Session mockSession = mock(Session.class);
+        new JcrXmlSerializer().deserialize(mockSession, "/objects",
                 getClass().getClassLoader().getResourceAsStream("invalid-jcr-xml.xml"));
-        IOUtils.toString(vis);
     }
 
 }
