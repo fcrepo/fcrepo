@@ -17,9 +17,9 @@ package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,6 +40,8 @@ import org.junit.Ignore;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.update.GraphStore;
+
+import javax.ws.rs.core.Link;
 
 /**
  * <p>FedoraNodesIT class.</p>
@@ -93,7 +95,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testMove() throws Exception {
+    public void testMoveAndTombstone() throws Exception {
 
         final String pid = getRandomUniquePid();
         final HttpResponse response = createObject("");
@@ -109,7 +111,10 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
 
         final HttpResponse originalResult = client.execute(new HttpGet(location));
-        assertEquals(NOT_FOUND.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+        assertEquals(GONE.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+
+        final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
+        assertEquals("hasTombstone", tombstone.getRel());
     }
 
     @Test

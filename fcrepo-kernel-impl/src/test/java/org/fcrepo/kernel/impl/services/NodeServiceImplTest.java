@@ -104,6 +104,8 @@ public class NodeServiceImplTest {
     @Test
     public void testMoveObject() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockSession.getNode("foo")).thenReturn(mockObjNode);
+        when(mockObjNode.getDepth()).thenReturn(0);
         testObj.moveObject(mockSession, "foo", "bar");
         verify(mockWorkspace).move("foo", "bar");
     }
