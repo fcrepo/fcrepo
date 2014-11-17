@@ -2,19 +2,18 @@
 #set ($writable = $helpers.isWritable($rdf, $topic))
 #set ($frozen = $helpers.isFrozenNode($rdf, $topic))
 
-#if ( $frozen == true )
+#if ($frozen == true)
 <div class="alert alert-warning">
     <span class="glyphicon glyphicon-warning-sign"></span>
     This is a <strong>historic version</strong> and cannot be modified.
 </div>
 <form id="action_revert" method="PATCH" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)" >
-    <button type="submit" class="btn btn-primary">Revert to this Version</button>
+    <button type="submit" class="btn btn-primary standalone">Revert to this Version</button>
 </form>
 <form id="action_remove_version" method="DELETE" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)/fcr:versions" >
-    <button type="submit" class="btn btn-danger">Delete this Version</button>
+    <button type="submit" class="btn btn-danger standalone">Delete this Version</button>
 </form>
-#end
-
+#else
 #if ($content != "")
     <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a>
 
@@ -150,5 +149,6 @@ WHERE { }
     <button type="submit" class="btn btn-primary">Update</button>
     <hr />
 </form>
+#end
 #end
 #end

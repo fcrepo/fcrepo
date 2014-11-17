@@ -103,3 +103,7 @@ dd {
 .nav-form {
     text-align: center;
 }
+
+.standalone {
+    margin-bottom: 20px;
+}
