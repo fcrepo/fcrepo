@@ -27,6 +27,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.File;
@@ -100,18 +101,30 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
     }
 
     private void validateJCRXML(final File file) throws InvalidSerializationFormatException, IOException {
+        int depth = 0;
         try (final FileInputStream fis = new FileInputStream(file)) {
             final XMLEventReader reader = XMLInputFactory.newFactory().createXMLEventReader(fis);
             while (reader.hasNext()) {
                 final XMLEvent event = reader.nextEvent();
                 if (event.isStartElement()) {
+                    depth ++;
                     final StartElement startElement = event.asStartElement();
+                    final Attribute nameAttribute = startElement.getAttributeByName(
+                            new QName("http://www.jcp.org/jcr/sv/1.0", "name"));
+                    if (depth == 1 && nameAttribute != null && "jcr:content".equals(nameAttribute.getValue())) {
+                        throw new InvalidSerializationFormatException(
+                                "Cannot import JCR/XML starting with content node.");
+                    }
                     final QName name = startElement.getName();
                     if (!(name.getNamespaceURI().equals("http://www.jcp.org/jcr/sv/1.0")
                             && (name.getLocalPart().equals("node") || name.getLocalPart().equals("property")
                             || name.getLocalPart().equals("value")))) {
                         throw new InvalidSerializationFormatException(
                                 "Unrecognized element \"" + name.toString() + "\", in import XML.");
+                    }
+                } else {
+                    if (event.isEndElement()) {
+                        depth --;
                     }
                 }
             }

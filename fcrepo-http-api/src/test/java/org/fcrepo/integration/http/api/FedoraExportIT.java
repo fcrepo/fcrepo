@@ -236,4 +236,28 @@ public class FedoraExportIT extends AbstractResourceIT {
                 new StringEntity("<sv:value xmlns:sv=\"http://www.jcp.org/jcr/sv/1.0\">just a value?</sv:value>"));
         assertEquals("Should not have been able to import nonsensical JCR/XML..", 400, getStatus(importMethod));
     }
+
+    @Test
+    public void testExportThenImportANonRDFResource() throws IOException {
+        final String objName = getRandomUniquePid();
+        createObject(objName);
+        createDatastream(objName, "testDS", "stuff");
+        final String dsName = objName + "/testDS";
+
+        final HttpGet exportMethod = new HttpGet(serverAddress + dsName + "/fcr:export");
+        HttpResponse response = execute(exportMethod);
+        assertEquals("application/xml", response.getEntity().getContentType()
+                .getValue());
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        final String content = EntityUtils.toString(response.getEntity());
+
+        execute(new HttpDelete(serverAddress + dsName));
+        assertDeleted(serverAddress + dsName);
+        final HttpResponse tombstoneResponse = execute(new HttpDelete(serverAddress + dsName + "/fcr:tombstone"));
+        assertEquals(204, tombstoneResponse.getStatusLine().getStatusCode());
+
+        final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
+        importMethod.setEntity(new StringEntity(content));
+        assertEquals("Should not have been able to import jcr:content export.", 400, getStatus(importMethod));
+    }
 }
