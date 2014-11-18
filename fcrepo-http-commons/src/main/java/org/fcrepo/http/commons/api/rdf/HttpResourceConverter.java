@@ -70,6 +70,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * URI translation.
  *
  * @author cabeer
+ * @author ajs6f
  * @since 10/5/14
  */
 public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraResource> {
@@ -107,7 +108,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     protected FedoraResource doForward(final Resource resource) {
-        final HashMap<String, String> values = new HashMap<>();
+        final Map<String, String> values = new HashMap<>();
         final String path = asString(resource, values);
         try {
             if (path != null) {
@@ -125,19 +126,19 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
             throw new IdentifierConversionException("Asked to translate a resource " + resource
                     + " that doesn't match the URI template");
-        } catch (final RepositoryException e) {
+        } catch (final PathNotFoundException e) {
             validatePath(session, path);
             try {
-                if ( e instanceof PathNotFoundException ) {
-                    final Node preexistingNode = getClosestExistingAncestor(session, path);
-                    if (TombstoneImpl.hasMixin(preexistingNode)) {
-                        throw new TombstoneException(new TombstoneImpl(preexistingNode));
-                    }
+                final Node preexistingNode = getClosestExistingAncestor(session, path);
+                if (TombstoneImpl.hasMixin(preexistingNode)) {
+                    throw new TombstoneException(new TombstoneImpl(preexistingNode));
                 }
-            } catch (RepositoryException inner) {
-                LOGGER.debug("Error checking for parent tombstones", inner);
+            } catch (final RepositoryException inner) {
+                LOGGER.error("Error checking for parent tombstones!", inner);
+                throw new RepositoryRuntimeException(e);
             }
-
+            throw new RepositoryRuntimeException(e);
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -149,7 +150,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     public boolean inDomain(final Resource resource) {
-        final HashMap<String, String> values = new HashMap<>();
+        final Map<String, String> values = new HashMap<>();
         return uriTemplate.match(resource.getURI(), values) && values.containsKey("path");
     }
 
@@ -182,8 +183,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     public String asString(final Resource resource) {
-        final HashMap<String, String> values = new HashMap<>();
-
+        final Map<String, String> values = new HashMap<>();
         return asString(resource, values);
     }
 
@@ -212,7 +212,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             try {
                 path = URLDecoder.decode(path, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
+            } catch (final UnsupportedEncodingException e) {
                 LOGGER.debug("Unable to URL-decode path " + e + " as UTF-8", e);
             }
 
@@ -262,48 +262,50 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      */
     private Node getFrozenNodeByLabel(final String baseResourcePath, final String label) {
         try {
-            try {
-                final Node frozenNode = session.getNodeByIdentifier(label);
-
+            final Node frozenNode = session.getNodeByIdentifier(label);
             /*
-             * We found a node whose identifier is the "label" for the version.  Now
-             * we must do due dilligence to make sure it's a frozen node representing
-             * a version of the subject node.
+             * We found a node whose identifier is the "label" for the version. Now we must do due dilligence to make
+             * sure it's a frozen node representing a version of the subject node.
              */
-                final Property p = frozenNode.getProperty("jcr:frozenUuid");
-                if (p != null) {
-                    final Node subjectNode = session.getNode(baseResourcePath);
-                    if (p.getString().equals(subjectNode.getIdentifier())) {
-                        return frozenNode;
-                    }
+            final Property p = frozenNode.getProperty("jcr:frozenUuid");
+            if (p != null) {
+                final Node subjectNode = session.getNode(baseResourcePath);
+                if (p.getString().equals(subjectNode.getIdentifier())) {
+                    return frozenNode;
                 }
-            /*
-             * Though a node with an id of the label was found, it wasn't the
-             * node we were looking for, so fall through and look for a labeled
-             * node.
-             */
-            } catch (final ItemNotFoundException ex) {
-            /*
-             * the label wasn't a uuid of a frozen node but
-             * instead possibly a version label.
-             */
             }
-
-            final VersionHistory hist =
-                    session.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
-            if (hist.hasVersionLabel(label)) {
-                LOGGER.debug("Found version for {} by label {}.", baseResourcePath, label);
-                return hist.getVersionByLabel(label).getFrozenNode();
+            /*
+             * Though a node with an id of the label was found, it wasn't the node we were looking for, so fall
+             * through and look for a labeled node.
+             */
+            return getNodeByLabel(baseResourcePath, label);
+        } catch (final ItemNotFoundException ex) {
+            /*
+             * the label wasn't a uuid of a frozen node but instead possibly a version label.
+             */
+            try {
+                return getNodeByLabel(baseResourcePath, label);
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
-            LOGGER.warn("Unknown version {} with label or uuid {}!", baseResourcePath, label);
-            throw new PathNotFoundException("Unknown version " + baseResourcePath
-                    + " with label or uuid " + label);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
-    private String getPath(final FedoraResource resource) {
+    private Node getNodeByLabel(final String baseResourcePath, final String label) throws RepositoryException {
+        final VersionHistory hist =
+                session.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
+        if (hist.hasVersionLabel(label)) {
+            LOGGER.debug("Found version for {} by label {}.", baseResourcePath, label);
+            return hist.getVersionByLabel(label).getFrozenNode();
+        }
+        LOGGER.warn("Unknown version {} with label or uuid {}!", baseResourcePath, label);
+        throw new PathNotFoundException("Unknown version " + baseResourcePath
+                + " with label or uuid " + label);
+    }
+
+    private static String getPath(final FedoraResource resource) {
         if (isFrozenNode.apply(resource)) {
             try {
 
@@ -360,7 +362,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
             return path;
         }
-        throw new RuntimeException("Unable to process reverse chain for resource " + resource);
+        throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
     }
 
 
@@ -415,7 +417,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     /**
      * Translate the current transaction into the identifier
      */
-    class TransactionIdentifierConverter extends Converter<String, String> {
+    static class TransactionIdentifierConverter extends Converter<String, String> {
         public static final String TX_PREFIX = "tx:";
 
         private final Session session;

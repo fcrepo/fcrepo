@@ -15,14 +15,12 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
@@ -42,10 +40,12 @@ import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/7/14
  */
 public class LdpIsMemberOfRdfContext extends NodeRdfContext {
@@ -92,10 +92,10 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
                 return;
             }
         } else {
-            insertedContainerProperty = RdfLexicon.MEMBER_SUBJECT.getURI();
+            insertedContainerProperty = MEMBER_SUBJECT.getURI();
         }
 
-        if (insertedContainerProperty.equals(RdfLexicon.MEMBER_SUBJECT.getURI())) {
+        if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
             concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
         } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {
             final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(), createResource
@@ -117,13 +117,10 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
                         }
                     });
 
-            concat(Iterators.transform(insertedContentRelations, new Function<RDFNode, Triple>() {
-                @Override
-                public Triple apply(final RDFNode input) {
-                    return create(input.asNode(), memberRelation.asNode(), membershipResource.asNode());
-                }
-            }));
-
+            while (insertedContentRelations.hasNext()) {
+                concat(create(insertedContentRelations.next().asNode(), memberRelation.asNode(), membershipResource
+                        .asNode()));
+            }
         }
     }
 

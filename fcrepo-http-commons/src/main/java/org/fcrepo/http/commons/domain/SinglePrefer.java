@@ -16,6 +16,7 @@
 
 package org.fcrepo.http.commons.domain;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.tryFind;
 import static org.fcrepo.http.commons.domain.PreferTag.emptyTag;
@@ -98,6 +99,7 @@ public class SinglePrefer {
 
             @Override
             public boolean apply(final T tag) {
+                checkNotNull(tag);
                 return tag.getTag().equals(tagName);
             }
         };

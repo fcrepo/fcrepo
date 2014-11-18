@@ -17,11 +17,15 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
 import javax.jcr.NamespaceRegistry;
@@ -31,6 +35,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -41,13 +46,14 @@ import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/1/14
  */
+@RunWith(MockitoJUnitRunner.class)
 public class TypeRdfContextTest {
 
 
@@ -97,7 +103,6 @@ public class TypeRdfContextTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
         when(mockPrimaryNodeType.getName()).thenReturn(

@@ -58,7 +58,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final com.hp.hpl.jena.graph.Node subject;
 
-    private final Logger LOGGER = getLogger(VersionsRdfContext.class);
+    private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
     /**
      * Ordinary constructor.
@@ -83,42 +83,37 @@ public class VersionsRdfContext extends RdfStream {
                 .getAllVersions()), version2triples));
     }
 
-    private Function<Version, Iterator<Triple>> version2triples =
-        new Function<Version, Iterator<Triple>>() {
+    private final Function<Version, Iterator<Triple>> version2triples =
+            new Function<Version, Iterator<Triple>>() {
 
-            @Override
-            public Iterator<Triple> apply(final Version version) {
+                @Override
+                public Iterator<Triple> apply(final Version version) {
 
-                try {
-                    /* Discard jcr:rootVersion */
-                    if (version.getName().equals(versionHistory.getRootVersion().getName())) {
-                        LOGGER.trace("Skipped root version from triples");
-                        return new RdfStream();
+                    try {
+                        /* Discard jcr:rootVersion */
+                        if (version.getName().equals(versionHistory.getRootVersion().getName())) {
+                            LOGGER.trace("Skipped root version from triples");
+                            return new RdfStream();
+                        }
+                        final Node frozenNode = version.getFrozenNode();
+                        final com.hp.hpl.jena.graph.Node versionSubject =
+                                nodeToResource(idTranslator).convert(frozenNode).asNode();
+
+                        final RdfStream results = new PropertiesRdfContext(nodeConverter.convert(frozenNode),
+                                idTranslator);
+
+                        results.concat(create(subject, HAS_VERSION.asNode(), versionSubject));
+
+                        for (final String label : versionHistory.getVersionLabels(version)) {
+                            results.concat(create(versionSubject, HAS_VERSION_LABEL
+                                    .asNode(), createLiteral(label)));
+                        }
+
+                        return results;
+
+                    } catch (final RepositoryException e) {
+                        throw propagate(e);
                     }
-                    final Node frozenNode = version.getFrozenNode();
-                    final com.hp.hpl.jena.graph.Node versionSubject
-                            = nodeToResource(idTranslator).convert(frozenNode).asNode();
-
-                    final RdfStream results = new PropertiesRdfContext(nodeConverter.convert(frozenNode),
-                            idTranslator);
-
-                    results.concat(create(subject, HAS_VERSION.asNode(),
-                            versionSubject));
-
-                    for (final String label : versionHistory
-                            .getVersionLabels(version)) {
-                        results.concat(create(versionSubject, HAS_VERSION_LABEL
-                                .asNode(), createLiteral(label)));
-                    }
-
-                    return results;
-
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
                 }
-            }
-
-        };
-
-
+            };
 }

@@ -15,13 +15,14 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import javax.jcr.Node;
 import javax.jcr.Session;
 
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -31,7 +32,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * // TODO Maybe write some tests?
  *
  * @author awoods
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultGraphSubjectsTest {
 
     private DefaultIdentifierTranslator testObj;
@@ -47,9 +50,12 @@ public class DefaultGraphSubjectsTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = new DefaultIdentifierTranslator(mockSession);
     }
 
+    @Test
+    public void test() {
+        // TODO make test here!
+    }
 
 }

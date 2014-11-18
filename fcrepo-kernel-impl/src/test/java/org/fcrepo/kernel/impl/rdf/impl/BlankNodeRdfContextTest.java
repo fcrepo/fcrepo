@@ -179,7 +179,7 @@ public class BlankNodeRdfContextTest {
 
         when(mockNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
-            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockBnodeReferenceProperty);
             }
         });
@@ -200,7 +200,7 @@ public class BlankNodeRdfContextTest {
 
         when(mockNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
-            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockBnodeReferenceProperty);
             }
         });
@@ -209,7 +209,7 @@ public class BlankNodeRdfContextTest {
 
         when(mockBlankNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
-            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockOtherBnodeReferenceProperty);
             }
         });

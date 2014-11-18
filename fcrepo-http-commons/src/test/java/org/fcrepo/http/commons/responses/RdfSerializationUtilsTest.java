@@ -22,33 +22,41 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static java.util.Arrays.asList;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstValueForPredicate;
 import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getAllValuesForPredicate;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 
 import java.util.Iterator;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>RdfSerializationUtilsTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class RdfSerializationUtilsTest {
 
-    private final UriInfo info = Mockito.mock(UriInfo.class);
+    @Mock
+    private UriInfo info;
 
     private final Model testData = createDefaultModel();
 
+    @Mock
     private PathSegment segment;
 
     @Before
@@ -62,10 +70,8 @@ public class RdfSerializationUtilsTest {
         testData.add(createResource("test:subject"),
                  createProperty("test:anotherPredicate"),
                  createTypedLiteral("test:object2"));
-        final List<PathSegment> segments = new ArrayList<>();
-        segment = Mockito.mock(PathSegment.class);
-        segments.add(segment);
-        Mockito.when(info.getPathSegments()).thenReturn(segments);
+        final List<PathSegment> segments = asList(segment);
+        when(info.getPathSegments()).thenReturn(segments);
     }
 
     @Test

@@ -20,7 +20,6 @@ import static org.fcrepo.kernel.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -41,7 +40,9 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -52,6 +53,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ContentRdfContextTest {
 
     @Test
@@ -64,7 +66,7 @@ public class ContentRdfContextTest {
     }
 
     @Test
-    public void testFedoraBinaryTriples() throws IOException {
+    public void testFedoraBinaryTriples() {
 
         final Model results =
                 new ContentRdfContext(mockBinary, idTranslator).asModel();
@@ -74,7 +76,6 @@ public class ContentRdfContextTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
         when(mockBinary.getDescription()).thenReturn(mockResource);
         when(mockBinaryNode.getSession()).thenReturn(mockSession);

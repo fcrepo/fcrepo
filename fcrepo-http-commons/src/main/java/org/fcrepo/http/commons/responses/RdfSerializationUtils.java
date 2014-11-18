@@ -15,11 +15,13 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterables.transform;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.google.common.collect.Iterators.getNext;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -32,12 +34,14 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+
 import org.slf4j.Logger;
 
 /**
  * Utilities to help with serializing a graph to an HTTP resource
  *
  * @author awoods
+ * @author ajs6f
  */
 public class RdfSerializationUtils {
 
@@ -64,7 +68,9 @@ public class RdfSerializationUtils {
                   "mixinTypes");
 
     private static final Function<RDFNode, String> stringConverter = new Function<RDFNode, String>() {
+        @Override
         public String apply(final RDFNode statement) {
+            checkNotNull(statement);
             return statement.asLiteral().getLexicalForm();
         }
     };
@@ -82,12 +88,8 @@ public class RdfSerializationUtils {
             final Node subject, final Node predicate) {
         final NodeIterator statements = rdf.listObjectsOfProperty(createResource(subject.getURI()),
                 createProperty(predicate.getURI()));
-        // we'll take the first one we get
-        if (statements.hasNext()) {
-            return statements.next().asLiteral().getLexicalForm();
-        }
-        LOGGER.trace("No value found for predicate: {}", predicate);
-        return null;
+        final RDFNode firstMatchingNode = getNext(statements, null);
+        return firstMatchingNode == null ? null : firstMatchingNode.asLiteral().getLexicalForm();
     }
 
     /**

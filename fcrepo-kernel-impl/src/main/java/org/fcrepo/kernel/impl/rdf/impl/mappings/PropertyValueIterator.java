@@ -30,7 +30,7 @@ import java.util.Iterator;
  * @author cabeer
  */
 public class PropertyValueIterator extends AbstractIterator<Value> {
-    private Iterator<Property> properties;
+    private final Iterator<Property> properties;
     private Iterator<Value> currentValues;
 
     /**
@@ -62,10 +62,9 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
                 if (property.isMultiple()) {
                     currentValues = Iterators.forArray(property.getValues());
                     return currentValues.next();
-                } else {
-                    currentValues = null;
-                    return property.getValue();
                 }
+                currentValues = null;
+                return property.getValue();
             }
 
             return endOfData();

@@ -24,14 +24,11 @@ import java.io.File;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.impl.AbstractIT;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.RepositoryService;
-import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Problems;
 import org.springframework.test.context.ContextConfiguration;
@@ -53,12 +50,6 @@ public class RepositoryServiceImplIT extends AbstractIT {
     @Inject
     BinaryService binaryService;
 
-    private DefaultIdentifierTranslator idTranslator;
-
-    @Before
-    public void setUp() throws RepositoryException {
-        idTranslator = new DefaultIdentifierTranslator(repository.login());
-    }
     @Test
     public void testGetAllObjectsDatastreamSize() throws Exception {
         Session session = repository.login();

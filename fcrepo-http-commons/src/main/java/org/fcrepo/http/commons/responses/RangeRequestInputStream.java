@@ -19,7 +19,6 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.io.input.ProxyInputStream;
 
@@ -42,6 +41,7 @@ public class RangeRequestInputStream extends FilterInputStream {
      * @param skip the number of bytes to skip at the beginning of the stream
      * @param length the number of bytes from the inputstream to read
      */
+    @SuppressWarnings("resource")
     public RangeRequestInputStream(final InputStream in,
                                    final long skip,
                                    final long length) throws IOException {
@@ -60,13 +60,13 @@ public class RangeRequestInputStream extends FilterInputStream {
         /**
          * An InputStream wrapper that always skips the first N bytes
          * @param in
-         * @param skip
+         * @param skipAmount
          * @throws IOException
          */
         public SkipInputStream(final InputStream in,
-                               final long skip) throws IOException {
+                               final long skipAmount) throws IOException {
             super(in);
-            IOUtils.skip(in, skip);
+            skip(skipAmount);
         }
     }
 }

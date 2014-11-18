@@ -125,7 +125,7 @@ public class PropertyConverterTest {
     }
 
     @Test (expected = InvalidPropertyURIException.class)
-    public void shouldThrowOnForward() throws RepositoryException {
+    public void shouldThrowOnForward() {
         final javax.jcr.Property p = mock(javax.jcr.Property.class);
         testObj.convert(p);
     }
@@ -136,7 +136,7 @@ public class PropertyConverterTest {
         testObj.doBackward(property);
     }
 
-    private void mockNamespaceRegistry(final NamespaceRegistry mockRegistry) throws RepositoryException {
+    private static void mockNamespaceRegistry(final NamespaceRegistry mockRegistry) throws RepositoryException {
 
         when(mockRegistry.isRegisteredUri(mockUri)).thenReturn(true);
         when(mockRegistry.isRegisteredUri("not-registered-uri#")).thenReturn(

@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
 import com.google.common.collect.ImmutableList;
+
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,6 +82,7 @@ public class PropertyValueIteratorTest {
         assertTrue(values.containsAll(ImmutableList.of(value2, value3)));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testSingleValuePropertyIterator() {
         testObj = new PropertyValueIterator(propertyIterator);

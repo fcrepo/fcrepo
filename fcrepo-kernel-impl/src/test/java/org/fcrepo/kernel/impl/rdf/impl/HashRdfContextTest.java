@@ -120,7 +120,7 @@ public class HashRdfContextTest {
         when(mockChildNode.hasProperties()).thenReturn(true);
         when(mockChildNode.getProperties()).thenAnswer(new Answer<PropertyIterator>() {
             @Override
-            public PropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public PropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockProperty);
             }
         });

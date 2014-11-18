@@ -194,7 +194,7 @@ public class FedoraTypesUtilsTest {
 
     @Test (expected = RepositoryRuntimeException.class)
     public void testIsInternalReferencePropertyException() throws RepositoryException {
-        when(mockProperty.getType()).thenThrow(RepositoryException.class);
+        when(mockProperty.getType()).thenThrow(new RepositoryException());
         assertTrue(isInternalReferenceProperty.apply(mockProperty));
     }
 

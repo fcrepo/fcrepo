@@ -93,7 +93,7 @@ public class JcrRdfTools {
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
     private final ValueConverter valueConverter;
 
-    private Session session;
+    private final Session session;
     private final NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
 
     @VisibleForTesting
@@ -413,7 +413,7 @@ public class JcrRdfTools {
         return skolemizedBnodeMap.get(id);
     }
 
-    private String skolemizedId() {
+    private static String skolemizedId() {
         return "/.well-known/genid/" + randomUUID().toString();
     }
 }

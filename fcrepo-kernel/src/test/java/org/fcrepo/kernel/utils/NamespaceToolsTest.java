@@ -37,6 +37,7 @@ import org.modeshape.jcr.api.NamespaceRegistry;
  * <p>NamespaceToolsTest class.</p>
  *
  * @author ksclarke
+ * @author ajs6f
  */
 public class NamespaceToolsTest {
 
@@ -60,7 +61,7 @@ public class NamespaceToolsTest {
     }
 
     @Test
-    public void testFunction() throws RepositoryException {
+    public void testFunction() {
         getNamespaceRegistry.apply(mockNode);
     }
 
