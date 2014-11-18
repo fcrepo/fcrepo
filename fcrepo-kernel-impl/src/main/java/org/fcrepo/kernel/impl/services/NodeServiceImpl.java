@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -105,10 +106,25 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     @Override
     public void moveObject(final Session session, final String source, final String destination) {
         try {
+            final FedoraResource srcResource = find(session, source);
+            final Node sourceNode = srcResource.getNode();
+            final Node parent = sourceNode.getDepth() > 0 ? sourceNode.getParent() : null;
+
             session.getWorkspace().move(source, destination);
+
+            if (parent != null) {
+                createTombstone(parent, source);
+            }
+
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    private void createTombstone(final Node parent, final String path) throws RepositoryException {
+        final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(parent);
+        final Node n  = fedoraResource.findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
+        LOGGER.info("Created tombstone at {} ", n.getPath());
     }
 
     /**
