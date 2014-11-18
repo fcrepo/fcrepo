@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.identifiers;
+package org.fcrepo.mint;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Joiner.on;

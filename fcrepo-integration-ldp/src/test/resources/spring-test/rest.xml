@@ -11,7 +11,7 @@
   <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
 
   <!-- Mints PIDs-->
-  <bean class="org.fcrepo.kernel.impl.identifiers.UUIDPidMinter"/>
+  <bean class="org.fcrepo.mint.UUIDPidMinter"/>
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">

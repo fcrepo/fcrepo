@@ -60,7 +60,7 @@ import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.impl.identifiers.UUIDPidMinter;
+import org.fcrepo.mint.UUIDPidMinter;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;

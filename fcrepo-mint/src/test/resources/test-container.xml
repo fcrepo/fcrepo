@@ -9,8 +9,7 @@
   <context:property-placeholder/>
 
   <bean id="containerWrapper"
-    class="org.fcrepo.integration.kernel.impl.identifiers.ContainerWrapper"
-    init-method="start" destroy-method="stop" p:port="${test.port:8080}"
-    p:configLocation="classpath:web.xml"/>
+    class="org.fcrepo.integration.mint.ContainerWrapper"
+    init-method="start" destroy-method="stop" p:port="${test.port:8080}"/>
 
 </beans>

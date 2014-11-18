@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.integration.kernel.impl.identifiers;
+package org.fcrepo.integration.mint;
 
 
 import org.glassfish.grizzly.PortRange;
@@ -40,12 +40,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ContainerWrapper implements ApplicationContextAware {
 
     private static final Logger logger = getLogger(ContainerWrapper.class);
-
-    private String configLocation;
-
-    public void setConfigLocation(final String configLocation) {
-        this.configLocation = configLocation.replaceFirst("^classpath:", "/");
-    }
 
     private int port;
 

@@ -62,6 +62,7 @@
   </properties>
   <modules>
     <module>fcrepo-boms</module>
+    <module>fcrepo-mint</module>
     <module>fcrepo-kernel</module>
     <module>fcrepo-kernel-impl</module>
     <module>fcrepo-webapp</module>

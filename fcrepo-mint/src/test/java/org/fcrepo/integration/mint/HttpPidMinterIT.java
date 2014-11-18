@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.integration.kernel.impl.identifiers;
+package org.fcrepo.integration.mint;
 
-import org.fcrepo.kernel.impl.identifiers.HttpPidMinter;
+import org.fcrepo.mint.HttpPidMinter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
