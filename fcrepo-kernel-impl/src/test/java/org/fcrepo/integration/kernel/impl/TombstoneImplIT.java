@@ -64,7 +64,7 @@ public class TombstoneImplIT extends AbstractIT {
     }
 
     @Test (expected = RepositoryRuntimeException.class)
-    public void testDeleteObjectException() throws RepositoryException {
+    public void testTombstoneNodeTypeException() throws RepositoryException {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
         new TombstoneImpl(container.getNode());
