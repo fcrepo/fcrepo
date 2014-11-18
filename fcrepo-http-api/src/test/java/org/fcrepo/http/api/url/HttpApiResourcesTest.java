@@ -25,6 +25,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -35,6 +36,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +48,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>HttpApiResourcesTest class.</p>
@@ -64,6 +67,9 @@ public class HttpApiResourcesTest {
     private SerializerUtil mockSerializers;
 
     @Mock
+    FedoraObjectSerializer mockSerializer;
+
+    @Mock
     private Session mockSession;
 
     @Mock
@@ -79,6 +85,12 @@ public class HttpApiResourcesTest {
         uriInfo = getUriInfoImpl();
         mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
         setField(testObj, "serializers", mockSerializers);
+        final Set<String> serializerKeySet = new HashSet<String>();
+        final String format = "DummyFORMAT";
+        serializerKeySet.add(format);
+        when(mockSerializers.keySet()).thenReturn(serializerKeySet);
+        when(mockSerializers.getSerializer(any(String.class))).thenReturn(mockSerializer);
+        when(mockSerializer.canSerialize(mockResource)).thenReturn(true);
     }
 
     @Test

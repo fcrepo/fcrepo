@@ -42,7 +42,8 @@ public abstract class BaseFedoraObjectSerializer implements
     public abstract void serialize(final FedoraResource obj,
                                    final OutputStream out,
                                    final boolean skipBinary,
-                                   final boolean recurse) throws RepositoryException, IOException;
+                                   final boolean recurse) throws RepositoryException, IOException,
+            InvalidSerializationFormatException;
 
     @Override
     public abstract void deserialize(final Session session, final String path,

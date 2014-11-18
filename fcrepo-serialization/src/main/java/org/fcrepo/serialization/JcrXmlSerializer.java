@@ -27,6 +27,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.File;
@@ -36,6 +37,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 
 /**
  * Serialize a FedoraObject using the modeshape-provided JCR/XML format
@@ -56,6 +60,11 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
     }
 
     @Override
+    public boolean canSerialize(final FedoraResource resource) {
+        return (!(resource.hasType(FEDORA_BINARY) || resource.hasType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)));
+    }
+
+    @Override
     /**
      * Serialize JCR/XML with options for recurse and skipBinary.
      * @param obj
@@ -69,7 +78,10 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
                           final OutputStream out,
                           final boolean skipBinary,
                           final boolean recurse)
-            throws RepositoryException, IOException {
+            throws RepositoryException, IOException, InvalidSerializationFormatException {
+        if (obj.hasType(FEDORA_BINARY)) {
+            throw new InvalidSerializationFormatException("Cannot serialize decontextualized binary content.");
+        }
         final Node node = obj.getNode();
         // jcr/xml export system view implemented for noRecurse:
         // exportSystemView(String absPath, OutputStream out, boolean skipBinary, boolean noRecurse)
@@ -100,18 +112,30 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
     }
 
     private void validateJCRXML(final File file) throws InvalidSerializationFormatException, IOException {
+        int depth = 0;
         try (final FileInputStream fis = new FileInputStream(file)) {
             final XMLEventReader reader = XMLInputFactory.newFactory().createXMLEventReader(fis);
             while (reader.hasNext()) {
                 final XMLEvent event = reader.nextEvent();
                 if (event.isStartElement()) {
+                    depth ++;
                     final StartElement startElement = event.asStartElement();
+                    final Attribute nameAttribute = startElement.getAttributeByName(
+                            new QName("http://www.jcp.org/jcr/sv/1.0", "name"));
+                    if (depth == 1 && nameAttribute != null && "jcr:content".equals(nameAttribute.getValue())) {
+                        throw new InvalidSerializationFormatException(
+                                "Cannot import JCR/XML starting with content node.");
+                    }
                     final QName name = startElement.getName();
                     if (!(name.getNamespaceURI().equals("http://www.jcp.org/jcr/sv/1.0")
                             && (name.getLocalPart().equals("node") || name.getLocalPart().equals("property")
                             || name.getLocalPart().equals("value")))) {
                         throw new InvalidSerializationFormatException(
                                 "Unrecognized element \"" + name.toString() + "\", in import XML.");
+                    }
+                } else {
+                    if (event.isEndElement()) {
+                        depth --;
                     }
                 }
             }
