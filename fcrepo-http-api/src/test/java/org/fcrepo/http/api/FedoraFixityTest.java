@@ -28,8 +28,6 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.TimeoutHandler;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
@@ -39,11 +37,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>FedoraFixityTest class.</p>
@@ -83,102 +76,13 @@ public class FedoraFixityTest {
     }
 
     @Test
-    public void testGetDatastreamFixity() throws RepositoryException, InterruptedException {
+    public void testGetDatastreamFixity() throws RepositoryException {
         final RdfStream expected = new RdfStream();
 
         when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
 
-        final TestAsyncResponse asyncResponse = new TestAsyncResponse();
+        final RdfStream actual = testObj.getDatastreamFixity();
 
-
-        synchronized (asyncResponse) {
-            testObj.getDatastreamFixity(asyncResponse);
-            asyncResponse.wait(1000);
-        }
-
-        assertEquals(expected, asyncResponse.getResponse());
-    }
-
-
-    private class TestAsyncResponse implements AsyncResponse {
-        private Object response;
-
-        public Object getResponse() {
-            return response;
-        }
-
-        @Override
-        public boolean resume(final Object o) {
-            synchronized (this) {
-                this.response = o;
-                notify();
-            }
-            return true;
-        }
-
-        @Override
-        public boolean resume(final Throwable throwable) {
-            return false;
-        }
-
-        @Override
-        public boolean cancel() {
-            return false;
-        }
-
-        @Override
-        public boolean cancel(final int i) {
-            return false;
-        }
-
-        @Override
-        public boolean cancel(final Date date) {
-            return false;
-        }
-
-        @Override
-        public boolean isSuspended() {
-            return false;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return false;
-        }
-
-        @Override
-        public boolean isDone() {
-            return false;
-        }
-
-        @Override
-        public boolean setTimeout(final long l, final TimeUnit timeUnit) {
-            return false;
-        }
-
-        @Override
-        public void setTimeoutHandler(final TimeoutHandler timeoutHandler) {
-
-        }
-
-        @Override
-        public Collection<Class<?>> register(final Class<?> aClass) {
-            return null;
-        }
-
-        @Override
-        public Map<Class<?>, Collection<Class<?>>> register(final Class<?> aClass, final Class<?>... classes) {
-            return null;
-        }
-
-        @Override
-        public Collection<Class<?>> register(final Object o) {
-            return null;
-        }
-
-        @Override
-        public Map<Class<?>, Collection<Class<?>>> register(final Object o, final Object... objects) {
-            return null;
-        }
+        assertEquals(expected, actual);
     }
 }

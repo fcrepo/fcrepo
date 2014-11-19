@@ -34,8 +34,6 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -82,6 +80,7 @@ public class FedoraFixity extends ContentExposingResource {
      *
      * GET /path/to/some/datastream/fcr:fixity
      *
+     * @return datastream fixity in the given format
      */
     @GET
     @Timed
@@ -89,25 +88,15 @@ public class FedoraFixity extends ContentExposingResource {
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
-    public void getDatastreamFixity(@Suspended final AsyncResponse asyncResponse) {
+    public RdfStream getDatastreamFixity() {
 
         if (!(resource() instanceof FedoraBinary)) {
             throw new NotFoundException(resource() + " is not a binary");
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final RdfStream result = getFixityStream();
-                asyncResponse.resume(result);
-            }
-
-            private RdfStream getFixityStream() {
-                return ((FedoraBinary)resource()).getFixity(translator())
-                        .topic(translator().reverse().convert(resource()).asNode())
-                        .session(session);
-            }
-        }).start();
+        return ((FedoraBinary)resource()).getFixity(translator())
+                .topic(translator().reverse().convert(resource()).asNode())
+                .session(session);
 
     }
 
