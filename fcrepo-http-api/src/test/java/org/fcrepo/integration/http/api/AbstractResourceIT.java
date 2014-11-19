@@ -76,6 +76,8 @@ import com.hp.hpl.jena.update.GraphStore;
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
 
+    public static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+
     protected static Logger logger;
 
     @Before

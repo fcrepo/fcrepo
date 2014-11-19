@@ -51,6 +51,18 @@ public interface FedoraObjectSerializer {
     String getMediaType();
 
     /**
+     * Determines whether this FedoraObjectSerializer can be used to
+     * serialize the given resource.  A FedoraObjectSerializer
+     * implementation may use any arbitrary criteria to determine
+     * which resources it can serialize, so this method should be
+     * invoked to avoid an InvalidSerializationFormatException from
+     * {@link #serialize}.
+     * @param resource
+     * @return
+     */
+    boolean canSerialize(final FedoraResource resource);
+
+    /**
      * Serialize a FedoraObject into some format with options for recurse
      * and skipBinary, and write it to the given OutputStream
      *
@@ -60,9 +72,10 @@ public interface FedoraObjectSerializer {
      * @param recurse
      * @throws RepositoryException
      * @throws IOException
+     * @throws org.fcrepo.serialization.InvalidSerializationFormatException
      */
     void serialize(final FedoraResource obj, final OutputStream out, final boolean skipBinary, final boolean recurse)
-                    throws RepositoryException, IOException;
+                    throws RepositoryException, IOException, InvalidSerializationFormatException;
 
     /**
      * Read the given InputStream and de-serialize the content

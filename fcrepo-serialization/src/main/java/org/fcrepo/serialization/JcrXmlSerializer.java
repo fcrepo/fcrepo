@@ -38,6 +38,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+
 /**
  * Serialize a FedoraObject using the modeshape-provided JCR/XML format
  *
@@ -57,6 +60,11 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
     }
 
     @Override
+    public boolean canSerialize(final FedoraResource resource) {
+        return (!(resource.hasType(FEDORA_BINARY) || resource.hasType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)));
+    }
+
+    @Override
     /**
      * Serialize JCR/XML with options for recurse and skipBinary.
      * @param obj
@@ -70,7 +78,10 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
                           final OutputStream out,
                           final boolean skipBinary,
                           final boolean recurse)
-            throws RepositoryException, IOException {
+            throws RepositoryException, IOException, InvalidSerializationFormatException {
+        if (obj.hasType(FEDORA_BINARY)) {
+            throw new InvalidSerializationFormatException("Cannot serialize decontextualized binary content.");
+        }
         final Node node = obj.getNode();
         // jcr/xml export system view implemented for noRecurse:
         // exportSystemView(String absPath, OutputStream out, boolean skipBinary, boolean noRecurse)

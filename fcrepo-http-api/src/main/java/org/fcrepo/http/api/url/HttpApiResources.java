@@ -114,17 +114,19 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         final Property dcFormat = createProperty(DC_NAMESPACE + "format");
         // fcr:exports?format=xyz
         for (final String key : serializers.keySet()) {
-            final Resource format =
-                    createResource(uriInfo.getBaseUriBuilder().path(
-                            FedoraExport.class).queryParam("format", key)
-                            .buildFromMap(pathMap, false).toASCIIString());
-            model.add(s, HAS_SERIALIZATION, format);
+            if (serializers.getSerializer(key).canSerialize(resource)) {
+                final Resource format =
+                        createResource(uriInfo.getBaseUriBuilder().path(
+                                FedoraExport.class).queryParam("format", key)
+                                .buildFromMap(pathMap, false).toASCIIString());
+                model.add(s, HAS_SERIALIZATION, format);
 
-            //RDF the serialization
-            final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
+                //RDF the serialization
+                final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
 
-            model.add(formatRDF, RDFS_LABEL, key);
-            model.add(format, dcFormat, formatRDF);
+                model.add(formatRDF, RDFS_LABEL, key);
+                model.add(format, dcFormat, formatRDF);
+            }
         }
     }
 

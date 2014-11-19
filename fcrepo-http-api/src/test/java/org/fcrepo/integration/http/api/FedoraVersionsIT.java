@@ -64,8 +64,6 @@ import com.hp.hpl.jena.update.GraphStore;
  */
 public class FedoraVersionsIT extends AbstractResourceIT {
 
-    public static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-
     @Test
     public void testGetObjectVersionProfile() throws Exception {
         final String pid = getRandomUniquePid();

@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,6 +37,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.InvalidSerializationFormatException;
 import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +101,8 @@ public class FedoraExport extends FedoraBaseResource {
                             LOGGER.debug("Successfully serialized object: {}", resource);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
+                        } catch (InvalidSerializationFormatException e) {
+                            throw new BadRequestException(e.getMessage());
                         }
                     }
                 }).build();

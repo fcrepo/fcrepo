@@ -15,12 +15,18 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -38,21 +44,41 @@ import org.modeshape.common.util.Base64;
 public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
-    public void shouldRoundTripOneObject() throws IOException {
+    public void shouldRoundTripOneContainer() throws IOException {
         final String objName = getRandomUniquePid();
 
         // set up the object
         createObject(objName);
         createDatastream(objName, "testDS", "stuff");
 
+        testRoundtrip(objName);
+    }
+
+    @Test
+    public void shouldRoundTripOnePairtree() throws IOException {
+        // set up the object
+        final HttpResponse response = createObject("");
+        final String objName = response.getFirstHeader("Location").getValue();
+        final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
+
+        final GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + pairtreeName));
+        assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
+                createResource(serverAddress + pairtreeName).asNode(),
+                createURI("http://fedora.info/definitions/v4/repository#mixinTypes"),
+                createLiteral(FEDORA_PAIRTREE)));
+
+        testRoundtrip(pairtreeName);
+    }
+
+    private void testRoundtrip(final String objName) throws IOException {
         // export it
         logger.debug("Attempting to export: " + objName);
         final HttpGet getObjMethod =
-            new HttpGet(serverAddress + objName + "/fcr:export");
+                new HttpGet(serverAddress + objName + "/fcr:export");
         HttpResponse response = execute(getObjMethod);
+        assertEquals(200, response.getStatusLine().getStatusCode());
         assertEquals("application/xml", response.getEntity().getContentType()
                 .getValue());
-        assertEquals(200, response.getStatusLine().getStatusCode());
         logger.debug("Successfully exported: " + objName);
         final String content = EntityUtils.toString(response.getEntity());
         logger.debug("Found exported object: " + content);
@@ -64,7 +90,9 @@ public class FedoraExportIT extends AbstractResourceIT {
         assertEquals(204, tombstoneResponse.getStatusLine().getStatusCode());
 
         // try to import it
-        final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
+        final String parentName = objName.contains("/")
+                ? objName.substring(0, objName.lastIndexOf('/')) : "";
+        final HttpPost importMethod = new HttpPost(serverAddress + parentName + "/fcr:import");
         importMethod.setEntity(new StringEntity(content));
         assertEquals("Couldn't import!", 201, getStatus(importMethod));
 
@@ -238,26 +266,15 @@ public class FedoraExportIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExportThenImportANonRDFResource() throws IOException {
+    public void testExportBinary() throws IOException {
         final String objName = getRandomUniquePid();
         createObject(objName);
         createDatastream(objName, "testDS", "stuff");
         final String dsName = objName + "/testDS";
 
         final HttpGet exportMethod = new HttpGet(serverAddress + dsName + "/fcr:export");
-        HttpResponse response = execute(exportMethod);
-        assertEquals("application/xml", response.getEntity().getContentType()
-                .getValue());
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        final String content = EntityUtils.toString(response.getEntity());
+        final HttpResponse response = execute(exportMethod);
+        assertEquals("Should not be able to export binary content.", 400, response.getStatusLine().getStatusCode());
 
-        execute(new HttpDelete(serverAddress + dsName));
-        assertDeleted(serverAddress + dsName);
-        final HttpResponse tombstoneResponse = execute(new HttpDelete(serverAddress + dsName + "/fcr:tombstone"));
-        assertEquals(204, tombstoneResponse.getStatusLine().getStatusCode());
-
-        final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
-        importMethod.setEntity(new StringEntity(content));
-        assertEquals("Should not have been able to import jcr:content export.", 400, getStatus(importMethod));
     }
 }
