@@ -80,7 +80,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         if (v == null) {
             throw new PathNotFoundException("Unknown version \"" + label + "\"!");
         } else if (workspace.getVersionManager().getBaseVersion(absPath).equals(v) ) {
-            throw new VersionException("Cannot remove current version");
+            throw new VersionException("Cannot remove most recent version snapshot.");
         } else {
             // remove labels
             final VersionHistory history = v.getContainingHistory();
