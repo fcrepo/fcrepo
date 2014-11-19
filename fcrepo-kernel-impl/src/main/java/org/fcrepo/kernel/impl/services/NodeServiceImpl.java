@@ -108,12 +108,13 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
         try {
             final FedoraResource srcResource = find(session, source);
             final Node sourceNode = srcResource.getNode();
+            final String name = sourceNode.getName();
             final Node parent = sourceNode.getDepth() > 0 ? sourceNode.getParent() : null;
 
             session.getWorkspace().move(source, destination);
 
             if (parent != null) {
-                createTombstone(parent, source);
+                createTombstone(parent, name);
             }
 
         } catch (final RepositoryException e) {

@@ -95,6 +95,29 @@ public class FedoraNodesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testMoveAndTombstoneFromRoot() throws Exception {
+
+        final String pid = getRandomUniquePid();
+        final String location = serverAddress + getRandomUniquePid();
+        final HttpResponse response = createObject(location.substring(serverAddress.length()));
+
+        final HttpMove request = new HttpMove(location);
+        request.addHeader("Destination", serverAddress + pid);
+        client.execute(request);
+
+        final HttpGet httpGet = new HttpGet(serverAddress + pid);
+
+        final HttpResponse copiedResult = client.execute(httpGet);
+        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+
+        final HttpResponse originalResult = client.execute(new HttpGet(location));
+        assertEquals(GONE.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+
+        final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
+        assertEquals("hasTombstone", tombstone.getRel());
+    }
+
+    @Test
     public void testMoveAndTombstone() throws Exception {
 
         final String pid = getRandomUniquePid();
