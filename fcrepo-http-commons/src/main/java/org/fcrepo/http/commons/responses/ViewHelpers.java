@@ -20,12 +20,11 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -110,22 +109,8 @@ public class ViewHelpers {
     }
 
     /**
-     * Return an iterator of Triples for child versions.
-     *
-     * @param graph
-     * @param subject
-     * @return iterator
-     */
-    public Iterator<Node> getChildVersions(final Graph graph,
-        final Node subject) {
-        return getOrderedVersions(graph, subject, DESCRIBES);
-    }
-
-    /**
-     * Return an iterator of Triples for versions in order by the
-     * last modification date for the versioned content.  When
-     * multiple versions exist with the same last modification
-     * date, the order of those redundant versions is undefined.
+     * Return an iterator of Triples for versions in order that
+     * they were created.
      *
      * @param graph
      * @param subject
@@ -148,25 +133,6 @@ public class ViewHelpers {
             map.put(key, triple.getObject());
         }
         return map.values().iterator();
-    }
-
-    /**
-     * Gets the URL of the node whose version is represented by the
-     * current node.  The current implementation assumes the URI
-     * of that node will be the same as the breadcrumb entry that
-     * precedes one with the path "fcr:versions".
-     */
-    public String getVersionSubjectUrl(final UriInfo uriInfo,
-                                       final Node subject) {
-        final Map<String, String> breadcrumbs = getNodeBreadcrumbs(uriInfo, subject);
-        String lastUrl = null;
-        for (final Map.Entry<String, String> entry : breadcrumbs.entrySet()) {
-            if (entry.getValue().equals("fcr:versions")) {
-                return lastUrl;
-            }
-            lastUrl = entry.getKey();
-        }
-        return null;
     }
 
     /**
@@ -197,7 +163,7 @@ public class ViewHelpers {
      */
     public String getVersionDate(final Graph graph,
                                  final Node subject) {
-        final Iterator<Triple> objects = getObjects(graph, subject, LAST_MODIFIED_DATE);
+        final Iterator<Triple> objects = getObjects(graph, subject, CREATED_DATE);
         if (objects.hasNext()) {
             return objects.next().getObject().getLiteralValue().toString();
         }

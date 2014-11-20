@@ -25,11 +25,11 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
@@ -81,7 +81,7 @@ public class ViewHelpersTest {
         final String date = new Date().toString();
         mem.add(new Triple(createURI("http://localhost/fcrepo/abc"), HAS_VERSION.asNode(),
                 version));
-        mem.add(new Triple(version, LAST_MODIFIED_DATE.asNode(), createLiteral(date)));
+        mem.add(new Triple(version, CREATED_DATE.asNode(), createLiteral(date)));
         assertEquals("Version should be available.",
                      version, testObj.getVersions(mem, createURI("http://localhost/fcrepo/abc")).next());
     }
@@ -98,13 +98,13 @@ public class ViewHelpersTest {
 
         final Graph mem = createDefaultModel().getGraph();
         mem.add(new Triple(resource, HAS_VERSION.asNode(), v1));
-        mem.add(new Triple(v1, LAST_MODIFIED_DATE.asNode(),
+        mem.add(new Triple(v1, CREATED_DATE.asNode(),
                 createLiteral(now.toString())));
         mem.add(new Triple(resource, HAS_VERSION.asNode(), v2));
-        mem.add(new Triple(v2, LAST_MODIFIED_DATE.asNode(),
+        mem.add(new Triple(v2, CREATED_DATE.asNode(),
                 createLiteral(now.toString())));
         mem.add(new Triple(resource, HAS_VERSION.asNode(), v3));
-        mem.add(new Triple(v3, LAST_MODIFIED_DATE.asNode(),
+        mem.add(new Triple(v3, CREATED_DATE.asNode(),
                 createLiteral(later.toString())));
 
         final Iterator<Node> versions = testObj.getOrderedVersions(mem, resource, HAS_VERSION);
@@ -112,18 +112,6 @@ public class ViewHelpersTest {
         versions.next();
         final Node r3 = versions.next();
         assertEquals("Latest version should be last.", v3, r3);
-    }
-    @Test
-    public void testGetChildVersions() {
-        final Graph mem = createDefaultModel().getGraph();
-        final Node version = createURI("http://localhost/fcrepo/abc/fcr:version/adcd");
-        final Node contentVersion = createURI("http://localhost/fcrepo/abc/fcr:version/adcd/fcr:content");
-        final String date = new Date().toString();
-        mem.add(new Triple(version, HAS_VERSION.asNode(), version));
-        mem.add(new Triple(version, DESCRIBES.asNode(), contentVersion));
-        mem.add(new Triple(contentVersion, LAST_MODIFIED_DATE.asNode(), createLiteral(date)));
-        assertEquals("Content version should be available.",
-                     contentVersion, testObj.getChildVersions(mem, version).next());
     }
 
     @Test
@@ -203,16 +191,6 @@ public class ViewHelpersTest {
     }
 
     @Test
-    public void shouldFindVersionRoot() {
-
-        final UriInfo mockUriInfo = getUriInfoImpl();
-
-        final String nodeUri = testObj.getVersionSubjectUrl(mockUriInfo, createResource(
-                        "http://localhost/fcrepo/a/b/fcr:versions/c").asNode());
-        assertEquals("http://localhost/fcrepo/a/b", nodeUri);
-    }
-
-    @Test
     public void testGetLabeledVersion() {
         final Graph mem = createDefaultModel().getGraph();
         final String label = "testLabel";
@@ -225,14 +203,14 @@ public class ViewHelpersTest {
     public void testGetUnlabeledVersion() {
         final Graph mem = createDefaultModel().getGraph();
         assertEquals("Default version label should be used.",
-                     testObj.getVersionLabel(mem, createURI("a/b/c"), "default"), "default");
+                     "d", testObj.getVersionLabel(mem, createURI("a/b/c"), "d"));
     }
 
     @Test
     public void testGetVersionDate() {
         final Graph mem = createDefaultModel().getGraph();
         final String date = new Date().toString();
-        mem.add(new Triple(createURI("a/b/c"), LAST_MODIFIED_DATE.asNode(),
+        mem.add(new Triple(createURI("a/b/c"), CREATED_DATE.asNode(),
                 createLiteral(date)));
         assertEquals("Date should be available.", date, testObj.getVersionDate(mem, createURI("a/b/c")));
     }

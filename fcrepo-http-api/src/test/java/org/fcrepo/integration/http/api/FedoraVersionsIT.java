@@ -24,10 +24,12 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -67,17 +69,35 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     @Test
     public void testGetObjectVersionProfile() throws Exception {
         final String pid = getRandomUniquePid();
+        final String label = "v0.0.1";
 
         createObject(pid);
         enableVersioning(pid);
-        postObjectVersion(pid, "v0.0.1");
+        postObjectVersion(pid, label);
         final HttpGet getVersion =
             new HttpGet(serverAddress + pid + "/fcr:versions");
         logger.debug("Retrieved version profile:");
         final GraphStore results = getGraphStore(getVersion);
+        assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
         final Resource subject = createResource(serverAddress + pid);
-        assertTrue("Didn't find a version triple!",
-                results.contains(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY));
+        final Iterator<Quad> hasVersionTriple = results.find(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY);
+        assertTrue("Didn't find a version triple!", hasVersionTriple.hasNext());
+        final Node versionURI = hasVersionTriple.next().getObject();
+        assertFalse("Found extra version triple!", hasVersionTriple.hasNext());
+        assertTrue("Version label wasn't presented!",
+                results.contains(ANY, versionURI, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
+        assertTrue("Version creation date wasn't present!",
+                results.contains(ANY, versionURI, CREATED_DATE.asNode(), ANY));
+    }
+
+    private int countTriples(final GraphStore g) {
+        int count = 0;
+        final Iterator<Quad> it = g.find();
+        while (it.hasNext()) {
+            count ++;
+            it.next();
+        }
+        return count;
     }
 
     private static void enableVersioning(final String pid) {
@@ -231,9 +251,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertTrue("Should find a title.", versionResults.contains(ANY, ANY, DC_TITLE.asNode(), ANY));
         assertTrue("Should find the title from the last version tagged with the label \"label\"",
                 versionResults.contains(ANY,
-                                        ANY,
-                                        DC_TITLE.asNode(),
-                                        createLiteral("Second title")));
+                        ANY,
+                        DC_TITLE.asNode(),
+                        createLiteral("Second title")));
     }
 
     @Test
@@ -381,14 +401,14 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final GraphStore originalObjectProperties = getContent(serverAddress + pid);
         assertFalse("Node must not have versionable mixin.",
                 originalObjectProperties.contains(ANY, createResource(serverAddress + pid).asNode(),
-                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
+                        createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
 
         postObjectVersion(pid, "label");
 
         final GraphStore updatedObjectProperties = getContent(serverAddress + pid);
         assertTrue("Node is expected to have versionable mixin.",
                 updatedObjectProperties.contains(ANY, createResource(serverAddress + pid).asNode(),
-                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
+                        createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
     }
 
     @Test
