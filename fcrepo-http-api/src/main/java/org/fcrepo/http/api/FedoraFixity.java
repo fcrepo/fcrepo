@@ -26,6 +26,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -39,6 +40,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
@@ -52,6 +54,8 @@ import com.codahale.metrics.annotation.Timed;
 @Scope("request")
 @Path("/{path: .*}/fcr:fixity")
 public class FedoraFixity extends ContentExposingResource {
+
+    private static final Logger LOGGER = getLogger(FedoraFixity.class);
 
     @Inject
     protected Session session;
@@ -94,6 +98,7 @@ public class FedoraFixity extends ContentExposingResource {
             throw new NotFoundException(resource() + " is not a binary");
         }
 
+        LOGGER.info("Get fixity for '{}'", externalPath);
         return ((FedoraBinary)resource()).getFixity(translator())
                 .topic(translator().reverse().convert(resource()).asNode())
                 .session(session);

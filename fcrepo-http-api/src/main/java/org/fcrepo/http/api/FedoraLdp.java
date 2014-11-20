@@ -141,7 +141,7 @@ public class FedoraLdp extends ContentExposingResource {
     @HEAD
     @Timed
     public Response head() {
-        LOGGER.trace("Getting head for: {}", externalPath);
+        LOGGER.info("HEAD for: {}", externalPath);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -162,6 +162,7 @@ public class FedoraLdp extends ContentExposingResource {
     @OPTIONS
     @Timed
     public Response options() {
+        LOGGER.info("OPTIONS for '{}'", externalPath);
         addOptionsHttpHeaders();
         return ok().build();
     }
@@ -180,6 +181,7 @@ public class FedoraLdp extends ContentExposingResource {
     public Response describe(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
+        LOGGER.info("GET resource '{}'", externalPath);
         addResourceHttpHeaders(resource());
 
         final RdfStream rdfStream = new RdfStream().session(session)
@@ -200,6 +202,7 @@ public class FedoraLdp extends ContentExposingResource {
     public Response deleteObject() {
         evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
+        LOGGER.info("Delete resource '{}'", externalPath);
         resource().delete();
 
         try {
@@ -263,6 +266,7 @@ public class FedoraLdp extends ContentExposingResource {
             resourceTriples = getResourceTriples();
         }
 
+        LOGGER.info("PUT resource '{}'", externalPath);
         if (resource instanceof FedoraBinary) {
             replaceResourceBinaryWithStream((FedoraBinary) resource,
                     requestBodyStream, contentDisposition, requestContentType, checksum);
@@ -338,6 +342,7 @@ public class FedoraLdp extends ContentExposingResource {
                 resourceTriples = getResourceTriples();
             }
 
+            LOGGER.info("PATCH for '{}'", externalPath);
             patchResourcewithSparql(resource(), requestBody, resourceTriples);
 
             try {
@@ -388,7 +393,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String newObjectPath = mintNewPid(slug);
 
-        LOGGER.debug("Attempting to ingest with path: {}", newObjectPath);
+        LOGGER.info("Ingest with path: {}", newObjectPath);
 
         final MediaType effectiveContentType
                 = requestBodyStream == null || requestContentType == null ? null : contentType;

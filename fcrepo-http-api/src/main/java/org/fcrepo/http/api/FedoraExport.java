@@ -98,7 +98,7 @@ public class FedoraExport extends FedoraBaseResource {
                                                  out,
                                                  parseBoolean(skipBinary),
                                                  parseBoolean(recurse));
-                            LOGGER.debug("Successfully serialized object: {}", resource);
+                            LOGGER.info("Serialized to {}, '{}'", format, externalPath);
                         } catch (final RepositoryException e) {
                             throw new WebApplicationException(e);
                         } catch (InvalidSerializationFormatException e) {

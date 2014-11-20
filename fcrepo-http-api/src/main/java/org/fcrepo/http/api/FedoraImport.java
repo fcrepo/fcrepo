@@ -83,7 +83,7 @@ public class FedoraImport extends FedoraBaseResource {
         throws IOException, InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(translator(), externalPath);
-        LOGGER.debug("Deserializing at {}", path);
+        LOGGER.info("Deserializing to {}, '{}'", format, path);
 
         try {
             serializers.getSerializer(format)

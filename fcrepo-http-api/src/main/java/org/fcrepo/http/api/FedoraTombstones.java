@@ -18,6 +18,7 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
@@ -29,6 +30,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.noContent;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * CRUD operations on Fedora tombstones
@@ -38,6 +40,8 @@ import static javax.ws.rs.core.Response.noContent;
 @Scope("request")
 @Path("/{path: .*}/fcr:tombstone")
 public class FedoraTombstones extends FedoraBaseResource {
+
+    private static final Logger LOGGER = getLogger(FedoraTombstones.class);
 
     @Inject
     protected Session session;
@@ -67,6 +71,7 @@ public class FedoraTombstones extends FedoraBaseResource {
      */
     @DELETE
     public Response delete() {
+        LOGGER.info("Delete tombstone: {}", resource());
         resource().delete();
 
         try {

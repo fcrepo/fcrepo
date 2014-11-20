@@ -107,6 +107,7 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @PUT
     public Response enableVersioning() {
+        LOGGER.info("Enable versioning for '{}'", externalPath);
         resource().enableVersioning();
 
         try {
@@ -123,6 +124,7 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @DELETE
     public Response disableVersioning() {
+        LOGGER.info("Disable versioning for '{}'", externalPath);
         resource().disableVersioning();
 
         try {
@@ -145,6 +147,7 @@ public class FedoraVersioning extends FedoraBaseResource {
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
         if (!isBlank(slug)) {
+            LOGGER.info("Add version {} for '{}'", slug, externalPath);
             final String path = toPath(translator(), externalPath);
             versionService.createVersion(session, path);
             resource().addVersionLabel(slug);

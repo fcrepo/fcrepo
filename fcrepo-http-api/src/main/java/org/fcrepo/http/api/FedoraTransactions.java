@@ -88,7 +88,7 @@ public class FedoraTransactions extends FedoraBaseResource {
         }
 
         final Transaction t = txService.beginTransaction(session, userName);
-        LOGGER.debug("created transaction {}", t.getId());
+        LOGGER.info("Created transaction '{}'", t.getId());
 
         return created(new URI(translator().toDomain("/tx:" + t.getId()).toString())).expires(
                 t.getExpires()).build();
@@ -103,6 +103,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path") final String externalPath) {
+        LOGGER.info("Commit transaction '{}'", externalPath);
         return finalizeTransaction(externalPath, true);
 
     }
@@ -114,7 +115,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path") final String externalPath) {
-
+        LOGGER.info("Rollback transaction '{}'", externalPath);
         return finalizeTransaction(externalPath, false);
     }
 

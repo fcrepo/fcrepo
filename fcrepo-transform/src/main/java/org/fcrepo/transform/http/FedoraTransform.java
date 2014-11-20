@@ -148,6 +148,7 @@ public class FedoraTransform extends ContentExposingResource {
     @Timed
     public Object evaluateLdpathProgram(@PathParam("program") final String program)
             throws RepositoryException {
+        LOGGER.info("GET transform, '{}', for '{}'", program, externalPath);
 
         final RdfStream rdfStream = getResourceTriples().session(session)
                 .topic(translator().reverse().convert(resource()).asNode());
@@ -175,6 +176,7 @@ public class FedoraTransform extends ContentExposingResource {
         if (transformationFactory == null) {
             transformationFactory = new TransformationFactory();
         }
+        LOGGER.info("POST transform for '{}'", externalPath);
 
         final RdfStream rdfStream = getResourceTriples().session(session)
                 .topic(translator().reverse().convert(resource()).asNode());

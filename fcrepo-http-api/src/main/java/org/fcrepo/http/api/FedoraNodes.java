@@ -122,6 +122,7 @@ public class FedoraNodes extends ContentExposingResource {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
+            LOGGER.info("Copy from '{}' to '{}'", source, destination);
             nodeService.copyObject(session, source, destination);
 
             session.save();
@@ -174,6 +175,7 @@ public class FedoraNodes extends ContentExposingResource {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
+            LOGGER.info("Move from '{}' to '{}'", source, destination);
             nodeService.moveObject(session, resource().getPath(), destination);
             session.save();
             return created(new URI(destinationUri)).build();
