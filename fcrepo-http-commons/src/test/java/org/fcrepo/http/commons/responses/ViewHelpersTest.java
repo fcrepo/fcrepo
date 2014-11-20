@@ -191,6 +191,16 @@ public class ViewHelpersTest {
     }
 
     @Test
+    public void shouldFindVersionRoot() {
+
+        final UriInfo mockUriInfo = getUriInfoImpl();
+
+        final String nodeUri = testObj.getVersionSubjectUrl(mockUriInfo, createResource(
+                        "http://localhost/fcrepo/a/b/fcr:versions/c").asNode());
+        assertEquals("http://localhost/fcrepo/a/b", nodeUri);
+    }
+
+    @Test
     public void testGetLabeledVersion() {
         final Graph mem = createDefaultModel().getGraph();
         final String label = "testLabel";
