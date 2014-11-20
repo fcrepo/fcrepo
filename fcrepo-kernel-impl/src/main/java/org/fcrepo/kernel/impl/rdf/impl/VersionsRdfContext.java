@@ -18,9 +18,10 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -95,12 +96,12 @@ public class VersionsRdfContext extends RdfStream {
                         LOGGER.trace("Skipped root version from triples");
                         return new RdfStream();
                     }
+
                     final Node frozenNode = version.getFrozenNode();
                     final com.hp.hpl.jena.graph.Node versionSubject
                             = nodeToResource(idTranslator).convert(frozenNode).asNode();
 
-                    final RdfStream results = new PropertiesRdfContext(nodeConverter.convert(frozenNode),
-                            idTranslator);
+                    final RdfStream results = new RdfStream();
 
                     results.concat(create(subject, HAS_VERSION.asNode(),
                             versionSubject));
@@ -110,6 +111,8 @@ public class VersionsRdfContext extends RdfStream {
                         results.concat(create(versionSubject, HAS_VERSION_LABEL
                                 .asNode(), createLiteral(label)));
                     }
+                    results.concat(create(versionSubject, CREATED_DATE.asNode(),
+                            createTypedLiteral(version.getCreated()).asNode()));
 
                     return results;
 

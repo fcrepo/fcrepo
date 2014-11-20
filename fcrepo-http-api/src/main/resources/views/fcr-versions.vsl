@@ -20,63 +20,19 @@
         <h2>Historic Versions</h2>
         <div class="panel-group" id="accordion">
             #foreach($subject in $helpers.getVersions($rdf, $topic))
-                #set($date = $helpers.getVersionDate($rdf, $subject))
-                #if($date && $date.length() > 0)
-                    <div class="panel panel-default" resource="$subject.getURI()">
-                        #set($label = $helpers.getVersionLabel($rdf, $subject, "Version: $date"))
-                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
-                            <div class="ctitle panel-title"><a href="$subject.getURI()" class="version_link">$esc.html($label)</a></div>
-                        </div>
-                        <div class="panel-collapse collapse" id="$helpers.parameterize($subject.getURI())_triples">
-                            <div class="panel-body">
-                                #triples($subject)
-                            </div>
-                        </div>
-		                #foreach($child in $helpers.getChildVersions($rdf, $subject))
-		                    #set($date = $helpers.getVersionDate($rdf, $child))
-		                    #if($date && $date.length() > 0)
-		                        <div class="panel-content panel-default" resource="$child.getURI()">
-		                            #set($label = $helpers.getVersionLabel($rdf, $child, "Content Version: $date"))
-		                            <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($child.getURI())_triples" >
-		                                <div class="ctitle panel-title"><a href="$child.getURI()" class="version_link">$esc.html($label)</a></div>
-		                            </div>
-		                            <div class="panel-collapse collapse"  id="$helpers.parameterize($child.getURI())_triples">
-		                                <div class="panel-body">
-		                                    #triples($child)
-		                                </div>
-		                            </div>
-		                        </div>
-		                    #else
-		                        <div class="panel-content panel-default" resource="$child.getURI()">
-		                            #set($label = $helpers.getVersionLabel($rdf, $child, "Content Version Root"))
-		                            <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($child.getURI())_triples" >
-		                                <div class="ctitle panel-title"><a href="$child.getURI()" class="version_link">$esc.html($label)</a></div>
-		                            </div>
-		                            <div class="panel-collapse collapse"  id="$helpers.parameterize($child.getURI())_triples">
-		                                <div class="panel-body">
-		                                    #triples($child)
-		                                </div>
-		                            </div>
-		                        </div>
-		                    #end
-		                #end                        
-                	</div>
-                #else
-                    <div class="panel panel-default" resource="$subject.getURI()">
-                        #set($label = $helpers.getVersionLabel($rdf, $subject, "Root Version"))
-                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
-                            <div class="ctitle panel-title"><a href="$subject.getURI()" class="version_link">$esc.html($label)</a></div>
-                        </div>
-                        <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
-                            <div class="panel-body">
-                                #triples($subject)
-                            </div>
+                <div class="panel panel-default" resource="$subject.getURI()">
+                    #set($label = $helpers.getVersionLabel($rdf, $subject, "Unlabeled Version"))
+                    <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
+                        <div class="ctitle panel-title"><a href="$subject.getURI()" class="version_link">$esc.html($label)</a></div>
+                    </div>
+                    <div class="panel-collapse collapse" id="$helpers.parameterize($subject.getURI())_triples">
+                        <div class="panel-body">
+                            #triples($subject)
                         </div>
                     </div>
-                #end
+                </div>
             #end
         </div>
-
   </div>
 </body>
 </html>
