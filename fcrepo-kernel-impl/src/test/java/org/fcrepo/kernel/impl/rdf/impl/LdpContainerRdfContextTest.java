@@ -36,12 +36,12 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.Workspace;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_BASIC_CONTAINER;
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION;
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.FedoraJcrTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION;
+import static org.fcrepo.kernel.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;

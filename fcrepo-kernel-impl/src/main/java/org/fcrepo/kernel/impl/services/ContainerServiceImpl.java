@@ -15,8 +15,8 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;

@@ -15,7 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl.observer;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.junit.Assert.assertEquals;
 
 import javax.inject.Inject;

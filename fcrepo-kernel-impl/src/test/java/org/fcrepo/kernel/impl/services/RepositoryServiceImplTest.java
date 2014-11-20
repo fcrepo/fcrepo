@@ -47,7 +47,7 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;

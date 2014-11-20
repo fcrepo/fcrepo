@@ -17,10 +17,10 @@ package org.fcrepo.kernel.impl.observer;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.transform;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.PathNotFoundException;

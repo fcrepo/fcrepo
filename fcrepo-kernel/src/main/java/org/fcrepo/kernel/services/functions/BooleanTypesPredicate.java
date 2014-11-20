@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.services.functions;
 
 import static com.google.common.base.Throwables.propagate;
-import static org.fcrepo.jcr.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;

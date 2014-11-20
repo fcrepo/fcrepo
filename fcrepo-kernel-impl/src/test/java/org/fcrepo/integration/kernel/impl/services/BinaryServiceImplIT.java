@@ -15,7 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl.services;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.PREMIS_FILE_NAME;
+import static org.fcrepo.kernel.FedoraJcrTypes.PREMIS_FILE_NAME;
 import static org.jgroups.util.Util.assertEquals;
 import static org.jgroups.util.Util.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;

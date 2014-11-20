@@ -31,7 +31,7 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.VERSIONABLE;
+import static org.fcrepo.kernel.FedoraJcrTypes.VERSIONABLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

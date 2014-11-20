@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.impl;
 
 import org.apache.tika.io.IOUtils;
-import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.junit.After;

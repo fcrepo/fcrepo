@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BLANKNODE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;

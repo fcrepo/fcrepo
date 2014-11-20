@@ -16,7 +16,7 @@
 package org.fcrepo.integration.http.api;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;

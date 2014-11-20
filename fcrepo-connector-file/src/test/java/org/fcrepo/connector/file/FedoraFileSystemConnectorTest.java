@@ -17,7 +17,7 @@ package org.fcrepo.connector.file;
 
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
-import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;

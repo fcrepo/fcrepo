@@ -28,7 +28,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.jcr.FedoraJcrTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.FedoraJcrTypes.FCR_VERSIONS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;

@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;

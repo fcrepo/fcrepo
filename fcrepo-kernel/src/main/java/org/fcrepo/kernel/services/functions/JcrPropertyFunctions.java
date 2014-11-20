@@ -18,7 +18,7 @@ package org.fcrepo.kernel.services.functions;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraJcrTypes;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;

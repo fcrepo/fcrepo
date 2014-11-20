@@ -16,9 +16,9 @@
 package org.fcrepo.kernel.impl.services;
 
 import static javax.jcr.query.Query.JCR_SQL2;
-import static org.fcrepo.jcr.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.CONTENT_SIZE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;

@@ -40,7 +40,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
-import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_BLANKNODE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;

@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl;
 
-import org.fcrepo.jcr.FedoraJcrTypes;
+import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.junit.After;
 import org.junit.Before;
