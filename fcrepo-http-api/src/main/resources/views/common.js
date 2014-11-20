@@ -290,7 +290,7 @@ function deleteItem()
 function updateFile()
 {
     var update_file = document.getElementById("update_file").files[0];
-    var url = window.location.replace("fcr:metadata", "");
+    var url = window.location.href.replace("fcr:metadata", "");
     var reader = new FileReader();
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
