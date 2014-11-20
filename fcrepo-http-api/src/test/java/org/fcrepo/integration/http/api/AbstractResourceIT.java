@@ -23,6 +23,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -76,7 +77,7 @@ import com.hp.hpl.jena.update.GraphStore;
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
 
-    public static final String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+    public static final String RDF_TYPE = RDF_NAMESPACE + "type";
 
     protected static Logger logger;
 

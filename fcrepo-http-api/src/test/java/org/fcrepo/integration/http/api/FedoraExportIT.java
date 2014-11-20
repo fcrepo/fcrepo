@@ -20,6 +20,7 @@ import static org.fcrepo.jcr.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -64,7 +65,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         final GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + pairtreeName));
         assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
                 createResource(serverAddress + pairtreeName).asNode(),
-                createURI("http://fedora.info/definitions/v4/repository#mixinTypes"),
+                createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
                 createLiteral(FEDORA_PAIRTREE)));
 
         testRoundtrip(pairtreeName);
