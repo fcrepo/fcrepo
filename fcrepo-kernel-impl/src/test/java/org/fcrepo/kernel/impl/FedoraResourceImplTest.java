@@ -230,7 +230,7 @@ public class FedoraResourceImplTest {
                 mockVersionHistory);
 
         testObj.addVersionLabel("v1.0.0");
-        verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", true);
+        verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", false);
     }
 
     @Test
