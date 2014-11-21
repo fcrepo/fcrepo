@@ -413,6 +413,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             final VersionHistory versionHistory = getVersionHistory();
             if (versionHistory.hasVersionLabel(label)) {
                 // ModeShape should do this, but it just throws a VersionException
+                // the bug has been reported here: https://issues.jboss.org/browse/MODE-2372
                 throw new LabelExistsVersionException("The specified label \"" + label
                         + "\" is already assigned to another version of this resource!");
             }
