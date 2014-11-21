@@ -88,6 +88,9 @@ public class VersionServiceImplTest {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
         final Version mockVersion1 = mock(Version.class);
+        final Version mockPreRevertVersion = mock(Version.class);
+        when(mockVersionManager.checkin(EXAMPLE_VERSIONED_PATH)).thenReturn(mockPreRevertVersion);
+        when(mockPreRevertVersion.getContainingHistory()).thenReturn(mockHistory);
         when(mockHistory.hasVersionLabel(versionLabel)).thenReturn(true);
         when(mockHistory.getVersionByLabel(versionLabel)).thenReturn(mockVersion1);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
@@ -105,6 +108,9 @@ public class VersionServiceImplTest {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
         final Version mockVersion1 = mock(Version.class);
+        final Version mockPreRevertVersion = mock(Version.class);
+        when(mockVersionManager.checkin(EXAMPLE_VERSIONED_PATH)).thenReturn(mockPreRevertVersion);
+        when(mockPreRevertVersion.getContainingHistory()).thenReturn(mockHistory);
         when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(new VersionException());
         final VersionIterator mockVersionIterator = mock(VersionIterator.class);
         when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);

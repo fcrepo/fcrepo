@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -225,6 +226,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testCreateTwoVersionsWithSameLabel() throws Exception {
+        final String label1 = "label";
+        final String label2 = "different-label";
         logger.debug("creating an object");
         final String objId = getRandomUniquePid();
         createObject(objId);
@@ -233,27 +236,58 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         logger.debug("Setting a title");
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "First title");
 
-        logger.debug("Posting a version with label \"label\"");
-        postObjectVersion(objId, "label");
+        logger.debug("Posting a version with label \"" + label1 + "\"");
+        postObjectVersion(objId, label1);
 
         logger.debug("Resetting the title");
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Second title");
 
-        logger.debug("Posting a version with label \"label\"");
-        postObjectVersion(objId, "label");
+        logger.debug("Posting a version with label \"" + label1 + "\"");
+        final HttpPost postVersion = postObjMethod(objId + "/fcr:versions");
+        postVersion.addHeader("Slug", "label");
+        final HttpResponse response = execute(postVersion);
+        assertEquals("Must not be allowed to create a version with a duplicate label!",
+                CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
 
-        logger.debug("Resetting the title");
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Third title");
+        logger.debug("Posting a version with label \"" + label2 + "\"");
+        postObjectVersion(objId, label2);
 
-        final GraphStore versionResults = getContent(serverAddress + objId + "/fcr:versions/label");
+        logger.debug("Deleting first labeled version \"" + label1 + "\"");
+        final HttpDelete remove = new HttpDelete(serverAddress + objId + "/fcr:versions/" + label1);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(remove));
 
-        logger.debug("Got version profile:");
-        assertTrue("Should find a title.", versionResults.contains(ANY, ANY, DC_TITLE.asNode(), ANY));
-        assertTrue("Should find the title from the last version tagged with the label \"label\"",
-                versionResults.contains(ANY,
-                        ANY,
-                        DC_TITLE.asNode(),
-                        createLiteral("Second title")));
+        /**
+         * This is the behavior we support... allowing a label to be reused if it's been
+         * deleted.
+         */
+        logger.debug("Making a new version with label \"" + label1 + "\"");
+        postObjectVersion(objId, label1);
+
+    }
+
+    /**
+     * This test just makes sure that while an object may not have two
+     * versions with the same label, two different objects may have versions
+     * with the same label.
+     */
+    @Test
+    public void testCreateTwoObjectsWIthVersionsWithTheSameLabel() throws Exception {
+        final String label = "label";
+        logger.debug("creating an object");
+        final String objId1 = getRandomUniquePid();
+        createObject(objId1);
+        enableVersioning(objId1);
+
+        logger.debug("Posting a version with label \"" + label + "\"");
+        postObjectVersion(objId1, label);
+
+        logger.debug("creating another object");
+        final String objId2 = getRandomUniquePid();
+        createObject(objId2);
+        enableVersioning(objId2);
+
+        logger.debug("Posting a version with label \"" + label + "\"");
+        postObjectVersion(objId2, label);
     }
 
     @Test

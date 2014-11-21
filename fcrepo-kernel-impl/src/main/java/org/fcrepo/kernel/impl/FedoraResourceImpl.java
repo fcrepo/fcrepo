@@ -48,6 +48,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.version.LabelExistsVersionException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -410,7 +411,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public void addVersionLabel(final String label) {
         try {
             final VersionHistory versionHistory = getVersionHistory();
-            versionHistory.addVersionLabel(getBaseVersion().getName(), label, true);
+            if (versionHistory.hasVersionLabel(label)) {
+                // ModeShape should do this, but it just throws a VersionException
+                throw new LabelExistsVersionException("The specified label \"" + label
+                        + "\" is already assigned to another version of this resource!");
+            }
+            versionHistory.addVersionLabel(getBaseVersion().getName(), label, false);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

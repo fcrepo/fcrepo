@@ -25,6 +25,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.version.LabelExistsVersionException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionException;
 import javax.jcr.version.VersionHistory;
@@ -66,9 +67,37 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             throw new PathNotFoundException("Unknown version \"" + label + "\"!");
         }
         final VersionManager versionManager = workspace.getVersionManager();
-        versionManager.checkin(absPath);
+        final Version preRevertVersion = versionManager.checkin(absPath);
+
+        try {
+            preRevertVersion.getContainingHistory().addVersionLabel(preRevertVersion.getName(),
+                    getPreRevertVersionLabel(label, preRevertVersion.getContainingHistory()), false);
+        } catch (LabelExistsVersionException e) {
+            // fall-back behavior is to leave an unlabeled version
+        }
         versionManager.restore(v, true);
         versionManager.checkout(absPath);
+    }
+
+    /**
+     * When we revert to a version, we snapshot first so that the "revert" action can be undone,
+     * this method generates a label suitable for that snapshot version to make it clear why
+     * it shows up in user's version history.
+     * @param targetLabel
+     * @param history
+     * @return
+     * @throws RepositoryException
+     */
+    private String getPreRevertVersionLabel(final String targetLabel, final VersionHistory history)
+            throws RepositoryException {
+        final String baseLabel = "automatic snapshot version before revert to \"" + targetLabel + "\"";
+        for (int i = 0; i < Integer.MAX_VALUE; i ++) {
+            final String label = baseLabel + (i == 0 ? "" : " " + i);
+            if (!history.hasVersionLabel(label)) {
+                return label;
+            }
+        }
+        return baseLabel;
     }
 
     @Override
@@ -131,7 +160,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     private static String checkpoint(final Session session, final String absPath) throws RepositoryException {
-        LOGGER.trace("Setting implicit version checkpoint set for {}", absPath);
+        LOGGER.trace("Setting version checkpoint for {}", absPath);
         final Workspace workspace = session.getWorkspace();
         final Version v = workspace.getVersionManager().checkpoint(absPath);
         return ( v == null ) ? null : v.getFrozenNode().getIdentifier();
