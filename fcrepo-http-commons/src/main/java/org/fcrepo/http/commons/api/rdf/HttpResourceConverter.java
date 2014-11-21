@@ -339,7 +339,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
     private static String getRelativePath(final FedoraResource child, final FedoraResource ancestor) {
-        return child.getPath().substring(ancestor.getPath().length() + 1);
+        return child.getPath().substring(ancestor.getPath().length());
     }
 
     /**

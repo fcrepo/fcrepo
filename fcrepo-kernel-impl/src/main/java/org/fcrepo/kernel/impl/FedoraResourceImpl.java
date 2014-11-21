@@ -533,10 +533,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     @Override
+    public boolean isFrozenResource() {
+        return isFrozenNode.apply(this);
+    }
+
+    @Override
     public FedoraResource getVersionedAncestor() {
 
         try {
-            if (!isFrozenNode.apply(this)) {
+            if (!isFrozenResource()) {
                 return null;
             }
 
@@ -566,7 +571,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     @Override
     public FedoraResource getUnfrozenResource() {
-        if (!isFrozenNode.apply(this)) {
+        if (!isFrozenResource()) {
             return this;
         }
 
