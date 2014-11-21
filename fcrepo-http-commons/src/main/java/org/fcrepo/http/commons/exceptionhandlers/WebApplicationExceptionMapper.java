@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import static javax.ws.rs.core.Response.fromResponse;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.WebApplicationException;
@@ -40,6 +41,8 @@ public class WebApplicationExceptionMapper implements
     public Response toResponse(final WebApplicationException e) {
         LOGGER.debug(
                 "WebApplicationException intercepted by WebApplicationExceptionMapper: \n", e);
-        return e.getResponse();
+
+        final String msg = null == e.getCause() ? e.getMessage() : e.getCause().getMessage();
+        return fromResponse(e.getResponse()).entity(msg).build();
     }
 }

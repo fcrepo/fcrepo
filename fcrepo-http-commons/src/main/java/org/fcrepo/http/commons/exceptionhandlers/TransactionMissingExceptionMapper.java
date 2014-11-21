@@ -35,6 +35,6 @@ public class TransactionMissingExceptionMapper implements
 
     @Override
     public Response toResponse(final TransactionMissingException exception) {
-        return status(GONE).build();
+        return status(GONE).entity(exception.getMessage()).build();
     }
 }

@@ -47,4 +47,12 @@ public class ValueFormatExceptionMapperTest {
         final Response actual = testObj.toResponse(input);
         assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
     }
+
+    @Test
+    public void testToResponseNullMessage() {
+        final ValueFormatException input =
+                new ValueFormatException("Value", PropertyType.NAME, null);
+        final Response actual = testObj.toResponse(input);
+        assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
+    }
 }

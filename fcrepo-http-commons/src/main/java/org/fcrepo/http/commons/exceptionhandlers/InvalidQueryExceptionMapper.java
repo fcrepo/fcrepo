@@ -42,6 +42,6 @@ public class InvalidQueryExceptionMapper implements
     public Response toResponse(final InvalidQueryException e) {
         LOGGER.debug(
                 "InvalidQueryException intercepted by InvalidQueryExceptionMapper: \n", e);
-        return status(BAD_REQUEST).build();
+        return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }

@@ -15,33 +15,22 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.slf4j.LoggerFactory.getLogger;
-
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.modeshape.jcr.value.ValueFormatException;
-import org.slf4j.Logger;
+import static javax.ws.rs.core.Response.fromResponse;
 
 /**
- * Translate Modeshape jcr ValueFormatException to HTTP 400 Bad Request
- *
- * @author lsitu
+ * @author awoods
+ * @since 11/20/14
  */
 @Provider
-public class ValueFormatExceptionMapper implements
-        ExceptionMapper<ValueFormatException> {
-
-    private static final Logger LOGGER =
-        getLogger(ValueFormatExceptionMapper.class);
+public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorException> {
 
     @Override
-    public Response toResponse(final ValueFormatException e) {
-        LOGGER.debug(
-                "ValueFormatException intercepted by ValueFormatExceptionMapper: \n", e);
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+    public Response toResponse(final ClientErrorException e) {
+        return fromResponse(e.getResponse()).entity(e.getMessage()).build();
     }
 }

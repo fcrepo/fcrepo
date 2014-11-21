@@ -42,6 +42,6 @@ public class DocumentStoreExceptionMapper implements
     public Response toResponse(final DocumentStoreException e) {
         LOGGER.debug(
                 "DocumentStoreException intercepted by DocumentStoreExceptionMapper: \n", e);
-        return status(INTERNAL_SERVER_ERROR).build();
+        return status(INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
     }
 }
