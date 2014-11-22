@@ -64,6 +64,7 @@ public class FedoraEvent {
 
     /**
      * Create a FedoraEvent from an existing FedoraEvent object
+     * Note: Only the wrapped JCR event is passed on to the new object.
      *
      * @param e
      */
