@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -59,10 +60,12 @@ public class ParentRdfContext extends NodeRdfContext {
 
     private Iterator<Triple> parentContext() {
         final RdfStream parentStream = new RdfStream();
-
-        final Node containerSubject = translator().reverse().convert(resource().getContainer()).asNode();
-        parentStream.concat(create(subject(), HAS_PARENT.asNode(), containerSubject));
-
+        // The parent node of a frozen node for a versionable resource in the
+        // jcr:system space is not a node we want to link to.
+        if (!resource().isFrozenResource() || !resource().getUnfrozenResource().hasType(FedoraJcrTypes.VERSIONABLE)) {
+            final Node containerSubject = translator().reverse().convert(resource().getContainer()).asNode();
+            parentStream.concat(create(subject(), HAS_PARENT.asNode(), containerSubject));
+        }
         return parentStream;
     }
 }

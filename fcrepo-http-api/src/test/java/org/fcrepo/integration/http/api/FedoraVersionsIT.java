@@ -53,6 +53,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
@@ -546,6 +547,19 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                     ANY));
         }
 
+    }
+
+    @Test
+    public void testInabilityToExportJCRXML() throws IOException {
+        final String versionLabel = "l1";
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        enableVersioning(pid);
+        postObjectVersion(pid, versionLabel);
+
+        final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid + "/fcr:versions/" + versionLabel));
+        assertFalse("Historic version must not have any serialization defined.",
+                rdf.find(ANY, ANY, RdfLexicon.HAS_SERIALIZATION.asNode(), ANY).hasNext());
     }
 
     /**

@@ -61,7 +61,8 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
 
     @Override
     public boolean canSerialize(final FedoraResource resource) {
-        return (!(resource.hasType(FEDORA_BINARY) || resource.hasType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)));
+        return (!(resource.hasType(FEDORA_BINARY) || resource.hasType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)
+                || resource.isFrozenResource()));
     }
 
     @Override
@@ -81,6 +82,9 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
             throws RepositoryException, IOException, InvalidSerializationFormatException {
         if (obj.hasType(FEDORA_BINARY)) {
             throw new InvalidSerializationFormatException("Cannot serialize decontextualized binary content.");
+        }
+        if (obj.isFrozenResource()) {
+            throw new InvalidSerializationFormatException("Cannot serialize historic versions.");
         }
         final Node node = obj.getNode();
         // jcr/xml export system view implemented for noRecurse:
@@ -125,6 +129,10 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
                     if (depth == 1 && nameAttribute != null && "jcr:content".equals(nameAttribute.getValue())) {
                         throw new InvalidSerializationFormatException(
                                 "Cannot import JCR/XML starting with content node.");
+                    }
+                    if (depth == 1 && nameAttribute != null && "jcr:frozenNode".equals(nameAttribute.getValue())) {
+                        throw new InvalidSerializationFormatException(
+                                "Cannot import historic versions.");
                     }
                     final QName name = startElement.getName();
                     if (!(name.getNamespaceURI().equals("http://www.jcp.org/jcr/sv/1.0")

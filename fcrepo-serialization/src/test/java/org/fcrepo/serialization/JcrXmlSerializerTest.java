@@ -140,4 +140,13 @@ public class JcrXmlSerializerTest {
                 getClass().getClassLoader().getResourceAsStream("invalid-jcr-xml-2.xml"));
     }
 
+    @Test (expected = InvalidSerializationFormatException.class)
+    public void testFrozenResourceJCRXMLValidation() throws IOException,
+            InvalidSerializationFormatException, RepositoryException {
+        final Session mockSession = mock(Session.class);
+        new JcrXmlSerializer().deserialize(mockSession, "/objects",
+                getClass().getClassLoader().getResourceAsStream("invalid-jcr-xml-3.xml"));
+    }
+
+
 }

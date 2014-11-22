@@ -201,6 +201,12 @@ public interface FedoraResource {
     boolean isVersioned();
 
     /**
+     * Check if a resource is frozen (a historic version).
+     * @return
+     */
+    boolean isFrozenResource();
+
+    /**
      * When this is a frozen node, get the ancestor that was explicitly versioned
      * @return
      */
