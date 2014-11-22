@@ -90,9 +90,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      */
     private String getPreRevertVersionLabel(final String targetLabel, final VersionHistory history)
             throws RepositoryException {
-        final String baseLabel = "automatic snapshot version before revert to \"" + targetLabel + "\"";
+        final String baseLabel = "auto-snapshot-before-" + targetLabel;
         for (int i = 0; i < Integer.MAX_VALUE; i ++) {
-            final String label = baseLabel + (i == 0 ? "" : " " + i);
+            final String label = baseLabel + (i == 0 ? "" : "-" + i);
             if (!history.hasVersionLabel(label)) {
                 return label;
             }
