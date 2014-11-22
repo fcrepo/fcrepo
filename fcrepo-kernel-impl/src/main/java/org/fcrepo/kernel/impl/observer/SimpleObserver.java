@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.observer;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.filter;
+import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
@@ -32,6 +33,7 @@ import java.util.Iterator;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
@@ -44,6 +46,7 @@ import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
+import com.google.common.base.Function;
 import com.google.common.eventbus.EventBus;
 
 /**
@@ -121,10 +124,42 @@ public class SimpleObserver implements EventListener {
         try {
             lookupSession = repository.login();
             @SuppressWarnings("unchecked")
+            final NamespaceRegistry namespaceRegistry = lookupSession != null && lookupSession.getWorkspace() != null
+                        ? lookupSession.getWorkspace().getNamespaceRegistry() : null;
+
             final Iterator<Event> filteredEvents = filter(events, eventFilter.getFilter(lookupSession));
             final Iterator<FedoraEvent> publishableEvents = eventMapper.apply(filteredEvents);
-            while (publishableEvents.hasNext()) {
-                eventBus.post(publishableEvents.next());
+
+            final Iterator<FedoraEvent> namespacedEvents = transform(publishableEvents,
+                    new Function<FedoraEvent, FedoraEvent>() {
+                @Override
+                public FedoraEvent apply(final FedoraEvent evt) {
+                    final FedoraEvent event = new FedoraEvent(evt);
+                    for (String property : evt.getProperties()) {
+                        final String[] parts = property.split(":", 2);
+                        if (parts.length == 2 && namespaceRegistry != null) {
+                            final String prefix = parts[0];
+                            try {
+                                event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);
+                            } catch (RepositoryException ex) {
+                                LOGGER.trace(
+                                    "Prefix could not be dereferenced using the namespace registry: " +
+                                    property);
+                                event.addProperty(property);
+                            }
+                        } else {
+                            event.addProperty(property);
+                        }
+                    }
+                    for (Integer type : evt.getTypes()) {
+                        event.addType(type);
+                    }
+                    return event;
+                }
+            });
+
+            while (namespacedEvents.hasNext()) {
+                eventBus.post(namespacedEvents.next());
                 EVENT_COUNTER.inc();
             }
         } catch (final RepositoryException ex) {
