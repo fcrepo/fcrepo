@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.observer;
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.filter;
+import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
@@ -120,11 +121,15 @@ public class SimpleObserver implements EventListener {
         Session lookupSession = null;
         try {
             lookupSession = repository.login();
+
             @SuppressWarnings("unchecked")
             final Iterator<Event> filteredEvents = filter(events, eventFilter.getFilter(lookupSession));
             final Iterator<FedoraEvent> publishableEvents = eventMapper.apply(filteredEvents);
-            while (publishableEvents.hasNext()) {
-                eventBus.post(publishableEvents.next());
+            final Iterator<FedoraEvent> namespacedEvents =
+                    transform(publishableEvents, new GetNamespacedProperties(lookupSession));
+
+            while (namespacedEvents.hasNext()) {
+                eventBus.post(namespacedEvents.next());
                 EVENT_COUNTER.inc();
             }
         } catch (final RepositoryException ex) {

@@ -45,7 +45,12 @@ public class FedoraEventTest {
     @SuppressWarnings("unused")
     @Test(expected = java.lang.IllegalArgumentException.class)
     public void testWrapNullEvent() {
-        new FedoraEvent(null);
+        new FedoraEvent((Event)null);
+    }
+
+    @Test(expected = java.lang.IllegalArgumentException.class)
+    public void testWrapNullFedoraEvent() {
+        new FedoraEvent((FedoraEvent)null);
     }
 
     @Test

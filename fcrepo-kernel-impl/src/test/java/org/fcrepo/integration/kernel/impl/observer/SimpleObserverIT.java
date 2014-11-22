@@ -16,7 +16,10 @@
 package org.fcrepo.integration.kernel.impl.observer;
 
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
@@ -32,6 +35,8 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+
+import java.util.Set;
 
 /**
  * <p>SimpleObserverIT class.</p>
@@ -73,8 +78,14 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Subscribe
-    public void countMessages(@SuppressWarnings("unused") final FedoraEvent e) {
+    public void countMessages(final FedoraEvent e) {
         eventBusMessageCount++;
+
+        final Set<String> properties = e.getProperties();
+        assertNotNull(properties);
+
+        final String expected = JCR_NAMESPACE + "mixinTypes";
+        assertTrue("Should contain: " + expected + properties, properties.contains(expected));
     }
 
     @Before

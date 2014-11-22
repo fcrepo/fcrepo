@@ -63,6 +63,17 @@ public class FedoraEvent {
     }
 
     /**
+     * Create a FedoraEvent from an existing FedoraEvent object
+     * Note: Only the wrapped JCR event is passed on to the new object.
+     *
+     * @param e
+     */
+    public FedoraEvent(final FedoraEvent e) {
+        checkArgument(e != null, "null cannot support a FedoraEvent!");
+        this.e = e.e;
+    }
+
+    /**
      * @return the event types of the underlying JCR {@link Event}s
      */
     public Set<Integer> getTypes() {

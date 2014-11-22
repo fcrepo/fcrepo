@@ -54,6 +54,25 @@ public abstract class NamespaceTools {
     };
 
     /**
+     * Return the javax.jcr.NamespaceRegistry associated with the arg session.
+     *
+     * @param session containing the NamespaceRegistry
+     * @return NamespaceRegistry
+     */
+    public static javax.jcr.NamespaceRegistry getNamespaceRegistry(final Session session) {
+        final javax.jcr.NamespaceRegistry namespaceRegistry;
+        try {
+            namespaceRegistry =
+                    session.getWorkspace().getNamespaceRegistry();
+            checkNotNull(namespaceRegistry,
+                    "Couldn't find namespace registry in repository!");
+            return namespaceRegistry;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
      * Validate resource path for unregistered namespace prefixes
      *
      * @param session the JCR session to use
@@ -63,15 +82,7 @@ public abstract class NamespaceTools {
      */
     public static void validatePath(final Session session, final String path) {
 
-        final javax.jcr.NamespaceRegistry namespaceRegistry;
-        try {
-            namespaceRegistry =
-                    session.getWorkspace().getNamespaceRegistry();
-            checkNotNull(namespaceRegistry,
-                    "Couldn't find namespace registry in repository!");
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        final javax.jcr.NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
 
         final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
         final String[] pathSegments = relPath.split("/");
