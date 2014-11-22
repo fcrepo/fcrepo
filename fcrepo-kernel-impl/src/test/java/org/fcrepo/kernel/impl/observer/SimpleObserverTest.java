@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.mockito.Mockito.mock;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.observation.Event;
@@ -64,6 +65,9 @@ public class SimpleObserverTest {
     private Workspace mockWS;
 
     @Mock
+    private NamespaceRegistry mockNS;
+
+    @Mock
     private EventBus mockBus;
 
     @Mock
@@ -96,7 +100,9 @@ public class SimpleObserverTest {
     }
 
     @Test
-    public void testOnEvent() {
+    public void testOnEvent() throws Exception {
+        when(mockSession.getWorkspace()).thenReturn(mockWS);
+        when(mockWS.getNamespaceRegistry()).thenReturn(mockNS);
         testObserver.onEvent(mockEvents);
         verify(mockBus).post(any(FedoraEvent.class));
     }
