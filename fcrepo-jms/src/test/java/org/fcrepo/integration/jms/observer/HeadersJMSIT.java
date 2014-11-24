@@ -13,28 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.integration.jms.observer;
 
 import static com.google.common.base.Throwables.propagate;
-import static java.lang.System.currentTimeMillis;
+import static com.google.common.collect.Iterables.any;
+import static com.jayway.awaitility.Awaitility.await;
+import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertTrue;
+import static org.jgroups.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -45,30 +47,54 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+
+import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.EventType;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.google.common.base.Predicate;
+
+
 /**
- * <p>HeadersJMSIT class.</p>
+ * <p>
+ * HeadersJMSIT class.
+ * </p>
  *
  * @author ajs6f
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration({"/spring-test/headers-jms.xml", "/spring-test/repo.xml",
-        "/spring-test/eventing.xml"})
+@ContextConfiguration({ "/spring-test/headers-jms.xml", "/spring-test/repo.xml",
+    "/spring-test/eventing.xml" })
 @DirtiesContext
 public class HeadersJMSIT implements MessageListener {
 
+    /**
+     * Time to wait for a set of test messages, in milliseconds.
+     */
+    private static final long TIMEOUT = 2000;
+
+    private static final String testIngested = "/testMessageFromIngestion-"+ randomUUID();
+
+    private static final String testRemoved = "/testMessageFromRemoval-"+ randomUUID();
+
+    private static final String INGESTION_EVENT_TYPE = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
+
+    private static final String REMOVAL_EVENT_TYPE = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_REMOVED).toString();
+
     @Inject
     private Repository repository;
+
+    @Inject
+    private ContainerService containerService;
 
     @Inject
     private ActiveMQConnectionFactory connectionFactory;
@@ -79,108 +105,74 @@ public class HeadersJMSIT implements MessageListener {
 
     private MessageConsumer consumer;
 
-    private volatile Set<Message> messages;
-
-    private JcrTools jcrTools = new JcrTools(true);
+    private volatile Set<Message> messages = new HashSet<>();
 
     private static final Logger LOGGER = getLogger(HeadersJMSIT.class);
 
-    /**
-     * Time to wait for a set of test messages.
-     */
-    private static final long TIMEOUT = 2000;
+    @Test(timeout = TIMEOUT)
+    public void testIngestion() throws RepositoryException {
 
-    @Test
-    public void testIngestion() throws RepositoryException,
-                               InterruptedException, JMSException {
-
-        final String pid = "/testIngestion";
-        final String expectedEventType =
-            REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
-        LOGGER.debug("Expecting a {} event", expectedEventType);
-        Boolean success = false;
+        LOGGER.debug("Expecting a {} event", INGESTION_EVENT_TYPE);
 
         final Session session = repository.login();
         try {
-            final Node node = jcrTools.findOrCreateNode(session, pid);
-            node.addMixin(FEDORA_CONTAINER);
+            containerService.findOrCreate(session, testIngested);
             session.save();
-
-            final Long start = currentTimeMillis();
-            synchronized (this) {
-                while ((currentTimeMillis() - start < TIMEOUT) && (!success)) {
-                    for (final Message message : messages) {
-                        if (getIdentifier(message).equals(pid)) {
-                            if (getEventTypes(message).contains(expectedEventType)) {
-                                success = true;
-                            }
-                        }
-                    }
-                    LOGGER.debug("Waiting for next message...");
-                    wait(1000);
-                }
-            }
+            awaitMessageOrFail(testIngested, INGESTION_EVENT_TYPE);
         } finally {
             session.logout();
         }
-        assertTrue(
-                "Found no message with correct identifer and correct event type!",
-                success);
     }
 
-    @Test
-    public void testRemoval() throws RepositoryException, InterruptedException,
-                             JMSException {
+    private void awaitMessageOrFail(final String id, final String eventType) {
+        await().pollInterval(ONE_SECOND).until(new Callable<Boolean>() {
 
-        final String pid = "/testRemoval";
-        final String expectedEventType =
-            REPOSITORY_NAMESPACE + EventType.valueOf(NODE_REMOVED).toString();
-        LOGGER.debug("Expecting a {} event", expectedEventType);
-        Boolean success = false;
+            @Override
+            public Boolean call() {
+                return any(messages, new Predicate<Message>() {
 
-        final Session session = repository.login();
-        try {
-            final Node node = jcrTools.findOrCreateNode(session, pid);
-            node.addMixin(FEDORA_CONTAINER);
-            session.save();
-            node.remove();
-            session.save();
-
-            final Long start = currentTimeMillis();
-            synchronized (this) {
-                while ((currentTimeMillis() - start < TIMEOUT) && (!success)) {
-                    for (final Message message : messages) {
-                        if (getIdentifier(message).equals(pid)) {
-                            if (getEventTypes(message).contains(expectedEventType)) {
-                                success = true;
-                            }
+                    @Override
+                    public boolean apply(final Message message) {
+                        try {
+                            return getIdentifier(message).equals(id) &&
+                                    getEventTypes(message).contains(eventType);
+                        } catch (final JMSException e) {
+                            throw propagate(e);
                         }
                     }
-                    LOGGER.debug("Waiting for next message...");
-                    wait(1000);
-                }
+                });
             }
+        });
+    }
+
+    @Test(timeout=TIMEOUT)
+    public void testRemoval() throws RepositoryException {
+
+        LOGGER.debug("Expecting a {} event", REMOVAL_EVENT_TYPE);
+        final Session session = repository.login();
+        try {
+            final Container resource = containerService.findOrCreate(session, testRemoved);
+            session.save();
+            resource.delete();
+            session.save();
+            awaitMessageOrFail(testRemoved, REMOVAL_EVENT_TYPE);
         } finally {
             session.logout();
         }
-        assertTrue(
-                "Found no message with correct identifer and correct event type!",
-                success);
     }
 
     @Override
     public void onMessage(final Message message) {
         try {
-            LOGGER.debug( "Received JMS message: {} with identifier: {}, timestamp: {}, event type: {}, properties: {},"
-                + " and baseURL: {}", message.getJMSMessageID(), getIdentifier(message), getTimestamp(message),
-                getEventTypes(message), getProperties(message), getBaseURL(message));
+            LOGGER.debug(
+                    "Received JMS message: {} with identifier: {}, timestamp: {}, event type: {}, properties: {},"
+                            + " and baseURL: {}", message.getJMSMessageID(), getIdentifier(message),
+                    getTimestamp(message),
+                    getEventTypes(message), getProperties(message), getBaseURL(message));
         } catch (final JMSException e) {
             propagate(e);
         }
         messages.add(message);
-        synchronized (this) {
-            this.notifyAll();
-        }
     }
 
     @Before
@@ -190,7 +182,7 @@ public class HeadersJMSIT implements MessageListener {
         connection.start();
         session = connection.createSession(false, AUTO_ACKNOWLEDGE);
         consumer = session.createConsumer(session.createTopic("fedora"));
-        messages = new HashSet<>();
+        messages.clear();
         consumer.setMessageListener(this);
     }
 

@@ -9,8 +9,8 @@
 
     <!-- Context that supports the actual ModeShape JCR itself -->
 
-    <context:annotation-config/>
-
+    <context:component-scan base-package="org.fcrepo"/>
+    
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:config/testing/repository.json}"/>
