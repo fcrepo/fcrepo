@@ -47,10 +47,10 @@ import com.google.common.eventbus.EventBus;
  */
 public class JMSTopicPublisherTest {
 
-    private JMSTopicPublisher testObj;
+    private JMSTopicPublisher testJMSTopicPublisher;
 
     @Mock
-    private JMSEventMessageFactory mockEvents;
+    private JMSEventMessageFactory mockEventFactory;
 
     @Mock
     private MessageProducer mockProducer;
@@ -69,12 +69,12 @@ public class JMSTopicPublisherTest {
 
     @Before
     public void setUp() {
-        testObj = new JMSTopicPublisher();
+        testJMSTopicPublisher = new JMSTopicPublisher();
         initMocks(this);
-        setField(testObj, "eventFactory", mockEvents);
-        setField(testObj, "producer", mockProducer);
-        setField(testObj, "connectionFactory", mockConnections);
-        setField(testObj, "eventBus", mockBus);
+        setField(testJMSTopicPublisher, "eventFactory", mockEventFactory);
+        setField(testJMSTopicPublisher, "producer", mockProducer);
+        setField(testJMSTopicPublisher, "connectionFactory", mockConnections);
+        setField(testJMSTopicPublisher, "eventBus", mockBus);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class JMSTopicPublisherTest {
         when(mockConnections.createConnection()).thenReturn(mockConn);
         when(mockConn.createSession(false, AUTO_ACKNOWLEDGE))
                 .thenReturn(mockJmsSession);
-        testObj.acquireConnections();
+        testJMSTopicPublisher.acquireConnections();
         verify(mockBus).register(any());
     }
 
@@ -90,18 +90,19 @@ public class JMSTopicPublisherTest {
     public void testPublishJCREvent() throws RepositoryException, IOException, JMSException {
         final Message mockMsg = mock(Message.class);
         final FedoraEvent mockEvent = mock(FedoraEvent.class);
-        when(mockEvents.getMessage(eq(mockEvent), any(javax.jms.Session.class))).thenReturn(mockMsg);
-        testObj.publishJCREvent(mockEvent);
+        when(mockEventFactory.getMessage(eq(mockEvent), any(javax.jms.Session.class))).thenReturn(mockMsg);
+        testJMSTopicPublisher.publishJCREvent(mockEvent);
+        verify(mockProducer).send(mockMsg);
     }
 
     @Test
     public void testReleaseConnections() throws JMSException  {
-        setField(testObj, "connection", mockConn);
-        setField(testObj, "jmsSession", mockJmsSession);
-        testObj.releaseConnections();
+        setField(testJMSTopicPublisher, "connection", mockConn);
+        setField(testJMSTopicPublisher, "jmsSession", mockJmsSession);
+        testJMSTopicPublisher.releaseConnections();
         verify(mockProducer).close();
         verify(mockJmsSession).close();
         verify(mockConn).close();
-        verify(mockBus).unregister(testObj);
+        verify(mockBus).unregister(testJMSTopicPublisher);
     }
 }
