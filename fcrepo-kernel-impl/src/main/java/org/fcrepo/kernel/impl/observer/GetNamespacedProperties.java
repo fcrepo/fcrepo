@@ -53,7 +53,7 @@ public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEven
         for (String property : evt.getProperties()) {
             final String[] parts = property.split(":", 2);
             if (parts.length == 2) {
-                final String prefix = parts[0];
+                final String prefix = parts[0].equals("jcr") ? "fedora" : parts[0];
                 try {
                     event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);
                 } catch (RepositoryException ex) {
