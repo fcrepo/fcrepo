@@ -111,7 +111,7 @@ public class GetNamespacedPropertiesTest {
         final String expected1 = FEDORA_CONTAINER.replace("fedora:", REPOSITORY_NAMESPACE);
         final String expected2 = FEDORA_TOMBSTONE.replace("fedora:", REPOSITORY_NAMESPACE);
         final String expected3 = LDP_BASIC_CONTAINER.replace("ldp:", LDP_NAMESPACE);
-        final String expected4 = JCR_MIXIN_TYPES.replace("jcr:", JCR_NAMESPACE);
+        final String expected4 = JCR_MIXIN_TYPES.replace("jcr:", REPOSITORY_NAMESPACE);
 
         assertTrue("Should contain: " + expected1 + ", " + properties, properties.contains(expected1));
         assertTrue("Should contain: " + expected2 + ", " + properties, properties.contains(expected2));

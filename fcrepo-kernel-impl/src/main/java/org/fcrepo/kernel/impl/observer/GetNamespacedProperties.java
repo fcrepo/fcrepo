@@ -23,6 +23,9 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static org.fcrepo.kernel.RdfLexicon.jcrProperties;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -54,11 +57,19 @@ public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEven
             final String[] parts = property.split(":", 2);
             if (parts.length == 2) {
                 final String prefix = parts[0];
-                try {
-                    event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);
-                } catch (RepositoryException ex) {
-                    LOGGER.trace("Prefix could not be dereferenced using the namespace registry: {}", property);
-                    event.addProperty(property);
+                if ("jcr".equals(prefix)) {
+                    if (jcrProperties.contains(createProperty(REPOSITORY_NAMESPACE + parts[1]))) {
+                        event.addProperty(REPOSITORY_NAMESPACE + parts[1]);
+                    } else {
+                        LOGGER.debug("Swallowing jcr property: {}", property);
+                    }
+                } else {
+                    try {
+                        event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);
+                    } catch (RepositoryException ex) {
+                        LOGGER.debug("Prefix could not be dereferenced using the namespace registry: {}", property);
+                        event.addProperty(property);
+                    }
                 }
             } else {
                 event.addProperty(property);
