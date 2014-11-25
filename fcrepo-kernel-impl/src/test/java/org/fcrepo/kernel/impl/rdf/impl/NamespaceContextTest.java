@@ -71,8 +71,10 @@ public class NamespaceContextTest {
     public void testJcrUris() throws RepositoryException {
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[] {"jcr"});
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn("http://www.jcp.org/jcr/1.0");
-        assertTrue(new NamespaceRdfContext(mockSession).asModel().contains(
+        assertTrue(!new NamespaceRdfContext(mockSession).asModel().contains(
                 createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_URI, REPOSITORY_NAMESPACE));
+        assertTrue(!new NamespaceRdfContext(mockSession).asModel().contains(
+                createResource("jcr"), HAS_NAMESPACE_URI, "http://www.jcp.org/jcr/1.0"));
     }
 
     @Test
@@ -94,9 +96,12 @@ public class NamespaceContextTest {
                 new String[] {"jcr", "some-prefix"});
 
         final Model jcrNamespaceModel = new NamespaceRdfContext(mockSession).asModel();
-        assertTrue(jcrNamespaceModel.contains(
+        assertTrue(!jcrNamespaceModel.contains(
                 createResource(REPOSITORY_NAMESPACE), HAS_NAMESPACE_PREFIX,
-                "fcrepo"));
+                "fedora"));
+        assertTrue(!jcrNamespaceModel.contains(
+                createResource("http://www.jcp.org/jcr/1.0"), HAS_NAMESPACE_PREFIX,
+                "jcr"));
 
         final Resource nsSubject = createResource(mockUri);
         assertTrue(jcrNamespaceModel.contains(nsSubject, RDF.type,
@@ -128,7 +133,7 @@ public class NamespaceContextTest {
 
     private final static String testUri = "http://example.com";
 
-    private final static String prefix = "jcr";
+    private final static String prefix = "testprefix";
 
     private static Predicate<Triple> hasTestUriAsObject =
         new Predicate<Triple>() {

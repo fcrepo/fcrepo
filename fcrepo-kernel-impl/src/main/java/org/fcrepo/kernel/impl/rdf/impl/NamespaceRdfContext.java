@@ -69,11 +69,8 @@ public class NamespaceRdfContext extends RdfStream {
         final ImmutableCollection.Builder<Triple> nsTriples =
             ImmutableSet.builder();
         for (String prefix : namespaceRegistry.getPrefixes()) {
-            if (!prefix.isEmpty()) {
+            if (!prefix.isEmpty() && !prefix.equals("jcr")) {
                 final String nsURI = namespaceRegistry.getURI(prefix);
-                if (prefix.equals("jcr")) {
-                    prefix = "fcrepo";
-                }
                 LOGGER.trace(
                         "Discovered namespace prefix \"{}\" with URI \"{}\"",
                         prefix, nsURI);
