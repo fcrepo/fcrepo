@@ -218,7 +218,11 @@ public class VersionServiceImplTest {
 
     @Test
     public void testMixinCreationWhenExplicitlyVersioning() throws RepositoryException {
-        testObj.createVersion(mockSession, EXAMPLE_UNVERSIONED_PATH);
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory(EXAMPLE_UNVERSIONED_PATH)).thenReturn(mockHistory);
+        testObj.createVersion(mockSession, EXAMPLE_UNVERSIONED_PATH, "LABEL");
 
         final Node unversionedNode = mockSession.getNode(EXAMPLE_UNVERSIONED_PATH);
         verify(unversionedNode).isNodeType(VERSIONABLE);

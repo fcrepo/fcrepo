@@ -147,10 +147,9 @@ public class FedoraVersioning extends FedoraBaseResource {
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
         if (!isBlank(slug)) {
-            LOGGER.info("Add version {} for '{}'", slug, externalPath);
+            LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
             final String path = toPath(translator(), externalPath);
-            versionService.createVersion(session, path);
-            resource().addVersionLabel(slug);
+            versionService.createVersion(session, path, slug);
             return noContent().header("Location", uriInfo.getRequestUri() + "/" + slug).build();
         }
         return status(BAD_REQUEST).entity("Specify label for version").build();
