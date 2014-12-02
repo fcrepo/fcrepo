@@ -20,7 +20,6 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
@@ -371,25 +370,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testAddVersionLabel() throws RepositoryException {
-
-        final FedoraResource object =
-            containerService.findOrCreate(session, "/testObjectVersionLabel");
-
-        object.getNode().addMixin("mix:versionable");
-
-        session.save();
-
-        object.addVersionLabel("v0.0.1");
-
-        session.save();
-
-        assertTrue(asList(object.getVersionHistory().getVersionLabels())
-                .contains("v0.0.1"));
-
-    }
-
-    @Test
     public void testGetObjectVersionGraph() throws RepositoryException {
 
         final FedoraResource object =
@@ -399,10 +379,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, object.getPath());
-        session.save();
-
-        object.addVersionLabel("v0.0.1");
+        versionService.createVersion(session, object.getPath(), "v0.0.1");
         session.save();
 
         final Model graphStore = object.getTriples(subjects, VersionsRdfContext.class).asModel();
@@ -657,7 +634,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
         session.save();
-        object.addVersionLabel("some-label");
+        addVersionLabel("some-label", object);
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         session.save();
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
@@ -675,22 +652,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid + "/a/b/c");
         session.save();
         session.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        object.addVersionLabel("some-label");
+        addVersionLabel("some-label", object);
         session.save();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
 
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
 
-    }
-
-    @Test (expected = RepositoryRuntimeException.class)
-    public void testNullBaseVersionLabel() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        session.save();
-        final FedoraResourceImpl resource = new FedoraResourceImpl(object.getNode());
-        resource.addVersionLabel("noop");
     }
 
     @Test (expected = RepositoryRuntimeException.class)
@@ -719,7 +687,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid + "/a/b/c");
         session.save();
         session.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        object.addVersionLabel("some-label");
+        addVersionLabel("some-label", object);
         session.save();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
@@ -736,7 +704,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid + "/a/b/c");
         session.save();
         session.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        object.addVersionLabel("some-label");
+        addVersionLabel("some-label", object);
         session.save();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
@@ -778,5 +746,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.save();
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(object.getNode());
         assertFalse(frozenResource.hashCode() == 0);
+    }
+
+    private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
+        addVersionLabel(label, session.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
+    }
+
+    private void addVersionLabel(final String label, final Version v) throws RepositoryException {
+        v.getContainingHistory().addVersionLabel(v.getName(), label, false);
     }
 }

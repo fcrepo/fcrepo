@@ -52,11 +52,8 @@ public class VersionServiceImplIT extends AbstractIT {
     @Inject
     VersionService versionService;
 
-/*
-  versionService.createVersion( workspace, paths )
-  versionService.revertToVersion( workspace, path, label )
-  versionService.removeVersion( workspace, path, label )
-*/
+    private static final String LABEL = "label";
+    private static final String SECOND_LABEL = "second-label";
 
     @Test
     public void testCreateVersion() throws RepositoryException {
@@ -66,7 +63,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, "/" + pid);
+        versionService.createVersion(session, "/" + pid, LABEL);
         session.save();
         assertEquals(2L, countVersions(session, resource));
     }
@@ -79,17 +76,17 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        final String label = versionService.createVersion(session, "/" + pid);
+        versionService.createVersion(session, "/" + pid, LABEL);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
         // create another version
-        versionService.createVersion(session, "/" + pid);
+        versionService.createVersion(session, "/" + pid, SECOND_LABEL);
         session.save();
         assertEquals(3L, countVersions(session, resource));
 
         // remove the old version and make sure there two versions again
-        versionService.removeVersion( session, "/" + pid, label );
+        versionService.removeVersion( session, "/" + pid,LABEL );
         session.save();
         assertEquals(2L, countVersions(session, resource));
     }
@@ -102,17 +99,17 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        final String label = versionService.createVersion(session, "/" + pid);
+        final String label = versionService.createVersion(session, "/" + pid, LABEL);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
         // create another version
-        versionService.createVersion(session, "/" + pid);
+        versionService.createVersion(session, "/" + pid, SECOND_LABEL);
         session.save();
         assertEquals(3L, countVersions(session, resource));
 
         // revert to the old version and make sure there two versions again
-        versionService.revertToVersion( session, "/" + pid, label );
+        versionService.revertToVersion( session, "/" + pid, LABEL );
         session.save();
         assertEquals(label, currentVersion(session,resource));
     }
@@ -125,7 +122,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, "/" + pid);
+        versionService.createVersion(session, "/" + pid, LABEL);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 
@@ -142,7 +139,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, "/" + pid);
+        versionService.createVersion(session, "/" + pid, LABEL);
         session.save();
         assertEquals(2L, countVersions(session, resource));
 

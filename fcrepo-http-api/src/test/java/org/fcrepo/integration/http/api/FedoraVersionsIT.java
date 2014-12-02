@@ -250,6 +250,12 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertEquals("Must not be allowed to create a version with a duplicate label!",
                 CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
 
+        final HttpGet getVersions =
+                new HttpGet(serverAddress + objId + "/fcr:versions");
+        logger.debug("Retrieved versions");
+        final GraphStore results = getGraphStore(getVersions);
+        assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
+
         logger.debug("Posting a version with label \"" + label2 + "\"");
         postObjectVersion(objId, label2);
 

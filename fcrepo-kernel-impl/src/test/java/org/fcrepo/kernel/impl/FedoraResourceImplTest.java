@@ -213,27 +213,6 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testAddVersionLabel() throws RepositoryException {
-
-        final VersionHistory mockVersionHistory = mock(VersionHistory.class);
-        final Version mockVersion = mock(Version.class);
-        when(mockVersion.getName()).thenReturn("uuid");
-        final Workspace mockWorkspace = mock(Workspace.class);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        final VersionManager mockVersionManager = mock(VersionManager.class);
-        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-
-        when(mockVersionManager.getBaseVersion(anyString())).thenReturn(
-                mockVersion);
-
-        when(mockVersionManager.getVersionHistory(anyString())).thenReturn(
-                mockVersionHistory);
-
-        testObj.addVersionLabel("v1.0.0");
-        verify(mockVersionHistory).addVersionLabel("uuid", "v1.0.0", false);
-    }
-
-    @Test
     public void testGetBaseVersion() throws RepositoryException {
 
         final Version mockVersion = mock(Version.class);

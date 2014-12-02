@@ -29,9 +29,10 @@ public interface VersionService {
      *
      * @param session the session in which the node resides
      * @param absPath absolute paths to the node
+     * @param label a label to be applied to the new version
      * @throws RepositoryException
      */
-    String createVersion(Session session, String absPath) throws RepositoryException;
+    String createVersion(Session session, String absPath, String label) throws RepositoryException;
 
     /**
      * Reverts the node to the version identified by the label.  This method

@@ -136,14 +136,6 @@ public interface FedoraResource {
                          Iterable<? extends Class<? extends RdfStream>> contexts);
 
     /**
-     * Tag the current version of the Node with a version label that
-     * can be retrieved by name later.
-     *
-     * @param label
-     */
-    void addVersionLabel(final String label);
-
-    /**
      * Get the JCR Base version for the node
      *
      * @return base version

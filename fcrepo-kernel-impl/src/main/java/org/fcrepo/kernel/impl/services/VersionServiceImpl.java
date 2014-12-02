@@ -50,12 +50,12 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     @Override
     public String createVersion(final Session session,
-                              final String absPath) throws RepositoryException {
+                              final String absPath, final String label) throws RepositoryException {
         final Node node = session.getNode(absPath);
         if (!isVersioningEnabled(node)) {
             enableVersioning(node);
         }
-        return checkpoint(session, absPath);
+        return checkpoint(session, absPath, label);
     }
 
     @Override
@@ -159,11 +159,23 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         node.getSession().save();
     }
 
-    private static String checkpoint(final Session session, final String absPath) throws RepositoryException {
+    private static String checkpoint(final Session session, final String absPath, final String label)
+            throws RepositoryException {
         LOGGER.trace("Setting version checkpoint for {}", absPath);
         final Workspace workspace = session.getWorkspace();
-        final Version v = workspace.getVersionManager().checkpoint(absPath);
-        return ( v == null ) ? null : v.getFrozenNode().getIdentifier();
+        final VersionManager versionManager = workspace.getVersionManager();
+        final VersionHistory versionHistory = versionManager.getVersionHistory(absPath);
+        if (versionHistory.hasVersionLabel(label)) {
+            throw new LabelExistsVersionException("The specified label \"" + label
+                    + "\" is already assigned to another version of this resource!");
+        }
+        final Version v = versionManager.checkpoint(absPath);
+        if (v == null) {
+            return null;
+        } else {
+            versionHistory.addVersionLabel(v.getName(), label, false);
+            return v.getFrozenNode().getIdentifier();
+        }
     }
 
 }
