@@ -42,6 +42,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
+import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import java.io.InputStream;
 import java.net.URI;
@@ -306,6 +307,11 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         super.delete();
 
         description.delete();
+    }
+
+    @Override
+    public Version getBaseVersion() {
+        return getDescription().getBaseVersion();
     }
 
     private static void decorateContentNode(final Node contentNode) throws RepositoryException {

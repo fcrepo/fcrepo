@@ -226,6 +226,19 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testVersionLabelWithSpace() throws Exception {
+        final String label = "label with space";
+
+        logger.debug("creating an object");
+        final String objId = getRandomUniquePid();
+        createObject(objId);
+        enableVersioning(objId);
+
+        logger.debug("Posting a version with label \"" + label + "\"");
+        postObjectVersion(objId, label);
+    }
+
+    @Test
     public void testCreateTwoVersionsWithSameLabel() throws Exception {
         final String label1 = "label";
         final String label2 = "different-label";
@@ -635,10 +648,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode() );
         final String locationHeader = response.getFirstHeader("Location").getValue();
         assertNotNull( "No version location header found", locationHeader );
-        if ( label != null ) {
-            assertEquals( "Version location header doesn't match requested version label",
-                    serverAddress + path + "/fcr:versions/" + label, locationHeader );
-        }
     }
 
     private static void revertToVersion(final String objId, final String versionLabel) throws IOException {
