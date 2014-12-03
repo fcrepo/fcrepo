@@ -57,6 +57,11 @@ public class FedoraBackupIT extends AbstractResourceIT {
         response = execute(new HttpGet(serverAddress + objName));
         assertEquals(200, response.getStatusLine().getStatusCode());
 
+        // create a named version of it with spaces
+        final HttpPost httpPost = new HttpPost(serverAddress + objName + "/testDS/fcr:versions");
+        httpPost.setHeader("Slug", "version name with spaces");
+        assertEquals(204, getStatus(httpPost));
+
         // back it up
         final File dir = createTempDir();
         logger.debug("Backing up repository to {}", dir.getCanonicalPath());
