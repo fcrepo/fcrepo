@@ -29,6 +29,7 @@ import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.impl.services.ContainerServiceImpl;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -81,6 +82,7 @@ public class ModeShapeHonorsFADResponseIT {
                 ServletContainerAuthenticationProvider.getInstance());
     }
 
+    @Ignore
     @Test
     public void testPermissiveFAD() throws RepositoryException {
         when(request.getRemoteUser()).thenReturn("fred");
