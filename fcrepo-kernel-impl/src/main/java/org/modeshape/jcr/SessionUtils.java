@@ -15,14 +15,10 @@
  */
 package org.modeshape.jcr;
 
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.bus.ChangeBus;
-import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -35,22 +31,6 @@ public class SessionUtils {
      */
     private SessionUtils() {
 
-    }
-
-    private static final Logger LOGGER = getLogger(SessionUtils.class);
-
-    /**
-     * Until MODE-2343 is fixed, we need to manually dispose of the ObservationManager listener.
-     *
-     * @param session
-     */
-    public static void unregisterObservationManager(final Session session) {
-        try {
-            getChangeBus(session).unregister(getObservationManager(session));
-        } catch (final RepositoryException e) {
-            LOGGER.info("Unable to dispose observation manager: {}", e);
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     private static JcrObservationManager getObservationManager(final Session session) throws RepositoryException {
