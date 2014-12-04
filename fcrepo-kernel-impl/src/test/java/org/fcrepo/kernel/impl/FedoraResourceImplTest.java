@@ -424,6 +424,10 @@ public class FedoraResourceImplTest {
         when(mockNode.getParent()).thenReturn(mockContainer);
         when(mockNode.getDepth()).thenReturn(2);
         when(mockContainer.getNode("a")).thenThrow(new PathNotFoundException());
+        when(mockContainer.getPath()).thenReturn("b");
+        when(mockContainer.getSession()).thenReturn(mockSession);
+        when(mockSession.nodeExists(anyString())).thenReturn(false);
+        when(mockSession.getNode("b")).thenReturn(mockContainer);
         testObj.delete();
         verify(mockNode).remove();
         verify(mockContainer).addNode("a", FEDORA_TOMBSTONE);

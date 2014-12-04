@@ -40,7 +40,7 @@
     <jgroups.version>3.5.0.Final</jgroups.version>
     <joda-time.version>2.4</joda-time.version>
     <logback.version>1.1.2</logback.version>
-    <modeshape.version>4.0.0.Final</modeshape.version>
+    <modeshape.version>4.1.0.Final</modeshape.version>
     <metrics.version>3.1.0</metrics.version>
     <mockito.version>1.10.8</mockito.version>
     <sesame.version>2.7.13</sesame.version>

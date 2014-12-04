@@ -91,7 +91,7 @@ public class HttpHeaderPrincipalProviderIT {
         }
         final ContainerService os = new ContainerServiceImpl();
         os.findOrCreate(session, "/myobject");
-        verify(fad, times(5)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
+        verify(fad, times(7)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 
 }

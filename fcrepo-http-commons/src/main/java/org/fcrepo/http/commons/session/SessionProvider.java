@@ -16,7 +16,6 @@
 package org.fcrepo.http.commons.session;
 
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.isInTransaction;
-import static org.modeshape.jcr.SessionUtils.unregisterObservationManager;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
@@ -65,7 +64,6 @@ public class SessionProvider implements Factory<Session> {
         LOGGER.trace("Disposing session {}", session);
 
         if (session.isLive() && !isInTransaction(session)) {
-            unregisterObservationManager(session);
             session.logout();
         }
     }
