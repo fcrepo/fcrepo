@@ -21,6 +21,7 @@ import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.impl.services.ContainerServiceImpl;
 import org.fcrepo.kernel.services.ContainerService;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -69,6 +70,7 @@ public class ContainerRolesPrincipalProviderIT {
                 ServletContainerAuthenticationProvider.getInstance());
     }
 
+    @Ignore
     @Test
     public void testEmptyPrincipalProvider() throws RepositoryException {
         when(request.getRemoteUser()).thenReturn("fred");
