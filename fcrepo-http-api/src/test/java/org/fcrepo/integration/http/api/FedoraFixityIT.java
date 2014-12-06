@@ -19,17 +19,26 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.util.Iterator;
+
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.junit.Test;
 
+import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 
 /**
@@ -79,5 +88,49 @@ public class FedoraFixityIT extends AbstractResourceIT {
             method.addHeader("Accept", type);
             assertEquals(type, getContentType(method));
         }
+    }
+
+    @Test
+    public void testBinaryVersionFixity() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+        createDatastream(pid, "dsid", "foo");
+
+        enableVersioning(pid);
+
+        logger.debug("Creating binary content version v0 ...");
+        postVersion(pid + "/dsid", "v0");
+
+        final HttpGet method = new HttpGet(serverAddress + pid + "/dsid/fcr%3aversions/v0/fcr:fixity");
+        final GraphStore graphStore = getGraphStore(method);
+        logger.debug("Got binary content versioned fixity triples {}", graphStore);
+        final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
+        assertTrue(stmtIt.hasNext());
+        assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(),
+                createPlainLiteral("SUCCESS").asNode()));
+
+        assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
+        assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(),
+                createTypedLiteral(3).asNode()));
+    }
+
+    private static void enableVersioning(final String pid) {
+        final HttpPut createTx = new HttpPut(serverAddress + pid + "/fcr:versions");
+        try {
+            execute(createTx);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void postVersion(final String path, final String label) throws IOException {
+        logger.debug("Posting version");
+        final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
+        postVersion.addHeader("Slug", label);
+        final HttpResponse response = execute(postVersion);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode() );
+        final String locationHeader = response.getFirstHeader("Location").getValue();
+        assertNotNull( "No version location header found", locationHeader );
     }
 }
