@@ -337,7 +337,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraph() throws MalformedRdfException {
+    public void testUpdatingObjectGraph() throws RepositoryException {
 
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectGraphUpdates");

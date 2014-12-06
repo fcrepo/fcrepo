@@ -41,7 +41,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -56,10 +55,13 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -351,7 +353,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
-            throws MalformedRdfException {
+            throws MalformedRdfException, FedoraInvalidNamespaceException {
 
         final Model model = originalTriples.asModel();
 
@@ -361,6 +363,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         model.register(listener);
 
         final UpdateRequest request = create(sparqlUpdateStatement, idTranslator.reverse().convert(this).toString());
+
+        // reject if update request contains any fcr namespacess
+        final String fcrNS = request.getPrefix("fcr");
+        if (StringUtils.isNotBlank(fcrNS)) {
+            throw new FedoraInvalidNamespaceException ("Update content contains fcr namespace " + fcrNS + ".");
+        }
+
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
@@ -443,9 +452,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-        final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
+        final Model inputModel, final RdfStream originalTriples)
+        throws MalformedRdfException, FedoraInvalidNamespaceException {
 
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
+
+        // reject if update request contains any fcr namespacess
+        final String fcrNS = inputModel.getNsPrefixURI("fcr");
+        if (inputModel.getNsPrefixMap().containsKey("fcr")) {
+            throw new FedoraInvalidNamespaceException("Update content contains fcr namespace " + fcrNS + ".");
+        }
 
         final GraphDifferencingIterator differencer =
             new GraphDifferencingIterator(inputModel, originalTriples);
