@@ -192,7 +192,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraphWithErrors() {
+    public void testUpdatingObjectGraphWithErrors() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
 
@@ -211,7 +211,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     }
 
     @Test
-    public void testReplaceObjectGraphWithErrors() {
+    public void testReplaceObjectGraphWithErrors() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
 

@@ -75,7 +75,6 @@ import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraBinary;
@@ -220,6 +219,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestContentType
      * @param requestBodyStream
      * @return 204
+     * @throws RepositoryException
      */
     @PUT
     @Consumes
@@ -230,7 +230,7 @@ public class FedoraLdp extends ContentExposingResource {
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch)
-            throws InvalidChecksumException, MalformedRdfException {
+            throws InvalidChecksumException, RepositoryException {
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
@@ -316,7 +316,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException, MalformedRdfException {
+            throws IOException, RepositoryException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -372,6 +372,7 @@ public class FedoraLdp extends ContentExposingResource {
      * requests without a Content-Type get routed here.
      *
      * @return 201
+     * @throws RepositoryException
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
@@ -381,7 +382,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream)
-            throws InvalidChecksumException, IOException, MalformedRdfException {
+            throws InvalidChecksumException, IOException, RepositoryException {
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
