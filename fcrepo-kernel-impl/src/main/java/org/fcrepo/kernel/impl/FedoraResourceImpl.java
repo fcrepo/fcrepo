@@ -61,6 +61,7 @@ import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -366,7 +367,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         // reject if update request contains any fcr namespacess
         final String fcrNS = request.getPrefix("fcr");
         if (StringUtils.isNotBlank(fcrNS)) {
-            throw new RepositoryException("Update content contains fcr namespace " + fcrNS + ".");
+            throw new FedoraInvalidNamespaceException ("Update content contains fcr namespace " + fcrNS + ".");
         }
 
         model.setNsPrefixes(request.getPrefixMapping());
@@ -458,7 +459,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         // reject if update request contains any fcr namespacess
         final String fcrNS = inputModel.getNsPrefixURI("fcr");
         if (inputModel.getNsPrefixMap().containsKey("fcr")) {
-            throw new RepositoryException("Update content contains fcr namespace " + fcrNS + ".");
+            throw new FedoraInvalidNamespaceException("Update content contains fcr namespace " + fcrNS + ".");
         }
 
         final GraphDifferencingIterator differencer =
