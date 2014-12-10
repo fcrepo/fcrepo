@@ -1,0 +1,56 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix mods: <http://www.loc.gov/mods/v3> .
+@prefix modsrdf: <http://www.loc.gov/mods/rdf/v1#> .
+@prefix madsrdf: <http://www.loc.gov/mads/rdf/v1#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+
+<>
+    dc:description "Jerome H. Schatz was a child actor of both film and radio during the 1930s and 1940s. Schatz, performing under the name Jerry Tucker, became the youngest actor ever placed under contract to Paramount studios. His most prominent role was as the spoiled rich kid in the Our Gang comedies. Schatz left show business to join the Navy and worked as engineer after World War II." ;
+    dc:title "Jerry Tucker Shatz Papers" ;
+    modsrdf:abstract "Jerome H. Schatz was a child actor of both film and radio during the 1930s and 1940s. Schatz, performing under the name Jerry Tucker, became the youngest actor ever placed under contract to Paramount studios. His most prominent role was as the spoiled rich kid in the Our Gang comedies. Schatz left show business to join the Navy and worked as engineer after World War II." ;
+    modsrdf:dateEnd "1987"^^<xsd:string> ;
+    modsrdf:dateStart "1931"^^<xsd:string> ;
+    modsrdf:genre [
+        madsrdf:elementList ([
+                madsrdf:elementValue "Finding aid" ;
+                a madsrdf:GenreFormElement
+            ]
+        ) ;
+        a madsrdf:GenreForm ;
+        rdfs:label "Finding aid"
+    ] ;
+    modsrdf:languageOfResource <http://id.loc.gov/vocabulary/language#en> ;
+    modsrdf:locationOfResource [
+        modsrdf:locationPhysical "Mass Media and Culture" ;
+        a modsrdf:Location
+    ] ;
+    modsrdf:name [
+        madsrdf:elementList ([
+                madsrdf:elementValue "Schatz, Jerry" ;
+                a madsrdf:FullNameElement
+            ]
+        ) ;
+        a madsrdf:PersonalName ;
+        rdfs:label "Schatz, Jerry"
+    ] ;
+    modsrdf:physicalExtent "39.00 linear feet" ;
+    modsrdf:placeOfOrigin [
+        madsrdf:elementList ([
+                madsrdf:elementValue "" ;
+                a madsrdf:GeographicElement
+            ]
+        ) ;
+        a madsrdf:Geographic ;
+        rdfs:label ""
+    ] ;
+    modsrdf:titlePrincipal [
+        madsrdf:elementList ([
+                madsrdf:elementValue "Jerry Tucker Shatz Papers" ;
+                a madsrdf:MainTitleElement
+            ]
+        ) ;
+        a madsrdf:Title ;
+        rdfs:label "Jerry Tucker Shatz Papers"
+    ] ;
+    a <http://id.loc.gov/vocabulary/resourceType#Collection>, <http://id.loc.gov/vocabulary/resourceType#MixedMaterial>, modsrdf:ModsResource .
