@@ -353,7 +353,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
-            throws RepositoryException {
+            throws MalformedRdfException, FedoraInvalidNamespaceException {
 
         final Model model = originalTriples.asModel();
 
@@ -452,7 +452,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-        final Model inputModel, final RdfStream originalTriples) throws RepositoryException {
+        final Model inputModel, final RdfStream originalTriples)
+        throws MalformedRdfException, FedoraInvalidNamespaceException {
 
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
 

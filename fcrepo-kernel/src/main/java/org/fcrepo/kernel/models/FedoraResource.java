@@ -19,12 +19,14 @@ import java.util.Date;
 import java.util.Iterator;
 
 import javax.jcr.Node;
-import javax.jcr.Property;import javax.jcr.RepositoryException;
+import javax.jcr.Property;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -116,7 +118,8 @@ public interface FedoraResource {
      */
     void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                           final String sparqlUpdateStatement,
-                          final RdfStream originalTriples) throws RepositoryException;
+                          final RdfStream originalTriples)
+                          throws MalformedRdfException, FedoraInvalidNamespaceException;
 
     /**
      * Return the RDF properties of this object using the provided context
@@ -165,7 +168,8 @@ public interface FedoraResource {
      */
     void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Model inputModel,
-                                final RdfStream originalTriples) throws RepositoryException;
+                                final RdfStream originalTriples)
+                                throws MalformedRdfException, FedoraInvalidNamespaceException;
 
     /**
          * Construct an ETag value from the last modified date and path. JCR has a
