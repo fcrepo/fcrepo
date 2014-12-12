@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.rdf.converters;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.shared.InvalidPropertyURIException;
 
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.impl.utils.JcrPropertyMock;
 
 import org.junit.Before;
@@ -31,6 +32,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
@@ -106,6 +108,14 @@ public class PropertyConverterTest {
         final Property p = createProperty(REPOSITORY_NAMESPACE, "uuid");
         assertEquals("jcr:uuid", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
 
+    }
+
+    @Test(expected = FedoraInvalidNamespaceException.class)
+    public final void shouldRejectFcrPredicates() throws RepositoryException {
+        final Property p = createProperty(mockUri, "fcr");
+        final Map<String, String> nsMap = new HashMap<String, String>();
+        nsMap.put("fcr", mockUri);
+        PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
     }
 
     @Test

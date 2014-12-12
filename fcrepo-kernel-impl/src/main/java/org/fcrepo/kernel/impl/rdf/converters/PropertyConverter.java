@@ -20,6 +20,8 @@ import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableBiMap;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
@@ -117,9 +119,14 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
 
         final String prefix;
 
-        final String namespace = getJcrNamespaceForRDFNamespace(rdfNamespace);
-
         assert (namespaceRegistry != null);
+
+        // reject if update request contains any fcr namespacess
+        if (namespaceMapping != null && namespaceMapping.containsKey("fcr")) {
+            throw new FedoraInvalidNamespaceException("Invalid fcr namespace properties " + predicate + ".");
+        }
+
+        final String namespace = getJcrNamespaceForRDFNamespace(rdfNamespace);
 
         if (namespaceRegistry.isRegisteredUri(namespace)) {
             LOGGER.debug("Discovered namespace: {} in namespace registry.",namespace);

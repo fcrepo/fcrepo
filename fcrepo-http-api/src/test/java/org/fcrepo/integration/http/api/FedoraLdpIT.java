@@ -921,6 +921,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testIngestWithSparqlQueryJcrNS() throws Exception {
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream(
+                ("PREFIX fcr: <http://xmlns.com/my-fcr/> "
+                        + "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"this is a title\" } WHERE {}")
+                        .getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final int status = response.getStatusLine().getStatusCode();
+        assertFalse("Got a CREATED response with jcr namspace prefix!",
+                CREATED.getStatusCode() == status);
+    }
+
+    @Test
     public void testIngestWithNewAndGraph() throws Exception {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "application/n3");
@@ -1514,6 +1530,28 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "<" + subjectURI + "> <info:rubydora#label> \"asdfg\" \\.",
                 DOTALL).matcher(content).find());
 
+    }
+
+    @Test
+    public void testUpdateWithSparqlQueryJcrNS() throws Exception {
+        final HttpResponse createResponse = createObject("");
+        final String subjectURI = createResponse.getFirstHeader("Location").getValue();
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
+
+        updateObjectGraphMethod.addHeader("Content-Type",
+                "application/sparql-update");
+
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                ("PREFIX fcr: <http://xmlns.com/my-fcr/> "
+                        + "INSERT { <" + subjectURI + "> <info:rubydora#label> \"asdfg\" } WHERE {}")
+                        .getBytes()));
+
+        updateObjectGraphMethod.setEntity(e);
+        final HttpResponse response = client.execute(updateObjectGraphMethod);
+        final int status = response.getStatusLine().getStatusCode();
+        assertFalse("Got updated response with jcr namspace prefix!\n",
+                NO_CONTENT.getStatusCode() == status);
     }
 
     @Test
