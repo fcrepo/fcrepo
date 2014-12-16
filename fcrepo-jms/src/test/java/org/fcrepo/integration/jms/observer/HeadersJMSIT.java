@@ -82,9 +82,9 @@ public class HeadersJMSIT implements MessageListener {
      */
     private static final long TIMEOUT = 2000;
 
-    private static final String testIngested = "/testMessageFromIngestion-"+ randomUUID();
+    private static final String testIngested = "/testMessageFromIngestion-" + randomUUID();
 
-    private static final String testRemoved = "/testMessageFromRemoval-"+ randomUUID();
+    private static final String testRemoved = "/testMessageFromRemoval-" + randomUUID();
 
     private static final String INGESTION_EVENT_TYPE = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
 
@@ -145,7 +145,7 @@ public class HeadersJMSIT implements MessageListener {
         });
     }
 
-    @Test(timeout=TIMEOUT)
+    @Test(timeout = TIMEOUT)
     public void testRemoval() throws RepositoryException {
 
         LOGGER.debug("Expecting a {} event", REMOVAL_EVENT_TYPE);
