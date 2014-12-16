@@ -34,8 +34,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  */
 public class DefaultGraphSubjectsTest {
 
-    private DefaultIdentifierTranslator testObj;
-
     @Mock
     Node mockNode;
 
@@ -48,7 +46,6 @@ public class DefaultGraphSubjectsTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new DefaultIdentifierTranslator(mockSession);
     }
 
 

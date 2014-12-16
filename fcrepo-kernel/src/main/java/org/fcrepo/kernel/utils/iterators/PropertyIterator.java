@@ -30,13 +30,14 @@ import com.google.common.collect.ForwardingIterator;
 public class PropertyIterator extends ForwardingIterator<Property> implements
         Iterable<Property> {
 
-    private javax.jcr.PropertyIterator i;
+    private final Iterator<Property> i;
 
     /**
      * Wrap the JCR PropertyIterator with our generic iterator
      *
      * @param i
      */
+    @SuppressWarnings("unchecked")
     public PropertyIterator(final javax.jcr.PropertyIterator i) {
         this.i = i;
     }
@@ -46,7 +47,6 @@ public class PropertyIterator extends ForwardingIterator<Property> implements
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected Iterator<Property> delegate() {
         return i;

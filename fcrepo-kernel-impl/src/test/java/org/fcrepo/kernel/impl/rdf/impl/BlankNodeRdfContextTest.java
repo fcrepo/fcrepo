@@ -16,10 +16,10 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.vocabulary.RDF;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -38,6 +38,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
@@ -47,6 +48,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class BlankNodeRdfContextTest {
 
@@ -179,7 +181,7 @@ public class BlankNodeRdfContextTest {
 
         when(mockNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
-            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockBnodeReferenceProperty);
             }
         });
@@ -189,7 +191,7 @@ public class BlankNodeRdfContextTest {
         final Model actual = testObj.asModel();
 
         assertTrue(actual.contains(subjects.toDomain("/.well-known/gen/xxxx"),
-                RDF.type,
+                type,
                 createResource("info:some#type")));
     }
 
@@ -200,7 +202,7 @@ public class BlankNodeRdfContextTest {
 
         when(mockNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
-            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockBnodeReferenceProperty);
             }
         });
@@ -209,7 +211,7 @@ public class BlankNodeRdfContextTest {
 
         when(mockBlankNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
-            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) throws Throwable {
+            public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockOtherBnodeReferenceProperty);
             }
         });
@@ -222,7 +224,7 @@ public class BlankNodeRdfContextTest {
         final Model actual = testObj.asModel();
 
         assertTrue(actual.contains(subjects.toDomain("/.well-known/gen/xxxx"),
-                RDF.type,
+                type,
                 createResource("info:some#type")));
 
         assertTrue(actual.contains(subjects.toDomain("/.well-known/gen/xxxx"),
@@ -230,7 +232,7 @@ public class BlankNodeRdfContextTest {
                 subjects.toDomain("/.well-known/gen/yyyy")));
 
         assertTrue(actual.contains(subjects.toDomain("/.well-known/gen/yyyy"),
-                RDF.type,
+                type,
                 createResource("info:some#type")));
 
     }

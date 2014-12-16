@@ -196,6 +196,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
             }
         }
 
+        @Override
         public String toString() {
             final StringBuilder b = new StringBuilder();
 
@@ -225,9 +226,8 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         public RDFDatatype datatype() {
             if (hasDatatypeUri()) {
                 return new BaseDatatype(datatypeUri);
-            } else {
-                return null;
             }
+            return null;
         }
 
         public String lang() {

@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.impl.ContainerImpl.hasMixin;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,6 +31,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.ResourceTypeException;
 import org.fcrepo.kernel.impl.ContainerImpl;
 import org.fcrepo.kernel.services.ContainerService;
+
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +39,7 @@ import org.springframework.stereotype.Component;
  * Service for creating and retrieving FedoraObjects without using the JCR API.
  *
  * @author cbeer
+ * @author ajs6f
  * @since Feb 11, 2013
  */
 @Component
@@ -81,7 +84,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
         return cast(node);
     }
 
-    private void initializeNewObjectProperties(final Node node) {
+    private static void initializeNewObjectProperties(final Node node) {
         try {
             LOGGER.debug("Setting object properties on node {}...", node.getPath());
 
@@ -105,8 +108,8 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
         return new ContainerImpl(node);
     }
 
-    private void assertIsType(final Node node) {
-        if (!ContainerImpl.hasMixin(node)) {
+    private static void assertIsType(final Node node) {
+        if (!hasMixin(node)) {
             throw new ResourceTypeException(node + " can not be used as a object");
         }
     }

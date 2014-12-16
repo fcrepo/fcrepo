@@ -28,10 +28,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.impl.AbstractIT;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.RepositoryService;
-import org.junit.Before;
+
 import org.junit.Test;
 import org.modeshape.jcr.api.Problems;
 import org.springframework.test.context.ContextConfiguration;
@@ -40,6 +40,7 @@ import org.springframework.test.context.ContextConfiguration;
  * <p>RepositoryServiceImplIT class.</p>
  *
  * @author ksclarke
+ * @author ajs6f
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class RepositoryServiceImplIT extends AbstractIT {
@@ -48,87 +49,76 @@ public class RepositoryServiceImplIT extends AbstractIT {
     private Repository repository;
 
     @Inject
-    RepositoryService repositoryService;
+    private RepositoryService repositoryService;
 
     @Inject
-    BinaryService binaryService;
+    private BinaryService binaryService;
 
-    private DefaultIdentifierTranslator idTranslator;
-
-    @Before
-    public void setUp() throws RepositoryException {
-        idTranslator = new DefaultIdentifierTranslator(repository.login());
-    }
     @Test
-    public void testGetAllObjectsDatastreamSize() throws Exception {
+    public void testGetAllObjectsDatastreamSize() throws RepositoryException, InvalidChecksumException {
+        final double originalSize;
         Session session = repository.login();
-
-        final double originalSize = repositoryService.getRepositorySize();
-
-
-        binaryService.findOrCreate(session, "/testObjectServiceNode").setContent(
-                new ByteArrayInputStream("asdf".getBytes()),
-                "application/octet-stream",
-                null,
-                null,
-                null
-        );
-
-        session.save();
-        session.logout();
-
-        session = repository.login();
-
-        final double afterSize = repositoryService.getRepositorySize();
-
-        assertEquals(4.0, afterSize - originalSize);
-
-        session.logout();
+        try {
+            originalSize = repositoryService.getRepositorySize();
+            binaryService.findOrCreate(session, "/testObjectServiceNode").setContent(
+                    new ByteArrayInputStream("asdf".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    null,
+                    null
+                    );
+            session.save();
+        } finally {
+            session.logout();
+        }
+        try {
+            session = repository.login();
+            final double afterSize = repositoryService.getRepositorySize();
+            assertEquals(4.0, afterSize - originalSize);
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
     public void testBackupRepository() throws Exception {
         final Session session = repository.login();
-
-        binaryService.findOrCreate(session, "/testObjectServiceNode0").setContent(
-                new ByteArrayInputStream("asdfx".getBytes()),
-                "application/octet-stream",
-                null,
-                null,
-                null
-        );
-
-        session.save();
-
-        final File backupDirectory = createTempDir();
-
-        final Problems problems = repositoryService.backupRepository(session, backupDirectory);
-
-        assertFalse(problems.hasProblems());
-        session.logout();
+        try {
+            binaryService.findOrCreate(session, "/testObjectServiceNode0").setContent(
+                    new ByteArrayInputStream("asdfx".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    null,
+                    null
+                    );
+            session.save();
+            final File backupDirectory = createTempDir();
+            final Problems problems = repositoryService.backupRepository(session, backupDirectory);
+            assertFalse(problems.hasProblems());
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
     public void testRestoreRepository() throws Exception {
         final Session session = repository.login();
+        try {
+            binaryService.findOrCreate(session, "/testObjectServiceNode1").setContent(
+                    new ByteArrayInputStream("asdfy".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    null,
+                    null
+                    );
 
-        binaryService.findOrCreate(session, "/testObjectServiceNode1").setContent(
-                new ByteArrayInputStream("asdfy".getBytes()),
-                "application/octet-stream",
-                null,
-                null,
-                null
-        );
-
-        session.save();
-
-        final File backupDirectory = createTempDir();
-
-        repositoryService.backupRepository(session, backupDirectory);
-
-        final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
-
-        assertFalse(problems.hasProblems());
-        session.logout();
+            session.save();
+            final File backupDirectory = createTempDir();
+            repositoryService.backupRepository(session, backupDirectory);
+            final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
+            assertFalse(problems.hasProblems());
+        } finally {
+            session.logout();
+        }
     }
 }

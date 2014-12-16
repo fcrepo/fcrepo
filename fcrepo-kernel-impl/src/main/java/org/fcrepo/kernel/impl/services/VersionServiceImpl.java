@@ -72,7 +72,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         try {
             preRevertVersion.getContainingHistory().addVersionLabel(preRevertVersion.getName(),
                     getPreRevertVersionLabel(label, preRevertVersion.getContainingHistory()), false);
-        } catch (LabelExistsVersionException e) {
+        } catch (final LabelExistsVersionException e) {
             // fall-back behavior is to leave an unlabeled version
         }
         versionManager.restore(v, true);
@@ -88,7 +88,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      * @return
      * @throws RepositoryException
      */
-    private String getPreRevertVersionLabel(final String targetLabel, final VersionHistory history)
+    private static String getPreRevertVersionLabel(final String targetLabel, final VersionHistory history)
             throws RepositoryException {
         final String baseLabel = "auto-snapshot-before-" + targetLabel;
         for (int i = 0; i < Integer.MAX_VALUE; i ++) {
@@ -172,10 +172,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         final Version v = versionManager.checkpoint(absPath);
         if (v == null) {
             return null;
-        } else {
-            versionHistory.addVersionLabel(v.getName(), label, false);
-            return v.getFrozenNode().getIdentifier();
         }
+        versionHistory.addVersionLabel(v.getName(), label, false);
+        return v.getFrozenNode().getIdentifier();
     }
 
 }

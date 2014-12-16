@@ -33,6 +33,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class BinaryServiceImplTest {
 
@@ -83,7 +84,7 @@ public class BinaryServiceImplTest {
 
     @Test (expected = RepositoryRuntimeException.class)
     public void testFindOrCreateBinary3() throws Exception {
-        when(mockDsNode.getNode(JCR_CONTENT)).thenThrow(RepositoryException.class);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenThrow(new RepositoryException());
         final String testPath = "/foo/bar";
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);

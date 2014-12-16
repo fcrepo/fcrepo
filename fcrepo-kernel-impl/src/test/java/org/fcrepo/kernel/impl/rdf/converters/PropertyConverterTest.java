@@ -18,7 +18,9 @@ package org.fcrepo.kernel.impl.rdf.converters;
 
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.shared.InvalidPropertyURIException;
+
 import org.fcrepo.kernel.impl.utils.JcrPropertyMock;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -35,6 +37,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -44,6 +47,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class PropertyConverterTest {
     public static final Map<String, String> EMPTY_NAMESPACE_MAP = emptyMap();
@@ -87,32 +91,27 @@ public class PropertyConverterTest {
 
         assert(property != null);
         assertEquals("some_reference", property.getLocalName());
-
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testGetPredicateForProperty() throws RepositoryException {
         when(mockNamespacedProperty.getNamespaceURI()).thenThrow(new RepositoryException());
-        try {
-            testObj.convert(mockNamespacedProperty);
-            fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {
-            // expected
-        }
+        testObj.convert(mockNamespacedProperty);
+        fail("Unexpected completion after RepositoryException!");
     }
 
     @Test
     public final void shouldMapRdfPredicatesToJcrProperties() throws RepositoryException {
 
         final Property p = createProperty(REPOSITORY_NAMESPACE, "uuid");
-        assertEquals("jcr:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
+        assertEquals("jcr:uuid", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
 
     }
 
     @Test
     public final void shouldReuseRegisteredNamespaces() throws RepositoryException {
         final Property p = createProperty(mockUri, "uuid");
-        assertEquals("some-prefix:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p,
+        assertEquals("some-prefix:uuid", getPropertyNameFromPredicate(mockNode, p,
                 EMPTY_NAMESPACE_MAP));
     }
 
@@ -121,11 +120,11 @@ public class PropertyConverterTest {
         when(mockNsRegistry.registerNamespace("not-registered-uri#"))
                 .thenReturn("ns001");
         final Property p = createProperty("not-registered-uri#", "uuid");
-        assertEquals("ns001:uuid", PropertyConverter.getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
+        assertEquals("ns001:uuid", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
     }
 
     @Test (expected = InvalidPropertyURIException.class)
-    public void shouldThrowOnForward() throws RepositoryException {
+    public void shouldThrowOnForward() {
         final javax.jcr.Property p = mock(javax.jcr.Property.class);
         testObj.convert(p);
     }
@@ -136,7 +135,7 @@ public class PropertyConverterTest {
         testObj.doBackward(property);
     }
 
-    private void mockNamespaceRegistry(final NamespaceRegistry mockRegistry) throws RepositoryException {
+    private static void mockNamespaceRegistry(final NamespaceRegistry mockRegistry) throws RepositoryException {
 
         when(mockRegistry.isRegisteredUri(mockUri)).thenReturn(true);
         when(mockRegistry.isRegisteredUri("not-registered-uri#")).thenReturn(
@@ -152,5 +151,4 @@ public class PropertyConverterTest {
         when(mockRegistry.getPrefixes()).thenReturn(
                 new String[] {"jcr", "some-prefix"});
     }
-
 }

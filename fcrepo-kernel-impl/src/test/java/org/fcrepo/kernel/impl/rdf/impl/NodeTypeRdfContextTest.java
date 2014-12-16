@@ -245,7 +245,7 @@ public class NodeTypeRdfContextTest {
         assertFalse(actual.listResourcesWithProperty(domain, getResource((NodeType)mockNodeType)).hasNext());
     }
 
-    private void initNodeTypeMocks(final NodeType mockNodeType,
+    private static void initNodeTypeMocks(final NodeType mockNodeType,
                                    final String mockNamespaceUri,
                                    final String mockNodeTypeName) throws RepositoryException {
 

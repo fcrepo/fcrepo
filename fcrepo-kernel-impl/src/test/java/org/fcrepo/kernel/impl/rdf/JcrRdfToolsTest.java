@@ -39,8 +39,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.util.Collections;
 import java.util.NoSuchElementException;
 
@@ -80,8 +78,6 @@ import org.mockito.Mock;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.value.BinaryValue;
-import org.slf4j.Logger;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Function;
@@ -95,17 +91,13 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * <p>JcrRdfToolsTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 public class JcrRdfToolsTest implements FedoraJcrTypes {
-
-    private static final Logger LOGGER = getLogger(JcrRdfToolsTest.class);
 
     private DefaultIdentifierTranslator testSubjects;
 
     private JcrRdfTools testObj;
-
-    private static final String mockPredicateName =
-        "http://example.com#someProperty";
 
     /*
      * Also see enormous list of mock fields at bottom.

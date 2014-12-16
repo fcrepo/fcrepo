@@ -17,10 +17,10 @@ package org.fcrepo.integration.kernel.impl;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.TombstoneImpl;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.NodeService;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +31,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import static org.fcrepo.kernel.impl.TombstoneImpl.hasMixin;
 import static org.junit.Assert.fail;
 
 /**
@@ -50,12 +51,9 @@ public class TombstoneImplIT extends AbstractIT {
 
     private Session session;
 
-    private DefaultIdentifierTranslator subjects;
-
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator(session);
     }
 
     @After
@@ -64,16 +62,15 @@ public class TombstoneImplIT extends AbstractIT {
     }
 
     @Test (expected = RepositoryRuntimeException.class)
-    public void testTombstoneNodeTypeException() throws RepositoryException {
+    public void testTombstoneNodeTypeException() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
-        new TombstoneImpl(container.getNode());
         session.logout();
-        TombstoneImpl.hasMixin(container.getNode());
+        hasMixin(container.getNode());
     }
 
     @Test
-    public void testDeleteObject() throws RepositoryException {
+    public void testDeleteObject() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
         final TombstoneImpl tombstone = new TombstoneImpl(container.getNode());
@@ -82,7 +79,7 @@ public class TombstoneImplIT extends AbstractIT {
         try {
             nodeService.find(session, container.getPath());
             fail();
-        } catch (RepositoryRuntimeException e) {
+        } catch (final RepositoryRuntimeException e) {
             //ok
         }
     }

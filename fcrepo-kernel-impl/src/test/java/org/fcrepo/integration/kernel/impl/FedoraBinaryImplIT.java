@@ -36,10 +36,13 @@ import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.ValueFactory;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.apache.commons.io.IOUtils;
+
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -49,6 +52,7 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.ContentDigest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -57,6 +61,7 @@ import org.springframework.test.context.ContextConfiguration;
  * <p>DatastreamImplIT class.</p>
  *
  * @author ksclarke
+ * @author ajs6f
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraBinaryImplIT extends AbstractIT {
@@ -125,222 +130,244 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamContentType() throws IOException,
-            RepositoryException,
-            InvalidChecksumException {
+    public void testDatastreamContentType() throws RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        containerService.findOrCreate(session, "/testDatastreamObject");
+        try {
+            containerService.findOrCreate(session, "/testDatastreamObject");
 
-        binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode1").setContent(
-                new ByteArrayInputStream("asdf".getBytes()),
-                "some/mime-type; with=params",
-                null,
-                null,
-                null
-        );
+            binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode1").setContent(
+                    new ByteArrayInputStream("asdf".getBytes()),
+                    "some/mime-type; with=params",
+                    null,
+                    null,
+                    null
+                    );
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session,
-                "/testDatastreamObject/testDatastreamNode1");
+            final FedoraBinary ds = binaryService.findOrCreate(session,
+                    "/testDatastreamObject/testDatastreamNode1");
 
-        assertEquals("some/mime-type; with=params", ds.getMimeType());
+            assertEquals("some/mime-type; with=params", ds.getMimeType());
+        } finally {
+            session.logout();
+        }
 
     }
 
     @Test
-    public void testDatastreamContentDigestAndLength() throws IOException,
-            RepositoryException,
-            InvalidChecksumException {
+    public void testDatastreamContentDigestAndLength() throws IOException, RepositoryException,
+    InvalidChecksumException {
         final Session session = repo.login();
-        containerService.findOrCreate(session, "/testDatastreamObject");
+        try {
+            containerService.findOrCreate(session, "/testDatastreamObject");
 
-        binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode2").setContent(
-                new ByteArrayInputStream("asdf".getBytes()),
-                "application/octet-stream",
-                null,
-                null,
-                null
-        );
+            binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode2").setContent(
+                    new ByteArrayInputStream("asdf".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    null,
+                    null
+                    );
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session,
-                        "/testDatastreamObject/testDatastreamNode2");
-        assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
-                .getContentDigest().toString());
-        assertEquals(4L, ds.getContentSize());
+            final FedoraBinary ds = binaryService.findOrCreate(session,
+                    "/testDatastreamObject/testDatastreamNode2");
+            assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
+                    .getContentDigest().toString());
+            assertEquals(4L, ds.getContentSize());
 
-        final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+            final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
-        assertEquals("asdf", contentString);
+            assertEquals("asdf", contentString);
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
     public void
-    testModifyDatastreamContentDigestAndLength() throws IOException,
-            RepositoryException,
-            InvalidChecksumException {
+    testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        containerService.findOrCreate(session, "/testDatastreamObject");
+        try {
+            containerService.findOrCreate(session, "/testDatastreamObject");
 
-        binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3").setContent(
-                new ByteArrayInputStream("asdf".getBytes()),
-                "application/octet-stream",
-                null,
-                null,
-                null
-        );
+            binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3").setContent(
+                    new ByteArrayInputStream("asdf".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    null,
+                    null
+                    );
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session,
-                "/testDatastreamObject/testDatastreamNode3");
+            final FedoraBinary ds = binaryService.findOrCreate(session,
+                    "/testDatastreamObject/testDatastreamNode3");
 
-        ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
+            ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
 
-        assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds
-                .getContentDigest().toString());
-        assertEquals(10L, ds.getContentSize());
+            assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds
+                    .getContentDigest().toString());
+            assertEquals(10L, ds.getContentSize());
 
-        final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+            final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
-        assertEquals("0123456789", contentString);
+            assertEquals("0123456789", contentString);
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
-    public void testDatastreamContentWithChecksum() throws IOException,
-            RepositoryException,
-            InvalidChecksumException {
+    public void testDatastreamContentWithChecksum() throws IOException, RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        containerService.findOrCreate(session, "/testDatastreamObject");
+        try {
+            containerService.findOrCreate(session, "/testDatastreamObject");
 
-        binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode4").setContent(
-                new ByteArrayInputStream("asdf".getBytes()),
-                "application/octet-stream",
-                ContentDigest.asURI("SHA-1", "3da541559918a808c2402bba5012f6c60b27661c"),
-                null,
-                null
-        );
+            binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode4").setContent(
+                    new ByteArrayInputStream("asdf".getBytes()),
+                    "application/octet-stream",
+                    ContentDigest.asURI("SHA-1", "3da541559918a808c2402bba5012f6c60b27661c"),
+                    null,
+                    null
+                    );
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session,
-                "/testDatastreamObject/testDatastreamNode4");
-        assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
-                .getContentDigest().toString());
+            final FedoraBinary ds = binaryService.findOrCreate(session,
+                    "/testDatastreamObject/testDatastreamNode4");
+            assertEquals("urn:sha1:3da541559918a808c2402bba5012f6c60b27661c", ds
+                    .getContentDigest().toString());
 
-        final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
+            final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
-        assertEquals("asdf", contentString);
+            assertEquals("asdf", contentString);
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
     public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
         final Session session = repo.login();
-        containerService.findOrCreate(session, "/testDatastreamObject");
+        try {
+            containerService.findOrCreate(session, "/testDatastreamObject");
 
-        binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode5").setContent(
-                new ByteArrayInputStream("asdf".getBytes()),
-                "application/octet-stream",
-                null,
-                "xyz.jpg",
-                null
-        );
+            binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode5").setContent(
+                    new ByteArrayInputStream("asdf".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    "xyz.jpg",
+                    null
+                    );
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session,
-                        "/testDatastreamObject/testDatastreamNode5");
-        final String filename = ds.getFilename();
+            final FedoraBinary ds = binaryService.findOrCreate(session,
+                    "/testDatastreamObject/testDatastreamNode5");
+            final String filename = ds.getFilename();
 
-        assertEquals("xyz.jpg", filename);
-
+            assertEquals("xyz.jpg", filename);
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
-    public void testChecksumBlobs() throws Exception {
+    public void testChecksumBlobs() throws RepositoryException, InvalidChecksumException {
 
         final Session session = repo.login();
-        containerService.findOrCreate(session, "/testLLObject");
+        try {
+            containerService.findOrCreate(session, "/testLLObject");
 
-        binaryService.findOrCreate(session, "/testLLObject/testRepositoryContent").setContent(
-                new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
-                "application/octet-stream",
-                null,
-                null,
-                null
-        );
+            binaryService.findOrCreate(session, "/testLLObject/testRepositoryContent").setContent(
+                    new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    null,
+                    null
+                    );
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/"
-                        + "testRepositoryContent");
+            final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/"
+                    + "testRepositoryContent");
 
-        final Model fixityResults = ds.getFixity(idTranslator).asModel();
+            final Model fixityResults = ds.getFixity(idTranslator).asModel();
 
-        assertNotEquals(0, fixityResults.size());
+            assertNotEquals(0, fixityResults.size());
 
-        assertTrue("Expected to find checksum",
-                fixityResults.contains(null,
-                        HAS_MESSAGE_DIGEST,
-                        createResource("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf")));
-
+            assertTrue("Expected to find checksum",
+                    fixityResults.contains(null,
+                            HAS_MESSAGE_DIGEST,
+                            createResource("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf")));
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
-    public void testChecksumBlobsForInMemoryValues() throws Exception {
+    public void testChecksumBlobsForInMemoryValues() throws RepositoryException, InvalidChecksumException {
 
         final Session session = repo.login();
-        containerService.findOrCreate(session, "/testLLObject");
-        binaryService.findOrCreate(session, "/testLLObject/testMemoryContent").setContent(
-                new ByteArrayInputStream("0123456789".getBytes()),
-                "application/octet-stream",
-                null,
-                null,
-                null
-        );
+        try {
+            containerService.findOrCreate(session, "/testLLObject");
+            binaryService.findOrCreate(session, "/testLLObject/testMemoryContent").setContent(
+                    new ByteArrayInputStream("0123456789".getBytes()),
+                    "application/octet-stream",
+                    null,
+                    null,
+                    null
+                    );
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testMemoryContent");
+            final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testMemoryContent");
 
-        final Model fixityResults = ds.getFixity(idTranslator).asModel();
+            final Model fixityResults = ds.getFixity(idTranslator).asModel();
 
-        assertNotEquals(0, fixityResults.size());
+            assertNotEquals(0, fixityResults.size());
 
-        assertTrue("Expected to find checksum",
-                fixityResults.contains(null,
-                        HAS_MESSAGE_DIGEST,
-                        createResource("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016")));
+            assertTrue("Expected to find checksum",
+                    fixityResults.contains(null,
+                            HAS_MESSAGE_DIGEST,
+                            createResource("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016")));
+        } finally {
+            session.logout();
+        }
     }
 
     @Test
-    public void testChecksumBlobsForValuesWithoutChecksums() throws Exception {
+    public void testChecksumBlobsForValuesWithoutChecksums() throws RepositoryException {
 
         final Session session = repo.login();
-        final javax.jcr.ValueFactory factory = session.getValueFactory();
-        final Container object = containerService.findOrCreate(session, "/testLLObject");
+        try {
+            final ValueFactory factory = session.getValueFactory();
+            final Container object = containerService.findOrCreate(session, "/testLLObject");
 
-        final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
-        testRandomContentNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-        final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
-        testRandomContent.addMixin(FEDORA_BINARY);
-        testRandomContent.setProperty(JCR_DATA,
-                factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));
+            final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
+            testRandomContentNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+            final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
+            testRandomContent.addMixin(FEDORA_BINARY);
+            testRandomContent.setProperty(JCR_DATA,
+                    factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));
 
-        session.save();
+            session.save();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testRandomContent");
+            final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testRandomContent");
 
-        final Model fixityResults = ds.getFixity(idTranslator).asModel();
+            final Model fixityResults = ds.getFixity(idTranslator).asModel();
 
-        assertNotEquals(0, fixityResults.size());
+            assertNotEquals(0, fixityResults.size());
 
-
-        assertTrue("Expected to find checksum",
-                fixityResults.contains(null,
-                        HAS_MESSAGE_DIGEST,
-                        createResource("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016")));
+            assertTrue("Expected to find checksum",
+                    fixityResults.contains(null,
+                            HAS_MESSAGE_DIGEST,
+                            createResource("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016")));
+        } finally {
+            session.logout();
+        }
     }
 }

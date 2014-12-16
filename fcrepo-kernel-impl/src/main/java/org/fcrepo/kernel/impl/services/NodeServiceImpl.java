@@ -37,10 +37,10 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 /**
- * Service for managing access to Fedora 'nodes' (either datastreams or objects,
- * we don't care.)
+ * Service for managing access to Fedora 'nodes' (either datastreams or objects, we don't care.)
  *
  * @author Chris Beer
+ * @author ajs6f
  * @since May 9, 2013
  */
 @Component
@@ -122,7 +122,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
         }
     }
 
-    private void createTombstone(final Node parent, final String path) throws RepositoryException {
+    private static void createTombstone(final Node parent, final String path) throws RepositoryException {
         final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(parent);
         final Node n  = fedoraResource.findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
         LOGGER.info("Created tombstone at {} ", n.getPath());

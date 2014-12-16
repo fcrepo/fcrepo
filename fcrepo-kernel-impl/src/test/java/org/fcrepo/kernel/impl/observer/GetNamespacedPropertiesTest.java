@@ -46,6 +46,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author Andrew Woods
+ * @author ajs6f
  *         Date: 11/22/14
  */
 public class GetNamespacedPropertiesTest {
@@ -80,7 +81,7 @@ public class GetNamespacedPropertiesTest {
     }
 
     @Test
-    public void testApply() throws Exception {
+    public void testApply() {
         final FedoraEvent fedoraEvent = new FedoraEvent(event);
 
         fedoraEvent.addProperty(FEDORA_CONTAINER);
