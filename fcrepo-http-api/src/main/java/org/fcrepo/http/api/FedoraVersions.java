@@ -58,6 +58,7 @@ import com.google.common.annotations.VisibleForTesting;
  * Endpoint for managing versions of nodes
  *
  * @author awoods
+ * @author ajs6f
  */
 @Scope("request")
 @Path("/{path: .*}/fcr:versions/{labelAndOptionalPathIntoVersion: .*}")
@@ -149,7 +150,7 @@ public class FedoraVersions extends ContentExposingResource {
         return getContent(rangeValue, rdfStream);
     }
 
-    protected String unversionedResourcePath() throws RepositoryException {
+    protected String unversionedResourcePath() {
 
         if (baseResource == null) {
             baseResource = getResourceFromPath(externalPath);

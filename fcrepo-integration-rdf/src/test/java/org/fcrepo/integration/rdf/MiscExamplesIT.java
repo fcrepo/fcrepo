@@ -17,16 +17,15 @@ package org.fcrepo.integration.rdf;
 
 import org.junit.Test;
 
-import java.io.IOException;
-
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class MiscExamplesIT extends AbstractIntegrationRdfIT {
 
 
     @Test
-    public void testSyntacticallyInvalidDate() throws IOException {
+    public void testSyntacticallyInvalidDate() {
         createLDPRSAndCheckResponse(getRandomUniquePid(), "<> <info:some/property> \"dunno\"^^<http://www.w3" +
                 ".org/2001/XMLSchema#dateTime>");
     }

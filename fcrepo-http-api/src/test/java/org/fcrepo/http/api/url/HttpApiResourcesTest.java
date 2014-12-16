@@ -42,7 +42,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -54,6 +53,7 @@ import java.util.Set;
  * <p>HttpApiResourcesTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 public class HttpApiResourcesTest {
 
@@ -85,7 +85,7 @@ public class HttpApiResourcesTest {
         uriInfo = getUriInfoImpl();
         mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
         setField(testObj, "serializers", mockSerializers);
-        final Set<String> serializerKeySet = new HashSet<String>();
+        final Set<String> serializerKeySet = new HashSet<>();
         final String format = "DummyFORMAT";
         serializerKeySet.add(format);
         when(mockSerializers.keySet()).thenReturn(serializerKeySet);
@@ -94,8 +94,7 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateModeRootNodesWithRepositoryWideLinks()
-        throws RepositoryException {
+    public void shouldDecorateModeRootNodesWithRepositoryWideLinks() {
         when(mockResource.hasType(ROOT)).thenReturn(true);
         when(mockResource.getPath()).thenReturn("/");
 
@@ -108,8 +107,7 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateNodesWithLinksToVersionsAndExport()
-        throws RepositoryException {
+    public void shouldDecorateNodesWithLinksToVersionsAndExport() {
 
         when(mockResource.isVersioned()).thenReturn(true);
         when(mockResource.getPath()).thenReturn("/some/path/to/object");
@@ -126,8 +124,7 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldNotDecorateNodesWithLinksToVersionsUnlessVersionable()
-            throws RepositoryException {
+    public void shouldNotDecorateNodesWithLinksToVersionsUnlessVersionable() {
 
         when(mockResource.isVersioned()).thenReturn(false);
         when(mockResource.getPath()).thenReturn("/some/path/to/object");
@@ -142,8 +139,7 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateDatastreamsWithLinksToFixityChecks()
-        throws RepositoryException {
+    public void shouldDecorateDatastreamsWithLinksToFixityChecks() {
         when(mockBinary.getPath()).thenReturn("/some/path/to/datastream");
         when(mockSerializers.keySet()).thenReturn(new HashSet<String>());
         final Resource graphSubject = mockSubjects.reverse().convert(mockBinary);
@@ -155,8 +151,7 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateRootNodeWithCorrectResourceURI()
-            throws RepositoryException {
+    public void shouldDecorateRootNodeWithCorrectResourceURI() {
         when(mockResource.hasType(ROOT)).thenReturn(true);
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockResource.getPath()).thenReturn("/");
@@ -171,8 +166,7 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateOtherNodesWithCorrectResourceURI()
-            throws RepositoryException {
+    public void shouldDecorateOtherNodesWithCorrectResourceURI() {
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockResource.getPath()).thenReturn("/some/path/to/object");
 

@@ -60,7 +60,7 @@ public class NamespaceToolsTest {
     }
 
     @Test
-    public void testFunction() throws RepositoryException {
+    public void testFunction() {
         getNamespaceRegistry.apply(mockNode);
     }
 

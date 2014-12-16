@@ -64,7 +64,7 @@ public class ContentRdfContextTest {
     }
 
     @Test
-    public void testFedoraBinaryTriples() throws IOException {
+    public void testFedoraBinaryTriples() {
 
         final Model results =
                 new ContentRdfContext(mockBinary, idTranslator).asModel();

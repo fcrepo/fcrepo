@@ -15,13 +15,18 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
+import static com.google.common.collect.Iterators.singletonIterator;
+
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
+
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
+
 import java.util.Iterator;
 
 /**
@@ -30,23 +35,33 @@ import java.util.Iterator;
  * @author cabeer
  */
 public class PropertyValueIterator extends AbstractIterator<Value> {
-    private Iterator<Property> properties;
+    private final Iterator<Property> properties;
     private Iterator<Value> currentValues;
 
     /**
-     * Iterate through a single property's values
+     * Iterate through multiple properties' values
      * @param properties
      */
-    public PropertyValueIterator(final Property properties) {
-        this(Iterators.singletonIterator(properties));
+    public PropertyValueIterator(final PropertyIterator properties) {
+        this.properties = properties;
+        this.currentValues = null;
     }
 
     /**
-     * Iterate through multiple property's values
+     * Iterate through multiple properties' values
      * @param properties
      */
     public PropertyValueIterator(final Iterator<Property> properties) {
         this.properties = properties;
+        this.currentValues = null;
+    }
+
+    /**
+     * Iterate through a property's values
+     * @param properties
+     */
+    public PropertyValueIterator(final Property property) {
+        this.properties = singletonIterator(property);
         this.currentValues = null;
     }
 
@@ -62,10 +77,9 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
                 if (property.isMultiple()) {
                     currentValues = Iterators.forArray(property.getValues());
                     return currentValues.next();
-                } else {
-                    currentValues = null;
-                    return property.getValue();
                 }
+                currentValues = null;
+                return property.getValue();
             }
 
             return endOfData();

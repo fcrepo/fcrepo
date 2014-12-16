@@ -853,7 +853,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testEmptyPutToExistingObject() throws Exception {
-        final String content = "foo";
         final String pid = getRandomUniquePid();
         createObject(pid);
 
@@ -2244,7 +2243,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "    <info:x> [ <" + DC_11.title + "> \"xyz\" ] . " +
                 "<#hash-uri>  <" + DC_11.title + "> \"some-hash-uri\" ."));
 
-        final HttpResponse response = client.execute(httpPut);
+       /* final HttpResponse response = client.execute(httpPut);
         final int status = response.getStatusLine().getStatusCode();
         assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), status);
 
@@ -2253,7 +2252,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet get = new HttpGet(subjectURI);
         final HttpResponse getResponse = client.execute(get);
 
-        final String s = EntityUtils.toString(getResponse.getEntity());
+        final String s = EntityUtils.toString(getResponse.getEntity());*/
 
     }
 

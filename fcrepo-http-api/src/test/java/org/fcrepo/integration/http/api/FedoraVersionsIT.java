@@ -15,7 +15,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -37,11 +36,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.apache.http.HttpResponse;
@@ -65,6 +61,7 @@ import com.hp.hpl.jena.update.GraphStore;
  * <p>FedoraVersionsIT class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 public class FedoraVersionsIT extends AbstractResourceIT {
 
@@ -92,7 +89,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 results.contains(ANY, versionURI, CREATED_DATE.asNode(), ANY));
     }
 
-    private int countTriples(final GraphStore g) {
+    private static int countTriples(final GraphStore g) {
         int count = 0;
         final Iterator<Quad> it = g.find();
         while (it.hasNext()) {
@@ -557,7 +554,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 REPOSITORY_NAMESPACE + "predecessors",
                 REPOSITORY_NAMESPACE + "versionHistory" };
 
-        for (String prohibitedProperty : jcrVersioningTriples) {
+        for (final String prohibitedProperty : jcrVersioningTriples) {
             assertFalse(prohibitedProperty + " must not appear in RDF for version-enabled node!",
                     rdf.contains(
                     ANY,
@@ -579,29 +576,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid + "/fcr:versions/" + versionLabel));
         assertFalse("Historic version must not have any serialization defined.",
                 rdf.find(ANY, ANY, RdfLexicon.HAS_SERIALIZATION.asNode(), ANY).hasNext());
-    }
-
-    /**
-     * Verifies that one version exists with each supplied value.  This method
-     * makes assertions that each of the provided values is the content of a
-     * version node and nothing else.  Order isn't important, and no assumption
-     * is made about whether extra versions exist.
-     */
-    private static void verifyVersions(final GraphStore graph, final Node subject, final String ... values)
-            throws IOException {
-        final ArrayList<String> remainingValues = newArrayList(values);
-        final Iterator<Quad> versionIt = graph.find(ANY, subject, HAS_VERSION.asNode(), ANY);
-
-        while (versionIt.hasNext() && !remainingValues.isEmpty()) {
-            final String value =
-                    EntityUtils.toString(execute(new HttpGet(versionIt.next().getObject().getURI()))
-                            .getEntity());
-            remainingValues.remove(value);
-        }
-
-        if (!remainingValues.isEmpty()) {
-            fail(remainingValues.get(0) + " was not preserved in the version history!");
-        }
     }
 
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)

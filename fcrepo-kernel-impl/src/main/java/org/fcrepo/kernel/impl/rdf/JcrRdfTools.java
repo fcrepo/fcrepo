@@ -71,6 +71,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * A set of helpful tools for converting JCR properties to RDF
  *
  * @author Chris Beer
+ * @author ajs6f
  * @since May 10, 2013
  */
 public class JcrRdfTools {
@@ -93,7 +94,7 @@ public class JcrRdfTools {
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
     private final ValueConverter valueConverter;
 
-    private Session session;
+    private final Session session;
     private final NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();
 
     @VisibleForTesting
@@ -413,7 +414,7 @@ public class JcrRdfTools {
         return skolemizedBnodeMap.get(id);
     }
 
-    private String skolemizedId() {
-        return "/.well-known/genid/" + randomUUID().toString();
+    private static String skolemizedId() {
+        return "/.well-known/genid/" + randomUUID();
     }
 }

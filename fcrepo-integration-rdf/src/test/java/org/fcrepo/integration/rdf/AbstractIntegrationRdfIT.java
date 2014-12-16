@@ -47,6 +47,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
 
@@ -102,7 +103,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
         }
     }
 
-    private Graph getTidiedGraph(final GraphStore graphStore) {
+    private static Graph getTidiedGraph(final GraphStore graphStore) {
         final Graph betterGraph = GraphFactory.createDefaultGraph();
         final ExtendedIterator<Triple> triples = graphStore.getDefaultGraph().find(Node.ANY, Node.ANY, Node.ANY);
         final Map<Node, Node> bnodeMap = new HashMap<>();

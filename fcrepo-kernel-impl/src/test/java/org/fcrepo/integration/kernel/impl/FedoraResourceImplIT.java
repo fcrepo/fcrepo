@@ -500,7 +500,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 public boolean apply(final javax.jcr.Property property) {
                     try {
                         return property.getName().contains("xyz_ref");
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         return false;
                     }
                 }
@@ -713,7 +713,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testNullLastModifiedDate() throws RepositoryException {
+    public void testNullLastModifiedDate() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         assertFalse(object.hasProperty(JCR_LASTMODIFIED));
@@ -732,7 +732,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test (expected = RepositoryRuntimeException.class)
-    public void testDisableVersioningException() throws RepositoryException {
+    public void testDisableVersioningException() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.disableVersioning();
@@ -752,7 +752,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         addVersionLabel(label, session.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
     }
 
-    private void addVersionLabel(final String label, final Version v) throws RepositoryException {
+    private static void addVersionLabel(final String label, final Version v) throws RepositoryException {
         v.getContainingHistory().addVersionLabel(v.getName(), label, false);
     }
 }

@@ -46,14 +46,13 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * <p>DatastreamImplTest class.</p>
  *
  * @author ksclarke
+ * @author ajs6f
  */
 public class DatastreamImplTest implements FedoraJcrTypes {
 
     private static final String testDsId = "testDs";
 
     private NonRdfSourceDescription testObj;
-
-    private String testObjPath;
 
     @Mock
     private Session mockSession;

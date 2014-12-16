@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.lang.reflect.Field;
 import java.util.Date;
@@ -39,13 +38,18 @@ import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * @author frank asseg
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class TransactionServiceImplTest {
 
     private static final String IS_A_TX = "foo";
@@ -66,13 +70,13 @@ public class TransactionServiceImplTest {
 
     @Before
     public void setup() throws Exception {
-        initMocks(this);
         service = new TransactionServiceImpl();
         when(mockTx.getId()).thenReturn(IS_A_TX);
         when(mockTx.isAssociatedWithUser(null)).thenReturn(true);
         final Field txsField =
                 TransactionServiceImpl.class.getDeclaredField("transactions");
         txsField.setAccessible(true);
+        @SuppressWarnings("unchecked")
         final Map<String, Transaction> txs =
                 (Map<String, Transaction>) txsField
                         .get(TransactionService.class);

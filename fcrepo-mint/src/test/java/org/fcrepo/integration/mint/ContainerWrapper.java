@@ -23,7 +23,6 @@ import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.slf4j.Logger;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -36,6 +35,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * <p>ContainerWrapper class.</p>
  *
  * @author osmandin
+ * @author ajs6f
  */
 public class ContainerWrapper implements ApplicationContextAware {
 
@@ -50,7 +50,7 @@ public class ContainerWrapper implements ApplicationContextAware {
     private HttpServer server;
 
     @PostConstruct
-    public void start() throws Exception {
+    public void start() {
         server = new HttpServer();
         final NetworkListener listener = new NetworkListener("grizzly", "localhost", new PortRange(port));
         server.addListener(listener);
@@ -58,7 +58,7 @@ public class ContainerWrapper implements ApplicationContextAware {
         try {
             server.start();
             logger.info("Test server running on {}", port);
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             logger.error("Error with test server", e);
         }
     }
@@ -66,6 +66,7 @@ public class ContainerWrapper implements ApplicationContextAware {
     public void addHandler(final String data, final String path) {
         final HttpHandler httpHandler = new HttpHandler() {
 
+            @Override
             public void service(final Request request, final Response response)
                     throws Exception {
                 response.getWriter().write(data);
@@ -81,8 +82,7 @@ public class ContainerWrapper implements ApplicationContextAware {
     }
 
     @Override
-    public void setApplicationContext(final ApplicationContext applicationContext)
-            throws BeansException {
+    public void setApplicationContext(final ApplicationContext applicationContext) {
     }
 
 }

@@ -15,7 +15,9 @@
  */
 package org.fcrepo.integration.kernel.impl;
 
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.regex.Pattern.compile;
+import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,15 +31,15 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.apache.commons.io.IOUtils;
+
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
@@ -46,6 +48,7 @@ import org.springframework.test.context.ContextConfiguration;
  * <p>FedoraObjectImplIT class.</p>
  *
  * @author ksclarke
+ * @author ajs6f
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraObjectImplIT extends AbstractIT {
@@ -192,7 +195,7 @@ public class FedoraObjectImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraphWithErrors() throws RepositoryException {
+    public void testUpdatingObjectGraphWithErrors() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
 
@@ -211,12 +214,12 @@ public class FedoraObjectImplIT extends AbstractIT {
     }
 
     @Test
-    public void testReplaceObjectGraphWithErrors() throws RepositoryException {
+    public void testReplaceObjectGraphWithErrors() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
 
-        final Model model = ModelFactory.createDefaultModel().read(
-                IOUtils.toInputStream("<> <info:some-property> <relative-url> . \n" +
+        final Model model = createDefaultModel().read(
+                toInputStream("<> <info:some-property> <relative-url> . \n" +
                                       "<> <info:some-other-property> <another-relative-url>"),
                 subjects.reverse().convert(object).toString(),
                 "TTL");

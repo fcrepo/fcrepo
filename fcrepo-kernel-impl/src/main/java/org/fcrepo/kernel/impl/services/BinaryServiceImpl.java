@@ -37,6 +37,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/10/14
  */
 @Component
@@ -84,7 +85,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
         }
     }
 
-    private void initializeNewDatastreamProperties(final Node node) {
+    private static void initializeNewDatastreamProperties(final Node node) {
         try {
 
             if (node.canAddMixin(FEDORA_RESOURCE)) {
@@ -117,7 +118,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
         return new FedoraBinaryImpl(node);
     }
 
-    private void assertIsType(final Node node) {
+    private static void assertIsType(final Node node) {
         if (!FedoraBinaryImpl.hasMixin(node)) {
             throw new ResourceTypeException(node + " can not be used as a binary");
         }

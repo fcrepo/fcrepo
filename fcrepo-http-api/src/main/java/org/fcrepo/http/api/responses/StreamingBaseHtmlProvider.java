@@ -339,7 +339,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                      primaryNodeTypeName);
     }
 
-    private String getTemplateLocation(final String nodeTypeName) {
+    private static String getTemplateLocation(final String nodeTypeName) {
         return templatesLocation + "/" +
             nodeTypeName.replace(':', '-') + templateFilenameExtension;
     }
