@@ -20,6 +20,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -29,12 +30,16 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import java.util.Iterator;
 
+import java.util.Iterator;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.PATH;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
 
@@ -42,9 +47,12 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
  * Embed all blank nodes in the RDF stream
  *
  * @author cabeer
+ * @author ajs6f
  * @since 10/9/14
  */
 public class BlankNodeRdfContext extends NodeRdfContext {
+
+    private static final List<Integer> referencePropertyTypes = asList(PATH,REFERENCE,WEAKREFERENCE);
 
     /**
      * Default constructor.
@@ -83,14 +91,12 @@ public class BlankNodeRdfContext extends NodeRdfContext {
 
 
     private static final Predicate<Property> filterReferenceProperties = new Predicate<Property>() {
+
         @Override
         public boolean apply(final Property property) {
             try {
                 final int type = property.getType();
-
-                return type == PropertyType.REFERENCE
-                        || type == PropertyType.WEAKREFERENCE
-                        || type == PropertyType.PATH;
+                return referencePropertyTypes.contains(type);
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
@@ -102,13 +108,11 @@ public class BlankNodeRdfContext extends NodeRdfContext {
         public Node apply(final Value v) {
             try {
                 final Node refNode;
-
                 if (v.getType() == PATH) {
                     refNode = resource().getNode().getSession().getNode(v.getString());
                 } else {
                     refNode = resource().getNode().getSession().getNodeByIdentifier(v.getString());
                 }
-
                 return refNode;
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);

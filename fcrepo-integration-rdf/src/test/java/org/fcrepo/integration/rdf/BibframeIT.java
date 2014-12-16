@@ -19,11 +19,12 @@ import org.junit.Test;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class BibframeIT extends AbstractIntegrationRdfIT {
 
     @Test
-    public void testBibframe() throws Exception {
+    public void testBibframe() {
         final String bibframe = "@prefix bf: <http://bibframe.org/vocab/> .\n" +
                 "@prefix madsrdf: <http://www.loc.gov/mads/rdf/v1#> .\n" +
                 "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" +

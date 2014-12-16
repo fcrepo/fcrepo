@@ -282,15 +282,14 @@ public class FedoraLdp extends ContentExposingResource {
             boolean emptyRequest = true;
             try {
                 emptyRequest = requestBodyStream.read() == -1;
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 LOGGER.debug("Error checking for request body content", ex);
             }
 
             if (requestContentType == null && emptyRequest) {
                 throw new ClientErrorException("Resource Already Exists", CONFLICT);
-            } else {
-                throw new ClientErrorException("Invalid Content Type " + requestContentType, UNSUPPORTED_MEDIA_TYPE);
             }
+            throw new ClientErrorException("Invalid Content Type " + requestContentType, UNSUPPORTED_MEDIA_TYPE);
         }
 
         try {
@@ -527,7 +526,7 @@ public class FedoraLdp extends ContentExposingResource {
 
     }
 
-    private String getRequestedObjectType(final MediaType requestContentType,
+    private static String getRequestedObjectType(final MediaType requestContentType,
                                           final ContentDisposition contentDisposition) {
 
         if (requestContentType != null) {
@@ -584,7 +583,7 @@ public class FedoraLdp extends ContentExposingResource {
         pid = translator().asString(createResource(newResourceUri.toString()));
         try {
             pid = URLDecoder.decode(pid, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
+        } catch (final UnsupportedEncodingException e) {
             // noop
         }
         // remove leading slash left over from translation

@@ -53,14 +53,16 @@ public class ReporterFactoryTest {
 
     @Test
     public void testGetJmxReporter() {
-        final JmxReporter reporter = factory.getJmxReporter("not-used");
-        assertNotNull(reporter);
+        try (final JmxReporter reporter = factory.getJmxReporter("not-used")) {
+            assertNotNull(reporter);
+        }
     }
 
     @Test
     public void testGetGraphiteReporter() {
-        final GraphiteReporter reporter = factory.getGraphiteReporter("some-prefix", mockGraphite);
-        assertNotNull(reporter);
+        try (final GraphiteReporter reporter = factory.getGraphiteReporter("some-prefix", mockGraphite)) {
+            assertNotNull(reporter);
+        }
     }
 
 }

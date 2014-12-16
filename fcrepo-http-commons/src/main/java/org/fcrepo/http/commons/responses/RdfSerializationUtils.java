@@ -64,8 +64,9 @@ public class RdfSerializationUtils {
                   "mixinTypes");
 
     private static final Function<RDFNode, String> stringConverter = new Function<RDFNode, String>() {
-        public String apply(final RDFNode statement) {
-            return statement.asLiteral().getLexicalForm();
+        @Override
+        public String apply(final RDFNode node) {
+            return node.asLiteral().getLexicalForm();
         }
     };
 

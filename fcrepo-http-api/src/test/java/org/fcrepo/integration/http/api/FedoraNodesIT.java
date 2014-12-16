@@ -99,7 +99,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         final String pid = getRandomUniquePid();
         final String location = serverAddress + getRandomUniquePid();
-        final HttpResponse response = createObject(location.substring(serverAddress.length()));
+        createObject(location.substring(serverAddress.length()));
 
         final HttpMove request = new HttpMove(location);
         request.addHeader("Destination", serverAddress + pid);

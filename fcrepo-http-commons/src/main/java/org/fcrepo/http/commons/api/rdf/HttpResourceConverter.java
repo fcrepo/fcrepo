@@ -16,6 +16,7 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -56,6 +57,7 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.TombstoneImpl;
 import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
+
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -134,7 +136,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                         throw new TombstoneException(new TombstoneImpl(preexistingNode));
                     }
                 }
-            } catch (RepositoryException inner) {
+            } catch (final RepositoryException inner) {
                 LOGGER.debug("Error checking for parent tombstones", inner);
             }
 
@@ -212,7 +214,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             try {
                 path = URLDecoder.decode(path, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
+            } catch (final UnsupportedEncodingException e) {
                 LOGGER.debug("Unable to URL-decode path " + e + " as UTF-8", e);
             }
 
@@ -303,7 +305,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         }
     }
 
-    private String getPath(final FedoraResource resource) {
+    private static String getPath(final FedoraResource resource) {
         if (isFrozenNode.apply(resource)) {
             try {
 
@@ -391,11 +393,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
 
-    @SuppressWarnings("unchecked")
-    private static final List<Converter<String, String>> minimalTranslationChain =
-            newArrayList(
-                    (Converter<String, String>) new NamespaceConverter(),
-                    (Converter<String, String>) new HashConverter()
+    private static final List<Converter<String, String>> minimalTranslationChain = of(
+                    new NamespaceConverter(), (Converter<String, String>) new HashConverter()
             );
 
     protected List<Converter<String,String>> getTranslationChain() {

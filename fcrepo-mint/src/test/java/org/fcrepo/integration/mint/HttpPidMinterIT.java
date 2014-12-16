@@ -22,8 +22,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
-import java.io.IOException;
-
 import static java.lang.Integer.parseInt;
 import static org.junit.Assert.assertEquals;
 
@@ -31,6 +29,7 @@ import static org.junit.Assert.assertEquals;
  * <p>HttpPidMinterIT class.</p>
  *
  * @author osmandin
+ * @author ajs6f
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("/test-container.xml")
@@ -38,7 +37,7 @@ public class HttpPidMinterIT{
 
     private static String PREFIX = "http://localhost:";
 
-    private int getPort() {
+    private static int getPort() {
         return parseInt(System.getProperty("test.port", "8080"));
     }
 
@@ -50,7 +49,7 @@ public class HttpPidMinterIT{
     }
 
     @Test
-    public void shouldMintPid() throws IOException {
+    public void shouldMintPid() {
         final String res = "/res1";
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
@@ -60,7 +59,7 @@ public class HttpPidMinterIT{
     }
 
     @Test
-    public void shouldMintPid2() throws IOException {
+    public void shouldMintPid2() {
         final String res = "/res2";
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
@@ -70,7 +69,7 @@ public class HttpPidMinterIT{
     }
 
     @Test
-    public void shouldMintPid3() throws IOException {
+    public void shouldMintPid3() {
         final String res = "/res3";
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
@@ -80,22 +79,22 @@ public class HttpPidMinterIT{
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void shouldNotAccept1() throws IOException {
+    public void shouldNotAccept1() {
         new HttpPidMinter(null, "POST", "", "", ".*/", "");
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void shouldNotAccept2() throws IOException {
+    public void shouldNotAccept2() {
         new HttpPidMinter(null, "POST", "", "", ".*/", " ");
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void shouldNotAccept3() throws IOException {
+    public void shouldNotAccept3() {
         new HttpPidMinter("http://test", "POST", "", "", ".*/", "\\wrongxpath");
     }
 
     @Test
-    public void shouldMintPidWithGET() throws IOException {
+    public void shouldMintPidWithGET() {
         final String res = "/getres";
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
@@ -105,7 +104,7 @@ public class HttpPidMinterIT{
     }
 
     @Test
-    public void shouldMintPidWithPUT() throws IOException {
+    public void shouldMintPidWithPUT() {
         final String res = "/putres";
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
@@ -115,7 +114,7 @@ public class HttpPidMinterIT{
     }
 
     @Test
-    public void shouldMintPidWithNullMethod() throws IOException {
+    public void shouldMintPidWithNullMethod() {
         final String res = "/res4";
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
@@ -125,7 +124,7 @@ public class HttpPidMinterIT{
     }
 
     @Test
-    public void shouldMintPidXml() throws IOException {
+    public void shouldMintPidXml() {
         final String res = "/xml1";
         final String server = PREFIX + getPort() + res;
         addHandler("<test><id>baz</id></test>", res);
@@ -136,7 +135,7 @@ public class HttpPidMinterIT{
     }
 
     @Test
-    public void shouldRunWithNoAuth() throws IOException {
+    public void shouldRunWithNoAuth() {
         final String res = "/res5";
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
@@ -147,7 +146,7 @@ public class HttpPidMinterIT{
     }
 
     @Test (expected = RuntimeException.class)
-    public void shouldMintPidXmlInvalid() throws IOException {
+    public void shouldMintPidXmlInvalid() {
         final String res = "/xml2";
         final String server = PREFIX + getPort() + res;
         addHandler("<test><id>baz</id></tet>", res);

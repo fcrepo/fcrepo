@@ -42,6 +42,7 @@ import org.mockito.Mock;
  * <p>FedoraFixityTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 public class FedoraFixityTest {
 
@@ -60,7 +61,7 @@ public class FedoraFixityTest {
     @Mock
     private FedoraBinary mockBinary;
 
-    private String externalPath = "objects/FedoraDatastreamsTest1/testDS";
+    private final String externalPath = "objects/FedoraDatastreamsTest1/testDS";
 
     @Before
     public void setUp() throws RepositoryException {
@@ -76,7 +77,7 @@ public class FedoraFixityTest {
     }
 
     @Test
-    public void testGetDatastreamFixity() throws RepositoryException {
+    public void testGetDatastreamFixity() {
         final RdfStream expected = new RdfStream();
 
         when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);

@@ -180,9 +180,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     } catch (final URISyntaxException e) {
                         throw new RepositoryRuntimeException(e);
                     }
-                } else {
-                    return getBinaryContent(rangeValue);
                 }
+                return getBinaryContent(rangeValue);
             }
 
         } else {
@@ -359,7 +358,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                         final Binary binaryContent = binary.getBinaryContent();
                         try {
                             binaryContent.read(buf, rangeStart);
-                        } catch (RepositoryException e1) {
+                        } catch (final RepositoryException e1) {
                             throw new RepositoryRuntimeException(e1);
                         }
                         binaryContent.dispose();

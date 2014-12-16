@@ -17,6 +17,7 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+
 import org.slf4j.Logger;
 
 import javax.ws.rs.core.Context;
@@ -53,8 +54,9 @@ public class RepositoryRuntimeExceptionMapper implements
     @Override
     public Response toResponse(final RepositoryRuntimeException e) {
         final Throwable cause = e.getCause();
-        final ExceptionMapper exceptionMapper = providers.getExceptionMapper(cause.getClass());
-
+        @SuppressWarnings("unchecked")
+        final ExceptionMapper<Throwable> exceptionMapper =
+                (ExceptionMapper<Throwable>) providers.getExceptionMapper(cause.getClass());
         if (exceptionMapper != null) {
             return exceptionMapper.toResponse(cause);
         }

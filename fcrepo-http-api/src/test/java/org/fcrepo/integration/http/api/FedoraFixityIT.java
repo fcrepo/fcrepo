@@ -112,7 +112,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
                 createTypedLiteral(3).asNode()));
     }
 
-    private void postVersion(final String path, final String label) throws IOException {
+    private static void postVersion(final String path, final String label) throws IOException {
         logger.debug("Posting version");
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
         postVersion.addHeader("Slug", label);
