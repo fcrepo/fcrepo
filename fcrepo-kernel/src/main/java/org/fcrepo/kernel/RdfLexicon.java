@@ -291,6 +291,10 @@ public final class RdfLexicon {
             createProperty("http://www.w3.org/2000/01/rdf-schema#label");
     public static final Property DC_TITLE =
             createProperty("http://purl.org/dc/elements/1.1/title");
+    public static final Property DCTERMS_TITLE =
+            createProperty("http://purl.org/dc/terms/title");
+    public static final Property SKOS_PREFLABEL =
+            createProperty("http://www.w3.org/2004/02/skos/core#prefLabel");
 
     public static final Set<Property> managedProperties;
 

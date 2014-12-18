@@ -22,8 +22,10 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.DCTERMS_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.RdfLexicon.SKOS_PREFLABEL;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
@@ -201,7 +203,7 @@ public class ViewHelpers {
             return "";
         }
 
-        final Property[] properties = new Property[] {RDFS_LABEL, DC_TITLE};
+        final Property[] properties = new Property[] {RDFS_LABEL, DC_TITLE, DCTERMS_TITLE, SKOS_PREFLABEL};
 
         for (final Property p : properties) {
             final Iterator<Triple> objects = getObjects(graph, subject, p);

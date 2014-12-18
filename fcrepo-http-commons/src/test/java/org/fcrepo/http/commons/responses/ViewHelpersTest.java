@@ -27,6 +27,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.DCTERMS_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
@@ -34,6 +35,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.SKOS_PREFLABEL;
 import static org.fcrepo.kernel.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -232,11 +234,16 @@ public class ViewHelpersTest {
     }
 
     @Test
-    public void shouldTryToExtractDublinCoreTitleFromNode() {
-        final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), DC_TITLE.asNode(),
-                createLiteral("abc")));
+    public void shouldExtractTitleFromNode() {
+        shouldExtractTitleFromNode(DC_TITLE);
+        shouldExtractTitleFromNode(DCTERMS_TITLE);
+        shouldExtractTitleFromNode(RDFS_LABEL);
+        shouldExtractTitleFromNode(SKOS_PREFLABEL);
+    }
 
+    private void shouldExtractTitleFromNode( final Property property ) {
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), property.asNode(), createLiteral("abc")));
         assertEquals("abc", testObj.getObjectTitle(mem, createURI("a/b/c")));
     }
 
