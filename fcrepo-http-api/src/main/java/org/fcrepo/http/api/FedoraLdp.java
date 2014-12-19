@@ -74,7 +74,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -232,7 +231,7 @@ public class FedoraLdp extends ContentExposingResource {
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch)
-            throws InvalidChecksumException, MalformedRdfException, FedoraInvalidNamespaceException {
+            throws InvalidChecksumException, MalformedRdfException {
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
@@ -317,7 +316,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException, MalformedRdfException, FedoraInvalidNamespaceException {
+            throws IOException, MalformedRdfException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -383,7 +382,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream)
-            throws InvalidChecksumException, IOException, MalformedRdfException, FedoraInvalidNamespaceException {
+            throws InvalidChecksumException, IOException, MalformedRdfException {
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);

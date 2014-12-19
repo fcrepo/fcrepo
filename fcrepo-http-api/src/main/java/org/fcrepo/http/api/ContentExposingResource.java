@@ -72,7 +72,6 @@ import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
-import org.fcrepo.kernel.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -589,8 +588,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
-                                             final RdfStream resourceTriples)
-                                             throws MalformedRdfException, FedoraInvalidNamespaceException {
+                                             final RdfStream resourceTriples) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel = createDefaultModel()
@@ -601,8 +599,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void patchResourcewithSparql(final FedoraResource resource,
                                            final String requestBody,
-                                           final RdfStream resourceTriples)
-                                           throws MalformedRdfException, FedoraInvalidNamespaceException {
+                                           final RdfStream resourceTriples) throws MalformedRdfException {
         resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 
