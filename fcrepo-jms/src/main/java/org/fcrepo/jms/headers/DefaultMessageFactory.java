@@ -74,7 +74,11 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
             final String userdata = event.getUserData();
             if (!StringUtils.isBlank(userdata)) {
                 final JsonObject json = new JsonParser().parse(userdata).getAsJsonObject();
-                this.baseURL = json.get("baseURL").getAsString();
+                String url = json.get("baseURL").getAsString();
+                while (url.endsWith("/")) {
+                    url = url.substring(0, url.length() - 1);
+                }
+                this.baseURL = url;
                 log.debug("MessageFactory baseURL: {}", baseURL);
 
             } else {

@@ -89,7 +89,7 @@ public class DefaultMessageFactoryTest {
     @Test
     public void testBuildMessageContent() throws RepositoryException, JMSException {
         final String testPath = "/path/to/resource";
-        final Message msg = doTestBuildMessage("base-url", testPath + "/" + JCR_CONTENT);
+        final Message msg = doTestBuildMessage("base-url/", testPath + "/" + JCR_CONTENT);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
@@ -110,9 +110,15 @@ public class DefaultMessageFactoryTest {
         when(mockEvent.getProperties()).thenReturn(singleton(prop));
 
         final Message msg = testDefaultMessageFactory.getMessage(mockEvent, mockSession);
+
+        String trimmedBaseUrl = baseUrl;
+        while (!StringUtils.isBlank(trimmedBaseUrl) && trimmedBaseUrl.endsWith("/")) {
+            trimmedBaseUrl = trimmedBaseUrl.substring(0, trimmedBaseUrl.length() - 1);
+        }
+
         assertEquals("Got wrong date in message!", testDate, (Long) msg.getLongProperty(TIMESTAMP_HEADER_NAME));
         assertEquals("Got wrong type in message!", testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME));
-        assertEquals("Got wrong base-url in message", baseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
+        assertEquals("Got wrong base-url in message", trimmedBaseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
         assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
         return msg;
     }
