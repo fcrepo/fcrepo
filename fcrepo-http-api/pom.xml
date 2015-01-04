@@ -27,6 +27,12 @@
   <dependencies>
     <dependency>
       <groupId>org.modeshape</groupId>
+      <artifactId>modeshape-jcr</artifactId>
+      <version>${modeshape.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.modeshape</groupId>
       <artifactId>modeshape-web-jcr</artifactId>
       <version>${modeshape.version}</version>
     </dependency>
@@ -66,6 +72,16 @@
       <artifactId>spring-context</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
+      <version>${metrics.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-server</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -193,6 +209,36 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+            <Export-Package>
+              org.fcrepo.http.api;version=${project.version},
+              org.fcrepo.http.api.repository;version=${project.version},
+              org.fcrepo.http.api.responses;version=${project.version},
+              org.fcrepo.http.api.url;version=${project.version}
+            </Export-Package>
+            <Import-Package>
+              org.fcrepo.kernel.impl,
+              org.fcrepo.kernel.impl.rdf,
+              org.fcrepo.kernel.impl.utils,
+              org.fcrepo.kernel.impl.utils.impl,
+              org.fcrepo.kernel.impl.utils.iterators,
+              org.fcrepo.kernel.impl.utils.infinispan,
+              org.fcrepo.auth.common,
+              org.fcrepo.mint,
+              org.fcrepo.serialization,
+              org.fcrepo.http.commons.api.rdf,
+              org.fcrepo.http.commons.domain,
+              org.fcrepo.http.commons.domain.ldp,
+              org.fcrepo.http.commons.responses,
+              org.fcrepo.http.commons.session,
+              org.fcrepo.connector.filesystem,
+              org.modeshape.connector.filesystem
+            </Import-Package>
+          </instructions>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>

@@ -27,6 +27,16 @@
       <artifactId>commons-lang</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
+      <version>${metrics.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.glassfish.hk2.external</groupId>
@@ -77,6 +87,18 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+            <Export-Package>org.fcrepo.mint;version=${project.version}</Export-Package>
+            <Import-Package>
+              org.fcrepo.kernel,
+              org.fcrepo.metrics
+            </Import-Package>
+            <Embed-Transitive>true</Embed-Transitive>
+          </instructions>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>

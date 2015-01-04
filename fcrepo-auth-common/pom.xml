@@ -20,7 +20,6 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-serialization</artifactId>
       <version>${project.version}</version>
-      <type>bundle</type>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -155,6 +154,25 @@
           <reuseForks>false</reuseForks>
         </configuration>
       </plugin>   
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+            <Export-Package>
+              org.fcrepo.auth.common;version=${project.version}
+            </Export-Package>
+            <Import-Package>
+              org.fcrepo.serialization,
+              org.fcrepo.mint,
+              org.fcrepo.http.commons
+            </Import-Package>
+            <Embed-Transitive>true</Embed-Transitive>
+          </instructions>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
