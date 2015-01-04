@@ -313,6 +313,29 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+            <Export-Package>
+              org.fcrepo.http.commons,
+              org.fcrepo.http.commons.api,
+              org.fcrepo.http.commons.api.rdf,
+              org.fcrepo.http.commons.domain,
+              org.fcrepo.http.commons.domain.ldp,
+              org.fcrepo.http.commons.responses,
+              org.fcrepo.http.commons.session,
+              org.fcrepo.http.commons.exceptionhandlers,
+            </Export-Package>
+            <Import-Package>
+              org.fcrepo.metrics,
+              org.fcrepo.mint,
+              org.fcrepo.kernel.impl,
+              org.fcrepo.serialization
+            </Import-Package>
+            <Embed-Transitive>true</Embed-Transitive>
+          </instructions>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>

@@ -17,6 +17,25 @@
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+            <Export-Package>
+              org.fcrepo.kernel,
+              org.fcrepo.kernel.exception,
+              org.fcrepo.kernel.identifiers,
+              org.fcrepo.kernel.observer,
+              org.fcrepo.kernel.observer.eventmappings,
+              org.fcrepo.kernel.models,
+              org.fcrepo.kernel.services,
+              org.fcrepo.kernel.services.functions,
+              org.fcrepo.kernel.services.policies,
+              org.fcrepo.kernel.utils,
+              org.fcrepo.kernel.utils.iterators
+            </Export-Package>
+            <Embed-Transitive>true</Embed-Transitive>
+          </instructions>
+        </configuration>
       </plugin>
     </plugins>
   </build>

@@ -7,12 +7,12 @@
   </parent>
   <artifactId>fcrepo-configs</artifactId>
   <name>Fedora Repository Configurations Module</name>
-  <description>The Fedora Commons repository configurations module: Provides configuration resources that are used in 
+  <description>The Fedora Commons repository configurations module: Provides configuration resources that are used in
   integration testing and deployments.</description>
   <build>
     <plugins>
       <!-- Turn this into a lifecycle -->
-      <plugin>      
+      <plugin>
         <artifactId>maven-remote-resources-plugin</artifactId>
         <executions>
           <execution>

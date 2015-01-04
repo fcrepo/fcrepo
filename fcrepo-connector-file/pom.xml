@@ -8,7 +8,7 @@
   <artifactId>fcrepo-connector-file</artifactId>
   <name>Fedora Repository FileSystem Connector Module</name>
   <description>The Fedora Commons repository filesystem connector module: Provides repository projection over hierarchical files/directories on the filesystem.</description>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
 
   <dependencies>
 
@@ -48,5 +48,29 @@
       <artifactId>mockito-core</artifactId>
     </dependency>
   </dependencies>
-
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+            <Export-Package>
+              org.fcrepo.connector,
+              org.fcrepo.connector.file,
+              org.modeshape.connector.filesystem
+            </Export-Package>
+            <Import-Package>
+              org.fcrepo.kernel,
+              org.fcrepo.kernel.impl.utils,
+              org.fcrepo.kernel.impl.utils.impl
+            </Import-Package>
+            <Embed-Transitive>true</Embed-Transitive>
+          </instructions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
