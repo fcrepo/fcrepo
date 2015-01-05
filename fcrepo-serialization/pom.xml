@@ -56,7 +56,7 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>org.fcrepo.serialization</Export-Package>
+            <Export-Package>org.fcrepo.serialization;version=${project.version}</Export-Package>
             <Import-Package>org.fcrepo.kernel</Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>

@@ -21,17 +21,17 @@
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>
-              org.fcrepo.kernel,
-              org.fcrepo.kernel.exception,
-              org.fcrepo.kernel.identifiers,
-              org.fcrepo.kernel.observer,
-              org.fcrepo.kernel.observer.eventmappings,
-              org.fcrepo.kernel.models,
-              org.fcrepo.kernel.services,
-              org.fcrepo.kernel.services.functions,
-              org.fcrepo.kernel.services.policies,
-              org.fcrepo.kernel.utils,
-              org.fcrepo.kernel.utils.iterators
+              org.fcrepo.kernel;version=${project.version},
+              org.fcrepo.kernel.exception;version=${project.version},
+              org.fcrepo.kernel.identifiers;version=${project.version},
+              org.fcrepo.kernel.observer;version=${project.version},
+              org.fcrepo.kernel.observer.eventmappings;version=${project.version},
+              org.fcrepo.kernel.models;version=${project.version},
+              org.fcrepo.kernel.services;version=${project.version},
+              org.fcrepo.kernel.services.functions;version=${project.version},
+              org.fcrepo.kernel.services.policies;version=${project.version},
+              org.fcrepo.kernel.utils;version=${project.version},
+              org.fcrepo.kernel.utils.iterators;version=${project.version}
             </Export-Package>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>

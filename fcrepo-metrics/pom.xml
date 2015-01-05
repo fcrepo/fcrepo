@@ -78,36 +78,10 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>org.fcrepo.metrics</Export-Package>
-            <Import-Package>
-            </Import-Package>
+            <Export-Package>org.fcrepo.metrics;version=${project.version}</Export-Package>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>1.1</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <includes>
-                  <include>io.dropwizard.metrics:metrics-core</include>
-                  <include>io.dropwizard.metrics:metrics-graphite</include>
-                  <include>io.dropwizard.metrics:metrics-jersey2</include>
-                  <include>io.dropwizard.metrics:metrics-servlets</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

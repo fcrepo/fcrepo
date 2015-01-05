@@ -318,14 +318,14 @@
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>
-              org.fcrepo.http.commons,
-              org.fcrepo.http.commons.api,
-              org.fcrepo.http.commons.api.rdf,
-              org.fcrepo.http.commons.domain,
-              org.fcrepo.http.commons.domain.ldp,
-              org.fcrepo.http.commons.responses,
-              org.fcrepo.http.commons.session,
-              org.fcrepo.http.commons.exceptionhandlers,
+              org.fcrepo.http.commons;version=${project.version},
+              org.fcrepo.http.commons.api;version=${project.version},
+              org.fcrepo.http.commons.api.rdf;version=${project.version},
+              org.fcrepo.http.commons.domain;version=${project.version},
+              org.fcrepo.http.commons.domain.ldp;version=${project.version},
+              org.fcrepo.http.commons.responses;version=${project.version},
+              org.fcrepo.http.commons.session;version=${project.version},
+              org.fcrepo.http.commons.exceptionhandlers;version=${project.version}
             </Export-Package>
             <Import-Package>
               org.fcrepo.metrics,

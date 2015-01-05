@@ -214,10 +214,10 @@
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>
-              org.fcrepo.http.api,
-              org.fcrepo.http.api.repository,
-              org.fcrepo.http.api.responses,
-              org.fcrepo.http.api.url
+              org.fcrepo.http.api;version=${project.version},
+              org.fcrepo.http.api.repository;version=${project.version},
+              org.fcrepo.http.api.responses;version=${project.version},
+              org.fcrepo.http.api.url;version=${project.version}
             </Export-Package>
             <Import-Package>
               org.fcrepo.kernel.impl,

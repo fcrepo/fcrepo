@@ -162,7 +162,7 @@
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>
-              org.fcrepo.auth.common
+              org.fcrepo.auth.common;version=${project.version}
             </Export-Package>
             <Import-Package>
               org.fcrepo.serialization,

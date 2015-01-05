@@ -197,7 +197,7 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>org.fcrepo.transform</Export-Package>
+            <Export-Package>org.fcrepo.transform;version=${project.version}</Export-Package>
             <Import-Package>
               org.fcrepo.kernel.impl,
               org.fcrepo.http.commons,

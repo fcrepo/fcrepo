@@ -91,7 +91,7 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>org.fcrepo.mint</Export-Package>
+            <Export-Package>org.fcrepo.mint;version=${project.version}</Export-Package>
             <Import-Package>
               org.fcrepo.kernel,
               org.fcrepo.metrics
