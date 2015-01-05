@@ -37,14 +37,16 @@ import org.fcrepo.kernel.observer.eventmappings.InternalExternalEventMapper;
  */
 public class OneToOne implements InternalExternalEventMapper {
 
+    private static final Function<Event, FedoraEvent> TO_FEDORA_EVENT = new Function<Event, FedoraEvent>() {
+
+        @Override
+        public FedoraEvent apply(final Event e) {
+            return new FedoraEvent(e);
+        }
+    };
+
     @Override
     public Iterator<FedoraEvent> apply(final Iterator<Event> jcrEvents) {
-        return transform(jcrEvents, new Function<Event, FedoraEvent>() {
-
-            @Override
-            public FedoraEvent apply(final Event e) {
-                return new FedoraEvent(e);
-            }
-        });
+        return transform(jcrEvents, TO_FEDORA_EVENT);
     }
 }

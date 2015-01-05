@@ -31,16 +31,16 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
-
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.fcrepo.kernel.utils.iterators.VersionIterator;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
+
 import org.slf4j.Logger;
 
 
@@ -80,11 +80,11 @@ public class VersionsRdfContext extends RdfStream {
     }
 
     private Iterator<Triple> versionTriples() throws RepositoryException {
-        return Iterators.concat(Iterators.transform(new VersionIterator(versionHistory
-                .getAllVersions()), version2triples));
+        final Iterator<Version> allVersions = versionHistory.getAllVersions();
+        return Iterators.concat(Iterators.transform(allVersions, version2triples));
     }
 
-    private Function<Version, Iterator<Triple>> version2triples =
+    private final Function<Version, Iterator<Triple>> version2triples =
         new Function<Version, Iterator<Triple>>() {
 
             @Override

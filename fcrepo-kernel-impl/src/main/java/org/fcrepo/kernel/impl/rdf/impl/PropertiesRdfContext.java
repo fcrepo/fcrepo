@@ -25,10 +25,11 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
-import org.fcrepo.kernel.utils.iterators.PropertyIterator;
+
 import org.slf4j.Logger;
 
 import com.google.common.collect.Iterators;
@@ -43,7 +44,7 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class PropertiesRdfContext extends NodeRdfContext {
 
-    private PropertyToTriple property2triple;
+    private final PropertyToTriple property2triple;
 
     private static final Logger LOGGER = getLogger(PropertiesRdfContext.class);
 
@@ -65,8 +66,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
     private Iterator<Triple> triplesFromProperties(final FedoraResource n)
         throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
+        final Iterator<Property> allProperties = n.getNode().getProperties();
         final UnmodifiableIterator<Property> properties =
-            Iterators.filter(new PropertyIterator(n.getNode().getProperties()), not(isInternalProperty));
+            Iterators.filter(allProperties, not(isInternalProperty));
 
         return Iterators.concat(Iterators.transform(properties, property2triple));
 

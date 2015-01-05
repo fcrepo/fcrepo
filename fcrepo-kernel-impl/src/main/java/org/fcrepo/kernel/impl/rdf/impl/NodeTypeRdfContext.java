@@ -28,16 +28,19 @@ import static com.hp.hpl.jena.vocabulary.RDFS.subClassOf;
 import static org.fcrepo.kernel.impl.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Iterator;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
+
 import org.fcrepo.kernel.impl.rdf.impl.mappings.NodeDefinitionToTriples;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyDefinitionToTriples;
-import org.fcrepo.kernel.utils.iterators.NodeTypeIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
@@ -74,10 +77,8 @@ public class NodeTypeRdfContext extends RdfStream {
         throws RepositoryException {
         super();
 
-        concat(new NodeTypeRdfContext(new NodeTypeIterator(nodeTypeManager
-                .getPrimaryNodeTypes())));
-        concat(new NodeTypeRdfContext(new NodeTypeIterator(nodeTypeManager
-                .getMixinNodeTypes())));
+        concat(new NodeTypeRdfContext(nodeTypeManager.getPrimaryNodeTypes()));
+        concat(new NodeTypeRdfContext(nodeTypeManager.getMixinNodeTypes()));
 
     }
 
@@ -87,12 +88,12 @@ public class NodeTypeRdfContext extends RdfStream {
      * @param nodeTypeIterator
      * @throws RepositoryException
      */
-    public NodeTypeRdfContext(final Iterable<NodeType> nodeTypeIterator)
+    public NodeTypeRdfContext(final Iterator<NodeType> nodeTypeIterator)
         throws RepositoryException {
         super();
 
-        for (final NodeType t : nodeTypeIterator) {
-            concat(new NodeTypeRdfContext(t));
+        while (nodeTypeIterator.hasNext()) {
+            concat(new NodeTypeRdfContext(nodeTypeIterator.next()));
         }
     }
 

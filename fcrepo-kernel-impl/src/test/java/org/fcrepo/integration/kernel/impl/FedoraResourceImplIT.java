@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,6 +56,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.Container;
@@ -72,8 +74,8 @@ import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.VersionService;
-import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -492,7 +494,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class));
 
-        final PropertyIterator properties = new PropertyIterator(object.getNode().getProperties());
+        final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
 
         final UnmodifiableIterator<javax.jcr.Property> relation
             = Iterators.filter(properties, new Predicate<javax.jcr.Property>() {

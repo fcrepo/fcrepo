@@ -15,20 +15,19 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl.mappings;
 
-import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
+import java.util.Iterator;
 import java.util.List;
 
 import static com.google.common.collect.ImmutableList.of;
+import static com.google.common.collect.Iterators.contains;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -57,7 +56,7 @@ public class PropertyValueIteratorTest {
     @Mock
     private Value value3;
 
-    private PropertyIterator propertyIterator;
+    private Iterator<Property> propertyIterator;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -65,14 +64,13 @@ public class PropertyValueIteratorTest {
         when(mockProperty.getValue()).thenReturn(value1);
         when(mockMultivaluedProperty.isMultiple()).thenReturn(true);
         when(mockMultivaluedProperty.getValues()).thenReturn(new Value[] { value2, value3 });
-        propertyIterator = new TestPropertyIterator(mockProperty, mockMultivaluedProperty);
+        propertyIterator = of(mockProperty, mockMultivaluedProperty).iterator();
     }
 
     @Test
     public void testSingleValueSingleProperty() {
         testObj = new PropertyValueIterator(mockProperty);
-        final List<Value> values = newArrayList(testObj);
-        assertTrue(values.contains(value1));
+        assertTrue(contains(testObj, value1));
     }
 
     @Test
@@ -84,7 +82,7 @@ public class PropertyValueIteratorTest {
 
     @Test
     public void testSingleValuePropertyIterator() {
-        testObj = new PropertyValueIterator(new org.fcrepo.kernel.utils.iterators.PropertyIterator(propertyIterator));
+        testObj = new PropertyValueIterator(propertyIterator);
         final List<Value> values = newArrayList(testObj);
         assertTrue(values.containsAll(of(value1, value2, value3)));
     }
