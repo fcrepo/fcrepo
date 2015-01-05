@@ -22,12 +22,12 @@
       <dependency>
         <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-auth-roles-basic</artifactId>
-        <version>4.0.0-beta-04-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-auth-roles-common</artifactId>
-        <version>4.0.0-beta-04-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.fcrepo</groupId>
