@@ -123,10 +123,8 @@ public class NodeTypeRdfContextTest {
 
     @Test
     public void testShouldMapNodeTypeIteratorToRdf() throws RepositoryException {
-        @SuppressWarnings("rawtypes")
-        final List mockNodeTypeList = singletonList(mockNodeType);
-        @SuppressWarnings("unchecked")
-        final Model actual = new NodeTypeRdfContext(mockNodeTypeList).asModel();
+        final List<NodeType> mockNodeTypeList = singletonList((NodeType) mockNodeType);
+        final Model actual = new NodeTypeRdfContext(mockNodeTypeList.iterator()).asModel();
         assertTrue(actual.contains(createResource(REPOSITORY_NAMESPACE + mockNodeTypeName),
                 type, Class));
     }

@@ -68,9 +68,8 @@ import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
-import org.fcrepo.kernel.utils.iterators.NodeIterator;
-import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
@@ -136,7 +135,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @throws RepositoryException
      */
     private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
-        final Iterator<Node> children = filter(new NodeIterator(input.getNodes()), not(nastyChildren));
+        final Iterator<Node> allChildren = input.getNodes();
+        final Iterator<Node> children = filter(allChildren, not(nastyChildren));
         return transform(children, new Function<Node, Iterator<FedoraResource>>() {
 
             @Override
@@ -250,9 +250,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public void delete() {
         try {
-            final Iterator<Property> inboundProperties = Iterators.concat(
-                    new PropertyIterator(node.getReferences()),
-                    new PropertyIterator(node.getWeakReferences()));
+            final Iterator<Property> references = node.getReferences();
+            final Iterator<Property> weakReferences = node.getWeakReferences();
+            final Iterator<Property> inboundProperties = Iterators.concat(references, weakReferences);
 
             while (inboundProperties.hasNext()) {
                 inboundProperties.next().remove();

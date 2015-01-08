@@ -24,7 +24,7 @@ import org.fcrepo.kernel.observer.FedoraEvent;
 import com.google.common.base.Function;
 
 /**
- * Maps {@link Iterator} packages of {@link Event}s to
+ * Maps {@link Iterator}-packages of {@link Event}s to
  * {@link Iterator}s of {@link FedoraEvent}s according to some algorithm
  *
  * @author ajs6f

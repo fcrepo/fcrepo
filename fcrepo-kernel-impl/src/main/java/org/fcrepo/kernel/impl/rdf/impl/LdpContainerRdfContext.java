@@ -29,7 +29,6 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
-import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 
 import org.slf4j.Logger;
 
@@ -76,8 +75,8 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                                   final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
-        final Iterator<Property> properties = Iterators.filter(new PropertyIterator(resource.getNode().getReferences
-                (LDP_MEMBER_RESOURCE)), isContainer );
+        final Iterator<Property> memberReferences = resource.getNode().getReferences(LDP_MEMBER_RESOURCE);
+        final Iterator<Property> properties = Iterators.filter(memberReferences, isContainer );
 
         if (properties.hasNext()) {
             LOGGER.trace("Found membership containers for {}", resource);

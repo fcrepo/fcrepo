@@ -20,12 +20,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.utils.iterators.NodeIterator;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+
 import java.util.Iterator;
 
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
@@ -51,7 +52,8 @@ public class HashRdfContext extends NodeRdfContext {
 
         final Node node = resource().getNode();
         if (node.hasNode("#")) {
-            concat(Iterators.concat(Iterators.transform(new NodeIterator(node.getNode("#").getNodes()),
+            final Iterator<Node> hashChildrenNodes = node.getNode("#").getNodes();
+            concat(Iterators.concat(Iterators.transform(hashChildrenNodes,
                     new Function<Node, Iterator<Triple>>() {
                         @Override
                         public Iterator<Triple> apply(final Node input) {

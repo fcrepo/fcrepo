@@ -25,7 +25,6 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
-import org.fcrepo.kernel.utils.iterators.PropertyIterator;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import javax.jcr.Node;
@@ -80,7 +79,7 @@ public class BlankNodeRdfContext extends NodeRdfContext {
     }
 
     private Iterator<Node> getBlankNodesIterator() throws RepositoryException {
-        final PropertyIterator properties = new PropertyIterator(resource().getNode().getProperties());
+        final Iterator<Property> properties = resource().getNode().getProperties();
 
         final Iterator<Property> references = Iterators.filter(properties, filterReferenceProperties);
 
