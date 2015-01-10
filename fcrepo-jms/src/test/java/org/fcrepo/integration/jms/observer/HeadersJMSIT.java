@@ -80,7 +80,7 @@ public class HeadersJMSIT implements MessageListener {
     /**
      * Time to wait for a set of test messages, in milliseconds.
      */
-    private static final long TIMEOUT = 2000;
+    private static final long TIMEOUT = 20000;
 
     private static final String testIngested = "/testMessageFromIngestion-" + randomUUID();
 
