@@ -58,7 +58,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
- * <p>DatastreamImplIT class.</p>
+ * <p>{@link org.fcrepo.integration.kernel.impl.FedoraBinaryImplIT} class.</p>
  *
  * @author ksclarke
  * @author ajs6f

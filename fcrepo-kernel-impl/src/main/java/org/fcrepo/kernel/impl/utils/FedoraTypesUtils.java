@@ -50,14 +50,13 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora object.
+     * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.models.Container}.
      */
     public static Predicate<Node> isContainer =
             new AnyTypesPredicate(FEDORA_CONTAINER);
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora
-     * datastream.
+     * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.models.NonRdfSourceDescription}
      */
     public static Predicate<Node> isNonRdfSourceDescription =
             new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);

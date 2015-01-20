@@ -17,8 +17,8 @@
 package org.fcrepo.kernel.exception;
 
 /**
- * An extension of RepositoryException that may be thrown when attempting a
- * operation (or instantiation) of one fedora resource type (Object, Datastream)
+ * An extension of {@link RepositoryRuntimeException} that may be thrown when attempting a
+ * operation (or instantiation) of a {@link org.fcrepo.kernel.models.FedoraResource}
  * on a different (and incompatible) type.
  *
  * @author Mike Durbin

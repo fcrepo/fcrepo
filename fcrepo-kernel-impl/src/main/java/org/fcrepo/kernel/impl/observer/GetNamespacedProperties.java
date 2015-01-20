@@ -28,7 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author Andrew Woods
- *         Date: 11/22/14
+ * @since 11/22/14
  */
 public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEvent> {
 

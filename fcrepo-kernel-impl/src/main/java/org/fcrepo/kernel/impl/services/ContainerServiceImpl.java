@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 /**
- * Service for creating and retrieving FedoraObjects without using the JCR API.
+ * Service for creating and retrieving {@link org.fcrepo.kernel.models.Container} without using the JCR API.
  *
  * @author cbeer
  * @author ajs6f
@@ -50,8 +50,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
     /**
      * @param path
      * @param session
-     * @return A FedoraObject with the proffered PID
-     * @throws RepositoryException
+     * @return A {@link org.fcrepo.kernel.models.Container} with the proffered PID
      */
     @Override
     public Container findOrCreate(final Session session, final String path) {
@@ -71,11 +70,10 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
     }
 
     /**
-     * Retrieve a FedoraObject instance by pid and dsid
+     * Retrieve a {@link org.fcrepo.kernel.models.Container} instance by pid and dsid
      *
      * @param path
-     * @return A FedoraObject with the proffered PID
-     * @throws javax.jcr.RepositoryException
+     * @return A {@link org.fcrepo.kernel.models.Container} with the proffered PID
      */
     @Override
     public Container find(final Session session, final String path) {

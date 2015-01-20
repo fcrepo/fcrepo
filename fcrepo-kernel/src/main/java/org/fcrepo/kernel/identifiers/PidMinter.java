@@ -17,8 +17,7 @@ package org.fcrepo.kernel.identifiers;
 
 /**
  * Defines the behavior of a component that can accept responsibility
- * for the creation of Fedora PIDs. Do not implement this interface directly.
- * Subclass BasePidMinter instead.
+ * for the creation of Fedora PIDs.
  *
  * @author eddies
  * @author ajs6f

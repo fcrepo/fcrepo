@@ -18,7 +18,7 @@ package org.fcrepo.kernel.services;
 import org.fcrepo.kernel.models.Container;
 
 /**
- * Service for creating and retrieving FedoraObjects
+ * Service for creating and retrieving {@link org.fcrepo.kernel.models.Container}
  *
  * @author bbpennel
  * @since Feb 20, 2014

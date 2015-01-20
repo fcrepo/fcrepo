@@ -35,7 +35,7 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
     private static final Logger LOGGER = getLogger(Container.class);
 
     /**
-     * Construct a FedoraObject from an existing JCR Node
+     * Construct a {@link org.fcrepo.kernel.models.Container} from an existing JCR Node
      * @param node an existing JCR node to treat as an fcrepo object
      */
     public ContainerImpl(final Node node) {

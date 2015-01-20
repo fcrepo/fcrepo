@@ -45,13 +45,13 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
- * <p>FedoraObjectImplIT class.</p>
+ * <p>{@link ContainerImplIT} class.</p>
  *
  * @author ksclarke
  * @author ajs6f
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
-public class FedoraObjectImplIT extends AbstractIT {
+public class ContainerImplIT extends AbstractIT {
 
     @Inject
     Repository repo;
