@@ -77,7 +77,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 /**
- * Common behaviors across FedoraObject and Datastream types; also used
+ * Common behaviors across {@link org.fcrepo.kernel.models.Container} and
+ * {@link org.fcrepo.kernel.models.NonRdfSourceDescription} types; also used
  * when the exact type of an object is irrelevant
  *
  * @author ajs6f
@@ -89,7 +90,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     protected Node node;
 
     /**
-     * Construct a FedoraObject from an existing JCR Node
+     * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
      * @param node an existing JCR node to treat as an fcrepo object
      */
     public FedoraResourceImpl(final Node node) {

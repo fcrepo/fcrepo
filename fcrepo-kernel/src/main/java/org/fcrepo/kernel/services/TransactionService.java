@@ -40,7 +40,7 @@ public interface TransactionService {
     Transaction beginTransaction(Session sess, String userName);
 
     /**
-     * Recieve an open {@link Transaction} for a given user
+     * Receive an open {@link Transaction} for a given user
      *
      * @param txId the Id of the {@link Transaction}
      * @param userName the name  of the {@link java.security.Principal}

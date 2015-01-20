@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.exception;
 
 /**
- * Runtime exception that wraps a RepositoryException
+ * Runtime exception
  *
  * @author bbpennel
  */

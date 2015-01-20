@@ -43,12 +43,12 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
- * <p>DatastreamImplTest class.</p>
+ * <p>{@link NonRdfSourceDescriptionImplTest} class.</p>
  *
  * @author ksclarke
  * @author ajs6f
  */
-public class DatastreamImplTest implements FedoraJcrTypes {
+public class NonRdfSourceDescriptionImplTest implements FedoraJcrTypes {
 
     private static final String testDsId = "testDs";
 
