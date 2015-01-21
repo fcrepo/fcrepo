@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.rdf;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static java.util.UUID.randomUUID;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -59,6 +58,7 @@ import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
+import org.fcrepo.mint.UUIDPathMinter;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
@@ -104,6 +104,7 @@ public class JcrRdfTools {
 
     private static final Model m = createDefaultModel();
 
+    private static final UUIDPathMinter pidMinter =  new UUIDPathMinter(10,1);
 
     /**
      * Constructor with even more context.
@@ -173,7 +174,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
-        throws RepositoryException {
+            throws RepositoryException {
         assert (valueFactory != null);
 
 
@@ -405,7 +406,8 @@ public class JcrRdfTools {
         final AnonId id = resource.asResource().getId();
 
         if (!skolemizedBnodeMap.containsKey(id)) {
-            final Node orCreateNode = jcrTools.findOrCreateNode(session, skolemizedId());
+            final String path = "/.well-known/genid/" + pidMinter.mintPid();
+            final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
             orCreateNode.addMixin(FEDORA_BLANKNODE);
             final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
@@ -414,7 +416,4 @@ public class JcrRdfTools {
         return skolemizedBnodeMap.get(id);
     }
 
-    private static String skolemizedId() {
-        return "/.well-known/genid/" + randomUUID();
-    }
 }
