@@ -38,7 +38,7 @@ public class HttpPidMinterIT{
     private static String PREFIX = "http://localhost:";
 
     private static int getPort() {
-        return parseInt(System.getProperty("test.port", "8080"));
+        return parseInt(System.getProperty("fcrepo.test.port", "8080"));
     }
 
     @Inject

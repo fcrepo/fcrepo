@@ -31,7 +31,7 @@
                   preload="false"
                   fetchPersistentState="true"
                   purgeOnStartup="false"
-                  location="${fcrepo.ispn.repo.CacheDirPath:target/FedoraRepository/storage}" />
+                  location="${fcrepo.ispn.repo.cache:target/FedoraRepository/storage}" />
     </persistence>
 
   </namedCache>

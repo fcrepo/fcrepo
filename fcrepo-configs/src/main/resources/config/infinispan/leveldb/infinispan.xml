@@ -28,8 +28,8 @@
 
     <persistence passivation="false">
       <store:leveldbStore
-          location="${fcrepo.ispn.repo.CacheDirPath:target/repo}/data"
-          expiredLocation="${fcrepo.ispn.repo.CacheDirPath:target/repo}/expired"/>
+          location="${fcrepo.ispn.repo.cache:target/repo}/data"
+          expiredLocation="${fcrepo.ispn.repo.cache:target/repo}/expired"/>
     </persistence>
 
   </namedCache>
@@ -52,8 +52,8 @@
 
     <persistence passivation="false">
       <store:leveldbStore
-          location="${fcrepo.ispn.CacheDirPath:target}/data"
-          expiredLocation="${fcrepo.ispn.CacheDirPath:target}/expired"/>
+          location="${fcrepo.ispn.cache:target}/data"
+          expiredLocation="${fcrepo.ispn.cache:target}/expired"/>
     </persistence>
 
 </namedCache>
@@ -79,7 +79,7 @@
                 preload="false"
                 fetchPersistentState="true"
                 purgeOnStartup="false"
-                location="${fcrepo.ispn.binary.CacheDirPath:target/FedoraRepositoryBinaryData/storage}" />
+                location="${fcrepo.ispn.binary.cache:target/FedoraRepositoryBinaryData/storage}" />
   </persistence>
 
 </namedCache>

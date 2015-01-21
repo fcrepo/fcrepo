@@ -605,8 +605,8 @@
           <version>2.17</version>
           <configuration>
             <systemPropertyVariables>
-              <test.port>${test.port}</test.port>
-              <test.context.path>${test.context.path}</test.context.path>
+              <fcrepo.test.port>${fcrepo.test.port}</fcrepo.test.port>
+              <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
               <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
                 ${project.build.directory}/object-store-default
               </com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
@@ -701,11 +701,11 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
-          <!-- reserve a port under the property ${test.port} for integration 
+          <!-- reserve a port under the property ${fcrepo.test.port} for integration 
             tests -->
           <configuration>
             <portNames>
-              <portName>test.port</portName>
+              <portName>fcrepo.test.port</portName>
             </portNames>
           </configuration>
           <executions>

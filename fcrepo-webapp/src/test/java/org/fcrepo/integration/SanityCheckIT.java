@@ -40,14 +40,14 @@ public class SanityCheckIT {
      * The server port of the application, set as system property by
      * maven-failsafe-plugin.
      */
-    private static final String SERVER_PORT = System.getProperty("test.port");
+    private static final String SERVER_PORT = System.getProperty("fcrepo.test.port");
 
     /**
     * The context path of the application (including the leading "/"), set as
     * system property by maven-failsafe-plugin.
     */
     private static final String CONTEXT_PATH = System
-            .getProperty("test.context.path");
+            .getProperty("fcrepo.test.context.path");
 
     protected Logger logger;
 

@@ -49,14 +49,14 @@ public class DefaultPropertiesLoader {
         DEFAULT_OBJECT_STORE(
                 "com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir"),
         OBJECT_STORE("com.arjuna.ats.arjuna.objectstore.objectStoreDir"),
-        ISPN_CACHE("fcrepo.ispn.CacheDirPath"),
-        ISPN_BIN_CACHE("fcrepo.ispn.binary.CacheDirPath"),
-        BIN_STORE_PATH("fcrepo.binary-store-path"),
-        MODE_INDEX("fcrepo.modeshape.index.location"),
-        ISPN_ALT_CACHE("fcrepo.ispn.alternative.CacheDirPath"),
-        ISPN_BIN_ALT_CACHE("fcrepo.ispn.binary.alternative.CacheDirPath"),
-        ISPN_REPO_CACHE("fcrepo.ispn.repo.CacheDirPath"),
-        ACTIVE_MQ("fcrepo.activemq.dir");
+        ISPN_CACHE("fcrepo.ispn.cache"),
+        ISPN_BIN_CACHE("fcrepo.ispn.binary.cache"),
+        BIN_STORE_PATH("fcrepo.binary.directory"),
+        MODE_INDEX("fcrepo.modeshape.index.directory"),
+        ISPN_ALT_CACHE("fcrepo.ispn.alternative.cache"),
+        ISPN_BIN_ALT_CACHE("fcrepo.ispn.binary.alternative.cache"),
+        ISPN_REPO_CACHE("fcrepo.ispn.repo.cache"),
+        ACTIVE_MQ("fcrepo.activemq.directory");
 
         private String text;
 

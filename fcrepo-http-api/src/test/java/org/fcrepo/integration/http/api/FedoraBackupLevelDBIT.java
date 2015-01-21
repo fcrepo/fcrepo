@@ -25,7 +25,7 @@ import org.junit.BeforeClass;
  */
 public class FedoraBackupLevelDBIT extends FedoraBackupIT {
 
-    private static final String CACHE_CONFIG_FILE = "fcrepo.infinispan.cache_configuration";
+    private static final String CACHE_CONFIG_FILE = "fcrepo.ispn.configuration";
 
     @BeforeClass
     public static void beforeClass() {

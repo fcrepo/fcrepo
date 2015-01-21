@@ -118,11 +118,11 @@
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <configuration>
                     <portNames>
-                        <portName>test.port</portName>
+                        <portName>fcrepo.test.port</portName>
                         <!-- reserves the stop port for jetty-maven-plugin -->
                         <portName>jetty.port.stop</portName>
-                        <portName>jms.port</portName>
-                        <portName>stomp.port</portName>
+                        <portName>fcrepo.jms.port</portName>
+                        <portName>fcrepo.stomp.port</portName>
                     </portNames>
                 </configuration>
             </plugin>
@@ -130,10 +130,10 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <systemPropertyVariables>
-                        <test.port>${test.port}</test.port>
-                        <test.context.path>${test.context.path}</test.context.path>
-                        <jms.port>${jms.port}</jms.port>
-                        <stomp.port>${stomp.port}</stomp.port>
+                        <fcrepo.test.port>${fcrepo.test.port}</fcrepo.test.port>
+                        <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
+                        <fcrepo.jms.port>${fcrepo.jms.port}</fcrepo.jms.port>
+                        <fcrepo.stomp.port>${fcrepo.stomp.port}</fcrepo.stomp.port>
                         <integration-test>true</integration-test>
                     </systemPropertyVariables>
                 </configuration>

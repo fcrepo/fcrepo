@@ -51,7 +51,7 @@ public abstract class AbstractResourceIT {
     }
 
     protected static final int SERVER_PORT = Integer.parseInt(System
-            .getProperty("test.port", "8080"));
+            .getProperty("fcrepo.test.port", "8080"));
 
     protected static final String HOSTNAME = "localhost";
 

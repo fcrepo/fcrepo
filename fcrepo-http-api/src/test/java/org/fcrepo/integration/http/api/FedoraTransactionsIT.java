@@ -116,7 +116,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         } finally {
             System.setProperty(TIMEOUT_SYSTEM_PROPERTY, Long
                     .toString(DEFAULT_TIMEOUT));
-            System.clearProperty("fcrepo4.tx.timeout");
+            System.clearProperty("fcrepo.transactions.timeout");
         }
     }
 
