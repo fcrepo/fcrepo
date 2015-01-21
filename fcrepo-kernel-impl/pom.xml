@@ -29,6 +29,10 @@
       <artifactId>modeshape-jcr</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.jboss.jbossts</groupId>
+      <artifactId>jbossjta</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel</artifactId>
       <version>${project.version}</version>
