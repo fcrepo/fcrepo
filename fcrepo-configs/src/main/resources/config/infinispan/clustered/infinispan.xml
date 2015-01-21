@@ -61,7 +61,7 @@
                   preload="false"
                   fetchPersistentState="true"
                   purgeOnStartup="false"
-                  location="${fcrepo.ispn.repo.CacheDirPath:target/FedoraRepository/storage}"/>
+                  location="${fcrepo.ispn.repo.cache:target/FedoraRepository/storage}"/>
     </persistence>
   </namedCache>
 
@@ -99,7 +99,7 @@
                   preload="false"
                   fetchPersistentState="true"
                   purgeOnStartup="false"
-                  location="${fcrepo.ispn.CacheDirPath:target/FedoraRepositoryMetaData/storage}"/>
+                  location="${fcrepo.ispn.cache:target/FedoraRepositoryMetaData/storage}"/>
     </persistence>
   </namedCache>
 
@@ -139,7 +139,7 @@
                   preload="false"
                   fetchPersistentState="true"
                   purgeOnStartup="false"
-                  location="${fcrepo.ispn.binary.CacheDirPath:target/FedoraRepositoryBinaryData/storage}"/>
+                  location="${fcrepo.ispn.binary.cache:target/FedoraRepositoryBinaryData/storage}"/>
     </persistence>
   </namedCache>
 </infinispan>

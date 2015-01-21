@@ -31,7 +31,7 @@ public class DefaultPropertiesLoaderTest {
     private DefaultPropertiesLoader loader;
 
     private static final String PROP_FLAG = "integration-test";
-    private static final String PROP_TEST = "fcrepo.ispn.repo.CacheDirPath";
+    private static final String PROP_TEST = "fcrepo.ispn.repo.cache";
     private static final String HOME_PROP = "fcrepo.home";
 
     @Before

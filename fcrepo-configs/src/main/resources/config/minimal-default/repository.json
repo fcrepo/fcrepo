@@ -8,10 +8,10 @@
     },
     "storage" : {
         "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "${fcrepo.infinispan.cache_configuration:config/infinispan/leveldb-default/infinispan.xml}",
+        "cacheConfiguration" : "${fcrepo.ispn.configuration:config/infinispan/leveldb-default/infinispan.xml}",
         "binaryStorage" : {
             "type" : "file",
-            "directory" : "${fcrepo.binary-store-path:target/binaries}",
+            "directory" : "${fcrepo.binary.directory:target/binaries}",
             "minimumBinarySizeInBytes" : 4096
         }
     },

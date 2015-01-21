@@ -25,8 +25,8 @@
          into memory. -->
     <persistence passivation="false">
       <store:leveldbStore
-          location="${fcrepo.ispn.repo.CacheDirPath:target}/data"
-          expiredLocation="${fcrepo.ispn.repo.CacheDirPath:target}/expired"/>
+          location="${fcrepo.ispn.repo.cache:target}/data"
+          expiredLocation="${fcrepo.ispn.repo.cache:target}/expired"/>
     </persistence>
 
   </namedCache>

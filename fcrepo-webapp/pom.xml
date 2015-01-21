@@ -319,8 +319,8 @@
           <systemPropertyVariables>
             <test.port>${test.port}</test.port>
             <test.context.path>${test.context.path}</test.context.path>
-            <jms.port>${jms.port}</jms.port>
-            <stomp.port>${stomp.port}</stomp.port>
+            <fcrepo.jms.port>${fcrepo.jms.port}</fcrepo.jms.port>
+            <fcrepo.stomp.port>${fcrepo.stomp.port}</fcrepo.stomp.port>
             <integration-test>true</integration-test>
           </systemPropertyVariables>
         </configuration>
@@ -333,8 +333,8 @@
             <portName>test.port</portName>
             <!-- reserves the stop port for jetty-maven-plugin -->
             <portName>jetty.port.stop</portName>
-            <portName>jms.port</portName>
-            <portName>stomp.port</portName>
+            <portName>fcrepo.jms.port</portName>
+            <portName>fcrepo.stomp.port</portName>
           </portNames>
         </configuration>
       </plugin>
@@ -352,13 +352,13 @@
             <configuration>
               <properties>
                 <property>
-                  <name>jms.port</name>
-                  <value>${jms.port}</value>
+                  <name>fcrepo.jms.port</name>
+                  <value>${fcrepo.jms.port}</value>
                 </property>
 
                 <property>
-                  <name>stomp.port</name>
-                  <value>${stomp.port}</value>
+                  <name>fcrepo.stomp.port</name>
+                  <value>${fcrepo.stomp.port}</value>
                 </property>
 
                 <property>
@@ -408,13 +408,13 @@
 
               <systemProperties>
                 <systemProperty>
-                  <name>jms.port</name>
-                  <value>${jms.port}</value>
+                  <name>fcrepo.jms.port</name>
+                  <value>${fcrepo.jms.port}</value>
                 </systemProperty>
 
                 <systemProperty>
-                  <name>stomp.port</name>
-                  <value>${stomp.port}</value>
+                  <name>fcrepo.stomp.port</name>
+                  <value>${fcrepo.stomp.port}</value>
                 </systemProperty>
 
                 <systemProperty>
@@ -435,7 +435,7 @@
                 </systemProperty>
 
                 <systemProperty>
-                  <name>fcrepo.activemq.dir</name>
+                  <name>fcrepo.activemq.directory</name>
                   <value>${project.build.directory}/active-mq</value>
                 </systemProperty>
               </systemProperties>

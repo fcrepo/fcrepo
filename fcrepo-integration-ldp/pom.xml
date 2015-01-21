@@ -218,8 +218,8 @@
                     <systemPropertyVariables>
                         <test.port>${test.port}</test.port>
                         <test.context.path>${test.context.path}</test.context.path>
-                        <jms.port>${jms.port}</jms.port>
-                        <stomp.port>${stomp.port}</stomp.port>
+                        <fcrepo.jms.port>${jms.port}</fcrepo.jms.port>
+                        <fcrepo.stomp.port>${stomp.port}</fcrepo.stomp.port>
                         <integration-test>true</integration-test>
                     </systemPropertyVariables>
                 </configuration>

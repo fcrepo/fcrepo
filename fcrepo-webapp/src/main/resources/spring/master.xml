@@ -6,11 +6,11 @@
     
     <!-- Master context for fcrepo4. -->
 
-    <import resource="classpath:/spring/repo.xml"/>
-    <import resource="classpath:/spring/rest.xml"/>
-    <import resource="${fcrepo.minter.config:classpath:/spring/minter.xml}"/>
-    <import resource="classpath:/spring/eventing.xml"/>
-    <import resource="classpath:/spring/jms.xml"/>
-    <import resource="classpath:/spring/transactions.xml"/>
+    <import resource="${fcrepo.spring.repo.configuration:classpath:/spring/repo.xml}"/>
+    <import resource="${fcrepo.spring.rest.configuration:classpath:/spring/rest.xml}"/>
+    <import resource="${fcrepo.spring.minter.configuration:classpath:/spring/minter.xml}"/>
+    <import resource="${fcrepo.spring.eventing.configuration:classpath:/spring/eventing.xml}"/>
+    <import resource="${fcrepo.spring.jms.configuration:classpath:/spring/jms.xml}"/>
+    <import resource="${fcrepo.spring.transactions.configuration:classpath:/spring/transactions.xml}"/>
     
 </beans>
