@@ -68,6 +68,7 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.FedoraJcrTypes;
+import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
@@ -344,6 +345,29 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         verify(testObj.jcrTools).findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER);
         verify(mockNode).addMixin(FEDORA_RESOURCE);
         verify(mockHashNode).addMixin(FEDORA_PAIRTREE);
+    }
+
+    @Test
+    public void shouldAddBlankNodePairtreeMixin() throws RepositoryException {
+        final Model m = createDefaultModel();
+        final Resource resource = createResource();
+        final Statement x = m.createStatement(resource,
+                createProperty("info:x"),
+                resource);
+        testObj.jcrTools = mock(JcrTools.class);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn("/x");
+        when(mockNode.getParent()).thenReturn(mockHashNode);
+        when(mockHashNode.getParent()).thenReturn(mockChildNode);
+        when(mockHashNode.isNew()).thenReturn(true);
+        when(FedoraTypesUtils.getClosestExistingAncestor(mockSession,"/.well-known/genid/"))
+                .thenReturn(mockChildNode);
+        final Statement statement = testObj.skolemize(testSubjects, x);
+        assertEquals("info:fedora/x", statement.getSubject().toString());
+        assertEquals("info:fedora/x", statement.getObject().toString());
+        verify(testObj.jcrTools).findOrCreateNode(mockSession, "/.well-known/genid/");
+        verify(mockNode).addMixin(FEDORA_BLANKNODE);
+        verify(mockNode.getParent()).addMixin(FEDORA_PAIRTREE);
     }
 
     @Test

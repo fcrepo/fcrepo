@@ -64,7 +64,13 @@ public abstract class AbstractService {
         }
     }
 
-    private static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)
+    /**
+     * Tag a hierarchy with {@link org.fcrepo.kernel.FedoraJcrTypes#FEDORA_PAIRTREE}
+     * @param baseNode Top most ancestor that should not be tagged
+     * @param createdNode Node whose parents should be tagged up to but not including {@code baseNode}
+     * @throws RepositoryException
+     */
+    public static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)
             throws RepositoryException {
         Node parent = createdNode.getParent();
 

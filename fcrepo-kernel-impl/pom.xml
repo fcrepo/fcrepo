@@ -72,10 +72,14 @@
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-mint</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <!-- test gear -->
