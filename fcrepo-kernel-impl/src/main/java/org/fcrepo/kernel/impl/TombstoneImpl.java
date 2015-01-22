@@ -33,7 +33,7 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
     private static final Logger LOGGER = getLogger(TombstoneImpl.class);
 
     /**
-     * Construct a {@link org.fcrepo.kernel.models.Container} from an existing JCR Node
+     * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
      * @param node an existing JCR node to treat as an fcrepo object
      */
     public TombstoneImpl(final Node node) {
