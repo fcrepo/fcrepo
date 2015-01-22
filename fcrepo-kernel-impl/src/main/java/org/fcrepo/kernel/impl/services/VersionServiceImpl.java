@@ -165,10 +165,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         final Workspace workspace = session.getWorkspace();
         final VersionManager versionManager = workspace.getVersionManager();
         final VersionHistory versionHistory = versionManager.getVersionHistory(absPath);
-        if (versionHistory.hasVersionLabel(label)) {
-            throw new LabelExistsVersionException("The specified label \"" + label
-                    + "\" is already assigned to another version of this resource!");
-        }
         final Version v = versionManager.checkpoint(absPath);
         if (v == null) {
             return null;
