@@ -104,7 +104,7 @@ public class JcrRdfTools {
 
     private static final Model m = createDefaultModel();
 
-    private static final UUIDPathMinter pidMinter =  new UUIDPathMinter(10,1);
+    private static final UUIDPathMinter pidMinter =  new UUIDPathMinter();
 
     /**
      * Constructor with even more context.
@@ -174,7 +174,7 @@ public class JcrRdfTools {
      * @throws RepositoryException
      */
     public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
-            throws RepositoryException {
+        throws RepositoryException {
         assert (valueFactory != null);
 
 
@@ -406,7 +406,7 @@ public class JcrRdfTools {
         final AnonId id = resource.asResource().getId();
 
         if (!skolemizedBnodeMap.containsKey(id)) {
-            final String path = "/.well-known/genid/" + pidMinter.mintPid();
+            final String path = skolemizedId() + pidMinter.mintPid();
             final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
             orCreateNode.addMixin(FEDORA_BLANKNODE);
             final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
@@ -414,6 +414,10 @@ public class JcrRdfTools {
         }
 
         return skolemizedBnodeMap.get(id);
+    }
+
+    private static String skolemizedId() {
+        return "/.well-known/genid/";
     }
 
 }
