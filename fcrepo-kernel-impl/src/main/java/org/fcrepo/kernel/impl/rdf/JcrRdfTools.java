@@ -409,6 +409,7 @@ public class JcrRdfTools {
             final String path = skolemizedId() + pidMinter.mintPid();
             final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
             orCreateNode.addMixin(FEDORA_BLANKNODE);
+            orCreateNode.addMixin(FEDORA_PAIRTREE);
             final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }
