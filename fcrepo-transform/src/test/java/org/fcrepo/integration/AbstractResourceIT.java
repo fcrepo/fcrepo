@@ -62,7 +62,7 @@ public abstract class AbstractResourceIT {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    protected static final int SERVER_PORT = parseInt(getProperty("test.port",
+    protected static final int SERVER_PORT = parseInt(getProperty("fcrepo.test.port",
                                                                          "8080"));
 
     protected static final String HOSTNAME = "localhost";

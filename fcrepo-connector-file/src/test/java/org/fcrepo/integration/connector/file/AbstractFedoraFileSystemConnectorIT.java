@@ -125,9 +125,9 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
      */
     protected abstract String getFederationRoot();
 
-    private final static String PROP_TEST_DIR1 = "fcrepo.test.dir1";
-    private final static String PROP_TEST_DIR2 = "fcrepo.test.dir2";
-    private final static String PROP_EXT_TEST_DIR = "fcrepo.test.properties.dir";
+    private final static String PROP_TEST_DIR1 = "fcrepo.test.connector.file.directory1";
+    private final static String PROP_TEST_DIR2 = "fcrepo.test.connector.file.directory2";
+    private final static String PROP_EXT_TEST_DIR = "fcrepo.test.connector.file.properties.directory";
 
     protected String getReadWriteFederationRoot() {
         return getProperty(PROP_TEST_DIR1);

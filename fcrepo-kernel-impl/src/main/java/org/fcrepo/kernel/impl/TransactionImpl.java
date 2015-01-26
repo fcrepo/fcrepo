@@ -42,7 +42,7 @@ public class TransactionImpl implements Transaction {
     // the default timeout is 3 minutes
     public static final long DEFAULT_TIMEOUT = 3L * 60L * 1000L;
 
-    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo4.tx.timeout";
+    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.transactions.timeout";
 
     private final Session session;
 

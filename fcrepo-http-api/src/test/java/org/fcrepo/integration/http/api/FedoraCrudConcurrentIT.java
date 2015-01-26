@@ -36,13 +36,13 @@ import org.junit.Test;
  * It takes roughly 2 minutes to complete and should only be run if the timing metrics are wanted.
  * In order to activate this utility, the following System Property must be set:
  * <p/>
- * mvn -DRUN_TEST_CRUD_CONCURRENT install
+ * mvn -Dfcrepo.test.http.concurrent install
  *
  * @author lsitu
  */
 public class FedoraCrudConcurrentIT extends AbstractResourceIT {
 
-    private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CRUD_CONCURRENT";
+    private static final String TEST_ACTIVATION_PROPERTY = "fcrepo.test.http.concurrent";
 
     @Test
     public void testConcurrentIngest() throws Exception {

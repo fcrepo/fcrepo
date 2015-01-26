@@ -13,7 +13,7 @@
 
   <properties>
     <!-- integration test properties -->
-    <test.context.path>/</test.context.path>
+    <fcrepo.test.context.path>/</fcrepo.test.context.path>
     
     <!-- jmeter -->
     <jmeter.loop_count>100</jmeter.loop_count>
@@ -317,8 +317,8 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
-            <test.port>${test.port}</test.port>
-            <test.context.path>${test.context.path}</test.context.path>
+            <fcrepo.test.port>${fcrepo.test.port}</fcrepo.test.port>
+            <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
             <fcrepo.jms.port>${fcrepo.jms.port}</fcrepo.jms.port>
             <fcrepo.stomp.port>${fcrepo.stomp.port}</fcrepo.stomp.port>
             <integration-test>true</integration-test>
@@ -330,7 +330,7 @@
         <artifactId>build-helper-maven-plugin</artifactId>
         <configuration>
           <portNames>
-            <portName>test.port</portName>
+            <portName>fcrepo.test.port</portName>
             <!-- reserves the stop port for jetty-maven-plugin -->
             <portName>jetty.port.stop</portName>
             <portName>fcrepo.jms.port</portName>
@@ -384,7 +384,7 @@
           <scanIntervalSeconds>2</scanIntervalSeconds>
           <stopKey>STOP</stopKey>
           <webApp>
-            <contextPath>${test.context.path}</contextPath>
+            <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
 
         </configuration>
@@ -399,7 +399,7 @@
             <configuration>
               <connectors>
                 <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-                  <port>${test.port}</port>
+                  <port>${fcrepo.test.port}</port>
                   <maxIdleTime>60000</maxIdleTime>
                 </connector>
               </connectors>
@@ -501,7 +501,7 @@
                 <jmeter.exit.check.pause>${jmeter.exit.check.pause}</jmeter.exit.check.pause>
               </propertiesJMeter>
               <propertiesUser>
-                <fedora_4_port>${test.port}</fedora_4_port>
+                <fedora_4_port>${fcrepo.test.port}</fedora_4_port>
                 <fedora_4_context>rest</fedora_4_context>
                 <loop_count>${jmeter.loop_count}</loop_count>
                 <num_threads>${jmeter.num_threads}</num_threads>
