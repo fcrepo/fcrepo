@@ -68,13 +68,11 @@ public class PropertiesRdfContext extends NodeRdfContext {
     private Iterator<Triple> triplesFromProperties(final FedoraResource n)
         throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
-        final Iterator<Property> allProperties;
+        final Iterator<Property> allProperties = n.getNode().getProperties();
         if (n instanceof FedoraBinary) {
             LOGGER.info("n is FedoraBinary");
             final FedoraResource description = ((FedoraBinary)n).getDescription();
-            allProperties = description.getNode().getProperties();
-        } else {
-            allProperties = n.getNode().getProperties();
+            Iterators.concat(allProperties, description.getNode().getProperties());
         }
         final UnmodifiableIterator<Property> properties =
             Iterators.filter(allProperties, not(isInternalProperty));
