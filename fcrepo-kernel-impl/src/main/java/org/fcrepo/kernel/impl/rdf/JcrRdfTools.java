@@ -50,6 +50,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
+import org.fcrepo.kernel.impl.services.AbstractService;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.MalformedRdfException;
@@ -406,9 +407,19 @@ public class JcrRdfTools {
         final AnonId id = resource.asResource().getId();
 
         if (!skolemizedBnodeMap.containsKey(id)) {
-            final String path = skolemizedId() + pidMinter.mintPid();
+            final String pid = pidMinter.mintPid();
+            jcrTools.findOrCreateNode(session, skolemizedId());
+            final String path = skolemizedId() + pid;
+            final Node preexistingNode = getClosestExistingAncestor(session, path);
+
             final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
             orCreateNode.addMixin(FEDORA_BLANKNODE);
+
+            if (preexistingNode != null) {
+                AbstractService.tagHierarchyWithPairtreeMixin(preexistingNode,
+                        orCreateNode);
+            }
+
             final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }

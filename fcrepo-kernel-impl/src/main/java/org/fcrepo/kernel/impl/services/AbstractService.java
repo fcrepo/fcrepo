@@ -64,7 +64,13 @@ public abstract class AbstractService {
         }
     }
 
-    private static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)
+    /**
+     *
+     * @param baseNode
+     * @param createdNode
+     * @throws RepositoryException
+     */
+    public static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)
             throws RepositoryException {
         Node parent = createdNode.getParent();
 
