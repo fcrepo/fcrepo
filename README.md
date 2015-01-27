@@ -5,7 +5,7 @@
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
 [Use cases](https://wiki.duraspace.org/display/FF/Use+Cases) |
-[REST API](https://wiki.duraspace.org/display/FF/RESTful+HTTP+API) |
+[REST API](https://wiki.duraspace.org/display/FEDORA4x/RESTful+HTTP+API) |
 
 Technical goals:
 * Improved scalability and performance
