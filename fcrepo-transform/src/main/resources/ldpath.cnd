@@ -9,7 +9,7 @@
 /*
  * Any Fedora resource.
  */
-[fedora:configuration] > nt:folder 
+[fedora:Configuration] > nt:folder
 
-[fedora:nodeTypeConfiguration] > nt:folder 
+[fedora:NodeTypeConfiguration] > nt:folder
 

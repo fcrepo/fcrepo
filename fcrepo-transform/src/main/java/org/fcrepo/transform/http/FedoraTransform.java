@@ -118,8 +118,8 @@ public class FedoraTransform extends ContentExposingResource {
             jcrTools.registerNodeTypes(internalSession, "ldpath.cnd");
 
             // create the configuration base path
-            jcrTools.findOrCreateNode(internalSession, "/fedora:system/fedora:transform", "fedora:configuration",
-                    "fedora:nodeTypeConfiguration");
+            jcrTools.findOrCreateNode(internalSession, "/fedora:system/fedora:transform", "fedora:Configuration",
+                    "fedora:NodeTypeConfiguration");
             final Node node =
                 jcrTools.findOrCreateNode(internalSession, CONFIGURATION_FOLDER + "default", NT_FOLDER, NT_FOLDER);
             LOGGER.debug("Transforming node: {}", node.getPath());

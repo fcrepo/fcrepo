@@ -29,6 +29,7 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.metrics.RegistryService;
@@ -87,8 +88,15 @@ public class RootRdfContext extends NodeRdfContext {
         for (final String key : repository.getDescriptorKeys()) {
             final String descriptor = repository.getDescriptor(key);
             if (descriptor != null) {
-                final String uri = REPOSITORY_NAMESPACE + "repository." + key;
-                b.add(create(subject(), createURI(uri),
+                // Create a URI from the jcr.Repository constant values,
+                // converting them from dot notation (identifier.stability)
+                // to the camel case that is more common in RDF properties.
+                final StringBuilder uri = new StringBuilder(REPOSITORY_NAMESPACE);
+                uri.append("repository");
+                for (final String segment : key.split("\\.")) {
+                    uri.append(StringUtils.capitalize(segment));
+                }
+                b.add(create(subject(), createURI(uri.toString()),
                         createLiteral(descriptor)));
             }
         }
