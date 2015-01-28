@@ -137,4 +137,10 @@ public class PreferTag implements Comparable<PreferTag> {
     public int compareTo(final PreferTag otherTag) {
         return getTag().compareTo(otherTag.getTag());
     }
+
+    @Override
+    public boolean equals(final Object obj) {
+        return getTag().equals(((PreferTag) obj).getTag());
+    }
+
 }
