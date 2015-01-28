@@ -50,6 +50,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
+import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.impl.services.AbstractService;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
@@ -105,7 +106,7 @@ public class JcrRdfTools {
 
     private static final Model m = createDefaultModel();
 
-    private static final UUIDPathMinter pidMinter =  new UUIDPathMinter();
+    private static final PidMinter pidMinter =  new UUIDPathMinter();
 
     /**
      * Constructor with even more context.
@@ -407,11 +408,10 @@ public class JcrRdfTools {
         final AnonId id = resource.asResource().getId();
 
         if (!skolemizedBnodeMap.containsKey(id)) {
+            jcrTools.findOrCreateNode(session, skolemizedPrefix());
             final String pid = pidMinter.mintPid();
-            jcrTools.findOrCreateNode(session, skolemizedId());
-            final String path = skolemizedId() + pid;
+            final String path = skolemizedPrefix() + pid;
             final Node preexistingNode = getClosestExistingAncestor(session, path);
-
             final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
             orCreateNode.addMixin(FEDORA_BLANKNODE);
 
@@ -427,7 +427,7 @@ public class JcrRdfTools {
         return skolemizedBnodeMap.get(id);
     }
 
-    private static String skolemizedId() {
+    private static String skolemizedPrefix() {
         return "/.well-known/genid/";
     }
 
