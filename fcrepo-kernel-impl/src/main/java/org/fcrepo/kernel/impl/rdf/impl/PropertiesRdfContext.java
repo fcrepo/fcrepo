@@ -26,6 +26,7 @@ import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
@@ -59,6 +60,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
+
         property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
         concat(triplesFromProperties(resource()));
     }
@@ -66,7 +68,13 @@ public class PropertiesRdfContext extends NodeRdfContext {
     private Iterator<Triple> triplesFromProperties(final FedoraResource n)
         throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
-        final Iterator<Property> allProperties = n.getNode().getProperties();
+        final Iterator<Property> allProperties;
+        if (n instanceof FedoraBinary) {
+            final FedoraResource description = ((FedoraBinary)n).getDescription();
+            allProperties = Iterators.concat(n.getNode().getProperties(), description.getNode().getProperties());
+        } else {
+            allProperties = n.getNode().getProperties();
+        }
         final UnmodifiableIterator<Property> properties =
             Iterators.filter(allProperties, not(isInternalProperty));
 
