@@ -17,7 +17,10 @@ package org.fcrepo.http.commons.domain;
 
 import org.junit.Test;
 
+import java.text.ParseException;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -31,5 +34,18 @@ public class PreferTagTest {
         assertEquals("", preferTag.getTag());
         assertEquals("", preferTag.getValue());
         assertTrue(preferTag.getParams().isEmpty());
+    }
+
+    @Test
+    public void testEquals() throws ParseException {
+        final PreferTag preferTag1 = new PreferTag("handling=lenient; received=\"minimal\"");
+        final PreferTag preferTag2 = new PreferTag("handling=lenient; received=\"minimal\"");
+        final PreferTag preferTag3 = PreferTag.emptyTag();
+        assertTrue(preferTag1.equals(preferTag2));
+        assertTrue(preferTag1.equals(preferTag1));  // ensure consistency
+        assertTrue(preferTag2.equals(preferTag1));
+        assertFalse(preferTag1.equals(preferTag3));
+        assertFalse(preferTag1.equals(null));
+        assertFalse(preferTag1.equals("some string"));
     }
 }
