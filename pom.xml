@@ -59,6 +59,9 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
+    <!-- default properties that can be altered on the command line -->
+    <fcrepo.test.port>8080</fcrepo.test.port>
+    <fcrepo.test.context.path/>
   </properties>
   <modules>
     <module>fcrepo-boms</module>
