@@ -146,4 +146,13 @@ public class PreferTag implements Comparable<PreferTag> {
             return false;
         }
     }
+
+    @Override
+    public int hashCode() {
+        if (getTag() == null) {
+            return 0;
+        }
+
+        return getTag().hashCode();
+    }
 }

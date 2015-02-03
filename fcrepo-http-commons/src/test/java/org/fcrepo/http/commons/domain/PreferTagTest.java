@@ -15,13 +15,14 @@
  */
 package org.fcrepo.http.commons.domain;
 
-import org.junit.Test;
-
-import java.text.ParseException;
-
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.text.ParseException;
+
+import org.junit.Test;
 
 /**
  * @author cabeer
@@ -48,4 +49,25 @@ public class PreferTagTest {
         assertFalse(preferTag1.equals(null));
         assertFalse(preferTag1.equals("some string"));
     }
+
+    @Test
+    public void testHashCode() throws ParseException {
+        doTestHashCode(new PreferTag("handling=lenient; received=\"minimal\""),
+                new PreferTag("handling=lenient; received=\"minimal\""),
+                true);
+
+        doTestHashCode(new PreferTag("handling=lenient; received=\"minimal\""),
+                new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer\""),
+                false);
+
+        doTestHashCode(new PreferTag("handling=lenient; received=\"minimal\""),
+                PreferTag.emptyTag(),
+                false);
+    }
+
+    private void doTestHashCode(final PreferTag tag0, final PreferTag tag1, final boolean expectEqual)    {
+        assertEquals(expectEqual, tag0.equals(tag1));
+        assertEquals(expectEqual, tag0.hashCode() == tag1.hashCode());
+    }
+
 }
