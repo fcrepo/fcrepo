@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.1.0</version>
+  <version>4.1.1-SNAPSHOT</version>
   <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons 4</description>
   <organization>
@@ -1150,7 +1150,7 @@
     <developerConnection>scm:git:git@github.com:fcrepo4/${project_name}.git
     </developerConnection>
     <url>https://github.com/fcrepo4/fcrepo4</url>
-    <tag>fcrepo-4.1.0</tag>
+    <tag>HEAD</tag>
   </scm>
   <prerequisites>
     <maven>3.0.0</maven>
