@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ResultSetStreamingOutput.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository RDF Transformations Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.transform.http.responses</a> &gt; <span class="el_source">ResultSetStreamingOutput.java</span></div><h1>ResultSetStreamingOutput.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.transform.http.responses;
+
+import static com.hp.hpl.jena.query.ResultSetFormatter.output;
+import static com.hp.hpl.jena.query.ResultSetFormatter.toModel;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_NT;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_TTL;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RDF_XML;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_BIO;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_CSV;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_JSON;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_TSV;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_RS_XML;
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
+import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
+import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
+import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
+import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt1;
+import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
+
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+
+import org.apache.jena.riot.Lang;
+
+import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.resultset.ResultsFormat;
+
+/**
+ * Stream the results of a SPARQL Query
+ *
+ * @author cbeer
+ */
+@Provider
+@Produces({contentTypeTextTSV, contentTypeTextCSV, contentTypeResultsJSON,
+        contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
+        contentTypeNTriples, contentTypeRDFXML})
+<span class="fc" id="L67">public class ResultSetStreamingOutput implements MessageBodyWriter&lt;ResultSet&gt; {</span>
+
+
+
+    @Override
+    public boolean isWriteable(final Class&lt;?&gt; type,
+                               final Type genericType,
+                               final Annotation[] annotations,
+                               final MediaType mediaType) {
+<span class="fc" id="L76">        final ResultsFormat resultsFormat = getResultsFormat(mediaType);</span>
+
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (resultsFormat == FMT_UNKNOWN) {</span>
+<span class="nc" id="L79">            final Lang format = contentTypeToLang(mediaType.toString());</span>
+
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            return format != null;</span>
+        }
+<span class="fc" id="L83">        return true;</span>
+    }
+
+    @Override
+    public long getSize(final ResultSet resultSet,
+                        final Class&lt;?&gt; type,
+                        final Type genericType,
+                        final Annotation[] annotations,
+                        final MediaType mediaType) {
+<span class="nc" id="L92">        return -1;</span>
+    }
+
+    @Override
+    public void writeTo(final ResultSet resultSet,
+                        final Class&lt;?&gt; type,
+                        final Type genericType,
+                        final Annotation[] annotations,
+                        final MediaType mediaType,
+                        final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+                        final OutputStream entityStream) throws WebApplicationException {
+<span class="fc" id="L103">        final ResultsFormat resultsFormat = getResultsFormat(mediaType);</span>
+
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        if (resultsFormat == FMT_UNKNOWN) {</span>
+<span class="nc" id="L106">            final String format = contentTypeToLang(mediaType.toString()).getName().toUpperCase();</span>
+<span class="nc" id="L107">            final Model model = toModel(resultSet);</span>
+<span class="nc" id="L108">            model.write(entityStream, format);</span>
+<span class="nc" id="L109">        } else {</span>
+<span class="fc" id="L110">            output(entityStream, resultSet, resultsFormat);</span>
+        }
+<span class="fc" id="L112">    }</span>
+
+    /**
+     * Map the HTTP MediaType to a SPARQL ResultsFormat
+     * @param mediaType
+     * @return SPARQL {@link ResultsFormat} for the given {@link MediaType}
+     */
+    public static ResultsFormat getResultsFormat(final MediaType mediaType) {
+<span class="pc bpc" id="L120" title="16 of 40 branches missed.">        switch (mediaType.toString()) {</span>
+            case contentTypeTextTSV:
+<span class="fc" id="L122">                return FMT_RS_TSV;</span>
+
+            case contentTypeTextCSV:
+<span class="fc" id="L125">                return FMT_RS_CSV;</span>
+
+            case contentTypeResultsJSON:
+<span class="fc" id="L128">                return FMT_RS_JSON;</span>
+
+            case contentTypeResultsXML:
+<span class="fc" id="L131">                return FMT_RS_XML;</span>
+
+            case contentTypeResultsBIO:
+<span class="fc" id="L134">                return FMT_RS_BIO;</span>
+
+            case contentTypeTurtle:
+            case contentTypeTurtleAlt1:
+            case contentTypeTurtleAlt2:
+<span class="fc" id="L139">                return FMT_RDF_TTL;</span>
+
+            case contentTypeNTriples:
+<span class="fc" id="L142">                return FMT_RDF_NT;</span>
+
+            case contentTypeRDFXML:
+<span class="fc" id="L145">                return FMT_RDF_XML;</span>
+            default:
+<span class="nc" id="L147">                return FMT_UNKNOWN;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>
