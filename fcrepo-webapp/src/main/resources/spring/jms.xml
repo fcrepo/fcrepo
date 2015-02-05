@@ -13,7 +13,7 @@
 
   <bean id="connectionFactory"
     class="org.apache.activemq.ActiveMQConnectionFactory" depends-on="jmsBroker"
-    p:brokerURL="vm://${fcrepo.jms.host:localhost}:${fcrepo.jms.port:61616}?create=false"/>
+    p:brokerURL="vm://${fcrepo.jms.host:localhost}:${fcrepo.dynamic.jms.port:61616}?create=false"/>
 
   <bean name="jmsBroker" class="org.apache.activemq.xbean.BrokerFactoryBean"
     p:config="${fcrepo.activemq.configuration:classpath:/config/activemq.xml}" p:start="true"/>

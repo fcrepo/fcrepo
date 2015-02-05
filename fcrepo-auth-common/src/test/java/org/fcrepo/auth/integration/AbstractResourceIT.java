@@ -15,10 +15,6 @@
  */
 package org.fcrepo.auth.integration;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.UUID;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -33,6 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.UUID;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
@@ -51,7 +51,7 @@ public abstract class AbstractResourceIT {
     }
 
     protected static final int SERVER_PORT = Integer.parseInt(System
-            .getProperty("fcrepo.test.port", "8080"));
+            .getProperty("fcrepo.dynamic.test.port", "8080"));
 
     protected static final String HOSTNAME = "localhost";
 

@@ -73,7 +73,7 @@ public abstract class AbstractResourceIT {
     }
 
     protected static final int SERVER_PORT = parseInt(System.getProperty(
-            "fcrepo.test.port", "8080"));
+            "fcrepo.dynamic.test.port", "8080"));
 
     private static final String CONTEXT_PATH = System
             .getProperty("fcrepo.test.context.path");
