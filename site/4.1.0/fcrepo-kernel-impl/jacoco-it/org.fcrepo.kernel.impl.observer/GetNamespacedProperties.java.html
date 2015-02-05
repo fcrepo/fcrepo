@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>GetNamespacedProperties.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.observer</a> &gt; <span class="el_source">GetNamespacedProperties.java</span></div><h1>GetNamespacedProperties.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.observer;
+
+import com.google.common.base.Function;
+import org.fcrepo.kernel.observer.FedoraEvent;
+import org.slf4j.Logger;
+
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import static org.fcrepo.kernel.utils.NamespaceTools.getNamespaceRegistry;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author Andrew Woods
+ * @since 11/22/14
+ */
+public class GetNamespacedProperties implements Function&lt;FedoraEvent, FedoraEvent&gt; {
+
+<span class="fc" id="L35">    private static final Logger LOGGER = getLogger(SimpleObserver.class);</span>
+
+    private Session session;
+
+    /**
+     * Constructor
+     *
+     * @param session used to get NamespaceRegistry
+     */
+<span class="fc" id="L44">    public GetNamespacedProperties(final Session session) {</span>
+<span class="fc" id="L45">        this.session = session;</span>
+<span class="fc" id="L46">    }</span>
+
+    @Override
+    public FedoraEvent apply(final FedoraEvent evt) {
+<span class="fc" id="L50">        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);</span>
+
+<span class="fc" id="L52">        final FedoraEvent event = new FedoraEvent(evt);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        for (String property : evt.getProperties()) {</span>
+<span class="fc" id="L54">            final String[] parts = property.split(&quot;:&quot;, 2);</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">            if (parts.length == 2) {</span>
+<span class="fc" id="L56">                final String prefix = parts[0];</span>
+                try {
+<span class="fc" id="L58">                    event.addProperty(namespaceRegistry.getURI(prefix) + parts[1]);</span>
+<span class="nc" id="L59">                } catch (RepositoryException ex) {</span>
+<span class="nc" id="L60">                    LOGGER.trace(&quot;Prefix could not be dereferenced using the namespace registry: {}&quot;, property);</span>
+<span class="nc" id="L61">                    event.addProperty(property);</span>
+<span class="fc" id="L62">                }</span>
+<span class="fc" id="L63">            } else {</span>
+<span class="nc" id="L64">                event.addProperty(property);</span>
+            }
+<span class="fc" id="L66">        }</span>
+
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        for (Integer type : evt.getTypes()) {</span>
+<span class="fc" id="L69">            event.addType(type);</span>
+<span class="fc" id="L70">        }</span>
+<span class="fc" id="L71">        return event;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>

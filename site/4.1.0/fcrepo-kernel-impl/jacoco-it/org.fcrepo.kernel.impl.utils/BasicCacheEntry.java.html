@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BasicCacheEntry.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.utils</a> &gt; <span class="el_source">BasicCacheEntry.java</span></div><h1>BasicCacheEntry.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.utils;
+
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.utils.CacheEntry;
+import org.fcrepo.kernel.utils.ContentDigest;
+import org.fcrepo.kernel.utils.FixityResult;
+import org.slf4j.Logger;
+
+import javax.jcr.RepositoryException;
+import java.io.IOException;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+
+import static com.google.common.base.Throwables.propagate;
+import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Cache entry that wraps a binary stream and provides
+ * fixity methods against it
+ *
+ * @author fasseg
+ */
+<span class="fc" id="L42">public abstract class BasicCacheEntry implements CacheEntry {</span>
+
+<span class="fc" id="L44">    private static final Logger LOGGER = getLogger(BasicCacheEntry.class);</span>
+
+    /**
+     * Calculate the fixity of a CacheEntry by piping it through
+     * a simple fixity-calculating InputStream
+     *
+     * @return the fixity of this cache entry
+     * @throws RepositoryException
+     */
+    @Override
+    public Collection&lt;FixityResult&gt; checkFixity(final String digest)
+        throws RepositoryException {
+
+<span class="pc" id="L57">        try (FixityInputStream fixityInputStream = new FixityInputStream(this.getInputStream(),</span>
+<span class="fc" id="L58">                MessageDigest.getInstance(digest))) {</span>
+
+<span class="fc" id="L60">            IOUtils.copy(fixityInputStream, NULL_OUTPUT_STREAM);</span>
+
+<span class="fc" id="L62">            final URI calculatedChecksum = ContentDigest.asURI(digest,</span>
+<span class="fc" id="L63">                                                                  fixityInputStream.getMessageDigest().digest());</span>
+<span class="fc" id="L64">            final FixityResult result =</span>
+                new FixityResultImpl(this,
+<span class="fc" id="L66">                                    fixityInputStream.getByteCount(),</span>
+                                    calculatedChecksum);
+
+<span class="fc" id="L69">            LOGGER.debug(&quot;Got {}&quot;, result.toString());</span>
+
+<span class="fc" id="L71">            return ImmutableSet.of(result);</span>
+<span class="pc bpc" id="L72" title="6 of 8 branches missed.">        } catch (final IOException e) {</span>
+<span class="nc" id="L73">            LOGGER.debug(&quot;Got error closing input stream: {}&quot;, e);</span>
+<span class="nc" id="L74">            throw propagate(e);</span>
+<span class="nc" id="L75">        } catch (final NoSuchAlgorithmException e1) {</span>
+<span class="nc" id="L76">            throw propagate(e1);</span>
+        }
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.1.201405082137</span></div></body></html>
