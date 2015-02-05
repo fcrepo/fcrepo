@@ -1,0 +1,25 @@
+-classpath
+'/home/awoods/programming/java/apps/fedora/futures/fcrepo4/fcrepo-kernel/target/classes:/home/awoods/.m2/repository/javax/javaee-api/7.0/javaee-api-7.0.jar:/home/awoods/.m2/repository/com/github/jsonld-java/jsonld-java/0.5.0/jsonld-java-0.5.0.jar:/home/awoods/.m2/repository/org/apache/jena/jena-arq/2.12.1/jena-arq-2.12.1.jar:/home/awoods/.m2/repository/org/apache/jena/jena-iri/1.1.1/jena-iri-1.1.1.jar:/home/awoods/.m2/repository/org/apache/commons/commons-csv/1.0/commons-csv-1.0.jar:/home/awoods/.m2/repository/org/apache/jena/jena-core/2.12.1/jena-core-2.12.1.jar:/home/awoods/.m2/repository/org/apache/httpcomponents/httpclient-cache/4.3.3/httpclient-cache-4.3.3.jar:/home/awoods/.m2/repository/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar:/home/awoods/.m2/repository/xml-apis/xml-apis/1.4.01/xml-apis-1.4.01.jar:/home/awoods/.m2/repository/commons-codec/commons-codec/1.6/commons-codec-1.6.jar:/home/awoods/.m2/repository/org/apache/thrift/libthrift/0.9.1/libthrift-0.9.1.jar:/home/awoods/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.3.3/jackson-databind-2.3.3.jar:/home/awoods/.m2/repository/com/sun/mail/javax.mail/1.5.0/javax.mail-1.5.0.jar:/home/awoods/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.3.0/jackson-annotations-2.3.0.jar:/home/awoods/.m2/repository/xerces/xercesImpl/2.11.0/xercesImpl-2.11.0.jar:/home/awoods/.m2/repository/org/modeshape/modeshape-jcr-api/4.1.0.Final/modeshape-jcr-api-4.1.0.Final.jar:/home/awoods/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar:/home/awoods/.m2/repository/org/apache/httpcomponents/httpcore/4.3.2/httpcore-4.3.2.jar:/home/awoods/.m2/repository/javax/jcr/jcr/2.0/jcr-2.0.jar:/home/awoods/.m2/repository/org/apache/httpcomponents/httpclient/4.3.3/httpclient-4.3.3.jar:/home/awoods/.m2/repository/org/slf4j/slf4j-api/1.7.7/slf4j-api-1.7.7.jar:/home/awoods/.m2/repository/com/google/guava/guava/18.0/guava-18.0.jar:/home/awoods/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.3.3/jackson-core-2.3.3.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/home/awoods/programming/java/apps/fedora/futures/fcrepo4/fcrepo-kernel/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2013-2015 <a href="http://www.duraspace.org/">DuraSpace, Inc.</a>. All Rights Reserved.'
+-charset
+'UTF-8'
+-d
+'/home/awoods/programming/java/apps/fedora/futures/fcrepo4/fcrepo-kernel/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Fedora Repository Kernel API 4.1.0 API'
+-linkoffline
+'http://docs.oracle.com/javase/7/docs/api' '/home/awoods/programming/java/apps/fedora/futures/fcrepo4/fcrepo-kernel/target/javadoc-bundle-options'
+-linksource
+-use
+-version
+-windowtitle
+'Fedora Repository Kernel API 4.1.0 API'
