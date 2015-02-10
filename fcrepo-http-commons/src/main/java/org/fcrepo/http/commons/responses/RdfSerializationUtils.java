@@ -26,20 +26,21 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import org.slf4j.Logger;
 
 /**
  * Utilities to help with serializing a graph to an HTTP resource
  *
  * @author awoods
  */
-public class RdfSerializationUtils {
+public final class RdfSerializationUtils {
 
     private static final Logger LOGGER = getLogger(RdfSerializationUtils.class);
 
@@ -60,8 +61,8 @@ public class RdfSerializationUtils {
      * The RDF predicate that will indicate the mixin types.
      */
     public static Node mixinTypesPredicate =
-        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
-                  "mixinTypes");
+            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
+                    "mixinTypes");
 
     private static final Function<RDFNode, String> stringConverter = new Function<RDFNode, String>() {
         @Override
@@ -103,8 +104,8 @@ public class RdfSerializationUtils {
     public static Iterator<String> getAllValuesForPredicate(final Model rdf,
             final Node subject, final Node predicate) {
         final NodeIterator objects =
-            rdf.listObjectsOfProperty(createResource(subject.getURI()),
-                createProperty(predicate.getURI()));
+                rdf.listObjectsOfProperty(createResource(subject.getURI()),
+                        createProperty(predicate.getURI()));
 
         final ImmutableList<RDFNode> copy = copyOf(objects);
         return transform(copy, stringConverter).iterator();

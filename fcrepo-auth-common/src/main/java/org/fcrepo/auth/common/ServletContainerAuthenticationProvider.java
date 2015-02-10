@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gregory Jansen
  */
-public class ServletContainerAuthenticationProvider implements
-        AuthenticationProvider {
+public final class ServletContainerAuthenticationProvider implements
+AuthenticationProvider {
 
     private static ServletContainerAuthenticationProvider _instance = null;
 
@@ -177,8 +177,8 @@ public class ServletContainerAuthenticationProvider implements
         } else {
 
             sessionAttributes
-                    .put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
-                            EVERYONE);
+            .put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
+                    EVERYONE);
 
             sessionAttributes.put(
                     FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
