@@ -126,7 +126,7 @@ public class PropertyToTriple implements
 
         if (object.isLiteral()) {
             final String propertyName = p.getName();
-            final int i = propertyName.indexOf("@");
+            final int i = propertyName.indexOf('@');
 
             if (i > 0) {
                 final LiteralLabel literal = object.getLiteral();

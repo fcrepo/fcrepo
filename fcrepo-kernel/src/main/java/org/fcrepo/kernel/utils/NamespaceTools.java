@@ -88,8 +88,8 @@ public abstract class NamespaceTools {
         final String[] pathSegments = relPath.split("/");
         for (final String segment : pathSegments) {
             if (segment.length() > 0 && segment.contains(":") &&
-                    !segment.substring(0, segment.indexOf(":")).equals("fedora")) {
-                final String prefix = segment.substring(0, segment.indexOf(":"));
+                    !segment.substring(0, segment.indexOf(':')).equals("fedora")) {
+                final String prefix = segment.substring(0, segment.indexOf(':'));
                 if (prefix.length() == 0) {
                     throw new FedoraInvalidNamespaceException(
                             String.format("Unable to identify namespace for (%s)", segment));
