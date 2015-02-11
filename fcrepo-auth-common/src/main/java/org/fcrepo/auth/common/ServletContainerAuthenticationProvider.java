@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gregory Jansen
  */
-public class ServletContainerAuthenticationProvider implements
+public final class ServletContainerAuthenticationProvider implements
         AuthenticationProvider {
 
     private static ServletContainerAuthenticationProvider _instance = null;
