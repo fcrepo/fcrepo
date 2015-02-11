@@ -25,7 +25,7 @@ public class HashConverter extends InternalIdentifierConverter {
 
     @Override
     protected String doForward(final String externalId) {
-        final int i = externalId.indexOf("#");
+        final int i = externalId.indexOf('#');
         if (i >= 0) {
             return externalId.substring(0, i) + "/#/" + externalId.substring(i + 1).replace("/", "%2F");
         }

@@ -124,7 +124,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
             try {
                 if (PROPERTY_EVENT_TYPES.contains(ev.getType())) {
                     final String eventPath = ev.getPath();
-                    fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf("/") + 1));
+                    fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf('/') + 1));
                 } else {
                     log.trace("Not adding non-event property: {}, {}", fedoraEvent, ev);
                 }
