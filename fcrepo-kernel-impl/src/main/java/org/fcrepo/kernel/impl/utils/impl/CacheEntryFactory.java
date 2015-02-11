@@ -15,15 +15,9 @@
  */
 package org.fcrepo.kernel.impl.utils.impl;
 
-import javax.jcr.Binary;
-import javax.jcr.Property;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-
 import org.fcrepo.kernel.impl.utils.BinaryCacheEntry;
-import org.fcrepo.kernel.impl.utils.ProjectedCacheEntry;
 import org.fcrepo.kernel.utils.CacheEntry;
-
+import org.fcrepo.kernel.impl.utils.ProjectedCacheEntry;
 import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.binary.BinaryStore;
@@ -33,10 +27,15 @@ import org.modeshape.jcr.value.binary.FileSystemBinaryStore;
 import org.modeshape.jcr.value.binary.InMemoryBinaryValue;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
+import javax.jcr.Binary;
+import javax.jcr.Property;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+
 /**
  * @author cabeer
  */
-public final class CacheEntryFactory {
+public class CacheEntryFactory {
     private static GetBinaryStore getBinaryStore = new GetBinaryStore();
 
     /**
@@ -53,7 +52,7 @@ public final class CacheEntryFactory {
      * @throws RepositoryException
      */
     public static CacheEntry forProperty(final Repository repository, final Property property)
-            throws RepositoryException {
+        throws RepositoryException {
         final Binary binary = property.getBinary();
         final BinaryStore store = binaryStore(repository);
 
@@ -74,7 +73,7 @@ public final class CacheEntryFactory {
      * @throws RepositoryException
      */
     public static CacheEntry forProperty(final BinaryStore store, final Property property)
-            throws RepositoryException {
+        throws RepositoryException {
         final BinaryValue binary = (BinaryValue)property.getBinary();
         if (store instanceof InfinispanBinaryStore) {
             return new InfinispanCacheStoreEntry((InfinispanBinaryStore)store, property);
@@ -83,7 +82,7 @@ public final class CacheEntryFactory {
         } else if (store instanceof CompositeBinaryStore) {
             final CompositeBinaryStore compositeBinaryStore = (CompositeBinaryStore) store;
             final BinaryStore binaryStoreContainingKey
-            = compositeBinaryStore.findBinaryStoreContainingKey(binary.getKey());
+                = compositeBinaryStore.findBinaryStoreContainingKey(binary.getKey());
             return forProperty(binaryStoreContainingKey, property);
         } else {
             return new LocalBinaryStoreEntry(store, property);

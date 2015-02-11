@@ -21,18 +21,18 @@ import com.codahale.metrics.MetricRegistry;
 
 /**
  * Provide helpers for working with the Metrics registry
- *
+ * 
  * @author cbeer
  * @since Mar 22, 2013
  */
-public final class RegistryService {
+public class RegistryService {
 
     private static final MetricRegistry METRICS = getOrCreate("fcrepo-metrics");
 
     private static volatile RegistryService instance = null;
 
     private RegistryService() {
-        // New instances should come from the singleton
+      // New instances should come from the singleton
     }
 
     /**
@@ -41,14 +41,14 @@ public final class RegistryService {
     public synchronized static RegistryService getInstance() {
         RegistryService local = instance;
         if (null == local) {
-            instance = local = new RegistryService();
+             instance = local = new RegistryService();
         }
         return local;
     }
 
     /**
      * Get the current registry service
-     *
+     * 
      * TODO the new upstream SharedMetricRegistries may make this obsolete
      * @return the current registry service
      */

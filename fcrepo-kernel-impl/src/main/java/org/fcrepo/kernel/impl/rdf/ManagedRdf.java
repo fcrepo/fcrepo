@@ -30,7 +30,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @since Oct 23, 2013
  */
-public final class ManagedRdf {
+public class ManagedRdf {
 
     private static final Model model = createDefaultModel();
 
@@ -41,23 +41,23 @@ public final class ManagedRdf {
     }
 
     public static final Predicate<Triple> isManagedTriple =
-            new Predicate<Triple>() {
+        new Predicate<Triple>() {
 
-        @Override
-        public boolean apply(final Triple t) {
-            return isManagedPredicate.apply(model.asStatement(t)
-                    .getPredicate());
-        }
+            @Override
+            public boolean apply(final Triple t) {
+                return isManagedPredicate.apply(model.asStatement(t)
+                        .getPredicate());
+            }
 
-    };
+        };
 
     public static final Predicate<Resource> isManagedMixin =
-            new Predicate<Resource>() {
+        new Predicate<Resource>() {
 
-        @Override
-        public boolean apply(final Resource m) {
-            return isManagedNamespace.apply(m.getNameSpace());
-        }
+            @Override
+            public boolean apply(final Resource m) {
+                return isManagedNamespace.apply(m.getNameSpace());
+            }
 
-    };
+        };
 }

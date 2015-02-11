@@ -21,7 +21,7 @@ import org.modeshape.jcr.value.BinaryKey;
  * Utilities for gaining access to InfinispanBinaryStore internals
  * @author cabeer
  */
-public final class InfinispanUtils {
+public class InfinispanUtils {
 
     private InfinispanUtils() {
     }
