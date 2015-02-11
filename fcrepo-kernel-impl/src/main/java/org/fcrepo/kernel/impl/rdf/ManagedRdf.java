@@ -30,7 +30,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @since Oct 23, 2013
  */
-public class ManagedRdf {
+public final class ManagedRdf {
 
     private static final Model model = createDefaultModel();
 
