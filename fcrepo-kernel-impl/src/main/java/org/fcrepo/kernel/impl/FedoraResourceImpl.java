@@ -567,33 +567,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public Node getNodeVersion(final String label) {
         try {
             final Session session = getSession();
-            try {
 
-                final Node frozenNode = session.getNodeByIdentifier(label);
+            final Node n = getFrozenNode(label);
 
-                final String baseUUID = getNode().getIdentifier();
-
-            /*
-             * We found a node whose identifier is the "label" for the version.  Now
-             * we must do due dilligence to make sure it's a frozen node representing
-             * a version of the subject node.
-             */
-                final Property p = frozenNode.getProperty("jcr:frozenUuid");
-                if (p != null) {
-                    if (p.getString().equals(baseUUID)) {
-                        return frozenNode;
-                    }
-                }
-            /*
-             * Though a node with an id of the label was found, it wasn't the
-             * node we were looking for, so fall through and look for a labeled
-             * node.
-             */
-            } catch (final ItemNotFoundException ex) {
-            /*
-             * the label wasn't a uuid of a frozen node but
-             * instead possibly a version label.
-             */
+            if (n != null) {
+                return n;
             }
 
             if (isVersioned()) {
@@ -612,6 +590,39 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             throw new RepositoryRuntimeException(e);
         }
 
+    }
+
+    private Node getFrozenNode(final String label) throws RepositoryException {
+        try {
+            final Session session = getSession();
+
+            final Node frozenNode = session.getNodeByIdentifier(label);
+
+            final String baseUUID = getNode().getIdentifier();
+
+            /*
+             * We found a node whose identifier is the "label" for the version.  Now
+             * we must do due dilligence to make sure it's a frozen node representing
+             * a version of the subject node.
+             */
+            final Property p = frozenNode.getProperty("jcr:frozenUuid");
+            if (p != null) {
+                if (p.getString().equals(baseUUID)) {
+                    return frozenNode;
+                }
+            }
+            /*
+             * Though a node with an id of the label was found, it wasn't the
+             * node we were looking for, so fall through and look for a labeled
+             * node.
+             */
+        } catch (final ItemNotFoundException ex) {
+            /*
+             * the label wasn't a uuid of a frozen node but
+             * instead possibly a version label.
+             */
+        }
+        return null;
     }
 
     @Override

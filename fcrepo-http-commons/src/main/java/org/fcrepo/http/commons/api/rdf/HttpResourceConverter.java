@@ -264,33 +264,17 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      */
     private Node getFrozenNodeByLabel(final String baseResourcePath, final String label) {
         try {
-            try {
-                final Node frozenNode = session.getNodeByIdentifier(label);
+            final Node n = getNode(baseResourcePath, label);
 
-            /*
-             * We found a node whose identifier is the "label" for the version.  Now
-             * we must do due dilligence to make sure it's a frozen node representing
-             * a version of the subject node.
-             */
-                final Property p = frozenNode.getProperty("jcr:frozenUuid");
-                if (p != null) {
-                    final Node subjectNode = session.getNode(baseResourcePath);
-                    if (p.getString().equals(subjectNode.getIdentifier())) {
-                        return frozenNode;
-                    }
-                }
-            /*
+            if (n != null) {
+                return n;
+            }
+
+             /*
              * Though a node with an id of the label was found, it wasn't the
              * node we were looking for, so fall through and look for a labeled
              * node.
              */
-            } catch (final ItemNotFoundException ex) {
-            /*
-             * the label wasn't a uuid of a frozen node but
-             * instead possibly a version label.
-             */
-            }
-
             final VersionHistory hist =
                     session.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
             if (hist.hasVersionLabel(label)) {
@@ -303,6 +287,32 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    private Node getNode(final String baseResourcePath, final String label) throws RepositoryException {
+        try {
+            final Node frozenNode = session.getNodeByIdentifier(label);
+
+            /*
+             * We found a node whose identifier is the "label" for the version.  Now
+             * we must do due diligence to make sure it's a frozen node representing
+             * a version of the subject node.
+             */
+            final Property p = frozenNode.getProperty("jcr:frozenUuid");
+            if (p != null) {
+                final Node subjectNode = session.getNode(baseResourcePath);
+                if (p.getString().equals(subjectNode.getIdentifier())) {
+                    return frozenNode;
+                }
+            }
+
+        } catch (final ItemNotFoundException ex) {
+            /*
+             * the label wasn't a uuid of a frozen node but
+             * instead possibly a version label.
+             */
+        }
+        return null;
     }
 
     private static String getPath(final FedoraResource resource) {
