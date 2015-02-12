@@ -62,6 +62,9 @@ import org.springframework.context.annotation.Scope;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author cabeer
  * @since 9/25/14
@@ -84,6 +87,7 @@ public class FedoraVersioning extends FedoraBaseResource {
 
     protected FedoraResource resource;
 
+    private static final Pattern invalidLabelPattern = Pattern.compile("[~#@*+%{}<>\\[\\]|\"^]");
 
     /**
      * Default JAX-RS entry point
@@ -147,7 +151,7 @@ public class FedoraVersioning extends FedoraBaseResource {
      */
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
-        if (!isBlank(slug)) {
+        if (!isBlank(slug) && !invalidLabel(slug)) {
             LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
             final String path = toPath(translator(), externalPath);
             versionService.createVersion(session, path, slug);
@@ -155,7 +159,7 @@ public class FedoraVersioning extends FedoraBaseResource {
                     nodeToResource(translator()).convert(
                             resource().getBaseVersion().getFrozenNode()).getURI()).build();
         }
-        return status(BAD_REQUEST).entity("Specify label for version").build();
+        return status(BAD_REQUEST).entity("Specify a valid label for version").build();
     }
 
 
@@ -190,5 +194,15 @@ public class FedoraVersioning extends FedoraBaseResource {
     @Override
     protected Session session() {
         return session;
+    }
+
+    /**
+     * Determines if a label contains valid characters
+     * @param label label
+     * @return whether label contains valid characters
+     */
+    public boolean invalidLabel(final String label) {
+        final Matcher matcher = invalidLabelPattern.matcher(label);
+        return matcher.find();
     }
 }
