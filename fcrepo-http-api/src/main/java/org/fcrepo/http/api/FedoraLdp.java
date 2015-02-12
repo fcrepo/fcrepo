@@ -345,16 +345,11 @@ public class FedoraLdp extends ContentExposingResource {
             LOGGER.info("PATCH for '{}'", externalPath);
             patchResourcewithSparql(resource(), requestBody, resourceTriples);
 
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
+            session.save();
 
             addCacheControlHeaders(servletResponse, resource(), session);
 
             return noContent().build();
-
         } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
             if ( cause != null && cause instanceof PathNotFoundException) {
@@ -362,6 +357,8 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new BadRequestException(cause.getMessage());
             }
             throw ex;
+        }  catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 

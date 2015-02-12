@@ -144,11 +144,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                try {
-                    jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());
-                } catch (final RepositoryException e) {
-                    // TODO
-                }
+                jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());
                 return;
             }
 
