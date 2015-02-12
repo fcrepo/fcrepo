@@ -24,6 +24,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.ModeShapeEngine;
 import org.modeshape.jcr.NoSuchRepositoryException;
@@ -60,21 +61,24 @@ public class ModeShapeRepositoryFactoryBean implements
      * @throws Exception
      */
     @PostConstruct
-    public void buildRepository() throws Exception {
-        LOGGER.info("Using repo config (classpath): {}", repositoryConfiguration.getURL());
+    public void buildRepository() {
+        try {
+            LOGGER.info("Using repo config (classpath): {}", repositoryConfiguration.getURL());
+            getPropertiesLoader().loadSystemProperties();
 
-        getPropertiesLoader().loadSystemProperties();
+            final RepositoryConfiguration config =
+                    RepositoryConfiguration.read(repositoryConfiguration.getURL());
+            repository = modeShapeEngine.deploy(config);
 
-        final RepositoryConfiguration config =
-                RepositoryConfiguration.read(repositoryConfiguration.getURL());
-        repository = modeShapeEngine.deploy(config);
-
-        // next line ensures that repository starts before the factory is used.
-        final org.modeshape.common.collection.Problems problems =
-                repository.getStartupProblems();
-        for (final org.modeshape.common.collection.Problem p : problems) {
-            LOGGER.error("ModeShape Start Problem: {}", p.getMessageString());
-            // TODO determine problems that should be runtime errors
+            // next line ensures that repository starts before the factory is used.
+            final org.modeshape.common.collection.Problems problems =
+                    repository.getStartupProblems();
+            for (final org.modeshape.common.collection.Problem p : problems) {
+                LOGGER.error("ModeShape Start Problem: {}", p.getMessageString());
+                // TODO determine problems that should be runtime errors
+            }
+        } catch (Exception e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 

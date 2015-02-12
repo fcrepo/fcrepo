@@ -15,6 +15,7 @@
  */
 package org.modeshape.connector.filesystem;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
 
 import java.io.File;
@@ -60,7 +61,7 @@ public class ExternalJsonSidecarExtraPropertyStore extends JsonSidecarExtraPrope
             file = propertyStoreRoot.toPath().resolve(relativePath).toFile();
         }
         if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
-            throw new RuntimeException("Unable to create directories " + file.getParentFile() + ".");
+            throw new RepositoryRuntimeException("Unable to create directories " + file.getParentFile() + ".");
         }
         return file;
     }
