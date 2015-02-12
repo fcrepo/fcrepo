@@ -236,6 +236,18 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testVersionLabelWithInvalidCharacters() throws Exception {
+        final String label = "\"label with quotes";
+        final String objId = getRandomUniquePid();
+        createObject(objId);
+        enableVersioning(objId);
+        final HttpPost postVersion = postObjMethod(objId + "/fcr:versions");
+        postVersion.addHeader("Slug", label);
+        final HttpResponse response = execute(postVersion);
+        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode() );
+    }
+
+    @Test
     public void testCreateTwoVersionsWithSameLabel() throws Exception {
         final String label1 = "label";
         final String label2 = "different-label";
