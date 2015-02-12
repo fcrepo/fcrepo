@@ -60,7 +60,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         public String apply(final Event ev) {
             try {
                 final String id = ev.getIdentifier();
-                log.debug("Sorting an event by identifier: {}", id);
+                LOGGER.debug("Sorting an event by identifier: {}", id);
                 return id;
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
@@ -116,7 +116,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
                         final String eventPath = ev.getPath();
                         fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf("/") + 1));
                     } else {
-                        log.trace("Not adding non-event property: {}, {}", fedoraEvent, ev);
+                        LOGGER.trace("Not adding non-event property: {}, {}", fedoraEvent, ev);
                     }
                 } catch (final RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
@@ -125,5 +125,5 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         };
     }
 
-    private final static Logger log = getLogger(AllNodeEventsOneEvent.class);
+    private static final Logger LOGGER = getLogger(AllNodeEventsOneEvent.class);
 }

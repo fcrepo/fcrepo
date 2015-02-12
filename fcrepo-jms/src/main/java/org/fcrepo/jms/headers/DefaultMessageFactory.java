@@ -79,14 +79,14 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
                     url = url.substring(0, url.length() - 1);
                 }
                 this.baseURL = url;
-                log.debug("MessageFactory baseURL: {}", baseURL);
+                LOGGER.debug("MessageFactory baseURL: {}", baseURL);
 
             } else {
-                log.warn("MessageFactory baseURL is empty!");
+                LOGGER.warn("MessageFactory baseURL is empty!");
             }
 
         } catch ( Exception ex ) {
-            log.warn("Error setting baseURL", ex);
+            LOGGER.warn("Error setting baseURL", ex);
         }
     }
 
@@ -111,7 +111,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(PROPERTIES_HEADER_NAME, Joiner.on(',').join(jcrEvent.getProperties()));
 
-        log.trace("getMessage() returning: {}", message);
+        LOGGER.trace("getMessage() returning: {}", message);
         return message;
     }
 
@@ -123,10 +123,10 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
                 return REPOSITORY_NAMESPACE + EventType.valueOf(type);
             }
         }));
-        log.debug("Constructed event type URIs: {}", uris);
+        LOGGER.debug("Constructed event type URIs: {}", uris);
         return uris;
     }
 
-    private static final Logger log = getLogger(DefaultMessageFactory.class);
+    private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);
 
 }
