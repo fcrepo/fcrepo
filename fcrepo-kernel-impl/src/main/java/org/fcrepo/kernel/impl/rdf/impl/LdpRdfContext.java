@@ -21,12 +21,10 @@ import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;
-import static org.slf4j.LoggerFactory.getLogger;
 
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.slf4j.Logger;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -37,7 +35,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  */
 public class LdpRdfContext extends NodeRdfContext {
 
-    private static final Logger LOGGER = getLogger(LdpRdfContext.class);
 
     /**
      * Default constructor.

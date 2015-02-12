@@ -16,12 +16,10 @@
 package org.fcrepo.kernel.impl;
 
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 
 import org.fcrepo.kernel.models.Container;
-import org.slf4j.Logger;
 
 /**
  * An abstraction that represents a Fedora Object backed by
@@ -32,7 +30,6 @@ import org.slf4j.Logger;
  */
 public class ContainerImpl extends FedoraResourceImpl implements Container {
 
-    private static final Logger LOGGER = getLogger(Container.class);
 
     /**
      * Construct a {@link org.fcrepo.kernel.models.Container} from an existing JCR Node
