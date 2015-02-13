@@ -34,7 +34,7 @@ import com.google.common.collect.ImmutableMap;
  * @author Chris Beer
  * @since Mar 6, 2013
  */
-public abstract class ContentDigest {
+public final class ContentDigest {
 
     private static final Logger LOGGER = getLogger(ContentDigest.class);
 
@@ -43,6 +43,7 @@ public abstract class ContentDigest {
 
     public static final Map<String, String> schemeToAlgorithm =
         singletonMap("urn:sha1", "SHA-1");
+
     public static final String DEFAULT_ALGORITHM = "SHA-1";
 
     /**
@@ -97,5 +98,8 @@ public abstract class ContentDigest {
      */
     public static URI missingChecksum() {
         return asURI("SHA-1", "missing");
+    }
+
+    private ContentDigest() {
     }
 }

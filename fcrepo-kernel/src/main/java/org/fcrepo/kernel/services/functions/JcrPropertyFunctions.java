@@ -38,7 +38,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author cabeer
  * @since 9/25/14
  */
-public abstract class JcrPropertyFunctions {
+public final class JcrPropertyFunctions {
 
     private static final Logger LOGGER = getLogger(JcrPropertyFunctions.class);
     /**
@@ -139,4 +139,7 @@ public abstract class JcrPropertyFunctions {
             }
         }
     };
+
+    private JcrPropertyFunctions() {
+    }
 }
