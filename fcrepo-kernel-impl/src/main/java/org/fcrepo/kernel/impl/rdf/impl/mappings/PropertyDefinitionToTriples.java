@@ -66,7 +66,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
     /**
      * A JCR type for which we know no RDF equivalent.
      */
-    private static Node UNMAPPED_TYPE = createURI(REPOSITORY_NAMESPACE
+    private static Node unmapped_TYPE = createURI(REPOSITORY_NAMESPACE
             + "UnmappedType");
 
     /**
@@ -113,7 +113,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
 
             final Node rangeForJcrType = getRangeForJcrType(requiredType);
 
-            if (rangeForJcrType != UNMAPPED_TYPE) {
+            if (rangeForJcrType != unmapped_TYPE) {
                 LOGGER.trace("Adding RDFS:range for property: {} with required type: {} as: {}",
                     input.getName(), nameFromValue(requiredType), rangeForJcrType.getURI());
                 final Triple propertyTriple =
@@ -139,6 +139,6 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
     private static Node getRangeForJcrType(final int requiredType) {
         return JCR_TYPE_TO_XSD_DATATYPE.containsKey(requiredType)
             ? createURI(JCR_TYPE_TO_XSD_DATATYPE.get(requiredType).getURI())
-            : UNMAPPED_TYPE;
+            : unmapped_TYPE;
     }
 }

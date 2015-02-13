@@ -28,7 +28,6 @@ import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
-//import org.fcrepo.kernel.services.RepositoryService;
 import org.fcrepo.kernel.services.VersionService;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.bridge.SLF4JBridgeHandler;
