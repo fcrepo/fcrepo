@@ -113,7 +113,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
 
             final Node rangeForJcrType = getRangeForJcrType(requiredType);
 
-            if (rangeForJcrType != UNMAPPED_TYPE) {
+            if (!rangeForJcrType.equals(UNMAPPED_TYPE)) {
                 LOGGER.trace("Adding RDFS:range for property: {} with required type: {} as: {}",
                     input.getName(), nameFromValue(requiredType), rangeForJcrType.getURI());
                 final Triple propertyTriple =

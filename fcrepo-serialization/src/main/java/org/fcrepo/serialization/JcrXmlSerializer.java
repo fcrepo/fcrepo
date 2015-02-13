@@ -170,6 +170,7 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
          */
         public TempFileInputStream(final File f) throws FileNotFoundException {
             super(f);
+            this.f = f;
         }
 
         @Override
