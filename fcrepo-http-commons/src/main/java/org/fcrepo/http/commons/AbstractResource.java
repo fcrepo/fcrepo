@@ -37,12 +37,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.eventbus.EventBus;
 
 /**
- * Abstract superclass for Fedora JAX-RS Resources, providing convenience fields
+ * Superclass for Fedora JAX-RS Resources, providing convenience fields
  * and methods.
  *
  * @author ajs6f
  */
-public abstract class AbstractResource {
+public class AbstractResource {
 
     static {
         // the SLF4J to JUL bridge normally adds its attachments

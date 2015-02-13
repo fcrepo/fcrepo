@@ -34,7 +34,10 @@ import com.google.common.base.Function;
  * @author Benjamin Armintor
  * @since May 13, 2013
  */
-public abstract class NamespaceTools {
+public final class NamespaceTools {
+
+    private NamespaceTools() {
+    }
 
     /**
      * We need the Modeshape NamespaceRegistry, because it allows us to register
@@ -105,4 +108,5 @@ public abstract class NamespaceTools {
             }
         }
     }
+
 }
