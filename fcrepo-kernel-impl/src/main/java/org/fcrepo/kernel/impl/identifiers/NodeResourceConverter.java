@@ -63,4 +63,9 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
     protected Node doBackward(final FedoraResource resource) {
         return resource.getNode();
     }
+
+    @Override
+    public int hashCode() {
+        throw new UnsupportedOperationException();
+    }
 }

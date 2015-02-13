@@ -67,4 +67,10 @@ public class NamespaceConverter extends InternalIdentifierConverter {
         }
         return result;
     }
+
+    @Override
+    public int hashCode() {
+        throw new UnsupportedOperationException();
+    }
+
 }

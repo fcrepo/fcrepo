@@ -139,4 +139,9 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
         return absPath;
     }
 
+    @Override
+    public int hashCode() {
+        throw new UnsupportedOperationException();
+    }
+
 }

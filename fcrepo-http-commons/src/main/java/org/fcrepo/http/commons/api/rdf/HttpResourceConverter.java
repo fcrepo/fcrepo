@@ -129,17 +129,17 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                     + " that doesn't match the URI template");
         } catch (final RepositoryException e) {
             validatePath(session, path);
-            try {
-                if ( e instanceof PathNotFoundException ) {
+
+            if ( e instanceof PathNotFoundException ) {
+                try {
                     final Node preexistingNode = getClosestExistingAncestor(session, path);
                     if (TombstoneImpl.hasMixin(preexistingNode)) {
                         throw new TombstoneException(new TombstoneImpl(preexistingNode));
                     }
+                } catch (RepositoryException inner) {
+                    LOGGER.debug("Error checking for parent tombstones", inner);
                 }
-            } catch (final RepositoryException inner) {
-                LOGGER.debug("Error checking for parent tombstones", inner);
             }
-
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -448,5 +448,10 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
             return EMPTY;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        throw new UnsupportedOperationException();
     }
 }

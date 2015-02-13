@@ -192,6 +192,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             }
             return fedoraResource;
         }
+
+        @Override
+        public int hashCode() {
+            throw new UnsupportedOperationException();
+        }
     };
 
     private static final Converter<Node, FedoraResource> nodeToObjectBinaryConverter

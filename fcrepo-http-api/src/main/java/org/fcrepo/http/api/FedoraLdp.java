@@ -357,7 +357,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
-            if ( cause != null && cause instanceof PathNotFoundException) {
+            if (cause instanceof PathNotFoundException) {
                 // the sparql update referred to a repository resource that doesn't exist
                 throw new BadRequestException(cause.getMessage());
             }

@@ -268,4 +268,9 @@ public class ValueConverter extends Converter<Value, RDFNode> {
             return hasDatatypeUri() && datatypeUri.equals("URI");
         }
     }
+
+    @Override
+    public int hashCode() {
+        throw new UnsupportedOperationException();
+    }
 }
