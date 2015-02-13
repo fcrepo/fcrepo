@@ -66,10 +66,12 @@ public class TypeRdfContext extends NodeRdfContext {
         final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();
         nodeTypesB.add(primaryNodeType);
 
-        if (primaryNodeType != null && primaryNodeType.getSupertypes() != null) {
+        try {
             final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
                     .add(primaryNodeType.getSupertypes()).build();
             nodeTypesB.addAll(primarySupertypes);
+        } catch (NullPointerException e) {
+            // ignore
         }
 
         final NodeType[] mixinNodeTypesArr = resource().getNode().getMixinNodeTypes();

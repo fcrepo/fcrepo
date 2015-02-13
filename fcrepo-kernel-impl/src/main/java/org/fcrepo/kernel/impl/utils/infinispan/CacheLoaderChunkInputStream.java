@@ -39,7 +39,7 @@ public class CacheLoaderChunkInputStream extends InputStream {
     private int chunkNumber;
 
     /**
-     * Appease checkstyles..
+     * Constructor
      * @param blobCache
      * @param key
      * @param chunkSize
@@ -175,7 +175,7 @@ public class CacheLoaderChunkInputStream extends InputStream {
 
     private void fillBuffer(final int chunkNumber) {
         buffer = readChunk(chunkNumber);
-        if (buffer == null) {
+        if (buffer == null || buffer.length == 0) {
             endOfStream();
         } else {
             indexInBuffer = 0;
@@ -194,6 +194,6 @@ public class CacheLoaderChunkInputStream extends InputStream {
         if (blobCache.contains(chunkKey)) {
             return blobCache.load(chunkKey).getValue();
         }
-        return null;
+        return new byte[]{};
     }
 }
