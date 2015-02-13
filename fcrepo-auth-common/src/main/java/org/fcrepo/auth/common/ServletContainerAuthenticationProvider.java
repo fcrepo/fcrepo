@@ -41,10 +41,10 @@ import org.slf4j.LoggerFactory;
 public final class ServletContainerAuthenticationProvider implements
         AuthenticationProvider {
 
-    private static ServletContainerAuthenticationProvider _instance = null;
+    private static ServletContainerAuthenticationProvider instance = null;
 
     private ServletContainerAuthenticationProvider() {
-        _instance = this;
+        instance = this;
     }
 
     public static final String EVERYONE_NAME = "EVERYONE";
@@ -90,12 +90,12 @@ public final class ServletContainerAuthenticationProvider implements
      * @return a AuthenticationProvider
      */
     public static synchronized AuthenticationProvider getInstance() {
-        if (_instance != null) {
-            return _instance;
+        if (instance != null) {
+            return instance;
         }
-        _instance = new ServletContainerAuthenticationProvider();
+        instance = new ServletContainerAuthenticationProvider();
         LOGGER.warn("Security is MINIMAL, no Policy Enforcement Point configured.");
-        return _instance;
+        return instance;
     }
 
     /**

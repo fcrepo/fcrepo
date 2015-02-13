@@ -136,7 +136,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected FedoraResource resource;
 
-    private static long MAX_BUFFER_SIZE = 10240000;
+    private static final long MAX_BUFFER_SIZE = 10240000;
 
     protected abstract String externalPath();
 
@@ -342,13 +342,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                             .header("Content-Range", contentRangeValue);
                 } else {
-                    final long maxBufferSize = MAX_BUFFER_SIZE; // 10MB max buffer size?
                     final long rangeStart = range.start();
                     final long rangeSize = range.size() == -1 ? contentSize - rangeStart : range.size();
                     final long remainingBytes = contentSize - rangeStart;
                     final long bufSize = rangeSize < remainingBytes ? rangeSize : remainingBytes;
 
-                    if (bufSize < maxBufferSize) {
+                    if (bufSize < MAX_BUFFER_SIZE) {
                         // Small size range content retrieval use javax.jcr.Binary to improve performance
                         final byte[] buf = new byte[(int) bufSize];
 
