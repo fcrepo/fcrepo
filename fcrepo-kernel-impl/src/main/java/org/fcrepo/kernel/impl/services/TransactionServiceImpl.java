@@ -133,9 +133,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     }
 
     @Override
-    public Transaction getTransaction(final String txId, final String userName)
-        throws TransactionMissingException {
-
+    public Transaction getTransaction(final String txId, final String userName) {
         final Transaction tx = transactions.get(txId);
 
         if (tx == null) {
@@ -158,9 +156,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * @throws TransactionMissingException
      */
     @Override
-    public Transaction getTransaction(final Session session)
-        throws TransactionMissingException {
-
+    public Transaction getTransaction(final Session session) {
         final String txId = getCurrentTransactionId(session);
 
         if (txId == null) {

@@ -70,7 +70,7 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
                                 final Annotation[] annotations,
                                 final MediaType mediaType,
                                 final MultivaluedMap<String, String> httpHeaders,
-                                final InputStream entityStream) throws IOException, WebApplicationException {
+                                final InputStream entityStream) throws IOException {
 
         if (httpHeaders.containsKey("Content-Location")) {
             final String location = httpHeaders.getFirst("Content-Location");
