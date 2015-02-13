@@ -41,8 +41,6 @@ public class LdpPreferTag extends PreferTag {
 
     private final boolean references;
 
-    private final boolean preferMinimalContainer;
-
     private final boolean embed;
 
     private final boolean managedProperties;
@@ -64,7 +62,7 @@ public class LdpPreferTag extends PreferTag {
 
         final boolean minimal = preferTag.getValue().equals("minimal") || received.or("").equals("minimal");
 
-        preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer") || minimal;
+        final boolean preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer") || minimal;
 
         membership = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferMembership")) ||
                 includes.contains(LDP_NAMESPACE + "PreferMembership");

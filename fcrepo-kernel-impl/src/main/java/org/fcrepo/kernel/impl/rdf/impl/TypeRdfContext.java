@@ -64,12 +64,17 @@ public class TypeRdfContext extends NodeRdfContext {
         final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
 
         final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();
-        nodeTypesB.add(primaryNodeType);
 
-        if (primaryNodeType != null && primaryNodeType.getSupertypes() != null) {
+        if (primaryNodeType != null) {
+            nodeTypesB.add(primaryNodeType);
+        }
+
+        try {
             final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
                     .add(primaryNodeType.getSupertypes()).build();
             nodeTypesB.addAll(primarySupertypes);
+        } catch (NullPointerException e) {
+            // ignore
         }
 
         final NodeType[] mixinNodeTypesArr = resource().getNode().getMixinNodeTypes();

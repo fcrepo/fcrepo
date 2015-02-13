@@ -39,7 +39,7 @@ public class CacheLoaderChunkInputStream extends InputStream {
     private int chunkNumber;
 
     /**
-     * Appease checkstyles..
+     * Constructor
      * @param blobCache
      * @param key
      * @param chunkSize
