@@ -317,10 +317,10 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
-            <fcrepo.test.port>${fcrepo.test.port}</fcrepo.test.port>
+            <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
             <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
-            <fcrepo.jms.port>${fcrepo.jms.port}</fcrepo.jms.port>
-            <fcrepo.stomp.port>${fcrepo.stomp.port}</fcrepo.stomp.port>
+            <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
+            <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
             <integration-test>true</integration-test>
           </systemPropertyVariables>
         </configuration>
@@ -330,11 +330,11 @@
         <artifactId>build-helper-maven-plugin</artifactId>
         <configuration>
           <portNames>
-            <portName>fcrepo.test.port</portName>
+            <portName>fcrepo.dynamic.test.port</portName>
             <!-- reserves the stop port for jetty-maven-plugin -->
-            <portName>jetty.port.stop</portName>
-            <portName>fcrepo.jms.port</portName>
-            <portName>fcrepo.stomp.port</portName>
+            <portName>jetty.dynamic.stop.port</portName>
+            <portName>fcrepo.dynamic.jms.port</portName>
+            <portName>fcrepo.dynamic.stomp.port</portName>
           </portNames>
         </configuration>
       </plugin>
@@ -352,13 +352,13 @@
             <configuration>
               <properties>
                 <property>
-                  <name>fcrepo.jms.port</name>
-                  <value>${fcrepo.jms.port}</value>
+                  <name>fcrepo.dynamic.jms.port</name>
+                  <value>${fcrepo.dynamic.jms.port}</value>
                 </property>
 
                 <property>
-                  <name>fcrepo.stomp.port</name>
-                  <value>${fcrepo.stomp.port}</value>
+                  <name>fcrepo.dynamic.stomp.port</name>
+                  <value>${fcrepo.dynamic.stomp.port}</value>
                 </property>
 
                 <property>
@@ -399,22 +399,22 @@
             <configuration>
               <connectors>
                 <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-                  <port>${fcrepo.test.port}</port>
+                  <port>${fcrepo.dynamic.test.port}</port>
                   <maxIdleTime>60000</maxIdleTime>
                 </connector>
               </connectors>
               <daemon>true</daemon>
-              <stopPort>${jetty.port.stop}</stopPort>
+              <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
                 <systemProperty>
-                  <name>fcrepo.jms.port</name>
-                  <value>${fcrepo.jms.port}</value>
+                  <name>fcrepo.dynamic.jms.port</name>
+                  <value>${fcrepo.dynamic.jms.port}</value>
                 </systemProperty>
 
                 <systemProperty>
-                  <name>fcrepo.stomp.port</name>
-                  <value>${fcrepo.stomp.port}</value>
+                  <name>fcrepo.dynamic.stomp.port</name>
+                  <value>${fcrepo.dynamic.stomp.port}</value>
                 </systemProperty>
 
                 <systemProperty>
@@ -449,7 +449,7 @@
               <goal>stop</goal>
             </goals>
             <configuration>
-              <stopPort>${jetty.port.stop}</stopPort>
+              <stopPort>${jetty.dynamic.stop.port}</stopPort>
             </configuration>
           </execution>
         </executions>
@@ -501,7 +501,7 @@
                 <jmeter.exit.check.pause>${jmeter.exit.check.pause}</jmeter.exit.check.pause>
               </propertiesJMeter>
               <propertiesUser>
-                <fedora_4_port>${fcrepo.test.port}</fedora_4_port>
+                <fedora_4_port>${fcrepo.dynamic.test.port}</fedora_4_port>
                 <fedora_4_context>rest</fedora_4_context>
                 <loop_count>${jmeter.loop_count}</loop_count>
                 <num_threads>${jmeter.num_threads}</num_threads>

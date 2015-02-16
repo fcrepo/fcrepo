@@ -59,6 +59,8 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
+    <!-- default properties that can be altered on the command line -->
+    <fcrepo.test.context.path/>
   </properties>
   <modules>
     <module>fcrepo-boms</module>
@@ -605,7 +607,7 @@
           <version>2.17</version>
           <configuration>
             <systemPropertyVariables>
-              <fcrepo.test.port>${fcrepo.test.port}</fcrepo.test.port>
+              <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
               <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
               <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
                 ${project.build.directory}/object-store-default
@@ -701,11 +703,11 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
-          <!-- reserve a port under the property ${fcrepo.test.port} for integration 
+          <!-- reserve a port under the property ${fcrepo.dynamic.test.port} for integration
             tests -->
           <configuration>
             <portNames>
-              <portName>fcrepo.test.port</portName>
+              <portName>fcrepo.dynamic.test.port</portName>
             </portNames>
           </configuration>
           <executions>
