@@ -19,6 +19,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.annotation.Timed;
@@ -31,8 +32,10 @@ import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.http.HttpResponse;
@@ -49,6 +52,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.fcrepo.kernel.identifiers.PidMinter;
+import org.xml.sax.SAXException;
 
 
 /**
@@ -135,15 +139,19 @@ public class HttpPidMinter implements PidMinter {
     }
 
     /**
-     * Remove unwanted text from the minter service response to produce the desired identifer.
+     * Remove unwanted text from the minter service response to produce the desired identifier.
      * Override this method for processing more complex than a simple regex replacement.
     **/
-    protected String responseToPid( final String responseText ) throws Exception {
+    protected String responseToPid( final String responseText ) throws IOException {
         log.debug("responseToPid({})", responseText);
         if ( !isBlank(regex) ) {
             return responseText.replaceFirst(regex,"");
         } else if ( xpath != null ) {
-            return xpath( responseText, xpath );
+            try {
+                return xpath( responseText, xpath );
+            } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
+                throw new IOException(e);
+            }
         } else {
             return responseText;
         }
@@ -152,7 +160,8 @@ public class HttpPidMinter implements PidMinter {
     /**
      * Extract the desired identifier value from an XML response using XPath
     **/
-    private static String xpath( final String xml, final XPathExpression xpath ) throws Exception {
+    private static String xpath( final String xml, final XPathExpression xpath )
+            throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
         final DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         final Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes()));
         return xpath.evaluate(doc);
@@ -171,10 +180,10 @@ public class HttpPidMinter implements PidMinter {
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( IOException ex ) {
             log.warn("Error minting pid from {}: {}", url, ex);
-            throw new RuntimeException("Error minting pid", ex);
+            throw new RepositoryRuntimeException("Error minting pid", ex);
         } catch ( Exception ex ) {
             log.warn("Error processing minter response", ex);
-            throw new RuntimeException("Error processing minter response", ex);
+            throw new RepositoryRuntimeException("Error processing minter response", ex);
         }
     }
 }

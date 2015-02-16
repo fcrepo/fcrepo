@@ -362,7 +362,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
             return path;
         }
-        throw new RuntimeException("Unable to process reverse chain for resource " + resource);
+        throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
     }
 
 
