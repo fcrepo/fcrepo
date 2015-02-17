@@ -205,7 +205,7 @@ public final class ServletContainerAuthenticationProvider implements
     }
 
     private Set<Principal> collectPrincipals(final Credentials credentials) {
-        final HashSet<Principal> principals = new HashSet<>();
+        final Set<Principal> principals = new HashSet<>();
 
         // TODO add exception handling for principal providers
         for (final PrincipalProvider p : this.getPrincipalProviders()) {
