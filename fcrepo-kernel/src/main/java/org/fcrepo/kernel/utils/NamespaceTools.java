@@ -36,6 +36,9 @@ import com.google.common.base.Function;
  */
 public final class NamespaceTools {
 
+    private NamespaceTools() {
+    }
+
     /**
      * We need the Modeshape NamespaceRegistry, because it allows us to register
      * anonymous namespaces.
@@ -106,6 +109,4 @@ public final class NamespaceTools {
         }
     }
 
-    private NamespaceTools() {
-    }
 }

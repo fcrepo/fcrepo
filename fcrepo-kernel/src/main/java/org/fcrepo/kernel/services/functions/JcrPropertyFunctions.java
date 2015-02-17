@@ -41,6 +41,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 public final class JcrPropertyFunctions {
 
     private static final Logger LOGGER = getLogger(JcrPropertyFunctions.class);
+
+    private JcrPropertyFunctions() {
+    }
+
     /**
      * Translates a {@link javax.jcr.nodetype.NodeType} to its {@link String} name.
      */
@@ -140,6 +144,4 @@ public final class JcrPropertyFunctions {
         }
     };
 
-    private JcrPropertyFunctions() {
-    }
 }

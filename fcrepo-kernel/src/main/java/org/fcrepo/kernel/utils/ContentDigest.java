@@ -46,6 +46,9 @@ public final class ContentDigest {
 
     public static final String DEFAULT_ALGORITHM = "SHA-1";
 
+    private ContentDigest() {
+    }
+
     /**
      * Convert a MessageDigest algorithm and checksum value to a URN
      * @param algorithm
@@ -100,6 +103,4 @@ public final class ContentDigest {
         return asURI("SHA-1", "missing");
     }
 
-    private ContentDigest() {
-    }
 }
