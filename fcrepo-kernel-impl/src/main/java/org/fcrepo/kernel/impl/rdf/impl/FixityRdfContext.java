@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.builder;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -38,6 +37,7 @@ import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -71,48 +71,65 @@ public class FixityRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         concat(Iterators.concat(Iterators.transform(blobs.iterator(),
-                new Function<FixityResult, Iterator<Triple>>() {
+                new FixityResultIteratorFunction(resource, idTranslator, digest, size))));
+    }
 
-                    @Override
-                    public Iterator<Triple> apply(final FixityResult blob) {
-                        final com.hp.hpl.jena.graph.Node resultSubject = getTransientFixitySubject();
-                        final ImmutableSet.Builder<Triple> b = builder();
-                        try {
-                            b.add(create(idTranslator.reverse().convert(resource).asNode(),
-                                    HAS_FIXITY_RESULT.asNode(), resultSubject));
-                            b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
-                            final String storeIdentifier = blob.getStoreIdentifier();
-                            final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
-                                                                     .asNode();
+    private class FixityResultIteratorFunction implements Function<FixityResult, Iterator<Triple>> {
 
-                            for (final FixityResult.FixityState state : blob.getStatus(size, digest)) {
-                                b.add(create(resultSubject, HAS_FIXITY_STATE
-                                        .asNode(), createLiteral(state
-                                        .toString())));
-                            }
-                            final String checksum =
-                                    blob.getComputedChecksum().toString();
-                            b.add(create(resultSubject, HAS_MESSAGE_DIGEST
-                                    .asNode(), createURI(checksum)));
-                            b.add(create(resultSubject, HAS_SIZE.asNode(),
-                                    createTypedLiteral(
-                                            blob.getComputedSize())
-                                    .asNode()));
-                            b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),
-                                    contentLocation));
-                            b.add(create(contentLocation,
-                                    RDF.type.asNode(),
-                                    CONTENT_LOCATION_TYPE.asNode()));
-                            b.add(create(contentLocation,
-                                    HAS_CONTENT_LOCATION_VALUE.asNode(),
-                                    createLiteral(storeIdentifier)));
+        private final FedoraResource resource;
+        private final IdentifierConverter<Resource, FedoraResource> idTranslator;
+        private URI digest;
+        private final long size;
 
-                            return b.build().iterator();
-                        } catch (final RepositoryException e) {
-                            throw propagate(e);
-                        }
-                    }
-                })));
+        public FixityResultIteratorFunction(final FedoraResource resource,
+                                            final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                                            final URI digest,  final long size) {
+            this.resource = resource;
+            this.idTranslator = idTranslator;
+            this.digest = digest;
+            this.size = size;
+        }
+
+        @Override
+        public Iterator<Triple> apply(final FixityResult blob) {
+            final com.hp.hpl.jena.graph.Node resultSubject = getTransientFixitySubject();
+            final ImmutableSet.Builder<Triple> b = builder();
+            try {
+                b.add(create(idTranslator.reverse().convert(resource).asNode(),
+                        HAS_FIXITY_RESULT.asNode(), resultSubject));
+                b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
+                final String storeIdentifier = blob.getStoreIdentifier();
+                final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
+                        .asNode();
+
+                for (final FixityResult.FixityState state : blob.getStatus(size, digest)) {
+                    b.add(create(resultSubject, HAS_FIXITY_STATE
+                            .asNode(), createLiteral(state
+                            .toString())));
+                }
+                final String checksum =
+                        blob.getComputedChecksum().toString();
+                b.add(create(resultSubject, HAS_MESSAGE_DIGEST
+                        .asNode(), createURI(checksum)));
+                b.add(create(resultSubject, HAS_SIZE.asNode(),
+                        createTypedLiteral(
+                                blob.getComputedSize())
+                                .asNode()));
+                b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),
+                        contentLocation));
+                b.add(create(contentLocation,
+                        RDF.type.asNode(),
+                        CONTENT_LOCATION_TYPE.asNode()));
+                b.add(create(contentLocation,
+                        HAS_CONTENT_LOCATION_VALUE.asNode(),
+                        createLiteral(storeIdentifier)));
+
+                return b.build().iterator();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        }
+
     }
 
     private com.hp.hpl.jena.graph.Node getTransientFixitySubject() {

@@ -98,16 +98,14 @@ public class TypeRdfContext extends NodeRdfContext {
             @Override
             public Triple apply(final NodeType nodeType) {
                 try {
-                    final String fullTypeName = nodeType.getName();
-                    LOGGER.trace("Translating JCR mixin name: {}", fullTypeName);
-                    final String prefix = fullTypeName.split(":")[0];
-                    final String typeName = fullTypeName.split(":")[1];
+                    final String name = nodeType.getName();
+                    final String prefix = name.split(":")[0];
+                    final String typeName = name.split(":")[1];
                     final String namespace = getJcrUri(prefix);
-                    LOGGER.trace("with JCR namespace: {}", namespace);
                     final com.hp.hpl.jena.graph.Node rdfType =
                             createURI(getRDFNamespaceForJcrNamespace(namespace)
                                     + typeName);
-                    LOGGER.trace("into RDF resource: {}", rdfType);
+                    LOGGER.trace("Translating mixin: {} w/ namespace: {} into resource: {}", name, namespace, rdfType);
                     return create(subject(), type.asNode(), rdfType);
                 } catch (final RepositoryException e) {
                     throw propagate(e);
