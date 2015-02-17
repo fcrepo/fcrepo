@@ -197,6 +197,6 @@ public class FedoraTransform extends ContentExposingResource {
 
     @Override
     protected void addResourceHttpHeaders(final FedoraResource resource) {
-
+        throw new UnsupportedOperationException();
     }
 }
