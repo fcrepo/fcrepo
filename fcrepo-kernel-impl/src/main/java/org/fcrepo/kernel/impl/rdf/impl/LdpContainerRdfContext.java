@@ -153,9 +153,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
     private class FedoraResourceTripleFunction implements Function<FedoraResource, Iterator<Triple>>   {
 
-        final String insertedContainerProperty;
+        private final String insertedContainerProperty;
 
-        final com.hp.hpl.jena.graph.Node memberRelation;
+        private final com.hp.hpl.jena.graph.Node memberRelation;
 
         public FedoraResourceTripleFunction(final String insertedContainerProperty,
                                             final com.hp.hpl.jena.graph.Node memberRelation) {

@@ -75,18 +75,18 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
     private class FedoraEventIterator implements Iterator {
 
-        final Iterator<Event> events;
+        private final Iterator<Event> events;
+
+        // sort JCR events into a Multimap keyed by the node ID involved
+        private final Multimap<String, Event> sortedEvents;
+
+        private final Iterator<String> nodeIds;
 
         public FedoraEventIterator(final Iterator<Event> events) {
             this.events = events;
             sortedEvents = index(events, EXTRACT_NODE_ID);
             nodeIds = sortedEvents.keySet().iterator();
         }
-
-        // sort JCR events into a Multimap keyed by the node ID involved
-        final Multimap<String, Event> sortedEvents;
-
-        final Iterator<String> nodeIds;
 
         @Override
         public boolean hasNext() {

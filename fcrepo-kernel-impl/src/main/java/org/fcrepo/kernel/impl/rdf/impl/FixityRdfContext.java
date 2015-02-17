@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.ImmutableSet.builder;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -38,6 +37,7 @@ import javax.jcr.RepositoryException;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.RDF;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -76,10 +76,10 @@ public class FixityRdfContext extends NodeRdfContext {
 
     private class FixityResultIteratorFunction implements Function<FixityResult, Iterator<Triple>> {
 
-        final FedoraResource resource;
-        final IdentifierConverter<Resource, FedoraResource> idTranslator;
+        private final FedoraResource resource;
+        private final IdentifierConverter<Resource, FedoraResource> idTranslator;
         private URI digest;
-        final long size;
+        private final long size;
 
         public FixityResultIteratorFunction(final FedoraResource resource,
                                             final IdentifierConverter<Resource, FedoraResource> idTranslator,
@@ -126,7 +126,7 @@ public class FixityRdfContext extends NodeRdfContext {
 
                 return b.build().iterator();
             } catch (final RepositoryException e) {
-                throw propagate(e);
+                throw new RepositoryRuntimeException(e);
             }
         }
 

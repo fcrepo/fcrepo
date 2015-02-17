@@ -72,6 +72,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
             @Override
             public Iterator<Triple> apply(final FedoraResource child) {
+
                 final com.hp.hpl.jena.graph.Node childSubject;
 
                 if (child instanceof NonRdfSourceDescription) {

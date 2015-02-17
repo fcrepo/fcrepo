@@ -123,27 +123,35 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * Check whether a property is protected (ie, cannot be modified directly) but
      * is not one we've explicitly chosen to include.
      */
-    public static Predicate<Property> isProtectedAndShouldBeHidden =
-        new Predicate<Property>() {
+    public static Predicate<Property> isProtectedAndShouldBeHidden = new ProtectedAndHiddenCheck();
 
-            @Override
-            public boolean apply(final Property p) {
-                try {
-                    if (!p.getDefinition().isProtected() || p.getParent().isNodeType(FROZEN_NODE)) {
-                        return false;
-                    } else {
-                        for (String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
-                            if (p.getName().equals(exposedName)) {
-                                return false;
-                            }
+    private static class ProtectedAndHiddenCheck implements  Predicate<Property> {
+
+        @Override
+        public boolean apply(final Property p) {
+            try {
+                if (!p.getDefinition().isProtected()) {
+                    return false;
+                } else if (p.getParent().isNodeType(FROZEN_NODE)) {
+                    // everything on a frozen node is protected
+                    // but we wish to display it anyway and there's
+                    // another mechanism in place to make clear that
+                    // things cannot be edited.
+                    return false;
+                } else {
+                    final String name = p.getName();
+                    for (String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
+                        if (name.equals(exposedName)) {
+                            return false;
                         }
-                        return true;
                     }
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
+                    return true;
                 }
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
-        };
+        }
+    }
 
     /**
      * Check if a node is "internal" and should not be exposed e.g. via the REST
