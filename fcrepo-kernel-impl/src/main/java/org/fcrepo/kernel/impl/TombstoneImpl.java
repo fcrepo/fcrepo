@@ -15,14 +15,11 @@
  */
 package org.fcrepo.kernel.impl;
 
-import org.fcrepo.kernel.models.Tombstone;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.slf4j.Logger;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.models.Tombstone;
 
 /**
  * @author cabeer
@@ -30,7 +27,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 
-    private static final Logger LOGGER = getLogger(TombstoneImpl.class);
 
     /**
      * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
