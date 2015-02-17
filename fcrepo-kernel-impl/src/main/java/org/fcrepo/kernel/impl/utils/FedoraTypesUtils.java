@@ -129,18 +129,11 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             @Override
             public boolean apply(final Property p) {
                 try {
-                    if (!p.getDefinition().isProtected()) {
-                        return false;
-                    } else if (p.getParent().isNodeType(FROZEN_NODE)) {
-                        // everything on a frozen node is protected
-                        // but we wish to display it anyway and there's
-                        // another mechanism in place to make clear that
-                        // things cannot be edited.
+                    if (!p.getDefinition().isProtected() || p.getParent().isNodeType(FROZEN_NODE)) {
                         return false;
                     } else {
-                        final String name = p.getName();
                         for (String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
-                            if (name.equals(exposedName)) {
+                            if (p.getName().equals(exposedName)) {
                                 return false;
                             }
                         }

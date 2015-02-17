@@ -84,44 +84,49 @@ public class VersionsRdfContext extends RdfStream {
         return Iterators.concat(Iterators.transform(allVersions, version2triples));
     }
 
-    private final Function<Version, Iterator<Triple>> version2triples =
-        new Function<Version, Iterator<Triple>>() {
+    private final Function<Version, Iterator<Triple>> version2triples = new Version2Triples();
 
-            @Override
-            public Iterator<Triple> apply(final Version version) {
+    private class Version2Triples implements Function<Version, Iterator<Triple>> {
 
-                try {
+        @Override
+        public Iterator<Triple> apply(final Version version) {
+
+            try {
                     /* Discard jcr:rootVersion */
-                    if (version.getName().equals(versionHistory.getRootVersion().getName())) {
-                        LOGGER.trace("Skipped root version from triples");
-                        return new RdfStream();
-                    }
-
-                    final Node frozenNode = version.getFrozenNode();
-                    final com.hp.hpl.jena.graph.Node versionSubject
-                            = nodeToResource(idTranslator).convert(frozenNode).asNode();
-
-                    final RdfStream results = new RdfStream();
-
-                    results.concat(create(subject, HAS_VERSION.asNode(),
-                            versionSubject));
-
-                    for (final String label : versionHistory
-                            .getVersionLabels(version)) {
-                        results.concat(create(versionSubject, HAS_VERSION_LABEL
-                                .asNode(), createLiteral(label)));
-                    }
-                    results.concat(create(versionSubject, CREATED_DATE.asNode(),
-                            createTypedLiteral(version.getCreated()).asNode()));
-
-                    return results;
-
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
+                if (version.getName().equals(versionHistory.getRootVersion().getName())) {
+                    LOGGER.trace("Skipped root version from triples");
+                    return new RdfStream();
                 }
-            }
 
-        };
+                final Node frozenNode = version.getFrozenNode();
+                final com.hp.hpl.jena.graph.Node versionSubject
+                        = nodeToResource(idTranslator).convert(frozenNode).asNode();
+
+                final RdfStream results = new RdfStream();
+
+                results.concat(create(subject, HAS_VERSION.asNode(),
+                        versionSubject));
+
+                for (final String label : versionHistory
+                        .getVersionLabels(version)) {
+                    results.concat(create(versionSubject, HAS_VERSION_LABEL
+                            .asNode(), createLiteral(label)));
+                }
+                results.concat(create(versionSubject, CREATED_DATE.asNode(),
+                        createTypedLiteral(version.getCreated()).asNode()));
+
+                return results;
+
+            } catch (final RepositoryException e) {
+                throw propagate(e);
+            }
+        }
+
+        @Override
+        public boolean equals(final Object object) {
+            throw new UnsupportedOperationException();
+        }
+    }
 
 
 }

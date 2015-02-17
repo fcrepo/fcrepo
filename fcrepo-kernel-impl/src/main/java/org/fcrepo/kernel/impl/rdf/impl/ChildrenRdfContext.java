@@ -72,7 +72,6 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
             @Override
             public Iterator<Triple> apply(final FedoraResource child) {
-
                 final com.hp.hpl.jena.graph.Node childSubject;
 
                 if (child instanceof NonRdfSourceDescription) {
@@ -84,11 +83,8 @@ public class ChildrenRdfContext extends NodeRdfContext {
                 }
                 LOGGER.trace("Creating triples for child node: {}", child);
                 final RdfStream childStream = new RdfStream();
-
                 childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
-
                 return childStream;
-
             }
         };
     }
