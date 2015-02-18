@@ -202,7 +202,7 @@ public class FedoraNodes extends ContentExposingResource {
 
     @Override
     protected void addResourceHttpHeaders(final FedoraResource resource) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override

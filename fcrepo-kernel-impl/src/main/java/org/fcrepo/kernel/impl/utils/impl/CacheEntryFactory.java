@@ -35,7 +35,7 @@ import javax.jcr.RepositoryException;
 /**
  * @author cabeer
  */
-public class CacheEntryFactory {
+public final class CacheEntryFactory {
     private static GetBinaryStore getBinaryStore = new GetBinaryStore();
 
     /**

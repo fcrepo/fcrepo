@@ -109,7 +109,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     protected FedoraResource doForward(final Resource resource) {
-        final HashMap<String, String> values = new HashMap<>();
+        final Map<String, String> values = new HashMap<>();
         final String path = asString(resource, values);
         try {
             if (path != null) {
@@ -151,7 +151,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     public boolean inDomain(final Resource resource) {
-        final HashMap<String, String> values = new HashMap<>();
+        final Map<String, String> values = new HashMap<>();
         return uriTemplate.match(resource.getURI(), values) && values.containsKey("path");
     }
 
@@ -184,7 +184,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     public String asString(final Resource resource) {
-        final HashMap<String, String> values = new HashMap<>();
+        final Map<String, String> values = new HashMap<>();
 
         return asString(resource, values);
     }
@@ -362,7 +362,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
             return path;
         }
-        throw new RuntimeException("Unable to process reverse chain for resource " + resource);
+        throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
     }
 
 

@@ -34,7 +34,10 @@ import com.google.common.base.Function;
  * @author Benjamin Armintor
  * @since May 13, 2013
  */
-public abstract class NamespaceTools {
+public final class NamespaceTools {
+
+    private NamespaceTools() {
+    }
 
     /**
      * We need the Modeshape NamespaceRegistry, because it allows us to register
@@ -88,8 +91,8 @@ public abstract class NamespaceTools {
         final String[] pathSegments = relPath.split("/");
         for (final String segment : pathSegments) {
             if (segment.length() > 0 && segment.contains(":") &&
-                    !segment.substring(0, segment.indexOf(":")).equals("fedora")) {
-                final String prefix = segment.substring(0, segment.indexOf(":"));
+                    !segment.substring(0, segment.indexOf(':')).equals("fedora")) {
+                final String prefix = segment.substring(0, segment.indexOf(':'));
                 if (prefix.length() == 0) {
                     throw new FedoraInvalidNamespaceException(
                             String.format("Unable to identify namespace for (%s)", segment));
@@ -105,4 +108,5 @@ public abstract class NamespaceTools {
             }
         }
     }
+
 }

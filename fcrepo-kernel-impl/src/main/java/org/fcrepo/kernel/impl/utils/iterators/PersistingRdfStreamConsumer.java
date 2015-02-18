@@ -162,7 +162,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         try {
             consume();
             result.set(true);
-        } catch (final Exception e) {
+        } catch (final MalformedRdfException e) {
             LOGGER.warn("Got exception consuming RDF stream", e);
             result.setException(e);
             result.set(false);

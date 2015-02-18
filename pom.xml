@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.0.1-SNAPSHOT</version>
+  <version>4.1.1-SNAPSHOT</version>
   <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons 4</description>
   <organization>
@@ -59,6 +59,8 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
+    <!-- default properties that can be altered on the command line -->
+    <fcrepo.test.context.path/>
   </properties>
   <modules>
     <module>fcrepo-boms</module>
@@ -605,7 +607,7 @@
           <version>2.17</version>
           <configuration>
             <systemPropertyVariables>
-              <fcrepo.test.port>${fcrepo.test.port}</fcrepo.test.port>
+              <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
               <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
               <com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir>
                 ${project.build.directory}/object-store-default
@@ -701,11 +703,11 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>1.8</version>
-          <!-- reserve a port under the property ${fcrepo.test.port} for integration 
+          <!-- reserve a port under the property ${fcrepo.dynamic.test.port} for integration
             tests -->
           <configuration>
             <portNames>
-              <portName>fcrepo.test.port</portName>
+              <portName>fcrepo.dynamic.test.port</portName>
             </portNames>
           </configuration>
           <executions>
@@ -1237,17 +1239,6 @@
   </distributionManagement>
   <developers>
     <developer>
-      <id>eddies</id>
-      <name>Edwin Shin</name>
-      <email>edwin.shin @ (domain of organization url)</email>
-      <organization>MediaShelf</organization>
-      <organizationUrl>http://www.yourmediashelf.com/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>+8</timezone>
-    </developer>
-    <developer>
       <id>ajs6f</id>
       <name>Adam Soroka</name>
       <email>ajs6f @ (domain of organization url)</email>
@@ -1292,144 +1283,11 @@
       <timezone>-8</timezone>
     </developer>
     <developer>
-      <id>fasseg</id>
-      <name>Frank Asseg</name>
-      <organization>FIZ Karlsruhe</organization>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>+1</timezone>
-    </developer>
-    <developer>
-      <id>yecao</id>
-      <name>Ye Cao</name>
-      <email>cao@mpdl.mpg.de</email>
-      <organization>Max Planck Digital Library</organization>
-      <organizationUrl>http://www.mpdl.mpg.de</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>+1</timezone>
-    </developer>
-    <developer>
-      <id>jmacwilliams</id>
-      <name>Jason MacWilliams</name>
-      <organization>Discovery Garden</organization>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-4</timezone>
-    </developer>
-    <developer>
-      <id>jonathangreen</id>
-      <name>Jonathan Green</name>
-      <organization>Discovery Garden</organization>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-4</timezone>
-    </developer>
-    <developer>
-      <id>gregjan</id>
-      <name>Greg Jansen</name>
-      <email>count0@email.unc.edu</email>
-      <organization>University of North Carolina, Chapel Hill</organization>
-      <organizationUrl>http://unc.edu</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>sprater</id>
-      <name>Scott Prater</name>
-      <email>sprater@gmail.com</email>
-      <organization>University of Wisconsin, Madison</organization>
-      <organizationUrl>http://www.wisc.edu</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-6</timezone>
-    </developer>
-    <developer>
       <id>osmandin</id>
       <name>Osman Din</name>
       <email>osman.din@yale.edu</email>
       <organization>Yale University</organization>
       <organizationUrl>http://yale.edu</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>yulgit1</id>
-      <name>Eric James</name>
-      <email>eric.james@yale.edu</email>
-      <organization>Yale University</organization>
-      <organizationUrl>http://yale.edu</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>vincentng</id>
-      <name>Vincent Nguyen</name>
-      <email>vng0 @ (domain of organization url)</email>
-      <organization>US Centers for Disease Control and Prevention</organization>
-      <organizationUrl>http://stacks.cdc.gov/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>nigelgbanks</id>
-      <name>Nigel Banks</name>
-      <organization>Discovery Garden</organization>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>+2</timezone>
-    </developer>
-    <developer>
-      <id>ppound</id>
-      <name>Paul Pound</name>
-      <email>paul.pound@gmail.com</email>
-      <organization>University of Prince Edward Island</organization>
-      <organizationUrl>http://home.upei.ca/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-4</timezone>
-    </developer>
-    <developer>
-      <id>yqjiang</id>
-      <name>Yuqing Jiang</name>
-      <email>yqjiang0830@gmail.com</email>
-      <organization>University of Prince Edward Island</organization>
-      <organizationUrl>http://home.upei.ca/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-4</timezone>
-    </developer>
-    <developer>
-      <id>anusharanganathan</id>
-      <name>Anusha Ranganathan</name>
-      <organization>Oxford University</organization>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>+0</timezone>
-    </developer>
-    <developer>
-      <id>escowles</id>
-      <name>Esmé Cowles</name>
-      <email>escowles @ (domain of organization url)</email>
-      <organization>UC San Diego</organization>
-      <organizationUrl>http://www.ucsd.edu/</organizationUrl>
       <roles>
         <role>developer</role>
       </roles>
@@ -1445,94 +1303,6 @@
         <role>developer</role>
       </roles>
       <timezone>-7</timezone>
-    </developer>
-    <developer>
-      <id>ksclarke</id>
-      <name>Kevin Clarke</name>
-      <email>ksclarke @ (domain of organization url)</email>
-      <organization>UC Los Angeles</organization>
-      <organizationUrl>http://library.ucla.edu/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>giuliah</id>
-      <name>Giulia Hill</name>
-      <email>giulia @ (domain of organization url)</email>
-      <organization>UC Berkeley</organization>
-      <organizationUrl>http://berkeley.edu</organizationUrl>
-      <roles>
-       <role>developer</role>
-      </roles>
-      <timezone>-8</timezone>
-    </developer>
-    <developer>
-      <id>mohideen</id>
-      <name>Mohamed Abdul Rasheed</name>
-      <email>mohideen @ (domain of organization url)</email>
-      <organization>University of Maryland</organization>
-      <organizationUrl>http://www.lib.umd.edu/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>lsitu</id>
-      <name>Longshou Situ</name>
-      <email>lsitu @ (domain of organization url)</email>
-        <organization>UC San Diego</organization>
-        <organizationUrl>http://libraries.ucsd.edu</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-8</timezone>
-     </developer>
-    <developer>
-      <id>whikloj</id>
-      <name>Jared Whiklo</name>
-      <email>whikloj @ (domain of organization url)</email>
-      <organization>University of Maryland</organization>
-      <organizationUrl>http://www.lib.umd.edu/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>robyj</id>
-      <name>Jon Roby</name>
-      <email>robyj @ (domain of organization url)</email>
-      <organization>University of Manitoba</organization>
-      <organizationUrl>http://umanitoba.ca/libraries</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-6</timezone>
-    </developer>
-    <developer>
-      <id>bbpennel</id>
-      <name>Ben Pennell</name>
-      <email>bbpennel @ (domain of organization url)</email>
-      <organization>UNC Chapel Hill</organization>
-      <organizationUrl>http://library.unc.edu/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>daines</id>
-      <name>Mike Daines</name>
-      <email>daines @ (domain of organization url)</email>
-      <organization>UNC Chapel Hill</organization>
-      <organizationUrl>http://library.unc.edu/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
     </developer>
   </developers>
   <issueManagement>

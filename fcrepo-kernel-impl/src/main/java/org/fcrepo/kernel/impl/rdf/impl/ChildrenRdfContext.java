@@ -84,11 +84,8 @@ public class ChildrenRdfContext extends NodeRdfContext {
                 }
                 LOGGER.trace("Creating triples for child node: {}", child);
                 final RdfStream childStream = new RdfStream();
-
                 childStream.concat(create(subject(), CONTAINS.asNode(), childSubject));
-
                 return childStream;
-
             }
         };
     }

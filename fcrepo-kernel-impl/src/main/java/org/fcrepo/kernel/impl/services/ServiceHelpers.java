@@ -45,7 +45,10 @@ import org.springframework.stereotype.Component;
  * @author awoods
  */
 @Component
-public abstract class ServiceHelpers {
+public class ServiceHelpers {
+
+    private ServiceHelpers() {
+    }
 
     /**
      * Get the total size of a Node's properties
@@ -189,4 +192,5 @@ public abstract class ServiceHelpers {
             session.logout();
         }
     }
+
 }

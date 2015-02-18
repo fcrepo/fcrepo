@@ -18,7 +18,6 @@ package org.fcrepo.kernel.services;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.exception.TransactionMissingException;
 
 /**
  * @author bbpennel
@@ -45,19 +44,17 @@ public interface TransactionService {
      * @param txId the Id of the {@link Transaction}
      * @param userName the name  of the {@link java.security.Principal}
      * @return the {@link Transaction}
-     * @throws TransactionMissingException if the transaction could not be found or is not associated
      * with this user
      */
-    Transaction getTransaction(final String txId, final String userName) throws TransactionMissingException;
+    Transaction getTransaction(final String txId, final String userName);
 
     /**
      * Get the current Transaction for a session
      *
      * @param session
      * @return transaction
-     * @throws TransactionMissingException
      */
-    Transaction getTransaction(Session session) throws TransactionMissingException;
+    Transaction getTransaction(Session session);
 
     /**
      * Check if a Transaction exists

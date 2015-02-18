@@ -147,47 +147,62 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
         final Iterator<FedoraResource> memberNodes = container.getChildren();
 
-        return Iterators.concat(Iterators.transform(memberNodes, new Function<FedoraResource, Iterator<Triple>>() {
-            @Override
-            public Iterator<Triple> apply(final FedoraResource child) {
+        return Iterators.concat(Iterators.transform(memberNodes,
+                new FedoraResourceTripleFunction(insertedContainerProperty, memberRelation)));
+    }
 
-                try {
-                    final com.hp.hpl.jena.graph.Node childSubject;
-                    if (child instanceof NonRdfSourceDescription) {
-                        childSubject = translator().reverse()
-                                .convert(((NonRdfSourceDescription) child).getDescribedResource())
-                                .asNode();
-                    } else {
-                        childSubject = translator().reverse().convert(child).asNode();
-                    }
+    private class FedoraResourceTripleFunction implements Function<FedoraResource, Iterator<Triple>>   {
 
-                    if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
+        private final String insertedContainerProperty;
 
-                        return singletonIterator(create(subject(), memberRelation, childSubject));
-                    }
-                    final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
-                            createResource(insertedContainerProperty),
-                            null);
+        private final com.hp.hpl.jena.graph.Node memberRelation;
 
-                    if (!child.hasProperty(insertedContentProperty)) {
-                        return emptyIterator();
-                    }
+        public FedoraResourceTripleFunction(final String insertedContainerProperty,
+                                            final com.hp.hpl.jena.graph.Node memberRelation) {
+            this.insertedContainerProperty = insertedContainerProperty;
+            this.memberRelation = memberRelation;
+        }
 
-                    final PropertyValueIterator values
-                            = new PropertyValueIterator(child.getProperty(insertedContentProperty));
+        @Override
+        public Iterator<Triple> apply(final FedoraResource child) {
 
-                    return Iterators.transform(values, new Function<Value, Triple>() {
-                        @Override
-                        public Triple apply(final Value input) {
-                            final RDFNode membershipResource = new ValueConverter(session(), translator())
-                                    .convert(input);
-                            return create(subject(), memberRelation, membershipResource.asNode());
-                        }
-                    });
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
+            try {
+                final com.hp.hpl.jena.graph.Node childSubject;
+                if (child instanceof NonRdfSourceDescription) {
+                    childSubject = translator().reverse()
+                            .convert(((NonRdfSourceDescription) child).getDescribedResource())
+                            .asNode();
+                } else {
+                    childSubject = translator().reverse().convert(child).asNode();
                 }
+
+                if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
+
+                    return singletonIterator(create(subject(), memberRelation, childSubject));
+                }
+                final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
+                        createResource(insertedContainerProperty),
+                        null);
+
+                if (!child.hasProperty(insertedContentProperty)) {
+                    return emptyIterator();
+                }
+
+                final PropertyValueIterator values
+                        = new PropertyValueIterator(child.getProperty(insertedContentProperty));
+
+                return Iterators.transform(values, new Function<Value, Triple>() {
+                    @Override
+                    public Triple apply(final Value input) {
+                        final RDFNode membershipResource = new ValueConverter(session(), translator())
+                                .convert(input);
+                        return create(subject(), memberRelation, membershipResource.asNode());
+                    }
+                });
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
-        }));
+        }
+
     }
 }

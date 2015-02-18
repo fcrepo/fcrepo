@@ -10,6 +10,6 @@
 
   <bean id="containerWrapper"
     class="org.fcrepo.integration.mint.ContainerWrapper"
-    init-method="start" destroy-method="stop" p:port="${fcrepo.test.port:8080}"/>
+    init-method="start" destroy-method="stop" p:port="${fcrepo.dynamic.test.port:8080}"/>
 
 </beans>

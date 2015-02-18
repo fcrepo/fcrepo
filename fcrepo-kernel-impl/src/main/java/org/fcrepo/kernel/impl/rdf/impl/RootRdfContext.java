@@ -110,15 +110,15 @@ public class RootRdfContext extends NodeRdfContext {
                     createLiteral(nodeType.getName())));
         }
 
-            /*
-                FIXME: removing because performance problems, esp. w/ many files on federated filesystem
-                see: https://www.pivotaltracker.com/story/show/78647248
+        /*
+            FIXME: removing due to performance problems, esp. w/ many files on federated filesystem
+            see: https://www.pivotaltracker.com/story/show/78647248
 
             b.add(create(subject(), HAS_OBJECT_COUNT.asNode(), createLiteral(String
                     .valueOf(getRepositoryCount(repository)))));
             b.add(create(subject(), HAS_OBJECT_SIZE.asNode(), createLiteral(String
                     .valueOf(getRepositorySize(repository)))));
-            */
+        */
 
         // Get the cluster configuration, if available
         // this ugly test checks to see whether this is an ordinary JCR

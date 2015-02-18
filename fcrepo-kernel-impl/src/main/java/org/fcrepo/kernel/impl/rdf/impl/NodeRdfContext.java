@@ -16,14 +16,12 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 
-import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-import org.slf4j.Logger;
 
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -42,7 +40,6 @@ public class NodeRdfContext extends RdfStream {
 
     private final com.hp.hpl.jena.graph.Node subject;
 
-    private static final Logger LOGGER = getLogger(NodeRdfContext.class);
 
     /**
      * Default constructor.

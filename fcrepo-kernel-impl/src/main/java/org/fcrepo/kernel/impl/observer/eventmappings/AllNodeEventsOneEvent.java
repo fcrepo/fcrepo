@@ -70,59 +70,68 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
     @Override
     public Iterator<FedoraEvent> apply(final Iterator<Event> events) {
+        return new FedoraEventIterator(events);
+    }
 
-        return new Iterator<FedoraEvent>() {
+    private class FedoraEventIterator implements Iterator {
 
-            // sort JCR events into a Multimap keyed by the node ID involved
-            final Multimap<String, Event> sortedEvents = index(events, EXTRACT_NODE_ID);
+        private final Iterator<Event> events;
 
-            final Iterator<String> nodeIds = sortedEvents.keySet().iterator();
+        // sort JCR events into a Multimap keyed by the node ID involved
+        private final Multimap<String, Event> sortedEvents;
 
-            @Override
-            public boolean hasNext() {
-                return nodeIds.hasNext();
+        private final Iterator<String> nodeIds;
+
+        public FedoraEventIterator(final Iterator<Event> events) {
+            this.events = events;
+            sortedEvents = index(events, EXTRACT_NODE_ID);
+            nodeIds = sortedEvents.keySet().iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return nodeIds.hasNext();
+        }
+
+        @Override
+        public FedoraEvent next() {
+            final Iterator<Event> nodeSpecificEvents = sortedEvents.get(nodeIds.next()).iterator();
+            // we can safely call next() immediately on nodeSpecificEvents
+            // because if
+            // there was no event at all, there would appear no entry in our
+            // Multimap under this key
+            final Event firstEvent = nodeSpecificEvents.next();
+            final FedoraEvent fedoraEvent = new FedoraEvent(firstEvent);
+
+            addProperty(fedoraEvent, firstEvent);
+            while (nodeSpecificEvents.hasNext()) {
+                // add the event type and property name to the event we are building up to emit
+                // we could aggregate other information here if that seems useful
+                final Event otherEvent = nodeSpecificEvents.next();
+                fedoraEvent.addType(otherEvent.getType());
+                addProperty(fedoraEvent, otherEvent);
             }
+            return fedoraEvent;
+        }
 
-            @Override
-            public FedoraEvent next() {
-                final Iterator<Event> nodeSpecificEvents = sortedEvents.get(nodeIds.next()).iterator();
-                // we can safely call next() immediately on nodeSpecificEvents
-                // because if
-                // there was no event at all, there would appear no entry in our
-                // Multimap under this key
-                final Event firstEvent = nodeSpecificEvents.next();
-                final FedoraEvent fedoraEvent = new FedoraEvent(firstEvent);
+        @Override
+        public void remove() {
+            // the underlying Multimap is immutable anyway
+            throw new UnsupportedOperationException();
+        }
 
-                addProperty(fedoraEvent, firstEvent);
-                while (nodeSpecificEvents.hasNext()) {
-                    // add the event type and property name to the event we are building up to emit
-                    // we could aggregate other information here if that seems useful
-                    final Event otherEvent = nodeSpecificEvents.next();
-                    fedoraEvent.addType(otherEvent.getType());
-                    addProperty(fedoraEvent, otherEvent);
+        private void addProperty( final FedoraEvent fedoraEvent, final Event ev ) {
+            try {
+                if (PROPERTY_EVENT_TYPES.contains(ev.getType())) {
+                    final String eventPath = ev.getPath();
+                    fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf('/') + 1));
+                } else {
+                    log.trace("Not adding non-event property: {}, {}", fedoraEvent, ev);
                 }
-                return fedoraEvent;
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
-
-            @Override
-            public void remove() {
-                // the underlying Multimap is immutable anyway
-                throw new UnsupportedOperationException();
-            }
-
-            private void addProperty( final FedoraEvent fedoraEvent, final Event ev ) {
-                try {
-                    if (PROPERTY_EVENT_TYPES.contains(ev.getType())) {
-                        final String eventPath = ev.getPath();
-                        fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf("/") + 1));
-                    } else {
-                        log.trace("Not adding non-event property: {}, {}", fedoraEvent, ev);
-                    }
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-            }
-        };
+        }
     }
 
     private final static Logger log = getLogger(AllNodeEventsOneEvent.class);

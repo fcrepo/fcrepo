@@ -39,7 +39,7 @@ import org.slf4j.Logger;
  *
  * @author awoods
  */
-public class RdfSerializationUtils {
+public final class RdfSerializationUtils {
 
     private static final Logger LOGGER = getLogger(RdfSerializationUtils.class);
 

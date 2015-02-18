@@ -34,7 +34,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
  * @author ajs6f
  * @since Feb 20, 2014
  */
-public abstract class AbstractService {
+public class AbstractService {
     protected final static JcrTools jcrTools = new JcrTools();
 
     protected Node findOrCreateNode(final Session session,

@@ -3,7 +3,7 @@
     <parent>
         <artifactId>fcrepo</artifactId>
         <groupId>org.fcrepo</groupId>
-        <version>4.0.1-SNAPSHOT</version>
+        <version>4.1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -118,11 +118,11 @@
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <configuration>
                     <portNames>
-                        <portName>fcrepo.test.port</portName>
+                        <portName>fcrepo.dynamic.test.port</portName>
                         <!-- reserves the stop port for jetty-maven-plugin -->
-                        <portName>jetty.port.stop</portName>
-                        <portName>fcrepo.jms.port</portName>
-                        <portName>fcrepo.stomp.port</portName>
+                        <portName>jetty.dynamic.stop.port</portName>
+                        <portName>fcrepo.dynamic.jms.port</portName>
+                        <portName>fcrepo.dynamic.stomp.port</portName>
                     </portNames>
                 </configuration>
             </plugin>
@@ -130,10 +130,10 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <systemPropertyVariables>
-                        <fcrepo.test.port>${fcrepo.test.port}</fcrepo.test.port>
+                        <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
                         <fcrepo.test.context.path>${fcrepo.test.context.path}</fcrepo.test.context.path>
-                        <fcrepo.jms.port>${fcrepo.jms.port}</fcrepo.jms.port>
-                        <fcrepo.stomp.port>${fcrepo.stomp.port}</fcrepo.stomp.port>
+                        <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
+                        <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
                         <integration-test>true</integration-test>
                     </systemPropertyVariables>
                 </configuration>

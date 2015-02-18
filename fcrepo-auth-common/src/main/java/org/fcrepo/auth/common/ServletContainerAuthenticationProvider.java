@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gregory Jansen
  */
-public class ServletContainerAuthenticationProvider implements
+public final class ServletContainerAuthenticationProvider implements
         AuthenticationProvider {
 
     private static ServletContainerAuthenticationProvider _instance = null;
@@ -205,7 +205,7 @@ public class ServletContainerAuthenticationProvider implements
     }
 
     private Set<Principal> collectPrincipals(final Credentials credentials) {
-        final HashSet<Principal> principals = new HashSet<>();
+        final Set<Principal> principals = new HashSet<>();
 
         // TODO add exception handling for principal providers
         for (final PrincipalProvider p : this.getPrincipalProviders()) {
