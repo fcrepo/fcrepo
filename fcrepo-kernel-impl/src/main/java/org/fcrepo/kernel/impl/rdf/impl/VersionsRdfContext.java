@@ -59,7 +59,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final com.hp.hpl.jena.graph.Node subject;
 
-    private final Logger LOGGER = getLogger(VersionsRdfContext.class);
+    private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
     /**
      * Ordinary constructor.

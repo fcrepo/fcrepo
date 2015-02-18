@@ -63,7 +63,7 @@ import org.xml.sax.SAXException;
  */
 public class HttpPidMinter implements PidMinter {
 
-    private static final Logger log = getLogger(HttpPidMinter.class);
+    private static final Logger LOGGER = getLogger(HttpPidMinter.class);
     protected final String url;
     protected final String method;
     protected final String username;
@@ -101,7 +101,7 @@ public class HttpPidMinter implements PidMinter {
             try {
                 this.xpath = XPathFactory.newInstance().newXPath().compile(xpath);
             } catch ( XPathException ex ) {
-                log.warn("Error parsing xpath ({}): {}", xpath, ex );
+                LOGGER.warn("Error parsing xpath ({}): {}", xpath, ex );
                 throw new IllegalArgumentException("Error parsing xpath" + xpath, ex);
             }
         }
@@ -143,7 +143,7 @@ public class HttpPidMinter implements PidMinter {
      * Override this method for processing more complex than a simple regex replacement.
     **/
     protected String responseToPid( final String responseText ) throws IOException {
-        log.debug("responseToPid({})", responseText);
+        LOGGER.debug("responseToPid({})", responseText);
         if ( !isBlank(regex) ) {
             return responseText.replaceFirst(regex,"");
         } else if ( xpath != null ) {
@@ -175,14 +175,14 @@ public class HttpPidMinter implements PidMinter {
     @Override
     public String mintPid() {
         try {
-            log.debug("mintPid()");
+            LOGGER.debug("mintPid()");
             final HttpResponse resp = client.execute( minterRequest() );
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( IOException ex ) {
-            log.warn("Error minting pid from {}: {}", url, ex);
+            LOGGER.warn("Error minting pid from {}: {}", url, ex);
             throw new RepositoryRuntimeException("Error minting pid", ex);
         } catch ( Exception ex ) {
-            log.warn("Error processing minter response", ex);
+            LOGGER.warn("Error processing minter response", ex);
             throw new RepositoryRuntimeException("Error processing minter response", ex);
         }
     }

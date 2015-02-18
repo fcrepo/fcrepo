@@ -31,7 +31,7 @@ import org.slf4j.Logger;
  */
 public class NamespaceConverter extends InternalIdentifierConverter {
 
-    private static final Logger log = getLogger(NamespaceConverter.class);
+    private static final Logger LOGGER = getLogger(NamespaceConverter.class);
 
     /*
      * (non-Javadoc)
@@ -41,13 +41,14 @@ public class NamespaceConverter extends InternalIdentifierConverter {
      */
     @Override
     protected String doForward(final String inputId) {
-        log.trace("Converting identifier {} from internal to external...", inputId);
+        LOGGER.trace("Converting identifier {} from internal to external...", inputId);
         String result = inputId;
         for (final String jcrNamespace : jcrNamespacesToRDFNamespaces.keySet()) {
-            log.trace("Replacing namespace: {} with: {}", jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
+            LOGGER.trace("Replacing namespace: {} with: {}", jcrNamespace, jcrNamespacesToRDFNamespaces
+                    .get(jcrNamespace));
             result = result.replace(jcrNamespace, jcrNamespacesToRDFNamespaces.get(jcrNamespace));
         }
-        log.trace("Converted identifier {} from internal to external {}...", inputId, result);
+        LOGGER.trace("Converted identifier {} from internal to external {}...", inputId, result);
         return result;
     }
 
@@ -59,10 +60,11 @@ public class NamespaceConverter extends InternalIdentifierConverter {
      */
     @Override
     protected String doBackward(final String b) {
-        log.trace("Converting identifier from external to internal...");
+        LOGGER.trace("Converting identifier from external to internal...");
         String result = b;
         for (final String rdfNamespace : rdfNamespacesToJcrNamespaces.keySet()) {
-            log.trace("Replacing namespace: {} with: {}", rdfNamespace, rdfNamespacesToJcrNamespaces.get(rdfNamespace));
+            LOGGER.trace("Replacing namespace: {} with: {}", rdfNamespace, rdfNamespacesToJcrNamespaces
+                    .get(rdfNamespace));
             result = result.replace(rdfNamespace, rdfNamespacesToJcrNamespaces.get(rdfNamespace));
         }
         return result;
