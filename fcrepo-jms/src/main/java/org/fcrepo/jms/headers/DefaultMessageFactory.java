@@ -92,8 +92,8 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     @Override
     public Message getMessage(final FedoraEvent jcrEvent,
-            final javax.jms.Session jmsSession) throws RepositoryException,
-            JMSException {
+        final javax.jms.Session jmsSession) throws RepositoryException,
+        JMSException {
 
         if ( baseURL == null ) {
             setBaseURL(jcrEvent);
