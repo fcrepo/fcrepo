@@ -83,11 +83,11 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     @Override
     public void initialize(final NamespaceRegistry registry,
-            final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
+                           final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
         super.initialize(registry, nodeTypeManager);
 
         if (propertiesDirectoryPath != null) {
-            propertiesDirectory = new File(propertiesDirectoryPath);
+           propertiesDirectory = new File(propertiesDirectoryPath);
             if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
                 throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
                         + ", does not exist or is not a directory.");
@@ -139,11 +139,11 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         if (primaryType.equals(NT_FILE)) {
             decorateDatastreamNode(docReader, docWriter);
 
-            // Is Fedora Content?
+        // Is Fedora Content?
         } else if (primaryType.equals(NT_RESOURCE)) {
             decorateContentNode(docReader, docWriter, fileFor(id));
 
-            // Is Fedora Object?
+        // Is Fedora Object?
         } else if (primaryType.equals(NT_FOLDER)) {
             decorateObjectNode(docReader, docWriter);
         }
@@ -220,8 +220,8 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     }
 
     private static void decorateContentNode(final DocumentReader docReader,
-            final DocumentWriter docWriter,
-            final File file) {
+                                            final DocumentWriter docWriter,
+                                            final File file) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_BINARY)) {
             LOGGER.trace("Adding mixin: {}, to {}", FEDORA_BINARY, docReader.getDocumentId());
             docWriter.addMixinType(FEDORA_BINARY);
@@ -291,7 +291,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     /**
      * Find the parent file, and set its timestamp to the current time.  This
      * timestamp will be used for populating the Last-Modified header.
-     **/
+    **/
     protected void touchParent( final String id ) {
         if (!isRoot(id)) {
             final File file = fileFor(id);
