@@ -35,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -122,7 +123,7 @@ public class ViewHelpers {
         final Node subject, final Resource predicate) {
         final Iterator<Triple> versions = getObjects(graph, subject, predicate);
         final Map<String, Node> map = new TreeMap<>();
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
         Triple triple;
         String date;
         while (versions.hasNext()) {
@@ -130,7 +131,7 @@ public class ViewHelpers {
             date = getVersionDate(graph, triple.getObject());
             String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
             while (map.containsKey(key)) {
-                key = key + "1";
+                key += "1";
             }
             map.put(key, triple.getObject());
         }
