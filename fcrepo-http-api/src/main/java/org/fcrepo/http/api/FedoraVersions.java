@@ -98,11 +98,8 @@ public class FedoraVersions extends ContentExposingResource {
         this.pathIntoVersion = pathIntoVersion;
     }
 
-    /**
-     * Initialization method. Clients don't invoke this.
-     */
     @PostConstruct
-    public void postConstruct() {
+    private void postConstruct() {
         this.path = externalPath + "/" + FCR_VERSIONS + "/" + pathListIntoVersion;
         this.label = pathListIntoVersion.split("/", 2)[0];
     }

@@ -175,7 +175,7 @@ public class CacheLoaderChunkInputStream extends InputStream {
 
     private void fillBuffer(final int chunkNumber) {
         buffer = readChunk(chunkNumber);
-        if (buffer == null || buffer.length == 0) {
+        if (buffer == null) {
             endOfStream();
         } else {
             indexInBuffer = 0;
@@ -194,6 +194,6 @@ public class CacheLoaderChunkInputStream extends InputStream {
         if (blobCache.contains(chunkKey)) {
             return blobCache.load(chunkKey).getValue();
         }
-        return new byte[]{};
+        return null;
     }
 }

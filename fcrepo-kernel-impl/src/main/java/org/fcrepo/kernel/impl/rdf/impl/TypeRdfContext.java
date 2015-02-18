@@ -64,7 +64,10 @@ public class TypeRdfContext extends NodeRdfContext {
         final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
 
         final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();
-        nodeTypesB.add(primaryNodeType);
+
+        if (primaryNodeType != null) {
+            nodeTypesB.add(primaryNodeType);
+        }
 
         try {
             final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
