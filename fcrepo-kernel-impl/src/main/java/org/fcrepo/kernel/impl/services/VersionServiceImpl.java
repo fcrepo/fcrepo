@@ -32,6 +32,9 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static org.fcrepo.kernel.FedoraJcrTypes.VERSIONABLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -47,6 +50,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class VersionServiceImpl extends AbstractService implements VersionService {
 
     private static final Logger LOGGER = getLogger(VersionService.class);
+
+    private static final Pattern invalidLabelPattern = Pattern.compile("[~#@*+%{}<>\\[\\]|\"^]");
 
     @Override
     public String createVersion(final Session session,
@@ -161,6 +166,10 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static String checkpoint(final Session session, final String absPath, final String label)
             throws RepositoryException {
+        if (!validLabel(label)) {
+            throw new VersionException("Invalid label: " + label);
+        }
+
         LOGGER.trace("Setting version checkpoint for {}", absPath);
         final Workspace workspace = session.getWorkspace();
         final VersionManager versionManager = workspace.getVersionManager();
@@ -175,6 +184,11 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
         versionHistory.addVersionLabel(v.getName(), label, false);
         return v.getFrozenNode().getIdentifier();
+    }
+
+    private static boolean validLabel(final String label) {
+        final Matcher matcher = invalidLabelPattern.matcher(label);
+        return !matcher.find();
     }
 
 }
