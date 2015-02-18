@@ -152,9 +152,4 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
 
     }
 
-    @Override
-    public int hashCode() {
-        throw new UnsupportedOperationException();
-    }
-
 }

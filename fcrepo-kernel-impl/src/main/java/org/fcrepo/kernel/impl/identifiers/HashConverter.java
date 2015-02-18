@@ -42,9 +42,4 @@ public class HashConverter extends InternalIdentifierConverter {
         }
         return internalId;
     }
-
-    @Override
-    public int hashCode() {
-        throw new UnsupportedOperationException();
-    }
 }

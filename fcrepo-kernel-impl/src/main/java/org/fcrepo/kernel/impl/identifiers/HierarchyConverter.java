@@ -162,9 +162,4 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         this.prefix = p;
     }
 
-    @Override
-    public int hashCode() {
-        throw new UnsupportedOperationException();
-    }
-
 }

@@ -449,9 +449,4 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             return EMPTY;
         }
     }
-
-    @Override
-    public int hashCode() {
-        throw new UnsupportedOperationException();
-    }
 }
