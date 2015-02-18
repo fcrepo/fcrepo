@@ -364,7 +364,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         if (path != null) {
 
             if (resource instanceof NonRdfSourceDescription) {
-                path = path + "/" + FCR_METADATA;
+                path += "/" + FCR_METADATA;
             }
 
             if (path.endsWith(JCR_CONTENT)) {
@@ -424,7 +424,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     /**
      * Translate the current transaction into the identifier
      */
-    class TransactionIdentifierConverter extends Converter<String, String> {
+    static class TransactionIdentifierConverter extends Converter<String, String> {
         public static final String TX_PREFIX = "tx:";
 
         private final Session session;
