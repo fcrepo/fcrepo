@@ -579,10 +579,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
              * a version of the subject node.
              */
                 final Property p = frozenNode.getProperty("jcr:frozenUuid");
-                if (p != null) {
-                    if (p.getString().equals(baseUUID)) {
-                        return frozenNode;
-                    }
+                if (p != null && p.getString().equals(baseUUID)) {
+                    return frozenNode;
                 }
             /*
              * Though a node with an id of the label was found, it wasn't the
