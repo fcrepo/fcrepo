@@ -144,7 +144,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                removeMixin(resource, mixinResource, subject);
+                jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());
                 return;
             }
 
@@ -154,14 +154,6 @@ public class JcrPropertyStatementListener extends StatementListener {
             exceptions.add(e.getMessage());
         }
 
-    }
-
-    private void removeMixin(final FedoraResource resource, final Resource mixinResource, final Resource s) {
-        try {
-            jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());
-        } catch (RepositoryException e) {
-            // TODO
-        }
     }
 
     /**
