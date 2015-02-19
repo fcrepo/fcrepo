@@ -102,6 +102,9 @@ import javax.ws.rs.core.Variant;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -124,8 +127,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -269,7 +270,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("3", response.getFirstHeader("Content-Length").getValue());
         assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
         final ContentDisposition disposition
-                = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+        = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
         assertEquals("attachment", disposition.getType());
     }
 
@@ -677,7 +678,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 (initialContent + "\n<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
-                        .getBytes()));
+                .getBytes()));
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(204, response.getStatusLine().getStatusCode());
@@ -713,7 +714,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\"")
-                        .getBytes()));
+                .getBytes()));
         replaceMethod.setEntity(e);
         final HttpResponse response = client.execute(replaceMethod);
         assertEquals(201, response.getStatusLine().getStatusCode());
@@ -897,7 +898,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream(
                 ("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"this is a title\" } WHERE {}")
-                        .getBytes()));
+                .getBytes()));
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
         final String content = EntityUtils.toString(response.getEntity());
@@ -912,7 +913,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
-                        .asNode()));
+                .asNode()));
 
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
         final String lastmod = response.getFirstHeader("Last-Modified").getValue();
@@ -958,7 +959,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createPlainLiteral("this is a title")
-                        .asNode()));
+                .asNode()));
 
         assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
         final String lastmod = response.getFirstHeader("Last-Modified").getValue();
@@ -1061,11 +1062,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createLangLiteral("this is an english title", "en")
-                        .asNode()));
+                .asNode()));
 
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 DC_TITLE.asNode(), createLangLiteral("this is a french title", "fr")
-                        .asNode()));
+                .asNode()));
 
     }
 
@@ -1116,7 +1117,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("3", response.getFirstHeader("Content-Length").getValue());
         assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
         final ContentDisposition disposition
-                = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+        = new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
         assertEquals("attachment", disposition.getType());
 
         final Collection<String> links = getLinkHeaders(response);
@@ -1250,10 +1251,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     private static void verifyResource(final Model model,
-                                       final Resource nodeUri,
-                                       final Property rdfType,
-                                       final String namespace,
-                                       final String resource) {
+            final Resource nodeUri,
+            final Property rdfType,
+            final String namespace,
+            final String resource) {
         assertTrue("Didn't find rdfType " + namespace + resource,
                 model.contains(nodeUri, rdfType, createResource(namespace + resource)));
     }
@@ -1317,14 +1318,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "<"
                                 + serverAddress
                                 + pid + "> <" + HAS_CHILD + ">",
-                        DOTALL).matcher(content).find());
+                                DOTALL).matcher(content).find());
 
         assertFalse("Didn't expect contained member resources",
                 compile(
                         "<"
                                 + serverAddress
                                 + pid + "> <" + CONTAINS + ">",
-                        DOTALL).matcher(content).find());
+                                DOTALL).matcher(content).find());
     }
 
     @Test
@@ -1338,7 +1339,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getObjMethod.addHeader("Prefer",
                 "return=representation; " +
                         "omit=\"http://www.w3.org/ns/ldp#PreferContainment " +
-                        "http://www.w3.org/ns/ldp#PreferMembership\"");
+                "http://www.w3.org/ns/ldp#PreferMembership\"");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
@@ -1353,7 +1354,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "<"
                                 + serverAddress
                                 + pid + "> <" + HAS_CHILD + ">",
-                        DOTALL).matcher(content).find());
+                                DOTALL).matcher(content).find());
 
     }
 
@@ -1390,14 +1391,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "<"
                                 + serverAddress
                                 + pid + "> <" + LDP_MEMBER + ">",
-                        DOTALL).matcher(content).find());
+                                DOTALL).matcher(content).find());
 
         assertFalse("Didn't expect contained resources",
                 compile(
                         "<"
                                 + serverAddress
                                 + pid + "> <" + CONTAINS + ">",
-                        DOTALL).matcher(content).find());
+                                DOTALL).matcher(content).find());
 
     }
 
@@ -1437,13 +1438,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 NodeFactory.createURI(serverAddress + pid + "/a"),
                 NodeFactory.createURI("http://purl.org/dc/terms/isPartOf"),
                 NodeFactory.createURI(serverAddress + pid + "/b")
-        ));
+                ));
 
         assertTrue(graphStore.contains(Node.ANY,
                 NodeFactory.createURI(serverAddress + pid + "/a"),
                 NodeFactory.createURI("info:xyz#some-other-property"),
                 NodeFactory.createURI(serverAddress + pid + "/b")
-        ));
+                ));
 
     }
 
@@ -1482,7 +1483,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 ("INSERT { <> <http://some-vocabulary#isMemberOfCollection> " +
                         "<" + serverAddress + "non-existant> } WHERE {}").getBytes()));
         patch.setEntity(e);
-        assertEquals(CONFLICT.getStatusCode(), getStatus(patch));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -1497,7 +1498,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         BasicHttpEntity e = new BasicHttpEntity();
         e.setContent(new ByteArrayInputStream(
                 ("INSERT { <" + subjectURI + "> <info:rubydora#label> \"asdfg\" } WHERE {}")
-                        .getBytes()));
+                .getBytes()));
 
         updateObjectGraphMethod.setEntity(e);
         client.execute(updateObjectGraphMethod);
@@ -1575,7 +1576,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String content = EntityUtils.toString(response.getEntity());
             logger.trace("Got unexpected update response:\n" + content);
         }
-        assertEquals(CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
+        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
 
     }
 
@@ -1587,7 +1588,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut secondPut = new HttpPut(serverAddress + pid);
         secondPut.setHeader("Content-Type", "text/turtle");
-        assertEquals(409, getStatus(secondPut));
+        assertEquals(400, getStatus(secondPut));
     }
 
     @Test
@@ -1762,7 +1763,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testDescribeRdfCached() throws IOException {
         try (final CloseableHttpClient cachingClient =
-                     CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {
+                CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {
 
             final HttpResponse createResponse = createObject("");
             final String location = createResponse.getFirstHeader("Location").getValue();
@@ -1823,7 +1824,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         htmlParser.setContentHandler(new TreeBuilder());
         try (
                 final InputStream htmlStream =
-                        new ByteArrayInputStream(content.getBytes())) {
+                new ByteArrayInputStream(content.getBytes())) {
             htmlParser.parse(new InputSource(htmlStream));
         }
         logger.debug("HTML found to be valid.");
@@ -2140,13 +2141,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 NodeFactory.createURI(location),
                 NodeFactory.createURI(RdfLexicon.LDP_NAMESPACE + "contains"),
                 NodeFactory.createURI(location + "/t")
-        ));
+                ));
 
         assertTrue("Expected to have container b", graphStore.contains(Node.ANY,
                 NodeFactory.createURI(location),
                 NodeFactory.createURI(RdfLexicon.LDP_NAMESPACE + "contains"),
                 NodeFactory.createURI(location + "/b")
-        ));
+                ));
 
         assertTrue("Expected member relation", graphStore.contains(Node.ANY,
                 NodeFactory.createURI(location),
@@ -2158,7 +2159,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 NodeFactory.createURI(location),
                 NodeFactory.createURI("info:some/another-relation"),
                 NodeFactory.createURI(location + "/b/1")
-        ));
+                ));
 
     }
 
@@ -2243,7 +2244,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "    <info:x> [ <" + DC_11.title + "> \"xyz\" ] . " +
                 "<#hash-uri>  <" + DC_11.title + "> \"some-hash-uri\" ."));
 
-       /* final HttpResponse response = client.execute(httpPut);
+        /* final HttpResponse response = client.execute(httpPut);
         final int status = response.getStatusLine().getStatusCode();
         assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), status);
 
