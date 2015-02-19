@@ -69,9 +69,9 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * Ordinary constructor.
      *
-     * @param idTranslator
-     * @param session
-     * @param stream
+     * @param idTranslator the id translator
+     * @param session the session
+     * @param stream the rdf stream
      */
     public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final Session session, final RdfStream stream) {

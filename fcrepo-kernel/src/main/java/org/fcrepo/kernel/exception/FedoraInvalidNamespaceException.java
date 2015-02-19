@@ -29,7 +29,7 @@ public class FedoraInvalidNamespaceException extends RepositoryRuntimeException 
     /**
      * Ordinary constructor
      *
-     * @param msg
+     * @param msg the message
      */
     public FedoraInvalidNamespaceException(final String msg) {
         super(msg);
@@ -38,8 +38,8 @@ public class FedoraInvalidNamespaceException extends RepositoryRuntimeException 
     /**
      * Ordinary constructor
      *
-     * @param msg
-     * @param rootCause
+     * @param msg the message
+     * @param rootCause the root cause
      */
     public FedoraInvalidNamespaceException(final String msg, final Throwable rootCause) {
         super(msg, rootCause);

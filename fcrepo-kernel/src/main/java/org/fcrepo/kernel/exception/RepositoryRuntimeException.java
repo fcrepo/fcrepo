@@ -26,7 +26,7 @@ public class RepositoryRuntimeException extends RuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param msg
+     * @param msg the message
      */
     public RepositoryRuntimeException(final String msg) {
         super(msg);
@@ -35,7 +35,7 @@ public class RepositoryRuntimeException extends RuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param rootCause
+     * @param rootCause the root cause
      */
     public RepositoryRuntimeException(final Throwable rootCause) {
         super(rootCause);
@@ -45,8 +45,8 @@ public class RepositoryRuntimeException extends RuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param msg
-     * @param rootCause
+     * @param msg the message
+     * @param rootCause the root cause
      */
     public RepositoryRuntimeException(final String msg, final Throwable rootCause) {
         super(msg, rootCause);

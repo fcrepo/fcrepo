@@ -89,7 +89,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
     /**
      * Translate ItemDefinitions into triples. The definitions will hang off
      * the provided RDF Node
-     * @param domain
+     * @param domain the given domain
      */
     public PropertyDefinitionToTriples(final Node domain) {
         super(domain);

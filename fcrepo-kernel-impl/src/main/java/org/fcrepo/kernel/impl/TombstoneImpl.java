@@ -43,7 +43,7 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 
     /**
      * Check if the node has a fedora:tombstone mixin
-     * @param node
+     * @param node the node
      * @return true if the node has the fedora object mixin
      */
     public static boolean hasMixin(final Node node) {

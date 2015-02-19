@@ -27,6 +27,8 @@ public interface StoragePolicy {
     /**
      * Evaluate the policy; if the policy matches, return the
      * binary storage hint. If not, return null.
+     * @param n the node
+     * @return the binary storage hint
      */
     String evaluatePolicy(Node n);
 }

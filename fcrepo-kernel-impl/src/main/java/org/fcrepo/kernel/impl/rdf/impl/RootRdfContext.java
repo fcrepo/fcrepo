@@ -65,9 +65,9 @@ public class RootRdfContext extends NodeRdfContext {
     /**
      * Ordinary constructor.
      *
-     * @param resource
-     * @param idTranslator
-     * @throws RepositoryException
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
      */
     public RootRdfContext(final FedoraResource resource,
                           final IdentifierConverter<Resource, FedoraResource> idTranslator)

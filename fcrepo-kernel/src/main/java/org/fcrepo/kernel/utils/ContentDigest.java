@@ -47,8 +47,8 @@ public abstract class ContentDigest {
 
     /**
      * Convert a MessageDigest algorithm and checksum value to a URN
-     * @param algorithm
-     * @param value
+     * @param algorithm the message digest algorithm
+     * @param value the checksum value
      * @return URI
      */
     public static URI asURI(final String algorithm, final String value) {
@@ -65,8 +65,8 @@ public abstract class ContentDigest {
 
     /**
      * Convert a MessageDigest algorithm and checksum byte-array data to a URN
-     * @param algorithm
-     * @param data
+     * @param algorithm the message digest algorithm
+     * @param data the checksum byte-array data
      * @return URI
      */
     public static URI asURI(final String algorithm, final byte[] data) {
@@ -75,7 +75,7 @@ public abstract class ContentDigest {
 
     /**
      * Given a digest URI, get the corresponding MessageDigest algorithm
-     * @param digestUri
+     * @param digestUri the digest uri
      * @return MessageDigest algorithm
      */
     public static String getAlgorithm(final URI digestUri) {

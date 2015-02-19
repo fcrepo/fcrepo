@@ -42,8 +42,8 @@ public class LdpRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource
-     * @param idTranslator
+     * @param resource the resource
+     * @param idTranslator the id translator
      */
     public LdpRdfContext(final FedoraResource resource,
                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {

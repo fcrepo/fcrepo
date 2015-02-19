@@ -57,7 +57,7 @@ public class FedoraTombstones extends FedoraBaseResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param externalPath
+     * @param externalPath the external path
      */
     @VisibleForTesting
     public FedoraTombstones(final String externalPath) {
@@ -67,7 +67,7 @@ public class FedoraTombstones extends FedoraBaseResource {
 
     /**
      * Delete a tombstone resource (freeing the original resource to be reused)
-     * @return
+     * @return the free resource
      */
     @DELETE
     public Response delete() {

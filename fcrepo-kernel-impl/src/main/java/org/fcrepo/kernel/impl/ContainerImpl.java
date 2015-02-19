@@ -44,7 +44,7 @@ public class ContainerImpl extends FedoraResourceImpl implements Container {
 
     /**
      * Check if the node has a fedora:object mixin
-     * @param node
+     * @param node the given node
      * @return true if the node has the fedora object mixin
      */
     public static boolean hasMixin(final Node node) {

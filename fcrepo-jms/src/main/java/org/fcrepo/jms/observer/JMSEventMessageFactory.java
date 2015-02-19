@@ -34,12 +34,12 @@ public interface JMSEventMessageFactory {
      * Produce a JMS message from a JCR event with the
      * given session
      *
-     * @param jcrEvent
-     * @param jmsSession
+     * @param jcrEvent the jcr event
+     * @param jmsSession the jms session
      * @return JMS message created from a JCR event
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws JMSException
+     * @throws RepositoryException if RepositoryException occurred
+     * @throws IOException if IO exception occurred
+     * @throws JMSException if JMS exception occurred
      */
     Message getMessage(final FedoraEvent jcrEvent,
             final javax.jms.Session jmsSession) throws RepositoryException,

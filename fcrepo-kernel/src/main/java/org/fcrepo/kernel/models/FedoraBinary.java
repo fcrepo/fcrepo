@@ -50,7 +50,7 @@ public interface FedoraBinary extends NonRdfSource {
      * @param checksum Checksum URI of the content (optional)
      * @param originalFileName Original file name of the content (optional)
      * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
-     * @throws org.fcrepo.kernel.exception.InvalidChecksumException
+     * @throws org.fcrepo.kernel.exception.InvalidChecksumException if invalid checksum exception occurred
      */
     void setContent(InputStream content, String contentType, URI checksum,
                     String originalFileName,
@@ -81,17 +81,17 @@ public interface FedoraBinary extends NonRdfSource {
 
     /**
      * Get the fixity of this datastream compared to metadata stored in the repository
-     * @param idTranslator
-     * @return
+     * @param idTranslator the id translator
+     * @return the fixity of this datastream compared to metadata stored in the repository
      */
     RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator);
 
     /**
      * Get the fixity of this datastream in a given repository's binary store.
-     * @param idTranslator
+     * @param idTranslator the id translator
      * @param contentDigest the checksum to compare against
      * @param size the expected size of the binary
-     * @return
+     * @return the fixity of the datastream
      */
     RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
                         URI contentDigest, long size);

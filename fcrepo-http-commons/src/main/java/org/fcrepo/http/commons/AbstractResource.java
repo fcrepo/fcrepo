@@ -97,8 +97,8 @@ public abstract class AbstractResource {
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
      *
-     * @param idTranslator
-     * @param originalPath
+     * @param idTranslator the id translator
+     * @param originalPath the original path
      * @return String jcr path
      */
     public static final String toPath(final IdentifierConverter<Resource, FedoraResource> idTranslator,

@@ -57,7 +57,7 @@ public class ModeShapeRepositoryFactoryBean implements
     /**
      * Generate a JCR repository from the given configuration
      *
-     * @throws Exception
+     * @throws Exception if exception occurred
      */
     @PostConstruct
     public void buildRepository() throws Exception {
@@ -82,7 +82,7 @@ public class ModeShapeRepositoryFactoryBean implements
      * Attempts to undeploy the repository and shutdown the ModeShape engine on
      * context destroy.
      *
-     * @throws InterruptedException
+     * @throws InterruptedException if interrupted exception occurred
      */
     @PreDestroy
     public void stopRepository() throws InterruptedException {
@@ -128,7 +128,7 @@ public class ModeShapeRepositoryFactoryBean implements
     /**
      * Set the configuration to use for creating the repository
      *
-     * @param repositoryConfiguration
+     * @param repositoryConfiguration the repository configuration
      */
     public void setRepositoryConfiguration(
             final Resource repositoryConfiguration) {

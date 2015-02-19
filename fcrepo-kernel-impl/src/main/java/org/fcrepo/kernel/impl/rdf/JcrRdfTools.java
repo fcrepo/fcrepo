@@ -111,8 +111,8 @@ public class JcrRdfTools {
     /**
      * Constructor with even more context.
      *
-     * @param idTranslator
-     * @param session
+     * @param idTranslator the id translator
+     * @param session the session
      */
     public JcrRdfTools(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                        final Session session) {
@@ -157,8 +157,8 @@ public class JcrRdfTools {
      * @param node the JCR node we want a property for
      * @param data an RDF Node (possibly with a DataType)
      * @param propertyName name of the property to populate (used to use the right type for the value)
-     * @return
-     * @throws RepositoryException
+     * @return the JCR value from an RDFNode for a given JCR property
+     * @throws RepositoryException if repository exception occurred
      */
     public Value createValue(final Node node,
                              final RDFNode data,
@@ -169,11 +169,11 @@ public class JcrRdfTools {
 
     /**
      * Create a JCR value from an RDF node with the given JCR type
-     * @param valueFactory
-     * @param data
-     * @param type
+     * @param valueFactory the given value factory
+     * @param data the rdf node data
+     * @param type the given JCR type
      * @return created value
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
         throws RepositoryException {
@@ -207,10 +207,10 @@ public class JcrRdfTools {
 
     /**
      * Add a mixin to a node
-     * @param resource
-     * @param mixinResource
-     * @param namespaces
-     * @throws RepositoryException
+     * @param resource the fedora resource
+     * @param mixinResource the mixin resource
+     * @param namespaces the namespace
+     * @throws RepositoryException if repository exception occurred
      */
     public void addMixin(final FedoraResource resource,
                          final Resource mixinResource,
@@ -247,11 +247,11 @@ public class JcrRdfTools {
 
     /**
      * Add property to a node
-     * @param resource
-     * @param predicate
-     * @param value
-     * @param namespaces
-     * @throws RepositoryException
+     * @param resource the fedora resource
+     * @param predicate the predicate
+     * @param value the value
+     * @param namespaces the namespace
+     * @throws RepositoryException if repository exception occurred
      */
     public void addProperty(final FedoraResource resource,
                             final com.hp.hpl.jena.rdf.model.Property predicate,
@@ -287,10 +287,10 @@ public class JcrRdfTools {
 
     /**
      * Remove a mixin from a node
-     * @param resource
-     * @param mixinResource
-     * @param nsPrefixMap
-     * @throws RepositoryException
+     * @param resource the resource
+     * @param mixinResource the mixin resource
+     * @param nsPrefixMap the prefix map
+     * @throws RepositoryException if repository exception occurred
      */
     public void removeMixin(final FedoraResource resource,
                             final Resource mixinResource,
@@ -306,11 +306,11 @@ public class JcrRdfTools {
 
     /**
      * Remove a property from a node
-     * @param resource
-     * @param predicate
-     * @param objectNode
-     * @param nsPrefixMap
-     * @throws RepositoryException
+     * @param resource the fedora resource
+     * @param predicate the predicate
+     * @param objectNode the object node
+     * @param nsPrefixMap the prefix map
+     * @throws RepositoryException if repository exception occurred
      */
     public void removeProperty(final FedoraResource resource,
                                final com.hp.hpl.jena.rdf.model.Property predicate,
@@ -345,10 +345,10 @@ public class JcrRdfTools {
      * Convert an external statement into a persistable statement by skolemizing
      * blank nodes, creating hash-uri subjects, etc
      *
-     * @param idTranslator
-     * @param t
-     * @return
-     * @throws RepositoryException
+     * @param idTranslator the property of idTranslator
+     * @param t the statement
+     * @return the persistable statement
+     * @throws RepositoryException if repository exception occurred
      */
     public Statement skolemize(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Statement t)
             throws RepositoryException {

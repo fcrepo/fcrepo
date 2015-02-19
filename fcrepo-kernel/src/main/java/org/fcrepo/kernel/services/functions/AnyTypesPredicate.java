@@ -24,7 +24,7 @@ package org.fcrepo.kernel.services.functions;
 public class AnyTypesPredicate extends BooleanTypesPredicate {
     /**
      * True if any of the types specified match.
-     * @param types
+     * @param types the types
      */
     public AnyTypesPredicate(final String...types) {
         super(types);

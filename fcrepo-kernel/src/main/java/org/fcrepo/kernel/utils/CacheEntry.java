@@ -29,8 +29,9 @@ public interface CacheEntry {
 
     /**
      * Check the fixity of a {@link CacheEntry}
+     * @param algorithm the given algorithm
      * @return a {@link FixityResult} containing the relevant data
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     Collection<FixityResult> checkFixity(final String algorithm)
         throws RepositoryException;
@@ -38,7 +39,7 @@ public interface CacheEntry {
     /**
      * Get a raw input stream from the underlying store
      * @return the content for this entry
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     abstract InputStream getInputStream() throws RepositoryException;
 
@@ -46,7 +47,7 @@ public interface CacheEntry {
      * Generate a human-readable identifier for the location of this entry
      *
      * @return human-readable identifier for the location of this entry
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     abstract String getExternalIdentifier() throws RepositoryException;
 }

@@ -50,8 +50,8 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      * Prepare a fixity result given the computed checksum and size
-     * @param size
-     * @param checksum
+     * @param size the given size
+     * @param checksum the given checksum
      */
     public FixityResultImpl(final long size, final URI checksum) {
         this("comparison-only-identifier", size, checksum);
@@ -59,9 +59,10 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      * Prepare a fixity result with the expected size and checksum
-     * @param entry
-     * @param size
-     * @param checksum
+     * @param entry the entry
+     * @param size the expected size
+     * @param checksum the checksum
+     * @throws RepositoryException if repository exception occurred
      */
     public FixityResultImpl(final CacheEntry entry, final long size,
                         final URI checksum) throws RepositoryException {
@@ -70,9 +71,9 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      *
-     * @param storeIdentifier
-     * @param size
-     * @param checksum
+     * @param storeIdentifier the store identifier
+     * @param size the size
+     * @param checksum the checksum
      */
     public FixityResultImpl(final String storeIdentifier, final long size, final URI checksum) {
         this.storeIdentifier = storeIdentifier;
@@ -116,7 +117,7 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      * Check if the fixity result matches the given checksum URI
-     * @param checksum
+     * @param checksum the checksum uri
      * @return true if the checksums match
      */
     @Override
@@ -126,7 +127,7 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      * Check if the fixity result matches the given size
-     * @param size
+     * @param size the size
      * @return true if fixity result matches the given size
      */
     @Override

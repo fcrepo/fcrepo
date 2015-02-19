@@ -57,8 +57,8 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * Construct a statement listener within the given session
      *
-     * @param idTranslator
-     * @param session
+     * @param idTranslator the id translator
+     * @param session the session
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                         final Session session) {
@@ -68,7 +68,8 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * Construct a statement listener within the given session
      *
-     * @param idTranslator
+     * @param idTranslator the id translator
+     * @param jcrRdfTools the jcr rdf tools
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                         final JcrRdfTools jcrRdfTools) {
@@ -81,7 +82,7 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * When a statement is added to the graph, serialize it to a JCR property
      *
-     * @param input
+     * @param input the input statement
      */
     @Override
     public void addedStatement(final Statement input) {
@@ -120,7 +121,7 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * When a statement is removed, remove it from the JCR properties
      *
-     * @param s
+     * @param s the given statement
      */
     @Override
     public void removedStatement(final Statement s) {
@@ -162,6 +163,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     /**
      * Assert that no exceptions were thrown while this listener was processing change
+     * @throws MalformedRdfException if malformed rdf exception occurred
      */
     public void assertNoExceptions() throws MalformedRdfException {
         if (!exceptions.isEmpty()) {

@@ -88,7 +88,7 @@ public class SimpleObserver implements EventListener {
     /**
      * Register this observer with the JCR event listeners
      *
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     @PostConstruct
     public void buildListener() throws RepositoryException {
@@ -102,7 +102,7 @@ public class SimpleObserver implements EventListener {
     /**
      * logout of the session
      *
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     @PreDestroy
     public void stopListening() throws RepositoryException {
@@ -114,7 +114,7 @@ public class SimpleObserver implements EventListener {
     /**
      * Filter JCR events and transform them into our own FedoraEvents.
      *
-     * @param events
+     * @param events the JCR events
      */
     @Override
     public void onEvent(final javax.jcr.observation.EventIterator events) {

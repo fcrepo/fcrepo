@@ -25,9 +25,9 @@ import java.net.URI;
 public interface ExternalContentService {
     /**
      * Fetch the content body at a given URI
-     * @param sourceUri
+     * @param sourceUri the source uri
      * @return an InputStream of the content body
-     * @throws IOException
+     * @throws IOException if IO exception occurred
      */
     InputStream retrieveExternalContent(URI sourceUri) throws IOException;
 }

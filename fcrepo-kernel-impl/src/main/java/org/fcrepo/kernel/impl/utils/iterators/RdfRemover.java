@@ -43,9 +43,9 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     /**
      * Ordinary constructor.
      *
-     * @param idTranslator
-     * @param session
-     * @param stream
+     * @param idTranslator the id translator
+     * @param session the session
+     * @param stream the stream
      */
     public RdfRemover(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
         final RdfStream stream) {

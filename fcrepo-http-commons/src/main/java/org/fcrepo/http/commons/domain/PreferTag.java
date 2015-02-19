@@ -34,7 +34,7 @@ public class PreferTag implements Comparable<PreferTag> {
 
     /**
      * Create an empty PreferTag
-     * @return
+     * @return the empty PreferTag
      */
     public static PreferTag emptyTag() {
         try {
@@ -46,7 +46,7 @@ public class PreferTag implements Comparable<PreferTag> {
 
     /**
      * Create a new PreferTag from an existing tag
-     * @param preferTag
+     * @param preferTag the preferTag
      */
     public PreferTag(final PreferTag preferTag) {
         tag = preferTag.getTag();
@@ -56,8 +56,8 @@ public class PreferTag implements Comparable<PreferTag> {
 
     /**
      * Parse the prefer tag and parameters out of the header
-     * @param reader
-     * @throws ParseException
+     * @param reader the reader
+     * @throws ParseException if parse exception occurred
      */
     public PreferTag(final HttpHeaderReader reader) throws ParseException {
 
@@ -83,7 +83,8 @@ public class PreferTag implements Comparable<PreferTag> {
 
     /**
      * Create a blank prefer tag
-     * @param inputTag
+     * @param inputTag the input tag
+     * @throws ParseException if parse exception occurred
      */
     public PreferTag(final String inputTag) throws ParseException {
         this(HttpHeaderReader.newInstance(inputTag));
@@ -115,7 +116,7 @@ public class PreferTag implements Comparable<PreferTag> {
 
     /**
      * Add appropriate response headers to indicate that the incoming preferences were acknowledged
-     * @param servletResponse
+     * @param servletResponse the servlet response
      */
     public void addResponseHeaders(final HttpServletResponse servletResponse) {
         if (!value.equals("minimal")) {

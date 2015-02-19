@@ -30,7 +30,7 @@ public class FedoraHttpConfiguration {
 
     /**
      * Should PUT requests require an If-Match header?
-     * @return
+     * @return put request if match
      */
     public boolean putRequiresIfMatch() {
         return putRequiresIfMatch;

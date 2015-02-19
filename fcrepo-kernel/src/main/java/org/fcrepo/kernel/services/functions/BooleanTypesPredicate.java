@@ -42,7 +42,7 @@ public abstract class BooleanTypesPredicate implements Predicate<Node> {
 
     /**
      * Base constructor for function peforming boolean ops on matched node types.
-     * @param types
+     * @param types the types
      */
     public BooleanTypesPredicate(final String... types) {
         nodeTypes = Arrays.asList(types);

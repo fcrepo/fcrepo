@@ -45,8 +45,8 @@ public class GraphDifferencingIterator extends AbstractIterator<Triple> {
     /**
      * Diff a Model against a stream of triples
      *
-     * @param replacement
-     * @param original
+     * @param replacement the replacement
+     * @param original the original
      */
     public GraphDifferencingIterator(final Model replacement,
                                      final Iterator<Triple> original) {
@@ -56,8 +56,8 @@ public class GraphDifferencingIterator extends AbstractIterator<Triple> {
     /**
      * Diff a graph against a stream of triples
      *
-     * @param replacement
-     * @param original
+     * @param replacement the replacement
+     * @param original the original
      */
     public GraphDifferencingIterator(final Graph replacement,
                                      final Iterator<Triple> original) {

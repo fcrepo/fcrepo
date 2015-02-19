@@ -154,6 +154,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     /**
      * Checks whether internally managed properties can and should be stored to
      * an ExtraPropertiesStore.
+     * @return whether internally managed properties can and should be stored to
      */
     protected boolean shouldCacheProperties() {
         return extraPropertiesStore() != null && (!isReadonly() || this.propertiesDirectory != null);
@@ -292,6 +293,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     /**
      * Find the parent file, and set its timestamp to the current time.  This
      * timestamp will be used for populating the Last-Modified header.
+     * @param id the id
     **/
     protected void touchParent( final String id ) {
         if (!isRoot(id)) {

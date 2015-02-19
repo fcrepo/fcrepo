@@ -60,8 +60,9 @@ public class FedoraRepositoryBackup extends AbstractResource {
     /**
      * This method runs a repository backup.
      *
+     * @param bodyStream the input body stream
      * @return path to the backup
-     * @throws IOException
+     * @throws IOException if IO exception occurred
      */
     @POST
     public String runBackup(final InputStream bodyStream) throws IOException {

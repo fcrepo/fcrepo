@@ -64,9 +64,9 @@ public class VersionsRdfContext extends RdfStream {
     /**
      * Ordinary constructor.
      *
-     * @param resource
-     * @param idTranslator
-     * @throws RepositoryException
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
      */
     public VersionsRdfContext(final FedoraResource resource,
                               final IdentifierConverter<Resource, FedoraResource> idTranslator)

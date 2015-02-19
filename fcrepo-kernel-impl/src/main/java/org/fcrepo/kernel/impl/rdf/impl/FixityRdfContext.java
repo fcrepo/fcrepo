@@ -59,9 +59,11 @@ public class FixityRdfContext extends NodeRdfContext {
     /**
      * Ordinary constructor.
      *
-     * @param resource
-     * @param idTranslator
-     * @param blobs
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @param blobs the blobs
+     * @param digest the digest uri
+     * @param size the size
      */
     public FixityRdfContext(final FedoraResource resource,
                             final IdentifierConverter<Resource, FedoraResource> idTranslator,

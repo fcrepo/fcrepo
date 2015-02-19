@@ -65,6 +65,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
      * Check if the node has a fedora:datastream mixin
      *
      * @param node node to check
+     * @return whether the node has a fedora:datastream mixin
      */
     public static boolean hasMixin(final Node node) {
         return isNonRdfSourceDescription.apply(node);

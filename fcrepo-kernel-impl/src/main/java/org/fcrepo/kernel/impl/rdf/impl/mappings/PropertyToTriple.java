@@ -60,7 +60,8 @@ public class PropertyToTriple implements
      * Default constructor. We require a {@link Converter} in order to
      * construct the externally-meaningful RDF subjects of our triples.
      *
-     * @param graphSubjects
+     * @param graphSubjects the graph subjects
+     * @param session the session
      */
     public PropertyToTriple(final Session session, final Converter<Resource, FedoraResource> graphSubjects) {
         this.valueConverter = new ValueConverter(session, graphSubjects);
@@ -84,7 +85,7 @@ public class PropertyToTriple implements
      * can use efficient machinery to manipulate iterators of the objects in
      * which we are interested, and that's exactly what we want to do in this
      * class. See {@link org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext#triplesFromProperties} for an
-     * example of the use of this class with {@link ZippingIterator}.
+     * example of the use of this class with ZippingIterator.
      *
      * @see <a href="http://en.wikipedia.org/wiki/Currying">Currying</a>
      */

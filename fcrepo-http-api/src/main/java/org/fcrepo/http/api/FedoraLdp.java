@@ -118,7 +118,7 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param externalPath
+     * @param externalPath the external path
      */
     @VisibleForTesting
     public FedoraLdp(final String externalPath) {
@@ -136,7 +136,6 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * Retrieve the node headers
      * @return response
-     * @throws javax.jcr.RepositoryException
      */
     @HEAD
     @Timed
@@ -158,6 +157,7 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Outputs information about the supported HTTP methods, etc.
+     * @return the outputs information about the supported HTTP methods, etc.
      */
     @OPTIONS
     @Timed
@@ -171,8 +171,9 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * Retrieve the node profile
      *
+     * @param rangeValue the range value
      * @return triples for the specified node
-     * @throws RepositoryException
+     * @throws IOException if IO exception occurred
      */
     @GET
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
@@ -195,7 +196,6 @@ public class FedoraLdp extends ContentExposingResource {
      * Deletes an object.
      *
      * @return response
-     * @throws RepositoryException
      */
     @DELETE
     @Timed
@@ -217,10 +217,14 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Create a resource at a specified path, or replace triples with provided RDF.
-     * @param requestContentType
-     * @param requestBodyStream
+     * @param requestContentType the request content type
+     * @param requestBodyStream the request body stream
+     * @param checksum the checksum value
+     * @param contentDisposition the content disposition value
+     * @param ifMatch the if-match value
      * @return 204
-     * @throws RepositoryException
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
      */
     @PUT
     @Consumes
@@ -308,9 +312,10 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * Update an object using SPARQL-UPDATE
      *
+     * @param requestBodyStream the request body stream
      * @return 201
-     * @throws RepositoryException
-     * @throws IOException
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws IOException if IO exception occurred
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
@@ -371,8 +376,15 @@ public class FedoraLdp extends ContentExposingResource {
      * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
      * requests without a Content-Type get routed here.
      *
+     * @param checksum the checksum value
+     * @param contentDisposition the content Disposition value
+     * @param requestContentType the request content type
+     * @param slug the slug value
+     * @param requestBodyStream the request body stream
      * @return 201
-     * @throws RepositoryException
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws IOException if IO exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})

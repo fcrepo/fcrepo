@@ -31,7 +31,7 @@ public class BinaryCacheEntry extends BasicCacheEntry {
 
     /**
      * Create a new BinaryCacheEntry
-     * @param property
+     * @param property the property
      */
     public BinaryCacheEntry(final Property property) {
         super();

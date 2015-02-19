@@ -30,8 +30,8 @@ public abstract class IdentifierConverter<A, B> extends Converter<A, B> {
 
     /**
      * Check if the given resource is in the domain of this converter
-     * @param resource
-     * @return
+     * @param resource the given resource
+     * @return boolean value of the check
      */
     public boolean inDomain(final A resource) {
         return convert(resource) != null;
@@ -39,15 +39,15 @@ public abstract class IdentifierConverter<A, B> extends Converter<A, B> {
 
     /**
      * Convert a plain string to a resource appropriate to this converter
-     * @param resource
-     * @return
+     * @param resource the plain string resource
+     * @return the resource appropriate to this converter
      */
     abstract public A toDomain(final String resource);
 
     /**
      * Convert the given resource into a plain string representation of the conversion to the resource
-     * @param resource
-     * @return
+     * @param resource the given resource
+     * @return a plain string representation of the conversion to the resource
      */
     abstract public String asString(final A resource);
 }

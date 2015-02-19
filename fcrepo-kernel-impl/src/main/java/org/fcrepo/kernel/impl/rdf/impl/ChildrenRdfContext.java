@@ -44,9 +44,9 @@ public class ChildrenRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource
-     * @param idTranslator
-     * @throws javax.jcr.RepositoryException
+     * @param resource the resource
+     * @param idTranslator the idTranslator
+     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public ChildrenRdfContext(final FedoraResource resource,
                               final IdentifierConverter<Resource, FedoraResource> idTranslator)

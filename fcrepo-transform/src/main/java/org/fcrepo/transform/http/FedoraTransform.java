@@ -93,7 +93,7 @@ public class FedoraTransform extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param externalPath
+     * @param externalPath the external path
      */
     @VisibleForTesting
     public FedoraTransform(final String externalPath) {
@@ -104,9 +104,9 @@ public class FedoraTransform extends ContentExposingResource {
     /**
      * Register the LDPath configuration tree in JCR
      *
-     * @throws RepositoryException
-     * @throws java.io.IOException
-     * @throws SecurityException
+     * @throws RepositoryException if repository exception occurred
+     * @throws java.io.IOException if IO exception occurred
+     * @throws SecurityException if security exception occurred
      */
     @PostConstruct
     public void setUpRepositoryConfiguration() throws RepositoryException, IOException {
@@ -139,8 +139,9 @@ public class FedoraTransform extends ContentExposingResource {
     /**
      * Execute an LDpath program transform
      *
+     * @param program the LDpath program
      * @return Binary blob
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     @GET
     @Path("{program}")
@@ -160,7 +161,8 @@ public class FedoraTransform extends ContentExposingResource {
     /**
      * Get the LDPath output as a JSON stream appropriate for e.g. Solr
      *
-     * @param requestBodyStream
+     * @param contentType the content type
+     * @param requestBodyStream the request body stream
      * @return LDPath as a JSON stream
      */
     @POST

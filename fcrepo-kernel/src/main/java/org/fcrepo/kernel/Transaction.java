@@ -51,7 +51,7 @@ public interface Transaction {
     /**
      * Get the state of this transaction
      * @return transaction state
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     State getState() throws RepositoryException;
 
@@ -64,7 +64,6 @@ public interface Transaction {
 
     /**
      * "Commit" the transaction by saving the backing-session
-     * @throws RepositoryException
      */
     void commit();
 
@@ -84,7 +83,6 @@ public interface Transaction {
 
     /**
      * Discard all unpersisted changes and expire
-     * @throws RepositoryException
      */
     void rollback();
 

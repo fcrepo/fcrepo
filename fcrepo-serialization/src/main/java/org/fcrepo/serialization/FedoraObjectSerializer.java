@@ -57,8 +57,8 @@ public interface FedoraObjectSerializer {
      * which resources it can serialize, so this method should be
      * invoked to avoid an InvalidSerializationFormatException from
      * {@link #serialize}.
-     * @param resource
-     * @return
+     * @param resource the resource
+     * @return whether this can be used to serialize the given resource
      */
     boolean canSerialize(final FedoraResource resource);
 
@@ -66,13 +66,13 @@ public interface FedoraObjectSerializer {
      * Serialize a FedoraObject into some format with options for recurse
      * and skipBinary, and write it to the given OutputStream
      *
-     * @param obj
-     * @param out
-     * @param skipBinary
-     * @param recurse
-     * @throws RepositoryException
-     * @throws IOException
-     * @throws org.fcrepo.serialization.InvalidSerializationFormatException
+     * @param obj the obj
+     * @param out the out
+     * @param skipBinary skip binary
+     * @param recurse the recurse
+     * @throws RepositoryException if repository exception occurred
+     * @throws IOException if IO exception occurred
+     * @throws org.fcrepo.serialization.InvalidSerializationFormatException if invalid serialization occurred
      */
     void serialize(final FedoraResource obj, final OutputStream out, final boolean skipBinary, final boolean recurse)
                     throws RepositoryException, IOException, InvalidSerializationFormatException;
@@ -82,13 +82,13 @@ public interface FedoraObjectSerializer {
      * into new nodes in the given session using the given path
      * as the parent node
      *
-     * @param session
-     * @param path
-     * @param stream
-     * @throws IOException
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     * @throws org.fcrepo.serialization.InvalidSerializationFormatException
+     * @param session the session
+     * @param path the path
+     * @param stream the stream
+     * @throws IOException if IO exception occurred
+     * @throws RepositoryException if repository exception occurred
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws org.fcrepo.serialization.InvalidSerializationFormatException if invadlid serialization occurred
      */
     void deserialize(final Session session, final String path,
             final InputStream stream) throws IOException, RepositoryException,

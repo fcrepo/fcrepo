@@ -25,7 +25,7 @@ public class ChunkBinaryMetadata {
 
     /**
      * Wrap a Metadata object
-     * @param metadata
+     * @param metadata the metadata
      */
     public ChunkBinaryMetadata(final Metadata metadata) {
         chunkSize = metadata.getChunkSize();
@@ -34,7 +34,7 @@ public class ChunkBinaryMetadata {
 
     /**
      * Get the content length
-     * @return
+     * @return the content length
      */
     public long getLength() {
         return length;
@@ -42,7 +42,7 @@ public class ChunkBinaryMetadata {
 
     /**
      * Get the size of the binary's chunks
-     * @return
+     * @return the size of the binary's chunks
      */
     public int getChunkSize() {
         return chunkSize;

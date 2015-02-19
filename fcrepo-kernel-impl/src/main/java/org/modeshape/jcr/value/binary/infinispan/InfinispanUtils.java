@@ -28,9 +28,9 @@ public class InfinispanUtils {
 
     /**
      * Get the data key for the given binary key
-     * @param binaryStore
-     * @param key
-     * @return
+     * @param binaryStore the binary store
+     * @param key the binary key
+     * @return the data key for the given binary key
      */
     public static String dataKeyFrom(final InfinispanBinaryStore binaryStore, final BinaryKey key) {
         return binaryStore.dataKeyFrom(key);
@@ -38,9 +38,9 @@ public class InfinispanUtils {
 
     /**
      * Get the Metadata for the given key
-     * @param binaryStore
-     * @param key
-     * @return
+     * @param binaryStore the given binary store
+     * @param key the binary key
+     * @return the metadata for the given key
      */
     public static ChunkBinaryMetadata getMetadata(final InfinispanBinaryStore binaryStore, final BinaryKey key) {
         final String metadataKey = binaryStore.metadataKeyFrom(key);

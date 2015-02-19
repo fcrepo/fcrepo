@@ -41,7 +41,7 @@ public class SparqlQueryTransform implements Transformation<QueryExecution> {
     /**
      * Construct a new SparqlQueryTransform from the data from
      * the InputStream
-     * @param query
+     * @param query the query
      */
     public SparqlQueryTransform(final InputStream query) {
         this.query = query;

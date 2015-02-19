@@ -28,6 +28,7 @@ public class ResourceTypeException extends RepositoryRuntimeException {
 
     /**
      * Default constructor.
+     * @param message the message
      */
     public ResourceTypeException(final String message) {
         super(message);

@@ -56,28 +56,28 @@ public interface FedoraResource {
 
     /**
      * Get the container of this resource
-     * @return
+     * @return the container of this resource
      */
     FedoraResource getContainer();
 
     /**
      * Get the child of this resource at the given path
-     * @param relPath
-     * @return
+     * @param relPath the given path
+     * @return the child of this resource
      */
     FedoraResource getChild(String relPath);
 
     /**
      * Does this resource have a property
-     * @param relPath
-     * @return
+     * @param relPath the given path
+     * @return the boolean value whether the resource has a property
      */
     boolean hasProperty(String relPath);
 
     /**
      * Retrieve the given property value for this resource
-     * @param relPath
-     * @return
+     * @param relPath the given path
+     * @return the property
      */
     Property getProperty(String relPath);
 
@@ -100,6 +100,7 @@ public interface FedoraResource {
 
     /**
      * Check if this object uses a given mixin
+     * @param type the given type
      * @return a collection of mixin names
      */
     boolean hasType(final String type);
@@ -111,9 +112,10 @@ public interface FedoraResource {
      * of #getDatasetProblems, which may include problems when attempting to
      * serialize the data to JCR.
      *
-     * @param idTranslator
-     * @param sparqlUpdateStatement
-     * @param originalTriples
+     * @param idTranslator the property of idTranslator
+     * @param sparqlUpdateStatement sparql update statement
+     * @param originalTriples original triples
+     * @throws MalformedRdfException if malformed rdf exception occurred
      */
     void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                           final String sparqlUpdateStatement,
@@ -121,18 +123,18 @@ public interface FedoraResource {
 
     /**
      * Return the RDF properties of this object using the provided context
-     * @param idTranslator
-     * @param context
-     * @return
+     * @param idTranslator the property of idTranslator
+     * @param context the context
+     * @return the rdf properties of this object using the provided context
      */
     RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                          final Class<? extends RdfStream> context);
 
     /**
      * Return the RDF properties of this object using the provided contexts
-     * @param idTranslator
-     * @param contexts
-     * @return
+     * @param idTranslator the property of idTranslator
+     * @param contexts the provided contexts
+     * @return the rdf properties of this object
      */
     RdfStream getTriples(IdentifierConverter<Resource, FedoraResource> idTranslator,
                          Iterable<? extends Class<? extends RdfStream>> contexts);
@@ -161,8 +163,10 @@ public interface FedoraResource {
      * Replace the properties of this object with the properties from the given
      * model
      *
-     * @param idTranslator
-     * @param inputModel
+     * @param idTranslator the given property of idTranslator
+     * @param inputModel the input model
+     * @param originalTriples the original triples
+     * @throws MalformedRdfException if malformed rdf exception occurred
      */
     void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Model inputModel,
@@ -190,32 +194,32 @@ public interface FedoraResource {
 
     /**
      * Check if a resource is versioned
-     * @return
+     * @return whether the resource is versioned
      */
     boolean isVersioned();
 
     /**
      * Check if a resource is frozen (a historic version).
-     * @return
+     * @return whether the resource is frozen
      */
     boolean isFrozenResource();
 
     /**
      * When this is a frozen node, get the ancestor that was explicitly versioned
-     * @return
+     * @return the ancestor that was explicity versioned
      */
     FedoraResource getVersionedAncestor();
 
     /**
      * Get the unfrozen equivalent of a frozen versioned node
-     * @return
+     * @return the unfrozen equivalent of a frozen versioned node
      */
     FedoraResource getUnfrozenResource();
 
     /**
      * Get the node for this object at the version provided.
-     * @param label
-     * @return
+     * @param label the label
+     * @return the node for this object at the version provided
      */
     Node getNodeVersion(String label);
 }

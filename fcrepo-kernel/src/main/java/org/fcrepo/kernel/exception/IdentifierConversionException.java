@@ -26,7 +26,7 @@ public class IdentifierConversionException extends RuntimeException {
     /**
      * Ordinary constructor.
      *
-     * @param msg
+     * @param msg the message
      */
     public IdentifierConversionException(final String msg) {
         super(msg);

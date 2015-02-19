@@ -35,13 +35,14 @@ public interface FixityResult {
     /**
      * Get the identifier for the entry's store
      * @return String
+     * @throws RepositoryException if repository exception occurred
      */
     String getStoreIdentifier() throws RepositoryException;
 
     /**
      * Check if the fixity result matches the given checksum URI
      *
-     * @param checksum
+     * @param checksum the given checksum uri
      * @return fixity result matches the given checksum URI
      */
     boolean matches(URI checksum);
@@ -49,7 +50,7 @@ public interface FixityResult {
     /**
      * Check if the fixity result matches the given size
      *
-     * @param size
+     * @param size the given size
      * @return fixity result matches the given size
      */
     boolean matches(long size);
@@ -64,6 +65,8 @@ public interface FixityResult {
     boolean matches(long size, URI checksum);
 
     /**
+     * @param size the size
+     * @param checksum the checksum uri
      * @return the status
      */
     Set<FixityState> getStatus(long size, URI checksum);
