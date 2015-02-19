@@ -296,14 +296,10 @@ public class JcrRdfTools {
                             final Resource mixinResource,
                             final Map<String, String> nsPrefixMap) throws RepositoryException {
 
-        try {
-            final Node node = resource.getNode();
-            final String mixinName = getPropertyNameFromPredicate(node, mixinResource, nsPrefixMap);
-            if (repositoryHasType(session, mixinName) && node.isNodeType(mixinName)) {
-                node.removeMixin(mixinName);
-            }
-        } catch (RepositoryException e) {
-            throw e;
+        final Node node = resource.getNode();
+        final String mixinName = getPropertyNameFromPredicate(node, mixinResource, nsPrefixMap);
+        if (repositoryHasType(session, mixinName) && node.isNodeType(mixinName)) {
+            node.removeMixin(mixinName);
         }
 
     }
