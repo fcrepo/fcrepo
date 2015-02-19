@@ -1339,7 +1339,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getObjMethod.addHeader("Prefer",
                 "return=representation; " +
                         "omit=\"http://www.w3.org/ns/ldp#PreferContainment " +
-                "http://www.w3.org/ns/ldp#PreferMembership\"");
+                        "http://www.w3.org/ns/ldp#PreferMembership\"");
         getObjMethod.addHeader("Accept", "application/n-triples");
         final HttpResponse response = client.execute(getObjMethod);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
@@ -2153,7 +2153,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 NodeFactory.createURI(location),
                 NodeFactory.createURI("info:some/relation"),
                 NodeFactory.createURI(location + "/t/1")
-        ));
+                ));
 
         assertTrue("Expected other member relation", graphStore.contains(Node.ANY,
                 NodeFactory.createURI(location),
