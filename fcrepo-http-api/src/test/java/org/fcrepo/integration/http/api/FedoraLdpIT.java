@@ -31,7 +31,6 @@ import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -102,6 +101,9 @@ import javax.ws.rs.core.Variant;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.kernel.RdfLexicon;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -124,8 +126,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1482,7 +1482,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 ("INSERT { <> <http://some-vocabulary#isMemberOfCollection> " +
                         "<" + serverAddress + "non-existant> } WHERE {}").getBytes()));
         patch.setEntity(e);
-        assertEquals(CONFLICT.getStatusCode(), getStatus(patch));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -1570,13 +1570,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patchObjMethod.setEntity(e);
         final HttpResponse response = client.execute(patchObjMethod);
 
-        if (response.getStatusLine().getStatusCode() != CONFLICT.getStatusCode()
+        if (response.getStatusLine().getStatusCode() != BAD_REQUEST.getStatusCode()
                 && response.getEntity() != null) {
             final String content = EntityUtils.toString(response.getEntity());
             logger.trace("Got unexpected update response:\n" + content);
         }
-        assertEquals(CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
+        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
 
+    }
+
+    @Test
+    public void testPutResourceBadRdf() throws Exception {
+        final String pid = getRandomUniquePid();
+        final HttpPut httpPut = new HttpPut(serverAddress + "/test/" + pid);
+        httpPut.setHeader("Content-Type", "text/turtle");
+        httpPut.setEntity(new StringEntity("<> a \"still image\"."));
+
+        final HttpResponse response = client.execute(httpPut);
+
+        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
     @Test
@@ -1587,7 +1599,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut secondPut = new HttpPut(serverAddress + pid);
         secondPut.setHeader("Content-Type", "text/turtle");
-        assertEquals(409, getStatus(secondPut));
+        assertEquals(400, getStatus(secondPut));
     }
 
     @Test
