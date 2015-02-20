@@ -41,9 +41,9 @@ public class ExternalContentServiceImpl implements ExternalContentService {
 
     /**
      * Retrieve the content at the URI using the global connection pool.
-     * @param sourceUri
-     * @return
-     * @throws IOException
+     * @param sourceUri the source uri
+     * @return the content at the URI using the global connection pool
+     * @throws IOException if IO exception occurred
      */
     @Override
     public InputStream retrieveExternalContent(final URI sourceUri) throws IOException {

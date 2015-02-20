@@ -41,7 +41,7 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
     /**
      * Translate ItemDefinitions into triples. The definitions will hang off
      * the provided RDF Node
-     * @param domain
+     * @param domain the domain
      */
     public NodeDefinitionToTriples(final Node domain) {
         super(domain);

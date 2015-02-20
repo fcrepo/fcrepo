@@ -90,8 +90,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     /**
      * Create a new identifier converter within the given session with the given URI template
-     * @param session
-     * @param uriBuilder
+     * @param session the session
+     * @param uriBuilder the uri builder
      */
     public HttpResourceConverter(final Session session,
                                  final UriBuilder uriBuilder) {

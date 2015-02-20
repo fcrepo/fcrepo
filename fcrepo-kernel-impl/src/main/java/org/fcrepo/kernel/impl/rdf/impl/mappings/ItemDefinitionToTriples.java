@@ -47,7 +47,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @since Oct 2013
  *
- * @param <T>
+ * @param <T> the property of T
  */
 public class ItemDefinitionToTriples<T extends ItemDefinition> implements Function<T, Iterator<Triple>> {
 
@@ -58,7 +58,7 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
     /**
      * Translate ItemDefinitions into triples. The definitions will hang off
      * the provided RDF Node
-     * @param context
+     * @param context the context
      */
     public ItemDefinitionToTriples(final Node context) {
         this.context = context;
@@ -88,9 +88,9 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      * {@link Namespaced} is a Modeshape API type which is implemented by types
      * that fulfill the JCR interfaces that represent definitions.
      *
-     * @param namespacedObject
+     * @param namespacedObject the namespace object
      * @return a resource for the given Namespaced JCR object
-     * @throws javax.jcr.RepositoryException
+     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public static Resource getResource(final Namespaced namespacedObject)
         throws RepositoryException {
@@ -110,9 +110,9 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      * {@link Namespaced} is a Modeshape API type which is implemented by types
      * that fulfill the JCR interfaces that represent definitions.
      *
-     * @param nodeType
+     * @param nodeType the node type
      * @return a Resource for the given NodeType
-     * @throws javax.jcr.RepositoryException
+     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public static Resource getResource(final NodeType nodeType) throws RepositoryException {
         return getResource((Namespaced) nodeType);
@@ -123,9 +123,9 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
      * {@link Namespaced} is a Modeshape API type which is implemented by types
      * that fulfill the JCR interfaces that represent definitions.
      *
-     * @param itemDefinition
+     * @param itemDefinition the given item definition
      * @return a resource for the given ItemDefinition
-     * @throws javax.jcr.RepositoryException
+     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public static Resource getResource(final ItemDefinition itemDefinition) throws RepositoryException {
         return getResource((Namespaced) itemDefinition);

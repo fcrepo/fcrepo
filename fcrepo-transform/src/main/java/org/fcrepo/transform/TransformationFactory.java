@@ -38,7 +38,7 @@ public class TransformationFactory {
 
     /**
      * Get a new TransformationFactory with the default classes
-     * @throws SecurityException
+     * @throws SecurityException if security exception occurred
      */
     public TransformationFactory() {
         mimeToTransform.put(contentTypeSPARQLQuery, new SparqlQueryTransform(null));
@@ -48,8 +48,8 @@ public class TransformationFactory {
     /**
      * Get a Transformation from a MediaType and an InputStream with
      * the transform program
-     * @param contentType
-     * @param inputStream
+     * @param contentType the content type
+     * @param inputStream the input stream
      * @return a Transformation
      */
 

@@ -43,7 +43,7 @@ public class SessionProvider implements Factory<Session> {
 
     /**
      * Create a new session provider for a request
-     * @param request
+     * @param request the request
      */
     @Inject
     public SessionProvider(final HttpServletRequest request) {

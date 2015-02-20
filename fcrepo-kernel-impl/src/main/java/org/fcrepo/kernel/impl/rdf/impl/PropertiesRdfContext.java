@@ -51,8 +51,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource
-     * @throws RepositoryException
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
      */
 
     public PropertiesRdfContext(final FedoraResource resource,

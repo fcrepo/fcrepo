@@ -68,7 +68,7 @@ public class AbstractService {
      * Tag a hierarchy with {@link org.fcrepo.kernel.FedoraJcrTypes#FEDORA_PAIRTREE}
      * @param baseNode Top most ancestor that should not be tagged
      * @param createdNode Node whose parents should be tagged up to but not including {@code baseNode}
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)
             throws RepositoryException {
@@ -82,8 +82,8 @@ public class AbstractService {
 
     /** test node existence at path
      *
-     * @param session
-     * @param path
+     * @param session the session
+     * @param path the path
      * @return whether T exists at the given path
      */
     public boolean exists(final Session session, final String path) {

@@ -30,7 +30,7 @@ public interface VersionService {
      * @param session the session in which the node resides
      * @param absPath absolute paths to the node
      * @param label a label to be applied to the new version
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     String createVersion(Session session, String absPath, String label) throws RepositoryException;
 
@@ -42,7 +42,7 @@ public interface VersionService {
      * @param session the session in which the node resides
      * @param absPath the path to the node whose version is to be reverted
      * @param label identifies the historic version
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     void revertToVersion(Session session, String absPath, String label)
         throws RepositoryException;
@@ -54,7 +54,7 @@ public interface VersionService {
      * @param session the session in which the node resides
      * @param absPath the path to the node whose version is to be removed
      * @param label identifies the historic version by label or id
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     void removeVersion(Session session, String absPath, String label)
         throws RepositoryException;

@@ -89,7 +89,9 @@ public class FedoraVersions extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param path
+     * @param path the path
+     * @param label the label
+     * @param pathIntoVersion the string value of pathIntoVersion
      */
     @VisibleForTesting
     public FedoraVersions(final String path, final String label, final String pathIntoVersion) {
@@ -108,7 +110,7 @@ public class FedoraVersions extends ContentExposingResource {
      * Reverts the resource at the given path to the version specified by
      * the label.
      * @return response
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     @PATCH
     public Response revertToVersion() throws RepositoryException {
@@ -121,7 +123,7 @@ public class FedoraVersions extends ContentExposingResource {
     /**
      * Removes the version specified by the label.
      * @return 204 No Content
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
     **/
     @DELETE
     public Response removeVersion() throws RepositoryException {
@@ -135,6 +137,8 @@ public class FedoraVersions extends ContentExposingResource {
      * (though these URLs are returned from getVersionList and need not be
      * constructed manually):
      * /versionable-node/fcr:versions/label/path/to/any/copied/unversionable/nodes
+     * @param rangeValue the range value
+     * @throws IOException if IO exception occurred
      * @return the version of the object as RDF in the requested format
      */
     @GET

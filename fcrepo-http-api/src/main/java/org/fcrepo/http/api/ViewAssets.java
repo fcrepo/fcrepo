@@ -36,6 +36,7 @@ public class ViewAssets {
 
     /**
      * Gets the common css file referenced in all velocity views.
+     * @return the common css file referenced in all velocity views
      */
     @GET
     @Path("common.css")

@@ -33,7 +33,7 @@ public class TombstoneException extends RepositoryRuntimeException {
 
     /**
      * Construct a new tombstone exception for a resource
-     * @param fedoraResource
+     * @param fedoraResource the fedora resource
      */
     public TombstoneException(final FedoraResource fedoraResource) {
         this(fedoraResource, null);
@@ -41,8 +41,8 @@ public class TombstoneException extends RepositoryRuntimeException {
 
     /**
      * Create a new tombstone exception with a URI to the tombstone resource
-     * @param fedoraResource
-     * @param uri
+     * @param fedoraResource the fedora resource
+     * @param uri the uri to the tombstone resource
      */
     public TombstoneException(final FedoraResource fedoraResource, final String uri) {
         super("Discovered tombstone resource at " + fedoraResource);
@@ -52,7 +52,7 @@ public class TombstoneException extends RepositoryRuntimeException {
 
     /**
      * Get the tombstone resource
-     * @return
+     * @return the tombstone resource
      */
     public FedoraResource getResource() {
         return fedoraResource;
@@ -60,7 +60,7 @@ public class TombstoneException extends RepositoryRuntimeException {
 
     /**
      * Get a URI to the tombstone resource
-     * @return
+     * @return the URI to the tombstone resource
      */
     public String getURI() {
         return uri;

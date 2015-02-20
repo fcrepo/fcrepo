@@ -88,9 +88,9 @@ public class ViewHelpers {
     /**
      * Return an iterator of Triples that match the given subject and predicate
      *
-     * @param graph
-     * @param subject
-     * @param predicate
+     * @param graph the graph
+     * @param subject the subject
+     * @param predicate the predicate
      * @return iterator
      */
     public Iterator<Triple> getObjects(final Graph graph,
@@ -101,8 +101,8 @@ public class ViewHelpers {
     /**
      * Return an iterator of Triples for versions.
      *
-     * @param graph
-     * @param subject
+     * @param graph the graph
+     * @param subject the subject
      * @return iterator
      */
     public Iterator<Node> getVersions(final Graph graph,
@@ -114,8 +114,9 @@ public class ViewHelpers {
      * Return an iterator of Triples for versions in order that
      * they were created.
      *
-     * @param graph
-     * @param subject
+     * @param graph the graph
+     * @param subject the subject
+     * @param predicate the predicate
      * @return iterator
      */
     public Iterator<Node> getOrderedVersions(final Graph graph,
@@ -142,6 +143,9 @@ public class ViewHelpers {
      * current node.  The current implementation assumes the URI
      * of that node will be the same as the breadcrumb entry that
      * precedes one with the path "fcr:versions".
+     * @param uriInfo the uri info
+     * @param subject the subject
+     * @return the URL of the node
      */
      public String getVersionSubjectUrl(final UriInfo uriInfo, final Node subject) {
         final Map<String, String> breadcrumbs = getNodeBreadcrumbs(uriInfo, subject);
@@ -158,8 +162,8 @@ public class ViewHelpers {
     /**
      * Gets a version label of a subject from the graph
      *
-     * @param graph
-     * @param subject
+     * @param graph the graph
+     * @param subject the subject
      * @param defaultValue a value to be returned if no label is present in the
      *                     graph
      * @return the label of the version if one has been provided; otherwise
@@ -177,8 +181,8 @@ public class ViewHelpers {
     /**
      * Gets a modification date of a subject from the graph
      *
-     * @param graph
-     * @param subject
+     * @param graph the graph
+     * @param subject the subject
      * @return the modification date or null if none exists
      */
     public String getVersionDate(final Graph graph,
@@ -193,8 +197,8 @@ public class ViewHelpers {
     /**
      * Get the canonical title of a subject from the graph
      *
-     * @param graph
-     * @param subject
+     * @param graph the graph
+     * @param subject the subject
      * @return canonical title of the subject in the graph
      */
     public String getObjectTitle(final Graph graph, final Node subject) {
@@ -226,8 +230,8 @@ public class ViewHelpers {
     /**
      * Take a HAS_SERIALIZATION node and find the RDFS_LABEL for the format it is associated with
      *
-     * @param graph
-     * @param subject
+     * @param graph the graph
+     * @param subject the subject
      * @return the label for the serialization format
      */
     public String getSerializationTitle(final Graph graph, final Node subject) {
@@ -242,6 +246,9 @@ public class ViewHelpers {
     /**
      * Determines whether the subject is writable
      * true if node is writable
+     * @param graph the graph
+     * @param subject the subject
+     * @return whether the subject is writable
      */
     public boolean isWritable(final Graph graph, final Node subject) {
         final Iterator<Triple> it = getObjects(graph, subject, RdfLexicon.WRITABLE);
@@ -251,6 +258,9 @@ public class ViewHelpers {
     /**
      * Determines whether the subject is of type nt:frozenNode.
      * true if node has type nt:frozen
+     * @param graph the graph
+     * @param subject the subject
+     * @return whether the subject is frozen node
      */
     public boolean isFrozenNode(final Graph graph, final Node subject) {
         final Iterator<Triple> objects = getObjects(graph, subject, RdfLexicon.HAS_PRIMARY_TYPE);
@@ -263,9 +273,10 @@ public class ViewHelpers {
      * Get the string version of the object that matches the given subject and
      * predicate
      *
-     * @param graph
-     * @param subject
-     * @param predicate
+     * @param graph the graph
+     * @param subject the subject
+     * @param predicate the predicate
+     * @param uriAsLink the boolean value of uri as link
      * @return string version of the object
      */
     public String getObjectsAsString(final Graph graph,
@@ -294,8 +305,8 @@ public class ViewHelpers {
     /**
      * Generate url to local name breadcrumbs for a given node's tree
      *
-     * @param uriInfo
-     * @param subject
+     * @param uriInfo the uri info
+     * @param subject the subject
      * @return breadcrumbs
      */
     public Map<String, String> getNodeBreadcrumbs(final UriInfo uriInfo,
@@ -348,8 +359,8 @@ public class ViewHelpers {
      * Sort a Iterator of Triples alphabetically by its subject, predicate, and
      * object
      *
-     * @param model
-     * @param it
+     * @param model the model
+     * @param it the iterator of triples
      * @return iterator of alphabetized triples
      */
     public List<Triple> getSortedTriples(final Model model, final Iterator<Triple> it) {
@@ -360,8 +371,9 @@ public class ViewHelpers {
      * Get the namespace prefix (or the namespace URI itself, if no prefix is
      * available) from a prefix mapping
      *
-     * @param mapping
-     * @param namespace
+     * @param mapping the prefix mapping
+     * @param namespace the namespace
+     * @param compact the boolean value of compact
      * @return namespace prefix
      */
     public String getNamespacePrefix(final PrefixMapping mapping,
@@ -394,7 +406,7 @@ public class ViewHelpers {
      * Get a prefix preamble appropriate for a SPARQL-UPDATE query from a prefix
      * mapping object
      *
-     * @param mapping
+     * @param mapping the prefix mapping
      * @return prefix preamble
      */
     public String getPrefixPreamble(final PrefixMapping mapping) {
@@ -413,6 +425,11 @@ public class ViewHelpers {
 
     /**
      * Determines whether the subject is kind of RDF resource
+     * @param graph the graph
+     * @param subject the subject
+     * @param namespace the namespace
+     * @param resource the resource
+     * @return whether the subject is kind of RDF resource
      */
     public boolean isRdfResource(final Graph graph,
                                  final Node subject,
@@ -427,7 +444,7 @@ public class ViewHelpers {
     /**
      * Convert an RDF resource to an RDF node
      *
-     * @param r
+     * @param r the resource
      * @return RDF node representation of the given RDF resource
      */
     public Node asNode(final Resource r) {
@@ -437,7 +454,7 @@ public class ViewHelpers {
     /**
      * Convert a URI string to an RDF node
      *
-     * @param r
+     * @param r the uri string
      * @return RDF node representation of the given string
      */
     public Node asLiteralStringNode(final String r) {
@@ -448,7 +465,7 @@ public class ViewHelpers {
      * Yes, we really did create a method to increment
      * a given int. You can't do math in a velocity template.
      *
-     * @param i
+     * @param i the given integer
      * @return maths
      */
     public int addOne(final int i) {
@@ -481,7 +498,7 @@ public class ViewHelpers {
 
     /**
      * Get the content-bearing node for the given subject
-     * @param subject
+     * @param subject the subject
      * @return content-bearing node for the given subject
      */
     public Node getContentNode(final Node subject) {
@@ -490,7 +507,7 @@ public class ViewHelpers {
 
     /**
      * Transform a source string to something appropriate for HTML ids
-     * @param source
+     * @param source the source string
      * @return transformed source string
      */
     public String parameterize(final String source) {

@@ -112,7 +112,7 @@ public class ResultSetStreamingOutput implements MessageBodyWriter<ResultSet> {
 
     /**
      * Map the HTTP MediaType to a SPARQL ResultsFormat
-     * @param mediaType
+     * @param mediaType the media type
      * @return SPARQL {@link ResultsFormat} for the given {@link MediaType}
      */
     public static ResultsFormat getResultsFormat(final MediaType mediaType) {

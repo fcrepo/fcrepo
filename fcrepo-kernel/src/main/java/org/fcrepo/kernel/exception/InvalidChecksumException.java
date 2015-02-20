@@ -26,7 +26,7 @@ public class InvalidChecksumException extends Exception {
 
     /**
      * Exception with message
-     * @param message
+     * @param message the message
      */
     public InvalidChecksumException(final String message) {
         super(message);

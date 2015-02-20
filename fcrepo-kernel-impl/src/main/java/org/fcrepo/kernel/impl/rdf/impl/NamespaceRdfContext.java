@@ -54,8 +54,8 @@ public class NamespaceRdfContext extends RdfStream {
      * Default constructor. Loads context with RDF describing namespaces in
      * scope in the repository.
      *
-     * @param session
-     * @throws RepositoryException
+     * @param session the session
+     * @throws RepositoryException if repository exception occurred
      */
     public NamespaceRdfContext(final Session session) throws RepositoryException {
         super();

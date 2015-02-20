@@ -44,7 +44,7 @@ public class Range {
 
     /**
      * Left-bounded range
-     * @param start
+     * @param start the start
      */
     public Range(final long start) {
         this(start, -1L);
@@ -52,8 +52,8 @@ public class Range {
 
     /**
      * Left and right bounded range
-     * @param start
-     * @param end
+     * @param start the start
+     * @param end the end
      */
     public Range(final long start, final long end) {
         this.start = start;
@@ -97,7 +97,7 @@ public class Range {
 
     /**
      * Convert an HTTP Range header to a Range object
-     * @param source
+     * @param source the source
      * @return range object
      */
     public static Range convert(final String source) {

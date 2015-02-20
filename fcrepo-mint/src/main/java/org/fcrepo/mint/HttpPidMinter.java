@@ -110,6 +110,7 @@ public class HttpPidMinter implements PidMinter {
 
     /**
      * Setup authentication in httpclient.
+     * @return the setup of authentication
     **/
     protected HttpClient buildClient() {
         HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties().setConnectionManager(
@@ -141,6 +142,9 @@ public class HttpPidMinter implements PidMinter {
     /**
      * Remove unwanted text from the minter service response to produce the desired identifier.
      * Override this method for processing more complex than a simple regex replacement.
+     * @param responseText the response text
+     * @throws Exception if exception occurred
+     * @return the response
     **/
     protected String responseToPid( final String responseText ) throws IOException {
         LOGGER.debug("responseToPid({})", responseText);

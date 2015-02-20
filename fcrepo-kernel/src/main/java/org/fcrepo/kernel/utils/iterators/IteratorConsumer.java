@@ -25,13 +25,14 @@ import org.fcrepo.kernel.exception.MalformedRdfException;
  * 
  * @author ajs6f
  * @since Oct 24, 2013
- * @param <E>
- * @param <T>
+ * @param <E> E
+ * @param <T> T
  */
 public interface IteratorConsumer<E, T> {
 
     /**
      * Synchronous consumption.
+     * @throws Exception if exception occurred
      */
     void consume() throws MalformedRdfException;
 

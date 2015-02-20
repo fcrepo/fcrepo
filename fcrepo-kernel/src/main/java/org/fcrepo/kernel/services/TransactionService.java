@@ -34,6 +34,7 @@ public interface TransactionService {
      * Create a new Transaction and add it to the currently open ones
      *
      * @param sess The session to use for this Transaction
+     * @param userName the user name
      * @return the {@link Transaction}
      */
     Transaction beginTransaction(Session sess, String userName);
@@ -51,8 +52,12 @@ public interface TransactionService {
     /**
      * Get the current Transaction for a session
      *
-     * @param session
+     * @param session the session
      * @return transaction
+<<<<<<< HEAD
+=======
+     * @throws TransactionMissingException if transaction missing exception occurred
+>>>>>>> https://jira.duraspace.org/browse/FCREPO-1352
      */
     Transaction getTransaction(Session session);
 
@@ -68,6 +73,7 @@ public interface TransactionService {
      * Commit a {@link Transaction} with the given id
      *
      * @param txid the id of the {@link Transaction}
+     * @return transaction
      */
     Transaction commit(String txid);
 

@@ -29,7 +29,7 @@ public class ProjectedCacheEntry extends BinaryCacheEntry {
 
     /**
      * Create a new ProjectedCacheEntry
-     * @param property
+     * @param property the given property
      */
     public ProjectedCacheEntry(final Property property) {
         super(property);

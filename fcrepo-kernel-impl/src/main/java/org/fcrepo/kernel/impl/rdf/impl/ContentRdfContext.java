@@ -35,8 +35,8 @@ public class ContentRdfContext extends NodeRdfContext {
     /**
      * Default constructor.
      *
-     * @param resource
-     * @param idTranslator
+     * @param resource the resource
+     * @param idTranslator the idTranslator
      */
     public ContentRdfContext(final FedoraResource resource,
                              final IdentifierConverter<Resource, FedoraResource> idTranslator) {

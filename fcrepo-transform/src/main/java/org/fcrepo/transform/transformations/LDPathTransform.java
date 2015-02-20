@@ -78,7 +78,7 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
 
     /**
      * Construct a new Transform from the InputStream
-     * @param query
+     * @param query the query
      */
     public LDPathTransform(final InputStream query) {
         this.query = query;
@@ -86,10 +86,10 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
 
     /**
      * Pull a node-type specific transform out of JCR
-     * @param node
-     * @param key
+     * @param node the node
+     * @param key the key
      * @return node-type specific transform
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static LDPathTransform getNodeTypeTransform(final Node node,
         final String key) throws RepositoryException {

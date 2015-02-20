@@ -300,8 +300,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     /**
      * Get the binary content of a datastream
      *
+     * @param rangeValue the range value
      * @return Binary blob
-     * @throws RepositoryException
+     * @throws IOException if io exception occurred
      */
     protected Response getBinaryContent(final String rangeValue)
             throws IOException {
@@ -414,7 +415,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Add any resource-specific headers to the response
-     * @param resource
+     * @param resource the resource
      */
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         if (resource instanceof FedoraBinary) {
@@ -458,11 +459,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * Evaluate the cache control headers for the request to see if it can be served from
      * the cache.
      *
-     * @param request
-     * @param servletResponse
-     * @param resource
-     * @param session
-     * @throws javax.jcr.RepositoryException
+     * @param request the request
+     * @param servletResponse the servlet response
+     * @param resource the fedora resource
+     * @param session the session
      */
     protected static void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
@@ -474,8 +474,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Add ETag and Last-Modified cache control headers to the response
-     * @param servletResponse
-     * @param resource
+     * @param servletResponse the servlet response
+     * @param resource the fedora resource
+     * @param session the session
      */
     protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
                                                  final FedoraResource resource,
@@ -501,8 +502,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Evaluate request preconditions to ensure the resource is the expected state
-     * @param request
-     * @param resource
+     * @param request the request
+     * @param servletResponse the servlet response
+     * @param resource the resource
+     * @param session the session
      */
     protected static void evaluateRequestPreconditions(final Request request,
                                                        final HttpServletResponse servletResponse,

@@ -70,8 +70,8 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
 
     /**
      * Check if a session is possibly within a transaction
-     * @param session
-     * @return
+     * @param session the session
+     * @return whether the session is possibly within a transaction
      */
     public static boolean isInTransaction(final Session session) {
         try {
@@ -151,9 +151,9 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     /**
      * Get the current Transaction for a session
      *
-     * @param session
+     * @param session the session
      * @return the given session's current Transaction
-     * @throws TransactionMissingException
+     * @throws TransactionMissingException if transaction missing exception occurred
      */
     @Override
     public Transaction getTransaction(final Session session) {
@@ -176,7 +176,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     /**
      * Get the current Transaction ID for a session
      *
-     * @param session
+     * @param session the session
      * @return the current Transaction ID for the given session
      */
     public static String getCurrentTransactionId(final Session session) {

@@ -67,14 +67,13 @@ public class FedoraImport extends FedoraBaseResource {
      * Deserialize a serialized object at the current path POST
      * /fcr:import?format=jcr/xml (with a JCR/XML payload)
      *
-     * @param externalPath
-     * @param format
-     * @param requestBodyStream
+     * @param externalPath the external path
+     * @param format the format
+     * @param requestBodyStream the request body stream
      * @return 201 with Location header to the path of the imported resource
-     * @throws IOException
-     * @throws RepositoryException
-     * @throws InvalidChecksumException
-     * @throws URISyntaxException
+     * @throws IOException if IO exception occurred
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws URISyntaxException if uri syntax exception
      */
     @POST
     public Response importObject(@PathParam("path") final String externalPath,

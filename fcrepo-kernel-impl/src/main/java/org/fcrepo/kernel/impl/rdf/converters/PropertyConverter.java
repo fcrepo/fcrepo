@@ -88,7 +88,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
      * @param predicate the predicate to map to a property name
      * @param namespaceMapping prefix to uri namespace mapping
      * @return the JCR property name
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static String getPropertyNameFromPredicate(final Node node,
                                                       final Resource predicate,
@@ -102,11 +102,11 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
     /**
      * Get the JCR property name for an RDF predicate
      *
-     * @param namespaceRegistry
+     * @param namespaceRegistry the namespace registry
      * @param predicate the predicate to map to a property name
-     * @param namespaceMapping
+     * @param namespaceMapping the namespace mapping
      * @return JCR property name for an RDF predicate
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
                                                       final Resource predicate,

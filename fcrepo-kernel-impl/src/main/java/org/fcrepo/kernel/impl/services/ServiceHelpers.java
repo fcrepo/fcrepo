@@ -53,9 +53,9 @@ public class ServiceHelpers {
     /**
      * Get the total size of a Node's properties
      * 
-     * @param node
+     * @param node the node
      * @return size in bytes
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static Long getNodePropertySize(final Node node)
         throws RepositoryException {
@@ -74,18 +74,18 @@ public class ServiceHelpers {
     }
 
     /**
-     * @param obj
+     * @param obj the object
      * @return object size in bytes
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static Long getObjectSize(final Node obj) throws RepositoryException {
         return getNodePropertySize(obj) + getObjectDSSize(obj);
     }
 
     /**
-     * @param obj
+     * @param obj the object
      * @return object's datastreams' total size in bytes
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     private static Long getObjectDSSize(final Node obj)
         throws RepositoryException {
@@ -103,9 +103,9 @@ public class ServiceHelpers {
      * Get the size of a datastream by calculating the size of the properties
      * and the binary properties
      * 
-     * @param ds
+     * @param ds the node
      * @return size of the datastream's properties and binary properties
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static Long getDatastreamSize(final Node ds)
         throws RepositoryException {
@@ -115,9 +115,8 @@ public class ServiceHelpers {
     /**
      * Get the size of the JCR content binary property
      * 
-     * @param ds
+     * @param ds the given node
      * @return size of the binary content property
-     * @throws RepositoryException
      */
     public static Long getContentSize(final Node ds) {
         try {
@@ -140,8 +139,9 @@ public class ServiceHelpers {
     }
 
     /**
+     * @param repository the repository
      * @return a double of the size of the fedora:datastream binary content
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static long getRepositoryCount(final Repository repository)
         throws RepositoryException {
@@ -164,8 +164,9 @@ public class ServiceHelpers {
     }
 
     /**
+     * @param repository the repository
      * @return a double of the size of the fedora:datastream binary content
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static long getRepositorySize(final Repository repository)
         throws RepositoryException {

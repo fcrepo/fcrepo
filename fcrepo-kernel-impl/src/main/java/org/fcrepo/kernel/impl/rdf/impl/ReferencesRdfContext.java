@@ -38,9 +38,9 @@ public class ReferencesRdfContext extends NodeRdfContext {
     /**
      * Add the inbound references from other nodes to this resource to the stream
      *
-     * @param resource
-     * @param idTranslator
-     * @throws javax.jcr.RepositoryException
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
      */
 
     public ReferencesRdfContext(final FedoraResource resource,

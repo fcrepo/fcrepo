@@ -55,7 +55,7 @@ public class HttpTripleUtil implements ApplicationContextAware {
      * @param rdfStream the source stream we'll add named models to
      * @param resource the FedoraResourceImpl in question
      * @param uriInfo a JAX-RS UriInfo object to build URIs to resources
-     * @param idTranslator
+     * @param idTranslator the id translator
      */
     public void addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
             final FedoraResource resource, final UriInfo uriInfo,

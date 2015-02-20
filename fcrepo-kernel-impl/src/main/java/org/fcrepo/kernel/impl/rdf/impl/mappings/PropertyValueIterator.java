@@ -38,7 +38,7 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
 
     /**
      * Iterate through multiple properties' values
-     * @param properties
+     * @param properties the properties
      */
     public PropertyValueIterator(final Iterator<Property> properties) {
         this.properties = properties;
@@ -47,7 +47,7 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
 
     /**
      * Iterate through a property's values
-     * @param properties
+     * @param property the properties
      */
     public PropertyValueIterator(final Property property) {
         this.properties = singletonIterator(property);

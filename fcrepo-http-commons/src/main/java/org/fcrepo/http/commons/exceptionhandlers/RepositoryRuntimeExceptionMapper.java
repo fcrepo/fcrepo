@@ -42,7 +42,7 @@ public class RepositoryRuntimeExceptionMapper implements
 
     /**
      * Get the context Providers so we can rethrow the cause to an appropriate handler
-     * @param providers
+     * @param providers the providers
      */
     public RepositoryRuntimeExceptionMapper(@Context final Providers providers) {
         this.providers = providers;

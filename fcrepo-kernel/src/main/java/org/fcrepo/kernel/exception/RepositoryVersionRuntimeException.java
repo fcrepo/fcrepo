@@ -25,7 +25,7 @@ public class RepositoryVersionRuntimeException extends RepositoryRuntimeExceptio
 
     /**
      * Wrap a RepositoryVersionException in a runtime exception
-     * @param rootCause
+     * @param rootCause the root cause
      */
     public RepositoryVersionRuntimeException(final Throwable rootCause) {
         super(rootCause);
@@ -33,7 +33,7 @@ public class RepositoryVersionRuntimeException extends RepositoryRuntimeExceptio
 
     /**
      * Wrap a RepositoryVersionException in a runtime exception
-     * @param msg
+     * @param msg the message
      */
     public RepositoryVersionRuntimeException(final String msg) {
         super(msg);

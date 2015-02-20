@@ -55,7 +55,10 @@ public class DistributedFixityCheck implements DistributedCallable<String, byte[
 
     /**
      *
-     * @param dataKey
+     * @param dataKey the data key
+     * @param digest the digest
+     * @param chunkSize the chunk size
+     * @param length the given length
      */
     public DistributedFixityCheck(final String dataKey, final String digest, final int chunkSize, final long length) {
         this.dataKey = dataKey;

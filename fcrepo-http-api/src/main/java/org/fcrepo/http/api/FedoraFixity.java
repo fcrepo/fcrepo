@@ -72,7 +72,7 @@ public class FedoraFixity extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param externalPath
+     * @param externalPath the external path
      */
     @VisibleForTesting
     public FedoraFixity(final String externalPath) {

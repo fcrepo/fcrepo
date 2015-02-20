@@ -70,9 +70,9 @@ public interface FedoraAuthorizationDelegate {
      * nodes. See AbstractRolesAuthorizationDelegate for an example.
      * </p>
      *
-     * @param session
-     * @param absPath
-     * @param actions
+     * @param session the session
+     * @param absPath the abspath
+     * @param actions the actions
      * @return true if the given session has permission at absPath for all of
      *         the given actions, or false otherwise
      */

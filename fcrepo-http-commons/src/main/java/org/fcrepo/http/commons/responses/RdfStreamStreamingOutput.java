@@ -71,8 +71,8 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     /**
      * Normal constructor
      *
-     * @param rdfStream
-     * @param mediaType
+     * @param rdfStream the rdf stream
+     * @param mediaType the media type
      */
     public RdfStreamStreamingOutput(final RdfStream rdfStream,
             final MediaType mediaType) {

@@ -64,10 +64,10 @@ public class FedoraExport extends FedoraBaseResource {
      * Export an object with the given format, e.g.: GET
      * /path/to/object/fcr:export?format=jcr/xml : the node as JCR/XML
      *
-     * @param externalPath
-     * @param format
-     * @param skipBinary
-     * @param recurse
+     * @param externalPath the external path
+     * @param format the format string
+     * @param skipBinary the value whether skip binary
+     * @param recurse the value whether recurse
      * @return object in the given format
      */
     @GET

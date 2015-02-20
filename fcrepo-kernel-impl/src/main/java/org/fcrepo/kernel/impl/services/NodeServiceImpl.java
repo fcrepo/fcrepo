@@ -67,7 +67,6 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @param session a JCR session
      * @param path a JCR path
      * @return Fedora resource at the given path
-     * @throws RepositoryException
      */
     @Override
     public FedoraResource find(final Session session, final String path) {
@@ -81,10 +80,9 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     /**
      * Copy an existing object from the source path to the destination path
      *
-     * @param session
-     * @param source
-     * @param destination
-     * @throws RepositoryException
+     * @param session a JCR session
+     * @param source the source path
+     * @param destination the destination path
      */
     @Override
     public void copyObject(final Session session, final String source, final String destination) {
@@ -98,10 +96,9 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     /**
      * Move an existing object from the source path to the destination path
      *
-     * @param session
-     * @param source
-     * @param destination
-     * @throws RepositoryException
+     * @param session the session
+     * @param source the source path
+     * @param destination the destination path
      */
     @Override
     public void moveObject(final Session session, final String source, final String destination) {
@@ -129,9 +126,8 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     }
 
     /**
-     * @param session
+     * @param session the session
      * @return node types
-     * @throws RepositoryException
      */
     @Override
     public RdfStream getNodeTypes(final Session session) {
@@ -143,10 +139,9 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     }
 
     /**
-     * @param session
-     * @param cndStream
-     * @throws RepositoryException
-     * @throws IOException
+     * @param session the session
+     * @param cndStream the cnd stream
+     * @throws IOException if io exception occurred
      */
     @Override
     public void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException {
@@ -159,8 +154,8 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     }
 
     /**
-     * @param session
-     * @param path
+     * @param session the session
+     * @param path the path
      */
     @Override
     public FedoraResource findOrCreate(final Session session, final String path) {
@@ -168,7 +163,8 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     }
 
     /**
-     * @param node
+     * @param node the node
+     * @return the fedora resource
      */
     @Override
     public FedoraResource cast(final Node node) {

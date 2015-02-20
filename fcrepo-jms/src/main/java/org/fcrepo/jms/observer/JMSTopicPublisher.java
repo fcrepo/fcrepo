@@ -66,10 +66,10 @@ public class JMSTopicPublisher {
      * When an EventBus mesage is received, map it to our JMS
      * message payload and push it onto the queue.
      *
-     * @param fedoraEvent
-     * @throws JMSException
-     * @throws RepositoryException
-     * @throws IOException
+     * @param fedoraEvent the fedora event
+     * @throws JMSException if JMS exception occurred
+     * @throws RepositoryException if repository exception occurred
+     * @throws IOException if IO exception occurred
      */
     @Subscribe
     public void publishJCREvent(final FedoraEvent fedoraEvent) throws JMSException,
@@ -86,7 +86,7 @@ public class JMSTopicPublisher {
     /**
      * Connect to JCR Repostory and JMS queue
      *
-     * @throws JMSException
+     * @throws JMSException if JMS Exception occurred
      */
     @PostConstruct
     public void acquireConnections() throws JMSException {
@@ -102,7 +102,7 @@ public class JMSTopicPublisher {
     /**
      * Close external connections
      *
-     * @throws JMSException
+     * @throws JMSException if JMS exception occurred
      */
     @PreDestroy
     public void releaseConnections() throws JMSException {

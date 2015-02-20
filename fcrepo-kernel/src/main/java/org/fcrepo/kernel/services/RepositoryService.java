@@ -44,8 +44,8 @@ public interface RepositoryService {
     /**
      * This method backups up a running repository
      *
-     * @param session
-     * @param backupDirectory
+     * @param session the session
+     * @param backupDirectory the backup directory
      * @return problems
      */
     Problems backupRepository(Session session, File backupDirectory);
@@ -53,8 +53,8 @@ public interface RepositoryService {
     /**
      * This methods restores the repository from a backup
      *
-     * @param session
-     * @param backupDirectory
+     * @param session the session
+     * @param backupDirectory the backup directory
      * @return problems
      */
     Problems restoreRepository(Session session, File backupDirectory);

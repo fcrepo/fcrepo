@@ -94,7 +94,7 @@ public class FedoraVersioning extends FedoraBaseResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param externalPath
+     * @param externalPath the external path
      */
     @VisibleForTesting
     public FedoraVersioning(final String externalPath) {
@@ -104,7 +104,7 @@ public class FedoraVersioning extends FedoraBaseResource {
 
     /**
      * Enable versioning
-     * @return
+     * @return the response
      */
     @PUT
     public Response enableVersioning() {
@@ -121,7 +121,7 @@ public class FedoraVersioning extends FedoraBaseResource {
 
     /**
      * Disable versioning
-     * @return
+     * @return the response
      */
     @DELETE
     public Response disableVersioning() {
@@ -142,8 +142,9 @@ public class FedoraVersioning extends FedoraBaseResource {
      * that label already describes another version it will silently be
      * reassigned to describe this version.
      *
+     * @param slug the value of slug
      * @return response
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
@@ -163,7 +164,6 @@ public class FedoraVersioning extends FedoraBaseResource {
      * Get the list of versions for the object
      *
      * @return List of versions for the object as RDF
-     * @throws RepositoryException
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
