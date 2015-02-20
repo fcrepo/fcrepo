@@ -18,10 +18,13 @@ package org.fcrepo.kernel.impl.observer;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.transform;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Collection;
+import java.util.List;
 
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
@@ -29,16 +32,14 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import org.fcrepo.kernel.observer.EventFilter;
+
 import org.slf4j.Logger;
 
-import java.util.Collection;
-import java.util.List;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -71,15 +72,9 @@ public class DefaultFilter implements EventFilter {
     public DefaultFilter() {
     }
 
-    /**
-     * @param session
-     */
-    private DefaultFilter(final Session session) {
-    }
-
     @Override
     public Predicate<Event> getFilter(final Session session) {
-        return new DefaultFilter(session);
+        return new DefaultFilter();
     }
 
     @Override

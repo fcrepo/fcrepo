@@ -73,7 +73,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         return new FedoraEventIterator(events);
     }
 
-    private class FedoraEventIterator implements Iterator {
+    private static class FedoraEventIterator implements Iterator {
 
         private final Iterator<Event> events;
 
