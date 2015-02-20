@@ -24,21 +24,21 @@ import javax.ws.rs.HeaderParam;
  * Aggregates information from multiple Prefer HTTP headers.
  *
  * @author ajs6f
- * @date 23 October 2014
+ * @since 23 October 2014
  */
 public class MultiPrefer extends SinglePrefer {
 
     /**
-     * @param header
-     * @throws ParseException
+     * @param header the header
+     * @throws ParseException if parse exception occurred
      */
     public MultiPrefer(final String header) throws ParseException {
         super(header);
     }
 
     /**
-     * @param prefers
-     * @throws ParseException
+     * @param prefers the prefers
+     * @throws ParseException if parse exception occurred
      */
     public MultiPrefer(final @HeaderParam("Prefer") Set<SinglePrefer> prefers) throws ParseException {
         super("");

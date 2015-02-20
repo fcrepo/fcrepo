@@ -37,6 +37,7 @@ public final class RegistryService {
 
     /**
      * Create the instance
+     * @return the local object
      */
     public synchronized static RegistryService getInstance() {
         RegistryService local = instance;

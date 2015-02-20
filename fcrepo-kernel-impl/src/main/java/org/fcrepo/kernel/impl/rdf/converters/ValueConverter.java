@@ -65,8 +65,8 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
     /**
      * Convert values between JCR values and RDF objects with the given session and subjects
-     * @param session
-     * @param graphSubjects
+     * @param session the session
+     * @param graphSubjects the graph subjects
      */
     public ValueConverter(final Session session,
                           final Converter<Resource, FedoraResource> graphSubjects) {

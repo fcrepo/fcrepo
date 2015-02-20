@@ -80,7 +80,7 @@ public class LocalBinaryStoreEntry extends BasicCacheEntry {
      * Two LowLevelCacheEntries are the same if they have the same key,
      * come from the same BinaryStore,
      * and have the same underlying store configuration
-     * @param other
+     * @param other the other object
      * @return true if the given binary store entries have the same key
      */
     @Override

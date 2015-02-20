@@ -48,8 +48,8 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     private static final GetClusterExecutor EXECUTOR_FACTORY = new GetClusterExecutor();
     /**
      *
-     * @param store
-     * @param property
+     * @param store the store
+     * @param property the property
      */
     public InfinispanCacheStoreEntry(final InfinispanBinaryStore store, final Property property) {
         super(store, property);

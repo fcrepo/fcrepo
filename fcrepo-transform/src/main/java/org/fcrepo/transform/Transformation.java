@@ -30,7 +30,7 @@ public interface Transformation<T> extends Function<RdfStream, T> {
 
     /**
      * Execute a transform on an rdf stream
-     * @param stream
+     * @param stream the stream
      * @return transformed output
      */
     @Override
@@ -43,6 +43,7 @@ public interface Transformation<T> extends Function<RdfStream, T> {
     InputStream getQuery();
 
     /**
+     * @param query the query
      * @return a new Transform of this type, for use as a factory
      */
     Transformation<T> newTransform(InputStream query);

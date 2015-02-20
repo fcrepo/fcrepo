@@ -40,8 +40,8 @@ public class SinglePrefer {
     /**
      * Parse a Prefer: header
      *
-     * @param inputValue
-     * @throws ParseException
+     * @param header the header
+     * @throws ParseException if parse exception occurred
      */
     public SinglePrefer(final String header) throws ParseException {
         preferTags.addAll(HttpHeaderReader.readList(PREFER_CREATOR, header));

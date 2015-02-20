@@ -34,7 +34,7 @@ public class FedoraAdminSecurityContext implements AuthorizationProvider,
     private boolean loggedIn = true;
 
     /**
-     * @param username
+     * @param username the user name
      */
     public FedoraAdminSecurityContext(final String username) {
         super();

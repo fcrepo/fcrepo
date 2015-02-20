@@ -34,8 +34,8 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
 
     /**
      * Get a converter that can transform a Node to a Resource
-     * @param c
-     * @return
+     * @param c the given node
+     * @return the converter that can transform a node to resource
      */
     public static Converter<Node, Resource> nodeToResource(final Converter<Resource, FedoraResource> c) {
         return nodeConverter.andThen(c.reverse());

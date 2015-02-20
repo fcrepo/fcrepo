@@ -62,9 +62,10 @@ public class FedoraTransactions extends FedoraBaseResource {
     /**
      * Create a new transaction resource and add it to the registry
      *
-     * @param externalPath
+     * @param externalPath the external path
+     * @param req the http servlet request
      * @return 201 with the transaction id and expiration date
-     * @throws URISyntaxException
+     * @throws URISyntaxException if URI syntax exception occurred
      */
     @POST
     public Response createTransaction(@PathParam("path") final String externalPath,
@@ -97,7 +98,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     /**
      * Commit a transaction resource
      *
-     * @param externalPath
+     * @param externalPath the external path
      * @return 204
      */
     @POST
@@ -110,6 +111,8 @@ public class FedoraTransactions extends FedoraBaseResource {
 
     /**
      * Rollback a transaction
+     *
+     * @param externalPath the external path
      * @return 204
      */
     @POST

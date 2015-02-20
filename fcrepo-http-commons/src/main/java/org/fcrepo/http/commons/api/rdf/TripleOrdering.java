@@ -32,7 +32,7 @@ public class TripleOrdering implements Comparator<Triple> {
 
     /**
      * When sorting predicates, take into account the given PrefixMapping
-     * @param prefixMapping
+     * @param prefixMapping the prefix mapping
      */
     public TripleOrdering(final PrefixMapping prefixMapping) {
         super();

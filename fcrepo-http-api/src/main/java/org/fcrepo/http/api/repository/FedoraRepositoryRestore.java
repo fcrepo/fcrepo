@@ -63,8 +63,9 @@ public class FedoraRepositoryRestore extends AbstractResource {
     /**
      * This method runs a repository restore.
      *
+     * @param bodyStream the body stream
      * @return response
-     * @throws IOException
+     * @throws IOException if IO exception occurred
      */
     @POST
     public Response runRestore(final InputStream bodyStream) throws IOException {

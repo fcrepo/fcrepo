@@ -59,6 +59,7 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
 
     /**
      * Construct the graph with a placeholder context resource
+     * @param session the session
      */
     public DefaultIdentifierTranslator(final Session session) {
         this.session = session;

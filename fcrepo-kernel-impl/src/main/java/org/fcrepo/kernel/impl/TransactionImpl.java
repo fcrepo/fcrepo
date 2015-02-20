@@ -58,7 +58,8 @@ public class TransactionImpl implements Transaction {
 
     /**
      * Create a transaction for the given Session
-     * @param session
+     * @param session the given session
+     * @param userName the user name
      */
 
     public TransactionImpl(final Session session, final String userName) {

@@ -40,10 +40,10 @@ public class CacheLoaderChunkInputStream extends InputStream {
 
     /**
      * Constructor
-     * @param blobCache
-     * @param key
-     * @param chunkSize
-     * @param totalSize
+     * @param blobCache the blob cache
+     * @param key the key
+     * @param chunkSize the chunk size
+     * @param totalSize the total size
      */
     public CacheLoaderChunkInputStream( final CacheLoader<String, byte[]> blobCache,
                              final String key,

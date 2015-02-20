@@ -59,7 +59,8 @@ public class NodePropertiesTools {
      * @param propertyName a name of a JCR property (either pre-existing or
      *   otherwise)
      * @param newValue the JCR value to insert
-     * @throws RepositoryException
+     * @return the property
+     * @throws RepositoryException if repository exception occurred
      */
     public Property appendOrReplaceNodeProperty(final Node node, final String propertyName, final Value newValue)
         throws RepositoryException {
@@ -126,11 +127,11 @@ public class NodePropertiesTools {
 
     /**
      * Add a reference placeholder from one node to another in-domain resource
-     * @param idTranslator
-     * @param node
-     * @param propertyName
-     * @param resource
-     * @throws RepositoryException
+     * @param idTranslator the id translator
+     * @param node the node
+     * @param propertyName the property name
+     * @param resource the resource
+     * @throws RepositoryException if repository exception occurred
      */
     public void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
                                           final Node node,
@@ -167,11 +168,11 @@ public class NodePropertiesTools {
 
     /**
      * Remove a reference placeholder that links one node to another in-domain resource
-     * @param idTranslator
-     * @param node
-     * @param propertyName
-     * @param resource
-     * @throws RepositoryException
+     * @param idTranslator the id translator
+     * @param node the node
+     * @param propertyName the property name
+     * @param resource the resource
+     * @throws RepositoryException if repository exception occurred
      */
     public void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
                                              final Node node,
@@ -193,7 +194,8 @@ public class NodePropertiesTools {
      * @param propertyName a name of a JCR property (either pre-existing or
      *   otherwise)
      * @param valueToRemove the JCR value to remove
-     * @throws RepositoryException
+     * @return the property
+     * @throws RepositoryException if repository exception occurred
      */
     public Property removeNodeProperty(final Node node, final String propertyName, final Value valueToRemove)
         throws RepositoryException {

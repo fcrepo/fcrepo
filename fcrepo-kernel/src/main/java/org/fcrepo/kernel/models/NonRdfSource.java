@@ -22,7 +22,7 @@ package org.fcrepo.kernel.models;
 public interface NonRdfSource extends FedoraResource {
     /**
      * Get the description for this binary
-     * @return
+     * @return the description for this binary
      */
     NonRdfSourceDescription getDescription();
 

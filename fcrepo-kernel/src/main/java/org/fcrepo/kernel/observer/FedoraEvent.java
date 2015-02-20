@@ -55,7 +55,7 @@ public class FedoraEvent {
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
      *
-     * @param e
+     * @param e the JCR event
      */
     public FedoraEvent(final Event e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
@@ -66,7 +66,7 @@ public class FedoraEvent {
      * Create a FedoraEvent from an existing FedoraEvent object
      * Note: Only the wrapped JCR event is passed on to the new object.
      *
-     * @param e
+     * @param e the given fedora event
      */
     public FedoraEvent(final FedoraEvent e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
@@ -81,7 +81,7 @@ public class FedoraEvent {
     }
 
     /**
-     * @param type
+     * @param type the type
      * @return this object for continued use
      */
     public FedoraEvent addType(final Integer type) {
@@ -108,6 +108,7 @@ public class FedoraEvent {
 
     /**
      * @return the path of the underlying JCR {@link Event}s
+     * @throws RepositoryException if the repository exception occurred
      */
     public String getPath() throws RepositoryException {
         if (e.getType() == PROPERTY_ADDED   ||
@@ -127,6 +128,7 @@ public class FedoraEvent {
 
     /**
      * @return the node identifer of the underlying JCR {@link Event}s
+     * @throws RepositoryException if repository exception occurred
      */
     public String getIdentifier() throws RepositoryException {
         return e.getIdentifier();
@@ -134,6 +136,7 @@ public class FedoraEvent {
 
     /**
      * @return the info map of the underlying JCR {@link Event}s
+     * @throws RepositoryException if repository exception occurred
      */
     public Map<Object, Object> getInfo() throws RepositoryException {
         return new HashMap<>(e.getInfo());
@@ -141,6 +144,7 @@ public class FedoraEvent {
 
     /**
      * @return the user data of the underlying JCR {@link Event}s
+     * @throws RepositoryException if repository exception occurred
      */
     public String getUserData() throws RepositoryException {
         return e.getUserData();
@@ -148,6 +152,7 @@ public class FedoraEvent {
 
     /**
      * @return the date of the underlying JCR {@link Event}s
+     * @throws RepositoryException if repository exception occurred
      */
     public long getDate() throws RepositoryException {
         return e.getDate();

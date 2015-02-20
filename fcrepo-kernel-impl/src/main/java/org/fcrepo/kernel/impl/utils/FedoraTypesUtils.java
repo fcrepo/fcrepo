@@ -177,7 +177,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @param node the JCR node to add the property on
      * @param propertyName the property name
      * @return a PropertyType value
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static int getPropertyType(final Node node, final String propertyName)
             throws RepositoryException {
@@ -202,7 +202,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @param propertyName the property name
      *   (which may or may not already exist)
      * @return true if the property is (or could be) multivalued
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     public static boolean isMultivaluedProperty(final Node node,
                                                 final String propertyName)
@@ -224,7 +224,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @param node the node to use for inferring the property definition
      * @param propertyName the property name to retrieve a definition for
      * @return a JCR PropertyDefinition, if available, or null
-     * @throws javax.jcr.RepositoryException
+     * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public static PropertyDefinition getDefinitionForPropertyName(final Node node,
                                                                   final String propertyName)
@@ -252,7 +252,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     /**
      * When we add certain URI properties, we also want to leave a reference node
-     * @param propertyName
+     * @param propertyName the property name
      * @return property name as a reference
      */
     public static String getReferencePropertyName(final String propertyName) {
@@ -261,7 +261,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     /**
      * Given an internal reference node property, get the original name
-     * @param refPropertyName
+     * @param refPropertyName the reference node property name
      * @return original property name of the reference property
      */
     public static String getReferencePropertyOriginalName(final String refPropertyName) {
@@ -275,10 +275,10 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     /**
      * Check if a property definition is a reference property
-     * @param node
-     * @param propertyName
-     * @return
-     * @throws RepositoryException
+     * @param node the given node
+     * @param propertyName the property name
+     * @return whether a property definition is a reference property
+     * @throws RepositoryException if repository exception occurred
      */
     public static boolean isReferenceProperty(final Node node, final String propertyName) throws RepositoryException {
         final PropertyDefinition propertyDefinition = getDefinitionForPropertyName(node, propertyName);
@@ -292,10 +292,10 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Get the closest ancestor that current exists
      *
-     * @param session
-     * @param path
-     * @return
-     * @throws RepositoryException
+     * @param session the given session
+     * @param path the given path
+     * @return the closest ancestor that current exists
+     * @throws RepositoryException if repository exception occurred
      */
     public static Node getClosestExistingAncestor(final Session session,
                                                   final String path) throws RepositoryException {

@@ -48,7 +48,7 @@ public class LdpPreferTag extends PreferTag {
     /**
      * Standard constructor.
      *
-     * @param preferTag
+     * @param preferTag the prefer tag
      */
     public LdpPreferTag(final PreferTag preferTag) {
         super(preferTag);

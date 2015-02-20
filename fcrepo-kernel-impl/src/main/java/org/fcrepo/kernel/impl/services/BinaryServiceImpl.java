@@ -50,7 +50,6 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      *
      * @param path jcr path to the datastream
      * @return datastream
-     * @throws javax.jcr.RepositoryException
      */
     @Override
     public FedoraBinary findOrCreate(final Session session, final String path) {
@@ -72,7 +71,6 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      *
      * @param path jcr path to the datastream
      * @return datastream
-     * @throws javax.jcr.RepositoryException
      */
     @Override
     public FedoraBinary find(final Session session, final String path) {

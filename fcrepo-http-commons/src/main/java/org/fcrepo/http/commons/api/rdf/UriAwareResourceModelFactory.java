@@ -36,9 +36,9 @@ public interface UriAwareResourceModelFactory {
      * create a model with triples to inject into an RDF response for the
      * resource (e.g. to add HATEOAS links)
      *
-     * @param resource
-     * @param uriInfo
-     * @param idTranslator
+     * @param resource the resource
+     * @param uriInfo the uri info
+     * @param idTranslator the id translator
      * @return model containing triples for the given resource
      */
     Model createModelForResource(final FedoraResource resource,

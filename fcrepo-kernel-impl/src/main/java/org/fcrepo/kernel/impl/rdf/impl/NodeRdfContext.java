@@ -44,8 +44,8 @@ public class NodeRdfContext extends RdfStream {
     /**
      * Default constructor.
      *
-     * @param resource
-     * @param idTranslator
+     * @param resource the resource
+     * @param idTranslator the id translator
      */
     public NodeRdfContext(final FedoraResource resource,
                           final IdentifierConverter<Resource, FedoraResource> idTranslator) {

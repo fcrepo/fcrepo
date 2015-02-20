@@ -47,8 +47,9 @@ public abstract class BasicCacheEntry implements CacheEntry {
      * Calculate the fixity of a CacheEntry by piping it through
      * a simple fixity-calculating InputStream
      *
+     * @param digest the digest
      * @return the fixity of this cache entry
-     * @throws RepositoryException
+     * @throws RepositoryException if repository exception occurred
      */
     @Override
     public Collection<FixityResult> checkFixity(final String digest)

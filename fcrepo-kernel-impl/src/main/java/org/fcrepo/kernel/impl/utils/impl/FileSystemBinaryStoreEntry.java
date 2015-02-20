@@ -29,8 +29,8 @@ public class FileSystemBinaryStoreEntry extends LocalBinaryStoreEntry {
 
     /**
      * Create a binary store entry for a property in a filesystem binary store
-     * @param store
-     * @param property
+     * @param store the store
+     * @param property the property
      */
     public FileSystemBinaryStoreEntry(final FileSystemBinaryStore store, final Property property) {
         super(store, property);

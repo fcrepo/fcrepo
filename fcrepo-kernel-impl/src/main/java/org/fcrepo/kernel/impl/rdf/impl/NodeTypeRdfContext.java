@@ -70,8 +70,8 @@ public class NodeTypeRdfContext extends RdfStream {
      * Convert the NodeTypeManager to an RDF stream, including both primary and
      * mixin node types.
      *
-     * @param nodeTypeManager
-     * @throws RepositoryException
+     * @param nodeTypeManager the node type manager
+     * @throws RepositoryException if repository exception occurred
      */
     public NodeTypeRdfContext(final NodeTypeManager nodeTypeManager)
         throws RepositoryException {
@@ -85,8 +85,8 @@ public class NodeTypeRdfContext extends RdfStream {
     /**
      * Convert a NodeType iterator into an RDF stream
      *
-     * @param nodeTypeIterator
-     * @throws RepositoryException
+     * @param nodeTypeIterator the node type iterator
+     * @throws RepositoryException if repository exception occurred
      */
     public NodeTypeRdfContext(final Iterator<NodeType> nodeTypeIterator)
         throws RepositoryException {
@@ -101,8 +101,8 @@ public class NodeTypeRdfContext extends RdfStream {
      * Convert a NodeType into an RDF stream by capturing the supertypes, node
      * definitions, and property definitions of the type as RDFS triples.
      *
-     * @param nodeType
-     * @throws RepositoryException
+     * @param nodeType the node type
+     * @throws RepositoryException if repository exception occurred
      */
     public NodeTypeRdfContext(final NodeType nodeType)
         throws RepositoryException {

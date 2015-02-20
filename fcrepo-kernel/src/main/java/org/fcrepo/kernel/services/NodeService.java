@@ -30,30 +30,30 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 public interface NodeService extends Service<FedoraResource> {
     /**
      * Copy an existing object from the source path to the destination path
-     * @param session
-     * @param source
-     * @param destination
+     * @param session the session
+     * @param source the source
+     * @param destination the destination
      */
     void copyObject(Session session, String source, String destination);
 
     /**
      * Move an existing object from the source path to the destination path
-     * @param session
-     * @param source
-     * @param destination
+     * @param session the session
+     * @param source the source
+     * @param destination the destination
      */
     void moveObject(Session session, String source, String destination);
 
     /**
-     * @param session
+     * @param session the session
      * @return RDFStream of node types
      */
     RdfStream getNodeTypes(final Session session);
 
     /**
-     * @param session
-     * @param cndStream
-     * @throws IOException
+     * @param session the session
+     * @param cndStream the cnd stream
+     * @throws IOException if IO exception occurred
      */
     void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException;
 }

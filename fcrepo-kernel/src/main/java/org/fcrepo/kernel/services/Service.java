@@ -28,7 +28,8 @@ public interface Service<T> {
      * Test whether T exists at the given path in the
      * repository
      *
-     * @param path
+     * @param path the path
+     * @param session the session
      * @return whether T exists at the given path
      */
     public boolean exists(final Session session, final String path);
@@ -36,12 +37,14 @@ public interface Service<T> {
      * Retrieve an existing T instance by session and path
      *
      * @param path jcr path to the node
+     * @param session the session
      * @return retrieved T
      */
     public T find(final Session session, final String path);
     /**
      * Retrieve a T instance by session and path
      *
+     * @param session the session
      * @param path jcr path to the node
      * @return retrieved T
      */
@@ -49,7 +52,7 @@ public interface Service<T> {
     /**
      * Retrieve a T instance from a node
      *
-     * @param node
+     * @param node the node
      * @return node as T
      */
     public T cast(Node node);

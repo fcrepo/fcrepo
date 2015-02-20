@@ -77,7 +77,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     /**
      * Wrap an existing Node as a Fedora Binary
-     * @param node
+     * @param node the node
      */
     public FedoraBinaryImpl(final Node node) {
         super(node);
@@ -370,8 +370,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     /**
      * Check if the given node is a Fedora binary
-     * @param node
-     * @return
+     * @param node the given node
+     * @return whether the given node is a Fedora binary
      */
     public static boolean hasMixin(final Node node) {
         return isFedoraBinary.apply(node);

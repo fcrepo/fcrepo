@@ -31,7 +31,7 @@ public interface StoragePolicyDecisionPoint extends List<StoragePolicy> {
      * Given a JCR node (likely a jcr:content node), determine which storage
      * policy should apply
      *
-     * @param n
+     * @param n the node
      * @return storage policy
      */
     String evaluatePolicies(final Node n);
@@ -39,7 +39,7 @@ public interface StoragePolicyDecisionPoint extends List<StoragePolicy> {
     /**
      * Explicitly set the policies this PDP should use
      *
-     * @param policies
+     * @param policies the policies
      */
     void setPolicies(final List<StoragePolicy> policies);
 

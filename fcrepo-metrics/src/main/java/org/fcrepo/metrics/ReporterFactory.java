@@ -63,7 +63,7 @@ public class ReporterFactory {
     /**
      * Publish metrics to JMX
      * 
-     * @param prefix
+     * @param prefix the prefix
      * @return a JMXReporter
      */
     public JmxReporter getJmxReporter(final String prefix) {

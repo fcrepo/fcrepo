@@ -41,6 +41,7 @@ public class RangeRequestInputStream extends FilterInputStream {
      *           this instance is to be created without an underlying stream.
      * @param skip the number of bytes to skip at the beginning of the stream
      * @param length the number of bytes from the inputstream to read
+     * @throws IOException if IO exception occurred
      */
     public RangeRequestInputStream(final InputStream in,
                                    final long skip,

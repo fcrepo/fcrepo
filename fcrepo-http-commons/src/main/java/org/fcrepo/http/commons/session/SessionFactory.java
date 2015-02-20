@@ -79,8 +79,8 @@ public class SessionFactory {
     /**
      * Initialize a session factory for the given Repository
      *
-     * @param repo
-     * @param transactionService
+     * @param repo the repository
+     * @param transactionService the transaction service
      */
     public SessionFactory(final Repository repo,
             final TransactionService transactionService) {
@@ -100,7 +100,6 @@ public class SessionFactory {
      * Get a new JCR Session
      *
      * @return an internal session
-     * @throws RepositoryException
      */
     public Session getInternalSession() {
         try {
@@ -114,7 +113,7 @@ public class SessionFactory {
      * Get a JCR session for the given HTTP servlet request with a
      * SecurityContext attached
      *
-     * @param servletRequest
+     * @param servletRequest the servlet request
      * @return the Session
      * @throws RuntimeException if the transaction could not be found
      */
@@ -141,7 +140,7 @@ public class SessionFactory {
      * Create a JCR session for the given HTTP servlet request with a
      * SecurityContext attached.
      *
-     * @param servletRequest
+     * @param servletRequest the servlet request
      * @return a newly created JCR session
      * @throws RepositoryException if the session could not be created
      */
@@ -157,7 +156,8 @@ public class SessionFactory {
     /**
      * Retrieve a JCR session from an active transaction
      *
-     * @param servletRequest
+     * @param servletRequest the servlet request
+     * @param txId the transaction id
      * @return a JCR session that is associated with the transaction
      */
     protected Session getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
@@ -181,7 +181,7 @@ public class SessionFactory {
     /**
      * Extract the id embedded at the beginning of a request path
      *
-     * @param servletRequest
+     * @param servletRequest the servlet request
      * @param prefix the prefix for the id
      * @return the found id or null
      */

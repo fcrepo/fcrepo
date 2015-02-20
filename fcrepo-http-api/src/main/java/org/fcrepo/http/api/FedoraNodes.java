@@ -83,7 +83,7 @@ public class FedoraNodes extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param externalPath
+     * @param externalPath the external path
      */
     @VisibleForTesting
     public FedoraNodes(final String externalPath) {
@@ -101,6 +101,9 @@ public class FedoraNodes extends ContentExposingResource {
 
     /**
      * Copies an object from one path to another
+     * @param destinationUri the destination uri
+     * @throws URISyntaxException if uri syntax exception occurred
+     * @return the response
      */
     @COPY
     @Timed
@@ -150,6 +153,9 @@ public class FedoraNodes extends ContentExposingResource {
 
     /**
      * Copies an object from one path to another
+     * @param destinationUri the destination uri
+     * @throws URISyntaxException if uri syntax exception occurred
+     * @return the response
      */
     @MOVE
     @Timed

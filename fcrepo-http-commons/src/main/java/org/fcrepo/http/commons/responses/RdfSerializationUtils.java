@@ -74,9 +74,9 @@ public final class RdfSerializationUtils {
      * Get the very first value for a predicate as a string, or null if the
      * predicate is not used
      *
-     * @param rdf
-     * @param subject
-     * @param predicate
+     * @param rdf the rdf
+     * @param subject the given subject
+     * @param predicate the given predicate
      * @return first value for the given predicate or null if not found
      */
     public static String getFirstValueForPredicate(final Model rdf,
@@ -95,9 +95,9 @@ public final class RdfSerializationUtils {
      * Get all the values for a predicate as a string array, or null if the
      * predicate is not used
      *
-     * @param rdf
-     * @param subject
-     * @param predicate
+     * @param rdf the rdf
+     * @param subject the given subject
+     * @param predicate the given predicate
      * @return all values for the given predicate
      */
     public static Iterator<String> getAllValuesForPredicate(final Model rdf,

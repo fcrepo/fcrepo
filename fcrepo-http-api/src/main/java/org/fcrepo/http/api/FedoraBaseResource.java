@@ -56,8 +56,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     /**
      * Get the FedoraResource for the resource at the external path
-     * @param externalPath
-     * @return
+     * @param externalPath the external path
+     * @return the fedora resource at the external path
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
@@ -73,6 +73,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     /**
      * Set the baseURL for JMS events.
+     * @param uriInfo the uri info
      **/
     protected void setUpJMSBaseURIs(final UriInfo uriInfo) {
         try {

@@ -48,8 +48,8 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
     private static final Logger LOGGER = getLogger(ContainerServiceImpl.class);
 
     /**
-     * @param path
-     * @param session
+     * @param path the path
+     * @param session the session
      * @return A {@link org.fcrepo.kernel.models.Container} with the proffered PID
      */
     @Override
@@ -72,7 +72,8 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
     /**
      * Retrieve a {@link org.fcrepo.kernel.models.Container} instance by pid and dsid
      *
-     * @param path
+     * @param path the path
+     * @param session the session
      * @return A {@link org.fcrepo.kernel.models.Container} with the proffered PID
      */
     @Override
