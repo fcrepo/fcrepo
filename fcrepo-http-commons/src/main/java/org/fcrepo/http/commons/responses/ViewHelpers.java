@@ -17,41 +17,41 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
-import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.DCTERMS_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
-import static org.fcrepo.kernel.RdfLexicon.SKOS_PREFLABEL;
-import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.SKOS_PREFLABEL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Triple;
 import org.fcrepo.http.commons.api.rdf.TripleOrdering;
 import org.fcrepo.kernel.RdfLexicon;
+
 import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -95,7 +95,7 @@ public class ViewHelpers {
      * @return iterator
      */
     public Iterator<Triple> getObjects(final Graph graph,
-        final Node subject, final Resource predicate) {
+            final Node subject, final Resource predicate) {
         return graph.find(subject, predicate.asNode(), ANY);
     }
 
@@ -107,7 +107,7 @@ public class ViewHelpers {
      * @return iterator
      */
     public Iterator<Node> getVersions(final Graph graph,
-        final Node subject) {
+            final Node subject) {
         return getOrderedVersions(graph, subject, HAS_VERSION);
     }
 
@@ -120,10 +120,10 @@ public class ViewHelpers {
      * @return iterator
      */
     public Iterator<Node> getOrderedVersions(final Graph graph,
-        final Node subject, final Resource predicate) {
+            final Node subject, final Resource predicate) {
         final Iterator<Triple> versions = getObjects(graph, subject, predicate);
         final Map<String, Node> map = new TreeMap<>();
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         Triple triple;
         String date;
         while (versions.hasNext()) {
@@ -131,7 +131,7 @@ public class ViewHelpers {
             date = getVersionDate(graph, triple.getObject());
             String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
             while (map.containsKey(key)) {
-                key += "1";
+                key = key + "1";
             }
             map.put(key, triple.getObject());
         }
@@ -144,7 +144,7 @@ public class ViewHelpers {
      * of that node will be the same as the breadcrumb entry that
      * precedes one with the path "fcr:versions".
      */
-     public String getVersionSubjectUrl(final UriInfo uriInfo, final Node subject) {
+    public String getVersionSubjectUrl(final UriInfo uriInfo, final Node subject) {
         final Map<String, String> breadcrumbs = getNodeBreadcrumbs(uriInfo, subject);
         String lastUrl = null;
         for (final Map.Entry<String, String> entry : breadcrumbs.entrySet()) {
@@ -154,7 +154,7 @@ public class ViewHelpers {
             lastUrl = entry.getKey();
         }
         return null;
-     }
+    }
 
     /**
      * Gets a version label of a subject from the graph
@@ -167,7 +167,7 @@ public class ViewHelpers {
      * the default is returned
      */
     public String getVersionLabel(final Graph graph,
-                                 final Node subject, final String defaultValue) {
+            final Node subject, final String defaultValue) {
         final Iterator<Triple> objects = getObjects(graph, subject, HAS_VERSION_LABEL);
         if (objects.hasNext()) {
             return objects.next().getObject().getLiteralValue().toString();
@@ -183,7 +183,7 @@ public class ViewHelpers {
      * @return the modification date or null if none exists
      */
     public String getVersionDate(final Graph graph,
-                                 final Node subject) {
+            final Node subject) {
         final Iterator<Triple> objects = getObjects(graph, subject, CREATED_DATE);
         if (objects.hasNext()) {
             return objects.next().getObject().getLiteralValue().toString();
@@ -285,7 +285,7 @@ public class ViewHelpers {
             }
             if (uriAsLink) {
                 return "&lt;<a href=\"" + object.getURI() + "\">" +
-                           object.getURI() + "</a>&gt;";
+                        object.getURI() + "</a>&gt;";
             }
             return object.getURI();
         }
@@ -330,7 +330,7 @@ public class ViewHelpers {
 
             final String uri =
                     uriInfo.getBaseUriBuilder().path(cumulativePath.toString())
-                            .build().toString();
+                    .build().toString();
 
             LOGGER.trace("Adding breadcrumb for path segment {} => {}", path,
                     uri);
@@ -416,12 +416,12 @@ public class ViewHelpers {
      * Determines whether the subject is kind of RDF resource
      */
     public boolean isRdfResource(final Graph graph,
-                                 final Node subject,
-                                 final String namespace,
-                                 final String resource) {
+            final Node subject,
+            final String namespace,
+            final String resource) {
         final Iterator<Triple> it = graph.find(subject,
-                                               createResource(RDF_NAMESPACE + "type").asNode(),
-                                               createResource(namespace + resource).asNode());
+                createResource(RDF_NAMESPACE + "type").asNode(),
+                createResource(namespace + resource).asNode());
         return it.hasNext();
     }
 

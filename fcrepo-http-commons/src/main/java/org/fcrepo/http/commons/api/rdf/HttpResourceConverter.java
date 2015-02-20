@@ -48,8 +48,6 @@ import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.TombstoneException;
@@ -57,6 +55,8 @@ import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.TombstoneImpl;
 import org.fcrepo.kernel.impl.identifiers.HashConverter;
 import org.fcrepo.kernel.impl.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSourceDescription;
 
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -94,7 +94,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      * @param uriBuilder
      */
     public HttpResourceConverter(final Session session,
-                                 final UriBuilder uriBuilder) {
+            final UriBuilder uriBuilder) {
 
         this.session = session;
         this.uriBuilder = uriBuilder;
@@ -267,11 +267,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             try {
                 final Node frozenNode = session.getNodeByIdentifier(label);
 
-            /*
-             * We found a node whose identifier is the "label" for the version.  Now
-             * we must do due dilligence to make sure it's a frozen node representing
-             * a version of the subject node.
-             */
+                /*
+                 * We found a node whose identifier is the "label" for the version.  Now
+                 * we must do due dilligence to make sure it's a frozen node representing
+                 * a version of the subject node.
+                 */
                 final Property p = frozenNode.getProperty("jcr:frozenUuid");
                 if (p != null) {
                     final Node subjectNode = session.getNode(baseResourcePath);
@@ -279,16 +279,16 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                         return frozenNode;
                     }
                 }
-            /*
-             * Though a node with an id of the label was found, it wasn't the
-             * node we were looking for, so fall through and look for a labeled
-             * node.
-             */
+                /*
+                 * Though a node with an id of the label was found, it wasn't the
+                 * node we were looking for, so fall through and look for a labeled
+                 * node.
+                 */
             } catch (final ItemNotFoundException ex) {
-            /*
-             * the label wasn't a uuid of a frozen node but
-             * instead possibly a version label.
-             */
+                /*
+                 * the label wasn't a uuid of a frozen node but
+                 * instead possibly a version label.
+                 */
             }
 
             final VersionHistory hist =
@@ -354,7 +354,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         if (path != null) {
 
             if (resource instanceof NonRdfSourceDescription) {
-                path += "/" + FCR_METADATA;
+                path = path + "/" + FCR_METADATA;
             }
 
             if (path.endsWith(JCR_CONTENT)) {
@@ -394,7 +394,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
 
     private static final List<Converter<String, String>> minimalTranslationChain = of(
-                    new NamespaceConverter(), (Converter<String, String>) new HashConverter()
+            new NamespaceConverter(), (Converter<String, String>) new HashConverter()
             );
 
     protected List<Converter<String,String>> getTranslationChain() {
