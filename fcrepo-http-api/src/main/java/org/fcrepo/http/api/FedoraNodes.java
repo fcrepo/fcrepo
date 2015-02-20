@@ -103,6 +103,7 @@ public class FedoraNodes extends ContentExposingResource {
      * Copies an object from one path to another
      * @param destinationUri the destination uri
      * @throws URISyntaxException if uri syntax exception occurred
+     * @return the response
      */
     @COPY
     @Timed
@@ -154,6 +155,7 @@ public class FedoraNodes extends ContentExposingResource {
      * Copies an object from one path to another
      * @param destinationUri the destination uri
      * @throws URISyntaxException if uri syntax exception occurred
+     * @return the response
      */
     @MOVE
     @Timed

@@ -32,7 +32,7 @@ public interface IteratorConsumer<E, T> {
 
     /**
      * Synchronous consumption.
-     * @throws Exception if exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
      */
     void consume() throws MalformedRdfException;
 

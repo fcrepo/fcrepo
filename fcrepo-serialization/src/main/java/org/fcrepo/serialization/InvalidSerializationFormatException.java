@@ -28,7 +28,7 @@ public class InvalidSerializationFormatException extends Exception {
 
     /**
      * Exception with message
-     * @param message
+     * @param message the message
      */
     public InvalidSerializationFormatException(final String message) {
         super(message);

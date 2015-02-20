@@ -47,7 +47,7 @@ public class ViewAssets {
 
     /**
      * Gets the common js file referenced in all velocity views.
-     * @return
+     * @return the response
      */
     @GET
     @Path("common.js")

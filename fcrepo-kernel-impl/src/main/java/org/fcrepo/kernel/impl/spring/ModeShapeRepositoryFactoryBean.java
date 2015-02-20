@@ -58,7 +58,6 @@ public class ModeShapeRepositoryFactoryBean implements
     /**
      * Generate a JCR repository from the given configuration
      *
-     * @throws Exception if exception occurred
      */
     @PostConstruct
     public void buildRepository() {

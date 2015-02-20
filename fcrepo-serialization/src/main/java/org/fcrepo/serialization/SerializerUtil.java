@@ -56,7 +56,7 @@ public class SerializerUtil implements ApplicationContextAware {
 
     /**
      * Get a Fedora Object Serializer by its key
-     * @param format
+     * @param format the format
      * @return FedoraObjectSerializer for the given format
      */
     public FedoraObjectSerializer getSerializer(final String format) {

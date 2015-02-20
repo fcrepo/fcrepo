@@ -54,10 +54,6 @@ public interface TransactionService {
      *
      * @param session the session
      * @return transaction
-<<<<<<< HEAD
-=======
-     * @throws TransactionMissingException if transaction missing exception occurred
->>>>>>> https://jira.duraspace.org/browse/FCREPO-1352
      */
     Transaction getTransaction(Session session);
 

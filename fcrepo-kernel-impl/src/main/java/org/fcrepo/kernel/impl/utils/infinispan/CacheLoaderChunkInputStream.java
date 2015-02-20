@@ -39,19 +39,11 @@ public class CacheLoaderChunkInputStream extends InputStream {
     private int chunkNumber;
 
     /**
-<<<<<<< HEAD
      * Constructor
-     * @param blobCache
-     * @param key
-     * @param chunkSize
-     * @param totalSize
-=======
-     * Appease checkstyles..
      * @param blobCache the blob cache
      * @param key the key
      * @param chunkSize the chunk size
      * @param totalSize the total size
->>>>>>> https://jira.duraspace.org/browse/FCREPO-1352
      */
     public CacheLoaderChunkInputStream( final CacheLoader<String, byte[]> blobCache,
                              final String key,

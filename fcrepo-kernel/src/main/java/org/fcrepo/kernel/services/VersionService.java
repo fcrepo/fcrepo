@@ -31,6 +31,7 @@ public interface VersionService {
      * @param absPath absolute paths to the node
      * @param label a label to be applied to the new version
      * @throws RepositoryException if repository exception occurred
+     * @return the identifier
      */
     String createVersion(Session session, String absPath, String label) throws RepositoryException;
 
