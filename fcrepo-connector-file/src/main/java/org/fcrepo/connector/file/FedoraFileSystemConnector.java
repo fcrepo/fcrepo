@@ -31,19 +31,20 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
 import java.util.HashMap;
-import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.annotations.VisibleForTesting;
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
 
 import org.infinispan.schematic.document.Document;
 import org.modeshape.connector.filesystem.ExternalJsonSidecarExtraPropertyStore;
 import org.modeshape.connector.filesystem.FileSystemConnector;
-import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
+import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.spi.federation.DocumentChanges;
 import org.modeshape.jcr.spi.federation.DocumentReader;
 import org.modeshape.jcr.spi.federation.DocumentWriter;
@@ -54,8 +55,7 @@ import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.NamespaceRegistry;
-import javax.jcr.RepositoryException;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This class extends the {@link FileSystemConnector} to enable the autocreation of Fedora-specific datastream and
@@ -83,11 +83,11 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     @Override
     public void initialize(final NamespaceRegistry registry,
-                           final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
+            final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
         super.initialize(registry, nodeTypeManager);
 
         if (propertiesDirectoryPath != null) {
-           propertiesDirectory = new File(propertiesDirectoryPath);
+            propertiesDirectory = new File(propertiesDirectoryPath);
             if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
                 throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
                         + ", does not exist or is not a directory.");
@@ -139,11 +139,11 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         if (primaryType.equals(NT_FILE)) {
             decorateDatastreamNode(docReader, docWriter);
 
-        // Is Fedora Content?
+            // Is Fedora Content?
         } else if (primaryType.equals(NT_RESOURCE)) {
             decorateContentNode(docReader, docWriter, fileFor(id));
 
-        // Is Fedora Object?
+            // Is Fedora Object?
         } else if (primaryType.equals(NT_FOLDER)) {
             decorateObjectNode(docReader, docWriter);
         }
@@ -174,12 +174,11 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         if (extraPropertiesStore() != null) {
             final Map<Name, Property> extraProperties = extraPropertiesStore().getProperties(id);
             final Name digestName = nameFrom(CONTENT_DIGEST);
-            if (extraProperties.containsKey(digestName)) {
-                if (!hasBeenModifiedSincePropertiesWereStored(file, extraProperties.get(nameFrom(JCR_CREATED)))) {
-                    LOGGER.trace("Found sha1 for {} in extra properties store.", id);
-                    final String uriStr = ((URI) extraProperties.get(digestName).getFirstValue()).toString();
-                    return uriStr.substring(uriStr.indexOf("sha1:") + 5);
-                }
+            if (extraProperties.containsKey(digestName) &&
+                    !hasBeenModifiedSincePropertiesWereStored(file, extraProperties.get(nameFrom(JCR_CREATED)))) {
+                LOGGER.trace("Found sha1 for {} in extra properties store.", id);
+                final String uriStr = ((URI) extraProperties.get(digestName).getFirstValue()).toString();
+                return uriStr.substring(uriStr.indexOf("sha1:") + 5);
             }
         } else {
             LOGGER.trace("No cache configured to contain object hashes.");
@@ -221,8 +220,8 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     }
 
     private static void decorateContentNode(final DocumentReader docReader,
-                                            final DocumentWriter docWriter,
-                                            final File file) {
+            final DocumentWriter docWriter,
+            final File file) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_BINARY)) {
             LOGGER.trace("Adding mixin: {}, to {}", FEDORA_BINARY, docReader.getDocumentId());
             docWriter.addMixinType(FEDORA_BINARY);
@@ -292,7 +291,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     /**
      * Find the parent file, and set its timestamp to the current time.  This
      * timestamp will be used for populating the Last-Modified header.
-    **/
+     **/
     protected void touchParent( final String id ) {
         if (!isRoot(id)) {
             final File file = fileFor(id);
