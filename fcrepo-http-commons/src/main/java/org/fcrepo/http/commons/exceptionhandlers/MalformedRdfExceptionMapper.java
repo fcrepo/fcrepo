@@ -38,7 +38,7 @@ public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdf
     @Override
     public Response toResponse(final MalformedRdfException e) {
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
-        if (e.getMessage().matches("org.*Exception")) {
+        if (e.getMessage().matches(".*org.*Exception.*")) {
             return status(BAD_REQUEST).entity("").links(link).build();
         }
         return status(BAD_REQUEST).entity(e.getMessage()).links(link).build();
