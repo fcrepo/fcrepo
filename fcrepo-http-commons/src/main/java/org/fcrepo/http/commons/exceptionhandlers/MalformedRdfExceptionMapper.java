@@ -16,6 +16,7 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 
 import javax.ws.rs.core.Link;
@@ -24,7 +25,7 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+
 import org.apache.commons.codec.binary.Base64;
 
 /**
@@ -37,6 +38,9 @@ public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdf
     @Override
     public Response toResponse(final MalformedRdfException e) {
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
+        if (e.getMessage().matches("org.*Exception")) {
+            return status(BAD_REQUEST).entity("").links(link).build();
+        }
         return status(BAD_REQUEST).entity(e.getMessage()).links(link).build();
     }
 
