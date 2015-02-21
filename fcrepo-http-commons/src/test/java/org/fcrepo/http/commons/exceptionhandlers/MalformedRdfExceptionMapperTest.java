@@ -52,4 +52,22 @@ public class MalformedRdfExceptionMapperTest {
         assertEquals("Constraint data appears malformed", 2, split.length);
         assertEquals("xyz", IOUtils.toString(Base64.decodeBase64(split[1].getBytes()), "UTF-8"));
     }
+
+    @Test
+    public void testToResponseError() throws IOException {
+        final String errorPrefix = "org.modeshape.jcr.value.ValueFormatException: ";
+        final String errorSuffix = "Error converting ...";
+        final Response response = testObj.toResponse(new MalformedRdfException(errorPrefix + errorSuffix));
+
+        assertEquals(errorSuffix, response.getEntity().toString());
+    }
+
+    @Test
+    public void testToResponseError2() throws IOException {
+        final String errorPrefix = "org.modeshape.jcr.value.ValueFormat: ";
+        final String errorSuffix = "Error converting ...";
+        final Response response = testObj.toResponse(new MalformedRdfException(errorPrefix + errorSuffix));
+
+        assertEquals(errorPrefix + errorSuffix, response.getEntity().toString());
+    }
 }
