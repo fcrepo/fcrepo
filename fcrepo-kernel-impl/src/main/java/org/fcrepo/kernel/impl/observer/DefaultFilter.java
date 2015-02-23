@@ -71,15 +71,9 @@ public class DefaultFilter implements EventFilter {
     public DefaultFilter() {
     }
 
-    /**
-     * @param session
-     */
-    private DefaultFilter(final Session session) {
-    }
-
     @Override
     public Predicate<Event> getFilter(final Session session) {
-        return new DefaultFilter(session);
+        return new DefaultFilter();
     }
 
     @Override

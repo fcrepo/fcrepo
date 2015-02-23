@@ -424,7 +424,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     /**
      * Translate the current transaction into the identifier
      */
-    class TransactionIdentifierConverter extends Converter<String, String> {
+    static class TransactionIdentifierConverter extends Converter<String, String> {
         public static final String TX_PREFIX = "tx:";
 
         private final Session session;
