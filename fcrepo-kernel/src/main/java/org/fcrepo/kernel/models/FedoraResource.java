@@ -18,6 +18,7 @@ package org.fcrepo.kernel.models;
 import java.util.Date;
 import java.util.Iterator;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.version.Version;
@@ -116,10 +117,11 @@ public interface FedoraResource {
      * @param sparqlUpdateStatement sparql update statement
      * @param originalTriples original triples
      * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws AccessDeniedException if access denied in updating properties
      */
     void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                           final String sparqlUpdateStatement,
-                          final RdfStream originalTriples) throws MalformedRdfException;
+                          final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException;
 
     /**
      * Return the RDF properties of this object using the provided context

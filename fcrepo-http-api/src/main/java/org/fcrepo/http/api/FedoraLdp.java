@@ -48,6 +48,7 @@ import java.net.URLDecoder;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.jcr.AccessDeniedException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -315,13 +316,14 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestBodyStream the request body stream
      * @return 201
      * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws AccessDeniedException if exception updating property occurred
      * @throws IOException if IO exception occurred
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException, MalformedRdfException {
+            throws IOException, MalformedRdfException, AccessDeniedException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -363,6 +365,9 @@ public class FedoraLdp extends ContentExposingResource {
             }
             throw ex;
         }  catch (final RepositoryException e) {
+            if (e instanceof AccessDeniedException) {
+                throw new AccessDeniedException(e.getMessage());
+            }
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -382,6 +387,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws AccessDeniedException if access denied in creating resource
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
@@ -391,7 +397,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream)
-            throws InvalidChecksumException, IOException, MalformedRdfException {
+            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);

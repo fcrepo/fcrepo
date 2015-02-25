@@ -17,10 +17,10 @@ package org.fcrepo.kernel.impl.utils;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import com.google.common.base.Joiner;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -52,7 +52,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private final List<String> exceptions;
+    private final List<Exception> exceptions;
 
     /**
      * Construct a statement listener within the given session
@@ -113,7 +113,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             jcrRdfTools.addProperty(resource, property, objectNode, input.getModel().getNsPrefixMap());
         } catch (final RepositoryException | RepositoryRuntimeException e) {
-            exceptions.add(e.getMessage());
+            exceptions.add(e);
         }
 
     }
@@ -152,7 +152,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             jcrRdfTools.removeProperty(resource, property, objectNode, s.getModel().getNsPrefixMap());
 
         } catch (final RepositoryException | RepositoryRuntimeException e) {
-            exceptions.add(e.getMessage());
+            exceptions.add(e);
         }
 
     }
@@ -160,10 +160,19 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * Assert that no exceptions were thrown while this listener was processing change
      * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws javax.jcr.AccessDeniedException if access denied exception occurred
      */
-    public void assertNoExceptions() throws MalformedRdfException {
+    public void assertNoExceptions() throws MalformedRdfException, AccessDeniedException {
+        final StringBuilder sb = new StringBuilder();
+        for (Exception e : exceptions) {
+            sb.append(e.getMessage());
+            sb.append("\n");
+            if (e instanceof AccessDeniedException) {
+                throw new AccessDeniedException(sb.toString());
+            }
+        }
         if (!exceptions.isEmpty()) {
-            throw new MalformedRdfException(Joiner.on("\n").join(exceptions));
+            throw new MalformedRdfException(sb.toString());
         }
     }
 }

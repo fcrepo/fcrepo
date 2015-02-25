@@ -50,6 +50,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import javax.inject.Inject;
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Binary;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -599,7 +600,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void patchResourcewithSparql(final FedoraResource resource,
                                            final String requestBody,
-                                           final RdfStream resourceTriples) throws MalformedRdfException {
+                                           final RdfStream resourceTriples)
+            throws MalformedRdfException, AccessDeniedException {
         resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 
