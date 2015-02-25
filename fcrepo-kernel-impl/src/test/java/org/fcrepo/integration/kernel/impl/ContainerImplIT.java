@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import javax.inject.Inject;
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -195,7 +196,7 @@ public class ContainerImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraphWithErrors() {
+    public void testUpdatingObjectGraphWithErrors() throws AccessDeniedException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
 

@@ -41,6 +41,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -352,7 +353,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
-            throws MalformedRdfException {
+            throws MalformedRdfException, AccessDeniedException {
 
         final Model model = originalTriples.asModel();
 

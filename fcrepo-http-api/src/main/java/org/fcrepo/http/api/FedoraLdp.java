@@ -48,6 +48,7 @@ import java.net.URLDecoder;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.jcr.AccessDeniedException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -391,7 +392,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream)
-            throws InvalidChecksumException, IOException, MalformedRdfException {
+            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);

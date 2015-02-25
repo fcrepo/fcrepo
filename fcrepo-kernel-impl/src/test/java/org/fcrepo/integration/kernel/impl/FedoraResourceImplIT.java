@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.inject.Inject;
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeTypeDefinition;
 import javax.jcr.nodetype.NodeTypeTemplate;
@@ -339,7 +340,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraph() throws MalformedRdfException {
+    public void testUpdatingObjectGraph() throws MalformedRdfException, AccessDeniedException {
 
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectGraphUpdates");
