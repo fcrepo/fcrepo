@@ -316,13 +316,14 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestBodyStream the request body stream
      * @return 201
      * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws AccessDeniedException if exception updating property occurred
      * @throws IOException if IO exception occurred
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException, MalformedRdfException {
+            throws IOException, MalformedRdfException, AccessDeniedException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -364,6 +365,9 @@ public class FedoraLdp extends ContentExposingResource {
             }
             throw ex;
         }  catch (final RepositoryException e) {
+            if (e instanceof AccessDeniedException) {
+                throw new AccessDeniedException(e.getMessage());
+            }
             throw new RepositoryRuntimeException(e);
         }
     }

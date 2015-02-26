@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.util.Iterator;
@@ -50,6 +51,9 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.security.AccessControlList;
+import javax.jcr.security.AccessControlManager;
+import javax.jcr.security.Privilege;
 import javax.jcr.version.Version;
 
 import com.google.common.base.Predicate;
@@ -80,6 +84,7 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.hp.hpl.jena.graph.Node;
@@ -418,6 +423,31 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n"
                         + "INSERT { <> fedora:isPartOf <" + subjects.toDomain("/some-path") + ">}"
                         + "WHERE { }", new RdfStream());
+    }
+
+    @Test(expected = AccessDeniedException.class)
+    public void testUpdateDenied() throws RepositoryException {
+        final FedoraResource object =
+                containerService.findOrCreate(session, "/testRefObject");
+        try {
+            object.updateProperties(
+                    subjects,
+                    "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-original\". }"
+                            + " WHERE { }", new RdfStream());
+        } catch (AccessDeniedException e) {
+            fail("Should fail at update, not create property");
+        }
+        final AccessControlManager acm = session.getAccessControlManager();
+        final Privilege[] permissions = new Privilege[] {acm.privilegeFromName(Privilege.JCR_READ)};
+        final AccessControlList acl = (AccessControlList) acm.getApplicablePolicies("/testRefObject").next();
+        acl.addAccessControlEntry(SimplePrincipal.newInstance("anonymous"), permissions);
+        acm.setPolicy("/testRefObject", acl);
+        session.save();
+
+        object.updateProperties(
+                subjects,
+                "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-update\". }"
+                        + " WHERE { }", new RdfStream());
     }
 
     @Test
