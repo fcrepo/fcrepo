@@ -386,6 +386,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                         = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
 
                 final RdfStream rdfStream = declaredConstructor.newInstance(this, idTranslator);
+                rdfStream.session(getSession());
 
                 stream.concat(rdfStream);
             } catch (final NoSuchMethodException |

@@ -53,6 +53,7 @@ import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -180,11 +181,19 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
                     return singletonIterator(create(subject(), memberRelation, childSubject));
                 }
-                final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
+                String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
                         createResource(insertedContainerProperty),
                         null);
 
-                if (!child.hasProperty(insertedContentProperty)) {
+                if (child.hasProperty(insertedContentProperty)) {
+                    // do nothing, insertedContentProperty is good
+
+                } else if (child.hasProperty(getReferencePropertyName(insertedContentProperty))) {
+                    // The insertedContentProperty is a pseudo reference property
+                    insertedContentProperty = getReferencePropertyName(insertedContentProperty);
+
+                } else {
+                    // No property found!
                     return emptyIterator();
                 }
 

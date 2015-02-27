@@ -2175,6 +2175,90 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testLdpIndirectContainerInteraction() throws Exception {
+
+        // Create resource (object)
+        final String resourceId = getRandomUniquePid();
+        final HttpResponse rResponse = createObject(resourceId);
+        final String resource = rResponse.getFirstHeader("Location").getValue();
+
+        // Create container (c0)
+        final String containerId = getRandomUniquePid();
+        final HttpResponse cResponse = createObject(containerId);
+        final String container = cResponse.getFirstHeader("Location").getValue();
+
+        // Create indirect container (c0/members)
+        final String indirectContainerId = containerId + "/t";
+        final HttpResponse icResponse = createObject(indirectContainerId);
+        final String indirectContainer = icResponse.getFirstHeader("Location").getValue();
+        addMixin(indirectContainerId, INDIRECT_CONTAINER.getURI());
+
+        // Add LDP properties to indirect container
+        final HttpPatch patch = new HttpPatch(indirectContainer);
+        final String sparql = "INSERT DATA { "
+                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + "> .\n"
+                + "<> <" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n"
+                + "<> <" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n"
+                + " }";
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(IOUtils.toInputStream(sparql));
+
+        patch.setEntity(entity);
+
+        assertEquals("Expected patch to succeed", 204, getStatus(patch));
+
+        // Add indirect resource to indirect container
+        final HttpPost postIndirectResource = postObjMethod(indirectContainerId);
+        final String irRdf =
+                "<> <info:proxy/in>  <" + container + "> ;\n" +
+                "   <info:proxy/for> <" + resource  + "> .";
+        final BasicHttpEntity irEntity = new BasicHttpEntity();
+        irEntity.setContent(IOUtils.toInputStream(irRdf));
+        postIndirectResource.setEntity(irEntity);
+        postIndirectResource.setHeader("Content-Type", "text/turtle");
+
+        final HttpResponse postResponse = client.execute(postIndirectResource);
+        final String indirectResource = postResponse.getFirstHeader("Location").getValue();
+
+        assertEquals("Expected post to succeed", 201, postResponse.getStatusLine().getStatusCode());
+
+        // Ensure container has been updated with relationship... indirectly
+        final HttpGet getContainer0 = new HttpGet(container);
+        final HttpResponse getResponse = client.execute(getContainer0);
+        final GraphStore graphStore = getGraphStore(getResponse);
+
+        assertTrue("Expected to have indirect container", graphStore.contains(Node.ANY,
+                NodeFactory.createURI(container),
+                NodeFactory.createURI(RdfLexicon.LDP_NAMESPACE + "contains"),
+                NodeFactory.createURI(indirectContainer)
+        ));
+
+        assertTrue("Expected to have resource: " + graphStore.toString(), graphStore.contains(Node.ANY,
+                NodeFactory.createURI(container),
+                NodeFactory.createURI("info:some/relation"),
+                NodeFactory.createURI(resource)
+        ));
+
+        // Remove indirect resource
+        final HttpDelete delete = new HttpDelete(indirectResource);
+        final HttpResponse deleteResponse = client.execute(delete);
+
+        assertEquals("Expected delete to succeed", 204, deleteResponse.getStatusLine().getStatusCode());
+
+        // Ensure container has been updated with relationship... indirectly
+        final HttpGet getContainer1 = new HttpGet(container);
+        final HttpResponse getResponse1 = client.execute(getContainer1);
+        final GraphStore graphStore1 = getGraphStore(getResponse1);
+
+        assertFalse("Expected NOT to have resource: " + graphStore1, graphStore1.contains(Node.ANY,
+                NodeFactory.createURI(container),
+                NodeFactory.createURI("info:some/relation"),
+                NodeFactory.createURI(resource)
+        ));
+
+    }
+
+    @Test
     public void testWithHashUris() throws IOException {
         final HttpPost method = postObjMethod("");
         method.addHeader("Content-Type", "text/turtle");
