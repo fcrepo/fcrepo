@@ -451,6 +451,23 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    public void testSparqlUpdatePrefixUriSubstitution() throws RepositoryException {
+        final FedoraResource object =
+                containerService.findOrCreate(session, "/testRefObject");
+
+        object.updateProperties(
+                subjects,
+                "PREFIX dsc:<http://myurl.org> \n" +
+                        "PREFIX esc:<http://myurl555.org> \n" +
+                        "PREFIX fsc:<http://myurl.org#> \n" +
+                        "INSERT { <> esc:p \"aaa\" . \n <> fsc:p \"bbb\" . \n <> dsc:p \"ccc\" ;} WHERE { }",
+                new RdfStream());
+        object.getNode().getProperty("dsc:p");
+        object.getNode().getProperty("esc:p");
+        object.getNode().getProperty("fsc:p");
+    }
+
+    @Test
     public void testUpdatingRdfType() throws RepositoryException {
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectRdfType");

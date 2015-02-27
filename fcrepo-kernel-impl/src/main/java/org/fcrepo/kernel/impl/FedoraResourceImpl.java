@@ -24,6 +24,7 @@ import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
+import static java.util.regex.Pattern.compile;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
@@ -40,6 +41,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
@@ -89,6 +92,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
     protected Node node;
+
+    private static final Pattern uriPattern = compile("[a-z]*:<[a-z]*://[a-zA-Z.0-9]*>");
 
     /**
      * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
@@ -362,11 +367,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         model.register(listener);
 
-        final UpdateRequest request = create(sparqlUpdateStatement, idTranslator.reverse().convert(this).toString());
+        final UpdateRequest request = create(changePrefixUri(sparqlUpdateStatement),
+                idTranslator.reverse().convert(this).toString());
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
         listener.assertNoExceptions();
+    }
+
+    private static String changePrefixUri(final String statement) {
+        String modifiedStatement = statement;
+        final String s[] = statement.split("(?i)INSERT");
+        final String prefix[] = s[0].split("(?i)PREFIX");
+
+        for (String p: prefix) {
+            final Matcher m = uriPattern.matcher(p.trim());
+            if (m.matches()) {
+                final String t = p.replace(">", "/>");
+                modifiedStatement = modifiedStatement.replace(p, t);
+                LOGGER.info("Changed prefix uri from {} to {}", p, t);
+            }
+        }
+        return modifiedStatement;
     }
 
     @Override
