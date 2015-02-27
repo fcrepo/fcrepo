@@ -451,6 +451,35 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    public void testSparqlUpdatePrefixUriSubstitution() throws RepositoryException {
+        final FedoraResource object =
+                containerService.findOrCreate(session, "/testRefObject");
+
+        object.updateProperties(
+                subjects,
+                "PREFIX dsc:<http://myurl.org> \n" +
+                        "PREFIX     esc:<http://myurl555.org> \n" +
+                        "PREFIX fsc:<http://myurl.org#> \n" +
+                        "PREFIX gsc:<http://myurl.org/u> \n" +
+                        "INSERT { <> dsc:p \"aaa\" . \n <> esc:p \"bbb\" . \n " +
+                        "<> fsc:p \"ccc\" . \n <> gsc:p \"ddd\" ;} WHERE { }",
+                new RdfStream());
+
+        final javax.jcr.Node n = object.getNode();
+        assertEquals(n.getProperty("dsc:p").getValues().length, 1);
+        assertEquals(n.getProperty("dsc:p").getValues()[0].getString(), "aaa");
+
+        assertEquals(n.getProperty("esc:p").getValues().length, 1);
+        assertEquals(n.getProperty("esc:p").getValues()[0].getString(), "bbb");
+
+        assertEquals(n.getProperty("fsc:p").getValues().length, 1);
+        assertEquals(n.getProperty("fsc:p").getValues()[0].getString(), "ccc");
+
+        assertEquals(n.getProperty("gsc:p").getValues().length, 1);
+        assertEquals(n.getProperty("gsc:p").getValues()[0].getString(), "ddd");
+    }
+
+    @Test
     public void testUpdatingRdfType() throws RepositoryException {
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectRdfType");
