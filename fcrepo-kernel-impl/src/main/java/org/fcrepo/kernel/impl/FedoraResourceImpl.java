@@ -93,7 +93,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     protected Node node;
 
-    private static final Pattern uriPattern = compile("[a-z]*:<[a-z]*://[a-zA-Z.0-9]*>");
+    private static final Pattern uriPattern = compile("[a-z]*:<[a-z]*://.*[^/]*>");
 
     /**
      * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
