@@ -461,13 +461,14 @@ public class FedoraResourceImplIT extends AbstractIT {
                         "PREFIX esc:<http://myurl555.org> \n" +
                         "PREFIX fsc:<http://myurl.org#> \n" +
                         "PREFIX gsc:<http://myurl.org/u> \n" +
-                        "INSERT { <> esc:p \"aaa\" . \n <> fsc:p \"bbb\" . \n " +
-                        "<> dsc:p \"ccc\" . \n <> gsc:p \"ddd\" ;} WHERE { }",
+                        "INSERT { <> dsc:p \"aaa\" . \n <> esc:p \"bbb\" . \n " +
+                        "<> fsc:p \"ccc\" . \n <> gsc:p \"ddd\" ;} WHERE { }",
                 new RdfStream());
-        object.getNode().getProperty("dsc:p");
-        object.getNode().getProperty("esc:p");
-        object.getNode().getProperty("fsc:p");
-        object.getNode().getProperty("gsc:p");
+        final javax.jcr.Node n = object.getNode();
+        assertTrue(n.getProperty("dsc:p").toString().contains("aaa"));
+        assertTrue(n.getProperty("esc:p").toString().contains("bbb"));
+        assertTrue(n.getProperty("fsc:p").toString().contains("ccc"));
+        assertTrue(n.getProperty("gsc:p").toString().contains("ddd"));
     }
 
     @Test

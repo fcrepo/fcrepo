@@ -93,7 +93,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     protected Node node;
 
-    private static final Pattern uriPattern = compile("[a-z]*:<[a-z]*://.*[^/]*>");
+    private static final Pattern uriPattern = compile("PREFIX [a-z]*:<[a-z]*://[^#(PREFIX)]*>");
 
     /**
      * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
@@ -376,19 +376,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     }
 
     private static String changePrefixUri(final String statement) {
-        String modifiedStatement = statement;
-        final String s[] = statement.split("(?i)INSERT");
-        final String prefix[] = s[0].split("(?i)PREFIX");
+        final Matcher m = uriPattern.matcher(statement.trim());
+        final StringBuffer sb = new StringBuffer();
 
-        for (String p: prefix) {
-            final Matcher m = uriPattern.matcher(p.trim());
-            if (m.matches()) {
-                final String t = p.replace(">", "/>");
-                modifiedStatement = modifiedStatement.replace(p, t);
-                LOGGER.info("Changed prefix uri from {} to {}", p, t);
-            }
+        while (m.find()) {
+            m.appendReplacement(sb, m.group().replaceFirst(">", "/>"));
         }
-        return modifiedStatement;
+
+        m.appendTail(sb);
+        return sb.length() > 0 ? sb.toString() : statement;
     }
 
     @Override
