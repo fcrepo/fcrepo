@@ -57,15 +57,15 @@ public class PropertiesRdfContext extends NodeRdfContext {
      */
 
     public PropertiesRdfContext(final FedoraResource resource,
-            final IdentifierConverter<Resource, FedoraResource> idTranslator)
-                    throws RepositoryException {
+                                final IdentifierConverter<Resource, FedoraResource> idTranslator)
+        throws RepositoryException {
         super(resource, idTranslator);
         property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
         concat(triplesFromProperties(resource()));
     }
 
     private Iterator<Triple> triplesFromProperties(final FedoraResource n)
-            throws RepositoryException {
+        throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
 
         final Iterator<Property> allProperties;
