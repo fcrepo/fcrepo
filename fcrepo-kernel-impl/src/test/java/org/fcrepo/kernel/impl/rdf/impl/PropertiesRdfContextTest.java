@@ -98,11 +98,11 @@ public class PropertiesRdfContextTest {
     public void testFedoraBinaryProperties() throws RepositoryException {
         final Model results = new PropertiesRdfContext(mockBinary, idTranslator).asModel();
 
-        assertTrue("Response contains NonRdfSourceDescription", results
-                .contains(mockSubject, DESCRIBES, mockContentSubject));
-
         assertTrue("Response contains RdfSourceDescription", results
                 .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
+
+        assertTrue("Response contains NonRdfSourceDescription", results
+                .contains(mockSubject, DESCRIBES, mockContentSubject));
 
     }
 
@@ -113,9 +113,11 @@ public class PropertiesRdfContextTest {
     public void testFedoraResourceProperties() throws RepositoryException {
 
         final Model results = new PropertiesRdfContext(mockResource, idTranslator).asModel();
+
         assertTrue("Response contains RdfSourceDescription", results
-                .contains(mockSubject, DESCRIBED_BY, mockContentSubject));
-        assertFalse("Response does not contains NonRdfSourceDescription", results
+                .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
+
+        assertFalse("Response does not contain NonRdfSourceDescription", results
                 .contains(mockSubject, DESCRIBES, mockContentSubject));
 
     }
