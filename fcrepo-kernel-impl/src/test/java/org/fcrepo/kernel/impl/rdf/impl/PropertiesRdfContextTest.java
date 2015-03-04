@@ -17,6 +17,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import static org.fcrepo.kernel.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.RdfLexicon.DESCRIBES;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -97,8 +98,10 @@ public class PropertiesRdfContextTest {
     public void testFedoraBinaryProperties() throws RepositoryException {
         final Model results = new PropertiesRdfContext(mockBinary, idTranslator).asModel();
 
-        assertTrue("Response contains both NonRdfSourceDescription and RdfSourceDescription", results
-                .contains(mockSubject, DESCRIBES, mockContentSubject) && results
+        assertTrue("Response contains NonRdfSourceDescription", results
+                .contains(mockSubject, DESCRIBES, mockContentSubject));
+
+        assertTrue("Response contains RdfSourceDescription", results
                 .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
 
     }
@@ -111,6 +114,8 @@ public class PropertiesRdfContextTest {
 
         final Model results = new PropertiesRdfContext(mockResource, idTranslator).asModel();
         assertTrue("Response contains RdfSourceDescription", results
+                .contains(mockSubject, DESCRIBED_BY, mockContentSubject));
+        assertFalse("Response does not contains NonRdfSourceDescription", results
                 .contains(mockSubject, DESCRIBES, mockContentSubject));
 
     }
