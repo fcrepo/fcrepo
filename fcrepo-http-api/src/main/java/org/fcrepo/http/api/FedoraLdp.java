@@ -70,9 +70,6 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -83,6 +80,10 @@ import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -280,7 +281,7 @@ public class FedoraLdp extends ContentExposingResource {
             try {
                 replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
             } catch (final RiotException e) {
-                throw new BadRequestException("RDF was not parsable", e);
+                throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
             }
         } else if (!resource.isNew()) {
             boolean emptyRequest = true;
