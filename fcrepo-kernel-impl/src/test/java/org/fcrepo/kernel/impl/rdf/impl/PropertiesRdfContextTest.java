@@ -94,7 +94,7 @@ public class PropertiesRdfContextTest {
 
         when(mockNonRdfSourceDescription.getNode()).thenReturn(mockNonRdfSourceDescriptionNode);
         when(mockNonRdfSourceDescriptionNode.getProperties()).thenReturn(new TestPropertyIterator());
-        when(mockNonRdfSourceDescription.getPath()).thenReturn("/mockNode2");
+        when(mockNonRdfSourceDescription.getPath()).thenReturn("/mockNode");
 
         idTranslator = new DefaultIdentifierTranslator(mockSession);
         mockSubject = idTranslator.reverse().convert(mockResource);
