@@ -15,8 +15,8 @@
 </form>
 #else
 #if ($content != "")
-    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a>
-
+    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a><br/><br/>
+	<a href="$content/fcr:fixity" class="btn btn-success btn-lg">Fixity</a>
     #if ($writable == true)
     <h3>Update Content</h3>
     <form action="javascript:updateFile()">
