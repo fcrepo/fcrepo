@@ -151,4 +151,10 @@ WHERE { }
 </form>
 #end
 #end
+
+#if ($content != "")
+    <a href="$content/fcr:fixity" class="btn btn-success btn-lg">Fixity</a>
+    <hr />
+#end
+
 #end
