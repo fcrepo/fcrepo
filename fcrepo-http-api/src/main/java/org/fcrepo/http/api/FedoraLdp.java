@@ -70,9 +70,6 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
@@ -83,6 +80,10 @@ import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -178,8 +179,8 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @GET
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
-            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
+        N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+        TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
     public Response describe(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -187,7 +188,7 @@ public class FedoraLdp extends ContentExposingResource {
         addResourceHttpHeaders(resource());
 
         final RdfStream rdfStream = new RdfStream().session(session)
-                    .topic(translator().reverse().convert(resource()).asNode());
+                .topic(translator().reverse().convert(resource()).asNode());
 
         return getContent(rangeValue, rdfStream);
 
@@ -236,7 +237,7 @@ public class FedoraLdp extends ContentExposingResource {
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch)
-            throws InvalidChecksumException, MalformedRdfException {
+                    throws InvalidChecksumException, MalformedRdfException {
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
@@ -250,7 +251,7 @@ public class FedoraLdp extends ContentExposingResource {
             response = noContent();
         } else {
             final MediaType effectiveContentType
-                    = requestBodyStream == null || requestContentType == null ? null : contentType;
+            = requestBodyStream == null || requestContentType == null ? null : contentType;
             resource = createFedoraResource(path, effectiveContentType, contentDisposition);
 
             final URI location = getUri(resource);
@@ -280,7 +281,7 @@ public class FedoraLdp extends ContentExposingResource {
             try {
                 replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
             } catch (final RiotException e) {
-                throw new BadRequestException("RDF was not parsable", e);
+                throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
             }
         } else if (!resource.isNew()) {
             boolean emptyRequest = true;
@@ -393,11 +394,11 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
     @Timed
     public Response createObject(@QueryParam("checksum") final String checksum,
-                                 @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
-                                 @HeaderParam("Content-Type") final MediaType requestContentType,
-                                 @HeaderParam("Slug") final String slug,
-                                 @ContentLocation final InputStream requestBodyStream)
-            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+            @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
+            @HeaderParam("Content-Type") final MediaType requestContentType,
+            @HeaderParam("Slug") final String slug,
+            @ContentLocation final InputStream requestBodyStream)
+                    throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -412,7 +413,7 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.info("Ingest with path: {}", newObjectPath);
 
         final MediaType effectiveContentType
-                = requestBodyStream == null || requestContentType == null ? null : contentType;
+        = requestBodyStream == null || requestContentType == null ? null : contentType;
         final FedoraResource result = createFedoraResource(
                 newObjectPath,
                 effectiveContentType,
@@ -541,7 +542,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private static String getRequestedObjectType(final MediaType requestContentType,
-                                          final ContentDisposition contentDisposition) {
+            final ContentDisposition contentDisposition) {
 
         if (requestContentType != null) {
             final String s = requestContentType.toString();
@@ -558,8 +559,8 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private FedoraResource createFedoraResource(final String path,
-                                                final MediaType requestContentType,
-                                                final ContentDisposition contentDisposition) {
+            final MediaType requestContentType,
+            final ContentDisposition contentDisposition) {
         final String objectType = getRequestedObjectType(requestContentType, contentDisposition);
 
         final FedoraResource result;
