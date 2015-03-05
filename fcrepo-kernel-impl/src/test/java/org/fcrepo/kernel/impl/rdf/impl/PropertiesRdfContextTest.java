@@ -60,7 +60,7 @@ public class PropertiesRdfContextTest {
     private Node mockBinaryNode;
 
     @Mock
-    private Node mockBindaryDescriptionNode;
+    private Node mockNonRdfSourceDescriptionNode;
 
     @Mock
     private NonRdfSourceDescription mockNonRdfSourceDescription;
@@ -74,7 +74,7 @@ public class PropertiesRdfContextTest {
 
     private Resource mockSubject;
 
-
+    private Resource mockNonRdfSourceDescriptionSubject;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -82,23 +82,24 @@ public class PropertiesRdfContextTest {
 
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockNode.getProperties()).thenReturn(new TestPropertyIterator());
         when(mockResource.getPath()).thenReturn("/mockNode");
+
+        when(mockNode.getProperties()).thenReturn(new TestPropertyIterator());
 
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
         when(mockBinaryNode.getSession()).thenReturn(mockSession);
-        when(mockBinary.getPath()).thenReturn("/mockNode/jcr:content");
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockBinaryNode.getProperties()).thenReturn(new TestPropertyIterator());
+        when(mockBinary.getPath()).thenReturn("/mockNode/jcr:content");
 
-        when(mockNonRdfSourceDescription.getNode()).thenReturn(mockBindaryDescriptionNode);
-        when(mockBindaryDescriptionNode.getSession()).thenReturn(mockSession);
-        when(mockBindaryDescriptionNode.getProperties()).thenReturn(new TestPropertyIterator());
+        when(mockNonRdfSourceDescription.getNode()).thenReturn(mockNonRdfSourceDescriptionNode);
+        when(mockNonRdfSourceDescriptionNode.getProperties()).thenReturn(new TestPropertyIterator());
+        when(mockNonRdfSourceDescription.getPath()).thenReturn("/mockNode2");
 
         idTranslator = new DefaultIdentifierTranslator(mockSession);
         mockSubject = idTranslator.reverse().convert(mockResource);
         mockContentSubject = idTranslator.reverse().convert(mockBinary);
-
+        mockNonRdfSourceDescriptionSubject = idTranslator.reverse().convert(mockNonRdfSourceDescription);
     }
 
 
@@ -110,10 +111,10 @@ public class PropertiesRdfContextTest {
         final Model results = new PropertiesRdfContext(mockBinary, idTranslator).asModel();
 
         assertTrue("Response contains RdfSourceDescription", results
-                .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
+                .contains(mockContentSubject, DESCRIBES, mockSubject));
 
         assertTrue("Response contains NonRdfSourceDescription", results
-                .contains(mockSubject, DESCRIBES, mockContentSubject));
+                .contains(mockNonRdfSourceDescriptionSubject, DESCRIBES, mockSubject));
 
     }
 
