@@ -111,10 +111,10 @@ public class PropertiesRdfContextTest {
         final Model results = new PropertiesRdfContext(mockBinary, idTranslator).asModel();
 
         assertTrue("Response contains RdfSourceDescription", results
-                .contains(mockContentSubject, DESCRIBES, mockSubject));
+                .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
 
         assertTrue("Response contains NonRdfSourceDescription", results
-                .contains(mockNonRdfSourceDescriptionSubject, DESCRIBES, mockSubject));
+                .contains(mockNonRdfSourceDescriptionSubject, DESCRIBES, mockContentSubject));
 
     }
 
@@ -127,10 +127,10 @@ public class PropertiesRdfContextTest {
         final Model results = new PropertiesRdfContext(mockResource, idTranslator).asModel();
 
         assertTrue("Response contains RdfSourceDescription", results
-                .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
+                .contains(mockContentSubject, DESCRIBES, mockSubject));
 
         assertFalse("Response does not contain NonRdfSourceDescription", results
-                .contains(mockSubject, DESCRIBES, mockContentSubject));
+                .contains(mockNonRdfSourceDescriptionSubject, DESCRIBES, mockSubject));
 
     }
 
