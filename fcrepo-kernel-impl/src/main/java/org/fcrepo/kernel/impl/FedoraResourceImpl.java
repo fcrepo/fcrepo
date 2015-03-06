@@ -36,6 +36,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -48,6 +49,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -257,7 +259,21 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             final Iterator<Property> inboundProperties = Iterators.concat(references, weakReferences);
 
             while (inboundProperties.hasNext()) {
-                inboundProperties.next().remove();
+                final Property prop = inboundProperties.next();
+                final List<Value> newVals = new ArrayList<>();
+                final Iterator<Value> propIt = property2values.apply(prop);
+                while (propIt.hasNext()) {
+                    final Value v = propIt.next();
+                    if (!node.equals(getSession().getNodeByIdentifier(v.getString()))) {
+                        newVals.add(v);
+                        LOGGER.trace("Keeping multivalue reference property when deleting node");
+                    }
+                }
+                if (newVals.size() == 0) {
+                    prop.remove();
+                } else {
+                    prop.setValue(newVals.toArray(new Value[newVals.size()]));
+                }
             }
 
             final Node parent;
