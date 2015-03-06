@@ -36,6 +36,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -48,6 +49,7 @@ import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -55,6 +57,7 @@ import com.google.common.base.Converter;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.FedoraJcrTypes;
@@ -65,7 +68,10 @@ import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
@@ -257,7 +263,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             final Iterator<Property> inboundProperties = Iterators.concat(references, weakReferences);
 
             while (inboundProperties.hasNext()) {
-                inboundProperties.next().remove();
+                final Property prop = inboundProperties.next();
+                final List<Value> newVals = new ArrayList<Value>();
+                final Iterator<Value> propIt = JcrPropertyFunctions.property2values.apply(prop);
+                final Converter<Resource, FedoraResource> subjects =
+                    new DefaultIdentifierTranslator(this.getSession());
+                final Converter<Value, RDFNode> propCvt = new ValueConverter(this.getSession(), subjects);
+                while (propIt.hasNext()) {
+                    final RDFNode propNode = propCvt.convert(propIt.next());
+                    // This doesn't work, how to compare JCRNode to RDFNode??
+                    if (!node.equals(propNode)) {
+                        newVals.add(propCvt.reverse().convert(propNode));
+                        LOGGER.trace("Keeping multivalue reference property when deleting node");
+                    }
+                }
+                if (newVals.size() == 0) {
+                    prop.remove();
+                } else {
+                    prop.setValue((Value[]) newVals.toArray());
+                }
             }
 
             final Node parent;
