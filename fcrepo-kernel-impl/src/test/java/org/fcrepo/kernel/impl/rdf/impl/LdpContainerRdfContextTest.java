@@ -224,6 +224,43 @@ public class LdpContainerRdfContextTest {
     }
 
     @Test
+    public void testLdpResourceWithIndirectContainerAssertingRelationReference() throws RepositoryException {
+
+        when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(new TestPropertyIterator(mockProperty));
+        when(mockProperty.getParent()).thenReturn(mockContainerNode);
+        when(mockContainerNode.getSession()).thenReturn(mockSession);
+        when(mockContainerNode.isNodeType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
+        when(mockContainerNode.hasProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn(true);
+        when(mockContainerNode.getProperty(LDP_INSERTED_CONTENT_RELATION)).thenReturn
+                (mockInsertedContentRelationProperty);
+        when(mockInsertedContentRelationProperty.getString()).thenReturn("some:relation");
+        when(mockNamespaceRegistry.isRegisteredUri("some:")).thenReturn(true);
+        when(mockNamespaceRegistry.getPrefix("some:")).thenReturn("some");
+        when(mockContainerNode.getNodes()).thenReturn(new TestNodeIterator(mockChild));
+        when(mockChild.getPath()).thenReturn("/b");
+        when(mockChild.getName()).thenReturn("b");
+        when(mockChild.hasProperty("some:relation")).thenReturn(false);
+        when(mockChild.hasProperty("some:relation_ref")).thenReturn(true);
+        when(mockChild.getProperty("some:relation_ref")).thenReturn(mockRelationProperty);
+        when(mockRelationProperty.isMultiple()).thenReturn(false);
+        when(mockRelationProperty.getValue()).thenReturn(mockRelationValue);
+        when(mockRelationValue.getString()).thenReturn("x");
+        final Property mockRelation = mock(Property.class);
+        when(mockRelation.getString()).thenReturn("some:property");
+        when(mockContainerNode.hasProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(true);
+        when(mockContainerNode.getProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(mockRelation);
+        testObj = new LdpContainerRdfContext(mockResource, subjects);
+
+        final Model model = testObj.asModel();
+
+        assertTrue("Expected stream to have one triple", model.size() == 1);
+        assertTrue(model.contains(
+                subjects.reverse().convert(mockResource),
+                ResourceFactory.createProperty("some:property"),
+                ResourceFactory.createPlainLiteral("x")));
+    }
+
+    @Test
     public void testLdpResourceWithIndirectContainerWithoutRelation() throws RepositoryException {
 
         when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(new TestPropertyIterator(mockProperty));
