@@ -68,7 +68,6 @@ import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
@@ -261,12 +260,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
             while (inboundProperties.hasNext()) {
                 final Property prop = inboundProperties.next();
-                final List<Value> newVals = new ArrayList<Value>();
-                final Iterator<Value> propIt = JcrPropertyFunctions.property2values.apply(prop);
+                final List<Value> newVals = new ArrayList<>();
+                final Iterator<Value> propIt = property2values.apply(prop);
                 while (propIt.hasNext()) {
                     final Value v = propIt.next();
-                    final Node n = this.getSession().getNodeByIdentifier(v.getString());
-                    if (!node.equals(n)) {
+                    if (!node.equals(getSession().getNodeByIdentifier(v.getString()))) {
                         newVals.add(v);
                         LOGGER.trace("Keeping multivalue reference property when deleting node");
                     }
