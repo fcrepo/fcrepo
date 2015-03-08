@@ -83,6 +83,7 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
@@ -450,6 +451,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + " WHERE { }", new RdfStream());
     }
 
+    @Ignore("Until ticket has been resolved: https://jira.duraspace.org/browse/FCREPO-1381")
     @Test
     public void testSparqlUpdatePrefixUriSubstitution() throws RepositoryException {
         final FedoraResource object =
