@@ -781,6 +781,31 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertFalse(frozenResource.hashCode() == 0);
     }
 
+    @Test
+    public void testDeletePartOfMultiValueProperty() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final String relation = "test:fakeRel";
+        containerService.findOrCreate(session, pid);
+        final Container subject = containerService.findOrCreate(session, pid + "/a");
+        final Container child1 = containerService.findOrCreate(session, pid + "/a/b");
+        final Container child2 = containerService.findOrCreate(session, pid + "/a/c");
+        final Value[] values = new Value[2];
+        values[0] = session.getValueFactory().createValue(child1.getNode());
+        values[1] = session.getValueFactory().createValue(child2.getNode());
+        subject.getNode().setProperty(relation, values);
+
+        session.save();
+
+        final Model model1 = child1.getTriples(subjects, ReferencesRdfContext.class).asModel();
+
+        child2.delete();
+
+        assertTrue(model1.contains(subjects.reverse().convert(subject),
+            createProperty("info:fedora/test/fakeRel"),
+            subjects.reverse().convert(child1)));
+
+    }
+
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
         addVersionLabel(label, session.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
     }
