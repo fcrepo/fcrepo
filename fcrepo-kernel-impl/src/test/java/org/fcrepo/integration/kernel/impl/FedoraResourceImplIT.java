@@ -642,7 +642,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid);
         final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid + "/a");
-        System.out.println("test:" + container.getChildren().next());
+
         assertEquals(resource, container.getChildren().next());
     }
 
