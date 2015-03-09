@@ -152,6 +152,7 @@ import com.hp.hpl.jena.vocabulary.DC_11;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class FedoraLdpIT extends AbstractResourceIT {
 
@@ -449,7 +450,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetNonRDFSourceDescription() throws Exception {
+    public void testGetNonRDFSourceDescription() throws IOException {
         final String pid = getRandomUniquePid();
 
         createDatastream(pid, "x", "some content");
@@ -646,19 +647,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet httpGet = new HttpGet(location);
 
         final GraphStore graphStore = getGraphStore(httpGet);
-
+        LOGGER.debug("Recovered graph: {}", graphStore);
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 createProperty("info:some-predicate").asNode(), ANY));
 
         final Node bnode = graphStore.find(ANY, createResource(location).asNode(),
                 createProperty("info:some-predicate").asNode(), ANY).next().getObject();
-
-        final HttpGet bnodeHttpGet = new HttpGet(bnode.getURI());
-
-        final GraphStore bnodeGraphStore = getGraphStore(bnodeHttpGet);
-
-        assertTrue(bnodeGraphStore.contains(ANY, bnode, DC_TITLE.asNode(), createLiteral("this is a title")));
-
+        LOGGER.debug("Received node: {}, checking for blankness.", bnode);
+        assertTrue(bnode.isBlank());
 
     }
 
@@ -739,7 +735,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateGraphWithBlanknodes() throws Exception {
+    public void testCreateGraphWithBlanknodes() throws IOException {
         final String pid = getRandomUniquePid();
         final String subjectURI = serverAddress + pid;
         final HttpPut replaceMethod = new HttpPut(subjectURI);
@@ -768,10 +764,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         final NodeIterator nodeIterator = model.listObjectsOfProperty(createResource(subjectURI),
                 createProperty("info:some-predicate"));
-        assertTrue("Didn't find skolemized blank node assertion", nodeIterator.hasNext());
-        final Resource skolemizedNode = nodeIterator.nextNode().asResource();
+        assertTrue("Didn't find blank node assertion", nodeIterator.hasNext());
+        final Resource blankNode = nodeIterator.nextNode().asResource();
+        assertTrue(blankNode.isAnon());
         assertTrue("Didn't find a triple we tried to create!", model.contains(
-                skolemizedNode,
+                blankNode,
                 createProperty("info:rubydora#label"),
                 createPlainLiteral("asdfg")));
     }

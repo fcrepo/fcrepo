@@ -15,15 +15,18 @@
  */
 package org.fcrepo.integration.kernel.impl;
 
+import static com.google.common.base.Functions.toStringFunction;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEMNODE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
@@ -58,6 +61,7 @@ import javax.jcr.version.Version;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
@@ -352,7 +356,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "INSERT { " + "<"
                 + createGraphSubjectNode(object).getURI() + "> "
-                + "<info:fcrepo/zyx> \"a\" } WHERE {} ", new RdfStream());
+                + "<info:fcrepo/zyx> \"a\" } WHERE {} ", new RdfStream(), containerService);
 
         // jcr property
         final Resource s = createResource(createGraphSubjectNode(object).getURI());
@@ -367,7 +371,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 + createGraphSubjectNode(object).getURI() + "> "
                 + "<info:fcrepo/zyx> \"b\" } " + "WHERE { " + "<"
                 + createGraphSubjectNode(object).getURI() + "> "
-                + "<info:fcrepo/zyx> ?o } ", RdfStream.fromModel(model));
+                + "<info:fcrepo/zyx> ?o } ", RdfStream.fromModel(model), containerService);
 
         model = object.getTriples(subjects, PropertiesRdfContext.class).asModel();
 
@@ -422,7 +426,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
                         + "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n"
                         + "INSERT { <> fedora:isPartOf <" + subjects.toDomain("/some-path") + ">}"
-                        + "WHERE { }", new RdfStream());
+                        + "WHERE { }", new RdfStream(), containerService);
     }
 
     @Test(expected = AccessDeniedException.class)
@@ -433,8 +437,8 @@ public class FedoraResourceImplIT extends AbstractIT {
             object.updateProperties(
                     subjects,
                     "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-original\". }"
-                            + " WHERE { }", new RdfStream());
-        } catch (AccessDeniedException e) {
+                            + " WHERE { }", new RdfStream(), containerService);
+        } catch (final AccessDeniedException e) {
             fail("Should fail at update, not create property");
         }
         final AccessControlManager acm = session.getAccessControlManager();
@@ -447,7 +451,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.updateProperties(
                 subjects,
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-update\". }"
-                        + " WHERE { }", new RdfStream());
+                        + " WHERE { }", new RdfStream(), containerService);
     }
 
     @Test
@@ -457,7 +461,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
-                + "> <http://some/uri> } WHERE { }", new RdfStream());
+                + "> <http://some/uri> } WHERE { }", new RdfStream(), containerService);
         assertTrue(object.getNode().isNodeType("{http://some/}uri"));
     }
 
@@ -468,12 +472,14 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
-                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, TypeRdfContext.class));
+                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, TypeRdfContext.class),
+                containerService);
         assertTrue(object.getNode().isNodeType("{http://some/}uri"));
 
         object.updateProperties(subjects, "DELETE { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
-                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, TypeRdfContext.class));
+                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, TypeRdfContext.class),
+                containerService);
         assertFalse(object.getNode().isNodeType("{http://some/}uri"));
     }
 
@@ -523,7 +529,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         model.add(subject, predicate, resource);
         model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
 
-        object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class));
+        object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class),
+                containerService);
 
         final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
 
@@ -547,7 +554,8 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
 
-        assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
+        assertTrue(Lists.transform(asList(skolemizedNode.getMixinNodeTypes()), toStringFunction()).contains(
+                FEDORA_SKOLEMNODE));
         assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
 
     }

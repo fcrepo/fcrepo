@@ -40,7 +40,7 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isSkolemNode;
 
 /**
  * Embed all blank nodes in the RDF stream
@@ -85,7 +85,7 @@ public class BlankNodeRdfContext extends NodeRdfContext {
 
         final Iterator<Node> nodes = Iterators.transform(new PropertyValueIterator(references), getNodesForValue);
 
-        return Iterators.filter(nodes, isBlankNode);
+        return Iterators.filter(nodes, isSkolemNode);
     }
 
 

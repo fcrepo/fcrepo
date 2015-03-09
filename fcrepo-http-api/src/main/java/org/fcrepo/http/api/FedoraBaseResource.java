@@ -51,9 +51,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
     protected IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
             idTranslator = new HttpResourceConverter(session(),
-                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+                uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
-
         return idTranslator;
     }
 
@@ -90,7 +89,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 json.addProperty("userAgent",headers.getHeaderString("user-agent"));
             }
             obs.setUserData(json.toString());
-        } catch ( Exception ex ) {
+        } catch ( final Exception ex ) {
             LOGGER.warn("Error setting baseURL", ex);
         }
     }

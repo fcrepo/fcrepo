@@ -15,29 +15,20 @@
  */
 package org.fcrepo.kernel.impl.rdf;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getPropertyType;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isReferenceProperty;
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -47,11 +38,6 @@ import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.NodeTypeTemplate;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.hp.hpl.jena.rdf.model.AnonId;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Statement;
-import org.fcrepo.kernel.identifiers.PidMinter;
-import org.fcrepo.kernel.impl.services.AbstractService;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;
 import org.fcrepo.kernel.exception.MalformedRdfException;
@@ -60,7 +46,6 @@ import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.impl.utils.NodePropertiesTools;
-import org.fcrepo.mint.UUIDPathMinter;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
@@ -102,12 +87,6 @@ public class JcrRdfTools {
     @VisibleForTesting
     protected JcrTools jcrTools = new JcrTools();
 
-    private final Map<AnonId, Resource> skolemizedBnodeMap;
-
-    private static final Model m = createDefaultModel();
-
-    private static final PidMinter pidMinter =  new UUIDPathMinter();
-
     /**
      * Constructor with even more context.
      *
@@ -119,7 +98,6 @@ public class JcrRdfTools {
         this.idTranslator = idTranslator;
         this.session = session;
         this.valueConverter = new ValueConverter(session, idTranslator);
-        this.skolemizedBnodeMap = new HashMap<>();
     }
 
     /**
@@ -340,95 +318,4 @@ public class JcrRdfTools {
             nodePropertiesTools.removeNodeProperty(node, propertyName, v);
         }
     }
-
-    /**
-     * Convert an external statement into a persistable statement by skolemizing
-     * blank nodes, creating hash-uri subjects, etc
-     *
-     * @param idTranslator the property of idTranslator
-     * @param t the statement
-     * @return the persistable statement
-     * @throws RepositoryException if repository exception occurred
-     */
-    public Statement skolemize(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Statement t)
-            throws RepositoryException {
-
-        Statement skolemized = t;
-
-        if (t.getSubject().isAnon()) {
-            skolemized = m.createStatement(getSkolemizedResource(idTranslator, skolemized.getSubject()),
-                    skolemized.getPredicate(),
-                    skolemized.getObject());
-        } else if (idTranslator.inDomain(t.getSubject()) && t.getSubject().getURI().contains("#")) {
-            findOrCreateHashUri(idTranslator, t.getSubject());
-        }
-
-        if (t.getObject().isAnon()) {
-            skolemized = m.createStatement(skolemized.getSubject(), skolemized.getPredicate(), getSkolemizedResource
-                    (idTranslator, skolemized.getObject()));
-        } else if (t.getObject().isResource()
-                && idTranslator.inDomain(t.getObject().asResource())
-                && t.getObject().asResource().getURI().contains("#")) {
-            findOrCreateHashUri(idTranslator, t.getObject().asResource());
-        }
-
-        return skolemized;
-    }
-
-    private void findOrCreateHashUri(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                     final Resource s) throws RepositoryException {
-        final String absPath = idTranslator.asString(s);
-
-        if (!absPath.isEmpty() && !session.nodeExists(absPath)) {
-            final Node closestExistingAncestor = getClosestExistingAncestor(session, absPath);
-
-            final Node orCreateNode = jcrTools.findOrCreateNode(session, absPath, NT_FOLDER);
-            orCreateNode.addMixin(FEDORA_RESOURCE);
-
-            final Node parent = orCreateNode.getParent();
-
-            if (!parent.getName().equals("#")) {
-                throw new AssertionError("Hash URI resource created with too much hierarchy: " + s);
-            }
-
-            // We require the closest node to be either "#" resource, or its parent.
-            if (!parent.equals(closestExistingAncestor)
-                    && !parent.getParent().equals(closestExistingAncestor)) {
-                throw new PathNotFoundException("Unexpected request to create new resource " + s);
-            }
-
-            if (parent.isNew()) {
-                parent.addMixin(FEDORA_PAIRTREE);
-            }
-        }
-    }
-
-    private Resource getSkolemizedResource(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                           final RDFNode resource) throws RepositoryException {
-        final AnonId id = resource.asResource().getId();
-
-        if (!skolemizedBnodeMap.containsKey(id)) {
-            jcrTools.findOrCreateNode(session, skolemizedPrefix());
-            final String pid = pidMinter.mintPid();
-            final String path = skolemizedPrefix() + pid;
-            final Node preexistingNode = getClosestExistingAncestor(session, path);
-            final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
-            orCreateNode.addMixin(FEDORA_BLANKNODE);
-
-            if (preexistingNode != null) {
-                AbstractService.tagHierarchyWithPairtreeMixin(preexistingNode,
-                        orCreateNode);
-            }
-
-            final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
-            skolemizedBnodeMap.put(id, skolemizedSubject);
-        }
-
-        return skolemizedBnodeMap.get(id);
-    }
-
-    private static String skolemizedPrefix() {
-        return "/.well-known/genid/";
-    }
-
 }

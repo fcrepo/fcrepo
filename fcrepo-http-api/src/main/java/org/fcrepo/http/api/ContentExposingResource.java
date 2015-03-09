@@ -74,6 +74,7 @@ import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.Deskolemizer;
 import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
@@ -116,12 +117,16 @@ import com.hp.hpl.jena.vocabulary.RDF;
  * content.
  *
  * @author Mike Durbin
+ * @author ajs6f
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
     @Context protected Request request;
+
+    private Deskolemizer deskolemizer;
+
     @Context protected HttpServletResponse servletResponse;
 
     @Inject
@@ -140,6 +145,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private static final long MAX_BUFFER_SIZE = 10240000;
 
     protected abstract String externalPath();
+
+    private Deskolemizer deskolemizer() {
+        if (deskolemizer != null) {
+            return deskolemizer;
+        }
+        return deskolemizer = new Deskolemizer(translator(), null);
+    }
 
     protected Response getContent(final String rangeValue,
                                   final RdfStream rdfStream) throws IOException {
@@ -192,7 +204,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
-        return Response.ok(rdfStream).build();
+        return ok(rdfStream.map(deskolemizer())).build();
     }
 
     protected RdfStream getResourceTriples() {
@@ -294,8 +306,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());
         }
 
-
-        return rdfStream;
+        return rdfStream.map(deskolemizer());
     }
 
     /**
@@ -595,14 +606,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Model inputModel = createDefaultModel()
                 .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
 
-        resource.replaceProperties(translator(), inputModel, resourceTriples);
+        resource.replaceProperties(translator(), inputModel, resourceTriples, containerService);
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
                                            final String requestBody,
                                            final RdfStream resourceTriples)
             throws MalformedRdfException, AccessDeniedException {
-        resource.updateProperties(translator(), requestBody, resourceTriples);
+        resource.updateProperties(translator(), requestBody, resourceTriples, containerService);
     }
 
     /**

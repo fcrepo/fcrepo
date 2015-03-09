@@ -71,7 +71,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
 
         // Write the properties
-        object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new RdfStream());
+        object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new RdfStream(), containerService);
 
         // Verify
         final Property property = object.getNode().getProperty("fedora:name");
@@ -97,7 +97,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
         // Write the properties
         final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
-        object.updateProperties(graphSubjects, sparql, new RdfStream());
+        object.updateProperties(graphSubjects, sparql, new RdfStream(), containerService);
 
         // Verify property exists
         final Property property = object.getNode().getProperty("fedora:remove");
@@ -114,7 +114,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         // Remove the properties
         object.updateProperties(graphSubjects,
                 sparqlRemove,
-                object.getTriples(graphSubjects, PropertiesRdfContext.class));
+                object.getTriples(graphSubjects, PropertiesRdfContext.class), containerService);
 
         // Persist the object (although the propery will be removed from memory without this.)
         session.save();

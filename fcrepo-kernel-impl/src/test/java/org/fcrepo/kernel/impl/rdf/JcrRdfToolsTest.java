@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -38,13 +37,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.PropertyIterator;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -68,7 +65,6 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.FedoraJcrTypes;
-import org.fcrepo.kernel.impl.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.testutilities.TestPropertyIterator;
@@ -76,17 +72,14 @@ import org.fcrepo.kernel.utils.CacheEntry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.value.BinaryValue;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Function;
-import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * <p>JcrRdfToolsTest class.</p>
@@ -266,175 +259,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
                 getJcrNamespaceForRDFNamespace("some-namespace-uri"));
         assertEquals("some-namespace-uri",
                 getRDFNamespaceForJcrNamespace("some-namespace-uri"));
-    }
-
-    @Test
-    public void shouldPassthroughValidStatements() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Statement x = m.createStatement(testSubjects.toDomain("/"),
-                createProperty("info:x"),
-                createPlainLiteral("x"));
-        final Statement statement = testObj.skolemize(testSubjects, x);
-
-        assertEquals(x, statement);
-    }
-
-    @Test
-    public void shouldSkolemizeBlankNodeSubjects() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Statement x = m.createStatement(createResource(),
-                createProperty("info:x"),
-                testSubjects.toDomain("/"));
-        testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/.well-known/x");
-        final Statement statement = testObj.skolemize(testSubjects, x);
-
-
-        assertEquals("info:fedora/.well-known/x", statement.getSubject().toString());
-    }
-
-    @Test
-    public void shouldSkolemizeBlankNodeObjects() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Statement x = m.createStatement(testSubjects.toDomain("/"),
-                createProperty("info:x"),
-                createResource());
-        testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/.well-known/x");
-        final Statement statement = testObj.skolemize(testSubjects, x);
-
-
-        assertEquals("info:fedora/.well-known/x", statement.getObject().toString());
-    }
-
-    @Test
-    public void shouldSkolemizeBlankNodeSubjectsAndObjects() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Resource resource = createResource();
-        final Statement x = m.createStatement(resource,
-                createProperty("info:x"),
-                resource);
-        testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/.well-known/x");
-        final Statement statement = testObj.skolemize(testSubjects, x);
-
-
-        assertEquals("info:fedora/.well-known/x", statement.getSubject().toString());
-        assertEquals("info:fedora/.well-known/x", statement.getObject().toString());
-    }
-
-    @Test
-    public void shouldCreateHashUriSubjects() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Statement x = m.createStatement(testSubjects.toDomain("/some/#/abc"),
-                createProperty("info:x"),
-                testSubjects.toDomain("/"));
-        testObj.jcrTools = mock(JcrTools.class);
-        when(mockNode.getParent()).thenReturn(mockHashNode);
-        when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockSession.nodeExists("/some")).thenReturn(true);
-        when(mockSession.getNode("/some")).thenReturn(mockChildNode);
-        when(mockChildNode.isNew()).thenReturn(false);
-        when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
-        when(mockHashNode.isNew()).thenReturn(true);
-        final Statement statement = testObj.skolemize(testSubjects, x);
-        assertEquals(x, statement);
-        verify(testObj.jcrTools).findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER);
-        verify(mockNode).addMixin(FEDORA_RESOURCE);
-        verify(mockHashNode).addMixin(FEDORA_PAIRTREE);
-    }
-
-    @Test
-    public void shouldAddBlankNodePairtreeMixin() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Resource resource = createResource();
-        final Statement x = m.createStatement(resource,
-                createProperty("info:x"),
-                resource);
-        testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/x");
-        when(mockNode.getParent()).thenReturn(mockHashNode);
-        when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockHashNode.isNew()).thenReturn(true);
-        when(FedoraTypesUtils.getClosestExistingAncestor(mockSession,"/.well-known/genid/"))
-                .thenReturn(mockChildNode);
-        final Statement statement = testObj.skolemize(testSubjects, x);
-        assertEquals("info:fedora/x", statement.getSubject().toString());
-        assertEquals("info:fedora/x", statement.getObject().toString());
-        verify(testObj.jcrTools).findOrCreateNode(mockSession, "/.well-known/genid/");
-        verify(mockNode).addMixin(FEDORA_BLANKNODE);
-        verify(mockNode.getParent()).addMixin(FEDORA_PAIRTREE);
-    }
-
-    @Test
-    public void shouldCreateHashUriSubjectsWithExistingHashUri() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Statement x = m.createStatement(testSubjects.toDomain("/some/#/abc"),
-                createProperty("info:x"),
-                testSubjects.toDomain("/"));
-        testObj.jcrTools = mock(JcrTools.class);
-        when(mockNode.getParent()).thenReturn(mockHashNode);
-        when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockSession.nodeExists("/some")).thenReturn(true);
-        when(mockSession.getNode("/some")).thenReturn(mockChildNode);
-        when(mockChildNode.isNew()).thenReturn(false);
-        when(mockChildNode.hasNode("#")).thenReturn(true);
-        when(mockChildNode.getNode("#")).thenReturn(mockHashNode);
-        when(mockHashNode.isNew()).thenReturn(false);
-        when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
-        final Statement statement = testObj.skolemize(testSubjects, x);
-        assertEquals(x, statement);
-        verify(testObj.jcrTools).findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER);
-        verify(mockNode).addMixin(FEDORA_RESOURCE);
-    }
-
-    @Test(expected = PathNotFoundException.class)
-    public void shouldNotAllowHashUriSubjectsForResourcesThatDontExist() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Statement x = m.createStatement(testSubjects.toDomain("/some/#/abc"),
-                createProperty("info:x"),
-                testSubjects.toDomain("/"));
-        testObj.jcrTools = mock(JcrTools.class);
-        when(mockNode.getParent()).thenReturn(mockHashNode);
-        when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockSession.nodeExists("/some")).thenReturn(false);
-        when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
-        testObj.skolemize(testSubjects, x);
-    }
-
-    @Test
-    public void shouldCreateHashUriObjects() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Statement x = m.createStatement(
-                testSubjects.toDomain("/"),
-                createProperty("info:x"),
-                testSubjects.toDomain("/some/#/abc"));
-        testObj.jcrTools = mock(JcrTools.class);
-        when(mockNode.getParent()).thenReturn(mockHashNode);
-        when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockSession.nodeExists("/some")).thenReturn(true);
-        when(mockSession.getNode("/some")).thenReturn(mockChildNode);
-        when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
-        final Statement statement = testObj.skolemize(testSubjects, x);
-        assertEquals(x, statement);
-        verify(testObj.jcrTools).findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER);
-        verify(mockNode).addMixin(FEDORA_RESOURCE);
-    }
-
-    @Test
-    public void shouldIgnoreHashUrisOutsideTheRepositoryDomain() throws RepositoryException {
-        final Model m = createDefaultModel();
-
-        final Statement x = m.createStatement(
-                testSubjects.toDomain("/"),
-                createProperty("info:x"),
-                createResource("info:x#abc"));
-        final Statement statement = testObj.skolemize(testSubjects, x);
-        assertEquals(x, statement);
     }
 
     @Mock
