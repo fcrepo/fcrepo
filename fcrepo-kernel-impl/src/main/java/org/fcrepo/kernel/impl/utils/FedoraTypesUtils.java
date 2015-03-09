@@ -16,11 +16,13 @@
 package org.fcrepo.kernel.impl.utils;
 
 import com.google.common.base.Predicate;
+
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
+
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -140,7 +142,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                     return false;
                 } else {
                     final String name = p.getName();
-                    for (String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
+                    for (final String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
                         if (name.equals(exposedName)) {
                             return false;
                         }
@@ -299,31 +301,14 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      */
     public static Node getClosestExistingAncestor(final Session session,
                                                   final String path) throws RepositoryException {
-        final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
 
-        final StringBuilder existingAncestorPath = new StringBuilder(path.length());
-        existingAncestorPath.append("/");
-
-        final int len = pathSegments.length;
-        for (int i = 0; i != len; ++i) {
-            final String pathSegment = pathSegments[i];
-
-            if (session.nodeExists(existingAncestorPath.toString() + pathSegment)) {
-                // Add to existingAncestorPath  ...
-                existingAncestorPath.append(pathSegment);
-                if (i != (len - 1)) {
-                existingAncestorPath.append("/");
-                }
-            } else {
-                if (i != 0) {
-                    existingAncestorPath.deleteCharAt(existingAncestorPath.length() - 1);
-                }
-                break;
+        String potentialPath = path.startsWith("/") ? path : "/" + path;
+        while (!potentialPath.isEmpty()) {
+            if (session.nodeExists(potentialPath)) {
+                return session.getNode(potentialPath);
             }
-
+            potentialPath = potentialPath.substring(0, potentialPath.lastIndexOf('/'));
         }
-
-        return session.getNode(existingAncestorPath.toString());
+        return session.getRootNode();
     }
-
 }

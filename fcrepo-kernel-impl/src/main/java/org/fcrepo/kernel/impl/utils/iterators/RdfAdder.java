@@ -20,9 +20,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -48,8 +51,8 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
      * @param stream the rdf stream
      */
     public RdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
-        final RdfStream stream) {
-        super(idTranslator, session, stream);
+        final RdfStream stream, final Service<Container> skolemService ) {
+        super(idTranslator, session, stream, skolemService);
     }
 
     @Override

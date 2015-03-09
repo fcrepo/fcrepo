@@ -102,7 +102,7 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private Model mockModel;
 
-    private Map<String, String> mockNsMapping = Collections.emptyMap();
+    private final Map<String, String> mockNsMapping = Collections.emptyMap();
 
     @Mock
     private NodePropertiesTools mockPropertiesTools;
@@ -121,8 +121,9 @@ public class JcrPropertyStatementListenerTest {
 
         idTranslator = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj = new JcrPropertyStatementListener(idTranslator, mockJcrRdfTools);
         mockResource = idTranslator.toDomain("/xyz");
+        testObj = new JcrPropertyStatementListener(idTranslator, mockSession, resource, null);
+
         when(mockStatement.getSubject()).thenReturn(mockResource);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);
         when(mockStatement.getModel()).thenReturn(mockModel);
@@ -137,7 +138,6 @@ public class JcrPropertyStatementListenerTest {
 
         when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
         resource = idTranslator.convert(mockResource);
-        when(mockJcrRdfTools.skolemize(idTranslator, mockStatement)).thenReturn(mockStatement);
     }
 
     @Test
@@ -205,7 +205,6 @@ public class JcrPropertyStatementListenerTest {
                 + "object");
         final Statement statement = model.createStatement(mockResource, RDF.type, type);
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        when(mockJcrRdfTools.skolemize(idTranslator, statement)).thenReturn(statement);
         testObj.addedStatement(statement);
         verify(mockJcrRdfTools).addMixin(resource, type, mockNsMapping);
     }
@@ -244,7 +243,6 @@ public class JcrPropertyStatementListenerTest {
                 type,
                 model.createResource(REPOSITORY_NAMESPACE + "Container"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        when(mockJcrRdfTools.skolemize(idTranslator, statement)).thenReturn(statement);
         testObj.addedStatement(statement);
         verify(mockSubjectNode, never()).addMixin("fedora:object");
     }

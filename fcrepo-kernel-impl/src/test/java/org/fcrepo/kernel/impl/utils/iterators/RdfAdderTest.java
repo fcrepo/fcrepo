@@ -31,6 +31,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
 import java.util.Iterator;
 import java.util.Map;
 
@@ -47,15 +48,19 @@ import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.nodetype.PropertyDefinition;
 
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
+
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -116,7 +121,7 @@ public class RdfAdderTest {
 
     @Test
     public void testAddingProperty() throws Exception {
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         when(mockNode.setProperty(propertyShortName, mockValue, UNDEFINED)).thenReturn(mockProperty);
         testAdder.operateOnProperty(descriptiveStmnt, resource);
         verify(mockNode).setProperty(propertyShortName, mockValue, UNDEFINED);
@@ -125,14 +130,14 @@ public class RdfAdderTest {
 
     @Test
     public void testAddingModelWithStreamNamespace() throws Exception {
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
         verify(mockNode).addMixin(anyString());
     }
 
     @Test
     public void testAddingModelWithPrimaryType() throws Exception {
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         when(mockNode.isNodeType(mixinShortName)).thenReturn(true);
         testAdder.operateOnMixin(createResource(mixinLongName), resource);
 
@@ -143,38 +148,38 @@ public class RdfAdderTest {
     @Test
     public void testAddingWithNotYetDefinedNamespace() throws Exception {
         // we drop our stream namespace map
-        testStream = new RdfStream(mockTriples);
+        testStream = new RdfStream(mockTriples).topic(descriptiveTriple.getSubject());
         when(
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
                                 .getNameSpace()))).thenThrow(new NamespaceException("Expected."));
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
     }
 
     @Test
     public void testAddingWithRepoNamespace() throws Exception {
         // we drop our stream namespace map
-        testStream = new RdfStream(mockTriples);
+        testStream = new RdfStream(mockTriples).topic(descriptiveTriple.getSubject());
         when(
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
                                 .getNameSpace()))).thenReturn("rdf");
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
     }
 
     @Test(expected = MalformedRdfException.class)
     public void testAddingWithBadMixinOnNode() throws Exception {
         when(mockNode.canAddMixin(mixinShortName)).thenReturn(false);
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
     }
 
     @Test
     public void testAddingWithBadMixinForRepo() throws Exception {
         when(mockNodeTypeManager.hasNodeType(mixinShortName)).thenReturn(false);
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
         verify(mockNodeTypeManager).registerNodeType(mockNodeTypeTemplate, false);
         verify(mockNodeTypeTemplate).setName(mixinShortName);
@@ -228,7 +233,7 @@ public class RdfAdderTest {
         when(mockTriples.hasNext()).thenReturn(true, true, false);
         when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         resource = new FedoraResourceImpl(mockNode);
-        testStream = new RdfStream(mockTriples);
+        testStream = new RdfStream(mockTriples).topic(descriptiveTriple.getSubject());
         testStream.namespaces(mockNamespaceMap);
     }
 
@@ -268,6 +273,9 @@ public class RdfAdderTest {
     private Iterator<Triple> mockTriples;
 
     private RdfStream testStream;
+
+    @Mock
+    private Service<Container> mockSkolemService;
 
     @Mock
     private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;

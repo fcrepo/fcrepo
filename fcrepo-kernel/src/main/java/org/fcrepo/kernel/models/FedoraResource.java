@@ -28,6 +28,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -116,12 +117,13 @@ public interface FedoraResource {
      * @param idTranslator the property of idTranslator
      * @param sparqlUpdateStatement sparql update statement
      * @param originalTriples original triples
+     * @param skolemService a service for the creation of skolem nodes as needed
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws AccessDeniedException if access denied in updating properties
      */
     void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                          final String sparqlUpdateStatement,
-                          final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException;
+            final String sparqlUpdateStatement, final RdfStream originalTriples,
+            final Service<Container> skolemService) throws MalformedRdfException, AccessDeniedException;
 
     /**
      * Return the RDF properties of this object using the provided context
@@ -168,11 +170,12 @@ public interface FedoraResource {
      * @param idTranslator the given property of idTranslator
      * @param inputModel the input model
      * @param originalTriples the original triples
+     * @param skolemService a service for the creation of skolem nodes as needed
      * @throws MalformedRdfException if malformed rdf exception occurred
      */
     void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Model inputModel,
-                                final RdfStream originalTriples) throws MalformedRdfException;
+                                final Model inputModel, final RdfStream originalTriples,
+                                final Service<Container> skolemService) throws MalformedRdfException;
 
     /**
          * Construct an ETag value from the last modified date and path. JCR has a

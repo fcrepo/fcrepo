@@ -345,7 +345,7 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testGetClosestExistingAncestorRoot() throws RepositoryException {
-        when(mockSession.getNode("/")).thenReturn(mockRootNode);
+        when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockSession.nodeExists(anyString())).thenReturn(false);
 
         final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");

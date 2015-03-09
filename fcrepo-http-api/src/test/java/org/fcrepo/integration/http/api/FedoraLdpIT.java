@@ -449,7 +449,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetNonRDFSourceDescription() throws Exception {
+    public void testGetNonRDFSourceDescription() throws IOException {
         final String pid = getRandomUniquePid();
 
         createDatastream(pid, "x", "some content");
@@ -646,19 +646,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet httpGet = new HttpGet(location);
 
         final GraphStore graphStore = getGraphStore(httpGet);
-
+        LOGGER.debug("Recovered graph: {}", graphStore);
         assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
                 createProperty("info:some-predicate").asNode(), ANY));
 
         final Node bnode = graphStore.find(ANY, createResource(location).asNode(),
                 createProperty("info:some-predicate").asNode(), ANY).next().getObject();
 
-        final HttpGet bnodeHttpGet = new HttpGet(bnode.getURI());
-
-        final GraphStore bnodeGraphStore = getGraphStore(bnodeHttpGet);
-
-        assertTrue(bnodeGraphStore.contains(ANY, bnode, DC_TITLE.asNode(), createLiteral("this is a title")));
-
+        assertTrue(bnode.isBlank());
 
     }
 

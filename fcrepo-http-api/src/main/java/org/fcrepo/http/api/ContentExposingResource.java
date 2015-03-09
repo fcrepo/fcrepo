@@ -74,6 +74,7 @@ import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.impl.rdf.Deskolemizer;
 import org.fcrepo.kernel.impl.rdf.ManagedRdf;
 import org.fcrepo.kernel.impl.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.impl.rdf.impl.BlankNodeRdfContext;
@@ -192,7 +193,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
-        return Response.ok(rdfStream).build();
+        return ok(rdfStream.withThisContext(rdfStream.transform(new Deskolemizer(idTranslator, null)))).build();
     }
 
     protected RdfStream getResourceTriples() {
@@ -295,7 +296,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
 
-        return rdfStream;
+        return rdfStream.withThisContext(rdfStream.transform(new Deskolemizer(idTranslator, resource == null ? null
+                : idTranslator.reverse()
+                        .convert(resource).getModel())));
     }
 
     /**
@@ -595,14 +598,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Model inputModel = createDefaultModel()
                 .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
 
-        resource.replaceProperties(translator(), inputModel, resourceTriples);
+        resource.replaceProperties(translator(), inputModel, resourceTriples, containerService);
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
                                            final String requestBody,
                                            final RdfStream resourceTriples)
             throws MalformedRdfException, AccessDeniedException {
-        resource.updateProperties(translator(), requestBody, resourceTriples);
+        resource.updateProperties(translator(), requestBody, resourceTriples, containerService);
     }
 
     /**

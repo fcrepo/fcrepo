@@ -45,10 +45,13 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.FedoraResourceImpl;
+import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -72,7 +75,7 @@ public class RdfRemoverTest {
     public void testRemovingNonExistentProperty() throws Exception {
 
         when(mockNode.hasProperty(propertyShortName)).thenReturn(false);
-        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream);
+        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testRemover.operateOnProperty(descriptiveStmnt, resource);
         verifyZeroInteractions(mockProperty);
     }
@@ -84,7 +87,7 @@ public class RdfRemoverTest {
         when(mockNode.getProperty(propertyShortName)).thenReturn(mockProperty);
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream);
+        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream,mockSkolemService);
         testRemover.operateOnProperty(descriptiveStmnt, resource);
         verify(mockProperty).setValue((Value) null);
     }
@@ -92,7 +95,7 @@ public class RdfRemoverTest {
     @Test
     public void testRemovingExistentMixin() throws Exception {
         when(mockNode.isNodeType(mixinShortName)).thenReturn(true);
-        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream);
+        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testRemover.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
         verify(mockNode).removeMixin(mixinShortName);
     }
@@ -103,7 +106,7 @@ public class RdfRemoverTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.isNodeType(mixinShortName)).thenReturn(true);
 
-        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream);
+        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testRemover.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
 
         verify(mockNode, never()).removeMixin(mixinShortName);
@@ -111,7 +114,7 @@ public class RdfRemoverTest {
 
     @Test
     public void testRemovingNonExistentMixin() throws Exception {
-        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream);
+        testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testRemover.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
     }
 
@@ -119,7 +122,7 @@ public class RdfRemoverTest {
     public void testRemovingMixinThatCannotExistInRepo() throws Exception {
         when(mockNodeTypeManager.hasNodeType(mixinShortName)).thenReturn(false);
         testRemover =
-            new RdfRemover(mockGraphSubjects, mockSession, testStream);
+            new RdfRemover(mockGraphSubjects, mockSession, testStream, mockSkolemService);
         testRemover.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
         verify(mockNode, never()).removeMixin(mixinShortName);
     }
@@ -169,8 +172,7 @@ public class RdfRemoverTest {
         when(mockTriples.hasNext()).thenReturn(true, true, false);
         when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         resource = new FedoraResourceImpl(mockNode);
-        testStream = new RdfStream(mockTriples);
-        testStream.namespaces(mockNamespaceMap);
+        testStream = new RdfStream(mockTriples).namespaces(mockNamespaceMap).topic(descriptiveTriple.getSubject());
     }
 
 
@@ -217,7 +219,8 @@ public class RdfRemoverTest {
 
     private RdfStream testStream;
 
-
+    @Mock
+    private Service<Container> mockSkolemService;
 
     @Mock
     private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;

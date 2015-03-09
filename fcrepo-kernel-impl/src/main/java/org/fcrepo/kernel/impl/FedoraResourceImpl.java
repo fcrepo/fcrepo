@@ -21,7 +21,7 @@ import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
-import static com.google.common.collect.Lists.newArrayList;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
@@ -58,8 +57,10 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 
 import org.fcrepo.kernel.FedoraJcrTypes;
+import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -67,7 +68,10 @@ import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.Deskolemizer;
+import org.fcrepo.kernel.impl.rdf.Skolemizer;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
@@ -77,12 +81,15 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.impl.StmtIteratorImpl;
 import com.hp.hpl.jena.update.UpdateRequest;
+import com.hp.hpl.jena.util.iterator.Map1;
+import com.hp.hpl.jena.util.iterator.Map1Iterator;
 
 /**
  * Common behaviors across {@link org.fcrepo.kernel.models.Container} and
- * {@link org.fcrepo.kernel.models.NonRdfSourceDescription} types; also used
- * when the exact type of an object is irrelevant
+ * {@link org.fcrepo.kernel.models.NonRdfSourceDescription} types; also used when the exact type of an object is
+ * irrelevant
  *
  * @author ajs6f
  */
@@ -94,13 +101,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /**
      * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
+     *
      * @param node an existing JCR node to treat as an fcrepo object
      */
     public FedoraResourceImpl(final Node node) {
         this.node = node;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#getNode()
      */
     @Override
@@ -108,7 +117,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return node;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#getPath()
      */
     @Override
@@ -120,7 +130,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#getChildren()
      */
     @Override
@@ -134,6 +145,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     /**
      * Get the "good" children for a node by skipping all pairtree nodes in the way.
+     *
      * @param input
      * @return
      * @throws RepositoryException
@@ -156,6 +168,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             }
         });
     }
+
     /**
      * Children for whom we will not generate triples.
      */
@@ -176,29 +189,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 }
             };
 
+    private static final Converter<FedoraResource, FedoraResource> datastreamToBinary =
+            new Converter<FedoraResource, FedoraResource>() {
 
-    private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
-            = new Converter<FedoraResource, FedoraResource>() {
+                @Override
+                protected FedoraResource doForward(final FedoraResource fedoraResource) {
+                    if (fedoraResource instanceof NonRdfSourceDescription) {
+                        return ((NonRdfSourceDescription) fedoraResource).getDescribedResource();
+                    }
+                    return fedoraResource;
+                }
 
-        @Override
-        protected FedoraResource doForward(final FedoraResource fedoraResource) {
-            if (fedoraResource instanceof NonRdfSourceDescription) {
-                return ((NonRdfSourceDescription) fedoraResource).getDescribedResource();
-            }
-            return fedoraResource;
-        }
+                @Override
+                protected FedoraResource doBackward(final FedoraResource fedoraResource) {
+                    if (fedoraResource instanceof FedoraBinary) {
+                        return ((FedoraBinary) fedoraResource).getDescription();
+                    }
+                    return fedoraResource;
+                }
+            };
 
-        @Override
-        protected FedoraResource doBackward(final FedoraResource fedoraResource) {
-            if (fedoraResource instanceof FedoraBinary) {
-                return ((FedoraBinary) fedoraResource).getDescription();
-            }
-            return fedoraResource;
-        }
-    };
-
-    private static final Converter<Node, FedoraResource> nodeToObjectBinaryConverter
-            = nodeConverter.andThen(datastreamToBinary);
+    private static final Converter<Node, FedoraResource> nodeToObjectBinaryConverter = nodeConverter
+            .andThen(datastreamToBinary);
 
     @Override
     public FedoraResource getContainer() {
@@ -300,7 +312,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#getCreatedDate()
      */
     @Override
@@ -318,7 +331,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return null;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#getLastModifiedDate()
      */
     @Override
@@ -344,15 +358,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return null;
     }
 
-
     @Override
     public boolean hasType(final String type) {
         try {
             if (isFrozen.apply(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
-                final List<String> types = newArrayList(
-                    transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), value2string)
-                );
-                return types.contains(type);
+                final Iterator<String> types =
+                        transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), value2string);
+                return Iterators.contains(types, type);
             }
             return node.isNodeType(type);
         } catch (final PathNotFoundException e) {
@@ -362,19 +374,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#updateProperties
-     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
+     * (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
     public void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                 final String sparqlUpdateStatement, final RdfStream originalTriples)
+            final String sparqlUpdateStatement, final RdfStream originalTriples, final Service<Container> skolemService)
             throws MalformedRdfException, AccessDeniedException {
 
-        final Model model = originalTriples.asModel();
+        final Model maybeModel = idTranslator.reverse().convert(this).getModel();
+        final Model context = maybeModel == null ? createDefaultModel() : maybeModel;
+
+        final Deskolemizer deskolemize = new Deskolemizer(idTranslator, context);
+
+        final Model model = originalTriples.withThisContext(originalTriples.transform(deskolemize)).asModel();
 
         final JcrPropertyStatementListener listener =
-                new JcrPropertyStatementListener(idTranslator, getSession());
+                new JcrPropertyStatementListener(idTranslator, getSession(), this, skolemService);
 
         model.register(listener);
 
@@ -388,19 +406,19 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Class<? extends RdfStream> context) {
+            final Class<? extends RdfStream> context) {
         return getTriples(idTranslator, Collections.singleton(context));
     }
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Iterable<? extends Class<? extends RdfStream>> contexts) {
+            final Iterable<? extends Class<? extends RdfStream>> contexts) {
         final RdfStream stream = new RdfStream();
 
         for (final Class<? extends RdfStream> context : contexts) {
             try {
-                final Constructor<? extends RdfStream> declaredConstructor
-                        = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
+                final Constructor<? extends RdfStream> declaredConstructor =
+                        context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
 
                 final RdfStream rdfStream = declaredConstructor.newInstance(this, idTranslator);
                 rdfStream.session(getSession());
@@ -449,7 +467,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#isNew()
      */
     @Override
@@ -457,23 +476,51 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return node.isNew();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#replaceProperties
-     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
+     * (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-        final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
+            final Model inputModel, final RdfStream originalTriples, final Service<Container> skolemService)
+            throws MalformedRdfException {
 
-        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
+        final RdfStream replacementStream =
+                new RdfStream().namespaces(inputModel.getNsPrefixMap()).topic(
+                        idTranslator.reverse().convert(this).asNode());
+
+        final Skolemizer skolemizer = new Skolemizer(idTranslator.reverse().convert(this));
+
+        final Model skolemizedModel = createDefaultModel().add(
+                new StmtIteratorImpl(new Map1Iterator<>(new Map1<Statement, Statement>() {
+
+                    @Override
+                    public Statement map1(final Statement stmnt) {
+                        return skolemizer.apply(stmnt);
+                    }
+                }, inputModel.listStatements())));
+
+        for (final Resource skolemNode : skolemizer.skolemNodes()) {
+            LOGGER.debug("Checking for skolem node: {}", skolemNode);
+            final String skolemPath = idTranslator.asString(skolemNode);
+            if (!skolemService.exists(getSession(), skolemPath)) {
+                LOGGER.debug("Creating skolem node at: {}", skolemPath);
+                try {
+                    skolemService.findOrCreate(getSession(), skolemPath).getNode().addMixin("fedora:Skolem");
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            }
+        }
 
         final GraphDifferencingIterator differencer =
-            new GraphDifferencingIterator(inputModel, originalTriples);
+                new GraphDifferencingIterator(skolemizedModel, originalTriples);
 
         final StringBuilder exceptions = new StringBuilder();
         try {
             new RdfRemover(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer)).consume();
+                    .withThisContext(differencer), skolemService).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
             exceptions.append("\n");
@@ -481,7 +528,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         try {
             new RdfAdder(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer.notCommon())).consume();
+                    .withThisContext(differencer.notCommon()), skolemService).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
         }
@@ -491,7 +538,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#getEtagValue()
      */
     @Override
@@ -620,9 +668,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             final String baseUUID = getNode().getIdentifier();
 
             /*
-             * We found a node whose identifier is the "label" for the version.  Now
-             * we must do due dilligence to make sure it's a frozen node representing
-             * a version of the subject node.
+             * We found a node whose identifier is the "label" for the version. Now we must do due dilligence to make
+             * sure it's a frozen node representing a version of the subject node.
              */
             final Property p = frozenNode.getProperty("jcr:frozenUuid");
             if (p != null) {
@@ -631,14 +678,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 }
             }
             /*
-             * Though a node with an id of the label was found, it wasn't the
-             * node we were looking for, so fall through and look for a labeled
-             * node.
+             * Though a node with an id of the label was found, it wasn't the node we were looking for, so fall
+             * through and look for a labeled node.
              */
         } catch (final ItemNotFoundException ex) {
             /*
-             * the label wasn't a uuid of a frozen node but
-             * instead possibly a version label.
+             * the label wasn't a uuid of a frozen node but instead possibly a version label.
              */
         }
         return null;

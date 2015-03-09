@@ -39,13 +39,13 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * A stream of RDF triples along with some useful context.
- * 
+ *
  * @author ajs6f
  * @since Oct 9, 2013
  */
 public class RdfStream extends ForwardingIterator<Triple> {
 
-    private Map<String, String> namespaces = new HashMap<>();
+    private final Map<String, String> namespaces = new HashMap<>();
 
     protected Iterator<Triple> triples;
 
@@ -57,7 +57,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Constructor that begins the stream with proffered triples.
-     * 
+     *
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterable}
@@ -69,7 +69,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Constructor that begins the stream with proffered triples.
-     * 
+     *
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterable}
@@ -80,7 +80,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Constructor that begins the stream with proffered triples.
-     * 
+     *
      * @param triples the triples
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Collection}
@@ -92,7 +92,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Constructor that begins the stream with proffered triples.
-     * 
+     *
      * @param triples the triples
      * @param <T> extends {@link Triple}
      */
@@ -103,7 +103,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Constructor that begins the stream with proffered statements.
-     * 
+     *
      * @param statements the statements
      * @param <T> extends {@link Statement}
      */
@@ -115,7 +115,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Constructor that begins the stream with proffered triple.
-     * 
+     *
      * @param triple the triple
      * @param <T> extends {@link Triple}
      */
@@ -132,26 +132,26 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Returns the proffered {@link Triple}s with the context of this RdfStream.
-     * 
+     *
      * @param stream the stream
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterator}
      * @return proffered Triples with the context of this RDFStream
      */
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).namespaces(namespaces()).topic(topic());
+        return new RdfStream(stream).namespaces(namespaces()).topic(topic()).session(session());
     }
 
     /**
      * Returns the proffered {@link Triple}s with the context of this RdfStream.
-     * 
+     *
      * @param stream the stream
      * @param <Tr> extends {@link Triple}
      * @param <T> extends {@link Iterator}
      * @return proffered Triples with the context of this RDFStream
      */
     public <Tr extends Triple, T extends Iterable<Tr>> RdfStream withThisContext(final T stream) {
-        return new RdfStream(stream).namespaces(namespaces()).topic(topic());
+        return new RdfStream(stream).namespaces(namespaces()).topic(topic()).session(session());
     }
 
     /**
@@ -194,7 +194,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * As {@link Iterators#limit(Iterator, int)} while maintaining context.
-     * 
+     *
      * @param limit the limit
      * @return RDFStream
      */
@@ -204,7 +204,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * As {@link Iterators#advance(Iterator, int)} while maintaining context.
-     * 
+     *
      * @param skipNum the skip number
      * @return RDFStream
      */
@@ -215,7 +215,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * As {@link Iterators#filter(Iterator, Predicate)} while maintaining context.
-     * 
+     *
      * @param predicate the predicate
      * @return RdfStream
      */
@@ -225,7 +225,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * As {@link Iterators#transform(Iterator, Function)}.
-     * 
+     *
      * @param f the parameter f
      * @param <ToType> extends {@link Iterator}
      * @return Iterator
@@ -236,7 +236,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * RdfStream
-     * 
+     *
      * @param prefix the prefix
      * @param uri the uri
      * @return This object for continued use.
@@ -264,7 +264,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Sets the JCR context of this stream
-     * 
+     *
      * @param session The {@link Session} in context
      * @return the JCR context of this stream
      */
@@ -282,7 +282,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * Sets the topic of this stream
-     * 
+     *
      * @param topic The {@link Node} topic in context
      * @return the stream
      */
@@ -293,7 +293,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
 
     /**
      * WARNING! This method exhausts the RdfStream on which it is called!
-     * 
+     *
      * @return A {@link Model} containing the prefix mappings and triples in this stream of RDF
      */
     public Model asModel() {
