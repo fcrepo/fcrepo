@@ -787,23 +787,37 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String relation = "test:fakeRel";
         containerService.findOrCreate(session, pid);
         final Container subject = containerService.findOrCreate(session, pid + "/a");
-        final Container child1 = containerService.findOrCreate(session, pid + "/a/b");
-        final Container child2 = containerService.findOrCreate(session, pid + "/a/c");
+        final Container referent1 = containerService.findOrCreate(session, pid + "/b");
+        final Container referent2 = containerService.findOrCreate(session, pid + "/c");
         final Value[] values = new Value[2];
-        values[0] = session.getValueFactory().createValue(child1.getNode());
-        values[1] = session.getValueFactory().createValue(child2.getNode());
+        values[0] = session.getValueFactory().createValue(referent1.getNode());
+        values[1] = session.getValueFactory().createValue(referent2.getNode());
         subject.getNode().setProperty(relation, values);
 
         session.save();
 
-        final Model model1 = child1.getTriples(subjects, ReferencesRdfContext.class).asModel();
-
-        child2.delete();
+        final Model model1 = referent1.getTriples(subjects, ReferencesRdfContext.class).asModel();
 
         assertTrue(model1.contains(subjects.reverse().convert(subject),
-            createProperty("info:fedora/test/fakeRel"),
-            subjects.reverse().convert(child1)));
+                createProperty("info:fedora/test/fakeRel"),
+                createResource("info:fedora/" + pid + "/b")));
 
+        assertTrue(model1.contains(subjects.reverse().convert(subject),
+                createProperty("info:fedora/test/fakeRel"),
+                createResource("info:fedora/" + pid + "/c")));
+
+        // This is the test! Ensure that only the delete resource is removed from the "subject" container.
+        referent2.delete();
+
+        final Model model2 = referent1.getTriples(subjects, ReferencesRdfContext.class).asModel();
+
+        assertTrue(model2.contains(subjects.reverse().convert(subject),
+            createProperty("info:fedora/test/fakeRel"),
+            createResource("info:fedora/" + pid + "/b")));
+
+        assertFalse(model2.contains(subjects.reverse().convert(subject),
+                createProperty("info:fedora/test/fakeRel"),
+                createResource("info:fedora/" + pid + "/c")));
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
