@@ -2353,6 +2353,41 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testEmbeddedChildResources() throws Exception {
+        final String pid = getRandomUniquePid();
+        final String binaryId = "binary0";
+
+        final HttpPut httpPutContainer = putObjMethod(pid);
+        final HttpResponse responseContainer = client.execute(httpPutContainer);
+        assertEquals(201, responseContainer.getStatusLine().getStatusCode());
+
+        final HttpPut httpPutBinary = putDSMethod(pid, binaryId, "some test content");
+        final HttpResponse responseBinary = client.execute(httpPutBinary);
+        assertEquals(201, responseBinary.getStatusLine().getStatusCode());
+
+        final HttpPatch httpPatch = patchObjMethod(pid + "/" + binaryId + "/fcr:metadata");
+        httpPatch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                ("INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}").getBytes()));
+        httpPatch.setEntity(e);
+
+        final HttpResponse responsePatch = client.execute(httpPatch);
+        assertEquals(NO_CONTENT.getStatusCode(), responsePatch.getStatusLine().getStatusCode());
+
+        final HttpGet httpGet = getObjMethod(pid);
+        httpGet.setHeader("Prefer",
+                "return=representation; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
+
+        final GraphStore graphStore = getGraphStore(httpGet);
+        assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(
+                ANY,
+                createResource(serverAddress + pid + "/" + binaryId + "/fcr:metadata").asNode(),
+                createProperty("http://purl.org/dc/elements/1.1/title").asNode(),
+                createLiteral("this is a title")));
+    }
+
+    @Test
     public void testExternalMessageBody() throws Exception {
 
         // we need a client that won't automatically follow redirects
