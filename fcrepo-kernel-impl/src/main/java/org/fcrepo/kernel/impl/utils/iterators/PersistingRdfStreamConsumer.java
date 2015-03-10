@@ -108,9 +108,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
         };
         // we knock out non-Fedora RDF
-        this.stream =
-                stream.withThisContext(stream.filter(isFedoraSubjectTriple));
-
+        this.stream = stream.withThisContext(stream.filter(isFedoraSubjectTriple)).session(session);
         this.exceptions = new ArrayList<>();
     }
 
@@ -145,11 +143,11 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                 }
             }
             final Resource subject = t.getSubject();
-            final String hashPath = translator().asString(subject);
-            if (hashPath.contains("/#/")) {
+            final String path = translator().asString(subject);
+            if (path.contains("/#/")) {
                 //  a hash-URI
-                LOGGER.debug("Creating hash node: {}", hashPath);
-                skolemService.findOrCreate(stream.session(), hashPath);
+                LOGGER.debug("Creating hash node: {}", path);
+                skolemService.findOrCreate(stream.session(), path);
             }
             final FedoraResource subjectNode = translator().convert(subject);
 

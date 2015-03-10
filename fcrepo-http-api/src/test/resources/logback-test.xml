@@ -13,7 +13,7 @@
   <logger name="org.fcrepo.integration.http" additivity="false" level="${fcrepo.log.integration.http:-INFO}">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.fcrepo" additivity="false" level="${fcrepo.log:-INFO}">
+  <logger name="org.fcrepo" additivity="false" level="${fcrepo.log:-DEBUG}">
     <appender-ref ref="STDOUT"/>
   </logger>
   <logger name="com.gargoylesoftware.htmlunit" additivity="false" level="ERROR">

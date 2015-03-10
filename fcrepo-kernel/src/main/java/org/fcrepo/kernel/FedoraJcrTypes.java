@@ -33,7 +33,7 @@ public interface FedoraJcrTypes {
 
     String FEDORA_TOMBSTONE = "fedora:Tombstone";
 
-    String FEDORA_BLANKNODE = "fedora:Blanknode";
+    String FEDORA_SKOLEMNODE = "fedora:Skolem";
 
     String FEDORA_CONTAINER = "fedora:Container";
 

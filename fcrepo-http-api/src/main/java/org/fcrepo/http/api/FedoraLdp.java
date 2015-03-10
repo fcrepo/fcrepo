@@ -420,13 +420,8 @@ public class FedoraLdp extends ContentExposingResource {
                 effectiveContentType,
                 contentDisposition);
 
-        final RdfStream resourceTriples;
-
-        if (result.isNew()) {
-            resourceTriples = new RdfStream();
-        } else {
-            resourceTriples = getResourceTriples();
-        }
+        final RdfStream resourceTriples =
+                result.isNew() ? new RdfStream().session(session) : getResourceTriples().session(session);
 
         if (requestBodyStream == null) {
             LOGGER.trace("No request body detected");
