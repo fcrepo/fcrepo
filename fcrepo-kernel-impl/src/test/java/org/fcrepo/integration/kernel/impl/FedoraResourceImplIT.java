@@ -647,24 +647,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetChildrenWithBinaryCustomProperties() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container container = containerService.findOrCreate(session, "/" + pid);
-        final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid + "/a");
-        final javax.jcr.Node node = resource.getNode();
-        node.setProperty("dc:title", "this-is-some-title");
-
-        final Graph graph =
-                container.getChildren().next().getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
-
-        //jcr property
-        final Node s = createGraphSubjectNode(container.getChildren().next());
-        final Node p = DC_TITLE.asNode();
-        final Node o = createLiteral("this-is-some-title");
-        assertTrue(graph.contains(s, p, o));
-    }
-
-    @Test
     public void testGetContainerForBinary() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid);
