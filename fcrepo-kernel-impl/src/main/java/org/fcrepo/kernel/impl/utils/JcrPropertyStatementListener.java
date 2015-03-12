@@ -93,6 +93,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             // if it's not about a node, ignore it.
             if (!idTranslator.inDomain(subject) && !subject.isAnon()) {
+                LOGGER.debug("subject ({}) is not in repository domain.", subject);
                 throw new MalformedRdfException(String.format(
                     "Update RDF contains subject(s) (%s) not in the domain of this repository.", subject));
             }
@@ -133,6 +134,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             // if it's not about a node, we don't care.
             if (!idTranslator.inDomain(subject)) {
+                LOGGER.debug("subject ({}) is not in repository domain.", subject);
                 throw new MalformedRdfException(String.format(
                     "Update RDF contains subject(s) (%s) not in the domain of this repository.", subject));
             }
