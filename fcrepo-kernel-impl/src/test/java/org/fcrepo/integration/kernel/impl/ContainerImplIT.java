@@ -97,13 +97,8 @@ public class ContainerImplIT extends AbstractIT {
                     .matcher(model.toString()).find());
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
-                "INSERT { <http://example/egbook> dc:title " +
-                "\"This is an example of an update that will be " +
-                "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
-
-        object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
-                "INSERT { <" + graphSubject + "> dc:title " +
-                "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+            "INSERT { <" + graphSubject + "> dc:title " +
+            "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
 
         final Value[] values = object.getNode().getProperty("dc:title").getValues();
@@ -236,4 +231,15 @@ public class ContainerImplIT extends AbstractIT {
         assertTrue(e.getMessage().contains("/relative-url"));
         assertTrue(e.getMessage().contains("/another-relative-url"));
     }
+    
+    @Test(expected = MalformedRdfException.class)
+    public void testUpdatingObjectGraphWithOutOfDomainSubjects() throws AccessDeniedException, MalformedRdfException {
+        final Container object =
+            containerService.findOrCreate(session, "/graphObject");
+        
+        object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+          "INSERT { <http://example/egbook> dc:title " + "\"This is an example of an update that will be " +
+          "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+    }
+    
 }
