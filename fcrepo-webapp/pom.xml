@@ -309,6 +309,7 @@
             </goals>
             <configuration>
               <backgroundImage>${basedir}/src/main/jettyconsole/fedora_logo_10in.png</backgroundImage>
+              <destinationFile>${project.build.directory}${file.separator}${project.artifactId}-${project.version}-jetty-console.jar</destinationFile>
             </configuration>
           </execution>
         </executions>
