@@ -247,7 +247,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
           "INSERT { <http://example/egbook> dc:title " + "\"This is an example of an update that will be " +
-          "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+          "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class), containerService);
     }
 
 }
