@@ -78,12 +78,13 @@ public class Deskolemizer implements Function<Triple, Triple> {
             log.debug("Deskolemized to {}", deskolemized);
             return deskolemized;
         } catch (final RuntimeException e) {
-            log.warn("Received exception while deskolemizing:", e);
+            log.error("Received exception while deskolemizing:", e);
             throw e;
         }
     }
 
     private RDFNode deskolemize(final RDFNode n) {
+        log.debug("Deskolemizing RDF node: {}", n);
         if (isSkolem(n)) {
             log.debug("Replacing {} with bnode.", n);
             return bnodeSubstitutions.getUnchecked(n.asResource());

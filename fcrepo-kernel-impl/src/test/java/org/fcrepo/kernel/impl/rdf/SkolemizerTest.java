@@ -21,9 +21,10 @@ import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.Test;
-
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -32,45 +33,62 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * @author ajs6f
- *
  */
-public class StatementSkolemizerTest {
+public class SkolemizerTest {
 
     private static Model model = createDefaultModel();
 
     @Test
     public void statementWithNoBNodeShouldNotBeChanged() {
-        final Skolemizer testStatementSkolemizer = new Skolemizer(randomURIResource());
+        final Skolemizer testSkolemizer = new Skolemizer(randomURIResource());
         final Statement testStatement =
                 model.createStatement(randomURIResource(), randomURIResource(), "literal value");
-        assertEquals(testStatement, testStatementSkolemizer.apply(testStatement));
+        assertEquals(testStatement, testSkolemizer.apply(testStatement));
+    }
+
+    @Test
+    public void statementWithBNodeSubjectAndNoUnderlyingModelShouldBeChanged() {
+        final Resource mockTopic = mock(Resource.class);
+        when(mockTopic.getModel()).thenReturn(null);
+        when(mockTopic.toString()).thenReturn("info:/mock");
+        final Skolemizer testSkolemizer = new Skolemizer(mockTopic);
+        final Resource bnode = model.createResource();
+        final Statement testStatement = model.createStatement(bnode, randomURIResource(), randomURIResource());
+        final Statement result = testSkolemizer.apply(testStatement);
+        assertNotEquals(testStatement, result);
+        final Resource skolem = result.getSubject();
+        assertTrue(skolem.isURIResource());
+        assertTrue(skolem.getURI().startsWith(mockTopic.toString()));
+        assertTrue(testSkolemizer.get().contains(skolem));
     }
 
     @Test
     public void statementWithBNodeSubjectShouldBeChanged() {
         final Resource topic = randomURIResource();
-        final Skolemizer testStatementSkolemizer = new Skolemizer(topic);
+        final Skolemizer testSkolemizer = new Skolemizer(topic);
         final Resource bnode = model.createResource();
         final Statement testStatement = model.createStatement(bnode, randomURIResource(), randomURIResource());
-        final Statement result = testStatementSkolemizer.apply(testStatement);
+        final Statement result = testSkolemizer.apply(testStatement);
         assertNotEquals(testStatement, result);
         final Resource skolem = result.getSubject();
         assertTrue(skolem.isURIResource());
         assertTrue(skolem.getURI().startsWith(topic.getURI()));
+        assertTrue(testSkolemizer.get().contains(skolem));
     }
 
     @Test
     public void statementWithBNodeObjectShouldBeChanged() {
         final Resource topic = randomURIResource();
-        final Skolemizer testStatementSkolemizer = new Skolemizer(topic);
+        final Skolemizer testSkolemizer = new Skolemizer(topic);
         final Resource bnode = model.createResource();
         final Statement testStatement = model.createStatement(randomURIResource(), randomURIResource(), bnode);
-        final Statement result = testStatementSkolemizer.apply(testStatement);
+        final Statement result = testSkolemizer.apply(testStatement);
         assertNotEquals(testStatement, result);
         final RDFNode object = result.getObject();
         assertTrue(object.isURIResource());
         final Resource skolem = object.asResource();
         assertTrue(skolem.getURI().startsWith(topic.getURI()));
+        assertTrue(testSkolemizer.get().contains(skolem));
     }
 
     private static Property randomURIResource() {
