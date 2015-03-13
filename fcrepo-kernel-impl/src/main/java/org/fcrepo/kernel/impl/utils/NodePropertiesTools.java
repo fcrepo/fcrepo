@@ -32,20 +32,17 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
-
 import org.modeshape.jcr.IsExternal;
 import org.slf4j.Logger;
 
 /**
  * Tools for replacing, appending and deleting JCR node properties
  * @author Chris Beer
- * @author ajs6f
  * @since May 10, 2013
  */
 public class NodePropertiesTools {
@@ -143,6 +140,7 @@ public class NodePropertiesTools {
 
         try {
             final Node refNode = idTranslator.convert(resource).getNode();
+
             if (isExternal.apply(refNode)) {
                 // we can't apply REFERENCE properties to external resources
                 return;
