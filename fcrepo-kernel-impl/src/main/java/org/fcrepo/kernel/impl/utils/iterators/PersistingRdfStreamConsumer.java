@@ -134,7 +134,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         try {
 
             final Statement t = skolemizer.apply(input);
-            for (final Resource skolemNode : skolemizer.skolemNodes() ) {
+            for (final Resource skolemNode : skolemizer.get() ) {
                 LOGGER.debug("Checking for skolem node: {}", skolemNode);
                 final String skolemPath = idTranslator.asString(skolemNode);
                 if (!skolemService.exists(stream.session(), skolemPath)) {

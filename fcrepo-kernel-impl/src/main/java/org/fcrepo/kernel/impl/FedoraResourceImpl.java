@@ -69,6 +69,7 @@ import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.Deskolemizer;
+import org.fcrepo.kernel.impl.rdf.HashURIDetector;
 import org.fcrepo.kernel.impl.rdf.Skolemizer;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.services.Service;
@@ -483,7 +484,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-            final Model inputModel, final RdfStream originalTriples, final Service<Container> skolemService)
+            final Model inputModel, final RdfStream originalTriples, final Service<Container> hashAndSkolemCreator)
             throws MalformedRdfException {
 
         final RdfStream replacementStream =
@@ -491,26 +492,35 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                         idTranslator.reverse().convert(this).asNode());
 
         final Skolemizer skolemizer = new Skolemizer(idTranslator.reverse().convert(this));
-
+        final HashURIDetector hashUriDetector = new HashURIDetector(idTranslator);
         final Model skolemizedModel = createDefaultModel().add(
                 new StmtIteratorImpl(new Map1Iterator<>(new Map1<Statement, Statement>() {
 
                     @Override
                     public Statement map1(final Statement stmnt) {
-                        return skolemizer.apply(stmnt);
+                        return skolemizer.apply(hashUriDetector.apply(stmnt));
                     }
                 }, inputModel.listStatements())));
 
-        for (final Resource skolemNode : skolemizer.skolemNodes()) {
+        for (final Resource skolemNode : skolemizer.get()) {
             LOGGER.debug("Checking for skolem node: {}", skolemNode);
             final String skolemPath = idTranslator.asString(skolemNode);
-            if (!skolemService.exists(getSession(), skolemPath)) {
+            if (!hashAndSkolemCreator.exists(getSession(), skolemPath)) {
                 LOGGER.debug("Creating skolem node at: {}", skolemPath);
                 try {
-                    skolemService.findOrCreate(getSession(), skolemPath).getNode().addMixin("fedora:Skolem");
+                    hashAndSkolemCreator.findOrCreate(getSession(), skolemPath).getNode().addMixin("fedora:Skolem");
                 } catch (final RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }
+            }
+        }
+
+        for (final Resource hashNode : hashUriDetector.get()) {
+            LOGGER.debug("Checking for hash node: {}", hashNode);
+            final String hashPath = idTranslator.asString(hashNode);
+            if (!hashAndSkolemCreator.exists(getSession(), hashPath)) {
+                LOGGER.debug("Creating hash node at: {}", hashPath);
+                hashAndSkolemCreator.findOrCreate(getSession(), hashPath);
             }
         }
 
@@ -520,7 +530,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final StringBuilder exceptions = new StringBuilder();
         try {
             new RdfRemover(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer), skolemService).consume();
+                    .withThisContext(differencer), hashAndSkolemCreator).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
             exceptions.append("\n");
@@ -528,7 +538,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         try {
             new RdfAdder(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer.notCommon()), skolemService).consume();
+                    .withThisContext(differencer.notCommon()), hashAndSkolemCreator).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
         }

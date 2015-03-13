@@ -142,12 +142,6 @@ public class NodePropertiesTools {
                                           final Resource resource) throws RepositoryException {
 
         try {
-
-            final String path = idTranslator.asString(resource);
-            if (!node.getSession().nodeExists(path)) {
-                // we must create this reference point
-                node.getSession().addNode(path);
-            }
             final Node refNode = idTranslator.convert(resource).getNode();
             if (isExternal.apply(refNode)) {
                 // we can't apply REFERENCE properties to external resources

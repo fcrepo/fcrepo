@@ -653,7 +653,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final Node bnode = graphStore.find(ANY, createResource(location).asNode(),
                 createProperty("info:some-predicate").asNode(), ANY).next().getObject();
-
+        LOGGER.debug("Received node: {}, checking for blankness.", bnode);
         assertTrue(bnode.isBlank());
 
     }

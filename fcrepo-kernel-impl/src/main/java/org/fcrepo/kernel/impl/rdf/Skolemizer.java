@@ -29,6 +29,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -43,7 +44,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  *
  * @author ajs6f
  */
-public class Skolemizer implements Function<Statement, Statement> {
+public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<Resource>> {
 
     private final RDFVisitor nodeSkolemizer;
 
@@ -89,7 +90,8 @@ public class Skolemizer implements Function<Statement, Statement> {
     /**
      * @return Any Skolem nodes that might need to be created.
      */
-    public Set<Resource> skolemNodes() {
+    @Override
+    public Set<Resource> get() {
         return skolemNodes;
     }
 

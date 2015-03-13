@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
@@ -43,6 +44,7 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
@@ -63,6 +65,8 @@ public class ContainerImplIT extends AbstractIT {
     private Session session;
 
     private DefaultIdentifierTranslator subjects;
+
+    private static final Logger log = getLogger(ContainerImplIT.class);
 
     @Before
     public void setUp() throws RepositoryException {
@@ -207,7 +211,7 @@ public class ContainerImplIT extends AbstractIT {
         }
 
         assertNotNull("Expected an exception to get thrown", e);
-        assertEquals("Excepted two nested exceptions", 2, e.getMessage().split("\n").length);
+        assertEquals("Expected two nested exceptions", 2, e.getMessage().split("\n").length);
         assertTrue(e.getMessage().contains("/relative-url"));
         assertTrue(e.getMessage().contains("/another-relative-url"));
     }
@@ -230,7 +234,8 @@ public class ContainerImplIT extends AbstractIT {
         }
 
         assertNotNull("Expected an exception to get thrown", e);
-        assertEquals("Excepted two nested exceptions", 2, e.getMessage().split("\n").length);
+        log.debug("Got exception with message: {}", e.getMessage());
+        assertEquals("Expected two nested exceptions", 2, e.getMessage().split("\n").length);
         assertTrue(e.getMessage().contains("/relative-url"));
         assertTrue(e.getMessage().contains("/another-relative-url"));
     }

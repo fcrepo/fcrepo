@@ -27,6 +27,7 @@ import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.HashURIDetector;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 import org.fcrepo.kernel.impl.rdf.Skolemizer;
 
@@ -63,20 +64,22 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final Skolemizer skolemizer;
 
-    private final Service<Container> skolemService;
+    private final Service<Container> skolemAndHashCreator;
 
     /**
      * Construct a statement listener within the given session
      *
      * @param idTranslator the id translator
      * @param session the session
+     * @param topic the resource RDF for which is being updated, and under which skolem nodes will be created
+     * @param skolemAndHashCreator a service with which to create these two kinds of nodes
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-            final Session session, final FedoraResource topic, final Service<Container> skolemService) {
+            final Session session, final FedoraResource topic, final Service<Container> skolemAndHashCreator) {
         this.idTranslator = idTranslator;
         this.jcrRdfTools = new JcrRdfTools(idTranslator, session);
         this.skolemizer = new Skolemizer(idTranslator.reverse().convert(topic));
-        this.skolemService = skolemService;
+        this.skolemAndHashCreator = skolemAndHashCreator;
         this.exceptions = new ArrayList<>();
         this.session = session;
     }
@@ -99,14 +102,28 @@ public class JcrPropertyStatementListener extends StatementListener {
                 throw new MalformedRdfException(String.format(
                     "Update RDF contains subject(s) (%s) not in the domain of this repository.", subject));
             }
+            final HashURIDetector hashURIDetector = new HashURIDetector(idTranslator);
+            final Statement s = skolemizer.apply(hashURIDetector.apply(input));
 
-            final Statement s = skolemizer.apply(input);
-            for (final Resource skolemNode : skolemizer.skolemNodes() ) {
+            // create all needed skolem nodes
+            for (final Resource skolemNode : skolemizer.get()) {
                 LOGGER.debug("Checking for skolem node: {}", skolemNode);
-                final String skolemPath = idTranslator.asString(skolemNode);
-                if (!skolemService.exists(session, skolemPath)) {
-                    LOGGER.debug("Creating skolem node at: {}", skolemPath);
-                    skolemService.findOrCreate(session, skolemPath).getNode().addMixin("fedora:Skolem");
+                final String path = idTranslator.asString(skolemNode);
+                LOGGER.debug("under path: {}", path);
+                if (!skolemAndHashCreator.exists(session, path)) {
+                    LOGGER.debug("Creating skolem node at: {}", path);
+                    skolemAndHashCreator.findOrCreate(session, path).getNode().addMixin("fedora:Skolem");
+                }
+            }
+
+            // create all needed hash-URI nodes
+            for (final Resource hashNode : hashURIDetector.get()) {
+                LOGGER.debug("Checking for hash node: {}", hashNode);
+                final String path = idTranslator.asString(hashNode);
+                LOGGER.debug("under path: {}", path);
+                if (!skolemAndHashCreator.exists(session, path)) {
+                    LOGGER.debug("Creating hash node at: {}", path);
+                    skolemAndHashCreator.findOrCreate(session, path);
                 }
             }
             final FedoraResource resource = idTranslator.convert(s.getSubject());
