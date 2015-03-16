@@ -526,7 +526,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final StringBuilder exceptions = new StringBuilder();
         try {
             new RdfRemover(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer), hashAndSkolemCreator).consume();
+                    .withThisContext(differencer)).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
             exceptions.append("\n");
@@ -534,7 +534,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         try {
             new RdfAdder(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer.notCommon()), hashAndSkolemCreator).consume();
+                    .withThisContext(differencer.notCommon())).consume();
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
         }

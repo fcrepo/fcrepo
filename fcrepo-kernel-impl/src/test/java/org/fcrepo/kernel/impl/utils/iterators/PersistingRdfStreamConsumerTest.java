@@ -35,13 +35,10 @@ import java.util.concurrent.ExecutionException;
 import javax.jcr.Node;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
-
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -75,7 +72,7 @@ public class PersistingRdfStreamConsumerTest {
         final Set<Resource> acceptedMixins = newHashSet();
 
         testPersister =
-            new PersistingRdfStreamConsumer(idTranslator, mockSession, testStream, mockSkolemService) {
+            new PersistingRdfStreamConsumer(idTranslator, mockSession, testStream) {
 
                 @Override
                 protected void operateOnProperty(final Statement s,
@@ -115,7 +112,7 @@ public class PersistingRdfStreamConsumerTest {
                 .thenThrow(new RuntimeException("Expected."));
         testPersister =
             new PersistingRdfStreamConsumer(idTranslator, mockSession,
-                    new RdfStream(mockTriples), mockSkolemService) {
+                    new RdfStream(mockTriples)) {
 
                     @Override
                     protected void operateOnProperty(final Statement s,
@@ -201,9 +198,6 @@ public class PersistingRdfStreamConsumerTest {
     private Node mockNode;
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
-
-    @Mock
-    private Service<Container> mockSkolemService;
 
     @Mock
     private Iterator<Triple> mockTriples;

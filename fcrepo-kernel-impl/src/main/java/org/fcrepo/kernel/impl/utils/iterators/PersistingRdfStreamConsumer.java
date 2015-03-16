@@ -21,8 +21,6 @@ import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.base.Joiner;
-
-import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -32,11 +30,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
-import org.fcrepo.kernel.impl.rdf.Skolemizer;
-import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.RdfStreamConsumer;
-
 import org.slf4j.Logger;
 
 import com.google.common.base.Predicate;
@@ -71,24 +66,17 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private final List<String> exceptions;
 
-    private final Skolemizer skolemizer;
-
-    private Service<Container> skolemService;
-
     /**
      * Ordinary constructor.
      *
      * @param idTranslator the id translator
      * @param session the session
      * @param stream the rdf stream
-     * @param skolemService
      */
     public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-            final Session session, final RdfStream stream, final Service<Container> skolemService) {
+            final Session session, final RdfStream stream) {
         this.idTranslator = idTranslator;
         this.jcrRdfTools = new JcrRdfTools(idTranslator, session);
-        this.skolemizer = new Skolemizer(m.asRDFNode(stream.topic()).asResource());
-        this.skolemService = skolemService;
         this.isFedoraSubjectTriple = new Predicate<Triple>() {
 
             @Override
@@ -108,7 +96,9 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
         };
         // we knock out non-Fedora RDF
-        this.stream = stream.withThisContext(stream.filter(isFedoraSubjectTriple)).session(session);
+        this.stream =
+                stream.withThisContext(stream.filter(isFedoraSubjectTriple));
+
         this.exceptions = new ArrayList<>();
     }
 
@@ -116,7 +106,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     public void consume() throws MalformedRdfException {
         while (stream.hasNext()) {
             final Statement t = m.asStatement(stream.next());
-            LOGGER.debug("Operating on triple {}.", t);
+            LOGGER.debug("Operating triple {}.", t);
 
             try {
                 operateOnTriple(t);
@@ -130,25 +120,9 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         }
     }
 
-    protected void operateOnTriple(final Statement input) throws MalformedRdfException {
+    protected void operateOnTriple(final Statement t) throws MalformedRdfException {
         try {
-
-            final Statement t = skolemizer.apply(input);
-            for (final Resource skolemNode : skolemizer.get() ) {
-                LOGGER.debug("Checking for skolem node: {}", skolemNode);
-                final String skolemPath = idTranslator.asString(skolemNode);
-                if (!skolemService.exists(stream.session(), skolemPath)) {
-                    LOGGER.debug("Creating skolem node at: {}", skolemPath);
-                    skolemService.findOrCreate(stream.session(), skolemPath).getNode().addMixin("fedora:Skolem");
-                }
-            }
             final Resource subject = t.getSubject();
-            final String path = translator().asString(subject);
-            if (path.contains("/#/")) {
-                //  a hash-URI
-                LOGGER.debug("Creating hash node: {}", path);
-                skolemService.findOrCreate(stream.session(), path);
-            }
             final FedoraResource subjectNode = translator().convert(subject);
 
             // if this is a user-managed RDF type assertion, update the node's
@@ -168,7 +142,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                 operateOnProperty(t, subjectNode);
             }
         } catch (final RepositoryException | RepositoryRuntimeException e) {
-            LOGGER.warn("Received exception: ", e);
             throw new MalformedRdfException(e.getMessage(), e);
         }
     }
