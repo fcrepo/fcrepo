@@ -121,11 +121,6 @@ public class VersionsRdfContext extends RdfStream {
                 throw propagate(e);
             }
         }
-
-        @Override
-        public boolean equals(final Object object) {
-            throw new UnsupportedOperationException();
-        }
     }
 
 
