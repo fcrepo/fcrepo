@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 
 
 /**
- * An {@link NodeRdfContext} that supplies {@link Triple}s concerning
+ * {@link RdfStream} that supplies {@link Triple}s concerning
  * the versions of a selected {@link Node}.
  *
  * @author ajs6f
@@ -120,11 +120,6 @@ public class VersionsRdfContext extends RdfStream {
             } catch (final RepositoryException e) {
                 throw propagate(e);
             }
-        }
-
-        @Override
-        public boolean equals(final Object object) {
-            throw new UnsupportedOperationException();
         }
     }
 
