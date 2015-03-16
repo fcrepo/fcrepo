@@ -36,6 +36,10 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
+ * Deskolemization is abstractly a function from RDF nodes to RDF nodes, but here we implement it, purely for
+ * convenience of operation, as a function from triples to triples. This object should be used to translate only one
+ * document's scope of RDF.
+ *
  * @author ajs6f
  */
 public class Deskolemizer implements Function<Triple, Triple> {
@@ -44,7 +48,17 @@ public class Deskolemizer implements Function<Triple, Triple> {
 
     private final Model context;
 
-    private LoadingCache<Resource, Resource> bnodeSubstitutions;
+    /**
+     * A map from which to select blank nodes as replacements for Skolem nodes.
+     */
+    private final LoadingCache<Resource, Resource> bnodeSubstitutions = newBuilder().build(from(
+            new Supplier<Resource>() {
+
+                @Override
+                public Resource get() {
+                    return context.createResource();
+                }
+            }));
 
     private static final Logger log = getLogger(Deskolemizer.class);
 
@@ -55,25 +69,18 @@ public class Deskolemizer implements Function<Triple, Triple> {
     public Deskolemizer(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Model model) {
         this.idTranslator = idTranslator;
         this.context = model == null ? createDefaultModel() : model;
-        this.bnodeSubstitutions = newBuilder().build(from(new Supplier<Resource>() {
-
-            @Override
-            public Resource get() {
-                return context.createResource();
-            }
-        }));
     }
 
     @Override
     public Triple apply(final Triple t) {
         log.debug("Deskolemizing: {}", t);
         final Statement stmnt = context.asStatement(t);
-
         final Resource s = stmnt.getSubject();
         final RDFNode o = stmnt.getObject();
         try {
             final Resource subject = deskolemize(s).asResource();
             final RDFNode object = deskolemize(o);
+            // predicates cannot be blank nodes in RDF 1.1
             final Triple deskolemized = context.createStatement(subject, stmnt.getPredicate(), object).asTriple();
             log.debug("Deskolemized to {}", deskolemized);
             return deskolemized;
@@ -83,6 +90,12 @@ public class Deskolemizer implements Function<Triple, Triple> {
         }
     }
 
+    /**
+     * The node-to-node deskolemization function.
+     *
+     * @param n
+     * @return a deskolemized version of n
+     */
     private RDFNode deskolemize(final RDFNode n) {
         log.debug("Deskolemizing RDF node: {}", n);
         if (isSkolem(n)) {

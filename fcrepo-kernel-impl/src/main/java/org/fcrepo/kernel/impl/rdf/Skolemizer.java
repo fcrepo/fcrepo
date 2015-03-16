@@ -16,9 +16,9 @@
 
 package org.fcrepo.kernel.impl.rdf;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.google.common.hash.Hashing.murmur3_32;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,9 +30,9 @@ import org.slf4j.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.hash.HashCode;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.RDFVisitor;
@@ -40,15 +40,19 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
- * Skolemizes blank nodes in a statement.
+ * Skolemization is abstractly a function from RDF nodes to RDF nodes, but here we implement it, purely for
+ * convenience of operation, as a function from triples to triples. {@link #nodeSkolemizer} represents the
+ * node-to-node function. This class will make two blank nodes with the same identifier into the same skolem resource
+ * because it uses only one prefix for its lifetime and because the mapping from a given blank node to a skolem
+ * resource depends only on that prefix and on a MurmurHash3 of the identifier of the blank node in question. An
+ * instance of this class should be used only with a contextual topic of one single resource and only for one
+ * document's scope of RDF about that resource.
  *
  * @author ajs6f
  */
 public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<Resource>> {
 
     private final RDFVisitor nodeSkolemizer;
-
-    private final Model model;
 
     public static final Resource SKOLEM_TYPE = createResource(REPOSITORY_NAMESPACE + "skolem");
 
@@ -61,10 +65,9 @@ public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<
      *        be skolemized to identifiers rooted at this URI.
      */
     public Skolemizer(final Resource topic) {
-        this.model = topic.getModel() == null ? createDefaultModel() : topic.getModel();
         // TODO use Java 8's StringJoiner facility.
         final String prefix = topic + "/" + randomUUID().toString().replace('-', '/');
-        this.nodeSkolemizer = new NodeSkolemizer(prefix, model);
+        this.nodeSkolemizer = new NodeSkolemizer(prefix);
     }
 
     @Override
@@ -80,15 +83,15 @@ public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<
         if (o.isResource() && !o.equals(object)) {
             skolemNodes.add(object.asResource());
         }
-        // predicates are never anonymous
+        // predicates are never anonymous in RDF 1.1
         final Property predicate = stmnt.getPredicate();
-        final Statement skolemized = model.createStatement(subject, predicate, object);
+        final Statement skolemized = createStatement(subject, predicate, object);
         log.debug("to: {}", skolemized);
         return skolemized;
     }
 
     /**
-     * @return Any Skolem nodes that might need to be created.
+     * @return Any Skolem nodes that have been generated and might need to be persisted.
      */
     @Override
     public Set<Resource> get() {
@@ -96,7 +99,7 @@ public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<
     }
 
     /**
-     * Does nothing to literals or URIs, skolemizes bnodes.
+     * Does nothing to literals or URIs, but skolemizes blank nodes.
      *
      * @author ajs6f
      */
@@ -104,19 +107,14 @@ public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<
 
         private final String prefix;
 
-        private final Model model;
-
-        public NodeSkolemizer(final String prefix, final Model model) {
+        public NodeSkolemizer(final String prefix) {
             this.prefix = prefix;
-            this.model = model;
         }
 
         @Override
         public Resource visitBlank(final Resource r, final AnonId id) {
-            final Resource skolemNode = model.createResource(prefix + "/" + id.getLabelString().replace(':', '-'));
-            // ensures that this skolem node is recognizable as such.
-            model.add(model.createStatement(skolemNode, type, SKOLEM_TYPE));
-            return skolemNode;
+            final HashCode suffix = murmur3_32().hashBytes(id.getLabelString().getBytes());
+            return createResource(prefix + "/" + suffix);
         }
 
         @Override

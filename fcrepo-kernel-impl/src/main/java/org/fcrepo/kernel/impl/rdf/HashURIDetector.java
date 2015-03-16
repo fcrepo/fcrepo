@@ -67,9 +67,11 @@ public class HashURIDetector implements Function<Statement, Statement>, Supplier
         return stmnt;
     }
 
+    /**
+     * @return Any nodes for hash URI resources that have been generated and might need to be persisted.
+     */
     @Override
     public Set<Resource> get() {
         return hashNodes;
     }
-
 }
