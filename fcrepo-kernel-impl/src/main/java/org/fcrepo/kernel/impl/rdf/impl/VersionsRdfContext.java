@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 
 
 /**
- * An {@link NodeRdfContext} that supplies {@link Triple}s concerning
+ * {@link RdfStream} that supplies {@link Triple}s concerning
  * the versions of a selected {@link Node}.
  *
  * @author ajs6f
