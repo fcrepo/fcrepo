@@ -44,9 +44,9 @@ import com.hp.hpl.jena.rdf.model.Statement;
  */
 public class Deskolemizer implements Function<Triple, Triple> {
 
-    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private final IdentifierConverter<Resource, FedoraResource> translator;
 
-    private final Model context;
+    private final Model model;
 
     /**
      * A map from which to select blank nodes as replacements for Skolem nodes.
@@ -56,32 +56,32 @@ public class Deskolemizer implements Function<Triple, Triple> {
 
                 @Override
                 public Resource get() {
-                    return context.createResource();
+                    return model.createResource();
                 }
             }));
 
     private static final Logger log = getLogger(Deskolemizer.class);
 
     /**
-     * @param idTranslator
-     * @param context
+     * @param idTranslator an {@link IdentifierConverter} with which to determine the skolem-nature of resources
+     * @param model the {@link Model} with respect to which to deskolemize
      */
     public Deskolemizer(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Model model) {
-        this.idTranslator = idTranslator;
-        this.context = model == null ? createDefaultModel() : model;
+        this.translator = idTranslator;
+        this.model = model == null ? createDefaultModel() : model;
     }
 
     @Override
     public Triple apply(final Triple t) {
         log.debug("Deskolemizing: {}", t);
-        final Statement stmnt = context.asStatement(t);
+        final Statement stmnt = model.asStatement(t);
         final Resource s = stmnt.getSubject();
         final RDFNode o = stmnt.getObject();
         try {
             final Resource subject = deskolemize(s).asResource();
             final RDFNode object = deskolemize(o);
             // predicates cannot be blank nodes in RDF 1.1
-            final Triple deskolemized = context.createStatement(subject, stmnt.getPredicate(), object).asTriple();
+            final Triple deskolemized = model.createStatement(subject, stmnt.getPredicate(), object).asTriple();
             log.debug("Deskolemized to {}", deskolemized);
             return deskolemized;
         } catch (final RuntimeException e) {
@@ -108,8 +108,8 @@ public class Deskolemizer implements Function<Triple, Triple> {
     private boolean isSkolem(final RDFNode n) {
         return n.isURIResource() &&
                 (n.asResource().getURI().indexOf('?') == -1) &&
-                idTranslator.inDomain(n.asResource()) &&
-                !idTranslator.asString(n.asResource()).contains("/fcr:") &&
-                idTranslator.convert(n.asResource()).hasType("fedora:Skolem");
+                translator.inDomain(n.asResource()) &&
+                !translator.asString(n.asResource()).contains("/fcr:") &&
+                translator.convert(n.asResource()).hasType("fedora:Skolem");
     }
 }

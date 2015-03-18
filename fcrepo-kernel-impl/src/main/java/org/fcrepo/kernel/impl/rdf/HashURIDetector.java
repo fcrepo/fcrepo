@@ -38,29 +38,30 @@ public class HashURIDetector implements Function<Statement, Statement>, Supplier
 
     private final Set<Resource> hashNodes = new HashSet<>();
 
-    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private final IdentifierConverter<Resource, FedoraResource> translator;
 
     /**
-     * @param idTranslator
+     * @param idTranslator an {@link IdentifierConverter} to use in determining whether an URI is in-domain for the
+     *        repository
      */
     public HashURIDetector(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
-        this.idTranslator = idTranslator;
+        this.translator = idTranslator;
     }
 
     @Override
     public Statement apply(final Statement stmnt) {
         final Resource subject = stmnt.getSubject();
-        if (subject.isURIResource() && idTranslator.inDomain(subject) && subject.getURI().contains("#")) {
+        if (subject.isURIResource() && translator.inDomain(subject) && subject.getURI().contains("#")) {
             hashNodes.add(subject);
         }
         final Property predicate = stmnt.getPredicate();
-        if (idTranslator.inDomain(predicate) && predicate.getURI().contains("#")) {
+        if (translator.inDomain(predicate) && predicate.getURI().contains("#")) {
             hashNodes.add(predicate);
         }
         final RDFNode object = stmnt.getObject();
         if (object.isURIResource()) {
             final Resource objResource = object.asResource();
-            if (idTranslator.inDomain(objResource) && objResource.getURI().contains("#")) {
+            if (translator.inDomain(objResource) && objResource.getURI().contains("#")) {
                 hashNodes.add(objResource);
             }
         }
