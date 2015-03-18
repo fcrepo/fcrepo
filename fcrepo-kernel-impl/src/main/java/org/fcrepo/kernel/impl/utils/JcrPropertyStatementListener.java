@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEMNODE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.AccessDeniedException;
@@ -112,7 +113,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 LOGGER.debug("under path: {}", path);
                 if (!skolemAndHashCreator.exists(session, path)) {
                     LOGGER.debug("Creating skolem node at: {}", path);
-                    skolemAndHashCreator.findOrCreate(session, path).getNode().addMixin("fedora:Skolem");
+                    skolemAndHashCreator.findOrCreate(session, path).getNode().addMixin(FEDORA_SKOLEMNODE);
                 }
             }
 

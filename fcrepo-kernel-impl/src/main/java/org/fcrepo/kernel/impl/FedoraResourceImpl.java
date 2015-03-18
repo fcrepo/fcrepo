@@ -504,7 +504,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             if (!hashAndSkolemCreator.exists(getSession(), skolemPath)) {
                 LOGGER.debug("Creating skolem node at: {}", skolemPath);
                 try {
-                    hashAndSkolemCreator.findOrCreate(getSession(), skolemPath).getNode().addMixin("fedora:Skolem");
+                    hashAndSkolemCreator.findOrCreate(getSession(), skolemPath).getNode().addMixin(FEDORA_SKOLEMNODE);
                 } catch (final RepositoryException e) {
                     throw new RepositoryRuntimeException(e);
                 }

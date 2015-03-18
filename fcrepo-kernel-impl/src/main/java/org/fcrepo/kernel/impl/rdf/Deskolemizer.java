@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.rdf;
 import static com.google.common.cache.CacheBuilder.newBuilder;
 import static com.google.common.cache.CacheLoader.from;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEMNODE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -107,9 +108,13 @@ public class Deskolemizer implements Function<Triple, Triple> {
 
     private boolean isSkolem(final RDFNode n) {
         return n.isURIResource() &&
+                // include only plain resources, not
                 (n.asResource().getURI().indexOf('?') == -1) &&
+                // include only resources from the repository
                 translator.inDomain(n.asResource()) &&
+                // exclude any API-specific endpoints
                 !translator.asString(n.asResource()).contains("/fcr:") &&
-                translator.convert(n.asResource()).hasType("fedora:Skolem");
+                // include only those resources with our marker type
+                translator.convert(n.asResource()).hasType(FEDORA_SKOLEMNODE);
     }
 }

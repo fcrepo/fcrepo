@@ -15,12 +15,12 @@
  */
 
 package org.fcrepo.kernel.impl.rdf;
-
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEMNODE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -62,8 +62,8 @@ public class DeskolemizerTest {
 
     @Before
     public void setUp() {
-        when(mockSkolemFedoraResource.hasType("fedora:Skolem")).thenReturn(true);
-        when(mockNonSkolemFedoraResource.hasType("fedora:Skolem")).thenReturn(false);
+        when(mockSkolemFedoraResource.hasType(FEDORA_SKOLEMNODE)).thenReturn(true);
+        when(mockNonSkolemFedoraResource.hasType(FEDORA_SKOLEMNODE)).thenReturn(false);
     }
 
     @Test
@@ -71,7 +71,7 @@ public class DeskolemizerTest {
         when(mockIdTranslator.inDomain(any(Resource.class))).thenReturn(true);
         when(mockIdTranslator.asString(any(Resource.class))).thenReturn("non-fcr-URI");
         when(mockIdTranslator.convert(any(Resource.class))).thenReturn(mockSkolemFedoraResource);
-        when(mockSkolemFedoraResource.hasType("fedora:Skolem")).thenReturn(false);
+        when(mockSkolemFedoraResource.hasType(FEDORA_SKOLEMNODE)).thenReturn(false);
         final Deskolemizer testDeskolemizer = new Deskolemizer(mockIdTranslator, null);
 
         final Triple testTriple = create(randomURIResource(), randomURIResource(), randomURIResource());

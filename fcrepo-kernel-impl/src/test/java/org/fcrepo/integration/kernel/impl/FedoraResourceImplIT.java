@@ -26,6 +26,7 @@ import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEMNODE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
@@ -554,7 +555,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
 
         assertTrue(Lists.transform(asList(skolemizedNode.getMixinNodeTypes()), toStringFunction()).contains(
-                "fedora:Skolem"));
+                FEDORA_SKOLEMNODE));
         assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
 
     }

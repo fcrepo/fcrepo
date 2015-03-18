@@ -20,7 +20,6 @@ import static com.google.common.hash.Hashing.murmur3_32;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashSet;
@@ -53,8 +52,6 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<Resource>> {
 
     private final RDFVisitor nodeSkolemizer;
-
-    public static final Resource SKOLEM_TYPE = createResource(REPOSITORY_NAMESPACE + "skolem");
 
     private final Set<Resource> skolemNodes = new HashSet<>();
 
