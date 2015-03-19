@@ -75,6 +75,9 @@ public class PreferTag implements Comparable<PreferTag> {
 
             if (reader.hasNext()) {
                 params = HttpHeaderReader.readParameters(reader);
+                if ( params == null ) {
+                    params = new HashMap<>();
+                }
             }
         } else {
             tag = "";
