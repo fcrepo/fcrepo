@@ -16,7 +16,7 @@
 package org.fcrepo.integration.kernel.impl.observer;
 
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -84,7 +84,7 @@ public class SimpleObserverIT extends AbstractIT {
         final Set<String> properties = e.getProperties();
         assertNotNull(properties);
 
-        final String expected = JCR_NAMESPACE + "mixinTypes";
+        final String expected = REPOSITORY_NAMESPACE + "mixinTypes";
         assertTrue("Should contain: " + expected + properties, properties.contains(expected));
     }
 
