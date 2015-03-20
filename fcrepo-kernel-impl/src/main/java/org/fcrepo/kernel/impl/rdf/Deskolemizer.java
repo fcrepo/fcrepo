@@ -22,6 +22,9 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEMNODE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.jcr.AccessDeniedException;
+
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.models.FedoraResource;
 
@@ -107,14 +110,25 @@ public class Deskolemizer implements Function<Triple, Triple> {
     }
 
     private boolean isSkolem(final RDFNode n) {
-        return n.isURIResource() &&
-                // include only plain resources, not
-                (n.asResource().getURI().indexOf('?') == -1) &&
-                // include only resources from the repository
-                translator.inDomain(n.asResource()) &&
-                // exclude any API-specific endpoints
-                !translator.asString(n.asResource()).contains("/fcr:") &&
-                // include only those resources with our marker type
-                translator.convert(n.asResource()).hasType(FEDORA_SKOLEMNODE);
+        try {
+            return n.isURIResource() &&
+                    // include only plain resources, not
+                    (n.asResource().getURI().indexOf('?') == -1) &&
+                    // include only resources from the repository
+                    translator.inDomain(n.asResource()) &&
+                    // exclude any API-specific endpoints
+                    !translator.asString(n.asResource()).contains("/fcr:") &&
+                    // include only those resources with our marker type
+                    translator.convert(n.asResource()).hasType(FEDORA_SKOLEMNODE);
+        } catch (final RepositoryRuntimeException e) {
+            if (e.getCause() instanceof AccessDeniedException) {
+                // If the potentially-Skolem node in hand is inaccessible to our examination, it could not be a Skolem
+                // node, because all true Skolem nodes inherit the same JCR access permissions as their parent. If the
+                // parent was unreadable for access-control reasons, we would not be trying to examine the child.
+                log.warn("Unable to examine JCR resource for RDF node: {} !", n);
+                return false;
+            }
+            throw e;
+        }
     }
 }
