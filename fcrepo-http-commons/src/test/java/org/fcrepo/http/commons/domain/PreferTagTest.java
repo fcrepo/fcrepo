@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.domain;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.text.ParseException;
@@ -35,6 +36,12 @@ public class PreferTagTest {
         assertEquals("", preferTag.getTag());
         assertEquals("", preferTag.getValue());
         assertTrue(preferTag.getParams().isEmpty());
+    }
+
+    @Test
+    public void testTrailingSemicolon() throws ParseException {
+        final PreferTag preferTag = new PreferTag("foo=bar;");
+        assertNotNull(preferTag.getParams());
     }
 
     @Test
