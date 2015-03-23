@@ -116,11 +116,16 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
         final String rdfNamespace = predicate.getNameSpace();
         final String rdfLocalname = predicate.getLocalName();
 
+        if (rdfNamespace.matches("[a-z]+://") && !namespaceMapping.containsValue(rdfNamespace)) {
+            LOGGER.info("Ignoring namespace prefix: {} and returning: {}", rdfNamespace, rdfLocalname);
+            return rdfLocalname;
+        }
+
         final String prefix;
 
         assert (namespaceRegistry != null);
 
-        // reject if update request contains any fcr namespacess
+        // reject if update request contains any fcr namespaces
         if (namespaceMapping != null && namespaceMapping.containsKey("fcr")) {
             throw new FedoraInvalidNamespaceException("Invalid fcr namespace properties " + predicate + ".");
         }
