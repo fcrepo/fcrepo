@@ -38,6 +38,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -83,7 +84,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
@@ -451,9 +451,8 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + " WHERE { }", new RdfStream());
     }
 
-    @Ignore("Until ticket has been resolved: https://jira.duraspace.org/browse/FCREPO-1381")
     @Test
-    public void testSparqlUpdatePrefixUriSubstitution() throws RepositoryException {
+    public void testSparqlUpdatePrefixUriIgnore() throws RepositoryException {
         final FedoraResource object =
                 containerService.findOrCreate(session, "/testRefObject");
 
@@ -462,23 +461,23 @@ public class FedoraResourceImplIT extends AbstractIT {
                 "PREFIX dsc:<http://myurl.org> \n" +
                         "PREFIX     esc:<http://myurl555.org> \n" +
                         "PREFIX fsc:<http://myurl.org#> \n" +
-                        "PREFIX gsc:<http://myurl.org/u> \n" +
                         "INSERT { <> dsc:p \"aaa\" . \n <> esc:p \"bbb\" . \n " +
-                        "<> fsc:p \"ccc\" . \n <> gsc:p \"ddd\" ;} WHERE { }",
+                        "<> fsc:p \"ccc\" ;} WHERE { }",
                 new RdfStream());
 
         final javax.jcr.Node n = object.getNode();
-        assertEquals(n.getProperty("dsc:p").getValues().length, 1);
-        assertEquals(n.getProperty("dsc:p").getValues()[0].getString(), "aaa");
 
-        assertEquals(n.getProperty("esc:p").getValues().length, 1);
-        assertEquals(n.getProperty("esc:p").getValues()[0].getString(), "bbb");
+        assertFalse("should not have contained wrong namespace prefix",
+                Arrays.asList(session.getNamespacePrefixes()).contains("http://"));
+
+        assertEquals(n.getProperty("myurl.orgp").getValues().length, 1);
+        assertEquals(n.getProperty("myurl.orgp").getValues()[0].getString(), "aaa");
+
+        assertEquals(n.getProperty("myurl555.orgp").getValues().length, 1);
+        assertEquals(n.getProperty("myurl555.orgp").getValues()[0].getString(), "bbb");
 
         assertEquals(n.getProperty("fsc:p").getValues().length, 1);
         assertEquals(n.getProperty("fsc:p").getValues()[0].getString(), "ccc");
-
-        assertEquals(n.getProperty("gsc:p").getValues().length, 1);
-        assertEquals(n.getProperty("gsc:p").getValues()[0].getString(), "ddd");
     }
 
     @Test
