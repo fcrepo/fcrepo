@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.1.1-SNAPSHOT</version>
+  <version>4.1.1</version>
   <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons 4</description>
   <organization>
@@ -60,7 +60,7 @@
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
     <!-- default properties that can be altered on the command line -->
-    <fcrepo.test.context.path/>
+    <fcrepo.test.context.path />
   </properties>
   <modules>
     <module>fcrepo-boms</module>
@@ -1152,7 +1152,7 @@
     <developerConnection>scm:git:git@github.com:fcrepo4/${project_name}.git
     </developerConnection>
     <url>https://github.com/fcrepo4/fcrepo4</url>
-    <tag>HEAD</tag>
+    <tag>fcrepo-4.1.1</tag>
   </scm>
   <prerequisites>
     <maven>3.0.0</maven>
