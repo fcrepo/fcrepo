@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BlankNodeRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.rdf.impl</a> &gt; <span class="el_source">BlankNodeRdfContext.java</span></div><h1>BlankNodeRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.rdf.impl;
+
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Value;
+
+import java.util.Iterator;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static javax.jcr.PropertyType.PATH;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
+
+/**
+ * Embed all blank nodes in the RDF stream
+ *
+ * @author cabeer
+ * @author ajs6f
+ * @since 10/9/14
+ */
+public class BlankNodeRdfContext extends NodeRdfContext {
+
+<span class="nc" id="L54">    private static final List&lt;Integer&gt; referencePropertyTypes = asList(PATH,REFERENCE,WEAKREFERENCE);</span>
+
+    /**
+     * Default constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the idTranslator
+     * @throws javax.jcr.RepositoryException if repository exception occurred
+     */
+    public BlankNodeRdfContext(final FedoraResource resource,
+                               final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator)
+            throws RepositoryException {
+<span class="nc" id="L66">        super(resource, idTranslator);</span>
+
+<span class="nc" id="L68">        concat(Iterators.concat(Iterators.transform(getBlankNodesIterator(), new Function&lt;Node, RdfStream&gt;() {</span>
+            @Override
+            public RdfStream apply(final Node node) {
+<span class="nc" id="L71">                final FedoraResource resource = nodeConverter.convert(node);</span>
+
+<span class="nc" id="L73">                return resource.getTriples(idTranslator, ImmutableList.of(TypeRdfContext.class,</span>
+                        PropertiesRdfContext.class,
+                        BlankNodeRdfContext.class));
+            }
+        })));
+
+<span class="nc" id="L79">    }</span>
+
+    private Iterator&lt;Node&gt; getBlankNodesIterator() throws RepositoryException {
+<span class="nc" id="L82">        final Iterator&lt;Property&gt; properties = resource().getNode().getProperties();</span>
+
+<span class="nc" id="L84">        final Iterator&lt;Property&gt; references = Iterators.filter(properties, filterReferenceProperties);</span>
+
+<span class="nc" id="L86">        final Iterator&lt;Node&gt; nodes = Iterators.transform(new PropertyValueIterator(references), getNodesForValue);</span>
+
+<span class="nc" id="L88">        return Iterators.filter(nodes, isBlankNode);</span>
+    }
+
+
+<span class="nc" id="L92">    private static final Predicate&lt;Property&gt; filterReferenceProperties = new Predicate&lt;Property&gt;() {</span>
+
+        @Override
+        public boolean apply(final Property property) {
+            try {
+<span class="nc" id="L97">                final int type = property.getType();</span>
+<span class="nc" id="L98">                return referencePropertyTypes.contains(type);</span>
+<span class="nc" id="L99">            } catch (final RepositoryException e) {</span>
+<span class="nc" id="L100">                throw new RepositoryRuntimeException(e);</span>
+            }
+        }
+    };
+
+<span class="nc" id="L105">    private final Function&lt;Value, Node&gt; getNodesForValue = new Function&lt;Value, Node&gt;() {</span>
+        @Override
+        public Node apply(final Value v) {
+            try {
+                final Node refNode;
+<span class="nc bnc" id="L110" title="All 2 branches missed.">                if (v.getType() == PATH) {</span>
+<span class="nc" id="L111">                    refNode = resource().getNode().getSession().getNode(v.getString());</span>
+                } else {
+<span class="nc" id="L113">                    refNode = resource().getNode().getSession().getNodeByIdentifier(v.getString());</span>
+                }
+<span class="nc" id="L115">                return refNode;</span>
+<span class="nc" id="L116">            } catch (final RepositoryException e) {</span>
+<span class="nc" id="L117">                throw new RepositoryRuntimeException(e);</span>
+            }
+        }
+    };
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span></div></body></html>

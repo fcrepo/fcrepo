@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>VersionsRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.rdf.impl</a> &gt; <span class="el_source">VersionsRdfContext.java</span></div><h1>VersionsRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.impl.rdf.impl;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.utils.iterators.RdfStream;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+
+import org.slf4j.Logger;
+
+
+/**
+ * {@link RdfStream} that supplies {@link Triple}s concerning
+ * the versions of a selected {@link Node}.
+ *
+ * @author ajs6f
+ * @since Oct 15, 2013
+ */
+public class VersionsRdfContext extends RdfStream {
+
+    private final VersionHistory versionHistory;
+
+    private final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+
+    private final com.hp.hpl.jena.graph.Node subject;
+
+<span class="fc" id="L62">    private static final Logger LOGGER = getLogger(VersionsRdfContext.class);</span>
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
+     */
+    public VersionsRdfContext(final FedoraResource resource,
+                              final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator)
+        throws RepositoryException {
+<span class="fc" id="L74">        super();</span>
+<span class="fc" id="L75">        this.idTranslator = idTranslator;</span>
+<span class="fc" id="L76">        this.subject = idTranslator.reverse().convert(resource).asNode();</span>
+<span class="fc" id="L77">        versionHistory = resource.getVersionHistory();</span>
+
+<span class="fc" id="L79">        concat(versionTriples());</span>
+<span class="fc" id="L80">    }</span>
+
+    private Iterator&lt;Triple&gt; versionTriples() throws RepositoryException {
+<span class="fc" id="L83">        final Iterator&lt;Version&gt; allVersions = versionHistory.getAllVersions();</span>
+<span class="fc" id="L84">        return Iterators.concat(Iterators.transform(allVersions, version2triples));</span>
+    }
+
+<span class="fc" id="L87">    private final Function&lt;Version, Iterator&lt;Triple&gt;&gt; version2triples = new Version2Triples();</span>
+
+<span class="fc" id="L89">    private class Version2Triples implements Function&lt;Version, Iterator&lt;Triple&gt;&gt; {</span>
+
+        @Override
+        public Iterator&lt;Triple&gt; apply(final Version version) {
+
+            try {
+                    /* Discard jcr:rootVersion */
+<span class="fc bfc" id="L96" title="All 2 branches covered.">                if (version.getName().equals(versionHistory.getRootVersion().getName())) {</span>
+<span class="fc" id="L97">                    LOGGER.trace(&quot;Skipped root version from triples&quot;);</span>
+<span class="fc" id="L98">                    return new RdfStream();</span>
+                }
+
+<span class="fc" id="L101">                final Node frozenNode = version.getFrozenNode();</span>
+<span class="fc" id="L102">                final com.hp.hpl.jena.graph.Node versionSubject</span>
+                        = nodeToResource(idTranslator).convert(frozenNode).asNode();
+
+<span class="fc" id="L105">                final RdfStream results = new RdfStream();</span>
+
+<span class="fc" id="L107">                results.concat(create(subject, HAS_VERSION.asNode(),</span>
+                        versionSubject));
+
+<span class="fc bfc" id="L110" title="All 2 branches covered.">                for (final String label : versionHistory</span>
+                        .getVersionLabels(version)) {
+<span class="fc" id="L112">                    results.concat(create(versionSubject, HAS_VERSION_LABEL</span>
+                            .asNode(), createLiteral(label)));
+                }
+<span class="fc" id="L115">                results.concat(create(versionSubject, CREATED_DATE.asNode(),</span>
+                        createTypedLiteral(version.getCreated()).asNode()));
+
+<span class="fc" id="L118">                return results;</span>
+
+<span class="nc" id="L120">            } catch (final RepositoryException e) {</span>
+<span class="nc" id="L121">                throw propagate(e);</span>
+            }
+        }
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span></div></body></html>
