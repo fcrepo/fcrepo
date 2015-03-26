@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>QueryExecutionProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository RDF Transformations Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.transform.http.responses</a> &gt; <span class="el_source">QueryExecutionProvider.java</span></div><h1>QueryExecutionProvider.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.transform.http.responses;
+
+import static com.hp.hpl.jena.sparql.resultset.ResultsFormat.FMT_UNKNOWN;
+import static java.util.Collections.singletonList;
+import static org.fcrepo.transform.http.responses.ResultSetStreamingOutput.getResultsFormat;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.ResultSet;
+
+/**
+ * Helper for writing QueryExecutions results out in a variety
+ * of serialization formats.
+ *
+ * @author cbeer
+ */
+@Provider
+@Component
+<span class="fc" id="L46">public class QueryExecutionProvider implements MessageBodyWriter&lt;QueryExecution&gt; {</span>
+
+<span class="fc" id="L48">    private static final Logger LOGGER = getLogger(QueryExecutionProvider.class);</span>
+
+<span class="fc" id="L50">    private static final ResultSetStreamingOutput resultSetStreamingOutput = new ResultSetStreamingOutput();</span>
+
+    @Override
+    public void writeTo(final QueryExecution qexec, final Class&lt;?&gt; type,
+            final Type genericType, final Annotation[] annotations,
+            final MediaType mediaType,
+            final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+            final OutputStream entityStream) {
+
+<span class="nc" id="L59">        LOGGER.debug(&quot;Writing a response for: {} with MIMEtype: {}&quot;, qexec,</span>
+                        mediaType);
+
+        // add standard headers
+<span class="nc" id="L63">        httpHeaders.put(&quot;Content-type&quot;, singletonList((Object) mediaType.toString()));</span>
+
+        try {
+<span class="nc" id="L66">            final ResultSet resultSet = qexec.execSelect();</span>
+
+<span class="nc" id="L68">            resultSetStreamingOutput.writeTo(resultSet, type, genericType,</span>
+                    annotations, mediaType, httpHeaders, entityStream);
+        } finally {
+<span class="nc" id="L71">            qexec.close();</span>
+<span class="nc" id="L72">        }</span>
+<span class="nc" id="L73">    }</span>
+
+    @Override
+    public boolean isWriteable(final Class&lt;?&gt; type, final Type genericType,
+            final Annotation[] annotations, final MediaType mediaType) {
+
+        // we can return a result for any MIME type that Jena can serialize
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        final Boolean appropriateResultType =</span>
+            getResultsFormat(mediaType) != FMT_UNKNOWN;
+<span class="nc bnc" id="L82" title="All 6 branches missed.">        return appropriateResultType</span>
+                &amp;&amp; (QueryExecution.class.isAssignableFrom(type) || QueryExecution.class
+                        .isAssignableFrom(genericType.getClass()));
+    }
+
+    @Override
+    public long getSize(final QueryExecution rdf, final Class&lt;?&gt; type,
+            final Type genericType, final Annotation[] annotations,
+            final MediaType mediaType) {
+        // we don't know in advance how large the result might be
+<span class="nc" id="L92">        return -1;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span></div></body></html>
