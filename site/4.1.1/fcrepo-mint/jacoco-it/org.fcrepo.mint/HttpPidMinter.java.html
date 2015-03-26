@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>HttpPidMinter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Minter Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.mint</a> &gt; <span class="el_source">HttpPidMinter.java</span></div><h1>HttpPidMinter.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.mint;
+
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static com.google.common.base.Preconditions.checkArgument;
+
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.slf4j.Logger;
+
+import com.codahale.metrics.annotation.Timed;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URI;
+
+import org.w3c.dom.Document;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.util.EntityUtils;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.fcrepo.kernel.identifiers.PidMinter;
+import org.xml.sax.SAXException;
+
+
+/**
+ * PID minter that uses an external REST service to mint PIDs.
+ *
+ * @author escowles
+ * @since 04/28/2014
+ */
+public class HttpPidMinter implements PidMinter {
+
+<span class="fc" id="L66">    private static final Logger LOGGER = getLogger(HttpPidMinter.class);</span>
+    protected final String url;
+    protected final String method;
+    protected final String username;
+    protected final String password;
+    private final String regex;
+    private XPathExpression xpath;
+
+    protected HttpClient client;
+
+    /**
+     * Create a new HttpPidMinter.
+     * @param url The URL for the minter service.  This is the only required argument -- all
+     *    other parameters can be blank.
+     * @param method The HTTP method (POST, PUT or GET) used to generate a new PID (POST will
+     *    be used if the method is blank.
+     * @param username If not blank, use this username to connect to the minter service.
+     * @param password If not blank, use this password used to connect to the minter service.
+     * @param regex If not blank, use this regular expression used to remove unwanted text from the
+     *    minter service response.  For example, if the response text is &quot;/foo/bar:baz&quot; and the
+     *    desired identifier is &quot;baz&quot;, then the regex would be &quot;.*:&quot;.
+     * @param xpath If not blank, use this XPath expression used to extract the desired identifier
+     *    from an XML minter response.
+    **/
+    public HttpPidMinter( final String url, final String method, final String username,
+<span class="fc" id="L91">        final String password, final String regex, final String xpath ) {</span>
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        checkArgument( !isBlank(url), &quot;Minter URL must be specified!&quot; );</span>
+
+<span class="fc" id="L95">        this.url = url;</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        this.method = (method == null ? &quot;post&quot; : method);</span>
+<span class="fc" id="L97">        this.username = username;</span>
+<span class="fc" id="L98">        this.password = password;</span>
+<span class="fc" id="L99">        this.regex = regex;</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if ( !isBlank(xpath) ) {</span>
+            try {
+<span class="fc" id="L102">                this.xpath = XPathFactory.newInstance().newXPath().compile(xpath);</span>
+<span class="fc" id="L103">            } catch ( XPathException ex ) {</span>
+<span class="fc" id="L104">                LOGGER.warn(&quot;Error parsing xpath ({}): {}&quot;, xpath, ex );</span>
+<span class="fc" id="L105">                throw new IllegalArgumentException(&quot;Error parsing xpath&quot; + xpath, ex);</span>
+<span class="fc" id="L106">            }</span>
+        }
+<span class="fc" id="L108">        this.client = buildClient();</span>
+<span class="fc" id="L109">    }</span>
+
+    /**
+     * Setup authentication in httpclient.
+     * @return the setup of authentication
+    **/
+    protected HttpClient buildClient() {
+<span class="fc" id="L116">        HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties().setConnectionManager(</span>
+            new PoolingHttpClientConnectionManager());
+<span class="pc bpc" id="L118" title="1 of 4 branches missed.">        if (!isBlank(username) &amp;&amp; !isBlank(password)) {</span>
+<span class="fc" id="L119">            final URI uri = URI.create(url);</span>
+<span class="fc" id="L120">            final CredentialsProvider credsProvider = new BasicCredentialsProvider();</span>
+<span class="fc" id="L121">            credsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()),</span>
+                new UsernamePasswordCredentials(username, password));
+<span class="fc" id="L123">            builder = builder.setDefaultCredentialsProvider(credsProvider);</span>
+        }
+<span class="fc" id="L125">        return builder.build();</span>
+    }
+
+    /**
+     * Instantiate a request object based on the method variable.
+    **/
+    private HttpUriRequest minterRequest() {
+<span class="pc bpc" id="L132" title="8 of 16 branches missed.">        switch (method) {</span>
+            case &quot;GET&quot;: case &quot;get&quot;:
+<span class="fc" id="L134">                return new HttpGet(url);</span>
+            case &quot;PUT&quot;: case &quot;put&quot;:
+<span class="fc" id="L136">                return new HttpPut(url);</span>
+            default:
+<span class="fc" id="L138">                return new HttpPost(url);</span>
+        }
+    }
+
+    /**
+     * Remove unwanted text from the minter service response to produce the desired identifier.
+     * Override this method for processing more complex than a simple regex replacement.
+     * @param responseText the response text
+     * @throws IOException if exception occurred
+     * @return the response
+    **/
+    protected String responseToPid( final String responseText ) throws IOException {
+<span class="fc" id="L150">        LOGGER.debug(&quot;responseToPid({})&quot;, responseText);</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">        if ( !isBlank(regex) ) {</span>
+<span class="fc" id="L152">            return responseText.replaceFirst(regex,&quot;&quot;);</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        } else if ( xpath != null ) {</span>
+            try {
+<span class="fc" id="L155">                return xpath( responseText, xpath );</span>
+<span class="fc" id="L156">            } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {</span>
+<span class="fc" id="L157">                throw new IOException(e);</span>
+            }
+        } else {
+<span class="fc" id="L160">            return responseText;</span>
+        }
+    }
+
+    /**
+     * Extract the desired identifier value from an XML response using XPath
+    **/
+    private static String xpath( final String xml, final XPathExpression xpath )
+            throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
+<span class="fc" id="L169">        final DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();</span>
+<span class="fc" id="L170">        final Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes()));</span>
+<span class="fc" id="L171">        return xpath.evaluate(doc);</span>
+    }
+
+    /**
+     * Mint a unique identifier using an external HTTP API.
+     * @return The generated identifier.
+     */
+    @Timed
+    @Override
+    public String mintPid() {
+        try {
+<span class="fc" id="L182">            LOGGER.debug(&quot;mintPid()&quot;);</span>
+<span class="fc" id="L183">            final HttpResponse resp = client.execute( minterRequest() );</span>
+<span class="fc" id="L184">            return responseToPid( EntityUtils.toString(resp.getEntity()) );</span>
+<span class="fc" id="L185">        } catch ( IOException ex ) {</span>
+<span class="fc" id="L186">            LOGGER.warn(&quot;Error minting pid from {}: {}&quot;, url, ex);</span>
+<span class="fc" id="L187">            throw new RepositoryRuntimeException(&quot;Error minting pid&quot;, ex);</span>
+<span class="nc" id="L188">        } catch ( Exception ex ) {</span>
+<span class="nc" id="L189">            LOGGER.warn(&quot;Error processing minter response&quot;, ex);</span>
+<span class="nc" id="L190">            throw new RepositoryRuntimeException(&quot;Error processing minter response&quot;, ex);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.2.201409121644</span></div></body></html>

@@ -1,0 +1,4 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository Minter Module,org.fcrepo.mint,UUIDPidMinter,18,0,0,0,3,0,2,0,2,0
+Fedora Repository Minter Module,org.fcrepo.mint,UUIDPathMinter,124,0,16,0,14,0,12,0,4,0
+Fedora Repository Minter Module,org.fcrepo.mint,HttpPidMinter,24,228,9,21,3,44,7,17,0,7
