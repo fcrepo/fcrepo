@@ -21,6 +21,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
@@ -66,6 +67,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -397,8 +399,14 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
-                                 @ContentLocation final InputStream requestBodyStream)
+                                 @ContentLocation final InputStream requestBodyStream,
+                                 @HeaderParam("Link") final String link)
             throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+
+        if (link != null && link.contains("http://www.w3.org/ns/ldp#Resource")) {
+            LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
+            throw new ServerErrorException("LDPR creation not implemented", NOT_IMPLEMENTED);
+        }
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
