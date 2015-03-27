@@ -21,6 +21,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
@@ -37,6 +39,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -66,9 +69,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilderException;
 
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -236,8 +241,11 @@ public class FedoraLdp extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
-            @HeaderParam("If-Match") final String ifMatch)
+            @HeaderParam("If-Match") final String ifMatch,
+            @HeaderParam("Link") final String link)
             throws InvalidChecksumException, MalformedRdfException {
+
+        checkLinkForLdpResourceCreation(link);
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
@@ -398,8 +406,11 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
-                                 @ContentLocation final InputStream requestBodyStream)
+                                 @ContentLocation final InputStream requestBodyStream,
+                                 @HeaderParam("Link") final String link)
             throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+
+        checkLinkForLdpResourceCreation(link);
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -606,6 +617,23 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return pid;
+    }
+
+    private void checkLinkForLdpResourceCreation(final String link) {
+        if (link != null) {
+            try {
+                final Link linq = Link.valueOf(link);
+                if ("type".equals(linq.getRel()) && (LDP_NAMESPACE + "Resource").equals(linq.getUri().toString())) {
+                    LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
+                    throw new ServerErrorException("LDPR creation not implemented", NOT_IMPLEMENTED);
+                }
+            } catch (RuntimeException e) {
+                if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
+                    throw new ClientErrorException("Invalid link specified: " + link, BAD_REQUEST);
+                }
+                throw e;
+            }
+        }
     }
 
 }

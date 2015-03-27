@@ -71,6 +71,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -600,9 +601,15 @@ public class FedoraLdpTest {
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
         when(mockContainerService.findOrCreate(mockSession, "/some/path")).thenReturn(mockContainer);
 
-        final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null);
+        final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
+    }
+
+    @Test(expected = ServerErrorException.class)
+    public void testPutNewObjectLdpr() throws Exception {
+        testObj.createOrReplaceObjectRdf(null, null, null, null, null,
+                "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
     }
 
     @Test
@@ -615,7 +622,7 @@ public class FedoraLdpTest {
         when(mockContainerService.findOrCreate(mockSession, "/some/path")).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c ."), null, null, null);
+                toInputStream("_:a <info:x> _:c ."), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
@@ -631,7 +638,7 @@ public class FedoraLdpTest {
         when(mockBinaryService.findOrCreate(mockSession, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
-                toInputStream("xyz"), null, null, null);
+                toInputStream("xyz"), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -648,7 +655,7 @@ public class FedoraLdpTest {
         when(mockContainerService.findOrCreate(mockSession, "/some/path")).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c ."), null, null, null);
+                toInputStream("_:a <info:x> _:c ."), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
@@ -667,7 +674,7 @@ public class FedoraLdpTest {
         when(mockContainerService.findOrCreate(mockSession, "/some/path")).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c ."), null, null, null);
+                toInputStream("_:a <info:x> _:c ."), null, null, null, null);
 
     }
 
@@ -719,7 +726,7 @@ public class FedoraLdpTest {
 
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
 
-        final Response actual = testObj.createObject(null, null, null, "b", null);
+        final Response actual = testObj.createObject(null, null, null, "b", null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -732,7 +739,7 @@ public class FedoraLdpTest {
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
 
         final Response actual = testObj.createObject(null, null,
-                MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"));
+                MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"), null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockContainer).updateProperties(eq(idTranslator), eq("x"), any(RdfStream.class), any(Service.class));
@@ -746,7 +753,7 @@ public class FedoraLdpTest {
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
 
         final Response actual = testObj.createObject(null, null, NTRIPLES_TYPE, "b",
-                toInputStream("_:a <info:b> _:c ."));
+                toInputStream("_:a <info:b> _:c ."), null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
@@ -763,7 +770,7 @@ public class FedoraLdpTest {
 
         try (final InputStream content = toInputStream("x")) {
             final Response actual = testObj.createObject(null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
-                    content);
+                    content, null);
 
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
@@ -780,7 +787,7 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x")) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final Response actual = testObj.createObject(null, null, requestContentType, "b",
-                    content);
+                    content, null);
 
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), null, "", null);
@@ -792,8 +799,18 @@ public class FedoraLdpTest {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
 
-        testObj.createObject(null, null, null, null, null);
+        testObj.createObject(null, null, null, null, null, null);
 
+    }
+
+    @Test(expected = ServerErrorException.class)
+    public void testLDPRNotImplemented() throws Exception {
+        testObj.createObject(null, null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
+    }
+
+    @Test(expected = ClientErrorException.class)
+    public void testLDPRNotImplementedInvalidLink() throws Exception {
+        testObj.createObject(null, null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type");
     }
 
     @Test
