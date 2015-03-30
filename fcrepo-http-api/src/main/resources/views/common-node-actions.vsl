@@ -111,7 +111,7 @@ WHERE { }
 #set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
 
 #if($serializations.hasNext())
-<form id="action_import" action="fcr:import" method="POST">
+<form id="action_import" method="POST">
 <h3>Import</h3>
 
 
@@ -127,7 +127,7 @@ WHERE { }
         #end
     </select>
         </div>
-    <button type="submit" class="btn btn-primary">Import</button>
+    <button type="submit" class="btn btn-primary" onclick='this.form.action="fcr:import"'>Import</button>
     <hr />
 </form>
 
