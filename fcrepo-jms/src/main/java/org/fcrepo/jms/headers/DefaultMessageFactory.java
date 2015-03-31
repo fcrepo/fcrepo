@@ -42,6 +42,7 @@ import com.google.gson.JsonParser;
  * on information found in the {@link FedoraEvent} that triggers publication.
  *
  * @author ajs6f
+ * @author escowles
  * @since Dec 2, 2013
  */
 public class DefaultMessageFactory implements JMSEventMessageFactory {
@@ -63,41 +64,17 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     public static final String PROPERTIES_HEADER_NAME = JMS_NAMESPACE
             + "properties";
 
+    public static final String USER_HEADER_NAME = JMS_NAMESPACE + "user";
+    public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
+
     private String baseURL;
-
-    /**
-     * Set baseURL.
-     * @param event Fedora event object containing user data with baseURL specified.
-     */
-    private void setBaseURL(final FedoraEvent event) {
-        try {
-            final String userdata = event.getUserData();
-            if (!StringUtils.isBlank(userdata)) {
-                final JsonObject json = new JsonParser().parse(userdata).getAsJsonObject();
-                String url = json.get("baseURL").getAsString();
-                while (url.endsWith("/")) {
-                    url = url.substring(0, url.length() - 1);
-                }
-                this.baseURL = url;
-                LOGGER.debug("MessageFactory baseURL: {}", baseURL);
-
-            } else {
-                LOGGER.warn("MessageFactory baseURL is empty!");
-            }
-
-        } catch ( final Exception ex ) {
-            LOGGER.warn("Error setting baseURL", ex);
-        }
-    }
+    private String user;
+    private String userAgent;
 
     @Override
     public Message getMessage(final FedoraEvent jcrEvent,
         final javax.jms.Session jmsSession) throws RepositoryException,
         JMSException {
-
-        if ( baseURL == null ) {
-            setBaseURL(jcrEvent);
-        }
 
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
@@ -105,10 +82,34 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         if ( path.endsWith("/" + JCR_CONTENT) ) {
             path = path.replaceAll("/" + JCR_CONTENT,"");
         }
+
+        // extract baseURL and userAgent from event UserData
+        try {
+            final String userdata = jcrEvent.getUserData();
+            if (!StringUtils.isBlank(userdata)) {
+                final JsonObject json = new JsonParser().parse(userdata).getAsJsonObject();
+                String url = json.get("baseURL").getAsString();
+                while (url.endsWith("/")) {
+                    url = url.substring(0, url.length() - 1);
+                }
+                this.baseURL = url;
+                this.userAgent = json.get("userAgent").getAsString();
+                LOGGER.debug("MessageFactory baseURL: {}, userAgent: {}", baseURL, userAgent);
+
+            } else {
+                LOGGER.warn("MessageFactory event UserData is empty!");
+            }
+
+        } catch ( final Exception ex ) {
+            LOGGER.warn("Error setting baseURL or userAgent", ex);
+        }
+
         message.setStringProperty(IDENTIFIER_HEADER_NAME, path);
         message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent
                 .getTypes()));
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
+        message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());
+        message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
         message.setStringProperty(PROPERTIES_HEADER_NAME, Joiner.on(',').join(jcrEvent.getProperties()));
 
         LOGGER.trace("getMessage() returning: {}", message);

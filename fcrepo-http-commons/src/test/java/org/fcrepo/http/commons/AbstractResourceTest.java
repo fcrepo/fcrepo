@@ -19,6 +19,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.identifiers.PidMinter;
@@ -47,6 +48,9 @@ public class AbstractResourceTest {
     private UriInfo mockUris;
 
     @Mock
+    private HttpHeaders mockHeaders;
+
+    @Mock
     private NamespaceRegistry mockNames;
 
     @Before
@@ -71,6 +75,12 @@ public class AbstractResourceTest {
     public void testSetUriInfo() {
         setField(testObj, "uriInfo", mockUris);
         assertEquals(mockUris, testObj.uriInfo);
+    }
+
+    @Test
+    public void testSetHeaders() {
+        setField(testObj, "headers", mockHeaders);
+        assertEquals(mockHeaders, testObj.headers);
     }
 
 }

@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
 import java.net.URI;
@@ -74,13 +75,15 @@ abstract public class FedoraBaseResource extends AbstractResource {
     /**
      * Set the baseURL for JMS events.
      * @param uriInfo the uri info
+     * @param headers HTTP headers
      **/
-    protected void setUpJMSBaseURIs(final UriInfo uriInfo) {
+    protected void setUpJMSBaseURIs(final UriInfo uriInfo, final HttpHeaders headers) {
         try {
             final URI baseURL = uriInfo.getBaseUri();
             LOGGER.debug("setting baseURL = " + baseURL.toString());
             final ObservationManager obs = session().getWorkspace().getObservationManager();
-            final String json = "{\"baseURL\":\"" + baseURL.toString() + "\"}";
+            final String json = "{\"baseURL\":\"" + baseURL.toString() + "\","
+                    + "\"userAgent\":\"" + headers.getHeaderString("user-agent") + "\"}";
             obs.setUserData(json);
         } catch ( Exception ex ) {
             LOGGER.warn("Error setting baseURL", ex);
