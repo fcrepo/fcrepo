@@ -17,6 +17,7 @@ package org.fcrepo.http.commons;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -55,6 +56,12 @@ public class AbstractResource {
      */
     @Context
     protected UriInfo uriInfo;
+
+    /**
+     * For getting user agent
+     */
+    @Context
+    protected HttpHeaders headers;
 
     @Autowired
     protected SessionFactory sessions;

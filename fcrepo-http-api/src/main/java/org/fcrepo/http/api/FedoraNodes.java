@@ -96,7 +96,7 @@ public class FedoraNodes extends ContentExposingResource {
      */
     @PostConstruct
     public void postConstruct() {
-        setUpJMSBaseURIs(uriInfo);
+        setUpJMSInfo(uriInfo, headers);
     }
 
     /**

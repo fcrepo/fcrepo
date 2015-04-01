@@ -22,6 +22,8 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -70,7 +72,8 @@ public class DefaultMessageFactoryTest {
     @Test
     public void testBuildMessage() throws RepositoryException, JMSException {
         final String testPath = "/path/to/resource";
-        final Message msg = doTestBuildMessage("base-url", testPath);
+        final String userAgent = "Test UserAgent (Like Mozilla)";
+        final Message msg = doTestBuildMessage("base-url", "Test UserAgent", testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
@@ -83,25 +86,28 @@ public class DefaultMessageFactoryTest {
     @Test
     public void testBuildMessageNullUrl() throws RepositoryException, JMSException {
         final String testPath = "/path/to/resource";
-        final Message msg = doTestBuildMessage(null, testPath);
+        final Message msg = doTestBuildMessage(null, null, testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
     @Test
     public void testBuildMessageContent() throws RepositoryException, JMSException {
         final String testPath = "/path/to/resource";
-        final Message msg = doTestBuildMessage("base-url/", testPath + "/" + JCR_CONTENT);
+        final Message msg = doTestBuildMessage("base-url/", "Test UserAgent", testPath + "/" + JCR_CONTENT);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
-    private Message doTestBuildMessage(final String baseUrl, final String id) throws RepositoryException, JMSException {
+    private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
+            throws RepositoryException, JMSException {
         final Long testDate = 46647758568747L;
         when(mockEvent.getDate()).thenReturn(testDate);
 
         String url = null;
-        if (!StringUtils.isBlank(baseUrl)) {
-            url = "{\"baseURL\":\"" + baseUrl + "\"}";
+        if (!StringUtils.isBlank(baseUrl) || !StringUtils.isBlank(userAgent)) {
+            url = "{\"baseURL\":\"" + baseUrl + "\",\"userAgent\":\"" + userAgent + "\"}";
         }
         when(mockEvent.getUserData()).thenReturn(url);
+        final String testUser = "testUser";
+        when(mockEvent.getUserID()).thenReturn(testUser);
         when(mockEvent.getPath()).thenReturn(id);
         final Set<Integer> testTypes = singleton(NODE_ADDED);
         final String testReturnType = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
@@ -120,6 +126,8 @@ public class DefaultMessageFactoryTest {
         assertEquals("Got wrong type in message!", testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME));
         assertEquals("Got wrong base-url in message", trimmedBaseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
         assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
+        assertEquals("Got wrong userID in message", testUser, msg.getStringProperty(USER_HEADER_NAME));
+        assertEquals("Got wrong userAgent in message", userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME));
         return msg;
     }
 

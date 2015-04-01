@@ -65,9 +65,12 @@ import java.util.List;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -147,6 +150,9 @@ public class FedoraLdpTest {
     @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
 
+    @Mock
+    private HttpHeaders mockHeaders;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -166,6 +172,7 @@ public class FedoraLdpTest {
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
         setField(testObj, "uriInfo", getUriInfoImpl());
+        setField(testObj, "headers", mockHeaders);
         setField(testObj, "idTranslator", idTranslator);
         setField(testObj, "nodeService", mockNodeService);
         setField(testObj, "containerService", mockContainerService);
@@ -184,6 +191,8 @@ public class FedoraLdpTest {
         when(mockBinary.getEtagValue()).thenReturn("");
         when(mockBinary.getPath()).thenReturn(binaryPath);
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
+
+        when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
@@ -832,5 +841,17 @@ public class FedoraLdpTest {
         final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
 
         assertEquals("text/plain", sanitizedMediaType.toString());
+    }
+
+    @Test
+    public void testSetUpJMSBaseURIs() throws RepositoryException {
+        final ObservationManager mockManager = mock(ObservationManager.class);
+        final Workspace mockWorkspace = mock(Workspace.class);
+        doReturn(mockWorkspace).when(mockSession).getWorkspace();
+        doReturn(mockManager).when(mockWorkspace).getObservationManager();
+        final String json = "{\"baseURL\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
+
+        testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
+        verify(mockManager).setUserData(eq(json));
     }
 }
