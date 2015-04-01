@@ -100,7 +100,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
                 LOGGER.warn("MessageFactory event UserData is empty!");
             }
 
-        } catch ( final Exception ex ) {
+        } catch ( final RuntimeException ex ) {
             LOGGER.warn("Error setting baseURL or userAgent", ex);
         }
 

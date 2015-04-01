@@ -851,7 +851,7 @@ public class FedoraLdpTest {
         doReturn(mockManager).when(mockWorkspace).getObservationManager();
         final String json = "{\"baseURL\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
 
-        testObj.setUpJMSBaseURIs(getUriInfoImpl(), mockHeaders);
+        testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
         verify(mockManager).setUserData(eq(json));
     }
 }

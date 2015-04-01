@@ -132,7 +132,7 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @PostConstruct
     public void postConstruct() {
-        setUpJMSBaseURIs(uriInfo, headers);
+        setUpJMSInfo(uriInfo, headers);
     }
 
     /**

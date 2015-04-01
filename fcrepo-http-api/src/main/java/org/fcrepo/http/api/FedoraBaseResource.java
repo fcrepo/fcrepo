@@ -16,7 +16,9 @@
 package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.JsonObject;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -77,14 +79,17 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @param uriInfo the uri info
      * @param headers HTTP headers
      **/
-    protected void setUpJMSBaseURIs(final UriInfo uriInfo, final HttpHeaders headers) {
+    protected void setUpJMSInfo(final UriInfo uriInfo, final HttpHeaders headers) {
         try {
             final URI baseURL = uriInfo.getBaseUri();
             LOGGER.debug("setting baseURL = " + baseURL.toString());
             final ObservationManager obs = session().getWorkspace().getObservationManager();
-            final String json = "{\"baseURL\":\"" + baseURL.toString() + "\","
-                    + "\"userAgent\":\"" + headers.getHeaderString("user-agent") + "\"}";
-            obs.setUserData(json);
+            final JsonObject json = new JsonObject();
+            json.addProperty("baseURL", baseURL.toString());
+            if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
+                json.addProperty("userAgent",headers.getHeaderString("user-agent"));
+            }
+            obs.setUserData(json.toString());
         } catch ( Exception ex ) {
             LOGGER.warn("Error setting baseURL", ex);
         }
