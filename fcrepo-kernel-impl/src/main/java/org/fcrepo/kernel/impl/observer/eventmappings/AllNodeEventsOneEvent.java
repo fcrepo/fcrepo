@@ -51,6 +51,8 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
     private static final List<Integer> PROPERTY_EVENT_TYPES = asList(PROPERTY_ADDED, PROPERTY_CHANGED,
             PROPERTY_REMOVED);
 
+    private final static String propPattern = "/[a-zA-Z0-9\\.]+:[a-zA-Z0-9\\.]+";
+
     /**
      * Extracts the node identifier from a JCR {@link Event}.
      */
@@ -59,7 +61,9 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         @Override
         public String apply(final Event ev) {
             try {
-                final String id = ev.getIdentifier();
+                // build id from nodepath+user to collapse multiple nodes from adding/removing content nodes
+                final String id = ev.getPath().replaceAll("/jcr:content/","/").replaceAll(propPattern,"")
+                        + "-" + ev.getUserID();
                 LOGGER.debug("Sorting an event by identifier: {}", id);
                 return id;
             } catch (final RepositoryException e) {
