@@ -17,6 +17,8 @@ package org.fcrepo.kernel.impl.observer.eventmappings;
 
 import static com.google.common.collect.Iterators.getLast;
 import static com.google.common.collect.Iterators.size;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static org.jgroups.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
@@ -51,11 +53,19 @@ public class AllNodeEventsOneEventTest {
 
     private static final String TEST_IDENTIFIER2 = TEST_IDENTIFIER1;
 
-    private static final String TEST_PATH2 = TEST_PATH1 + "/property";
+    private static final String TEST_PATH2 = TEST_PATH1 + "/dc:title";
 
     private static final String TEST_IDENTIFIER3 = randomUUID().toString();
 
     private static final String TEST_PATH3 = "/test/node2";
+
+    private static final String TEST_IDENTIFIER4 = randomUUID().toString();
+
+    private static final String TEST_PATH4 = "/test/node3";
+
+    private static final String TEST_IDENTIFIER5 = randomUUID().toString();
+
+    private static final String TEST_PATH5 = "/test/node3/fcr:content";
 
     private final AllNodeEventsOneEvent testMapping = new AllNodeEventsOneEvent();
 
@@ -69,26 +79,51 @@ public class AllNodeEventsOneEventTest {
     private Event mockEvent3;
 
     @Mock
+    private Event mockEvent4;
+
+    @Mock
+    private Event mockEvent5;
+
+    @Mock
     private Iterator<Event> mockIterator;
+
+    @Mock
+    private Iterator<Event> mockIterator2;
 
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockEvent1.getIdentifier()).thenReturn(TEST_IDENTIFIER1);
         when(mockEvent1.getPath()).thenReturn(TEST_PATH1);
+        when(mockEvent1.getType()).thenReturn(NODE_ADDED);
         when(mockEvent2.getIdentifier()).thenReturn(TEST_IDENTIFIER2);
         when(mockEvent2.getPath()).thenReturn(TEST_PATH2);
+        when(mockEvent2.getType()).thenReturn(PROPERTY_ADDED);
         when(mockEvent3.getIdentifier()).thenReturn(TEST_IDENTIFIER3);
         when(mockEvent3.getPath()).thenReturn(TEST_PATH3);
         when(mockEvent3.getType()).thenReturn(PROPERTY_CHANGED);
         when(mockIterator.next()).thenReturn(mockEvent1, mockEvent2, mockEvent3);
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+
+        when(mockEvent4.getIdentifier()).thenReturn(TEST_IDENTIFIER4);
+        when(mockEvent4.getPath()).thenReturn(TEST_PATH4);
+        when(mockEvent4.getType()).thenReturn(NODE_ADDED);
+        when(mockEvent5.getIdentifier()).thenReturn(TEST_IDENTIFIER5);
+        when(mockEvent5.getPath()).thenReturn(TEST_PATH5);
+        when(mockEvent5.getType()).thenReturn(NODE_ADDED);
+        when(mockIterator2.next()).thenReturn(mockEvent4, mockEvent5);
+        when(mockIterator2.hasNext()).thenReturn(true, true, false);
     }
 
     @Test
     public void testCardinality() {
         assertEquals("Didn't get 2 FedoraEvents for 3 input JCR Events, two of which were on the same node!", 2,
                 size(testMapping.apply(mockIterator)));
+    }
+
+    @Test
+    public void testCollapseContentEvents() {
+        assertEquals("Didn't collapse content node and fcr:content events!", 1, size(testMapping.apply(mockIterator2)));
     }
 
     @Test(expected = UnsupportedOperationException.class)
