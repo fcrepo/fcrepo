@@ -53,7 +53,8 @@ public class Deskolemizer implements Function<Triple, Triple> {
     private final Model model;
 
     /**
-     * A map from which to select blank nodes as replacements for Skolem nodes.
+     * A map from which to select blank nodes as replacements for Skolem nodes.<br/>
+     * TODO replace with java.util.concurrent.ConcurrentMap<K, V> in Java 8
      */
     private final LoadingCache<Resource, Resource> bnodeSubstitutions = newBuilder().build(from(
             new Supplier<Resource>() {
@@ -110,6 +111,7 @@ public class Deskolemizer implements Function<Triple, Triple> {
     }
 
     private boolean isSkolem(final RDFNode n) {
+        log.debug("Checking {} for Skolem nature.", n);
         try {
             return n.isURIResource() &&
                     // include only plain resources, not

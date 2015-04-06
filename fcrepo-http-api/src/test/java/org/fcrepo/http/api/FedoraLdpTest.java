@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.Predicates.containsPattern;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Lists.newArrayList;
@@ -99,13 +100,11 @@ import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -368,13 +367,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()),
-                new Function<RDFNode, String>() {
-            @Override
-            public String apply(final RDFNode input) {
-                return input.toString();
-            }
-        });
+        final List<String> rdfNodes = Lists.transform(newArrayList(model.listObjects()), toStringFunction());
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
@@ -398,13 +391,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()),
-                new Function<RDFNode, String>() {
-                    @Override
-                    public String apply(final RDFNode input) {
-                        return input.toString();
-                    }
-                });
+        final List<String> rdfNodes = Lists.transform(newArrayList(model.listObjects()), toStringFunction());
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
@@ -459,13 +446,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()),
-                new Function<RDFNode, String>() {
-                    @Override
-                    public String apply(final RDFNode input) {
-                        return input.toString();
-                    }
-                });
+        final List<String> rdfNodes = Lists.transform(newArrayList(model.listObjects()), toStringFunction());
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext"
@@ -490,13 +471,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()),
-                new Function<RDFNode, String>() {
-                    @Override
-                    public String apply(final RDFNode input) {
-                        return input.toString();
-                    }
-                });
+        final List<String> rdfNodes = Lists.transform(newArrayList(model.listObjects()), toStringFunction());
         assertTrue("Should include membership contexts",
                 rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext"));
 
@@ -515,13 +490,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()),
-                new Function<RDFNode, String>() {
-                    @Override
-                    public String apply(final RDFNode input) {
-                        return input.toString();
-                    }
-                });
+        final List<String> rdfNodes = Lists.transform(newArrayList(model.listObjects()), toStringFunction());
         assertFalse("Should not include membership contexts",
                 rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext"));
         assertFalse("Should not include membership contexts",
@@ -541,14 +510,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()),
-                new Function<RDFNode, String>() {
-
-                    @Override
-                    public String apply(final RDFNode input) {
-                        return input.toString();
-                    }
-                });
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), toStringFunction());
         log.debug("Received RDF nodes: {}", rdfNodes);
         final String referencesContextClassName = ReferencesRdfContext.class.getName();
         assertTrue("Should include references contexts", any(rdfNodes, containsPattern(referencesContextClassName)));
@@ -607,13 +569,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()),
-                new Function<RDFNode, String>() {
-                    @Override
-                    public String apply(final RDFNode input) {
-                        return input.toString();
-                    }
-                });
+        final List<String> rdfNodes = Lists.transform(newArrayList(model.listObjects()), toStringFunction());
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",

@@ -226,13 +226,24 @@ public class RdfStream extends ForwardingIterator<Triple> {
     /**
      * As {@link Iterators#transform(Iterator, Function)}.
      *
-     * @param f the parameter f
-     * @param <ToType> extends {@link Iterator}
-     * @return Iterator
+     * @param f function by which to transform
+     * @param <ToType> type to which to transform a {@link Triple}
+     * @return Iterator of transformed triples
      */
     public <ToType> Iterator<ToType> transform(final Function<? super Triple, ToType> f) {
         return Iterators.transform(this, f);
     }
+
+    /**
+     * As {@link Iterators#transform(Iterator, Function)}, but preserves context.
+     *
+     * @param f function by which to transform
+     * @return transformed RdfStream
+     */
+    public RdfStream map(final Function<? super Triple, ? extends Triple> f) {
+        return withThisContext(Iterators.transform(this, f));
+    }
+
 
     /**
      * RdfStream

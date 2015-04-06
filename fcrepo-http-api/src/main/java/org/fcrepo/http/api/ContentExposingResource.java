@@ -117,12 +117,16 @@ import com.hp.hpl.jena.vocabulary.RDF;
  * content.
  *
  * @author Mike Durbin
+ * @author ajs6f
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
     @Context protected Request request;
+
+    protected Deskolemizer deskolemizer;
+
     @Context protected HttpServletResponse servletResponse;
 
     @Inject
@@ -141,6 +145,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private static final long MAX_BUFFER_SIZE = 10240000;
 
     protected abstract String externalPath();
+
+    protected Deskolemizer deskolemizer() {
+        return deskolemizer == null ? deskolemizer = new Deskolemizer(translator(), null) : deskolemizer;
+    }
 
     protected Response getContent(final String rangeValue,
                                   final RdfStream rdfStream) throws IOException {
@@ -193,7 +201,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
-        return ok(rdfStream.withThisContext(rdfStream.transform(new Deskolemizer(idTranslator, null)))).build();
+        return ok(rdfStream.map(deskolemizer())).build();
     }
 
     protected RdfStream getResourceTriples() {
@@ -295,10 +303,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());
         }
 
-
-        return rdfStream.withThisContext(rdfStream.transform(new Deskolemizer(idTranslator, resource == null ? null
-                : idTranslator.reverse()
-                        .convert(resource).getModel())));
+        return rdfStream.map(deskolemizer());
     }
 
     /**
