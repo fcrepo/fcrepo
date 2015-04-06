@@ -47,8 +47,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
-
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Binary;
@@ -65,6 +65,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
+import com.google.common.eventbus.EventBus;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -94,6 +96,7 @@ import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.models.NonRdfSource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -613,5 +616,38 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return URI.create(checksum);
         }
         return null;
+    }
+
+    protected void createFixityEvent(final EventBus eventBus, final RdfStream rs,
+                                     final String baseURL, final String agent,
+                                     final String userID) {
+        final FixityEvent fixityEvent = new FixityEvent();
+        fixityEvent.setDate(System.currentTimeMillis());
+        fixityEvent.setType(128);
+        final StmtIterator it = rs.asModel().listStatements();
+        final HashMap<String,String> info = new HashMap<String,String>();
+        while (it.hasNext()) {
+           final Statement st = it.next();
+           if (st.getPredicate().toString().equals("http://www.loc.gov/premis/rdf/v1#hasFixity")) {
+               String identifier = st.getObject().toString().replaceAll(baseURL,"");
+               identifier = "/" + identifier.substring(0,identifier.indexOf("#fixity"));
+               fixityEvent.setPath(identifier);
+               fixityEvent.setIdentifier(identifier);
+           }
+            if (st.getPredicate().toString().equals("http://www.loc.gov/premis/rdf/v1#hasSize")) {
+                info.put(st.getPredicate().toString(), st.getObject().toString());
+            }
+            if (st.getPredicate().toString().equals("http://www.loc.gov/premis/rdf/v1#hasMessageDigest")) {
+                info.put(st.getPredicate().toString(),st.getObject().toString());
+            }
+            if (st.getPredicate().toString().equals("http://fedora.info/definitions/v4/repository#status")) {
+                info.put(st.getPredicate().toString(),st.getObject().toString());
+            }
+        }
+        fixityEvent.setInfo(info);
+        fixityEvent.setUserID(userID);
+        fixityEvent.setBaseURL(baseURL);
+        fixityEvent.setUserData(agent);
+        eventBus.post(fixityEvent);
     }
 }

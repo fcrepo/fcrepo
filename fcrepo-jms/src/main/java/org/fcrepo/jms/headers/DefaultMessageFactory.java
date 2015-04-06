@@ -19,6 +19,9 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -28,6 +31,7 @@ import javax.jms.Message;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.utils.EventType;
 import org.slf4j.Logger;
 
@@ -79,8 +83,8 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
         String path = jcrEvent.getPath();
-        if ( path.endsWith("/" + JCR_CONTENT) ) {
-            path = path.replaceAll("/" + JCR_CONTENT,"");
+        if (path.endsWith("/" + JCR_CONTENT)) {
+            path = path.replaceAll("/" + JCR_CONTENT, "");
         }
 
         // extract baseURL and userAgent from event UserData
@@ -100,12 +104,12 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
                 LOGGER.warn("MessageFactory event UserData is empty!");
             }
 
-        } catch ( final RuntimeException ex ) {
+        } catch (final RuntimeException ex) {
             LOGGER.warn("Error setting baseURL or userAgent", ex);
         }
 
         message.setStringProperty(IDENTIFIER_HEADER_NAME, path);
-        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent
+        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs(jcrEvent
                 .getTypes()));
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());
@@ -115,6 +119,32 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         LOGGER.trace("getMessage() returning: {}", message);
         return message;
     }
+
+    /**
+     *
+     * @param fixityEvent
+     * @param jmsSession
+     * @return
+     * @throws RepositoryException
+     * @throws JMSException
+     */
+
+    public Message getFixityMessage(final FixityEvent fixityEvent,
+                                    final javax.jms.Session jmsSession) throws RepositoryException,
+            JMSException {
+        final Message message = jmsSession.createMessage();
+        message.setLongProperty(TIMESTAMP_HEADER_NAME, fixityEvent.getDate());
+        message.setStringProperty(IDENTIFIER_HEADER_NAME, fixityEvent.getPath());
+        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs(
+                new HashSet<Integer>(Arrays.asList(fixityEvent.getType()))));
+        message.setStringProperty(BASE_URL_HEADER_NAME, fixityEvent.getBaseURL());
+        message.setStringProperty(USER_HEADER_NAME, fixityEvent.getUserID());
+        message.setStringProperty(USER_AGENT_HEADER_NAME, fixityEvent.getUserData());
+        message.setStringProperty(PROPERTIES_HEADER_NAME, getPropertiesAsString(fixityEvent));
+        LOGGER.trace("getFixityMessage return: {}", message);
+        return message;
+    }
+
 
     private static String getEventURIs(final Set<Integer> types) {
         final String uris = Joiner.on(',').join(Iterables.transform(types, new Function<Integer, String>() {
@@ -130,4 +160,17 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);
 
+    private String getPropertiesAsString(final FixityEvent fixityEvent) {
+        final StringBuilder propsStrBuilder = new StringBuilder();
+        for (Map.Entry<String,String> entry : fixityEvent.getInfo().entrySet()) {
+            propsStrBuilder.append(entry.getKey()).append("->").append(entry.getValue()).append(",");
+        }
+        String propsStr = new String();
+        if (propsStrBuilder.toString().endsWith(",")) {
+            propsStr = propsStrBuilder.substring(0,propsStrBuilder.length() - 1).toString();
+        } else {
+            propsStr = propsStrBuilder.toString();
+        }
+        return propsStr;
+    }
 }

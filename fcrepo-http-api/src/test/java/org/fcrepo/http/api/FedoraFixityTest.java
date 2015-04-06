@@ -31,6 +31,7 @@ import javax.jcr.Session;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.eventbus.EventBus;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -61,6 +62,12 @@ public class FedoraFixityTest {
     @Mock
     private FedoraBinary mockBinary;
 
+    @Mock
+    private EventBus mockBus;
+
+    @Mock
+    private FedoraFixity mockFixity;
+
     private final String externalPath = "objects/FedoraDatastreamsTest1/testDS";
 
     @Before
@@ -81,7 +88,7 @@ public class FedoraFixityTest {
         final RdfStream expected = new RdfStream();
 
         when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
-
+        setField(testObj, "eventBus", mockBus);
         final RdfStream actual = testObj.getDatastreamFixity();
 
         assertEquals(expected, actual);
