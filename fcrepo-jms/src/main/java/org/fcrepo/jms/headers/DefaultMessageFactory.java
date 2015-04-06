@@ -68,7 +68,6 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
 
     private String baseURL;
-    private String user;
     private String userAgent;
 
     @Override
