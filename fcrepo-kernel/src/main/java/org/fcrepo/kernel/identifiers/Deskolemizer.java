@@ -21,7 +21,7 @@ import com.hp.hpl.jena.graph.Triple;
 
 /**
  * Deskolemization is abstractly a function from RDF nodes to RDF nodes, but here we implement it, purely for
- * convenience of operation, as a function from triples to triples. An implementation object should be used to
+ * convenience of operation, as a function from triples to triples. An implementing object should be used to
  * translate only one document's scope of RDF.
  *
  * @author ajs6f

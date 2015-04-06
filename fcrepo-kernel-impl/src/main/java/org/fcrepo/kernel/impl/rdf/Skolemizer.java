@@ -41,9 +41,9 @@ import com.hp.hpl.jena.rdf.model.Statement;
 /**
  * Skolemization is abstractly a function from RDF nodes to RDF nodes, but here we implement it, purely for
  * convenience of operation, as a function from triples to triples. {@link #nodeSkolemizer} represents the
- * node-to-node function. This class will make two blank nodes with the same identifier into the same skolem resource
- * because it uses only one prefix for its lifetime and because the mapping from a given blank node to a skolem
- * resource depends only on that prefix and on a MurmurHash3 of the identifier of the blank node in question. An
+ * node-to-node function. An instance of this class will make two blank nodes with the same label into the same Skolem
+ * resource because it uses only one prefix for its lifetime and because the mapping from a given blank node to a
+ * Skolem resource depends only on that prefix and on a MurmurHash3 of the label of the blank node in hand. An
  * instance of this class should be used only with a contextual topic of one single resource and only for one
  * document's scope of RDF about that resource.
  *
@@ -58,11 +58,10 @@ public class Skolemizer implements Function<Statement, Statement>, Supplier<Set<
     private static final Logger log = getLogger(Skolemizer.class);
 
     /**
-     * @param topic The URI of the contextual topic of the RDF from which this statement was drawn. Blank nodes will
-     *        be skolemized to identifiers rooted at this URI.
+     * @param topic The URI of the contextual topic of the RDF supplied to this code. Blank nodes will be skolemized
+     *        to identifiers rooted at this URI.
      */
     public Skolemizer(final Resource topic) {
-        // TODO use Java 8's StringJoiner facility.
         final String prefix = topic + "/" + randomUUID().toString().replace('-', '/');
         this.nodeSkolemizer = new NodeSkolemizer(prefix);
     }
