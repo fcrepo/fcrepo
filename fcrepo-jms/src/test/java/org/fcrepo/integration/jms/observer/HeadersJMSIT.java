@@ -21,16 +21,21 @@ import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.jgroups.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -47,7 +52,12 @@ import javax.jms.MessageListener;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.EventType;
 
@@ -85,12 +95,26 @@ public class HeadersJMSIT implements MessageListener {
 
     private static final String testRemoved = "/testMessageFromRemoval-" + randomUUID();
 
-    private static final String INGESTION_EVENT_TYPE = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
+    private static final String testFile = "/testMessageFromFile-" + randomUUID() + "/file1";
 
-    private static final String REMOVAL_EVENT_TYPE = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_REMOVED).toString();
+    private static final String testMeta = "/testMessageFromMetadata-" + randomUUID();
+
+    private static final String NODE_ADDED_EVENT_TYPE
+            = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
+    private static final String NODE_REMOVED_EVENT_TYPE
+            = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_REMOVED).toString();
+    private static final String PROP_ADDED_EVENT_TYPE
+            = REPOSITORY_NAMESPACE + EventType.valueOf(PROPERTY_ADDED).toString();
+    private static final String PROP_CHANGED_EVENT_TYPE
+            = REPOSITORY_NAMESPACE + EventType.valueOf(PROPERTY_CHANGED).toString();
+    private static final String PROP_REMOVED_EVENT_TYPE
+            = REPOSITORY_NAMESPACE + EventType.valueOf(PROPERTY_REMOVED).toString();
 
     @Inject
     private Repository repository;
+
+    @Inject
+    private BinaryService binaryService;
 
     @Inject
     private ContainerService containerService;
@@ -111,19 +135,67 @@ public class HeadersJMSIT implements MessageListener {
     @Test(timeout = TIMEOUT)
     public void testIngestion() throws RepositoryException {
 
-        LOGGER.debug("Expecting a {} event", INGESTION_EVENT_TYPE);
+        LOGGER.debug("Expecting a {} event", NODE_ADDED_EVENT_TYPE);
 
         final Session session = repository.login();
         try {
             containerService.findOrCreate(session, testIngested);
             session.save();
-            awaitMessageOrFail(testIngested, INGESTION_EVENT_TYPE);
+            awaitMessageOrFail(testIngested, NODE_ADDED_EVENT_TYPE, null);
         } finally {
             session.logout();
         }
     }
 
-    private void awaitMessageOrFail(final String id, final String eventType) {
+    @Test(timeout = TIMEOUT)
+    public void testFileEvents() throws InvalidChecksumException, RepositoryException {
+
+        final Session session = repository.login();
+
+        try {
+            binaryService.findOrCreate(session, testFile)
+                .setContent(new ByteArrayInputStream("foo".getBytes()), "text/plain", null, null, null);
+            session.save();
+            awaitMessageOrFail(testFile, NODE_ADDED_EVENT_TYPE, HAS_SIZE.toString());
+
+            binaryService.find(session, testFile)
+                .setContent(new ByteArrayInputStream("bar".getBytes()), "text/plain", null, null, null);
+            session.save();
+            awaitMessageOrFail(testFile, PROP_CHANGED_EVENT_TYPE, HAS_SIZE.toString());
+
+            binaryService.find(session, testFile).delete();
+            session.save();
+            awaitMessageOrFail(testFile, NODE_REMOVED_EVENT_TYPE, null);
+        } finally {
+            session.logout();
+        }
+    }
+
+    @Test(timeout = TIMEOUT)
+    public void testMetadataEvents() throws RepositoryException {
+
+        final Session session = repository.login();
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
+
+        try {
+            final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);
+            final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
+            resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PropertiesRdfContext.class));
+            session.save();
+            awaitMessageOrFail(testMeta, PROP_ADDED_EVENT_TYPE, "http://foo.com/prop");
+
+            final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
+            final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
+                + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
+            resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PropertiesRdfContext.class));
+            session.save();
+            awaitMessageOrFail(testMeta, PROP_CHANGED_EVENT_TYPE, "http://foo.com/prop");
+        } finally {
+            session.logout();
+        }
+    }
+
+    private void awaitMessageOrFail(final String id, final String eventType, final String property) {
         await().pollInterval(ONE_SECOND).until(new Callable<Boolean>() {
 
             @Override
@@ -133,8 +205,8 @@ public class HeadersJMSIT implements MessageListener {
                     @Override
                     public boolean apply(final Message message) {
                         try {
-                            return getIdentifier(message).equals(id) &&
-                                    getEventTypes(message).contains(eventType);
+                            return getIdentifier(message).equals(id) && getEventTypes(message).contains(eventType)
+                                    && (property == null || getProperties(message).contains(property));
                         } catch (final JMSException e) {
                             throw propagate(e);
                         }
@@ -147,14 +219,14 @@ public class HeadersJMSIT implements MessageListener {
     @Test(timeout = TIMEOUT)
     public void testRemoval() throws RepositoryException {
 
-        LOGGER.debug("Expecting a {} event", REMOVAL_EVENT_TYPE);
+        LOGGER.debug("Expecting a {} event", NODE_REMOVED_EVENT_TYPE);
         final Session session = repository.login();
         try {
             final Container resource = containerService.findOrCreate(session, testRemoved);
             session.save();
             resource.delete();
             session.save();
-            awaitMessageOrFail(testRemoved, REMOVAL_EVENT_TYPE);
+            awaitMessageOrFail(testRemoved, NODE_REMOVED_EVENT_TYPE, null);
         } finally {
             session.logout();
         }
