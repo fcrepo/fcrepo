@@ -51,8 +51,6 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
     private static final List<Integer> PROPERTY_EVENT_TYPES = asList(PROPERTY_ADDED, PROPERTY_CHANGED,
             PROPERTY_REMOVED);
 
-    private final static String propPattern = "/[a-zA-Z0-9\\.]+:[a-zA-Z0-9\\.]+";
-
     /**
      * Extracts the node identifier from a JCR {@link Event}.
      */
