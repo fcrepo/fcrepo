@@ -30,7 +30,7 @@ public class FixityEventTest {
     public void SetUp() {
         fixityEvent = new org.fcrepo.kernel.observer.FixityEvent();
         fixityEvent.setDate(1428335457057L);
-        fixityEvent.setType(128);
+        fixityEvent.setType(4096);
         fixityEvent.setPath("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
         fixityEvent.setIdentifier("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
         fixityEvent.setBaseURL("http://localhost:8080/rest/");
@@ -48,7 +48,7 @@ public class FixityEventTest {
 
     @Test
     public void testGetType() {
-        assertEquals(128, fixityEvent.getType());
+        assertEquals(4096, fixityEvent.getType());
     }
 
     @Test

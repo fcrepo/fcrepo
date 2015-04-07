@@ -144,7 +144,6 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(BASE_URL_HEADER_NAME, fixityEvent.getBaseURL());
         message.setStringProperty(USER_HEADER_NAME, fixityEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, fixityEvent.getUserData());
-        //message.setStringProperty(PROPERTIES_HEADER_NAME, getPropertiesAsString(fixityEvent));
         message.setStringProperty(FIXITY_HEADER_NAME, fixityEvent.getFixity());
         message.setStringProperty(CONTENT_DIGEST_HEADER_NAME, fixityEvent.getContentDigest());
         message.setStringProperty(CONTENT_SIZE_HEADER_NAME, fixityEvent.getContentSize());
@@ -166,20 +165,4 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     }
 
     private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);
-
-    /*
-    private String getPropertiesAsString(final FixityEvent fixityEvent) {
-        final StringBuilder propsStrBuilder = new StringBuilder();
-        for (Map.Entry<String,String> entry : fixityEvent.getInfo().entrySet()) {
-            propsStrBuilder.append(entry.getKey()).append("->").append(entry.getValue()).append(",");
-        }
-        String propsStr = new String();
-        if (propsStrBuilder.toString().endsWith(",")) {
-            propsStr = propsStrBuilder.substring(0,propsStrBuilder.length() - 1).toString();
-        } else {
-            propsStr = propsStrBuilder.toString();
-        }
-        return propsStr;
-    }
-    */
 }
