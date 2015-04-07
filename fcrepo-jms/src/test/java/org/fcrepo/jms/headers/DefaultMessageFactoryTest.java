@@ -18,7 +18,10 @@ package org.fcrepo.jms.headers;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.CONTENT_DIGEST_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.CONTENT_SIZE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.FIXITY_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
@@ -31,7 +34,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
-import java.util.HashMap;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -104,19 +106,16 @@ public class DefaultMessageFactoryTest {
     @Test
     public void testBuildFixityMessageContent() throws RepositoryException, JMSException {
         when(mockFixityEvent.getDate()).thenReturn(1428335457057L);
-        when(mockFixityEvent.getType()).thenReturn(128);
+        when(mockFixityEvent.getType()).thenReturn(4096);
         when(mockFixityEvent.getPath()).thenReturn("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
         when(mockFixityEvent.getIdentifier()).thenReturn("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
         when(mockFixityEvent.getBaseURL()).thenReturn("http://localhost:8080/rest/");
-        final HashMap<String,String> info = new HashMap<String,String>();
-        info.put("http://www.loc.gov/premis/rdf/v1#hasMessageDigest",
-                "urn:sha1:ca063d541865ab93d062f35800feb5011183abe6");
-        info.put("http://www.loc.gov/premis/rdf/v1#hasSize", "56114^^http://www.w3.org/2001/XMLSchema#long");
-        info.put("http://fedora.info/definitions/v4/repository#status", "SUCCESS");
-        when(mockFixityEvent.getInfo()).thenReturn(info);
         when(mockFixityEvent.getUserID()).thenReturn("bypassAdmin");
         when(mockFixityEvent.getUserData())
                 .thenReturn("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0");
+        when(mockFixityEvent.getFixity()).thenReturn("SUCCESS");
+        when(mockFixityEvent.getContentDigest()).thenReturn("urn:sha1:ca063d541865ab93d062f35800feb5011183abe6");
+        when(mockFixityEvent.getContentSize()).thenReturn("56114^^http://www.w3.org/2001/XMLSchema#long");
 
         final Message message = mockSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, mockFixityEvent.getDate());
@@ -125,11 +124,9 @@ public class DefaultMessageFactoryTest {
         message.setStringProperty(BASE_URL_HEADER_NAME, mockFixityEvent.getBaseURL());
         message.setStringProperty(USER_HEADER_NAME, mockFixityEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, mockFixityEvent.getUserData());
-        message.setStringProperty(PROPERTIES_HEADER_NAME,
-                "http://www.loc.gov/premis/rdf/v1#hasMessageDigest->" +
-                        "urn:sha1:ca063d541865ab93d062f35800feb5011183abe6," +
-                "http://www.loc.gov/premis/rdf/v1#hasSize->56114^^http://www.w3.org/2001/XMLSchema#long," +
-                "http://fedora.info/definitions/v4/repository#status->SUCCESS");
+        message.setStringProperty(FIXITY_HEADER_NAME, mockFixityEvent.getFixity());
+        message.setStringProperty(CONTENT_DIGEST_HEADER_NAME, mockFixityEvent.getContentDigest());
+        message.setStringProperty(CONTENT_SIZE_HEADER_NAME, mockFixityEvent.getContentSize());
         assertEquals(testDefaultMessageFactory.getFixityMessage(mockFixityEvent,mockSession),message);
     }
 

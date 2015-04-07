@@ -15,13 +15,12 @@
  */
 package org.fcrepo.jms.headers;
 
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -71,6 +70,10 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     public static final String USER_HEADER_NAME = JMS_NAMESPACE + "user";
     public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
 
+    public static final String FIXITY_HEADER_NAME = JMS_NAMESPACE + "fixity";
+    public static final String CONTENT_DIGEST_HEADER_NAME = JMS_NAMESPACE + "contentDigest";
+    public static final String CONTENT_SIZE_HEADER_NAME = JMS_NAMESPACE + "contentSize";
+
     private String baseURL;
     private String user;
     private String userAgent;
@@ -83,7 +86,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
         String path = jcrEvent.getPath();
-        if (path.endsWith("/" + JCR_CONTENT)) {
+        if ( path.endsWith("/" + JCR_CONTENT) ) {
             path = path.replaceAll("/" + JCR_CONTENT, "");
         }
 
@@ -104,13 +107,13 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
                 LOGGER.warn("MessageFactory event UserData is empty!");
             }
 
-        } catch (final RuntimeException ex) {
+        } catch ( final RuntimeException ex ) {
             LOGGER.warn("Error setting baseURL or userAgent", ex);
         }
 
         message.setStringProperty(IDENTIFIER_HEADER_NAME, path);
-        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs(jcrEvent
-                .getTypes()));
+        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent
+                .getTypes() ));
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
@@ -129,6 +132,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
      * @throws JMSException
      */
 
+    @Override
     public Message getFixityMessage(final FixityEvent fixityEvent,
                                     final javax.jms.Session jmsSession) throws RepositoryException,
             JMSException {
@@ -136,11 +140,14 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setLongProperty(TIMESTAMP_HEADER_NAME, fixityEvent.getDate());
         message.setStringProperty(IDENTIFIER_HEADER_NAME, fixityEvent.getPath());
         message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs(
-                new HashSet<Integer>(Arrays.asList(fixityEvent.getType()))));
+                new HashSet<>(asList(fixityEvent.getType()))));
         message.setStringProperty(BASE_URL_HEADER_NAME, fixityEvent.getBaseURL());
         message.setStringProperty(USER_HEADER_NAME, fixityEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, fixityEvent.getUserData());
-        message.setStringProperty(PROPERTIES_HEADER_NAME, getPropertiesAsString(fixityEvent));
+        //message.setStringProperty(PROPERTIES_HEADER_NAME, getPropertiesAsString(fixityEvent));
+        message.setStringProperty(FIXITY_HEADER_NAME, fixityEvent.getFixity());
+        message.setStringProperty(CONTENT_DIGEST_HEADER_NAME, fixityEvent.getContentDigest());
+        message.setStringProperty(CONTENT_SIZE_HEADER_NAME, fixityEvent.getContentSize());
         LOGGER.trace("getFixityMessage return: {}", message);
         return message;
     }
@@ -160,6 +167,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);
 
+    /*
     private String getPropertiesAsString(final FixityEvent fixityEvent) {
         final StringBuilder propsStrBuilder = new StringBuilder();
         for (Map.Entry<String,String> entry : fixityEvent.getInfo().entrySet()) {
@@ -173,4 +181,5 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         }
         return propsStr;
     }
+    */
 }

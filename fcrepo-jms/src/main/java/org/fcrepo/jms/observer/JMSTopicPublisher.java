@@ -91,7 +91,7 @@ public class JMSTopicPublisher {
     @Subscribe
     public void publishFedoraEvent(final FixityEvent fixityEvent) throws JMSException,
         RepositoryException, IOException {
-        LOGGER.debug("Received an event from the internal bus:" + fixityEvent.toString());
+        LOGGER.debug("Received an event from the internal bus: {}", fixityEvent.toString());
         final Message tm = eventFactory.getFixityMessage(fixityEvent,jmsSession);
         LOGGER.debug("Transformed the event to a JMS message.");
         producer.send(tm);

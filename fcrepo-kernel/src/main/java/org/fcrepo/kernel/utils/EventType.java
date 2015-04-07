@@ -35,7 +35,7 @@ public enum EventType {
     PROPERTY_CHANGED(javax.jcr.observation.Event.PROPERTY_CHANGED, "property changed"),
     NODE_MOVED(javax.jcr.observation.Event.NODE_MOVED, "node moved"),
     PERSIST(javax.jcr.observation.Event.PERSIST, "persist"),
-    FIXITY(128,"fixity");
+    FIXITY(4096,"fixity");
 
     private static final Map<Integer, EventType> translation;
 

@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
@@ -28,6 +29,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
@@ -50,6 +52,10 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_STATE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_RESULT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -375,5 +381,46 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     public static boolean hasMixin(final Node node) {
         return isFedoraBinary.apply(node);
+    }
+
+    /**
+     *
+     * @param rs
+     * @param baseURL
+     * @param agent
+     * @param userID
+     * @return
+     */
+    @Override
+    public FixityEvent createFixityEvent(final RdfStream rs,
+                                            final String baseURL, final String agent,
+                                            final String userID) {
+        final FixityEvent fixityEvent = new FixityEvent();
+        fixityEvent.setDate(System.currentTimeMillis());
+        fixityEvent.setType(4096);
+        while (rs.hasNext()) {
+            final Triple triple = rs.next();
+            final String predicate = triple.getPredicate().toString();
+            final String object = triple.getObject().toString();
+            if (predicate.equals(HAS_FIXITY_RESULT.toString())) {
+                String identifier = object.replaceAll(baseURL,"");
+                identifier = "/" + identifier.substring(0,identifier.indexOf("#fixity"));
+                fixityEvent.setPath(identifier);
+                fixityEvent.setIdentifier(identifier);
+            }
+            if (predicate.equals(HAS_SIZE.toString())) {
+                fixityEvent.setContentSize(object);
+            }
+            if (predicate.equals(HAS_MESSAGE_DIGEST.toString())) {
+                fixityEvent.setContentDigest(object);
+            }
+            if (predicate.equals(HAS_FIXITY_STATE.toString())) {
+                fixityEvent.setFixity(object);
+            }
+        }
+        fixityEvent.setUserID(userID);
+        fixityEvent.setBaseURL(baseURL);
+        fixityEvent.setUserData(agent);
+        return fixityEvent;
     }
 }

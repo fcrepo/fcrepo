@@ -43,6 +43,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -122,7 +123,10 @@ public class FedoraFixity extends ContentExposingResource {
                 .topic(translator().reverse().convert(resource()).asNode())
                 .session(session);
         LOGGER.info("Debug for rdfStream");
-        createFixityEvent(eventBus, rs, baseURL, agent, session().getUserID());
+
+        final FixityEvent fixityEvent = ((FedoraBinary)resource()).createFixityEvent(rs,
+                baseURL, agent, session().getUserID());
+        eventBus.post(fixityEvent);
 
         return ((FedoraBinary)resource()).getFixity(translator())
                 .topic(translator().reverse().convert(resource()).asNode())

@@ -18,20 +18,12 @@ package org.fcrepo.kernel.observer;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.HashMap;
 
 /**
  * Created by ermadmix on 4/6/2015.
  * @author ermadmix
  */
 public class FixityEventTest {
-
-    //@Test(expected = java.lang.IllegalArgumentException.class)
-    //public void testWrapNullFedoraEvent() {
-    //    new org.fcrepo.kernel.observer.FixityEvent((org.fcrepo.kernel.observer.FixityEvent)null);
-    //}
 
     org.fcrepo.kernel.observer.FixityEvent fixityEvent;
     @Before
@@ -42,14 +34,11 @@ public class FixityEventTest {
         fixityEvent.setPath("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
         fixityEvent.setIdentifier("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
         fixityEvent.setBaseURL("http://localhost:8080/rest/");
-        final HashMap<String,String> info = new HashMap<String,String>();
-        info.put("http://www.loc.gov/premis/rdf/v1#hasMessageDigest",
-                "urn:sha1:ca063d541865ab93d062f35800feb5011183abe6");
-        info.put("http://www.loc.gov/premis/rdf/v1#hasSize","56114^^http://www.w3.org/2001/XMLSchema#long");
-        info.put("http://fedora.info/definitions/v4/repository#status","SUCCESS");
-        fixityEvent.setInfo(info);
         fixityEvent.setUserID("bypassAdmin");
         fixityEvent.setUserData("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0");
+        fixityEvent.setFixity("SUCCESS");
+        fixityEvent.setContentDigest("urn:sha1:ca063d541865ab93d062f35800feb5011183abe6");
+        fixityEvent.setContentSize("56114^^http://www.w3.org/2001/XMLSchema#long");
     }
 
     @Test
@@ -78,17 +67,6 @@ public class FixityEventTest {
     }
 
     @Test
-    public void testGetInfoLen() {
-        assertEquals(3,fixityEvent.getInfo().size());
-    }
-
-    @Test
-    public void testGetInfoContents() {
-        assertTrue(fixityEvent.getInfo().containsKey("http://www.loc.gov/premis/rdf/v1#hasMessageDigest"));
-        assertTrue(fixityEvent.getInfo().containsValue("urn:sha1:ca063d541865ab93d062f35800feb5011183abe6"));
-    }
-
-    @Test
     public void testGetUserID() {
         assertEquals("bypassAdmin", fixityEvent.getUserID());
     }
@@ -97,5 +75,20 @@ public class FixityEventTest {
     public void testGetUserData() {
         assertEquals("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0",
                 fixityEvent.getUserData());
+    }
+
+    @Test
+    public void testGetFixity() {
+        assertEquals("SUCCESS",fixityEvent.getFixity());
+    }
+
+    @Test
+    public void testGetContentDigest() {
+        assertEquals("urn:sha1:ca063d541865ab93d062f35800feb5011183abe6",fixityEvent.getContentDigest());
+    }
+
+    @Test
+    public void testGetContentSize() {
+        assertEquals("56114^^http://www.w3.org/2001/XMLSchema#long",fixityEvent.getContentSize());
     }
 }

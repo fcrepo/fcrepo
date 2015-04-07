@@ -26,11 +26,63 @@ public class FixityEvent {
 
     private long date;
     private String identifier;
-    private HashMap<String,String> info;
+    private HashMap<String,String> info;//deprecated in favor of using fixity,contentDigest,contentSize
     private String path;
-    int type;
-    String userData;
-    String userID;
+    private int type;
+    private String userData;
+    private String userID;
+    private String fixity;
+    private String contentDigest;
+    private String contentSize;
+
+
+    /**
+     *
+     * @return
+     */
+    public String getFixity() {
+        return fixity;
+    }
+
+    /**
+     *
+     * @param fixity
+     */
+    public void setFixity(final String fixity) {
+        this.fixity = fixity;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getContentDigest() {
+        return contentDigest;
+    }
+
+    /**
+     *
+     * @param contentDigest
+     */
+    public void setContentDigest(final String contentDigest) {
+        this.contentDigest = contentDigest;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getContentSize() {
+        return contentSize;
+    }
+
+    /**
+     *
+     * @param contentSize
+     */
+    public void setContentSize(final String contentSize) {
+        this.contentSize = contentSize;
+    }
 
     /**
      *
