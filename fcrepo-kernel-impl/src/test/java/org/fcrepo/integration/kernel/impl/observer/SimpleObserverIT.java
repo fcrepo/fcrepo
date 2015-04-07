@@ -15,13 +15,17 @@
  */
 package org.fcrepo.integration.kernel.impl.observer;
 
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
+import java.io.ByteArrayInputStream;
 import javax.inject.Inject;
+import javax.jcr.Node;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -31,6 +35,8 @@ import org.fcrepo.kernel.observer.FedoraEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.ValueFactory;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.google.common.eventbus.EventBus;
@@ -74,6 +80,28 @@ public class SimpleObserverIT extends AbstractIT {
 
         assertEquals("Where are my messages!?", (Integer) 2,
                 eventBusMessageCount);
+
+    }
+
+    @Test
+    public void contentEventCollapsing() throws RepositoryException {
+
+        final Session se = repository.login();
+        final Binary bin = ((ValueFactory)se.getValueFactory()).createBinary(
+                new ByteArrayInputStream("test content".getBytes()), null );
+        final Node node = se.getRootNode().addNode("/object1");
+        node.addMixin(FEDORA_BINARY);
+        node.setProperty(JCR_DATA, bin);
+        se.save();
+        se.logout();
+
+        try {
+            Thread.sleep(500);
+        } catch (final InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals("Node and content events not collapsed!", (Integer) 1, eventBusMessageCount);
 
     }
 

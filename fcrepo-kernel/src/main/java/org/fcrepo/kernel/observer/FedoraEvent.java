@@ -111,6 +111,15 @@ public class FedoraEvent {
      * @throws RepositoryException if the repository exception occurred
      */
     public String getPath() throws RepositoryException {
+        return getPath(e);
+    }
+
+    /**
+     * Get the path of the node related to this event (removing property names
+     * from the end of property nodes).
+     * @param e JCR Event
+    **/
+    public static String getPath(final Event e) throws RepositoryException {
         if (e.getType() == PROPERTY_ADDED   ||
             e.getType() == PROPERTY_CHANGED ||
             e.getType() == PROPERTY_REMOVED) {
