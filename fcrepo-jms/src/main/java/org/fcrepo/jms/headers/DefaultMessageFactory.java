@@ -87,7 +87,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
         String path = jcrEvent.getPath();
         if ( path.endsWith("/" + JCR_CONTENT) ) {
-            path = path.replaceAll("/" + JCR_CONTENT, "");
+            path = path.replaceAll("/" + JCR_CONTENT,"");
         }
 
         // extract baseURL and userAgent from event UserData
@@ -113,7 +113,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
         message.setStringProperty(IDENTIFIER_HEADER_NAME, path);
         message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent
-                .getTypes() ));
+                .getTypes()));
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
@@ -165,4 +165,5 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     }
 
     private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);
+
 }

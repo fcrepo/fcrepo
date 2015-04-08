@@ -48,6 +48,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Iterator;
+
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Binary;
@@ -613,5 +614,4 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
         return null;
     }
-
 }
