@@ -300,7 +300,10 @@ public class FedoraBinaryImplIT extends AbstractIT {
             final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/"
                     + "testRepositoryContent");
 
-            final Model fixityResults = ds.getFixity(idTranslator,null,null,mockBus).asModel();
+            final String baseURL = "http://localhost:8080/rest/";
+            final String agent = "Mozilla...";
+
+            final Model fixityResults = ds.getFixity(idTranslator, baseURL, agent, mockBus).asModel();
 
             assertNotEquals(0, fixityResults.size());
 
@@ -331,7 +334,10 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testMemoryContent");
 
-            final Model fixityResults = ds.getFixity(idTranslator,null,null, mockBus).asModel();
+            final String baseURL = "http://localhost:8080/rest/";
+            final String agent = "Mozilla...";
+
+            final Model fixityResults = ds.getFixity(idTranslator, baseURL, agent, mockBus).asModel();
 
             assertNotEquals(0, fixityResults.size());
 
@@ -363,7 +369,10 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testRandomContent");
 
-            final Model fixityResults = ds.getFixity(idTranslator,null,null,mockBus).asModel();
+            final String baseURL = "http://localhost:8080/rest/";
+            final String agent = "Mozilla...";
+
+            final Model fixityResults = ds.getFixity(idTranslator,baseURL, agent, mockBus).asModel();
 
             assertNotEquals(0, fixityResults.size());
 

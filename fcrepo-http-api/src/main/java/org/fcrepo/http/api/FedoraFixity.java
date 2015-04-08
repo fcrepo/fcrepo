@@ -117,7 +117,7 @@ public class FedoraFixity extends ContentExposingResource {
         }
 
         LOGGER.info("Get fixity for '{}'", externalPath);
-        return ((FedoraBinary)resource()).getFixity(translator(),null,null,eventBus)
+        return ((FedoraBinary)resource()).getFixity(translator(), baseURL, agent, eventBus)
                 .topic(translator().reverse().convert(resource()).asNode())
                 .session(session);
 

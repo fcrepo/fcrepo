@@ -298,7 +298,11 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
         final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(repo.login());
-        final Model results = binary.getFixity(graphSubjects,null,null,mock(EventBus.class)).asModel();
+
+        final String baseURL = "http://localhost:8080/rest/";
+        final String agent = "Mozilla...";
+
+        final Model results = binary.getFixity(graphSubjects, baseURL ,agent, mock(EventBus.class)).asModel();
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());
