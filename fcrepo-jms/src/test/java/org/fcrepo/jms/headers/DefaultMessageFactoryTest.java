@@ -18,7 +18,10 @@ package org.fcrepo.jms.headers;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.CONTENT_DIGEST_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.CONTENT_SIZE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.FIXITY_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
@@ -41,6 +44,7 @@ import javax.jms.Session;
 import org.apache.activemq.command.ActiveMQObjectMessage;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.utils.EventType;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +62,9 @@ public class DefaultMessageFactoryTest {
 
     @Mock
     private FedoraEvent mockEvent;
+
+    @Mock
+    private FixityEvent mockFixityEvent;
 
     private DefaultMessageFactory testDefaultMessageFactory;
 
@@ -94,6 +101,33 @@ public class DefaultMessageFactoryTest {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage("base-url/", "Test UserAgent", testPath + "/" + JCR_CONTENT);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
+    }
+
+    @Test
+    public void testBuildFixityMessageContent() throws RepositoryException, JMSException {
+        when(mockFixityEvent.getDate()).thenReturn(1428335457057L);
+        when(mockFixityEvent.getType()).thenReturn(4096);
+        when(mockFixityEvent.getPath()).thenReturn("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
+        when(mockFixityEvent.getIdentifier()).thenReturn("/83/0b/57/17/830b5717-1434-4653-af9c-a00d6d020426");
+        when(mockFixityEvent.getBaseURL()).thenReturn("http://localhost:8080/rest/");
+        when(mockFixityEvent.getUserID()).thenReturn("bypassAdmin");
+        when(mockFixityEvent.getUserData())
+                .thenReturn("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0");
+        when(mockFixityEvent.getFixity()).thenReturn("SUCCESS");
+        when(mockFixityEvent.getContentDigest()).thenReturn("urn:sha1:ca063d541865ab93d062f35800feb5011183abe6");
+        when(mockFixityEvent.getContentSize()).thenReturn("56114^^http://www.w3.org/2001/XMLSchema#long");
+
+        final Message message = mockSession.createMessage();
+        message.setLongProperty(TIMESTAMP_HEADER_NAME, mockFixityEvent.getDate());
+        message.setStringProperty(IDENTIFIER_HEADER_NAME, mockFixityEvent.getPath());
+        message.setStringProperty(EVENT_TYPE_HEADER_NAME, "http://fedora.info/definitions/v4/repository#FIXITY");
+        message.setStringProperty(BASE_URL_HEADER_NAME, mockFixityEvent.getBaseURL());
+        message.setStringProperty(USER_HEADER_NAME, mockFixityEvent.getUserID());
+        message.setStringProperty(USER_AGENT_HEADER_NAME, mockFixityEvent.getUserData());
+        message.setStringProperty(FIXITY_HEADER_NAME, mockFixityEvent.getFixity());
+        message.setStringProperty(CONTENT_DIGEST_HEADER_NAME, mockFixityEvent.getContentDigest());
+        message.setStringProperty(CONTENT_SIZE_HEADER_NAME, mockFixityEvent.getContentSize());
+        assertEquals(testDefaultMessageFactory.getFixityMessage(mockFixityEvent,mockSession),message);
     }
 
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)

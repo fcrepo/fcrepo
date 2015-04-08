@@ -28,6 +28,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.ws.rs.GET;
@@ -35,15 +36,21 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.UriInfo;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
+
+import java.net.URI;
 
 /**
  * Run a fixity check on a path
@@ -62,6 +69,9 @@ public class FedoraFixity extends ContentExposingResource {
 
     @PathParam("path") protected String externalPath;
 
+    protected String baseURL;
+    protected String agent;
+
 
     /**
      * Default JAX-RS entry point
@@ -77,6 +87,15 @@ public class FedoraFixity extends ContentExposingResource {
     @VisibleForTesting
     public FedoraFixity(final String externalPath) {
         this.externalPath = externalPath;
+    }
+
+    /**
+     *  set up fields recorded in fixity event
+     */
+    @PostConstruct
+    public void postConstruct() {
+        baseURL = setUpBaseURL(uriInfo);
+        agent = setUpAgent(headers);
     }
 
     /**
@@ -99,6 +118,16 @@ public class FedoraFixity extends ContentExposingResource {
         }
 
         LOGGER.info("Get fixity for '{}'", externalPath);
+
+        final RdfStream rs = ((FedoraBinary)resource()).getFixity(translator())
+                .topic(translator().reverse().convert(resource()).asNode())
+                .session(session);
+        LOGGER.info("Debug for rdfStream");
+
+        final FixityEvent fixityEvent = ((FedoraBinary)resource()).createFixityEvent(rs,
+                baseURL, agent, session().getUserID());
+        eventBus.post(fixityEvent);
+
         return ((FedoraBinary)resource()).getFixity(translator())
                 .topic(translator().reverse().convert(resource()).asNode())
                 .session(session);
@@ -113,5 +142,24 @@ public class FedoraFixity extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
+    }
+
+    private String setUpBaseURL(final UriInfo uriInfo) {
+        try {
+            final URI baseURL = uriInfo.getBaseUri();
+            LOGGER.debug("setting baseURL = " + baseURL.toString());
+            return baseURL.toString();
+        } catch (Exception ex) {
+            LOGGER.warn("Error setting baseURL", ex);
+        }
+        return "";
+    }
+
+    private String setUpAgent(final HttpHeaders headers) {
+        if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
+            return headers.getHeaderString("user-agent");
+        } else {
+            return "";
+        }
     }
 }

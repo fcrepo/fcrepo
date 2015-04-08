@@ -125,7 +125,7 @@ public final class RdfLexicon {
         createProperty(PREMIS_NAMESPACE + "hasFixity");
 
     public static final Property HAS_FIXITY_STATE =
-            createProperty(REPOSITORY_NAMESPACE + "status");
+            createProperty(PREMIS_NAMESPACE + "hasEventOutcome");
 
     public static final Property HAS_FIXITY_CHECK_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "numFixityChecks");

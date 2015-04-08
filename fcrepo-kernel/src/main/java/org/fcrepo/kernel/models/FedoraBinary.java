@@ -18,6 +18,7 @@ package org.fcrepo.kernel.models;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -95,4 +96,16 @@ public interface FedoraBinary extends NonRdfSource {
      */
     RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
                         URI contentDigest, long size);
+
+    /**
+     *
+     * @param rs
+     * @param baseURL
+     * @param agent
+     * @param userID
+     * @return
+     */
+    FixityEvent createFixityEvent(final RdfStream rs,
+                                            final String baseURL, final String agent,
+                                            final String userID);
 }
