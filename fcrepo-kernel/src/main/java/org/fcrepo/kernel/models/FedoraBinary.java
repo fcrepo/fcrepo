@@ -16,9 +16,9 @@
 package org.fcrepo.kernel.models;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.google.common.eventbus.EventBus;
 import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
@@ -83,29 +83,28 @@ public interface FedoraBinary extends NonRdfSource {
     /**
      * Get the fixity of this datastream compared to metadata stored in the repository
      * @param idTranslator the id translator
+     * @param baseURL base URL of the application making the fixity check
+     * @param userAgent user agent of the client making the fixity check
      * @return the fixity of this datastream compared to metadata stored in the repository
      */
-    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator);
+    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
+                        String baseURL,
+                        String userAgent,
+                        EventBus eventBus);
 
     /**
      * Get the fixity of this datastream in a given repository's binary store.
      * @param idTranslator the id translator
      * @param contentDigest the checksum to compare against
      * @param size the expected size of the binary
+     * @param baseURL base URL of the application making the fixity check
+     * @param userAgent user agent of the client making the fixity check
      * @return the fixity of the datastream
      */
     RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
-                        URI contentDigest, long size);
-
-    /**
-     *
-     * @param rs
-     * @param baseURL
-     * @param agent
-     * @param userID
-     * @return
-     */
-    FixityEvent createFixityEvent(final RdfStream rs,
-                                            final String baseURL, final String agent,
-                                            final String userID);
+                        URI contentDigest,
+                        long size,
+                        String baseURL,
+                        String userAgent,
+                        EventBus eventBus);
 }

@@ -19,6 +19,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -64,9 +65,6 @@ public class FedoraFixityTest {
     private FedoraBinary mockBinary;
 
     @Mock
-    private EventBus mockBus;
-
-    @Mock
     private FedoraFixity mockFixity;
 
     @Mock
@@ -91,10 +89,8 @@ public class FedoraFixityTest {
     public void testGetDatastreamFixity() {
         final RdfStream expected = new RdfStream();
 
-        when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
-        setField(testObj, "eventBus", mockBus);
-        when(mockBinary.createFixityEvent(any(RdfStream.class),
-                any(String.class),any(String.class),any(String.class))).thenReturn(mockFixityEvent);
+        when(mockBinary.getFixity(any(IdentifierConverter.class), anyString(), anyString(), any(EventBus.class)))
+                .thenReturn(expected);
         final RdfStream actual = testObj.getDatastreamFixity();
 
         assertEquals(expected, actual);
