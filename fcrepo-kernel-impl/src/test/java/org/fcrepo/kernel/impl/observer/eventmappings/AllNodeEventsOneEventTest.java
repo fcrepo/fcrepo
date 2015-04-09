@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
@@ -65,7 +66,7 @@ public class AllNodeEventsOneEventTest {
 
     private static final String TEST_IDENTIFIER5 = randomUUID().toString();
 
-    private static final String TEST_PATH5 = "/test/node3/fcr:content";
+    private static final String TEST_PATH5 = "/test/node3/" + JCR_CONTENT;
 
     private final AllNodeEventsOneEvent testMapping = new AllNodeEventsOneEvent();
 
@@ -90,6 +91,9 @@ public class AllNodeEventsOneEventTest {
     @Mock
     private Iterator<Event> mockIterator2;
 
+    @Mock
+    private Iterator<Event> mockIterator3;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -113,6 +117,9 @@ public class AllNodeEventsOneEventTest {
         when(mockEvent5.getType()).thenReturn(NODE_ADDED);
         when(mockIterator2.next()).thenReturn(mockEvent4, mockEvent5);
         when(mockIterator2.hasNext()).thenReturn(true, true, false);
+
+        when(mockIterator3.next()).thenReturn(mockEvent4, mockEvent5);
+        when(mockIterator3.hasNext()).thenReturn(true, true, false);
     }
 
     @Test
@@ -124,6 +131,13 @@ public class AllNodeEventsOneEventTest {
     @Test
     public void testCollapseContentEvents() {
         assertEquals("Didn't collapse content node and fcr:content events!", 1, size(testMapping.apply(mockIterator2)));
+    }
+
+    @Test
+    public void testFileEventProperties() {
+        final FedoraEvent e = testMapping.apply(mockIterator3).next();
+        assertTrue("Didn't add fedora:hasContent property to fcr:content events!: " + e.getProperties(),
+                e.getProperties().contains("fedora:hasContent"));
     }
 
     @Test(expected = UnsupportedOperationException.class)
