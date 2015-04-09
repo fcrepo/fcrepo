@@ -124,7 +124,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
         private void addProperty( final FedoraEvent fedoraEvent, final Event ev ) {
             try {
-                if (ev.getPath().indexOf(JCR_CONTENT) != -1) {
+                if ( ev.getPath().contains(JCR_CONTENT)) {
                     fedoraEvent.addProperty("fedora:hasContent");
                 }
                 if (PROPERTY_EVENT_TYPES.contains(ev.getType())) {

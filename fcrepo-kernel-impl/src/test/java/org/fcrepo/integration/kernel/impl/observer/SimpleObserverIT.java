@@ -17,11 +17,16 @@ package org.fcrepo.integration.kernel.impl.observer;
 
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
 import javax.inject.Inject;
@@ -31,11 +36,15 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.impl.AbstractIT;
+import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.impl.FedoraBinaryImpl;
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.ValueFactory;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -84,14 +93,25 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Test
-    public void contentEventCollapsing() throws RepositoryException {
+    public void contentEventCollapsing() throws RepositoryException, InvalidChecksumException {
 
         final Session se = repository.login();
+        final JcrTools jcrTools = new JcrTools();
+
+        final Node n = jcrTools.findOrCreateNode(se.getRootNode(), "/object3", NT_FOLDER, NT_FILE);
+        n.addMixin(FEDORA_RESOURCE);
+
+        final String content = "test content";
+        final String checksum = "1eebdf4fdc9fc7bf283031b93f9aef3338de9052";
         final Binary bin = ((ValueFactory)se.getValueFactory()).createBinary(
-                new ByteArrayInputStream("test content".getBytes()), null );
-        final Node node = se.getRootNode().addNode("/object1");
-        node.addMixin(FEDORA_BINARY);
-        node.setProperty(JCR_DATA, bin);
+                new ByteArrayInputStream(content.getBytes()), null );
+
+        final Node contentNode = jcrTools.findOrCreateChild(n, JCR_CONTENT, NT_RESOURCE);
+        contentNode.addMixin(FEDORA_BINARY);
+        final FedoraBinary binary = new FedoraBinaryImpl(contentNode);
+        binary.setContent( new ByteArrayInputStream(content.getBytes()), "text/plain",
+                asURI("SHA-1", checksum), "text.txt", null);
+
         se.save();
         se.logout();
 

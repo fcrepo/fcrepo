@@ -135,7 +135,7 @@ public class AllNodeEventsOneEventTest {
 
     @Test
     public void testFileEventProperties() {
-        FedoraEvent e = testMapping.apply(mockIterator3).next();
+        final FedoraEvent e = testMapping.apply(mockIterator3).next();
         assertTrue("Didn't add fedora:hasContent property to fcr:content events!: " + e.getProperties(),
                 e.getProperties().contains("fedora:hasContent"));
     }
