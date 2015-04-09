@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.observer.eventmappings;
 
 import static com.google.common.collect.Multimaps.index;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 import static java.util.Arrays.asList;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
@@ -60,7 +61,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         public String apply(final Event ev) {
             try {
                 // build id from nodepath+user to collapse multiple nodes from adding/removing content nodes
-                final String id = FedoraEvent.getPath(ev).replaceAll("/fcr:content","") + "-" + ev.getUserID();
+                final String id = FedoraEvent.getPath(ev).replaceAll("/" + JCR_CONTENT,"") + "-" + ev.getUserID();
                 LOGGER.debug("Sorting an event by identifier: {}", id);
                 return id;
             } catch (final RepositoryException e) {
@@ -123,6 +124,9 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
         private void addProperty( final FedoraEvent fedoraEvent, final Event ev ) {
             try {
+                if (ev.getPath().indexOf(JCR_CONTENT) != -1) {
+                    fedoraEvent.addProperty("fedora:hasContent");
+                }
                 if (PROPERTY_EVENT_TYPES.contains(ev.getType())) {
                     final String eventPath = ev.getPath();
                     fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf('/') + 1));
