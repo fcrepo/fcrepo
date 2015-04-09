@@ -32,6 +32,7 @@ import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -108,6 +109,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -152,6 +154,7 @@ import com.hp.hpl.jena.vocabulary.DC_11;
 
 /**
  * @author cabeer
+ * @author ajs6f
  */
 public class FedoraLdpIT extends AbstractResourceIT {
 
@@ -560,6 +563,27 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testUpdateObjectGraphWithNonLocalTriples() throws Exception {
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+        final String otherPid = getRandomUniquePid();
+        createObject(otherPid);
+        final String location = serverAddress + pid;
+        final String otherLocation = serverAddress + otherPid;
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(location);
+        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(("INSERT { <" + location +
+                "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\". " + "<" + otherLocation +
+                "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\"" + " } WHERE {}")
+                .getBytes()));
+        updateObjectGraphMethod.setEntity(e);
+        final HttpResponse response = client.execute(updateObjectGraphMethod);
+        assertEquals("It ought not be possible to use PATCH to create non-local triples!", FORBIDDEN.getStatusCode(),
+                response.getStatusLine().getStatusCode());
+    }
+
+    @Test
     public void testPatchBinary() throws Exception {
         final String pid = getRandomUniquePid();
 
@@ -736,6 +760,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 createResource(subjectURI),
                 createProperty("info:rubydora#label"),
                 createPlainLiteral("asdfg")));
+    }
+
+    @Test
+    public void testCreateGraphWithNonLocalTriples() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniquePid();
+        final String otherPid = getRandomUniquePid();
+        createObject(otherPid);
+        final String otherLocation = serverAddress + otherPid;
+        final HttpPut replaceMethod = new HttpPut(subjectURI);
+        replaceMethod.addHeader("Content-Type", "application/n3");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                ("<" + subjectURI + "> <info:rubydora#label> \"asdfg\".\n" +
+                "<" + otherLocation + "> <info:rubydora#label> \"asdfg\"." )
+                        .getBytes()));
+        replaceMethod.setEntity(e);
+        final HttpResponse response = client.execute(replaceMethod);
+        assertEquals("It ought not be possible to create triples about a non-local resource!", FORBIDDEN
+                .getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
     @Test
@@ -918,6 +961,27 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String lastmod = response.getFirstHeader("Last-Modified").getValue();
         assertNotNull("Should set Last-Modified for new nodes", lastmod);
         assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
+    }
+
+    @Test
+    public void testIngestWithNewAndSparqlQueryWithNonLocalTriples() throws ParseException, IOException {
+        final String otherPid = getRandomUniquePid();
+        createObject(otherPid);
+        final String otherLocation = serverAddress + otherPid;
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(new ByteArrayInputStream(
+                ("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"this is a title\". " +
+                        "<" + otherLocation + "> <http://purl.org/dc/elements/1.1/title> \"this is a title\"" +
+                " } WHERE {}")
+                        .getBytes()));
+        method.setEntity(entity);
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("It ought no be possible to create triples about non-local resources!" + content, FORBIDDEN
+                .getStatusCode(), status);
     }
 
     @Test
