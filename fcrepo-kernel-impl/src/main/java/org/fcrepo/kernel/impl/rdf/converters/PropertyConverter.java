@@ -113,17 +113,25 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
                                                       final Map<String, String> namespaceMapping)
             throws RepositoryException {
 
+        // reject if update request contains any fcr namespaces
+        if (namespaceMapping != null && namespaceMapping.containsKey("fcr")) {
+            throw new FedoraInvalidNamespaceException("Invalid fcr namespace properties " + predicate + ".");
+        }
+
         final String rdfNamespace = predicate.getNameSpace();
+
+        // log warning if the user-supplied namespace doesn't match value from predicate.getNameSpace(),
+        // e.g., if the Jena method returns "http://" for "http://myurl.org" (no terminating character).
+        if (namespaceMapping != null && !namespaceMapping.containsValue(rdfNamespace)) {
+            LOGGER.warn("The namespace of predicate: {} was possibly misinterpreted as: {}."
+                    , predicate, rdfNamespace);
+        }
+
         final String rdfLocalname = predicate.getLocalName();
 
         final String prefix;
 
         assert (namespaceRegistry != null);
-
-        // reject if update request contains any fcr namespacess
-        if (namespaceMapping != null && namespaceMapping.containsKey("fcr")) {
-            throw new FedoraInvalidNamespaceException("Invalid fcr namespace properties " + predicate + ".");
-        }
 
         final String namespace = getJcrNamespaceForRDFNamespace(rdfNamespace);
 
