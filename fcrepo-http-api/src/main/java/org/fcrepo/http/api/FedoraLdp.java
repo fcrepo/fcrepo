@@ -38,6 +38,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -403,9 +404,13 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Link") final String link)
             throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
 
-        if (link != null && link.contains("http://www.w3.org/ns/ldp#Resource")) {
-            LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
-            throw new ServerErrorException("LDPR creation not implemented", NOT_IMPLEMENTED);
+        if (link != null) {
+            final Link linq = Link.valueOf(link);
+            if ("type".equals(linq.getRel()) && (LDP_NAMESPACE + "Resource").equals(linq.getUri().toString())) {
+
+                LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
+                throw new ServerErrorException("LDPR creation not implemented", NOT_IMPLEMENTED);
+            }
         }
 
         if (!(resource() instanceof Container)) {
