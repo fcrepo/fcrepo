@@ -686,7 +686,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     }
 
-    @Test
+    @Ignore("Non-target resource. FCREPO-1411")
     public void testReplaceGraph() throws Exception {
         final String pid = getRandomUniquePid();
 
@@ -781,6 +781,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 .getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
+    @Ignore("Non-target resource. FCREPO-1411")
     @Test
     public void testCreateGraphWithBlanknodes() throws Exception {
         final String pid = getRandomUniquePid();

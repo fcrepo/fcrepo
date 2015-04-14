@@ -263,7 +263,7 @@ public class FedoraResourceImplTest {
                 testObj.isNew());
     }
 
-    @Test
+    @Test (expected = UnsupportedOperationException.class)
     public void testReplacePropertiesDataset() throws Exception {
 
         final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);
