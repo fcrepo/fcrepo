@@ -125,7 +125,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Context protected Request request;
 
-    protected Deskolemizer deskolemizer;
+    private Deskolemizer deskolemizer;
 
     @Context protected HttpServletResponse servletResponse;
 
@@ -146,7 +146,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected abstract String externalPath();
 
-    protected Deskolemizer deskolemizer() {
+    private Deskolemizer deskolemizer() {
         if (deskolemizer != null) {
             return deskolemizer;
         }
