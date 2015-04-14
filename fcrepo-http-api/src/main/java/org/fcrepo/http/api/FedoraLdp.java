@@ -56,6 +56,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
@@ -282,6 +283,8 @@ public class FedoraLdp extends ContentExposingResource {
                 replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
             } catch (final RiotException e) {
                 throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
+            } catch (final UnsupportedOperationException u) {
+                throw new ForbiddenException("Non targetted resource " + u.getMessage(), u);
             }
         } else if (!resource.isNew()) {
             boolean emptyRequest = true;

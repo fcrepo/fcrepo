@@ -509,6 +509,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         );
     }
 
+    @Ignore
     @Test
     public void testReplaceProperties() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();

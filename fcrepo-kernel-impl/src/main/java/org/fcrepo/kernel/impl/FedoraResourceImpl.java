@@ -59,6 +59,8 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
@@ -465,10 +467,23 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
+        LOGGER.info("Resource path: {}", getPath());
+
+        final StmtIterator stmtIterator = inputModel.listStatements();
+
+        while (stmtIterator.hasNext()) {
+            final Statement s = stmtIterator.next();
+            final Resource subject = s.getSubject();
+            if (!subject.toString().contains(getPath())) {
+                LOGGER.info("Input model subject not target of resource: {}", subject.toString());
+                throw new UnsupportedOperationException("Non targetted resource " + subject.toString());
+            }
+        }
+
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
 
         final GraphDifferencingIterator differencer =
-            new GraphDifferencingIterator(inputModel, originalTriples);
+                new GraphDifferencingIterator(inputModel, originalTriples);
 
         final StringBuilder exceptions = new StringBuilder();
         try {
