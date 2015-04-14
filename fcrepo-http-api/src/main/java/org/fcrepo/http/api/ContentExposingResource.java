@@ -147,7 +147,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected abstract String externalPath();
 
     protected Deskolemizer deskolemizer() {
-        return deskolemizer == null ? deskolemizer = new Deskolemizer(translator(), null) : deskolemizer;
+        if (deskolemizer != null) {
+            return deskolemizer;
+        }
+        return deskolemizer = new Deskolemizer(translator(), null);
     }
 
     protected Response getContent(final String rangeValue,
