@@ -15,8 +15,10 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
+import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
@@ -26,18 +28,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import org.fcrepo.kernel.observer.EventFilter;
 import org.slf4j.Logger;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -57,12 +58,8 @@ public class DefaultFilter implements EventFilter {
 
     private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
-    private static final Function<NodeType, String> nodetype2string = new Function<NodeType, String>() {
-        @Override
-        public String apply(final NodeType input) {
-            return input.getName();
-        }
-    };
+    private static final HashSet<String> fedoraMixins =
+            newHashSet(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_RESOURCE);
 
     /**
      * Default constructor.
@@ -78,11 +75,7 @@ public class DefaultFilter implements EventFilter {
     @Override
     public boolean apply(final Event event) {
         try {
-            final Collection<String> mixinTypes = getMixinTypes(event);
-            return mixinTypes.contains(FEDORA_RESOURCE)
-                    || mixinTypes.contains(FEDORA_BINARY)
-                    || mixinTypes.contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION)
-                    || mixinTypes.contains(FEDORA_CONTAINER);
+            return !Collections.disjoint(getMixinTypes(event), fedoraMixins);
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;
@@ -96,8 +89,7 @@ public class DefaultFilter implements EventFilter {
         try {
             final org.modeshape.jcr.api.observation.Event modeEvent =
                     (org.modeshape.jcr.api.observation.Event) event;
-            return ImmutableSet.copyOf(transform(ImmutableList.copyOf(modeEvent.getMixinNodeTypes()),
-                    nodetype2string));
+            return transform(Arrays.asList(modeEvent.getMixinNodeTypes()), toStringFunction());
         } catch (final ClassCastException e) {
             throw new ClassCastException(event + " is not a Modeshape Event");
         }

@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
-import static com.google.common.base.Throwables.propagate;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.PathNotFoundException;
@@ -25,6 +24,7 @@ import javax.jcr.observation.Event;
 
 import com.google.common.base.Predicate;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.observer.EventFilter;
 import org.slf4j.Logger;
 
@@ -66,7 +66,7 @@ public class SuppressByMixinFilter extends DefaultFilter implements EventFilter 
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 

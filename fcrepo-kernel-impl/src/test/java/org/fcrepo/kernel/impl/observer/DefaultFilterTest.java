@@ -70,10 +70,10 @@ public class DefaultFilterTest {
     public void setUp() {
         initMocks(this);
         testObj = new DefaultFilter();
-        when(fedoraResource.getName()).thenReturn(FEDORA_RESOURCE);
-        when(fedoraContainer.getName()).thenReturn(FEDORA_CONTAINER);
-        when(fedoraDatastream.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-        when(fedoraBinary.getName()).thenReturn(FEDORA_BINARY);
+        when(fedoraResource.toString()).thenReturn(FEDORA_RESOURCE);
+        when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
+        when(fedoraDatastream.toString()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+        when(fedoraBinary.toString()).thenReturn(FEDORA_BINARY);
     }
 
     @Test
