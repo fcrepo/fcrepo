@@ -123,8 +123,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
                 //RDF the serialization
                 final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
-
-                model.add(formatRDF, RDFS_LABEL, key);
                 model.add(format, dcFormat, formatRDF);
             }
         }
