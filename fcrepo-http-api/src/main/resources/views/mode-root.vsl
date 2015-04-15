@@ -12,10 +12,10 @@
 
 
 <body class="mode_root">
-<div id="main" class="container" resource="$topic.getURI()">
+<div id="main" resource="$topic.getURI()">
 
     #parse("views/common-node-header.vsl")
-
+<div class="container">
     <div class="row">
         <div class="col-md-12">
         #parse("views/common-breadcrumb.vsl")
@@ -72,7 +72,7 @@
         </div>
 
       </div>
-
+</div>
 
   </div>
   </body>
