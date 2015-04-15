@@ -15,12 +15,18 @@
  */
 package org.fcrepo.integration.kernel.impl.observer;
 
+import static com.jayway.awaitility.Awaitility.await;
+import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -38,7 +44,6 @@ import org.springframework.test.context.ContextConfiguration;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import java.util.Set;
 
 /**
  * <p>SuppressByMixinFilterIT class.</p>
@@ -49,7 +54,10 @@ import java.util.Set;
 @ContextConfiguration({"/spring-test/eventing-suppress.xml", "/spring-test/repo.xml"})
 public class SuppressByMixinFilterIT extends AbstractIT {
 
-    private Integer eventBusMessageCount;
+    /**
+     * Time to wait for a set of test messages, in milliseconds.
+     */
+    private static final long TIMEOUT = 20000;
 
     @Inject
     private Repository repository;
@@ -57,59 +65,47 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     @Inject
     private EventBus eventBus;
 
-    @Test
+    private Set<String> eventsReceived = new HashSet<>();
+
+    @Test(timeout = TIMEOUT)
     public void shouldSuppressWithMixin() throws RepositoryException {
 
         final Session se = repository.login();
-        final Node node = se.getRootNode().addNode("/object1");
-        node.addMixin(FEDORA_CONTAINER);
-        node.addMixin(LDP_DIRECT_CONTAINER);
-        se.save();
-        se.logout();
-
         try {
-            Thread.sleep(500);
-        } catch (final InterruptedException e) {
-            e.printStackTrace();
+            // add node with suppressed mixin ldp:DirectContainer
+            final Node node = se.getRootNode().addNode("/object1");
+            node.addMixin(FEDORA_CONTAINER);
+            node.addMixin(LDP_DIRECT_CONTAINER);
+
+            // add second node without suppressed mixin
+            se.getRootNode().addNode("/object2").addMixin(FEDORA_CONTAINER);
+            se.save();
+
+            // should only see second node
+            waitForEvent("/object2");
+            assertFalse("Event not suppressed!", eventsReceived.contains("/object1"));
+        } catch (final RepositoryException e) {
+            se.logout();
         }
-
-        assertEquals("Event not suppressed!", (Integer)0, eventBusMessageCount);
-
     }
 
-    @Test
+    @Test(timeout = TIMEOUT)
     public void shouldAllowWithoutMixin() throws RepositoryException {
 
         final Session se = repository.login();
-        final Node node = se.getRootNode().addNode("/object1");
-        node.addMixin(FEDORA_CONTAINER);
-        se.save();
-        se.logout();
-
         try {
-            Thread.sleep(500);
-        } catch (final InterruptedException e) {
-            e.printStackTrace();
+            se.getRootNode().addNode("/object3").addMixin(FEDORA_CONTAINER);
+            se.save();
+
+            // should see one message
+            waitForEvent("/object3");
+        } catch (final RepositoryException e) {
+            se.logout();
         }
-
-        assertEquals("Wrong number of events!", (Integer)1, eventBusMessageCount);
-
-    }
-
-    @Subscribe
-    public void countMessages(final FedoraEvent e) {
-        eventBusMessageCount++;
-
-        final Set<String> properties = e.getProperties();
-        assertNotNull(properties);
-
-        final String expected = REPOSITORY_NAMESPACE + "mixinTypes";
-        assertTrue("Should contain: " + expected + properties, properties.contains(expected));
     }
 
     @Before
     public void acquireConnections() {
-        eventBusMessageCount = 0;
         eventBus.register(this);
     }
 
@@ -117,4 +113,26 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     public void releaseConnections() {
         eventBus.unregister(this);
     }
+
+    @Subscribe
+    public void receiveEvents(final FedoraEvent e) throws RepositoryException {
+        final Set<String> properties = e.getProperties();
+        assertNotNull(properties);
+
+        final String expected = REPOSITORY_NAMESPACE + "mixinTypes";
+        assertTrue("Should contain: " + expected + properties, properties.contains(expected));
+
+        eventsReceived.add(e.getPath());
+    }
+
+    private void waitForEvent(final String id) {
+        await().pollInterval(ONE_SECOND).until(new Callable<Boolean>() {
+
+            @Override
+            public Boolean call() {
+                return eventsReceived.contains(id);
+            }
+        });
+    }
+
 }
