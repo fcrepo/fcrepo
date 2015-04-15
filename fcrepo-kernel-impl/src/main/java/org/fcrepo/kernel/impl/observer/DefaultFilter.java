@@ -38,7 +38,6 @@ import org.fcrepo.kernel.observer.EventFilter;
 import org.slf4j.Logger;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -79,10 +78,7 @@ public class DefaultFilter implements EventFilter {
     @Override
     public boolean apply(final Event event) {
         try {
-            final org.modeshape.jcr.api.observation.Event modeEvent = getJcr21Event(event);
-
-            final List<NodeType> nodeTypes = ImmutableList.copyOf(modeEvent.getMixinNodeTypes());
-            final Collection<String> mixinTypes = ImmutableSet.copyOf(transform(nodeTypes, nodetype2string));
+            final Collection<String> mixinTypes = getMixinTypes(event);
             return mixinTypes.contains(FEDORA_RESOURCE)
                     || mixinTypes.contains(FEDORA_BINARY)
                     || mixinTypes.contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION)
@@ -95,9 +91,13 @@ public class DefaultFilter implements EventFilter {
         }
     }
 
-    private static org.modeshape.jcr.api.observation.Event getJcr21Event(final Event event) {
+    protected static Collection<String> getMixinTypes(final Event event)
+            throws PathNotFoundException, RepositoryException {
         try {
-            return (org.modeshape.jcr.api.observation.Event) event;
+            final org.modeshape.jcr.api.observation.Event modeEvent =
+                    (org.modeshape.jcr.api.observation.Event) event;
+            return ImmutableSet.copyOf(transform(ImmutableList.copyOf(modeEvent.getMixinNodeTypes()),
+                    nodetype2string));
         } catch (final ClassCastException e) {
             throw new ClassCastException(event + " is not a Modeshape Event");
         }
