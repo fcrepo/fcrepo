@@ -17,10 +17,12 @@
     <!-- listener that moves JCR Events to the Fedora internal event bus -->
     <bean class="org.fcrepo.kernel.impl.observer.SimpleObserver"/>
 
-    <!-- used by bean above to filter which events get put on the bus -->
+    <!-- suppress events for resources with any of these mixins -->
     <util:set id="suppressedMixins">
       <value>ldp:DirectContainer</value>
     </util:set>
+
+    <!-- used by bean above to filter which events get put on the bus -->
     <bean name="fedoraEventFilter" class="org.fcrepo.kernel.impl.observer.SuppressByMixinFilter"
         c:suppressedMixins-ref="suppressedMixins"/>
 
