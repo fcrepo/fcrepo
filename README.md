@@ -27,6 +27,8 @@ $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
 ```
 
+Note: You may need to set the $JAVA_HOME property. See [topic](https://github.com/fcrepo4/fcrepo4/issues/771#issuecomment-93828872).
+
 If you have problems building fcrepo4 with the above settings, you may need to also pass
 options to the JaCoCo code coverage plugin:
 
