@@ -465,6 +465,12 @@
         <artifactId>jul-to-slf4j</artifactId>
         <version>1.7.7</version>
       </dependency>
+      <dependency>
+        <groupId>com.jayway.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>1.6.2</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <build>
