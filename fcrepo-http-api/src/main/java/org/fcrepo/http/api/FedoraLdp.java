@@ -241,8 +241,11 @@ public class FedoraLdp extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream,
             @QueryParam("checksum") final String checksum,
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
-            @HeaderParam("If-Match") final String ifMatch)
+            @HeaderParam("If-Match") final String ifMatch,
+            @HeaderParam("Link") final String link)
             throws InvalidChecksumException, MalformedRdfException {
+
+        checkLinkForLdpResourceCreation(link);
 
         final FedoraResource resource;
         final Response.ResponseBuilder response;
