@@ -32,8 +32,6 @@ import javax.jcr.observation.ObservationManager;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
-import java.net.URI;
-
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -80,11 +78,14 @@ abstract public class FedoraBaseResource extends AbstractResource {
      **/
     protected void setUpJMSInfo(final UriInfo uriInfo, final HttpHeaders headers) {
         try {
-            final URI baseURL = uriInfo.getBaseUri();
-            LOGGER.debug("setting baseURL = " + baseURL.toString());
+            String baseURL = getBaseUrlProperty();
+            if (baseURL.length() == 0) {
+                baseURL = uriInfo.getBaseUri().toString();
+            }
+            LOGGER.debug("setting baseURL = " + baseURL);
             final ObservationManager obs = session().getWorkspace().getObservationManager();
             final JsonObject json = new JsonObject();
-            json.addProperty("baseURL", baseURL.toString());
+            json.addProperty("baseURL", baseURL);
             if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
                 json.addProperty("userAgent",headers.getHeaderString("user-agent"));
             }
@@ -94,4 +95,22 @@ abstract public class FedoraBaseResource extends AbstractResource {
         }
     }
 
+    /**
+     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form host[:port], if it
+     * exists.
+     * 
+     * @return String the base Url
+     */
+    protected String getBaseUrlProperty() {
+        final String propBaseURL = System.getProperty("fcrepo.jms.baseUrl", "");
+        if (propBaseURL.length() > 0) {
+            if (propBaseURL.indexOf(':') > -1) {
+                final String[] parts = propBaseURL.split(":");
+                return uriInfo.getBaseUriBuilder().clone().host(parts[0]).port(Integer.valueOf(parts[1])).toString();
+            } else {
+                return uriInfo.getBaseUriBuilder().clone().host(propBaseURL).toString();
+            }
+        }
+        return "";
+    }
 }
