@@ -103,14 +103,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     protected String getBaseUrlProperty() {
         final String propBaseURL = System.getProperty("fcrepo.jms.baseUrl", "");
-        if (propBaseURL.length() > 0 && propBaseURL.indexOf(':') > -1) {
-            final String[] parts = propBaseURL.split(":");
-            if (parts.length == 3) {
-                return uriInfo.getBaseUriBuilder().clone().scheme(parts[0]).host(parts[1].substring(2)).port(
-                    Integer.valueOf(parts[2])).toString();
-            } else {
-                return uriInfo.getBaseUriBuilder().clone().scheme(parts[0]).host(parts[1].substring(2)).toString();
-            }
+        if (propBaseURL.length() > 0 && propBaseURL.startsWith("http")) {
+            return uriInfo.getBaseUriBuilder().clone().uri(propBaseURL).toString();
         }
         return "";
     }
