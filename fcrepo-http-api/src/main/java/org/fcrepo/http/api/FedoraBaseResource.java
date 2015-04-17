@@ -96,19 +96,20 @@ abstract public class FedoraBaseResource extends AbstractResource {
     }
 
     /**
-     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form host[:port], if it
-     * exists.
-     * 
+     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
+     * if it exists.
+     *
      * @return String the base Url
      */
     protected String getBaseUrlProperty() {
         final String propBaseURL = System.getProperty("fcrepo.jms.baseUrl", "");
-        if (propBaseURL.length() > 0) {
-            if (propBaseURL.indexOf(':') > -1) {
-                final String[] parts = propBaseURL.split(":");
-                return uriInfo.getBaseUriBuilder().clone().host(parts[0]).port(Integer.valueOf(parts[1])).toString();
+        if (propBaseURL.length() > 0 && propBaseURL.indexOf(':') > -1) {
+            final String[] parts = propBaseURL.split(":");
+            if (parts.length == 3) {
+                return uriInfo.getBaseUriBuilder().clone().scheme(parts[0]).host(parts[1].substring(2)).port(
+                    Integer.valueOf(parts[2])).toString();
             } else {
-                return uriInfo.getBaseUriBuilder().clone().host(propBaseURL).toString();
+                return uriInfo.getBaseUriBuilder().clone().scheme(parts[0]).host(parts[1].substring(2)).toString();
             }
         }
         return "";
