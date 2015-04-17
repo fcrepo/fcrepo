@@ -119,6 +119,8 @@ public class FedoraLdpTest {
     private final String binaryDescriptionPath = "/some/other/path";
     private FedoraLdp testObj;
 
+    private static final String BASEURL_PROP = "fcrepo.jms.baseUrl";
+
     @Mock
     private Request mockRequest;
 
@@ -828,6 +830,20 @@ public class FedoraLdpTest {
         doReturn(mockWorkspace).when(mockSession).getWorkspace();
         doReturn(mockManager).when(mockWorkspace).getObservationManager();
         final String json = "{\"baseURL\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
+
+        testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
+        verify(mockManager).setUserData(eq(json));
+    }
+
+    @Test
+    public void testSetUpJMSBaseURIsWithSystemProperty() throws RepositoryException {
+        System.setProperty(BASEURL_PROP, "https://localhome:8443");
+
+        final ObservationManager mockManager = mock(ObservationManager.class);
+        final Workspace mockWorkspace = mock(Workspace.class);
+        doReturn(mockWorkspace).when(mockSession).getWorkspace();
+        doReturn(mockManager).when(mockWorkspace).getObservationManager();
+        final String json = "{\"baseURL\":\"https://localhome:8443/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
 
         testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
         verify(mockManager).setUserData(eq(json));
