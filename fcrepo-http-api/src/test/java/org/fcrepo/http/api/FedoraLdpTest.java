@@ -832,6 +832,14 @@ public class FedoraLdpTest {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
 
+        testObj.createObject(null, null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
+    }
+
+    @Test(expected = ClientErrorException.class)
+    public void testLDPRNotImplementedInvalidLink() throws Exception {
+        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        doReturn(mockObject).when(testObj).resource();
+
         testObj.createObject(null, null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type");
     }
 

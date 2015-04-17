@@ -21,6 +21,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
@@ -72,6 +73,7 @@ import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilderException;
 
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -404,14 +406,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Link") final String link)
             throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
 
-        if (link != null) {
-            final Link linq = Link.valueOf(link);
-            if ("type".equals(linq.getRel()) && (LDP_NAMESPACE + "Resource").equals(linq.getUri().toString())) {
-
-                LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
-                throw new ServerErrorException("LDPR creation not implemented", NOT_IMPLEMENTED);
-            }
-        }
+        checkLinkForLdpResourceCreation(link);
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -623,6 +618,23 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return pid;
+    }
+
+    private void checkLinkForLdpResourceCreation(final String link) {
+        if (link != null) {
+            try {
+                final Link linq = Link.valueOf(link);
+                if ("type".equals(linq.getRel()) && (LDP_NAMESPACE + "Resource").equals(linq.getUri().toString())) {
+                    LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
+                    throw new ServerErrorException("LDPR creation not implemented", NOT_IMPLEMENTED);
+                }
+            } catch (RuntimeException e) {
+                if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
+                    throw new ClientErrorException("Invalid link specified: " + link, BAD_REQUEST);
+                }
+                throw e;
+            }
+        }
     }
 
 }
