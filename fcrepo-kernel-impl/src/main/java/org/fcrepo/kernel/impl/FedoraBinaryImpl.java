@@ -15,10 +15,14 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_CHECKSUM;
+import static org.fcrepo.kernel.utils.FixityResult.FixityState.BAD_SIZE;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.google.common.eventbus.EventBus;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -28,9 +32,11 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.impl.utils.impl.CacheEntryFactory;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
+import org.fcrepo.kernel.utils.FixityResult.FixityState;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.metrics.RegistryService;
 import org.modeshape.jcr.api.Binary;
@@ -48,6 +54,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Set;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraBinary;
@@ -63,7 +70,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary {
 
     private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);
-
 
     static final RegistryService registryService = RegistryService.getInstance();
     static final Counter fixityCheckCounter
@@ -270,14 +276,20 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     }
 
     @Override
-    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
-        return getFixity(idTranslator, getContentDigest(), getContentSize());
+    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                               final String baseURL,
+                               final String userAgent,
+                               final EventBus eventBus) {
+        return getFixity(idTranslator, getContentDigest(), getContentSize(), baseURL, userAgent, eventBus);
     }
 
     @Override
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                final URI digestUri,
-                               final long size) {
+                               final long size,
+                               final String baseURL,
+                               final String userAgent,
+                               final EventBus eventBus) {
 
         fixityCheckCounter.inc();
 
@@ -291,6 +303,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final Collection<FixityResult> fixityResults
                     = CacheEntryFactory.forProperty(repo, getProperty(JCR_DATA)).checkFixity(algorithm);
 
+            createFixityEvent(idTranslator, fixityResults, digestUri, size, baseURL, userAgent,
+                    node.getSession().getUserID(), eventBus);
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, size);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -375,5 +389,46 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     public static boolean hasMixin(final Node node) {
         return isFedoraBinary.apply(node);
+    }
+
+    /**
+     *
+     * @param rs
+     * @param baseURL
+     * @param agent
+     * @param userID
+     * @return
+     */
+    private void createFixityEvent(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                                   final Collection<FixityResult> results,
+                                   final URI digestUri,
+                                   final long size,
+                                   final String baseURL,
+                                   final String agent,
+                                   final String userID,
+                                   final EventBus eventBus) {
+        for (FixityResult result : results) {
+            final FixityEvent fixityEvent = new FixityEvent();
+            fixityEvent.setDate(System.currentTimeMillis());
+            fixityEvent.setType(4096);
+
+            final String identifier = getPath().replaceAll("/" + JCR_CONTENT, "");
+            fixityEvent.setPath(identifier);
+            fixityEvent.setIdentifier(identifier);
+
+            fixityEvent.setContentSize(String.valueOf(result.getComputedSize()));
+            fixityEvent.setContentDigest(result.getComputedChecksum().toString());
+            final Set<FixityState> status = result.getStatus(size, digestUri);
+            if (status.contains(BAD_CHECKSUM) && status.contains(BAD_SIZE)) {
+                fixityEvent.setFixity("BAD_CHECKSUM_AND_SIZE");
+            } else {
+                fixityEvent.setFixity(status.iterator().next().toString());
+            }
+            fixityEvent.setUserID(userID);
+            fixityEvent.setBaseURL(baseURL);
+            fixityEvent.setUserData(agent);
+            LOGGER.debug("createFixityEvent: {}: {}", identifier, fixityEvent.getFixity());
+            eventBus.post(fixityEvent);
+        }
     }
 }

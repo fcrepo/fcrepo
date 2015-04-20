@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 import static org.modeshape.common.util.SecureHash.getHash;
 import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -54,6 +55,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import com.google.common.eventbus.EventBus;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -296,7 +298,11 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
         final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(repo.login());
-        final Model results = binary.getFixity(graphSubjects).asModel();
+
+        final String baseURL = "http://localhost:8080/rest/";
+        final String agent = "Mozilla...";
+
+        final Model results = binary.getFixity(graphSubjects, baseURL ,agent, mock(EventBus.class)).asModel();
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());

@@ -22,6 +22,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.observer.FixityEvent;
 
 /**
  * Produce a JMS Message from a JCR Event
@@ -44,4 +45,17 @@ public interface JMSEventMessageFactory {
     Message getMessage(final FedoraEvent jcrEvent,
             final javax.jms.Session jmsSession) throws RepositoryException,
         IOException, JMSException;
+
+    /**
+     *
+     * @param fixityEvent
+     * @param jmsSession
+     * @return
+     * @throws RepositoryException
+     * @throws IOException
+     * @throws JMSException
+     */
+    Message getFixityMessage(final FixityEvent fixityEvent,
+                       final javax.jms.Session jmsSession) throws RepositoryException,
+            IOException, JMSException;
 }

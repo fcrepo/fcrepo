@@ -15,10 +15,12 @@
  */
 package org.fcrepo.jms.headers;
 
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -28,6 +30,7 @@ import javax.jms.Message;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.fcrepo.kernel.utils.EventType;
 import org.slf4j.Logger;
 
@@ -66,6 +69,10 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     public static final String USER_HEADER_NAME = JMS_NAMESPACE + "user";
     public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
+
+    public static final String FIXITY_HEADER_NAME = JMS_NAMESPACE + "fixity";
+    public static final String CONTENT_DIGEST_HEADER_NAME = JMS_NAMESPACE + "contentDigest";
+    public static final String CONTENT_SIZE_HEADER_NAME = JMS_NAMESPACE + "contentSize";
 
     private String baseURL;
     private String userAgent;
@@ -114,6 +121,35 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         LOGGER.trace("getMessage() returning: {}", message);
         return message;
     }
+
+    /**
+     *
+     * @param fixityEvent
+     * @param jmsSession
+     * @return
+     * @throws RepositoryException
+     * @throws JMSException
+     */
+
+    @Override
+    public Message getFixityMessage(final FixityEvent fixityEvent,
+                                    final javax.jms.Session jmsSession) throws RepositoryException,
+            JMSException {
+        final Message message = jmsSession.createMessage();
+        message.setLongProperty(TIMESTAMP_HEADER_NAME, fixityEvent.getDate());
+        message.setStringProperty(IDENTIFIER_HEADER_NAME, fixityEvent.getPath());
+        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs(
+                new HashSet<>(asList(fixityEvent.getType()))));
+        message.setStringProperty(BASE_URL_HEADER_NAME, fixityEvent.getBaseURL());
+        message.setStringProperty(USER_HEADER_NAME, fixityEvent.getUserID());
+        message.setStringProperty(USER_AGENT_HEADER_NAME, fixityEvent.getUserData());
+        message.setStringProperty(FIXITY_HEADER_NAME, fixityEvent.getFixity());
+        message.setStringProperty(CONTENT_DIGEST_HEADER_NAME, fixityEvent.getContentDigest());
+        message.setStringProperty(CONTENT_SIZE_HEADER_NAME, fixityEvent.getContentSize());
+        LOGGER.trace("getFixityMessage return: {}", message);
+        return message;
+    }
+
 
     private static String getEventURIs(final Set<Integer> types) {
         final String uris = Joiner.on(',').join(Iterables.transform(types, new Function<Integer, String>() {

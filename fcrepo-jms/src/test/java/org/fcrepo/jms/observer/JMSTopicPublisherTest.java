@@ -34,6 +34,7 @@ import javax.jms.MessageProducer;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -92,6 +93,15 @@ public class JMSTopicPublisherTest {
         final FedoraEvent mockEvent = mock(FedoraEvent.class);
         when(mockEventFactory.getMessage(eq(mockEvent), any(javax.jms.Session.class))).thenReturn(mockMsg);
         testJMSTopicPublisher.publishJCREvent(mockEvent);
+        verify(mockProducer).send(mockMsg);
+    }
+
+    @Test
+    public void testPublishFedoraEvent() throws RepositoryException, IOException, JMSException {
+        final Message mockMsg = mock(Message.class);
+        final FixityEvent mockEvent = mock(FixityEvent.class);
+        when(mockEventFactory.getFixityMessage(eq(mockEvent), any(javax.jms.Session.class))).thenReturn(mockMsg);
+        testJMSTopicPublisher.publishFedoraEvent(mockEvent);
         verify(mockProducer).send(mockMsg);
     }
 

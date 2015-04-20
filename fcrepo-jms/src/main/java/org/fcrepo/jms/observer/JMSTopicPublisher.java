@@ -31,6 +31,7 @@ import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.observer.FixityEvent;
 import org.slf4j.Logger;
 
 import com.google.common.eventbus.EventBus;
@@ -83,6 +84,20 @@ public class JMSTopicPublisher {
         LOGGER.debug("Put event: {} onto JMS.", tm.getJMSMessageID());
     }
 
+    /**
+     * Subscribe to special fedora event
+     * @param fixityEvent
+     */
+    @Subscribe
+    public void publishFedoraEvent(final FixityEvent fixityEvent) throws JMSException,
+        RepositoryException, IOException {
+        LOGGER.debug("Received an event from the internal bus: {}", fixityEvent.toString());
+        final Message tm = eventFactory.getFixityMessage(fixityEvent,jmsSession);
+        LOGGER.debug("Transformed the event to a JMS message.");
+        producer.send(tm);
+        LOGGER.debug("Put event: {} onto JMS.", tm.getJMSMessageID());
+
+    }
     /**
      * Connect to JCR Repostory and JMS queue
      *
