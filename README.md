@@ -27,7 +27,19 @@ $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
 ```
 
-Note: You may need to set the $JAVA_HOME property. See [topic](https://github.com/fcrepo4/fcrepo4/issues/771#issuecomment-93828872).
+Note: You may need to set the $JAVA_HOME property, since Maven uses it to find the Java runtime to use, overriding your PATH.
+`mvn --version` will show which version of Java is being used by Maven, e.g.:
+
+```bash
+Java version: 1.8.0_31, vendor: Oracle Corporation
+Java home: /usr/local/java-1.8.0_31/jre
+```
+
+To set your $JAVA_HOME environment variable:
+
+```bash
+JAVA_HOME=/path/to/java
+```
 
 If you have problems building fcrepo4 with the above settings, you may need to also pass
 options to the JaCoCo code coverage plugin:
