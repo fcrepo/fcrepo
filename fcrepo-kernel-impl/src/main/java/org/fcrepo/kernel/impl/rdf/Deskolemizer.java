@@ -25,6 +25,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.AccessDeniedException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.TombstoneException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.models.FedoraResource;
 
@@ -122,6 +123,9 @@ public class Deskolemizer implements Function<Triple, Triple> {
                     !translator.asString(n.asResource()).contains("/fcr:") &&
                     // include only those resources with our marker type
                     translator.convert(n.asResource()).hasType(FEDORA_SKOLEMNODE);
+        } catch (final TombstoneException e) {
+            log.debug("Tombstone is not a skolem: {}", n);
+            return false;
         } catch (final RepositoryRuntimeException e) {
             if (e.getCause() instanceof AccessDeniedException) {
                 // If the potentially-Skolem node in hand is inaccessible to our examination, it could not be a Skolem
