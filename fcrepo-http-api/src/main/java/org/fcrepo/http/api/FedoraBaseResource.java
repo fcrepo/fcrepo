@@ -15,8 +15,9 @@
  */
 package org.fcrepo.http.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.JsonObject;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
@@ -84,12 +85,13 @@ abstract public class FedoraBaseResource extends AbstractResource {
             }
             LOGGER.debug("setting baseURL = " + baseURL);
             final ObservationManager obs = session().getWorkspace().getObservationManager();
-            final JsonObject json = new JsonObject();
-            json.addProperty("baseURL", baseURL);
+            final ObjectMapper mapper = new ObjectMapper();
+            final ObjectNode json = mapper.createObjectNode();
+            json.put("baseURL", baseURL);
             if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
-                json.addProperty("userAgent",headers.getHeaderString("user-agent"));
+                json.put("userAgent", headers.getHeaderString("user-agent"));
             }
-            obs.setUserData(json.toString());
+            obs.setUserData(mapper.writeValueAsString(json));
         } catch ( final Exception ex ) {
             LOGGER.warn("Error setting baseURL", ex);
         }
