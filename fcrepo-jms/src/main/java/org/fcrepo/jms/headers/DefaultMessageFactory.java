@@ -19,6 +19,7 @@ import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -31,11 +32,11 @@ import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /**
  * Generates JMS {@link Message}s composed entirely of headers, based entirely
@@ -86,20 +87,21 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         try {
             final String userdata = jcrEvent.getUserData();
             if (!StringUtils.isBlank(userdata)) {
-                final JsonObject json = new JsonParser().parse(userdata).getAsJsonObject();
-                String url = json.get("baseURL").getAsString();
+                final ObjectMapper mapper = new ObjectMapper();
+                final JsonNode json = mapper.readTree(userdata);
+                String url = json.get("baseURL").asText();
                 while (url.endsWith("/")) {
                     url = url.substring(0, url.length() - 1);
                 }
                 this.baseURL = url;
-                this.userAgent = json.get("userAgent").getAsString();
+                this.userAgent = json.get("userAgent").asText();
                 LOGGER.debug("MessageFactory baseURL: {}, userAgent: {}", baseURL, userAgent);
 
             } else {
                 LOGGER.warn("MessageFactory event UserData is empty!");
             }
 
-        } catch ( final RuntimeException ex ) {
+        } catch ( final IOException ex ) {
             LOGGER.warn("Error setting baseURL or userAgent", ex);
         }
 
