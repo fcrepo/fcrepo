@@ -263,6 +263,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
+    /**
+     * Set the given property value for this resource as a URI, without translating any URIs that
+     * appear to be references to repository resources.  Using untranslated URIs to refer to
+     * repository resources will disable referential integrity checking, but also allows referring
+     * to resources that do not exist, have been deleted, etc.
+     * @param relPath the given path
+     * @param value the URI value
+     */
     @Override
     public void setURIProperty(final String relPath, final URI value) {
         try {
