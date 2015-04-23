@@ -37,6 +37,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -48,6 +49,7 @@ import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -256,6 +258,23 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public Property getProperty(final String relPath) {
         try {
             return getNode().getProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
+     * Set the given property value for this resource as a URI, without translating any URIs that
+     * appear to be references to repository resources.  Using untranslated URIs to refer to
+     * repository resources will disable referential integrity checking, but also allows referring
+     * to resources that do not exist, have been deleted, etc.
+     * @param relPath the given path
+     * @param value the URI value
+     */
+    @Override
+    public void setURIProperty(final String relPath, final URI value) {
+        try {
+            getNode().setProperty(relPath, value.toString(), PropertyType.URI);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

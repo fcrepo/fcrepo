@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.models;
 
+import java.net.URI;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -82,6 +83,13 @@ public interface FedoraResource {
      * @return the property
      */
     Property getProperty(String relPath);
+
+    /**
+     * Set the given property value for this resource
+     * @param relPath the given path
+     * @param value the URI value
+     */
+    void setURIProperty(String relPath, URI value);
 
     /**
      * Delete this resource, and any inbound references to it
