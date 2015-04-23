@@ -28,6 +28,7 @@ import javax.jms.Message;
 
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
 import org.slf4j.Logger;
@@ -73,19 +74,18 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     @Override
     public Message getMessage(final FedoraEvent jcrEvent,
-        final javax.jms.Session jmsSession) throws RepositoryException,
-        JMSException {
+        final javax.jms.Session jmsSession) throws JMSException {
 
         final Message message = jmsSession.createMessage();
-        message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
-        String path = jcrEvent.getPath();
+        message.setLongProperty(TIMESTAMP_HEADER_NAME, getDate(jcrEvent));
+        String path = getPath(jcrEvent);
         if ( path.endsWith("/" + JCR_CONTENT) ) {
             path = path.replaceAll("/" + JCR_CONTENT,"");
         }
 
         // extract baseURL and userAgent from event UserData
         try {
-            final String userdata = jcrEvent.getUserData();
+            final String userdata = getUserData(jcrEvent);
             if (!StringUtils.isBlank(userdata)) {
                 final ObjectMapper mapper = new ObjectMapper();
                 final JsonNode json = mapper.readTree(userdata);
@@ -115,6 +115,30 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
         LOGGER.trace("getMessage() returning: {}", message);
         return message;
+    }
+
+    private String getUserData(final FedoraEvent jcrEvent) {
+        try {
+            return jcrEvent.getUserData();
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException("Error getting event userData!", e);
+        }
+    }
+
+    private String getPath(final FedoraEvent jcrEvent) {
+        try {
+            return jcrEvent.getPath();
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException("Error getting event path!", e);
+        }
+    }
+
+    private long getDate(final FedoraEvent jcrEvent) {
+        try {
+            return jcrEvent.getDate();
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException("Error getting event date!", e);
+        }
     }
 
     private static String getEventURIs(final Set<Integer> types) {
