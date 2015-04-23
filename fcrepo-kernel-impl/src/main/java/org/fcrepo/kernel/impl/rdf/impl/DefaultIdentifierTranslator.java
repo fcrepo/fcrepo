@@ -51,10 +51,7 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
 
     private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
 
-    /**
-     * Default namespace to use for node URIs
-     */
-    public static final String RESOURCE_NAMESPACE = "info:fedora/";
+    private final String resourceNamespace;
     private final Session session;
 
     /**
@@ -62,7 +59,15 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
      * @param session the session
      */
     public DefaultIdentifierTranslator(final Session session) {
+        this(session, "info:fedora/");
+    }
+
+    /**
+     * Construct the graph with the provided resource namespace.
+    **/
+    public DefaultIdentifierTranslator(final Session session, final String resourceNamespace) {
         this.session = session;
+        this.resourceNamespace = resourceNamespace;
         setTranslationChain();
     }
 
@@ -109,7 +114,7 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
 
     @Override
     public boolean inDomain(final Resource subject) {
-        return subject.isURIResource() && subject.getURI().startsWith(RESOURCE_NAMESPACE);
+        return subject.isURIResource() && subject.getURI().startsWith(resourceNamespace);
     }
 
     @Override
@@ -121,7 +126,7 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
         } else {
             relativePath = absPath;
         }
-        return createResource(RESOURCE_NAMESPACE + reverse.convert(relativePath));
+        return createResource(resourceNamespace + reverse.convert(relativePath));
     }
 
     @Override
@@ -130,7 +135,7 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
             return null;
         }
 
-        final String path = subject.getURI().substring(RESOURCE_NAMESPACE.length() - 1);
+        final String path = subject.getURI().substring(resourceNamespace.length() - 1);
 
         final String absPath = forward.convert(path);
 
