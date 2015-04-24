@@ -59,14 +59,10 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
         @Override
         public String apply(final Event ev) {
-            try {
-                // build id from nodepath+user to collapse multiple nodes from adding/removing content nodes
-                final String id = FedoraEvent.getPath(ev).replaceAll("/" + JCR_CONTENT,"") + "-" + ev.getUserID();
-                LOGGER.debug("Sorting an event by identifier: {}", id);
-                return id;
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
+            // build id from nodepath+user to collapse multiple nodes from adding/removing content nodes
+            final String id = FedoraEvent.getPath(ev).replaceAll("/" + JCR_CONTENT,"") + "-" + ev.getUserID();
+            LOGGER.debug("Sorting an event by identifier: {}", id);
+            return id;
         }
     };
 

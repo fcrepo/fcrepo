@@ -17,7 +17,6 @@ package org.fcrepo.kernel.observer;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Sets.union;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
@@ -32,6 +31,7 @@ import java.util.Set;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.EventType;
 
 import com.google.common.base.Function;
@@ -108,9 +108,8 @@ public class FedoraEvent {
 
     /**
      * @return the path of the underlying JCR {@link Event}s
-     * @throws RepositoryException if the repository exception occurred
      */
-    public String getPath() throws RepositoryException {
+    public String getPath() {
         return getPath(e);
     }
 
@@ -119,13 +118,17 @@ public class FedoraEvent {
      * from the end of property nodes).
      * @param e JCR Event
     **/
-    public static String getPath(final Event e) throws RepositoryException {
-        if (e.getType() == PROPERTY_ADDED   ||
-            e.getType() == PROPERTY_CHANGED ||
-            e.getType() == PROPERTY_REMOVED) {
-            return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
+    public static String getPath(final Event e) {
+        try {
+            if (e.getType() == PROPERTY_ADDED   ||
+                e.getType() == PROPERTY_CHANGED ||
+                e.getType() == PROPERTY_REMOVED) {
+                return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
+            }
+            return e.getPath();
+        } catch (RepositoryException e1) {
+            throw new RepositoryRuntimeException("Error getting event path!", e1);
         }
-        return e.getPath();
     }
 
     /**
@@ -137,51 +140,59 @@ public class FedoraEvent {
 
     /**
      * @return the node identifer of the underlying JCR {@link Event}s
-     * @throws RepositoryException if repository exception occurred
      */
-    public String getIdentifier() throws RepositoryException {
-        return e.getIdentifier();
+    public String getIdentifier() {
+        try {
+            return e.getIdentifier();
+        } catch (RepositoryException e1) {
+            throw new RepositoryRuntimeException("Error getting event identifier!", e1);
+        }
     }
 
     /**
      * @return the info map of the underlying JCR {@link Event}s
-     * @throws RepositoryException if repository exception occurred
      */
-    public Map<Object, Object> getInfo() throws RepositoryException {
-        return new HashMap<>(e.getInfo());
+    public Map<Object, Object> getInfo() {
+        try {
+            return new HashMap<>(e.getInfo());
+        } catch (RepositoryException e1) {
+            throw new RepositoryRuntimeException("Error getting event info!", e1);
+        }
     }
 
     /**
      * @return the user data of the underlying JCR {@link Event}s
-     * @throws RepositoryException if repository exception occurred
      */
-    public String getUserData() throws RepositoryException {
-        return e.getUserData();
+    public String getUserData() {
+        try {
+            return e.getUserData();
+        } catch (RepositoryException e1) {
+            throw new RepositoryRuntimeException("Error getting event userData!", e1);
+        }
     }
 
     /**
      * @return the date of the underlying JCR {@link Event}s
-     * @throws RepositoryException if repository exception occurred
      */
-    public long getDate() throws RepositoryException {
-        return e.getDate();
+    public long getDate() {
+        try {
+            return e.getDate();
+        } catch (RepositoryException e1) {
+            throw new RepositoryRuntimeException("Error getting event date!", e1);
+        }
     }
 
     @Override
     public String toString() {
-        try {
-            return toStringHelper(this).add("Event types:",
-                    Joiner.on(',').join(Iterables.transform(getTypes(), new Function<Integer, String>() {
+        return toStringHelper(this).add("Event types:",
+            Joiner.on(',').join(Iterables.transform(getTypes(), new Function<Integer, String>() {
 
-                        @Override
-                        public String apply(final Integer type) {
-                            return EventType.valueOf(type).getName();
-                        }
-                    }))).add("Event properties:",
-                    Joiner.on(',').join(eventProperties)).add("Path:", getPath()).add("Date: ",
-                    getDate()).add("Info:", getInfo()).toString();
-        } catch (final RepositoryException e) {
-            throw propagate(e);
-        }
+                @Override
+                public String apply(final Integer type) {
+                    return EventType.valueOf(type).getName();
+                }
+            }))).add("Event properties:",
+            Joiner.on(',').join(eventProperties)).add("Path:", getPath()).add("Date: ",
+            getDate()).add("Info:", getInfo()).toString();
     }
 }

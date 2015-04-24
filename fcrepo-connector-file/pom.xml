@@ -25,7 +25,6 @@
     <dependency>
       <groupId>org.modeshape</groupId>
       <artifactId>modeshape-jcr</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.hk2.external</groupId>

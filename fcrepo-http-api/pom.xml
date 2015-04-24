@@ -26,6 +26,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.modeshape</groupId>
+      <artifactId>modeshape-jcr</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-commons</artifactId>
       <version>${project.version}</version>

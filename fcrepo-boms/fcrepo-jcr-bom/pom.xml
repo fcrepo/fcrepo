@@ -18,6 +18,7 @@
         <groupId>org.modeshape</groupId>
         <artifactId>modeshape-jcr</artifactId>
         <version>${modeshape.version}</version>
+        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <groupId>org.gagravarr</groupId>
