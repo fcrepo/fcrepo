@@ -71,6 +71,10 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
     protected Converter<String, String> forward = identity();
     protected Converter<String, String> reverse = identity();
 
+    /*
+     * TODO: much of what happens with chains of translators inside these converters should be factored
+     * out into some abstract class, or post Java 8, default implementation.
+     */
     private void setTranslationChain() {
 
         for (final Converter<String, String> t : minimalTranslationChain) {
