@@ -37,13 +37,13 @@ import javax.jcr.Session;
 import java.util.List;
 
 /**
- * A very simple {@link IdentifierConverter} which translates JCR paths into
- * un-dereference-able Fedora subjects (by replacing JCR-specific names with
- * Fedora names). Should not be used except in "embedded" deployments in which
- * no publication of translated identifiers is expected!
+ * A very simple {@link IdentifierConverter} which translates JCR paths into Fedora subjects with
+ * a configurable resource namespace (e.g., a baseURL).  When a REST API context is available for
+ * constructing URIs, {@link HttpResourceConverter} should be used instead.
  *
  * @author barmintor
  * @author ajs6f
+ * @author escowles
  * @since May 15, 2013
  */
 public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, FedoraResource> {
@@ -55,15 +55,22 @@ public class DefaultIdentifierTranslator extends IdentifierConverter<Resource, F
     private final Session session;
 
     /**
-     * Construct the graph with a placeholder context resource
-     * @param session the session
+     * Construct the graph with a placeholder resource namespace, which will translate JCR paths into
+     * un-dereference-able Fedora subjects (by replacing JCR-specific names with Fedora names). Should
+     * only be used in "embedded" deployments in which no publication of translated identifiers is
+     * expected!
+     * @param session Session to lookup nodes
      */
     public DefaultIdentifierTranslator(final Session session) {
         this(session, "info:fedora/");
     }
 
     /**
-     * Construct the graph with the provided resource namespace.
+     * Construct the graph with the provided resource namespace, which will translate JCR paths into
+     * URIs prefixed with that namespace.  Should only be used when a REST API context is not available
+     * for constructing URIs.
+     * @param session Session to lookup nodes
+     * @param resourceNamespace Resource namespace (i.e., base URL)
     **/
     public DefaultIdentifierTranslator(final Session session, final String resourceNamespace) {
         this.session = session;
