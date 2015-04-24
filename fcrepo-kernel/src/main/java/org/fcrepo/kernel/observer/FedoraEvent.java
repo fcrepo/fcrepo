@@ -120,6 +120,8 @@ public class FedoraEvent {
     **/
     public static String getPath(final Event e) {
         try {
+            // TODO: It would be better for this test to use a constant collection of:
+            // - PROPERTY_ADDED, PROPERTY_CHANGED, PROPERTY_REMOVED and Collection.contains().
             if (e.getType() == PROPERTY_ADDED   ||
                 e.getType() == PROPERTY_CHANGED ||
                 e.getType() == PROPERTY_REMOVED) {
