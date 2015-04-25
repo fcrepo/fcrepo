@@ -29,7 +29,7 @@
               org.fcrepo.kernel.models;version=${project.version},
               org.fcrepo.kernel.services;version=${project.version},
               org.fcrepo.kernel.services.functions;version=${project.version},
-              org.fcrepo.kernel.services.policies;version=${project.version},
+              org.fcrepo.kernel.services.policy;version=${project.version},
               org.fcrepo.kernel.utils;version=${project.version},
               org.fcrepo.kernel.utils.iterators;version=${project.version}
             </Export-Package>
