@@ -387,4 +387,25 @@ public class ViewHelpersTest {
         final Literal URIRES = ResourceFactory.createPlainLiteral(uri);
         assertEquals(URIRES.asNode(), testObj.asLiteralStringNode(uri));
     }
+
+    @Test
+    public void testGetURIofLabelNode() {
+        final String uri = "http://example.com";
+        final Node node = createURI(uri);
+        assertEquals(uri, testObj.getURIorLabel(node));
+    }
+
+    @Test
+    public void testGetURIofLabelBlank() {
+        final Node node = createAnon();
+        assertEquals(node.getBlankNodeLabel(), testObj.getURIorLabel(node));
+    }
+
+    @Test
+    public void testGetURIofLabelResource() {
+        final String uri = "http://example.com";
+        final Resource resource = createResource(uri);
+        assertEquals(uri, testObj.getURIorLabel(resource));
+    }
+
 }

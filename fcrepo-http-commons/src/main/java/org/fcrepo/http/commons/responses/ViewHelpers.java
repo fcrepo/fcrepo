@@ -217,6 +217,26 @@ public class ViewHelpers {
             }
         }
 
+        return getURIorLabel(subject);
+    }
+
+    /**
+     * Return the URI of the {@link com.hp.hpl.jena.rdf.model.Resource} or its label
+     *
+     * @param subject with URI or label
+     * @return URI or label of arg {@link com.hp.hpl.jena.rdf.model.Resource}
+     */
+    public String getURIorLabel(final Resource subject) {
+        return getURIorLabel(subject.asNode());
+    }
+
+    /**
+     * Return the URI of the {@link com.hp.hpl.jena.graph.Node} or its label
+     *
+     * @param subject with URI or label
+     * @return URI or label of arg {@link com.hp.hpl.jena.graph.Node}
+     */
+    public String getURIorLabel(final Node subject) {
         if (subject.isURI()) {
             return subject.getURI();
         } else if (subject.isBlank()) {
@@ -224,7 +244,6 @@ public class ViewHelpers {
         } else {
             return subject.toString();
         }
-
     }
 
     /**
