@@ -306,7 +306,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo, translator());
         }
 
-        return rdfStream.map(deskolemizer());
+        return rdfStream;
     }
 
     /**
