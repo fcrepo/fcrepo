@@ -236,6 +236,12 @@
       <artifactId>jcr</artifactId>
       <scope>compile</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.modeshape</groupId>
+      <artifactId>modeshape-jcr</artifactId>
+      <scope>runtime</scope>
+    </dependency>
     
   </dependencies>
   <build>

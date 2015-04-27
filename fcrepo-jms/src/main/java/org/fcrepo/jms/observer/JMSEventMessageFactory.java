@@ -17,7 +17,6 @@ package org.fcrepo.jms.observer;
 
 import java.io.IOException;
 
-import javax.jcr.RepositoryException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
@@ -37,11 +36,9 @@ public interface JMSEventMessageFactory {
      * @param jcrEvent the jcr event
      * @param jmsSession the jms session
      * @return JMS message created from a JCR event
-     * @throws RepositoryException if RepositoryException occurred
      * @throws IOException if IO exception occurred
      * @throws JMSException if JMS exception occurred
      */
     Message getMessage(final FedoraEvent jcrEvent,
-            final javax.jms.Session jmsSession) throws RepositoryException,
-        IOException, JMSException;
+            final javax.jms.Session jmsSession) throws IOException, JMSException;
 }

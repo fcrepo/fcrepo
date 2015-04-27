@@ -22,7 +22,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.util.Set;
 
-import javax.jcr.RepositoryException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
@@ -73,8 +72,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     @Override
     public Message getMessage(final FedoraEvent jcrEvent,
-        final javax.jms.Session jmsSession) throws RepositoryException,
-        JMSException {
+        final javax.jms.Session jmsSession) throws JMSException {
 
         final Message message = jmsSession.createMessage();
         message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());
