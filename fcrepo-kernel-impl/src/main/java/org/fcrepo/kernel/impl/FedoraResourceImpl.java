@@ -72,7 +72,6 @@ import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.Deskolemizer;
 import org.fcrepo.kernel.impl.rdf.HashURIDetector;
 import org.fcrepo.kernel.impl.rdf.Skolemizer;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
@@ -404,9 +403,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final Model maybeModel = idTranslator.reverse().convert(this).getModel();
         final Model context = maybeModel == null ? createDefaultModel() : maybeModel;
 
-        final Deskolemizer deskolemize = new Deskolemizer(idTranslator, context);
-
-        final Model model = originalTriples.withThisContext(originalTriples.transform(deskolemize)).asModel();
+        final Model model = originalTriples.asModel();
 
         final JcrPropertyStatementListener listener =
                 new JcrPropertyStatementListener(idTranslator, getSession(), this, skolemService);
