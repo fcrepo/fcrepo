@@ -22,7 +22,6 @@ import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
@@ -61,10 +60,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
 
 import org.fcrepo.kernel.FedoraJcrTypes;
-import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
@@ -72,11 +69,7 @@ import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.Deskolemizer;
-import org.fcrepo.kernel.impl.rdf.HashURIDetector;
-import org.fcrepo.kernel.impl.rdf.Skolemizer;
 import org.fcrepo.kernel.impl.utils.JcrPropertyStatementListener;
-import org.fcrepo.kernel.services.Service;
 import org.fcrepo.kernel.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.impl.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.impl.utils.iterators.RdfRemover;
@@ -86,10 +79,7 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.impl.StmtIteratorImpl;
 import com.hp.hpl.jena.update.UpdateRequest;
-import com.hp.hpl.jena.util.iterator.Map1;
-import com.hp.hpl.jena.util.iterator.Map1Iterator;
 
 /**
  * Common behaviors across {@link org.fcrepo.kernel.models.Container} and
@@ -391,25 +381,19 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         }
     }
 
-    /*
-     * (non-Javadoc)
+    /* (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#updateProperties
-     * (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
+     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, java.lang.String, RdfStream)
      */
     @Override
     public void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-            final String sparqlUpdateStatement, final RdfStream originalTriples, final Service<Container> skolemService)
+                                 final String sparqlUpdateStatement, final RdfStream originalTriples)
             throws MalformedRdfException, AccessDeniedException {
 
-        final Model maybeModel = idTranslator.reverse().convert(this).getModel();
-        final Model context = maybeModel == null ? createDefaultModel() : maybeModel;
-
-        final Deskolemizer deskolemize = new Deskolemizer(idTranslator, context);
-
-        final Model model = originalTriples.withThisContext(originalTriples.transform(deskolemize)).asModel();
+        final Model model = originalTriples.asModel();
 
         final JcrPropertyStatementListener listener =
-                new JcrPropertyStatementListener(idTranslator, getSession(), this, skolemService);
+                new JcrPropertyStatementListener(idTranslator, getSession());
 
         model.register(listener);
 
@@ -492,55 +476,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         return node.isNew();
     }
 
-    /*
-     * (non-Javadoc)
+    /* (non-Javadoc)
      * @see org.fcrepo.kernel.models.FedoraResource#replaceProperties
-     * (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
+     *     (org.fcrepo.kernel.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-            final Model inputModel, final RdfStream originalTriples, final Service<Container> hashAndSkolemCreator)
-            throws MalformedRdfException {
+        final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
-        final RdfStream replacementStream =
-                new RdfStream().namespaces(inputModel.getNsPrefixMap()).topic(
-                        idTranslator.reverse().convert(this).asNode());
-
-        final Skolemizer skolemizer = new Skolemizer(idTranslator.reverse().convert(this));
-        final HashURIDetector hashUriDetector = new HashURIDetector(idTranslator);
-        final Model skolemizedModel = createDefaultModel().add(
-                new StmtIteratorImpl(new Map1Iterator<>(new Map1<Statement, Statement>() {
-
-                    @Override
-                    public Statement map1(final Statement stmnt) {
-                        return skolemizer.apply(hashUriDetector.apply(stmnt));
-                    }
-                }, inputModel.listStatements())));
-
-        for (final Resource skolemNode : skolemizer.get()) {
-            LOGGER.debug("Checking for skolem node: {}", skolemNode);
-            final String skolemPath = idTranslator.asString(skolemNode);
-            if (!hashAndSkolemCreator.exists(getSession(), skolemPath)) {
-                LOGGER.debug("Creating skolem node at: {}", skolemPath);
-                try {
-                    hashAndSkolemCreator.findOrCreate(getSession(), skolemPath).getNode().addMixin(FEDORA_SKOLEMNODE);
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-            }
-        }
-
-        for (final Resource hashNode : hashUriDetector.get()) {
-            LOGGER.debug("Checking for hash node: {}", hashNode);
-            final String hashPath = idTranslator.asString(hashNode);
-            if (!hashAndSkolemCreator.exists(getSession(), hashPath)) {
-                LOGGER.debug("Creating hash node at: {}", hashPath);
-                hashAndSkolemCreator.findOrCreate(getSession(), hashPath);
-            }
-        }
+        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
 
         final GraphDifferencingIterator differencer =
-                new GraphDifferencingIterator(skolemizedModel, originalTriples);
+            new GraphDifferencingIterator(inputModel, originalTriples);
 
         final StringBuilder exceptions = new StringBuilder();
         try {

@@ -275,11 +275,19 @@ public class FedoraResourceImplTest {
         when(mockSession.getNode("/xyz")).thenReturn(mockNode);
 
         final Model propertiesModel = createDefaultModel();
-        final Resource topic = propertiesModel.createResource("a");
-        propertiesModel.add(topic, propertiesModel.createProperty("b"), "c")
-                .add(propertiesModel.createResource("i"), propertiesModel.createProperty("j"), "k")
-                .add(propertiesModel.createResource("x"), propertiesModel.createProperty("y"), "z");
-        final RdfStream propertiesStream = RdfStream.fromModel(propertiesModel).topic(topic.asNode());
+        propertiesModel.add(propertiesModel.createResource("a"),
+                               propertiesModel.createProperty("b"),
+                               "c");
+
+
+        propertiesModel.add(propertiesModel.createResource("i"),
+                               propertiesModel.createProperty("j"),
+                               "k");
+
+        propertiesModel.add(propertiesModel.createResource("x"),
+                               propertiesModel.createProperty("y"),
+                               "z");
+        final RdfStream propertiesStream = RdfStream.fromModel(propertiesModel);
 
         final Model replacementModel = createDefaultModel();
 
@@ -294,7 +302,7 @@ public class FedoraResourceImplTest {
 
         testObj.replaceProperties(defaultGraphSubjects,
                 replacementModel,
-                propertiesStream, null);
+                propertiesStream);
     }
 
     @Test

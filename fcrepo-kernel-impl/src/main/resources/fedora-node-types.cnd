@@ -70,7 +70,7 @@
   - premis:hasSize (LONG) COPY
   - fedora:digest (URI) COPY
 
-[fedora:Skolem] > mix:referenceable mixin
+[fedora:Blanknode] > mix:referenceable mixin
 
 [fedora:Pairtree] mixin
 
