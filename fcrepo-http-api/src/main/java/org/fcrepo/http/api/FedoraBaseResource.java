@@ -50,8 +50,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
     protected IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
             idTranslator = new HttpResourceConverter(session(),
-                uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
+
         return idTranslator;
     }
 

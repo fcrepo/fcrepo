@@ -23,7 +23,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
@@ -44,7 +43,6 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
@@ -65,8 +63,6 @@ public class ContainerImplIT extends AbstractIT {
     private Session session;
 
     private DefaultIdentifierTranslator subjects;
-
-    private static final Logger log = getLogger(ContainerImplIT.class);
 
     @Before
     public void setUp() throws RepositoryException {
@@ -102,8 +98,8 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
             "INSERT { <" + graphSubject + "> dc:title " +
-            "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class),
-                containerService);
+            "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+
 
         final Value[] values = object.getNode().getProperty("dc:title").getValues();
         assertTrue(values.length > 0);
@@ -116,8 +112,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX myurn: <info:myurn/>\n" +
                 "INSERT { <" + graphSubject + "> myurn:info " +
-                "\"This is some example data\"} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class),
-                containerService);
+                "\"This is some example data\"} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         final Value value =
             object.getNode().getProperty(object.getNode().getSession()
@@ -128,8 +123,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
                 "INSERT { <" + graphSubject + "> dcterms:" +
-                "isPartOf <" + graphSubject + "> } WHERE {}",
-                object.getTriples(subjects, PropertiesRdfContext.class), containerService);
+                "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         final Value refValue = object.getNode().getProperty("dcterms:isPartOf_ref").getValues()[0];
         assertTrue(refValue.getString(), refValue.getString().equals(object.getNode().getIdentifier()));
@@ -137,17 +131,16 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "DELETE { <" + graphSubject + "> dc:title " +
-                "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class),
-                containerService);
+                "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         assertFalse("Found unexpected dc:title",
-                object.getNode().hasProperty("dc:title"));
+                    object.getNode().hasProperty("dc:title"));
 
         object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
                 "DELETE { <" + graphSubject + "> " +
                 "dcterms:isPartOf <" + graphSubject + "> " +
-                "} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class), containerService);
- assertFalse("found unexpected reference",
+                "} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+        assertFalse("found unexpected reference",
                     object.getNode().hasProperty("dcterms:isPartOf"));
 
         session.save();
@@ -162,8 +155,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT { <" + graphSubject + "> some:urlProperty " +
-                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class),
-                containerService);
+                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
         final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
         final String propertyName = prefix + ":urlProperty";
@@ -177,8 +169,8 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "DELETE { <" + graphSubject + "> some:urlProperty " +
-                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class),
-                containerService);
+                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+
 
         assertFalse(object.getNode().hasProperty(referencePropertyName));
         assertFalse(object.getNode().hasProperty(propertyName));
@@ -186,7 +178,8 @@ public class ContainerImplIT extends AbstractIT {
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
                 "       some:urlProperty <info:somewhere/else> . }",
-                object.getTriples(subjects, PropertiesRdfContext.class), containerService);
+                object.getTriples(subjects, PropertiesRdfContext.class));
+
 
         assertTrue(object.getNode().hasProperty(referencePropertyName));
         assertTrue(object.getNode().hasProperty(propertyName));
@@ -205,13 +198,13 @@ public class ContainerImplIT extends AbstractIT {
         MalformedRdfException e = null;
         try {
             object.updateProperties(subjects, "INSERT DATA { <> <info:some-property> <relative-url> . \n" +
-                    "<> <info:some-other-property> <another-relative-url> }", new RdfStream(), containerService);
+                    "<> <info:some-other-property> <another-relative-url> }", new RdfStream());
         } catch (final MalformedRdfException ex) {
             e = ex;
         }
 
         assertNotNull("Expected an exception to get thrown", e);
-        assertEquals("Expected two nested exceptions", 2, e.getMessage().split("\n").length);
+        assertEquals("Excepted two nested exceptions", 2, e.getMessage().split("\n").length);
         assertTrue(e.getMessage().contains("/relative-url"));
         assertTrue(e.getMessage().contains("/another-relative-url"));
     }
@@ -228,14 +221,13 @@ public class ContainerImplIT extends AbstractIT {
                 "TTL");
         MalformedRdfException e = null;
         try {
-            object.replaceProperties(subjects, model, new RdfStream(), containerService);
+            object.replaceProperties(subjects, model, new RdfStream());
         } catch (final MalformedRdfException ex) {
             e = ex;
         }
 
         assertNotNull("Expected an exception to get thrown", e);
-        log.debug("Got exception with message: {}", e.getMessage());
-        assertEquals("Expected two nested exceptions", 2, e.getMessage().split("\n").length);
+        assertEquals("Excepted two nested exceptions", 2, e.getMessage().split("\n").length);
         assertTrue(e.getMessage().contains("/relative-url"));
         assertTrue(e.getMessage().contains("/another-relative-url"));
     }
@@ -247,7 +239,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
           "INSERT { <http://example/egbook> dc:title " + "\"This is an example of an update that will be " +
-          "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class), containerService);
+          "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
     }
 
 }

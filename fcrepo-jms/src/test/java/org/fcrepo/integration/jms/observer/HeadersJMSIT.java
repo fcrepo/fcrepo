@@ -180,16 +180,14 @@ public class HeadersJMSIT implements MessageListener {
         try {
             final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
-            resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PropertiesRdfContext.class),
-                    containerService);
+            resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PropertiesRdfContext.class));
             session.save();
             awaitMessageOrFail(testMeta, PROP_ADDED_EVENT_TYPE, "http://foo.com/prop");
 
             final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                 + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
-            resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PropertiesRdfContext.class),
-                    containerService);
+            resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PropertiesRdfContext.class));
             session.save();
             awaitMessageOrFail(testMeta, PROP_CHANGED_EVENT_TYPE, "http://foo.com/prop");
         } finally {

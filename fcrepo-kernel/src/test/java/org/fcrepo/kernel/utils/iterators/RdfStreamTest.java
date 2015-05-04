@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -37,7 +38,6 @@ import javax.jcr.Session;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
@@ -87,12 +87,6 @@ public class RdfStreamTest {
 
     private final Map<String, String> testNamespaces = ImmutableMap.of(prefix1,
             uri1, prefix2, uri2);
-
-    @Mock
-    private Session mockSession;
-
-    @Mock
-    private Node mockTopic;
 
     @Before
     public void setUp() {
@@ -299,25 +293,6 @@ public class RdfStreamTest {
     }
 
     @Test
-    public void testMap() {
-        final Function<Triple, Triple> f = new Function<Triple, Triple>() {
-
-            @Override
-            public Triple apply(final Triple t) {
-                return triple;
-            }
-
-        };
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
-        when(mockIterator.next()).thenReturn(triple1, triple2, triple3);
-        testStream.session(mockSession).topic(mockTopic).namespaces(testNamespaces);
-        final RdfStream result = testStream.map(f);
-        assertEquals(mockSession, result.session());
-        assertEquals(testNamespaces, result.namespaces());
-        assertEquals(mockTopic, result.topic());
-    }
-
-    @Test
     public void testCanContinue() {
         when(mockIterator.hasNext()).thenReturn(true).thenThrow(
                 new RuntimeException("Expected.")).thenReturn(true);
@@ -350,14 +325,16 @@ public class RdfStreamTest {
     }
 
     @Test
-    public void testSession() {
+    public void testContext() {
+        final Session mockSession = mock(Session.class);
         assertEquals("Didn't retrieve the session we stored!", mockSession,
                 testStream.session(mockSession).session());
     }
 
     @Test
     public void testTopic() {
-        assertEquals("Didn't retrieve the session we stored!", mockTopic,
-                testStream.topic(mockTopic).topic());
+        final Node mockNode = mock(Node.class);
+        assertEquals("Didn't retrieve the session we stored!", mockNode,
+                testStream.topic(mockNode).topic());
     }
 }
