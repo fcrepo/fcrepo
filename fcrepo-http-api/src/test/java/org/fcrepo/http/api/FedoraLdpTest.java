@@ -594,6 +594,7 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
+        when(mockBinary.getTriples(eq(idTranslator), any(Class.class))).thenReturn(new RdfStream());
         when(mockBinary.getTriples(eq(idTranslator), any(List.class))).thenReturn(new RdfStream(new Triple
                 (createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
         final Response actual = testObj.describe(null);
@@ -734,6 +735,7 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
 
+        when(mockBinary.getTriples(eq(idTranslator), any(Class.class))).thenReturn(new RdfStream());
         when(mockBinary.getTriples(eq(idTranslator), any(List.class))).thenReturn(
                 new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
 

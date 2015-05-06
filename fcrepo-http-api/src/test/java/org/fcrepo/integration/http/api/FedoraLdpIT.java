@@ -69,6 +69,7 @@ import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.NEXT_PAGE;
+import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -456,18 +457,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet httpGet = new HttpGet(serverAddress + pid + "/x/" + FCR_METADATA);
         final HttpResponse response = execute(httpGet);
+        assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
 
-        final HttpEntity entity = response.getEntity();
-        final String content = EntityUtils.toString(entity);
-
-        assertEquals(OK.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-
-        final MediaType mediaType = MediaType.valueOf(entity.getContentType().getValue());
-        final Lang lang = contentTypeToLang(mediaType.toString());
-        assertNotNull("Entity is not an RDF serialization", lang);
-        LOGGER.warn(content);
-
+        final GraphStore graphStore = getGraphStore(response);
+        final Node rdfType = createURI(RDF_NAMESPACE + "type");
+        assertTrue("Description should be a fedora:NonRdfSourceDescription",
+                graphStore.contains(ANY, createURI(serverAddress + pid + "/x/" + FCR_METADATA), rdfType,
+                        createURI(REPOSITORY_NAMESPACE + "NonRdfSourceDescription")));
+        assertTrue("Binary should be a ldp:NonRDFSource",
+                graphStore.contains(ANY, createURI(serverAddress + pid + "/x"), rdfType, NON_RDF_SOURCE.asNode()));
     }
 
     @Test
