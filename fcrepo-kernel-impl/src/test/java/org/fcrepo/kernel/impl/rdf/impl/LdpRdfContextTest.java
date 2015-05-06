@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -27,6 +28,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.models.Container;
+import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +47,9 @@ public class LdpRdfContextTest {
     private FedoraResource mockResource;
 
     @Mock
+    private FedoraBinary mockBinary;
+
+    @Mock
     private Container mockContainer;
     @Mock
     private Session mockSession;
@@ -58,7 +63,7 @@ public class LdpRdfContextTest {
     public void setUp() {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
-
+        when(mockBinary.getPath()).thenReturn("/a");
         when(mockContainer.getPath()).thenReturn("/a");
 
         subjects = new DefaultIdentifierTranslator(mockSession);
@@ -70,6 +75,14 @@ public class LdpRdfContextTest {
         final Model model = testObj.asModel();
 
         assertTrue(model.contains(subject(), RDF.type, RDF_SOURCE));
+    }
+
+    @Test
+    public void shouldIncludeBinaryTypeAssertions() {
+        testObj = new LdpRdfContext(mockBinary, subjects);
+        final Model model = testObj.asModel();
+
+        assertTrue(model.contains(subject(), RDF.type, NON_RDF_SOURCE));
     }
 
     @Test

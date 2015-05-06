@@ -20,11 +20,13 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;
 
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.models.NonRdfSource;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -46,7 +48,12 @@ public class LdpRdfContext extends NodeRdfContext {
                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
 
-        concat(typeContext());
+
+        if (resource instanceof NonRdfSource) {
+            concat(nonRdfSourceContext());
+        } else {
+            concat(typeContext());
+        }
 
         if (resource instanceof Container) {
             concat(containerContext());
@@ -68,5 +75,9 @@ public class LdpRdfContext extends NodeRdfContext {
 
     private Triple defaultContainerContext() {
         return create(subject(), type.asNode(), BASIC_CONTAINER.asNode());
+    }
+
+    private Triple nonRdfSourceContext() {
+        return create(subject(), type.asNode(), NON_RDF_SOURCE.asNode());
     }
 }

@@ -259,6 +259,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 rdfStream.concat(filter(described.getTriples(translator(), ImmutableList.of(TypeRdfContext.class,
                         PropertiesRdfContext.class,
                         ContentRdfContext.class)), tripleFilter));
+                if (ldpPreferences.prefersServerManaged()) {
+                    rdfStream.concat(getTriples(described,LdpRdfContext.class));
+                }
             }
 
             // Embed all hash and blank nodes
