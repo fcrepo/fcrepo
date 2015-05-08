@@ -59,6 +59,7 @@ import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
@@ -469,6 +470,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         createURI(REPOSITORY_NAMESPACE + "NonRdfSourceDescription")));
         assertTrue("Binary should be a ldp:NonRDFSource",
                 graphStore.contains(ANY, createURI(serverAddress + pid + "/x"), rdfType, NON_RDF_SOURCE.asNode()));
+        assertTrue("Binary should have a checksum",
+                graphStore.contains(ANY, createURI(serverAddress + pid + "/x"), HAS_MESSAGE_DIGEST.asNode(), ANY));
     }
 
     @Test
