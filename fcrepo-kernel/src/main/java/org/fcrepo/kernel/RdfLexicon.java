@@ -54,6 +54,8 @@ public final class RdfLexicon {
 
     public static final String JCR_NT_NAMESPACE = "http://www.jcp.org/jcr/nt/1.0";
 
+    public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
+
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
      * configuration properties.
@@ -240,12 +242,12 @@ public final class RdfLexicon {
     public static final Property HAS_CONTENT_LOCATION_VALUE =
         createProperty(PREMIS_NAMESPACE + "hasContentLocationValue");
     public static final Property HAS_MIME_TYPE =
-            createProperty(REPOSITORY_NAMESPACE + "mimeType");
+            createProperty(EBUCORE_NAMESPACE + "hasMimeType");
     public static final Property HAS_ORIGINAL_NAME =
             createProperty(PREMIS_NAMESPACE + "hasOriginalName");
 
     public static final Set<Property> contentProperties = of(HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
-            HAS_MIME_TYPE, HAS_ORIGINAL_NAME, HAS_SIZE);
+            HAS_SIZE);
 
 
     // VERSIONING
