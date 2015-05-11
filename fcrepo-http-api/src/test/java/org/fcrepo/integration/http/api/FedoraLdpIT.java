@@ -66,6 +66,10 @@ import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
+import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
@@ -508,9 +512,70 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchWithBlankNode() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
+    public void testPatchBinaryNameAndType() throws Exception {
+        final String pid = getRandomUniqueId();
+
+        createDatastream(pid, "x", "some content");
+
+        final String location = serverAddress + pid + "/x/fcr:metadata";
+        final HttpPatch patch = new HttpPatch(location);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        final String sparql = "INSERT DATA { <" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/plain\""
+                                       + " . <" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }";
+        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
+        final HttpResponse response = client.execute(patch);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
+
+        final GraphStore graphStore = getGraphStore(new HttpGet(location));
+        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
+                HAS_MIME_TYPE.asNode(), createLiteral("text/plain")));
+        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
+                HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
+    }
+
+    @Test
+    public void testPatchWithBlankNode() throws Exception {
+        final String pid = getRandomUniqueId();
+
+        createObject(pid);
+
+        final String location = serverAddress + pid;
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(location);
+        updateObjectGraphMethod.addHeader("Content-Type",
+                "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        e.setContent(new ByteArrayInputStream(
+                ("INSERT { <" + location +
+                        "> <info:some-predicate> _:a .\n" +
+                        "_:a <http://purl.org/dc/elements/1.1/title> \"this is a title\"\n" +
+                        " } WHERE {}")
+                        .getBytes()));
+        updateObjectGraphMethod.setEntity(e);
+        final HttpResponse response = client.execute(updateObjectGraphMethod);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
+
+
+        final HttpGet httpGet = new HttpGet(location);
+
+        final GraphStore graphStore = getGraphStore(httpGet);
+
+        assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
+                createProperty("info:some-predicate").asNode(), ANY));
+
+        final Node bnode = graphStore.find(ANY, createResource(location).asNode(),
+                createProperty("info:some-predicate").asNode(), ANY).next().getObject();
+
+        final HttpGet bnodeHttpGet = new HttpGet(bnode.getURI());
+
+        final GraphStore bnodeGraphStore = getGraphStore(bnodeHttpGet);
+
+        assertTrue(bnodeGraphStore.contains(ANY, bnode, DC_TITLE.asNode(), createLiteral("this is a title")));
+
+>>>>>>> Allow updating mimeType and filename properties
 
         final String location = serverAddress + id;
         final HttpPatch updateObjectGraphMethod = patchObjMethod(id);
