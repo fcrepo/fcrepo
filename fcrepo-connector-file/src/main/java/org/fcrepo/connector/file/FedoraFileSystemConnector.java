@@ -41,7 +41,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.infinispan.schematic.document.Document;
-import org.modeshape.connector.filesystem.ExternalJsonSidecarExtraPropertyStore;
 import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
@@ -165,6 +164,24 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         return extraPropertiesStore() != null && (!isReadonly() || this.propertiesDirectory != null);
     }
 
+
+    /**
+     * Pass-thru to the parent class in order to make this function public
+     *
+     * @param id the node ID to test
+     * @return whether the id corresponds to the root location
+     */
+    @Override
+    public boolean isRoot(final String id) {
+        return super.isRoot(id);
+    }
+
+    /**
+     * Pass-thru to the parent class in order to make this function public
+     *
+     * @param file the file used to compute a sha1 hash
+     * @return the sha1 hash of the file contents
+     */
     @Override
     public String sha1(final File file) {
         final String cachedSha1 = getCachedSha1(file);
@@ -173,7 +190,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
         return cachedSha1;
     }
-
 
     private String getCachedSha1(final File file) {
         final String id = idFor(file) + JCR_CONTENT_SUFFIX;
@@ -209,8 +225,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
         return sha1;
     }
-
-
 
     private static void decorateObjectNode(final DocumentReader docReader, final DocumentWriter docWriter) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_CONTAINER)) {
@@ -325,4 +339,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     public boolean isReadonly() {
         return true;
     }
+
+    @Override
+    public boolean isContentNode(final String id) {
+        return super.isContentNode(id);
+    }
+
 }

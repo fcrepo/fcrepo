@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.modeshape.connector.filesystem;
+package org.fcrepo.connector.file;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -38,7 +38,7 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
     public void testSidecarFile() throws IOException {
         final File tmp = createTempDirectory("filesystem-federation").toFile();
         try {
-            final FileSystemConnector mockConnector = mock(FileSystemConnector.class);
+            final FedoraFileSystemConnector mockConnector = mock(FedoraFileSystemConnector.class);
             final DocumentTranslator mockTranslator = mock(DocumentTranslator.class);
             when(mockConnector.fileFor("/")).thenReturn(new File(FEDERATION_ROOT));
             when(mockConnector.isContentNode("/")).thenReturn(false);
