@@ -39,9 +39,7 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.infinispan.schematic.document.Document;
-import org.modeshape.connector.filesystem.ExternalJsonSidecarExtraPropertyStore;
 import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
@@ -84,20 +82,16 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     @Override
     public void initialize(final NamespaceRegistry registry,
-                           final NodeTypeManager nodeTypeManager) throws IOException {
-        try {
-            super.initialize(registry, nodeTypeManager);
-        } catch (RepositoryException e) {
-            throw new RepositoryRuntimeException("Error initializing FedoraFileSystemConnector!", e);
-        }
+                           final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
+        super.initialize(registry, nodeTypeManager);
 
         if (propertiesDirectoryPath != null) {
            propertiesDirectory = new File(propertiesDirectoryPath);
             if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
-                throw new RepositoryRuntimeException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
+                throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
                         + ", does not exist or is not a directory.");
             } else if ( !propertiesDirectory.canRead() || !propertiesDirectory.canWrite() ) {
-                throw new RepositoryRuntimeException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
+                throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
                         + ", should be readable and writable.");
             }
             if (extraPropertiesStore() != null) {
@@ -163,6 +157,12 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
      */
     protected boolean shouldCacheProperties() {
         return extraPropertiesStore() != null && (!isReadonly() || this.propertiesDirectory != null);
+    }
+
+
+    @Override
+    public boolean isRoot(final String id) {
+        return super.isRoot(id);
     }
 
     @Override
@@ -325,4 +325,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     public boolean isReadonly() {
         return true;
     }
+
+    @Override
+    public boolean isContentNode(final String id) {
+        return super.isContentNode(id);
+    }
+
 }
