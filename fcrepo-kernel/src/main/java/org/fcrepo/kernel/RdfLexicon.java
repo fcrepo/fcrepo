@@ -244,7 +244,7 @@ public final class RdfLexicon {
     public static final Property HAS_MIME_TYPE =
             createProperty(EBUCORE_NAMESPACE + "hasMimeType");
     public static final Property HAS_ORIGINAL_NAME =
-            createProperty(PREMIS_NAMESPACE + "hasOriginalName");
+            createProperty(EBUCORE_NAMESPACE + "filename");
 
     public static final Set<Property> contentProperties = of(HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
             HAS_SIZE);
