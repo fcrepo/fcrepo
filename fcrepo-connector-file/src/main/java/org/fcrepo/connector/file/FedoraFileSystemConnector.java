@@ -39,6 +39,7 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.infinispan.schematic.document.Document;
 import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.api.value.DateTime;
@@ -82,16 +83,20 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     @Override
     public void initialize(final NamespaceRegistry registry,
-                           final NodeTypeManager nodeTypeManager) throws RepositoryException, IOException {
-        super.initialize(registry, nodeTypeManager);
+                           final NodeTypeManager nodeTypeManager) throws IOException {
+        try {
+            super.initialize(registry, nodeTypeManager);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException("Error initializing FedoraFileSystemConnector!", e);
+        }
 
         if (propertiesDirectoryPath != null) {
            propertiesDirectory = new File(propertiesDirectoryPath);
             if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {
-                throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
+                throw new RepositoryRuntimeException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
                         + ", does not exist or is not a directory.");
             } else if ( !propertiesDirectory.canRead() || !propertiesDirectory.canWrite() ) {
-                throw new RepositoryException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
+                throw new RepositoryRuntimeException("Configured \"propertiesDirectory\", " + propertiesDirectoryPath
                         + ", should be readable and writable.");
             }
             if (extraPropertiesStore() != null) {
@@ -160,11 +165,23 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     }
 
 
+    /**
+     * Pass-thru to the parent class in order to make this function public
+     *
+     * @param id the node ID to test
+     * @return whether the id corresponds to the root location
+     */
     @Override
     public boolean isRoot(final String id) {
         return super.isRoot(id);
     }
 
+    /**
+     * Pass-thru to the parent class in order to make this function public
+     *
+     * @param file the file used to compute a sha1 hash
+     * @return the sha1 hash of the file contents
+     */
     @Override
     public String sha1(final File file) {
         final String cachedSha1 = getCachedSha1(file);
@@ -173,7 +190,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
         return cachedSha1;
     }
-
 
     private String getCachedSha1(final File file) {
         final String id = idFor(file) + JCR_CONTENT_SUFFIX;
@@ -209,8 +225,6 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         }
         return sha1;
     }
-
-
 
     private static void decorateObjectNode(final DocumentReader docReader, final DocumentWriter docWriter) {
         if (!docReader.getMixinTypeNames().contains(FEDORA_CONTAINER)) {

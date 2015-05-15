@@ -86,6 +86,13 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
         return file;
     }
 
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * @param id the identifier for the sidecar file
+     * @return whether the file was deleted
+     */
     @Override
     public boolean removeProperties(final String id) {
         final File file = sidecarFile(id);
@@ -96,6 +103,14 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
         return true;
     }
 
+
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * @param id the identifier for the sidecar file
+     * @return a map of the properties associated with the given configuration
+     */
     @Override
     public Map<Name, Property> getProperties(final String id) {
         final File sidecarFile = sidecarFile(id);
@@ -112,6 +127,13 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
         }
     }
 
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * @param id the id for the sidecar file
+     * @param properties the keys/values to set in the specified sidecar configuration
+     */
     @Override
     public void updateProperties(final String id, final Map<Name, Property> properties ) {
         final File sidecarFile = sidecarFile(id);
@@ -141,6 +163,13 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
         }
     }
 
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * @param id the id for the sidecar file
+     * @param properties the keys/values to set in the specified sidecar configuration
+     */
     @Override
     public void storeProperties(final String id, final Map<Name, Property> properties ) {
         final File sidecarFile = sidecarFile(id);
@@ -164,8 +193,16 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
         }
     }
 
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * @param id the id for the sidecar file
+     * @return whether the specified sidecar configuration exists
+     */
     @Override
     public boolean contains(final String id) {
         return sidecarFile(id).exists();
     }
+
 }
