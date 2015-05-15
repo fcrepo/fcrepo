@@ -90,6 +90,9 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
      * This is a trivial reimplementation of the private modeshape implementation in
      * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
      *
+     * See: https://github.com/ModeShape/modeshape/blob/master/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L139
+     *
      * @param id the identifier for the sidecar file
      * @return whether the file was deleted
      */
@@ -107,6 +110,9 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
     /**
      * This is a trivial reimplementation of the private modeshape implementation in
      * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/master/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L60
      *
      * @param id the identifier for the sidecar file
      * @return a map of the properties associated with the given configuration
@@ -130,6 +136,9 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
     /**
      * This is a trivial reimplementation of the private modeshape implementation in
      * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/master/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L102
      *
      * @param id the id for the sidecar file
      * @param properties the keys/values to set in the specified sidecar configuration
@@ -167,6 +176,9 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
      * This is a trivial reimplementation of the private modeshape implementation in
      * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
      *
+     * See: https://github.com/ModeShape/modeshape/blob/master/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L102
+     *
      * @param id the id for the sidecar file
      * @param properties the keys/values to set in the specified sidecar configuration
      */
@@ -196,6 +208,9 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
     /**
      * This is a trivial reimplementation of the private modeshape implementation in
      * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/master/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L156
      *
      * @param id the id for the sidecar file
      * @return whether the specified sidecar configuration exists
