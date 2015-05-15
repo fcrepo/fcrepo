@@ -605,8 +605,8 @@
           <version>3.2</version>
           <configuration>
             <debug>true</debug>
-            <source>1.7</source>
-            <target>1.7</target>
+            <source>1.8</source>
+            <target>1.8</target>
             <compilerArgument>-Xlint:unchecked</compilerArgument>
           </configuration>
         </plugin>
