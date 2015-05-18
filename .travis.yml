@@ -5,7 +5,7 @@ before_install:
  - "echo $JAVA_OPTS"
  - "export JAVA_OPTS=-Xmx512m"
 notifications:
-  irc: "irc.freenode.org#duraspace-ff"
+  irc: "irc.freenode.org#fcrepo"
   email:
       - fedora-tech@googlegroups.com
 
