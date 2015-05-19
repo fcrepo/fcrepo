@@ -18,7 +18,7 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import javax.jcr.Session;
 
 /**
-  * A very simple {@link IdentifierConverter} which translates JCR paths into
+  * A very simple {@link org.fcrepo.kernel.identifiers.IdentifierConverter} which translates JCR paths into
   * un-dereference-able Fedora subjects (by replacing JCR-specific names with
   * Fedora names). Should not be used except in "embedded" deployments in which
   * no publication of translated identifiers is expected!

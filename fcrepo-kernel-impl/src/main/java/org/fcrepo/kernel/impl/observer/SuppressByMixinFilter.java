@@ -44,7 +44,7 @@ public class SuppressByMixinFilter extends DefaultFilter implements EventFilter 
     private Set<String> suppressedMixins;
 
     /**
-     * Default constructor.
+     * @param suppressedMixins Resources with these mixins will be filtered out
      */
     public SuppressByMixinFilter(final Set<String> suppressedMixins) {
         this.suppressedMixins = suppressedMixins;
