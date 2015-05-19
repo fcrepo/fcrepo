@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * A very simple {@link IdentifierConverter} which translates JCR paths into Fedora subjects with
  * a configurable resource namespace (e.g., a baseURL).  When a REST API context is available for
- * constructing URIs, {@link HttpResourceConverter} should be used instead.
+ * constructing URIs, org.fcrepo.http.commons.api.rdf.HttpResourceConverter should be used instead.
  *
  * @author barmintor
  * @author ajs6f
