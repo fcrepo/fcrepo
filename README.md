@@ -16,7 +16,7 @@ Technical goals:
 ## Building & running fcrepo4 from source
 
 System Requirements
-* Java 7
+* Java 8
 * Maven 3
 
 ```bash
