@@ -1,4 +1,3 @@
 @prefix fedora : <http://fedora.info/definitions/v4/repository#>
 id      = . :: xsd:string ;
 title = dc:title :: xsd:string;
-uuid = fedora:uuid :: xsd:string ;
