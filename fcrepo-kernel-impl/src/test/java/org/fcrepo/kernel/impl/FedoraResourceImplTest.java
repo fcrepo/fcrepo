@@ -57,6 +57,7 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
@@ -266,7 +267,7 @@ public class FedoraResourceImplTest {
                 testObj.isNew());
     }
 
-    @Test
+    @Test(expected = MalformedRdfException.class)
     public void testReplacePropertiesDataset() throws Exception {
 
         final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);
@@ -276,33 +277,20 @@ public class FedoraResourceImplTest {
 
         final Model propertiesModel = createDefaultModel();
         propertiesModel.add(propertiesModel.createResource("a"),
-                               propertiesModel.createProperty("b"),
-                               "c");
+            propertiesModel.createProperty("b"),
+            "c");
 
-
-        propertiesModel.add(propertiesModel.createResource("i"),
-                               propertiesModel.createProperty("j"),
-                               "k");
-
-        propertiesModel.add(propertiesModel.createResource("x"),
-                               propertiesModel.createProperty("y"),
-                               "z");
         final RdfStream propertiesStream = RdfStream.fromModel(propertiesModel);
 
         final Model replacementModel = createDefaultModel();
 
         replacementModel.add(replacementModel.createResource("a"),
-                                replacementModel.createProperty("b"),
-                               "n");
-
-
-        replacementModel.add(replacementModel.createResource("i"),
-                                replacementModel.createProperty("j"),
-                               "k");
+            replacementModel.createProperty("b"),
+            "n");
 
         testObj.replaceProperties(defaultGraphSubjects,
-                replacementModel,
-                propertiesStream);
+            replacementModel,
+            propertiesStream);
     }
 
     @Test
