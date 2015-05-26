@@ -19,6 +19,7 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.junit.Test;
 
 import javax.jcr.PathNotFoundException;
@@ -56,7 +57,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         return getReadWriteFederationRoot();
     }
 
-    @Test(expected = RepositoryException.class)
+    @Test(expected = RepositoryRuntimeException.class)
     public void testWriteProperty() throws RepositoryException {
         final Session session = repo.login();
 
@@ -82,7 +83,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
         session.logout();
     }
 
-    @Test(expected = RepositoryException.class)
+    @Test(expected = RepositoryRuntimeException.class)
     public void testRemoveProperty() throws RepositoryException {
         final Session session = repo.login();
 

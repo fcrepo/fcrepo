@@ -89,13 +89,15 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                             "Discovered a Fedora-relevant subject in triple: {}.",
                             t);
                 } else {
-                    LOGGER.debug("Ignoring triple: {}.", t);
+                    LOGGER.error("subject ({}) is not in repository domain.", t.getSubject().toString());
+                    throw new MalformedRdfException(String.format(
+                        "RDF Stream contains subject(s) (%s) not in the domain of this repository.", t.getSubject()));
                 }
                 return result;
             }
 
         };
-        // we knock out non-Fedora RDF
+        // we fail on non-Fedora RDF
         this.stream =
                 stream.withThisContext(stream.filter(isFedoraSubjectTriple));
 
