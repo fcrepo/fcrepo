@@ -26,7 +26,7 @@ import org.junit.Test;
 
 /**
  * @author ajs6f
- * @date 30 Oct 2014
+ * @since 30 Oct 2014
  *
  */
 public class MultiPreferTest extends SinglePreferTest {

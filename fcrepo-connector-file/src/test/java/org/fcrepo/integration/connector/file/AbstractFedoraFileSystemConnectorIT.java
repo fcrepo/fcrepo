@@ -102,18 +102,24 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     /**
      * Gets the path (relative to the filesystem federation) of a directory
      * that's expected to be present.
+     *
+     * @return string that contains the path to the dir
      */
     protected abstract String testDirPath();
 
     /**
      * Gets the path (relative to the filesystem federation) of a file
      * that's expected to be present.
+     *
+     * @return string that contains the path to the file
      */
     protected abstract String testFilePath();
 
     /**
      * The name (relative path) of the federation to be tested.  This
      * must coincide with the "projections" provided in repository.json.
+     *
+     * @return string that contains the path to the federation
      */
     protected abstract String federationName();
 
@@ -122,6 +128,8 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
      * tested.  This must coincide with the "directoryPath" provided in
      * repository.json (or the system property that's populating the relevant
      * configuration".
+     *
+     * @return string that contains the path to root
      */
     protected abstract String getFederationRoot();
 
@@ -319,6 +327,9 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
      * but it's critical that we test that the json files are actually written
      * somewhere, so it's the best I can do without further opening up the
      * internals of JsonSidecarExtraPropertiesStore.
+     *
+     * @param node The node to access for the file reference
+     * @return A reference to the nodes property file
      */
     protected File propertyFileForNode(final Node node) {
         try {

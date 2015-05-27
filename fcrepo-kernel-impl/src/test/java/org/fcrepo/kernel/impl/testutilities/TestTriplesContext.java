@@ -31,8 +31,8 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 public class TestTriplesContext extends RdfStream {
     /**
      * Add a triple that says we've been there..
-     * @param resource
-     * @param idTranslator
+     * @param resource a FedoraREsource
+     * @param idTranslator an IdentifierConvertor
      */
     public TestTriplesContext(final FedoraResource resource,
                               final IdentifierConverter<Resource, FedoraResource> idTranslator) {

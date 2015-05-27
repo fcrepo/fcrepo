@@ -35,7 +35,7 @@ import org.junit.Test;
  * This "test" is a utility for collecting the timing of concurrent operations operations.
  * It takes roughly 2 minutes to complete and should only be run if the timing metrics are wanted.
  * In order to activate this utility, the following System Property must be set:
- * <p/>
+ * &lt;p/&gt;
  * mvn -Dfcrepo.test.http.concurrent install
  *
  * @author lsitu

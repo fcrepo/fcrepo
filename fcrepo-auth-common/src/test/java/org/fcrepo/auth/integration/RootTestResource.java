@@ -41,7 +41,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * This class acts as the REST Resource endpoint against which integration tests are executed.
  * This is used instead of the real F4 REST API for two reasons:
  * - These integration tests are intended to test the AuthZ functionality, not the F4 REST API
- * - A circular dependency between fcrepo-auth-common <--> fcrepo-http-api is bad
+ * - A circular dependency between fcrepo-auth-common &lt;--&gt; fcrepo-http-api is bad
  *
  * @author awoods
  * @since 2014-06-26
