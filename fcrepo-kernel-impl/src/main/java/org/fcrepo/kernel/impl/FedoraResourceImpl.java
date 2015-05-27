@@ -390,6 +390,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
             throws MalformedRdfException, AccessDeniedException {
 
+        if (!clean(sparqlUpdateStatement)) {
+            throw new IllegalArgumentException("Invalid SPARQL UPDATE statement:"
+                    + sparqlUpdateStatement);
+        }
+
         final Model model = originalTriples.asModel();
 
         final JcrPropertyStatementListener listener =
@@ -403,6 +408,31 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         execute(request, model);
 
         listener.assertNoExceptions();
+    }
+
+    private boolean clean(final String updateStmt) {
+        final int start = updateStmt.indexOf("INSERT");
+        final int end = updateStmt.lastIndexOf("WHERE");
+
+        if (start < 0 || end < 0) {
+            return true;
+        }
+
+        final String insertStmt = updateStmt.substring(start, end);
+        final String[] insert = insertStmt.split(".+<[a-zA-Z]*>");
+        int count = 0;
+        final String terminated = "/>";
+
+        for (final String s: insert) {
+            if (s.contains(terminated)) {
+                final String[] p = s.split(terminated);
+                count++;
+                LOGGER.info("Problematic token({}):{}{} in statement:{}",
+                        count, p[0], terminated, updateStmt);
+            }
+        }
+
+        return count == 0;
     }
 
     @Override
