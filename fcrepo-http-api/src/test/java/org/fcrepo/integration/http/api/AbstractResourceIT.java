@@ -275,8 +275,8 @@ public abstract class AbstractResourceIT {
     /**
      * Creates a transaction, asserts that it's successful and
      * returns the transaction location.
-     * @return
-     * @throws IOException
+     * @return string containing transaction location
+     * @throws IOException exception thrown during the function
      */
     protected String createTransaction() throws IOException {
         final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
@@ -304,6 +304,8 @@ public abstract class AbstractResourceIT {
     /**
      * Gets a random (but valid) pid for use in testing.  This pid
      * is guaranteed to be unique within runs of this application.
+     *
+     * @return string containing new Pid
      */
     protected static String getRandomUniquePid() {
         return UUID.randomUUID().toString();
@@ -311,6 +313,8 @@ public abstract class AbstractResourceIT {
 
     /**
      * Gets a random (but valid) property name for use in testing.
+     *
+     * @return string containing random property name
      */
     protected static String getRandomPropertyName() {
         return randomUUID().toString();
@@ -318,6 +322,8 @@ public abstract class AbstractResourceIT {
 
     /**
      * Gets a random (but valid) property value for use in testing.
+     *
+     * @return string containing random property value
      */
     protected static String getRandomPropertyValue() {
         return randomUUID().toString();

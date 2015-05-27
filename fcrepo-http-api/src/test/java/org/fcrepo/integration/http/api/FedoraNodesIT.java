@@ -224,6 +224,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to copy objects from the repository to a federated filesystem.
+     *
+     * @throws IOException exception thrown during this function
     **/
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testCopyToProjection() throws IOException {
@@ -250,6 +252,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
     /**
      * I should be able to copy objects from a federated filesystem to the repository.
+     *
+     * @throws IOException exception thrown during this function
     **/
     @Test
     public void testCopyFromProjection() throws IOException {
@@ -281,6 +285,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
     /**
      * I should be able to move a node within a federated filesystem with
      * properties preserved.
+     *
+     * @throws Exception exception thrown during this function
     **/
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testFederatedMoveWithProperties() throws Exception {
