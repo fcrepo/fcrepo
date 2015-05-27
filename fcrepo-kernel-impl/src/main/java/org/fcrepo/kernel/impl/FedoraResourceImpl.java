@@ -24,6 +24,7 @@ import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
+import static java.util.regex.Pattern.compile;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
@@ -42,6 +43,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
@@ -93,6 +95,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
     protected Node node;
+
+    /*
+     * Helps split SPARQL Update statements, e.g., on <>, to enable individual processing
+     */
+    private static final Pattern subject = compile(".+<[a-zA-Z]*>");
+
+     /*
+     * Helps ensure there's no terminating slash in the predicate
+     */
+    private static final Pattern terminated = compile("/>");
 
     /**
      * Construct a {@link org.fcrepo.kernel.models.FedoraResource} from an existing JCR Node
@@ -390,6 +402,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
             throws MalformedRdfException, AccessDeniedException {
 
+        if (!clean(sparqlUpdateStatement)) {
+            throw new IllegalArgumentException("Invalid SPARQL UPDATE statement:"
+                    + sparqlUpdateStatement);
+        }
+
         final Model model = originalTriples.asModel();
 
         final JcrPropertyStatementListener listener =
@@ -403,6 +420,41 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         execute(request, model);
 
         listener.assertNoExceptions();
+    }
+
+    /**
+     * Helps ensure that there are no terminating slashes in the predicate.
+     * A terminating slash means ModeShape has trouble extracting the localName, e.g., for
+     * http://myurl.org/.
+     *
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
+     *
+     * @param updateStmt SPARQL Update statement specified by the user
+     * @return whether the statement is deemed to be not problematic for ModeShape
+     */
+    private boolean clean(final String updateStmt) {
+        final int start = updateStmt.indexOf("INSERT");
+        final int end = updateStmt.lastIndexOf("}");
+
+        if (start < 0 || end < 0 || end < start) {
+            return true;
+        }
+
+        final String insertStmt = updateStmt.substring(start, end);
+        final String[] insert = subject.split(insertStmt);
+        int count = 0;
+        final String terminatorIndicator = terminated.pattern();
+
+        for (final String s: insert) {
+            if (s.contains(terminatorIndicator)) {
+                final String[] p = terminated.split(s);
+                count++;
+                LOGGER.info("Problematic token({}):{}{} in statement:{}",
+                        count, p[0], terminated, updateStmt);
+            }
+        }
+
+        return count == 0;
     }
 
     @Override

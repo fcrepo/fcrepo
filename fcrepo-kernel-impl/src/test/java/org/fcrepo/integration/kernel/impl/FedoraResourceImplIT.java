@@ -452,6 +452,67 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + " WHERE { }", new RdfStream());
     }
 
+    @Test (expected = IllegalArgumentException.class)
+    public void testInvalidSparqlUpdateValidation() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object =
+                containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "INSERT { <> <http://myurl.org/title/> \"fancy title\" . \n" +
+                " <> <http://myurl.org/title/> \"fancy title 2\" . } WHERE { }",
+                new RdfStream());
+    }
+
+    @Test
+    public void testValidSparqlUpdateValidationAltSyntax() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(subjects,
+                "DELETE WHERE {" +
+                        "<> <http://www.loc.gov/premis/rdf/v1#hasDateCreatedByApplication> ?o0 ." +
+                        "}; INSERT DATA {" +
+                        "<> <http://purl.org/dc/elements/1.1/title> \"Example Managed binary datastream\" ." +
+                        "}",
+                new RdfStream());
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testInvalidSparqlUpdateValidationAltSyntax() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(subjects,
+                "DELETE WHERE {" +
+                        "<> <http://www.loc.gov/premis/rdf/v1#hasDateCreatedByApplication> ?o0 ." +
+                        "}; INSERT DATA {" +
+                        "<> <http://purl.org/dc/elements/1.1/title/> \"Example Managed binary datastream\" ." +
+                        "}",
+                new RdfStream());
+    }
+
+    @Test
+    public void testValidSparqlUpdateValidation1() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object =
+                containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "INSERT { <> <http://myurl.org/title> \"5\" . } WHERE { }",
+                new RdfStream());
+    }
+
+    @Test
+    public void testValidSparqlUpdateValidation2() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object =
+                containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "PREFIX dsc:<http://myurl.org/title> \n" +
+                        "INSERT { <> dsc:p \"ccc\" } WHERE { }",
+                new RdfStream());
+    }
+
     @Test
     public void testUpdatingRdfType() throws RepositoryException {
         final FedoraResource object =
