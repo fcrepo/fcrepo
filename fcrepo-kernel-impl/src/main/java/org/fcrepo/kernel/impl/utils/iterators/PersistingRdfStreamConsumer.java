@@ -91,8 +91,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                 } else {
                     LOGGER.error("subject ({}) is not in repository domain.", t.getSubject().toString());
                     throw new MalformedRdfException(String.format(
-                        "RDF Stream contains subject(s) (%s) not in the domain of this repository.", t.getSubject()
-                            .toString()));
+                        "RDF Stream contains subject(s) (%s) not in the domain of this repository.", t.getSubject()));
                 }
                 return result;
             }
