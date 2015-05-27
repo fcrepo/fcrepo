@@ -692,7 +692,7 @@
                 place files below src/site/markdown/[filename].md -->
               <groupId>org.apache.maven.doxia</groupId>
               <artifactId>doxia-module-markdown</artifactId>
-              <version>1.3</version>
+              <version>1.6</version>
             </dependency>
           </dependencies>
         </plugin>
