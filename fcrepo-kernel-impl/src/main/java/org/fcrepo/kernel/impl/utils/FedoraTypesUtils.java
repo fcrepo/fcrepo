@@ -86,7 +86,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * binary.
      */
     public static Predicate<Node> isBlankNode =
-            new AnyTypesPredicate(FEDORA_BLANKNODE);
+            new AnyTypesPredicate(FEDORA_SKOLEM);
 
     /**
      * Check if a property is a reference property.

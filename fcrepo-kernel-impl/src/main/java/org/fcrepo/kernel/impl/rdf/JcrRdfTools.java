@@ -20,7 +20,7 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
@@ -413,7 +413,7 @@ public class JcrRdfTools {
             final String path = skolemizedPrefix() + pid;
             final Node preexistingNode = getClosestExistingAncestor(session, path);
             final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
-            orCreateNode.addMixin(FEDORA_BLANKNODE);
+            orCreateNode.addMixin(FEDORA_SKOLEM);
 
             if (preexistingNode != null) {
                 AbstractService.tagHierarchyWithPairtreeMixin(preexistingNode,
