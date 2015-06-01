@@ -232,9 +232,7 @@
               org.fcrepo.http.commons.domain,
               org.fcrepo.http.commons.domain.ldp,
               org.fcrepo.http.commons.responses,
-              org.fcrepo.http.commons.session,
-              org.fcrepo.connector.filesystem,
-              org.modeshape.connector.filesystem
+              org.fcrepo.http.commons.session
             </Import-Package>
           </instructions>
         </configuration>
