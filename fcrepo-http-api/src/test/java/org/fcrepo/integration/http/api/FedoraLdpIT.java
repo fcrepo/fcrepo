@@ -31,6 +31,7 @@ import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -1568,12 +1569,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patchObjMethod.setEntity(e);
         final HttpResponse response = client.execute(patchObjMethod);
 
-        if (response.getStatusLine().getStatusCode() != BAD_REQUEST.getStatusCode()
-                && response.getEntity() != null) {
+        if (response.getStatusLine().getStatusCode() != CONFLICT.getStatusCode()
+            && response.getEntity() != null) {
             final String content = EntityUtils.toString(response.getEntity());
             logger.trace("Got unexpected update response:\n" + content);
         }
-        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
+        assertEquals(CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
 
     }
 
