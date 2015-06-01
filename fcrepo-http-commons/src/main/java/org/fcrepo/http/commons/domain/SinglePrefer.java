@@ -15,8 +15,6 @@
  */
 package org.fcrepo.http.commons.domain;
 
-import static com.google.common.collect.Iterables.any;
-import static com.google.common.collect.Iterables.tryFind;
 import static org.fcrepo.http.commons.domain.PreferTag.emptyTag;
 
 import java.text.ParseException;
@@ -25,13 +23,12 @@ import java.util.TreeSet;
 
 import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
-import com.google.common.base.Predicate;
-
 /**
  * JAX-RS HTTP parameter parser for the Prefer header
  *
  * @author cabeer
  * @author ajs6f
+ * @author acoburn
  */
 public class SinglePrefer {
 
@@ -53,7 +50,7 @@ public class SinglePrefer {
      * @return true if the header has a return tag
      */
     public Boolean hasReturn() {
-        return any(preferTags(), getPreferTag("return"));
+        return preferTags().stream().anyMatch(x -> x.getTag().equals("return"));
     }
 
     /**
@@ -62,7 +59,7 @@ public class SinglePrefer {
      * @return true if the header has a return tag
      */
     public Boolean hasHandling() {
-        return any(preferTags(), getPreferTag("handling"));
+        return preferTags().stream().anyMatch(x -> x.getTag().equals("handling"));
     }
 
     /**
@@ -71,7 +68,9 @@ public class SinglePrefer {
      * @return return tag, or a blank default, if none exists
      */
     public PreferTag getReturn() {
-        return tryFind(preferTags(), getPreferTag("return")).or(emptyTag());
+        return preferTags().stream()
+                .filter(x -> x.getTag().equals("return"))
+                .findFirst().orElse(emptyTag());
     }
 
     /**
@@ -80,7 +79,9 @@ public class SinglePrefer {
      * @return return tag, or a blank default, if none exists
      */
     public PreferTag getHandling() {
-        return tryFind(preferTags(), getPreferTag("handling")).or(emptyTag());
+        return preferTags().stream()
+                .filter(x -> x.getTag().equals("handling"))
+                .findFirst().orElse(emptyTag());
     }
 
     private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
@@ -92,15 +93,6 @@ public class SinglePrefer {
                 }
             };
 
-    private static <T extends PreferTag> Predicate<T> getPreferTag(final String tagName) {
-        return new Predicate<T>() {
-
-            @Override
-            public boolean apply(final T tag) {
-                return tag.getTag().equals(tagName);
-            }
-        };
-    }
 
     protected Set<PreferTag> preferTags() {
         return preferTags;
