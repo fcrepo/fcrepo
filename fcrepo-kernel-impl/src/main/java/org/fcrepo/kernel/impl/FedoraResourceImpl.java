@@ -67,6 +67,7 @@ import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.ConstraintViolationException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -545,6 +546,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         try {
             new RdfRemover(idTranslator, getSession(), replacementStream
                     .withThisContext(differencer)).consume();
+        } catch (final ConstraintViolationException e) {
+            throw e;
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
             exceptions.append("\n");
@@ -553,6 +556,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         try {
             new RdfAdder(idTranslator, getSession(), replacementStream
                     .withThisContext(differencer.notCommon())).consume();
+        } catch (final ConstraintViolationException e) {
+            throw e;
         } catch (final MalformedRdfException e) {
             exceptions.append(e.getMessage());
         }

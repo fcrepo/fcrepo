@@ -15,7 +15,8 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.ServerManagedPropertyException;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
@@ -23,22 +24,20 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.status;
+import org.fcrepo.kernel.exception.ServerManagedTypeException;
 
 /**
- * @author cabeer
  * @author whikloj
- * @since 10/1/14
+ * @since 2015-06-02
  */
 @Provider
-public class ServerManagedPropertyExceptionMapper extends ConstraintExceptionMapper<ServerManagedPropertyException> {
+public class ServerManagedTypeExceptionMapper extends ConstraintExceptionMapper<ServerManagedTypeException> {
 
     @Context
     private UriInfo uriInfo;
 
     @Override
-    public Response toResponse(final ServerManagedPropertyException e) {
+    public Response toResponse(final ServerManagedTypeException e) {
         final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
         return status(CONFLICT).entity(msg).links(link).build();

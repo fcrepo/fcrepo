@@ -22,10 +22,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.ConstraintViolationException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.OutOfDomainSubjectException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
@@ -94,8 +97,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             // if it's not about a node, ignore it.
             if (!idTranslator.inDomain(subject) && !subject.isAnon()) {
                 LOGGER.error("subject ({}) is not in repository domain.", subject);
-                throw new MalformedRdfException(String.format(
-                    "Update RDF contains subject(s) (%s) not in the domain of this repository.", subject));
+                throw new OutOfDomainSubjectException(subject.toString());
             }
 
             final Statement s = jcrRdfTools.skolemize(idTranslator, input);
@@ -114,6 +116,8 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             jcrRdfTools.addProperty(resource, property, objectNode, input.getModel().getNsPrefixMap());
+        } catch (final ConstraintViolationException e) {
+            throw e;
         } catch (final RepositoryException | RepositoryRuntimeException e) {
             exceptions.add(e);
         }
@@ -135,8 +139,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             // if it's not about a node, we don't care.
             if (!idTranslator.inDomain(subject)) {
                 LOGGER.error("subject ({}) is not in repository domain.", subject);
-                throw new MalformedRdfException(String.format(
-                    "Update RDF contains subject(s) (%s) not in the domain of this repository.", subject));
+                throw new OutOfDomainSubjectException(subject.toString());
             }
 
             final FedoraResource resource = idTranslator.convert(subject);
@@ -154,7 +157,8 @@ public class JcrPropertyStatementListener extends StatementListener {
             }
 
             jcrRdfTools.removeProperty(resource, property, objectNode, s.getModel().getNsPrefixMap());
-
+        } catch (final ConstraintViolationException e) {
+            throw e;
         } catch (final RepositoryException | RepositoryRuntimeException e) {
             exceptions.add(e);
         }
@@ -168,7 +172,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     public void assertNoExceptions() throws MalformedRdfException, AccessDeniedException {
         final StringBuilder sb = new StringBuilder();
-        for (Exception e : exceptions) {
+        for (final Exception e : exceptions) {
             sb.append(e.getMessage());
             sb.append("\n");
             if (e instanceof AccessDeniedException) {

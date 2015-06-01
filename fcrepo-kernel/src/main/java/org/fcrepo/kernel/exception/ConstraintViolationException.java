@@ -16,19 +16,31 @@
 package org.fcrepo.kernel.exception;
 
 /**
- * @author cabeer
+ * A constraint has been violated.
+ *
  * @author whikloj
- * @since 10/1/14
+ * @since 2015-05-29
  */
-public class ServerManagedPropertyException extends ConstraintViolationException {
+public class ConstraintViolationException extends MalformedRdfException {
 
     private static final long serialVersionUID = 1L;
 
     /**
+     * Ordinary constructor.
      *
      * @param msg the message
      */
-    public ServerManagedPropertyException(final String msg) {
+    public ConstraintViolationException(final String msg) {
         super(msg);
     }
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param rootCause the root cause
+     */
+    public ConstraintViolationException(final Throwable rootCause) {
+        super(rootCause);
+    }
+
 }

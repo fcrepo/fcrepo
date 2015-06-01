@@ -16,19 +16,22 @@
 package org.fcrepo.kernel.exception;
 
 /**
- * @author cabeer
+ * Fedora does not accept RDF with subjects that are not local to the repository.
+ *
  * @author whikloj
- * @since 10/1/14
+ * @since 2015-05-29
  */
-public class ServerManagedPropertyException extends ConstraintViolationException {
+public class OutOfDomainSubjectException extends ConstraintViolationException {
 
     private static final long serialVersionUID = 1L;
 
     /**
+     * Takes the subject that is out of domain, creates message.
      *
-     * @param msg the message
+     * @param subject the subject
      */
-    public ServerManagedPropertyException(final String msg) {
-        super(msg);
+    public OutOfDomainSubjectException(final String subject) {
+        super(String.format("RDF Stream contains subject(s) (%s) not in the domain of this repository.", subject));
     }
+
 }

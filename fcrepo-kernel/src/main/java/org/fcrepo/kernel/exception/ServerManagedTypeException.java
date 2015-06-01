@@ -16,19 +16,29 @@
 package org.fcrepo.kernel.exception;
 
 /**
- * @author cabeer
+ * Certain mixin types are managed by the repository only.
+ *
  * @author whikloj
- * @since 10/1/14
+ * @since 2015-06-02
  */
-public class ServerManagedPropertyException extends ConstraintViolationException {
+public class ServerManagedTypeException extends ConstraintViolationException {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     *
      * @param msg the message
      */
-    public ServerManagedPropertyException(final String msg) {
+    public ServerManagedTypeException(final String msg) {
         super(msg);
     }
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param rootCause the root cause
+     */
+    public ServerManagedTypeException(final Throwable rootCause) {
+        super(rootCause);
+    }
+
 }

@@ -31,6 +31,7 @@ import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -51,6 +52,7 @@ import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
@@ -86,6 +88,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1557,6 +1560,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpResponse createResponse = createObject("");
         final String subjectURI = createResponse.getFirstHeader("Location").getValue();
+        final Link exLink = Link.fromUri(new URI(serverAddress +
+                "static/constraints/ServerManagedPropertyException.rdf")).rel(CONSTRAINED_BY.getURI()).build();
 
         final HttpPatch patchObjMethod = new HttpPatch(subjectURI);
         patchObjMethod.addHeader("Content-Type", "application/sparql-update");
@@ -1568,12 +1573,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patchObjMethod.setEntity(e);
         final HttpResponse response = client.execute(patchObjMethod);
 
-        if (response.getStatusLine().getStatusCode() != BAD_REQUEST.getStatusCode()
+        if (response.getStatusLine().getStatusCode() != CONFLICT.getStatusCode()
                 && response.getEntity() != null) {
             final String content = EntityUtils.toString(response.getEntity());
             logger.trace("Got unexpected update response:\n" + content);
         }
-        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
+
+        assertEquals(CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
+        assertEquals(exLink.toString(), response.getFirstHeader("Link").getValue().toString());
 
     }
 
@@ -1597,7 +1604,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut secondPut = new HttpPut(serverAddress + pid);
         secondPut.setHeader("Content-Type", "text/turtle");
-        assertEquals(400, getStatus(secondPut));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(secondPut));
     }
 
     @Test

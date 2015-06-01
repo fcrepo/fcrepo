@@ -21,8 +21,12 @@ import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.base.Joiner;
+
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.ConstraintViolationException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.exception.OutOfDomainSubjectException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
@@ -90,8 +94,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                             t);
                 } else {
                     LOGGER.error("subject ({}) is not in repository domain.", t.getSubject().toString());
-                    throw new MalformedRdfException(String.format(
-                        "RDF Stream contains subject(s) (%s) not in the domain of this repository.", t.getSubject()));
+                    throw new OutOfDomainSubjectException(t.getSubject().toString());
                 }
                 return result;
             }
@@ -112,6 +115,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
             try {
                 operateOnTriple(t);
+            } catch (final ConstraintViolationException e) {
+                throw e;
             } catch (final MalformedRdfException e) {
                 exceptions.add(e.getMessage());
             }
@@ -140,12 +145,16 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                     operateOnMixin(mixinResource, subjectNode);
                 } else {
                     LOGGER.debug("Found repository-managed mixin on which we will not operate.");
+                    throw new ServerManagedTypeException(String.format(
+                            "The repository type (%s) of this resource is system managed.", mixinResource));
                 }
             } else {
                 LOGGER.debug("Operating on node: {} from triple: {}.", subjectNode,
                         t);
                 operateOnProperty(t, subjectNode);
             }
+        } catch (final ConstraintViolationException e) {
+            throw e;
         } catch (final RepositoryException | RepositoryRuntimeException e) {
             throw new MalformedRdfException(e.getMessage(), e);
         }
@@ -180,14 +189,12 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         return stream;
     }
 
-
     /**
      * @return the idTranslator
      */
-    public IdentifierConverter<Resource,FedoraResource> translator() {
+    public IdentifierConverter<Resource, FedoraResource> translator() {
         return idTranslator;
     }
-
 
     /**
      * @return the jcrRdfTools
