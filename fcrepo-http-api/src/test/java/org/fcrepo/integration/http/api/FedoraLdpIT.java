@@ -1457,13 +1457,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 graphStore.find(ANY, createURI(location),
                         HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
 
-        assertTrue("Expected graph to contain a UUID", iterator.hasNext());
-
-        final String uuid = iterator.next().getObject().getLiteralLexicalForm();
-
-        final HttpGet getObjMethodByUuid =
-                new HttpGet(serverAddress + "%5B" + uuid + "%5D");
-        getObjMethodByUuid.addHeader("Accept", "application/n3");
         final HttpResponse uuidResponse = client.execute(getObjMethod);
         assertEquals(200, uuidResponse.getStatusLine().getStatusCode());
 

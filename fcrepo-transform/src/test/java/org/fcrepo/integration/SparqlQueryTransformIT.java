@@ -37,7 +37,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 
 /**
@@ -72,7 +72,7 @@ public class SparqlQueryTransformIT extends AbstractResourceIT {
             assert (qexec != null);
             final ResultSet results = qexec.execSelect();
             assert (results != null);
-            assertTrue(results.hasNext());
+            assertFalse(results.hasNext());
         }
     }
 }

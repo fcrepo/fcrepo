@@ -201,22 +201,16 @@ public class FedoraResourceImplIT extends AbstractIT {
             containerService.findOrCreate(session, pid);
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
 
-        // jcr property
-        final Node s = createGraphSubjectNode(object);
-        Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
-        Node o = createLiteral(object.getNode().getIdentifier());
-        assertTrue(graph.contains(s, p, o));
-
         // multivalued property
-        p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
-        o = createLiteral(FEDORA_RESOURCE);
+        final Node s = createGraphSubjectNode(object);
+        final Node p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
+        Node o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
         o = createLiteral(FEDORA_CONTAINER);
         assertTrue(graph.contains(s, p, o));
 
     }
-
 
     @Test
     public void testObjectGraphWithCustomProperty() throws RepositoryException {
@@ -315,17 +309,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
 
-
-        // jcr property
-        final Node s = createGraphSubjectNode(object);
-        Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
-        Node o = createLiteral(object.getNode().getIdentifier());
-
-        assertTrue(graph.contains(s, p, o));
-
         // multivalued property
-        p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
-        o = createLiteral(FEDORA_RESOURCE);
+        final Node s = createGraphSubjectNode(object);
+        Node p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
+        Node o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
         o = createLiteral(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
