@@ -15,7 +15,6 @@
  */
 package org.fcrepo.transform.transformations;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -42,9 +41,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.ImmutableSortedSet.orderedBy;
-import static com.google.common.collect.Maps.transformValues;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -137,20 +134,22 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
 
     @Override
     public List<Map<String, Collection<Object>>> apply(final RdfStream stream) {
+        final LDPath<RDFNode> ldpathForResource =
+            getLdpathResource(stream);
+
+        final Resource context = createResource(stream.topic().getURI());
+
         try {
-            final LDPath<RDFNode> ldpathForResource =
-                getLdpathResource(stream);
-
-            final Resource context = createResource(stream.topic().getURI());
-
-            final Map<String, Collection<?>> wildcardCollection =
-                ldpathForResource.programQuery(context, new InputStreamReader(
-                        query));
-
-            return ImmutableList.of(transformLdpathOutputToSomethingSerializable(wildcardCollection));
+            return ImmutableList.of(unsafeCast(
+                ldpathForResource.programQuery(context, new InputStreamReader(query))));
         } catch (final LDPathParseException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <F, T> T unsafeCast(final F from) {
+        return (T) from;
     }
 
     @Override
@@ -179,37 +178,6 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
         return new LDPath<>(new GenericJenaBackend(rdfStream.asModel()));
 
     }
-
-    /**
-     * In order for the JAX-RS serialization magic to work, we have to turn the map into
-     * a non-wildcard type.
-     * @param collectionMap
-     * @return map of the LDPath
-     */
-    private static Map<String, Collection<Object>> transformLdpathOutputToSomethingSerializable(
-        final Map<String, Collection<?>> collectionMap) {
-
-        return transformValues(collectionMap,
-                WILDCARD_COLLECTION_TO_OBJECT_COLLECTION);
-    }
-
-    private static final Function<Collection<?>, Collection<Object>> WILDCARD_COLLECTION_TO_OBJECT_COLLECTION =
-        new Function<Collection<?>, Collection<Object>>() {
-
-            @Override
-            public Collection<Object> apply(final Collection<?> input) {
-                return transform(input, ANYTHING_TO_OBJECT_FUNCTION);
-            }
-        };
-
-    private static final Function<Object, Object> ANYTHING_TO_OBJECT_FUNCTION =
-        new Function<Object, Object>() {
-
-            @Override
-            public Object apply(final Object input) {
-                return input;
-            }
-        };
 
     @Override
     public LDPathTransform newTransform(final InputStream query) {

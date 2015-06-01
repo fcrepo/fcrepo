@@ -15,10 +15,10 @@
  */
 package org.fcrepo.transform;
 
-import com.google.common.base.Function;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
 import java.io.InputStream;
+import java.util.function.Function;
 
 /**
  * Generic interface for transforming a resource's properties
