@@ -21,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -33,9 +34,6 @@ import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 
 /**
  * Generates JMS {@link Message}s composed entirely of headers, based entirely
@@ -109,20 +107,17 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
-        message.setStringProperty(PROPERTIES_HEADER_NAME, Joiner.on(',').join(jcrEvent.getProperties()));
+        message.setStringProperty(PROPERTIES_HEADER_NAME, String.join(",", jcrEvent.getProperties()));
 
         LOGGER.trace("getMessage() returning: {}", message);
         return message;
     }
 
     private static String getEventURIs(final Set<Integer> types) {
-        final String uris = Joiner.on(',').join(Iterables.transform(types, new Function<Integer, String>() {
+        final String uris = types.stream()
+                                 .map(x -> REPOSITORY_NAMESPACE + EventType.valueOf(x))
+                                 .collect(Collectors.joining(","));
 
-            @Override
-            public String apply(final Integer type) {
-                return REPOSITORY_NAMESPACE + EventType.valueOf(type);
-            }
-        }));
         LOGGER.debug("Constructed event type URIs: {}", uris);
         return uris;
     }
