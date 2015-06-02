@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
@@ -35,7 +36,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 
 import javax.ws.rs.core.UriInfo;
@@ -126,9 +126,8 @@ public class ViewHelpers {
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         while (versions.hasNext()) {
             final Triple triple = versions.next();
-            String key = Optional.ofNullable(getVersionDate(graph, triple.getObject()))
-                            .filter(x -> !x.isEmpty())
-                            .orElse(format.format(new Date()));
+            final String date = getVersionDate(graph, triple.getObject());
+            String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
             while (map.containsKey(key)) {
                 key = key + "1";
             }
