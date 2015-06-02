@@ -35,12 +35,12 @@ import javax.ws.rs.ext.Provider;
 public class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
 
     @Context
-    UriInfo uriInfo;
+    private UriInfo uriInfo;
 
     @Override
     public Response toResponse(final ConstraintViolationException e) {
 
-        final Link link = ConstraintViolationException.buildConstraintLink(e, uriInfo);
+        final Link link = e.buildConstraintLink(uriInfo);
         final String msg = e.getMessage();
         return status(BAD_REQUEST).entity(msg).links(link).build();
     }

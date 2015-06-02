@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.ConstraintViolationException;
 import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 
 import javax.ws.rs.core.Context;
@@ -37,11 +36,11 @@ import static javax.ws.rs.core.Response.status;
 public class ServerManagedPropertyExceptionMapper implements ExceptionMapper<ServerManagedPropertyException> {
 
     @Context
-    UriInfo uriInfo;
+    private UriInfo uriInfo;
 
     @Override
     public Response toResponse(final ServerManagedPropertyException e) {
-        final Link link = ConstraintViolationException.buildConstraintLink(e, uriInfo);
+        final Link link = e.buildConstraintLink(uriInfo);
         final String msg = e.getMessage();
         return status(CONFLICT).entity(msg).links(link).build();
     }

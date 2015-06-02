@@ -17,7 +17,6 @@ package org.fcrepo.kernel.exception;
 
 import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 
@@ -32,9 +31,6 @@ public class ConstraintViolationException extends MalformedRdfException {
     private static final long serialVersionUID = 1L;
 
     private static final String CONSTRAINT_DIR = "/static/constraints/";
-
-    @Context
-    UriInfo uriInfo;
 
     /**
      * Ordinary constructor.
@@ -68,14 +64,11 @@ public class ConstraintViolationException extends MalformedRdfException {
      * Generates a link header for a constraint based on UriInfo and the name of the Exception class.
      * @return Link
      */
-    public static Link buildConstraintLink(final ConstraintViolationException e, final UriInfo uriInfo) {
-        String constraintURI = "";
-        if (uriInfo != null) {
-            constraintURI =
-                uriInfo.getBaseUri().getScheme() + "://" + uriInfo.getBaseUri().getAuthority() + CONSTRAINT_DIR +
-                e.getClass().toString().substring(e.getClass().toString().lastIndexOf('.') + 1) + ".rdf";
-        }
-
+    public Link buildConstraintLink(final UriInfo uriInfo) {
+        final String constraintURI =
+            uriInfo == null ? "" : String.format("%s://%s%s%s.rdf", uriInfo.getBaseUri().getScheme(), uriInfo
+                .getBaseUri().getAuthority(),
+                CONSTRAINT_DIR, this.getClass().toString().substring(this.getClass().toString().lastIndexOf('.') + 1));
         return Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build();
 
     }
