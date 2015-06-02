@@ -89,6 +89,8 @@ public abstract class AbstractResourceIT {
     /**
      * Gets a random (but valid) pid for use in testing.  This pid
      * is guaranteed to be unique within runs of this application.
+     *
+     * @return string containing new random unique Pid
      */
     protected static String getRandomUniquePid() {
         return UUID.randomUUID().toString();

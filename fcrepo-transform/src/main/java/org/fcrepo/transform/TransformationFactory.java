@@ -50,7 +50,7 @@ public class TransformationFactory {
      * the transform program
      * @param contentType the content type
      * @param inputStream the input stream
-     * @return a Transformation
+     * @return T a Transformation
      */
 
     public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {

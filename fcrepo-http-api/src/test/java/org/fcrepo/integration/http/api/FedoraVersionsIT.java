@@ -298,6 +298,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
      * This test just makes sure that while an object may not have two
      * versions with the same label, two different objects may have versions
      * with the same label.
+     *
+     * @throws Exception exception thrown during this function
      */
     @Test
     public void testCreateTwoObjectsWIthVersionsWithTheSameLabel() throws Exception {

@@ -1750,6 +1750,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * to retrieve an object from fedora:/files/FileSystem1 that lists a child
      * object at fedora:/files/FileSystem1/TestSubdir and lists datastreams ds1
      * and ds2
+     *
+     * @throws Exception thrown during this function
      */
     @Test
     public void testGetProjectedNode() throws Exception {
@@ -1861,6 +1863,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     /**
      * I should be able to create two subdirectories of a non-existent parent
      * directory.
+     *
+     * @throws Exception thrown during this function
      **/
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testBreakFederation() throws Exception {
@@ -1873,6 +1877,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     /**
      * I should be able to upload a file to a read/write federated filesystem.
+     *
+     * @throws IOException thrown during this function
      **/
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testUploadToProjection() throws IOException {
@@ -1901,6 +1907,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     /**
      * I should be able to link to content on a federated filesystem.
+     *
+     * @throws IOException thrown during this function
      **/
     @Test
     public void testFederatedDatastream() throws IOException {
@@ -2029,6 +2037,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     /**
      * When I make changes to a resource in a federated filesystem, the parent
      * folder's Last-Modified header should be updated.
+     *
+     * @throws Exception thrown during this function
      **/
     @Test
     public void testLastModifiedUpdatedAfterUpdates() throws Exception {

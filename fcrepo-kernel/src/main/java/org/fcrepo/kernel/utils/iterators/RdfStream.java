@@ -39,7 +39,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
  * A stream of RDF triples along with some useful context.
- * 
+ *
  * @author ajs6f
  * @since Oct 9, 2013
  */

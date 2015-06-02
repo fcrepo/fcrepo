@@ -214,6 +214,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
      * This test walks through the steps for creating an object, setting some
      * metadata, creating a version, updating that metadata, viewing the
      * version history to find that old version.
+     *
+     * @throws IOException exception thrown during this function
      */
     @Ignore
     @Test

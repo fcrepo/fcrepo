@@ -283,7 +283,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     /**
      * Tests whether a Sparql update is visible within a transaction
      * and if the update is made persistent along with the commit.
-     * @throws Exception
+     * @throws Exception exception thrown during this function
      */
     @Test
     public void testIngestNewWithSparqlPatchWithinTransaction() throws Exception {
@@ -357,6 +357,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     /**
      * Tests that transactions cannot be hijacked
+     *
+     * @throws Exception exception thrown during this function
      */
     @Test
     public void testTransactionHijackingNotPossible() throws Exception {
@@ -391,6 +393,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     /**
      * Tests that transactions cannot be hijacked,
      * even if created by an anonymous user
+     *
+     * @throws Exception exception thrown during this function
      */
     @Test
     public void testTransactionHijackingNotPossibleAnoymous() throws Exception {
@@ -428,7 +432,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
      * delivered content may be stale. Etag won't work either
      * because it is directly derived from Last-Modified.
      *
-     * @throws Exception
+     * @throws Exception excpetion thrown during this function
      */
     @Test
     public void testNoCachingHeadersDuringTransaction() throws Exception {
@@ -476,6 +480,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
      * "deleter" deleting objects it should not be possible for an object
      * to be deleted if a client has added a title and received a successful
      * http response code.
+     *
+     * @throws Exception exception thorn during this function
      */
     @Test
     @Ignore("Until we implement some kind of record level locking.")

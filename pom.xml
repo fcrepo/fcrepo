@@ -59,6 +59,7 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
+    <javadoc.plugin.version>2.10.3</javadoc.plugin.version>
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
   </properties>
@@ -989,13 +990,6 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>2.17</version>
-      </plugin>
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.10.1</version>
-        <configuration>
-          <linksource>true</linksource>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-jxr-plugin</artifactId>
