@@ -36,7 +36,8 @@ import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
 import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
 import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
 import static org.apache.jena.riot.WebContent.contentTypeTurtleAlt2;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.transform.http.responses.ResultSetStreamingOutput.getResultsFormat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -80,7 +81,8 @@ public class ResultSetStreamingOutputTest {
                         createURI("test:predicate"),
                         createLiteral("test:object")));
         testData.asDatasetGraph().getDefaultGraph().add(
-                new Triple(createURI("test:subject"), primaryTypePredicate,
+                new Triple(createURI("test:subject"),
+                        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "primaryType"),
                         createLiteral("nt:file")));
 
     }

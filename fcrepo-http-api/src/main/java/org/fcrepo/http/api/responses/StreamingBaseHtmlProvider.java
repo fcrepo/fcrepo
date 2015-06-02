@@ -56,7 +56,6 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Node;
@@ -126,16 +125,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
     private static final Logger LOGGER =
         getLogger(StreamingBaseHtmlProvider.class);
-
-    private final Predicate<String> acceptWhenTemplateMapContainsKey = new Predicate<String>() {
-        @Override
-        public boolean apply(final String key) {
-            if (isBlank(key)) {
-                return false;
-            }
-            return templatesMap.containsKey(key);
-        }
-    };
 
     @PostConstruct
     void init() throws IOException {

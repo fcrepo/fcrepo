@@ -21,8 +21,8 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypesPredicate;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -99,13 +99,15 @@ public class StreamingBaseHtmlProviderTest {
                         createURI("test:predicate"),
                         createLiteral("test:object")));
         testData.concat(
-                new Triple(createURI("test:subject"), primaryTypePredicate,
+                new Triple(createURI("test:subject"),
+                        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "primaryType"),
                         createLiteral("nt:file")));
 
         testData2.session(mockSession);
         testData2.topic(createURI("test:subject2"));
         testData2.concat(
-                new Triple(createURI("test:subject2"), mixinTypesPredicate,
+                new Triple(createURI("test:subject2"),
+                        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "mixinTypes"),
                         createLiteral("childOf:ntFile")));
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
