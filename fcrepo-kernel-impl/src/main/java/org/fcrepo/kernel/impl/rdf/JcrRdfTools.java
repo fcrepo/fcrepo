@@ -322,10 +322,18 @@ public class JcrRdfTools {
 
         if (isManagedPredicate.apply(predicate)) {
 
-            throw new ServerManagedPropertyException("Could not remove triple containing predicate "
-                    + predicate.toString()
-                    + " to node "
-                    + node.getPath());
+            if (propertyName.indexOf("lastModified") != -1) {
+                throw new ServerManagedPropertyException("Cannot update the container as the given RDF is "
+                        + "out-of-date based on the value of its fedora:lastModified triple. Predicate is "
+                        + predicate.toString()
+                        + " on node "
+                        + node.getPath());
+            } else {
+                throw new ServerManagedPropertyException("Could not remove triple containing predicate "
+                        + predicate.toString()
+                        + " to node "
+                        + node.getPath());
+            }
         }
 
         if (objectNode.isURIResource()

@@ -17,6 +17,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 
 import javax.ws.rs.core.Link;
@@ -25,7 +26,8 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
-
+import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 import org.apache.commons.codec.binary.Base64;
 
 /**
@@ -39,8 +41,15 @@ public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdf
     public Response toResponse(final MalformedRdfException e) {
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
         final String msg = e.getMessage();
+        final Logger LOGGER = getLogger(MalformedRdfExceptionMapper.class);
+
+        LOGGER.info("Msg is " + msg + ": \n");
+        if (msg.indexOf("given RDF is out-of-date") != -1) {
+            return status(CONFLICT).entity(msg).links(link).build();
+        }
         if (msg.matches(".*org.*Exception: .*")) {
             return status(BAD_REQUEST).entity(msg.replaceAll("org.*Exception: ", "")).links(link).build();
+            //return status(BAD_REQUEST).entity(msg).links(link).build();
         }
         return status(BAD_REQUEST).entity(msg).links(link).build();
     }
