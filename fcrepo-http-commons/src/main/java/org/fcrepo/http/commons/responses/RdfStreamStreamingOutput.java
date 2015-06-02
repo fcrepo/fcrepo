@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
@@ -24,7 +25,6 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -121,7 +121,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
          */
         final List<Map.Entry<String, String>> namespaces = rdfStream.namespaces().entrySet().stream()
                                                  .filter(x -> !x.getKey().equals("xmlns"))
-                                                 .collect(Collectors.toList());
+                                                 .collect(toList());
 
         for (final Map.Entry<String, String> namespace : namespaces) {
             writer.handleNamespace(namespace.getKey(), namespace.getValue());
