@@ -115,7 +115,9 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     private static String getEventURIs(final Set<Integer> types) {
         final String uris = types.stream()
-                                 .map(x -> REPOSITORY_NAMESPACE + EventType.valueOf(x))
+                                 .map(EventType::valueOf)
+                                 .map(EventType::toString)
+                                 .map(REPOSITORY_NAMESPACE::concat)
                                  .collect(Collectors.joining(","));
 
         LOGGER.debug("Constructed event type URIs: {}", uris);

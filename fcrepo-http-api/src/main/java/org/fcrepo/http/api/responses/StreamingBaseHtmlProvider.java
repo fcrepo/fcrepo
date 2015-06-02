@@ -160,7 +160,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
                 // Find a template that matches the primary type or one of its parents
                 nodeTypesList.stream()
-                             .map(x -> x.getName())
+                             .map(NodeType::getName)
                              .filter(x -> !isBlank(x) && velocity.resourceExists(getTemplateLocation(x)))
                              .findFirst()
                              .ifPresent(x -> addTemplate(primaryNodeTypeName, x, templatesMapBuilder));
@@ -200,7 +200,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
             final Model model = rdfStream.asModel();
 
-            final Template nodeTypeTemplate = getTemplate(model, subject, annotations);
+            final Template nodeTypeTemplate = getTemplate(model, subject, Arrays.asList(annotations));
 
             final Context context = getContext(model, subject);
 
@@ -234,13 +234,13 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     }
 
     private Template getTemplate(final Model rdf, final Node subject,
-                                 final Annotation[] annotations) {
+                                 final List<Annotation> annotations) {
 
-        Optional<Template> template = Arrays.asList(annotations).stream()
+        Optional<Template> template = annotations.stream()
                                   .filter(x -> x instanceof HtmlTemplate)
                                   .map(x -> ((HtmlTemplate) x).value())
-                                  .filter(x -> templatesMap.containsKey(x))
-                                  .map(x -> templatesMap.get(x))
+                                  .filter(templatesMap::containsKey)
+                                  .map(templatesMap::get)
                                   .findFirst();
 
         if (!template.isPresent()) {
@@ -250,8 +250,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                                                      "mixinTypes"))
                           .toList().stream()
                           .map(x -> x.asLiteral().getLexicalForm())
-                          .filter(x -> !isBlank(x) && templatesMap.containsKey(x))
-                          .map(x -> templatesMap.get(x))
+                          .filter(templatesMap::containsKey)
+                          .map(templatesMap::get)
                           .findFirst();
         }
 
@@ -265,10 +265,10 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                                                      "primaryType"))
                           .toList().stream()
                           .map(x -> x.asLiteral().getLexicalForm())
-                          .filter(x -> templatesMap.containsKey(x))
-                          .map(x -> templatesMap.get(x))
+                          .filter(templatesMap::containsKey)
+                          .map(templatesMap::get)
                           .findFirst()
-                          .orElseGet(() -> templatesMap.get("node"));
+                          .orElse(templatesMap.get("node"));
         }
     }
 

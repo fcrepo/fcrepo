@@ -50,7 +50,7 @@ public class SinglePrefer {
      * @return true if the header has a return tag
      */
     public Boolean hasReturn() {
-        return preferTags().stream().anyMatch(x -> x.getTag().equals("return"));
+        return preferTags().stream().map(PreferTag::getTag).anyMatch("return"::equals);
     }
 
     /**
@@ -59,7 +59,7 @@ public class SinglePrefer {
      * @return true if the header has a return tag
      */
     public Boolean hasHandling() {
-        return preferTags().stream().anyMatch(x -> x.getTag().equals("handling"));
+        return preferTags().stream().map(PreferTag::getTag).anyMatch("handling"::equals);
     }
 
     /**

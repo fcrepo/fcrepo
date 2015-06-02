@@ -47,6 +47,8 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
     @Autowired
     private ExternalContentService contentService;
 
+    private static final Class contentLocationClass = ContentLocation.class;
+
     @Override
     public boolean isReadable(final Class<?> type,
                               final Type genericType,
@@ -54,7 +56,8 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
                               final MediaType mediaType) {
         return InputStream.class.isAssignableFrom(type) &&
                     Arrays.asList(annotations).stream()
-                          .anyMatch(x -> x.annotationType().equals(ContentLocation.class));
+                          .map(Annotation::annotationType)
+                          .anyMatch(contentLocationClass::equals);
     }
 
     @Override

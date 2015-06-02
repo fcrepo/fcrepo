@@ -16,6 +16,7 @@
 package org.fcrepo.http.commons.domain.ldp;
 
 import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
@@ -51,9 +52,9 @@ public class LdpPreferTag extends PreferTag {
     public LdpPreferTag(final PreferTag preferTag) {
         super(preferTag);
 
-        final Optional<String> include = Optional.ofNullable(preferTag.getParams().get("include"));
-        final Optional<String> omit = Optional.ofNullable(preferTag.getParams().get("omit"));
-        final Optional<String> received = Optional.ofNullable(preferTag.getParams().get("received"));
+        final Optional<String> include = ofNullable(preferTag.getParams().get("include"));
+        final Optional<String> omit = ofNullable(preferTag.getParams().get("omit"));
+        final Optional<String> received = ofNullable(preferTag.getParams().get("received"));
 
         final List<String> includes = asList(include.orElse(" ").split(" "));
         final List<String> omits = asList(omit.orElse(" ").split(" "));
