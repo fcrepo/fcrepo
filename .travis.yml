@@ -6,6 +6,7 @@ before_install:
  - "export JAVA_OPTS=-Xmx512m"
 
 script:
+ - mvn install -B -V
  - mvn javadoc:jar
  - mvn javadoc:test-aggregate
 
