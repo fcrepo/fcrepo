@@ -1598,7 +1598,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut secondPut = new HttpPut(serverAddress + pid);
         secondPut.setHeader("Content-Type", "text/turtle");
-        assertEquals(400, getStatus(secondPut));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(secondPut));
     }
 
     @Test

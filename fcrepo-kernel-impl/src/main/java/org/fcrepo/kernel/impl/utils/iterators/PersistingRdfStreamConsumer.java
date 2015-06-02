@@ -21,8 +21,11 @@ import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.base.Joiner;
+
 import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.exception.ConstraintViolationException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.exception.OutOfDomainSubjectException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 
@@ -90,7 +93,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                             t);
                 } else {
                     LOGGER.error("subject ({}) is not in repository domain.", t.getSubject().toString());
-                    throw new MalformedRdfException(String.format(
+                    throw new OutOfDomainSubjectException(String.format(
                         "RDF Stream contains subject(s) (%s) not in the domain of this repository.", t.getSubject()));
                 }
                 return result;
@@ -112,6 +115,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
             try {
                 operateOnTriple(t);
+            } catch (final ConstraintViolationException e) {
+                throw e;
             } catch (final MalformedRdfException e) {
                 exceptions.add(e.getMessage());
             }
@@ -146,6 +151,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                         t);
                 operateOnProperty(t, subjectNode);
             }
+        } catch (final ConstraintViolationException e) {
+            throw e;
         } catch (final RepositoryException | RepositoryRuntimeException e) {
             throw new MalformedRdfException(e.getMessage(), e);
         }
