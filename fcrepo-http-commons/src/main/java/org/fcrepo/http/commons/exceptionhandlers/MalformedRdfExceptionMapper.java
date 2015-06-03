@@ -41,15 +41,12 @@ public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdf
     public Response toResponse(final MalformedRdfException e) {
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
         final String msg = e.getMessage();
-        final Logger LOGGER = getLogger(MalformedRdfExceptionMapper.class);
 
-        LOGGER.info("Msg is " + msg + ": \n");
         if (msg.indexOf("given RDF is out-of-date") != -1) {
             return status(CONFLICT).entity(msg).links(link).build();
         }
         if (msg.matches(".*org.*Exception: .*")) {
             return status(BAD_REQUEST).entity(msg.replaceAll("org.*Exception: ", "")).links(link).build();
-            //return status(BAD_REQUEST).entity(msg).links(link).build();
         }
         return status(BAD_REQUEST).entity(msg).links(link).build();
     }
