@@ -40,7 +40,7 @@ public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdf
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
         final String msg = e.getMessage();
 
-        if (msg.indexOf("given RDF is out-of-date") != -1) {
+        if (msg.contains("server-managed predicate")) {
             return status(CONFLICT).entity(msg).links(link).build();
         }
         if (msg.matches(".*org.*Exception: .*")) {

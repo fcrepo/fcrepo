@@ -322,17 +322,11 @@ public class JcrRdfTools {
 
         if (isManagedPredicate.apply(predicate)) {
 
-            throw new ServerManagedPropertyException("Cannot update the container as the given RDF is "
-                        + "out-of-date based on the value of its fedora:lastModified triple. Predicate is "
+            throw new ServerManagedPropertyException("Could not remove triple containing server-managed "
+                        + "predicate "
                         + predicate.toString()
-                        + " on node "
+                        + " to node "
                         + node.getPath());
-            //} else {
-            //    throw new ServerManagedPropertyException("Could not remove triple containing predicate "
-            //            + predicate.toString()
-            //            + " to node "
-            //            + node.getPath());
-            //}
         }
 
         if (objectNode.isURIResource()
