@@ -26,8 +26,6 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.exception.MalformedRdfException;
-import static org.slf4j.LoggerFactory.getLogger;
-import org.slf4j.Logger;
 import org.apache.commons.codec.binary.Base64;
 
 /**
