@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BLANKNODE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isBlankNode;
@@ -254,10 +254,10 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testIsBlanknode() throws RepositoryException {
-        when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(true);
+        when(mockNode.isNodeType(FEDORA_SKOLEM)).thenReturn(true);
         assertTrue("Expected to be a blank node", isBlankNode.apply(mockNode));
 
-        when(mockNode.isNodeType(FEDORA_BLANKNODE)).thenReturn(false);
+        when(mockNode.isNodeType(FEDORA_SKOLEM)).thenReturn(false);
         assertFalse("Expected to not be a blank node", isBlankNode.apply(mockNode));
     }
 

@@ -366,7 +366,7 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         assertEquals("info:fedora/x", statement.getSubject().toString());
         assertEquals("info:fedora/x", statement.getObject().toString());
         verify(testObj.jcrTools).findOrCreateNode(mockSession, "/.well-known/genid/");
-        verify(mockNode).addMixin(FEDORA_BLANKNODE);
+        verify(mockNode).addMixin(FEDORA_SKOLEM);
         verify(mockNode.getParent()).addMixin(FEDORA_PAIRTREE);
     }
 
