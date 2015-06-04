@@ -34,6 +34,9 @@ import javax.jcr.observation.Event;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.EventType;
 
+import org.fcrepo.mint.PidMinter;
+import org.fcrepo.mint.UUIDPathMinter;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
@@ -48,9 +51,12 @@ import com.google.common.collect.Iterables;
 public class FedoraEvent {
 
     private Event e;
+    private String eventID;
 
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
+
+    private static final PidMinter pidMinter = new UUIDPathMinter();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
@@ -59,6 +65,7 @@ public class FedoraEvent {
      */
     public FedoraEvent(final Event e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
+        eventID = pidMinter.mintPid();
         this.e = e;
     }
 
@@ -70,6 +77,7 @@ public class FedoraEvent {
      */
     public FedoraEvent(final FedoraEvent e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
+        eventID = e.getEventID();
         this.e = e.e;
     }
 
@@ -182,6 +190,13 @@ public class FedoraEvent {
         } catch (RepositoryException e1) {
             throw new RepositoryRuntimeException("Error getting event date!", e1);
         }
+    }
+
+    /**
+     * Get the event ID.
+    **/
+    public String getEventID() {
+        return eventID;
     }
 
     @Override

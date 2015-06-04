@@ -19,7 +19,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.annotation.Timed;
@@ -51,7 +50,6 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.fcrepo.kernel.identifiers.PidMinter;
 import org.xml.sax.SAXException;
 
 
@@ -184,10 +182,10 @@ public class HttpPidMinter implements PidMinter {
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( IOException ex ) {
             LOGGER.warn("Error minting pid from {}: {}", url, ex);
-            throw new RepositoryRuntimeException("Error minting pid", ex);
+            throw new RuntimeException("Error minting pid", ex);
         } catch ( Exception ex ) {
             LOGGER.warn("Error processing minter response", ex);
-            throw new RepositoryRuntimeException("Error processing minter response", ex);
+            throw new RuntimeException("Error processing minter response", ex);
         }
     }
 }

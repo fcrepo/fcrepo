@@ -64,6 +64,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
 
     public static final String USER_HEADER_NAME = JMS_NAMESPACE + "user";
     public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
+    public static final String EVENT_ID_HEADER_NAME = JMS_NAMESPACE + "eventID";
 
     private String baseURL;
     private String userAgent;
@@ -108,6 +109,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
         message.setStringProperty(PROPERTIES_HEADER_NAME, String.join(",", jcrEvent.getProperties()));
+        message.setStringProperty(EVENT_ID_HEADER_NAME, jcrEvent.getEventID());
 
         LOGGER.trace("getMessage() returning: {}", message);
         return message;

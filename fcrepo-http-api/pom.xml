@@ -46,7 +46,6 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-mint</artifactId>
       <version>${project.version}</version>
-      <scope>runtime</scope>
     </dependency>
 
     <dependency>

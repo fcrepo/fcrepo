@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.identifiers;
+package org.fcrepo.mint;
 
 /**
  * Defines the behavior of a component that can accept responsibility

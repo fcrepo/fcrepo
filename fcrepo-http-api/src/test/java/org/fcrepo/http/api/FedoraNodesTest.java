@@ -50,7 +50,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.mint.PidMinter;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;

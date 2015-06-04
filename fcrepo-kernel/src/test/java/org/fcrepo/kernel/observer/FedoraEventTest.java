@@ -19,6 +19,7 @@ import static com.google.common.collect.Iterators.contains;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
@@ -80,6 +81,13 @@ public class FedoraEventTest {
     public void testGetUserID() {
 
         assertEquals("UserId", e.getUserID());
+
+    }
+
+    @Test
+    public void testGetEventID() {
+
+        assertNotNull(e.getEventID());
 
     }
 
