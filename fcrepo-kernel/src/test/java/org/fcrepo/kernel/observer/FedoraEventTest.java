@@ -19,6 +19,7 @@ import static com.google.common.collect.Iterators.contains;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
@@ -84,9 +85,9 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testGetIdentifier() throws Exception {
+    public void testGetEventID() {
 
-        assertEquals("Identifier", e.getIdentifier());
+        assertNotNull(e.getEventID());
 
     }
 
@@ -136,7 +137,6 @@ public class FedoraEventTest {
         assertTrue("Should contain date: " + text, text.contains(Long.toString(e.getDate())));
 
         assertFalse("Should not contain user-data: " + text, text.contains(e.getUserData()));
-        assertFalse("Should not contain identifier: " + text, text.contains(e.getIdentifier()));
         assertFalse("Should not contain user-id: " + text, text.contains(e.getUserID()));
     }
 

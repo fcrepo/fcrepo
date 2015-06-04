@@ -24,6 +24,7 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -114,6 +115,8 @@ public class DefaultMessageFactoryTest {
         when(mockEvent.getTypes()).thenReturn(testTypes);
         final String prop = "test-property";
         when(mockEvent.getProperties()).thenReturn(singleton(prop));
+        final String eventID = "abcdefg12345678";
+        when(mockEvent.getEventID()).thenReturn(eventID);
 
         final Message msg = testDefaultMessageFactory.getMessage(mockEvent, mockSession);
 
@@ -128,6 +131,7 @@ public class DefaultMessageFactoryTest {
         assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
         assertEquals("Got wrong userID in message", testUser, msg.getStringProperty(USER_HEADER_NAME));
         assertEquals("Got wrong userAgent in message", userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME));
+        assertEquals("Got wrong eventID in message", eventID, msg.getStringProperty(EVENT_ID_HEADER_NAME));
         return msg;
     }
 

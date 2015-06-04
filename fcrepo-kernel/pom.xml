@@ -54,6 +54,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-mint</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>

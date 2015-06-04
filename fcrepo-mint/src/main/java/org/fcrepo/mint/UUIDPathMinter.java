@@ -21,7 +21,6 @@ import static java.util.UUID.randomUUID;
 import java.util.stream.IntStream;
 import java.util.StringJoiner;
 
-import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.metrics.RegistryService;
 
 import com.codahale.metrics.Timer;

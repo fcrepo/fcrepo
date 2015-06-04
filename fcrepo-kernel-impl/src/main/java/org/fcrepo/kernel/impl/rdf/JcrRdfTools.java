@@ -50,7 +50,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
-import org.fcrepo.kernel.identifiers.PidMinter;
+import org.fcrepo.mint.PidMinter;
 import org.fcrepo.kernel.impl.services.AbstractService;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.RdfLexicon;

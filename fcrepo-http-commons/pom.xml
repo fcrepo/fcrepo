@@ -31,7 +31,6 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-mint</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
