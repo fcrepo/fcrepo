@@ -124,11 +124,9 @@ public class ViewHelpers {
         final Iterator<Triple> versions = getObjects(graph, subject, predicate);
         final Map<String, Node> map = new TreeMap<>();
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        Triple triple;
-        String date;
         while (versions.hasNext()) {
-            triple = versions.next();
-            date = getVersionDate(graph, triple.getObject());
+            final Triple triple = versions.next();
+            final String date = getVersionDate(graph, triple.getObject());
             String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
             while (map.containsKey(key)) {
                 key = key + "1";

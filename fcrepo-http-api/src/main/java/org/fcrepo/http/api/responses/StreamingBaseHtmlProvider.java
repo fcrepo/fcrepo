@@ -15,18 +15,17 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static com.hp.hpl.jena.graph.Node.ANY;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getAllValuesForPredicate;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.getFirstValueForPredicate;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.mixinTypesPredicate;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
-import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.ImmutableMap.builder;
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -39,9 +38,9 @@ import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -57,10 +56,8 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import org.apache.velocity.Template;
@@ -129,27 +126,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     private static final Logger LOGGER =
         getLogger(StreamingBaseHtmlProvider.class);
 
-    private final Predicate<NodeType> acceptWhenTemplateExists = new Predicate<NodeType>() {
-        @Override
-        public boolean apply(final NodeType nodeType) {
-            final String nodeTypeName = nodeType.getName();
-            if (isBlank(nodeTypeName)) {
-                return false;
-            }
-            return velocity.resourceExists(getTemplateLocation(nodeTypeName));
-        }
-    };
-
-    private final Predicate<String> acceptWhenTemplateMapContainsKey = new Predicate<String>() {
-        @Override
-        public boolean apply(final String key) {
-            if (isBlank(key)) {
-                return false;
-            }
-            return templatesMap.containsKey(key);
-        }
-    };
-
     @PostConstruct
     void init() throws IOException {
 
@@ -183,14 +159,11 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                 nodeTypesList.addAll(Arrays.asList(primaryNodeType.getSupertypes()));
 
                 // Find a template that matches the primary type or one of its parents
-                final NodeType templateMatch = Iterables.find(nodeTypesList, acceptWhenTemplateExists, null);
-                if (templateMatch != null) {
-                    addTemplate(primaryNodeTypeName, templateMatch.getName(), templatesMapBuilder);
-                } else {
-                    // No HTML representation available for that kind of node
-                    LOGGER.debug("Didn't find template for nodes with primary type or its parents: {} in location: {}",
-                            primaryNodeTypeName, templatesLocation);
-                }
+                nodeTypesList.stream()
+                             .map(NodeType::getName)
+                             .filter(x -> !isBlank(x) && velocity.resourceExists(getTemplateLocation(x)))
+                             .findFirst()
+                             .ifPresent(x -> addTemplate(primaryNodeTypeName, x, templatesMapBuilder));
             }
 
             final List<String> otherTemplates =
@@ -227,7 +200,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
             final Model model = rdfStream.asModel();
 
-            final Template nodeTypeTemplate = getTemplate(model, subject, annotations);
+            final Template nodeTypeTemplate = getTemplate(model, subject, Arrays.asList(annotations));
 
             final Context context = getContext(model, subject);
 
@@ -261,51 +234,42 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     }
 
     private Template getTemplate(final Model rdf, final Node subject,
-                                 final Annotation[] annotations) {
-        Template template = null;
+                                 final List<Annotation> annotations) {
 
-        for (final Annotation a : annotations) {
-            if (a instanceof HtmlTemplate) {
-                final String value = ((HtmlTemplate) a).value();
-                LOGGER.debug("Found an HtmlTemplate annotation {}", value);
-                template = templatesMap.get(value);
-                break;
-            }
-        }
+        Optional<Template> template = annotations.stream()
+                                  .filter(x -> x instanceof HtmlTemplate)
+                                  .map(x -> ((HtmlTemplate) x).value())
+                                  .filter(templatesMap::containsKey)
+                                  .map(templatesMap::get)
+                                  .findFirst();
 
-        if (template == null) {
+        if (!template.isPresent()) {
             LOGGER.trace("Attempting to discover the mixin types of the node for the resource in question...");
-            final Iterator<String> mixinTypes =
-                getAllValuesForPredicate(rdf, subject,
-                                         mixinTypesPredicate);
-
-            LOGGER.debug("Found mixins: {}", mixinTypes);
-            if (mixinTypes != null) {
-                final ImmutableList<String> copy = copyOf(mixinTypes);
-                final String mixin = Iterables.find(copy, acceptWhenTemplateMapContainsKey, null);
-                if (mixin != null) {
-                    LOGGER.debug("Matched mixin type: {}", mixin);
-                    template = templatesMap.get(mixin);
-                }
-            }
+            template = rdf.listObjectsOfProperty(createResource(subject.getURI()),
+                                                 createProperty(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
+                                                     "mixinTypes"))
+                          .toList().stream()
+                          .map(x -> x.asLiteral().getLexicalForm())
+                          .filter(templatesMap::containsKey)
+                          .map(templatesMap::get)
+                          .findFirst();
         }
 
-        if (template == null) {
+        if (template.isPresent()) {
+            LOGGER.debug("Choosing template: {}", template.get().getName());
+            return template.get();
+        } else {
             LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
-            final String nodeType =
-                    getFirstValueForPredicate(rdf, subject, primaryTypePredicate);
-
-            LOGGER.debug("Found primary node type: {}", nodeType);
-            template = templatesMap.get(nodeType);
+            return rdf.listObjectsOfProperty(createResource(subject.getURI()),
+                                             createProperty(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
+                                                     "primaryType"))
+                          .toList().stream()
+                          .map(x -> x.asLiteral().getLexicalForm())
+                          .filter(templatesMap::containsKey)
+                          .map(templatesMap::get)
+                          .findFirst()
+                          .orElse(templatesMap.get("node"));
         }
-
-        if (template == null) {
-            LOGGER.debug("Falling back on default node template");
-            template = templatesMap.get("node");
-        }
-
-        LOGGER.debug("Choosing template: {}", template.getName());
-        return template;
     }
 
     @Override

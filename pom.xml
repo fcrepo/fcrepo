@@ -53,7 +53,7 @@
     <github.global.server>github</github.global.server>
     <guava.version>18.0</guava.version>
     <!-- plugin versions -->
-    <checkstyle.plugin.version>2.14</checkstyle.plugin.version>
+    <checkstyle.plugin.version>2.15</checkstyle.plugin.version>
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
     <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>

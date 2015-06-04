@@ -21,7 +21,8 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
-import static org.fcrepo.http.commons.responses.RdfSerializationUtils.primaryTypePredicate;
+import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -66,7 +67,8 @@ public class QueryExecutionProviderTest {
                         createURI("test:predicate"),
                         createLiteral("test:object")));
         testData.asDatasetGraph().getDefaultGraph().add(
-                new Triple(createURI("test:subject"), primaryTypePredicate,
+                new Triple(createURI("test:subject"),
+                        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "primaryType"),
                         createLiteral("nt:file")));
 
     }

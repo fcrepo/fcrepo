@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
@@ -22,14 +23,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
@@ -45,7 +45,6 @@ import org.openrdf.rio.WriterConfig;
 import org.slf4j.Logger;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -81,8 +80,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         if (LOGGER.isDebugEnabled()) {
             for (final RDFFormat writeableFormats : RDFWriterRegistry.getInstance().getKeys()) {
                 LOGGER.debug("Discovered RDF writer writeableFormats: {} with mimeTypes: {}",
-                        writeableFormats.getName(), Joiner.on(" ")
-                                .join(writeableFormats.getMIMETypes()));
+                        writeableFormats.getName(), String.join(" ", writeableFormats.getMIMETypes()));
             }
         }
         final RDFFormat format = Rio.getWriterFormatForMIMEType(mediaType.toString());
@@ -116,28 +114,21 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         final RDFWriter writer = Rio.createWriter(dataFormat, output);
         writer.setWriterConfig(settings);
 
-        for (final Map.Entry<String, String> namespace : excludeProtectedNamespaces(rdfStream.namespaces())) {
-            writer.handleNamespace(namespace.getKey(), namespace.getValue());
-        }
-
-        Rio.write(model, writer);
-    }
-
-    private static Iterable<Map.Entry<String, String>> excludeProtectedNamespaces(
-            final Map<String, String> namespaces) {
         /**
          * We exclude:
          *  - xmlns, which Sesame helpfully serializes, but normal parsers may complain
          *     about in some serializations (e.g. RDF/XML where xmlns:xmlns is forbidden by XML);
          */
-        return Iterables.filter(namespaces.entrySet(), new Predicate<Map.Entry<String, String>>() {
-            @Override
-            public boolean apply(final Map.Entry<String, String> input) {
-                return !input.getKey().equals("xmlns");
-            }
-        });
-    }
+        final List<Map.Entry<String, String>> namespaces = rdfStream.namespaces().entrySet().stream()
+                                                 .filter(x -> !x.getKey().equals("xmlns"))
+                                                 .collect(toList());
 
+        for (final Map.Entry<String, String> namespace : namespaces) {
+            writer.handleNamespace(namespace.getKey(), namespace.getValue());
+        }
+
+        Rio.write(model, writer);
+    }
 
     private Iterable<Statement> asStatements() {
         return new Iterable<Statement>() {

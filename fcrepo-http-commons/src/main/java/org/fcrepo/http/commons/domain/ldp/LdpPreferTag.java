@@ -15,18 +15,17 @@
  */
 package org.fcrepo.http.commons.domain.ldp;
 
-import static com.google.common.base.Optional.fromNullable;
 import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.SERVER_MANAGED;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.fcrepo.http.commons.domain.PreferTag;
-
-import com.google.common.base.Optional;
 
 /**
  * A subclass of {@link PreferTag} that contemplates the possible preferences for Linked Data Platform requests.
@@ -53,14 +52,14 @@ public class LdpPreferTag extends PreferTag {
     public LdpPreferTag(final PreferTag preferTag) {
         super(preferTag);
 
-        final Optional<String> include = fromNullable(preferTag.getParams().get("include"));
-        final Optional<String> omit = fromNullable(preferTag.getParams().get("omit"));
-        final Optional<String> received = fromNullable(preferTag.getParams().get("received"));
+        final Optional<String> include = ofNullable(preferTag.getParams().get("include"));
+        final Optional<String> omit = ofNullable(preferTag.getParams().get("omit"));
+        final Optional<String> received = ofNullable(preferTag.getParams().get("received"));
 
-        final List<String> includes = asList(include.or(" ").split(" "));
-        final List<String> omits = asList(omit.or(" ").split(" "));
+        final List<String> includes = asList(include.orElse(" ").split(" "));
+        final List<String> omits = asList(omit.orElse(" ").split(" "));
 
-        final boolean minimal = preferTag.getValue().equals("minimal") || received.or("").equals("minimal");
+        final boolean minimal = preferTag.getValue().equals("minimal") || received.orElse("").equals("minimal");
 
         final boolean preferMinimalContainer = includes.contains(LDP_NAMESPACE + "PreferMinimalContainer") || minimal;
 

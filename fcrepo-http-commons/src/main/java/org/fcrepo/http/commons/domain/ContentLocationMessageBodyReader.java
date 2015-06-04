@@ -16,8 +16,6 @@
 package org.fcrepo.http.commons.domain;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.fcrepo.kernel.services.ExternalContentService;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -43,17 +41,13 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 @Provider
 public class ContentLocationMessageBodyReader implements MessageBodyReader<InputStream> {
 
-    private static final Predicate<Annotation> HAS_CONTENT_LOCATION_PREDICATE = new Predicate<Annotation>() {
-        @Override
-        public boolean apply(final Annotation annotation) {
-            return annotation.annotationType().equals(ContentLocation.class);
-        }
-    };
     /**
      * The fcrepo node service
      */
     @Autowired
     private ExternalContentService contentService;
+
+    private static final Class contentLocationClass = ContentLocation.class;
 
     @Override
     public boolean isReadable(final Class<?> type,
@@ -61,7 +55,9 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
                               final Annotation[] annotations,
                               final MediaType mediaType) {
         return InputStream.class.isAssignableFrom(type) &&
-                   Iterables.any(Arrays.asList(annotations), HAS_CONTENT_LOCATION_PREDICATE);
+                    Arrays.asList(annotations).stream()
+                          .map(Annotation::annotationType)
+                          .anyMatch(contentLocationClass::equals);
     }
 
     @Override

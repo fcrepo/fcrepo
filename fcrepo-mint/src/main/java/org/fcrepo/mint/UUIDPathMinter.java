@@ -16,9 +16,10 @@
 package org.fcrepo.mint;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.base.Joiner.on;
-import static com.google.common.base.Splitter.fixedLength;
 import static java.util.UUID.randomUUID;
+
+import java.util.stream.IntStream;
+import java.util.StringJoiner;
 
 import org.fcrepo.kernel.identifiers.PidMinter;
 import org.fcrepo.metrics.RegistryService;
@@ -79,10 +80,11 @@ public class UUIDPathMinter implements PidMinter {
                 return s;
             }
 
-            final Iterable<String> split =
-                    fixedLength(length).split(s.substring(0, length * count));
+            final StringJoiner joiner = new StringJoiner("/");
+            IntStream.rangeClosed(0, count - 1)
+                     .forEach(x -> joiner.add(s.substring(x * length, (x + 1) * length)));
 
-            return on("/").join(split) + "/" + s;
+            return joiner.add(s).toString();
         }
     }
 }
