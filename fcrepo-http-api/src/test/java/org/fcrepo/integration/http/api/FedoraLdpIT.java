@@ -35,6 +35,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
@@ -1597,7 +1598,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut secondPut = new HttpPut(serverAddress + pid);
         secondPut.setHeader("Content-Type", "text/turtle");
-        assertEquals(400, getStatus(secondPut));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(secondPut));
+    }
+
+    @Test
+    public void testSMPEWithFedoraProperty() throws Exception {
+        final String content = "prefix fedora: <http://fedora.info/definitions/v4/repository#>\n<> "
+                             + "fedora:junk \"hello\"\n";
+        final String pid = getRandomUniquePid();
+        createObject(pid);
+
+        final HttpPut put = new HttpPut(serverAddress + pid);
+        put.setEntity(new StringEntity(content));
+        put.setHeader("Content-Type", "text/turtle");
+        final HttpResponse response = execute(put);
+        assertEquals("Expected 409 response code when PUTing malformed RDF on an object",
+                CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
     @Test

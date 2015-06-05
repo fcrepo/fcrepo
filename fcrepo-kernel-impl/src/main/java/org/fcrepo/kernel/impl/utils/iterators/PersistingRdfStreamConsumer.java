@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.base.Joiner;
+import org.fcrepo.kernel.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -146,6 +147,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                         t);
                 operateOnProperty(t, subjectNode);
             }
+        } catch (ServerManagedPropertyException smpe) {
+            throw smpe;
         } catch (final RepositoryException | RepositoryRuntimeException e) {
             throw new MalformedRdfException(e.getMessage(), e);
         }
