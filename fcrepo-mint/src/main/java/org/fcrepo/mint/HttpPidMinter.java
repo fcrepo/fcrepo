@@ -182,10 +182,10 @@ public class HttpPidMinter implements PidMinter {
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( IOException ex ) {
             LOGGER.warn("Error minting pid from {}: {}", url, ex);
-            throw new RuntimeException("Error minting pid", ex);
+            throw new PidMinterException("Error minting pid", ex);
         } catch ( Exception ex ) {
             LOGGER.warn("Error processing minter response", ex);
-            throw new RuntimeException("Error processing minter response", ex);
+            throw new PidMinterException("Error processing minter response", ex);
         }
     }
 }

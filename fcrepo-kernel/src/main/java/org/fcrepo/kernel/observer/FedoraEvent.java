@@ -51,7 +51,7 @@ import com.google.common.collect.Iterables;
 public class FedoraEvent {
 
     private Event e;
-    private String eventID;
+    private final String eventID;
 
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
@@ -149,17 +149,6 @@ public class FedoraEvent {
     }
 
     /**
-     * @return the node identifer of the underlying JCR {@link Event}s
-     */
-    public String getIdentifier() {
-        try {
-            return e.getIdentifier();
-        } catch (RepositoryException e1) {
-            throw new RepositoryRuntimeException("Error getting event identifier!", e1);
-        }
-    }
-
-    /**
      * @return the info map of the underlying JCR {@link Event}s
      */
     public Map<Object, Object> getInfo() {
@@ -194,6 +183,7 @@ public class FedoraEvent {
 
     /**
      * Get the event ID.
+     * @return Event identifier to use for building event URIs (e.g., in an external triplestore).
     **/
     public String getEventID() {
         return eventID;

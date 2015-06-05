@@ -92,13 +92,6 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testGetIdentifier() throws Exception {
-
-        assertEquals("Identifier", e.getIdentifier());
-
-    }
-
-    @Test
     public void testGetInfo() throws Exception {
         final Map<?, ?> m = e.getInfo();
 
@@ -144,7 +137,6 @@ public class FedoraEventTest {
         assertTrue("Should contain date: " + text, text.contains(Long.toString(e.getDate())));
 
         assertFalse("Should not contain user-data: " + text, text.contains(e.getUserData()));
-        assertFalse("Should not contain identifier: " + text, text.contains(e.getIdentifier()));
         assertFalse("Should not contain user-id: " + text, text.contains(e.getUserID()));
     }
 

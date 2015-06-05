@@ -205,7 +205,7 @@ public class HeadersJMSIT implements MessageListener {
                     @Override
                     public boolean apply(final Message message) {
                         try {
-                            return getIdentifier(message).equals(id) && getEventTypes(message).contains(eventType)
+                            return getPath(message).equals(id) && getEventTypes(message).contains(eventType)
                                     && (property == null || getProperties(message).contains(property));
                         } catch (final JMSException e) {
                             throw propagate(e);
@@ -236,10 +236,9 @@ public class HeadersJMSIT implements MessageListener {
     public void onMessage(final Message message) {
         try {
             LOGGER.debug(
-                    "Received JMS message: {} with identifier: {}, timestamp: {}, event type: {}, properties: {},"
-                            + " and baseURL: {}", message.getJMSMessageID(), getIdentifier(message),
-                    getTimestamp(message),
-                    getEventTypes(message), getProperties(message), getBaseURL(message));
+                    "Received JMS message: {} with path: {}, timestamp: {}, event type: {}, properties: {},"
+                            + " and baseURL: {}", message.getJMSMessageID(), getPath(message), getTimestamp(message),
+                            getEventTypes(message), getProperties(message), getBaseURL(message));
         } catch (final JMSException e) {
             propagate(e);
         }
@@ -268,7 +267,7 @@ public class HeadersJMSIT implements MessageListener {
         connection.close();
     }
 
-    private static String getIdentifier(final Message msg) throws JMSException {
+    private static String getPath(final Message msg) throws JMSException {
         final String id = msg.getStringProperty(IDENTIFIER_HEADER_NAME);
         LOGGER.debug("Processing an event with identifier: {}", id);
         return id;
