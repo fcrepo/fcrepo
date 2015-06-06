@@ -322,10 +322,11 @@ public class JcrRdfTools {
 
         if (isManagedPredicate.apply(predicate)) {
 
-            throw new ServerManagedPropertyException("Could not remove triple containing predicate "
-                    + predicate.toString()
-                    + " to node "
-                    + node.getPath());
+            throw new ServerManagedPropertyException("Could not remove triple containing server-managed "
+                        + "predicate "
+                        + predicate
+                        + " to node "
+                        + node.getPath());
         }
 
         if (objectNode.isURIResource()

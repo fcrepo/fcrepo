@@ -1613,7 +1613,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         put.setHeader("Content-Type", "text/turtle");
         final HttpResponse response = execute(put);
         assertEquals("Expected 409 response code when PUTing malformed RDF on an object",
-                CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
+                     CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
     }
 
     @Test
