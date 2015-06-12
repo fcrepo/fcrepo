@@ -169,10 +169,11 @@
               org.fcrepo.kernel.impl.utils;version=${project.version},
               org.fcrepo.kernel.impl.utils.impl;version=${project.version},
               org.fcrepo.kernel.impl.utils.infinispan;version=${project.version},
-              org.fcrepo.kernel.impl.utils.iterators;version=${project.version},
-              org.modeshape.jcr;version=${project.version},
-              org.modeshape.jcr.value.binary.infinispan;version=${project.version}
+              org.fcrepo.kernel.impl.utils.iterators;version=${project.version}
             </Export-Package>
+            <Private-Package>
+              org.modeshape.jcr.*;-split-package:=merge-first
+            </Private-Package>
             <Import-Package>
               org.fcrepo.kernel.*,
             </Import-Package>
