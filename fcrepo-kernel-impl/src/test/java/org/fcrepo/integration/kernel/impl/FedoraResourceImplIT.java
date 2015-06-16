@@ -200,11 +200,16 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             containerService.findOrCreate(session, pid);
         final Graph graph = object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
+        // jcr property
+        Node s = createGraphSubjectNode(object);
+        Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
+        Node o = createLiteral(object.getNode().getIdentifier());
+        assertFalse(graph.contains(s, p, o));
 
         // multivalued property
-        final Node s = createGraphSubjectNode(object);
-        final Node p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
-        Node o = createLiteral(FEDORA_RESOURCE);
+        s = createGraphSubjectNode(object);
+        p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
+        o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
         o = createLiteral(FEDORA_CONTAINER);
@@ -423,7 +428,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                     subjects,
                     "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-original\". }"
                             + " WHERE { }", new RdfStream());
-        } catch (AccessDeniedException e) {
+        } catch (final AccessDeniedException e) {
             fail("Should fail at update, not create property");
         }
         final AccessControlManager acm = session.getAccessControlManager();
