@@ -18,7 +18,7 @@
     <context:component-scan base-package="org.fcrepo"/>
 
     <bean name="modeshapeRepofactory"
-          class="org.fcrepo.kernel.spring.ModeShapeRepositoryFactoryBean">
+          class="org.fcrepo.kernel.impl.spring.ModeShapeRepositoryFactoryBean">
       <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:config/minimal-default/repository.json}"/>
     </bean>
 
