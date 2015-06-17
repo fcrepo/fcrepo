@@ -22,9 +22,20 @@ import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 
+/**
+ * A functional, unchecked predicate for any collection<T>
+ *
+ * @author ajs6f
+ */
 @FunctionalInterface
 public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.base.Predicate<T> {
 
+    /**
+     *  Test this predicate against the given object.
+     *
+     *  @param elem an item of type T
+     *  @return the value of this predicate when applied to the input elem.
+     */
     @Override
     default boolean test(final T elem) {
         try {
@@ -34,6 +45,12 @@ public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.b
         }
     }
 
+    /**
+     *  Apply this predicate to the given object.
+     *
+     *  @param elem an item of type T
+     *  @return the value of this predicate when applied to the input elem.
+     */
     @Override
     default boolean apply(final T elem) {
         try {
@@ -43,8 +60,21 @@ public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.b
         }
     }
 
+    /**
+     *  Test a throwable condition
+     *
+     *  @param elem an item of type T
+     *  @return the value of this predicate when applied to the input element.
+     */
     boolean testThrows(T elem) throws RepositoryException;
 
+    /**
+     *  Determine a true/false value for each item in a collection of inputs,
+     *  without warning about type checks.
+     *
+     *  @param p an unchecked predicate
+     *  @return the predicate given to this function
+     */
     static <T> UncheckedPredicate<T> uncheck(final UncheckedPredicate<T> p) {
         return p;
     }
