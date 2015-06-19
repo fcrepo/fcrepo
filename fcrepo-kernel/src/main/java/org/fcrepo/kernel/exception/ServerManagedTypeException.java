@@ -21,14 +21,14 @@ package org.fcrepo.kernel.exception;
  * @author whikloj
  * @since 2015-06-02
  */
-public class ManagedTypeException extends ConstraintViolationException {
+public class ServerManagedTypeException extends ConstraintViolationException {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * @param msg the message
      */
-    public ManagedTypeException(final String msg) {
+    public ServerManagedTypeException(final String msg) {
         super(msg);
     }
 
@@ -37,7 +37,7 @@ public class ManagedTypeException extends ConstraintViolationException {
      *
      * @param rootCause the root cause
      */
-    public ManagedTypeException(final Throwable rootCause) {
+    public ServerManagedTypeException(final Throwable rootCause) {
         super(rootCause);
     }
 
@@ -47,7 +47,7 @@ public class ManagedTypeException extends ConstraintViolationException {
      * @param msg the message
      * @param rootCause the root cause
      */
-    public ManagedTypeException(final String msg, final Throwable rootCause) {
+    public ServerManagedTypeException(final String msg, final Throwable rootCause) {
         super(msg, rootCause);
     }
 

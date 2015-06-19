@@ -25,7 +25,7 @@ import com.google.common.base.Joiner;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.ConstraintViolationException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
-import org.fcrepo.kernel.exception.ManagedTypeException;
+import org.fcrepo.kernel.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.exception.OutOfDomainSubjectException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
@@ -146,7 +146,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                     operateOnMixin(mixinResource, subjectNode);
                 } else {
                     LOGGER.debug("Found repository-managed mixin on which we will not operate.");
-                    throw new ManagedTypeException(String.format(
+                    throw new ServerManagedTypeException(String.format(
                             "The repository type (%s) of this resource is system managed.", mixinResource));
                 }
             } else {
@@ -190,14 +190,12 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         return stream;
     }
 
-
     /**
      * @return the idTranslator
      */
-    public IdentifierConverter<Resource,FedoraResource> translator() {
+    public IdentifierConverter<Resource, FedoraResource> translator() {
         return idTranslator;
     }
-
 
     /**
      * @return the jcrRdfTools

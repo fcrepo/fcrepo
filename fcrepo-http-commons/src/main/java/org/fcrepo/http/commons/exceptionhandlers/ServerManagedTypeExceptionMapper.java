@@ -25,20 +25,20 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.exception.ManagedTypeException;
+import org.fcrepo.kernel.exception.ServerManagedTypeException;
 
 /**
  * @author whikloj
  * @since 2015-06-02
  */
 @Provider
-public class ManagedTypeExceptionMapper implements ExceptionMapper<ManagedTypeException> {
+public class ServerManagedTypeExceptionMapper implements ExceptionMapper<ServerManagedTypeException> {
 
     @Context
     private UriInfo uriInfo;
 
     @Override
-    public Response toResponse(final ManagedTypeException e) {
+    public Response toResponse(final ServerManagedTypeException e) {
         final Link link = e.buildConstraintLink(uriInfo);
         final String msg = e.getMessage();
         return status(CONFLICT).entity(msg).links(link).build();
