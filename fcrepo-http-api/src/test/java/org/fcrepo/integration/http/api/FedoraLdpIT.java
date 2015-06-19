@@ -1446,7 +1446,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetObjectGraphByUUID() throws Exception {
+    public void testGetObjectGraphLacksUUID() throws Exception {
         final HttpResponse createResponse = createObject("");
 
         final String location = createResponse.getFirstHeader("Location").getValue();
@@ -1454,11 +1454,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet getObjMethod = new HttpGet(location);
         final GraphStore graphStore = getGraphStore(getObjMethod);
         final Iterator<Quad> iterator =
-                graphStore.find(ANY, createURI(location),
-                        HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
-
-        final HttpResponse uuidResponse = client.execute(getObjMethod);
-        assertEquals(200, uuidResponse.getStatusLine().getStatusCode());
+                graphStore.find(ANY, createURI(location), HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
+        assertFalse("Graph should not contain a UUID!", iterator.hasNext());
 
     }
 
