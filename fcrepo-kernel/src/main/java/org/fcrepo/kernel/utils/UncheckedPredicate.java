@@ -22,6 +22,11 @@ import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 
+/**
+ * A {@link Predicate} that permits {@RepositoryException}s.<T>
+ *
+ * @author ajs6f
+ */
 @FunctionalInterface
 public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.base.Predicate<T> {
 
@@ -43,8 +48,20 @@ public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.b
         }
     }
 
+    /**
+     *  This method has the same semantic as {@link #test} but permits {@link RepositoryException}s.
+     *
+     *  @param elem an item of type T
+     *  @return the value of this predicate when applied to the input element.
+     */
     boolean testThrows(T elem) throws RepositoryException;
 
+    /**
+     *  A static convenience method for constructing UncheckedPredicates from lambda syntax.
+     *
+     *  @param p an unchecked predicate
+     *  @return the predicate given to this function
+     */
     static <T> UncheckedPredicate<T> uncheck(final UncheckedPredicate<T> p) {
         return p;
     }
