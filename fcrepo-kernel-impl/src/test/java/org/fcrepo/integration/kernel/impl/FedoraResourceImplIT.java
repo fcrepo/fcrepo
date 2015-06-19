@@ -454,8 +454,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test (expected = IllegalArgumentException.class)
     public void testInvalidSparqlUpdateValidation() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
-                containerService.findOrCreate(session, "/testRefObject");
+                containerService.findOrCreate(session, pid);
         object.updateProperties(
                 subjects,
                 "INSERT { <> <http://myurl.org/title/> \"fancy title\" . \n" +
@@ -465,8 +466,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testValidSparqlUpdateValidation1() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
-                containerService.findOrCreate(session, "/testRefObject");
+                containerService.findOrCreate(session, pid);
         object.updateProperties(
                 subjects,
                 "INSERT { <> <http://myurl.org/title> \"5\" . } WHERE { }",
@@ -475,8 +477,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testValidSparqlUpdateValidation2() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
-                containerService.findOrCreate(session, "/testRefObject");
+                containerService.findOrCreate(session, pid);
         object.updateProperties(
                 subjects,
                 "PREFIX dsc:<http://myurl.org/title> \n" +
