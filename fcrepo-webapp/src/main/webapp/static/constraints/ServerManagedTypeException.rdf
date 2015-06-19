@@ -14,8 +14,8 @@
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-    <owl:Ontology rdf:about="static/constraints/ManagedTypeException">
-        <rdfs:label xml:lang="en">Managed Type Exception</rdfs:label>
+    <owl:Ontology rdf:about="static/constraints/ServerManagedTypeException">
+        <rdfs:label xml:lang="en">Server Managed Type Exception</rdfs:label>
         <rdfs:comment xml:lang="en">Certain repository types can only be modified by the repository.</rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>
