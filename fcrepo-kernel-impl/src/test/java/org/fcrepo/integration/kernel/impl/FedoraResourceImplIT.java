@@ -452,41 +452,6 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + " WHERE { }", new RdfStream());
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void testInvalidSparqlUpdateValidation() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
-        final FedoraResource object =
-                containerService.findOrCreate(session, pid);
-        object.updateProperties(
-                subjects,
-                "INSERT { <> <http://myurl.org/title/> \"fancy title\" . \n" +
-                " <> <http://myurl.org/title/> \"fancy title 2\" . } WHERE { }",
-                new RdfStream());
-    }
-
-    @Test
-    public void testValidSparqlUpdateValidation1() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
-        final FedoraResource object =
-                containerService.findOrCreate(session, pid);
-        object.updateProperties(
-                subjects,
-                "INSERT { <> <http://myurl.org/title> \"5\" . } WHERE { }",
-                new RdfStream());
-    }
-
-    @Test
-    public void testValidSparqlUpdateValidation2() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
-        final FedoraResource object =
-                containerService.findOrCreate(session, pid);
-        object.updateProperties(
-                subjects,
-                "PREFIX dsc:<http://myurl.org/title> \n" +
-                        "INSERT { <> dsc:p \"ccc\" } WHERE { }",
-                new RdfStream());
-    }
-
     @Test
     public void testUpdatingRdfType() throws RepositoryException {
         final FedoraResource object =
