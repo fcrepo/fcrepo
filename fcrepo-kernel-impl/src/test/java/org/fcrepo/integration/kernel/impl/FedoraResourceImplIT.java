@@ -465,6 +465,19 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    public void testValidSparqlUpdateValidationAltSyntax() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(subjects,
+                "DELETE WHERE {" +
+                        "<> <http://www.loc.gov/premis/rdf/v1#hasDateCreatedByApplication> ?o0 ." +
+                        "}; INSERT DATA {" +
+                        "<> <http://purl.org/dc/elements/1.1/title> \"Example Managed binary datastream\" ." +
+                        "}",
+                new RdfStream());
+    }
+
+    @Test
     public void testValidSparqlUpdateValidation1() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
