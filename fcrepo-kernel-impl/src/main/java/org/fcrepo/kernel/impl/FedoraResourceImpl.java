@@ -404,7 +404,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         if (!clean(sparqlUpdateStatement)) {
             throw new IllegalArgumentException("Invalid SPARQL UPDATE statement:"
-                    + sparqlUpdateStatement, new IllegalArgumentException());
+                    + sparqlUpdateStatement);
         }
 
         final Model model = originalTriples.asModel();

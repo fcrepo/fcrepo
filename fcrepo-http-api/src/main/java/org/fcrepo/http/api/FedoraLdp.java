@@ -366,9 +366,11 @@ public class FedoraLdp extends ContentExposingResource {
             addCacheControlHeaders(servletResponse, resource(), session);
 
             return noContent().build();
+        } catch (final IllegalArgumentException iae) {
+            throw new BadRequestException(iae.getMessage());
         } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
-            if (cause instanceof PathNotFoundException || cause instanceof  IllegalArgumentException) {
+            if (cause instanceof PathNotFoundException) {
                 // the sparql update referred to a repository resource that doesn't exist
                 throw new BadRequestException(cause.getMessage());
             }
