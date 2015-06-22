@@ -434,7 +434,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     private boolean clean(final String updateStmt) {
         final int start = updateStmt.indexOf("INSERT");
-        final int end = updateStmt.lastIndexOf("WHERE");
+        final int end = updateStmt.lastIndexOf("}");
 
         if (start < 0 || end < 0 || end < start) {
             return true;
