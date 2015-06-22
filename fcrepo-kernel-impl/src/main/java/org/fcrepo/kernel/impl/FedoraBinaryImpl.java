@@ -76,7 +76,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             registryService.getMetrics().histogram(name(FedoraBinary.class, "content-size"));
 
     /**
-     * Wrap an existing Node as a Fedora Binary
+     * Wrap an existing Node as a FedoGra Binary
      * @param node the node
      */
     public FedoraBinaryImpl(final Node node) {
@@ -288,10 +288,12 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
             final String algorithm = ContentDigest.getAlgorithm(digestUri);
 
-            final Collection<FixityResult> fixityResults
-                    = CacheEntryFactory.forProperty(repo, getProperty(JCR_DATA)).checkFixity(algorithm);
+            final long contentSize = size < 0 ? getBinaryContent().getSize() : size;
 
-            return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, size);
+            final Collection<FixityResult> fixityResults
+                    = CacheEntryFactory.forProperty(repo, getProperty(JCR_DATA), size).checkFixity(algorithm);
+
+            return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

@@ -32,9 +32,7 @@ import org.fcrepo.kernel.utils.FixityResult;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.BinaryKey;
-import org.modeshape.jcr.value.binary.infinispan.ChunkBinaryMetadata;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
-import org.modeshape.jcr.value.binary.infinispan.InfinispanUtils;
 import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableSet;
@@ -45,13 +43,24 @@ import com.google.common.collect.ImmutableSet;
 public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     private static final Logger LOGGER = getLogger(InfinispanCacheStoreEntry.class);
 
+    private static final GetClusterExecutor EXECUTOR_FACTORY = new GetClusterExecutor();
+
+    private static final String DATA_KEY = "-data";
+
+    private int chunkSize;
+
+    private long length;
+
     /**
      *
      * @param store the store
      * @param property the property
      */
-    public InfinispanCacheStoreEntry(final InfinispanBinaryStore store, final Property property) {
+    public InfinispanCacheStoreEntry(final InfinispanBinaryStore store, final Property property,
+            final int chunkSize, final long length) {
         super(store, property);
+        this.chunkSize = chunkSize;
+        this.length = length;
     }
 
     @Override
@@ -60,11 +69,9 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
         final ImmutableSet.Builder<FixityResult> fixityResults = new ImmutableSet.Builder<>();
 
         if (store().hasBinary(key)) {
-            final String dataKey = InfinispanUtils.dataKeyFrom((InfinispanBinaryStore)store(), key);
-            final ChunkBinaryMetadata metadata = InfinispanUtils.getMetadata((InfinispanBinaryStore)store(), key);
+            final String dataKey = key.toString() + DATA_KEY;
 
-            final DistributedFixityCheck task = new DistributedFixityCheck(dataKey, algorithm, metadata.getChunkSize(),
-                    metadata.getLength());
+            final DistributedFixityCheck task = new DistributedFixityCheck(dataKey, algorithm, chunkSize, length);
 
             final List<Future<Collection<FixityResult>>> futures
                 = clusterExecutor().submitEverywhere(task, dataKey + "-0");

@@ -18,6 +18,8 @@ package org.fcrepo.kernel.impl.utils.impl;
 import org.fcrepo.kernel.impl.utils.BinaryCacheEntry;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.impl.utils.ProjectedCacheEntry;
+import org.modeshape.jcr.JcrRepository;
+import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.binary.BinaryStore;
@@ -51,7 +53,7 @@ public final class CacheEntryFactory {
      * @return CacheEntry model for the property in the given repository
      * @throws RepositoryException if repository exception occurred
      */
-    public static CacheEntry forProperty(final Repository repository, final Property property)
+    public static CacheEntry forProperty(final Repository repository, final Property property, final long length)
         throws RepositoryException {
         final Binary binary = property.getBinary();
         final BinaryStore store = binaryStore(repository);
@@ -61,7 +63,11 @@ public final class CacheEntryFactory {
         } else if (binary instanceof InMemoryBinaryValue) {
             return new BinaryCacheEntry(property);
         } else {
-            return forProperty(store, property);
+            final RepositoryConfiguration config = ((JcrRepository)repository).getConfiguration();
+            final int chunkSize = config.getDocument().getInteger(RepositoryConfiguration.FieldName.CHUNK_SIZE,
+                    InfinispanBinaryStore.DEFAULT_CHUNK_SIZE);
+
+            return forProperty(store, property, chunkSize, length);
         }
     }
 
@@ -72,18 +78,18 @@ public final class CacheEntryFactory {
      * @return store specific cache entry
      * @throws RepositoryException if repository exception occurred
      */
-    public static CacheEntry forProperty(final BinaryStore store, final Property property)
-        throws RepositoryException {
+    public static CacheEntry forProperty(final BinaryStore store, final Property property,
+            final int chunkSize, final long length) throws RepositoryException {
         final BinaryValue binary = (BinaryValue)property.getBinary();
         if (store instanceof InfinispanBinaryStore) {
-            return new InfinispanCacheStoreEntry((InfinispanBinaryStore)store, property);
+            return new InfinispanCacheStoreEntry((InfinispanBinaryStore)store, property, chunkSize, length);
         } else if (store instanceof FileSystemBinaryStore) {
             return new FileSystemBinaryStoreEntry((FileSystemBinaryStore)store, property);
         } else if (store instanceof CompositeBinaryStore) {
             final CompositeBinaryStore compositeBinaryStore = (CompositeBinaryStore) store;
             final BinaryStore binaryStoreContainingKey
                 = compositeBinaryStore.findBinaryStoreContainingKey(binary.getKey());
-            return forProperty(binaryStoreContainingKey, property);
+            return forProperty(binaryStoreContainingKey, property, chunkSize, length);
         } else {
             return new LocalBinaryStoreEntry(store, property);
         }
