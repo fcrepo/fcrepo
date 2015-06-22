@@ -1059,28 +1059,6 @@
 
   <repositories>
     <repository>
-      <id>fcrepo-snapshot</id>
-      <name>Fcrepo Snapshot Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>fcrepo-thirdparty</id>
-      <name>Fcrepo Thirdparty Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
       <id>jboss-public-repository-group</id>
       <name>JBoss Public Maven Repository Group</name>
       <url>http://repository.jboss.org/nexus/content/groups/public/</url>
@@ -1136,18 +1114,6 @@
   </repositories>
 
   <pluginRepositories>
-    <pluginRepository>
-      <id>fcrepo-thirdparty</id>
-      <name>Fcrepo Thirdparty Repository</name>
-      <url>http://maven.fcrepo.org/nexus/content/repositories/thirdparty/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-
     <pluginRepository>
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Snapshots</name>
