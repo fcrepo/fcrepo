@@ -1,62 +1,54 @@
 <infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns="urn:infinispan:config:6.0"
-    xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd">
+    xmlns="urn:infinispan:config:7.2"
+    xsi:schemaLocation="urn:infinispan:config:7.2 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd">
+  
+  <cache-container  default-cache="FedoraRepository" statistics="false">
+    <jmx duplicate-domains="true"/>
 
-  <global>
-    <globalJmxStatistics enabled="false" allowDuplicateDomains="true"/>
-  </global>
+    <local-cache name="FedoraRepository" >
+      <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+                   mode="NON_XA"
+                   locking="OPTIMISTIC" />
 
-  <namedCache name="FedoraRepository">
+      <persistence passivation="false">
+        <file-store shared="false"
+                    preload="false"
+                    fetch-state="false"
+                    purge="false"
+                    path="target/fedora_repository/store" />
+      </persistence>
 
-    <transaction
-        transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-        transactionMode="TRANSACTIONAL"
-        lockingMode="OPTIMISTIC"/>
+    </local-cache>
 
-    <persistence passivation="false">
-      <singleFile shared="false"
-          preload="false"
-          fetchPersistentState="false"
-          purgeOnStartup="false"
-          location="target/fedora_repository/store">
-      </singleFile>
-    </persistence>
+    <local-cache name="FedoraRepositoryMetaData" >
+      <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+                   mode="NON_XA"
+                   locking="OPTIMISTIC" />
 
-  </namedCache>
+      <persistence passivation="false">
+        <file-store shared="false"
+                    preload="false"
+                    fetch-state="false"
+                    purge="false"
+                    path="target/fedora_repository/md_store" />
+      </persistence>
 
-  <namedCache name="FedoraRepositoryMetaData">
+    </local-cache>
 
-    <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-            transactionMode="TRANSACTIONAL"
-            lockingMode="OPTIMISTIC"/>
+    <local-cache name="FedoraRepositoryBinaryData" >
+      <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+                   mode="NON_XA"
+                   locking="OPTIMISTIC" />
 
-    <persistence passivation="false">
-      <singleFile shared="false"
-          preload="false"
-          fetchPersistentState="false"
-          purgeOnStartup="false"
-          location="target/fedora_repository/md_store">
-      </singleFile>
-    </persistence>
+      <persistence passivation="false">
+        <file-store shared="false"
+                    preload="false"
+                    fetch-state="false"
+                    purge="false"
+                    path="target/fedora_repository/bin_store" />
+      </persistence>
 
-  </namedCache>
+    </local-cache>
+  </cache-container>
 
-  <namedCache name="FedoraRepositoryBinaryData">
-
-    <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-            transactionMode="TRANSACTIONAL"
-            lockingMode="OPTIMISTIC"/>
-
-    <persistence passivation="false">
-      <singleFile shared="false"
-          preload="false"
-          fetchPersistentState="false"
-          purgeOnStartup="false"
-          location="target/fedora_repository/bin_store">
-      </singleFile>
-    </persistence>
-
-  </namedCache>
 </infinispan>

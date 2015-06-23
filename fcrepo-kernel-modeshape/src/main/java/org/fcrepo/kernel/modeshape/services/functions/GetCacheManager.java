@@ -23,7 +23,6 @@ import java.util.function.Function;
 
 import javax.jcr.Repository;
 
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.modeshape.jcr.JcrRepository;
 import org.slf4j.Logger;
@@ -33,12 +32,12 @@ import org.slf4j.Logger;
  *
  * @author acoburn
  */
-class GetCacheManager implements Function<Repository, CacheManager> {
+class GetCacheManager implements Function<Repository, DefaultCacheManager> {
 
     private static final Logger LOGGER = getLogger(GetCacheManager.class);
 
     @Override
-    public CacheManager apply(final Repository repo) {
+    public DefaultCacheManager apply(final Repository repo) {
         requireNonNull(repo, "null cannot have a CacheManager");
         try {
             if (repo instanceof JcrRepository) {
