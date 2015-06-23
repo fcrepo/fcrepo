@@ -1,34 +1,28 @@
 <infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns="urn:infinispan:config:6.0"
-    xmlns:store="urn:infinispan:config:store:leveldb:6.0"
-    xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd urn:infinispan:config:store:leveldb:6.0 http://infinispan.org/schemas/infinispan-cachestore-leveldb-config-6.0.xsd">
-  <global>
-    <globalJmxStatistics enabled="false" allowDuplicateDomains="true"/>
-  </global>
+    xmlns="urn:infinispan:config:7.2"
+    xmlns:store="urn:infinispan:config:store:leveldb:7.2"
+    xsi:schemaLocation="urn:infinispan:config:7.2 http://www.infinispan.org/schemas/infinispan-config-7.2.xsd urn:infinispan:config:store:leveldb:7.2 http://infinispan.org/schemas/infinispan-cachestore-leveldb-config-7.2.xsd">
 
-  <default>
-    <expiration wakeUpInterval="-1" />
-    <unsafe unreliableReturnValues="true" />
-  </default>
+  <cache-container default-cache="FedoraRepository" statistics="false">
+    <jmx duplicate-domains="true"/>
 
-  <namedCache name="FedoraRepository">
+    <local-cache name="FedoraRepository" unreliable-return-values="true">
+      <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+                   mode="NON_XA"
+                   locking="PESSIMISTIC"/>
 
-    <eviction maxEntries="500"  strategy="LIRS" threadPolicy="PIGGYBACK"/>
+      <eviction max-entries="500" strategy="LIRS" thread-policy="PIGGYBACK"/>
 
-    <transaction
-        transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-        transactionMode="TRANSACTIONAL"
-        lockingMode="PESSIMISTIC"/>
+      <expiration interval="-1"/>
 
-    <!-- Define the cache loaders (i.e., cache stores). Passivation is false
-         because we want *all* data to be persisted, not just what doesn't fit
-         into memory. -->
-    <persistence passivation="false">
-      <store:leveldbStore
-          location="${fcrepo.ispn.repo.cache:target}/data"
-          expiredLocation="${fcrepo.ispn.repo.cache:target}/expired"/>
-    </persistence>
+      <persistence passivation="false">
+        <store:leveldb-store path="${fcrepo.ispn.repo.cache:target}/data">
+          <store:expiration path="${fcrepo.ispn.repo.cache:target}/expired"/>
+          <store:implementation type="JAVA"/>
+        </store:leveldb-store>
+      </persistence>
 
-  </namedCache>
+    </local-cache>
+  </cache-container>
 
 </infinispan>

@@ -1,86 +1,50 @@
 <infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xmlns="urn:infinispan:config:6.0"
-            xmlns:store="urn:infinispan:config:store:leveldb:6.0"
-            xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd urn:infinispan:config:store:leveldb:6.0 http://infinispan.org/schemas/infinispan-cachestore-leveldb-config-6.0.xsd">
+            xmlns="urn:infinispan:config:7.2"
+            xmlns:store="urn:infinispan:config:store:leveldb:7.2"
+            xsi:schemaLocation="urn:infinispan:config:7.2 http://www.infinispan.org/schemas/infinispan-config-7.2.xsd urn:infinispan:config:store:leveldb:7.2 http://infinispan.org/schemas/infinispan-cachestore-leveldb-config-7.2.xsd">
 
-  <global>
-    <globalJmxStatistics enabled="true" allowDuplicateDomains="true"/>
-  </global>
+  <cache-container default-cache="FedoraRepository" statistics="true">
+    <jmx duplicate-domains="true"/>
 
-  <default>
-  </default>
+    <local-cache name="FedoraRepository">
 
-  <namedCache name="FedoraRepository">
+      <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" mode="NON_XA" locking="PESSIMISTIC"/>
+      <eviction max-entries="500" strategy="LIRS" thread-policy="DEFAULT"/>
+      <persistence>
+        <store:leveldb-store passivation="false" path="${fcrepo.ispn.repo.cache:target/repo}/data">
+          <store:expiration path="${fcrepo.ispn.repo.cache:target/repo}/expired"/>
+          <store:implementation type="JAVA"/>
+        </store:leveldb-store>
 
-    <eviction maxEntries="500"  strategy="LIRS" threadPolicy="DEFAULT"/>
+      </persistence>
+    </local-cache>
 
-    <transaction
-        transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-        transactionMode="TRANSACTIONAL" lockingMode="PESSIMISTIC"/>
-    <!--
-        Define the cache loaders (i.e., cache stores). Passivation is false because we want *all*
-        data to be persisted, not just what doesn't fit into memory. Shared is false because there
-        are no other caches sharing this file store. We set preload to false for lazy loading;
-        may be improved by preloading and configuring eviction.
+    <local-cache name="FedoraRepositoryMetaData">
 
-        We can have multiple cache loaders, which get chained. But we'll define just one.
-     -->
+      <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" mode="NON_XA" locking="PESSIMISTIC"/>
+      <eviction max-entries="500" strategy="LIRS" thread-policy="DEFAULT"/>
+      <persistence>
+        <store:leveldb-store passivation="false" path="${fcrepo.ispn.cache:target}/data">
+          <store:expiration path="${fcrepo.ispn.cache:target}/expired"/>
+          <store:implementation type="JAVA"/>
+        </store:leveldb-store>
 
-    <persistence passivation="false">
-      <store:leveldbStore
-          location="${fcrepo.ispn.repo.cache:target/repo}/data"
-          expiredLocation="${fcrepo.ispn.repo.cache:target/repo}/expired"/>
-    </persistence>
+      </persistence>
+    </local-cache>
 
-  </namedCache>
+    <local-cache name="FedoraRepositoryBinaryData">
 
-  <namedCache name="FedoraRepositoryMetaData">
+      <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" mode="NON_XA" locking="PESSIMISTIC"/>
+      <eviction max-entries="100" strategy="LIRS" thread-policy="DEFAULT"/>
+      <persistence>
+        <file-store shared="false"
+                    preload="false"
+                    fetch-state="true"
+                    purge="false"
+                    path="${fcrepo.ispn.binary.cache:target/FedoraRepositoryBinaryData/storage}"/>
+      </persistence>
+    </local-cache>
 
-    <eviction maxEntries="500"  strategy="LIRS" threadPolicy="DEFAULT"/>
+  </cache-container>
 
-    <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-            transactionMode="TRANSACTIONAL" lockingMode="PESSIMISTIC"/>
-    <!--
-        Define the cache loaders (i.e., cache stores). Passivation is false because we want *all*
-        data to be persisted, not just what doesn't fit into memory. Shared is false because there
-        are no other caches sharing this file store. We set preload to false for lazy loading;
-        may be improved by preloading and configuring eviction.
-
-        We can have multiple cache loaders, which get chained. But we'll define just one.
-     -->
-
-    <persistence passivation="false">
-      <store:leveldbStore
-          location="${fcrepo.ispn.cache:target}/data"
-          expiredLocation="${fcrepo.ispn.cache:target}/expired"/>
-    </persistence>
-
-</namedCache>
-
-<namedCache name="FedoraRepositoryBinaryData">
-
-<eviction maxEntries="100"  strategy="LIRS" threadPolicy="DEFAULT"/>
-
-<transaction
-        transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-        transactionMode="TRANSACTIONAL" lockingMode="PESSIMISTIC"/>
-<!--
-    Define the cache loaders (i.e., cache stores). Passivation is false because we want *all*
-    data to be persisted, not just what doesn't fit into memory. Shared is false because there
-    are no other caches sharing this file store. We set preload to false for lazy loading;
-    may be improved by preloading and configuring eviction.
-
-    We can have multiple cache loaders, which get chained. But we'll define just one.
- -->
-
-  <persistence passivation="false">
-    <singleFile shared="false"
-                preload="false"
-                fetchPersistentState="true"
-                purgeOnStartup="false"
-                location="${fcrepo.ispn.binary.cache:target/FedoraRepositoryBinaryData/storage}" />
-  </persistence>
-
-</namedCache>
 </infinispan>
