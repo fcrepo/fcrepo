@@ -24,7 +24,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 /**
@@ -32,7 +31,7 @@ import javax.ws.rs.ext.Provider;
  * @since 2015-05-29
  */
 @Provider
-public class OutOfDomainSubjectExceptionMapper implements ExceptionMapper<OutOfDomainSubjectException> {
+public class OutOfDomainSubjectExceptionMapper extends ConstraintExceptionMapper<OutOfDomainSubjectException> {
 
     @Context
     private UriInfo uriInfo;
@@ -40,7 +39,7 @@ public class OutOfDomainSubjectExceptionMapper implements ExceptionMapper<OutOfD
     @Override
     public Response toResponse(final OutOfDomainSubjectException e) {
 
-        final Link link = e.buildConstraintLink(uriInfo);
+        final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
         return status(BAD_REQUEST).entity(msg).links(link).build();
     }

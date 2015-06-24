@@ -24,7 +24,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 /**
@@ -32,7 +31,7 @@ import javax.ws.rs.ext.Provider;
  * @since 2015-06-01
  */
 @Provider
-public class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
+public class ConstraintViolationExceptionMapper extends ConstraintExceptionMapper<ConstraintViolationException> {
 
     @Context
     private UriInfo uriInfo;
@@ -40,7 +39,7 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
     @Override
     public Response toResponse(final ConstraintViolationException e) {
 
-        final Link link = e.buildConstraintLink(uriInfo);
+        final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
         return status(BAD_REQUEST).entity(msg).links(link).build();
     }

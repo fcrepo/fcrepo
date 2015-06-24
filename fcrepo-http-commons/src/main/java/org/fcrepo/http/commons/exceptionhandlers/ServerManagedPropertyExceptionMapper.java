@@ -21,7 +21,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -33,14 +32,14 @@ import static javax.ws.rs.core.Response.status;
  * @since 10/1/14
  */
 @Provider
-public class ServerManagedPropertyExceptionMapper implements ExceptionMapper<ServerManagedPropertyException> {
+public class ServerManagedPropertyExceptionMapper extends ConstraintExceptionMapper<ServerManagedPropertyException> {
 
     @Context
     private UriInfo uriInfo;
 
     @Override
     public Response toResponse(final ServerManagedPropertyException e) {
-        final Link link = e.buildConstraintLink(uriInfo);
+        final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
         return status(CONFLICT).entity(msg).links(link).build();
     }

@@ -22,7 +22,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.exception.ServerManagedTypeException;
@@ -32,14 +31,14 @@ import org.fcrepo.kernel.exception.ServerManagedTypeException;
  * @since 2015-06-02
  */
 @Provider
-public class ServerManagedTypeExceptionMapper implements ExceptionMapper<ServerManagedTypeException> {
+public class ServerManagedTypeExceptionMapper extends ConstraintExceptionMapper<ServerManagedTypeException> {
 
     @Context
     private UriInfo uriInfo;
 
     @Override
     public Response toResponse(final ServerManagedTypeException e) {
-        final Link link = e.buildConstraintLink(uriInfo);
+        final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
         return status(CONFLICT).entity(msg).links(link).build();
     }
