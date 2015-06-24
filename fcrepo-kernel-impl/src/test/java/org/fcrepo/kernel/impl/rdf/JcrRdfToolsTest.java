@@ -39,8 +39,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+
 import java.util.Collections;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -205,6 +207,8 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         when(mockSession.getNode("/x")).thenReturn(mockNode);
 
         when(mockNode.setProperty(anyString(), any(Value[].class), anyInt())).thenReturn(mockProperty);
+
+        when(mockNode.getIdentifier()).thenReturn(UUID.randomUUID().toString());
 
         testObj.addProperty(mockFedoraResource,
                 createProperty("some:property"),

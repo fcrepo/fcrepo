@@ -20,6 +20,7 @@ import static java.util.Arrays.stream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isMultivaluedProperty;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isExternalNode;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
@@ -38,8 +39,7 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-
-import org.modeshape.jcr.IsExternal;
+import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.slf4j.Logger;
 
 /**
@@ -51,7 +51,6 @@ import org.slf4j.Logger;
 public class NodePropertiesTools {
 
     private static final Logger LOGGER = getLogger(NodePropertiesTools.class);
-    private static final IsExternal isExternal = new IsExternal();
 
     /**
      * Given a JCR node, property and value, either:
@@ -139,8 +138,8 @@ public class NodePropertiesTools {
         try {
             final Node refNode = idTranslator.convert(resource).getNode();
 
-            if (isExternal.apply(refNode)) {
-                // we can't apply REFERENCE properties to external resources
+            if (isExternalNode.apply(refNode)) {
+                 //we can't apply REFERENCE properties to external resources
                 return;
             }
 
