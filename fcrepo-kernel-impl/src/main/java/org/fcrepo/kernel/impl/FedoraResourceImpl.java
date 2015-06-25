@@ -380,7 +380,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public boolean hasType(final String type) {
         try {
-            if (isFrozen.apply(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
+            if (isFrozen.test(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
                 final List<String> types = newArrayList(
                     transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), uncheck(Value::getString)::apply)
                 );

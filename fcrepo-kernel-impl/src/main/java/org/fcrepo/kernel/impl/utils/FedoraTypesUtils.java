@@ -15,11 +15,14 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
+
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -29,8 +32,8 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
+import static java.util.Arrays.stream;
 import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.utils.UncheckedPredicate.uncheck;
@@ -107,7 +110,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     * Check whether a property is an internal property that should be suppressed
     * from external output.
     */
-    public static Predicate<Property> isInternalProperty = p -> isBinaryContentProperty.apply(p) ||
+    public static Predicate<Property> isInternalProperty = p -> isBinaryContentProperty.test(p) ||
             isProtectedAndShouldBeHidden.test(p);
 
 
@@ -127,42 +130,24 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @return a PropertyType value
      * @throws RepositoryException if repository exception occurred
      */
-    public static int getPropertyType(final Node node, final String propertyName)
+    public static Optional<Integer> getPropertyType(final Node node, final String propertyName)
             throws RepositoryException {
-        LOGGER.debug("Getting type of property: {} from node: {}",
-                propertyName, node);
-        final PropertyDefinition def =
-                getDefinitionForPropertyName(node, propertyName);
-
-        if (def == null) {
-            return UNDEFINED;
-        }
-
-        return def.getRequiredType();
+        LOGGER.debug("Getting type of property: {} from node: {}", propertyName, node);
+        return getDefinitionForPropertyName(node, propertyName).map(PropertyDefinition::getRequiredType);
     }
 
     /**
      * Determine if a given JCR property name is single- or multi- valued.
-     * If unsure, choose the least restrictive
-     * option (multivalued)
+     * If unsure, choose the least restrictive option (multivalued = true)
      *
      * @param node the JCR node to check
-     * @param propertyName the property name
-     *   (which may or may not already exist)
-     * @return true if the property is (or could be) multivalued
+     * @param propertyName the property name (which may or may not already exist)
+     * @return true if the property is multivalued
      * @throws RepositoryException if repository exception occurred
      */
-    public static boolean isMultivaluedProperty(final Node node,
-                                                final String propertyName)
+    public static boolean isMultivaluedProperty(final Node node, final String propertyName)
             throws RepositoryException {
-        final PropertyDefinition def =
-                getDefinitionForPropertyName(node, propertyName);
-
-        if (def == null) {
-            return true;
-        }
-
-        return def.isMultiple();
+        return getDefinitionForPropertyName(node, propertyName).map(PropertyDefinition::isMultiple).orElse(true);
     }
 
     /**
@@ -171,31 +156,19 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      *
      * @param node the node to use for inferring the property definition
      * @param propertyName the property name to retrieve a definition for
-     * @return a JCR PropertyDefinition, if available, or null
+     * @return a JCR PropertyDefinition, if available
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
-    public static PropertyDefinition getDefinitionForPropertyName(final Node node,
-                                                                  final String propertyName)
+    public static Optional<PropertyDefinition> getDefinitionForPropertyName(final Node node, final String propertyName)
             throws RepositoryException {
-
-        final NodeType primaryNodeType = node.getPrimaryNodeType();
-        final PropertyDefinition[] propertyDefinitions = primaryNodeType.getPropertyDefinitions();
         LOGGER.debug("Looking for property name: {}", propertyName);
-        for (final PropertyDefinition p : propertyDefinitions) {
-            LOGGER.debug("Checking property: {}", p.getName());
-            if (p.getName().equals(propertyName)) {
-                return p;
-            }
-        }
+        final Predicate<PropertyDefinition> sameName = p -> propertyName.equals(p.getName());
 
-        for (final NodeType nodeType : node.getMixinNodeTypes()) {
-            for (final PropertyDefinition p : nodeType.getPropertyDefinitions()) {
-                if (p.getName().equals(propertyName)) {
-                    return p;
-                }
-            }
-        }
-        return null;
+        final PropertyDefinition[] propDefs = node.getPrimaryNodeType().getPropertyDefinitions();
+        final Optional<PropertyDefinition> primaryCandidate = stream(propDefs).filter(sameName).findFirst();
+        return primaryCandidate.isPresent() ? primaryCandidate :
+                stream(node.getMixinNodeTypes()).map(NodeType::getPropertyDefinitions).flatMap(Arrays::stream)
+                        .filter(sameName).findFirst();
     }
 
     /**
@@ -214,11 +187,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      */
     public static String getReferencePropertyOriginalName(final String refPropertyName) {
         final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);
-
-        if (i < 0) {
-            return refPropertyName;
-        }
-        return refPropertyName.substring(0, i);
+        return i < 0 ? refPropertyName : refPropertyName.substring(0, i);
     }
 
     /**
@@ -229,11 +198,11 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @throws RepositoryException if repository exception occurred
      */
     public static boolean isReferenceProperty(final Node node, final String propertyName) throws RepositoryException {
-        final PropertyDefinition propertyDefinition = getDefinitionForPropertyName(node, propertyName);
+        final Optional<PropertyDefinition> propertyDefinition = getDefinitionForPropertyName(node, propertyName);
 
-        return propertyDefinition != null &&
-                (propertyDefinition.getRequiredType() == REFERENCE
-                        || propertyDefinition.getRequiredType() == WEAKREFERENCE);
+        return propertyDefinition.isPresent() &&
+                (propertyDefinition.get().getRequiredType() == REFERENCE
+                        || propertyDefinition.get().getRequiredType() == WEAKREFERENCE);
     }
 
 
@@ -245,33 +214,17 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * @return the closest ancestor that current exists
      * @throws RepositoryException if repository exception occurred
      */
-    public static Node getClosestExistingAncestor(final Session session,
-                                                  final String path) throws RepositoryException {
-        final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
+    public static Node getClosestExistingAncestor(final Session session, final String path)
+            throws RepositoryException {
 
-        final StringBuilder existingAncestorPath = new StringBuilder(path.length());
-        existingAncestorPath.append("/");
-
-        final int len = pathSegments.length;
-        for (int i = 0; i != len; ++i) {
-            final String pathSegment = pathSegments[i];
-
-            if (session.nodeExists(existingAncestorPath.toString() + pathSegment)) {
-                // Add to existingAncestorPath  ...
-                existingAncestorPath.append(pathSegment);
-                if (i != (len - 1)) {
-                existingAncestorPath.append("/");
-                }
-            } else {
-                if (i != 0) {
-                    existingAncestorPath.deleteCharAt(existingAncestorPath.length() - 1);
-                }
-                break;
+        String potentialPath = path.startsWith("/") ? path : "/" + path;
+        while (!potentialPath.isEmpty()) {
+            if (session.nodeExists(potentialPath)) {
+                return session.getNode(potentialPath);
             }
-
+            potentialPath = potentialPath.substring(0, potentialPath.lastIndexOf('/'));
         }
-
-        return session.getNode(existingAncestorPath.toString());
+        return session.getRootNode();
     }
 
 }

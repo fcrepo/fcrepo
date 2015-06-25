@@ -16,10 +16,12 @@
 package org.fcrepo.auth.integration;
 
 import org.apache.http.auth.BasicUserPrincipal;
+
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.impl.services.ContainerServiceImpl;
 import org.fcrepo.kernel.services.ContainerService;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,8 +40,8 @@ import javax.jcr.security.Privilege;
 import javax.servlet.http.HttpServletRequest;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -60,7 +62,7 @@ public class HttpHeaderPrincipalProviderIT {
     @Autowired
     private FedoraAuthorizationDelegate fad;
 
-    private HttpServletRequest request = mock(HttpServletRequest.class);
+    private final HttpServletRequest request = mock(HttpServletRequest.class);
 
     @Test
     public void testFactory() {
@@ -91,7 +93,7 @@ public class HttpHeaderPrincipalProviderIT {
         }
         final ContainerService os = new ContainerServiceImpl();
         os.findOrCreate(session, "/myobject");
-        verify(fad, times(9)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
+        verify(fad, atLeastOnce()).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 
 }

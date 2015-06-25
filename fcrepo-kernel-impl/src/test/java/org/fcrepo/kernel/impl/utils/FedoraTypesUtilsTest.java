@@ -26,13 +26,11 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isNonRdfSourceDescription;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
-import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isMultipleValuedProperty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.io.InputStream;
 import java.util.Iterator;
@@ -67,8 +65,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.JcrConstants;
-
-import com.google.common.base.Predicate;
 
 /**
  * <p>FedoraTypesUtilsTest class.</p>
@@ -149,35 +145,10 @@ public class FedoraTypesUtilsTest {
     private Node mockContainer;
 
     @Test
-    public void testIsMultipleValuedProperty() throws RepositoryException {
-        final Property mockYes = mock(Property.class);
-        when(mockYes.isMultiple()).thenReturn(true);
-        final Property mockNo = mock(Property.class);
-        final Predicate<Property> test = isMultipleValuedProperty;
-        try {
-            test.apply(null);
-            fail("Null values should throw a NullPointerException");
-        } catch (final NullPointerException e) {
-            // expected
-        }
-        boolean actual = test.apply(mockYes);
-        assertEquals(true, actual);
-        actual = test.apply(mockNo);
-        assertEquals(false, actual);
-        when(mockYes.isMultiple()).thenThrow(new RepositoryException());
-        try {
-            test.apply(mockYes);
-            fail("Unexpected completion after RepositoryException!");
-        } catch (final RuntimeException e) {
-            // expected
-        }
-    }
-
-    @Test
     public void testIsBinaryContentProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
-        assertTrue(isBinaryContentProperty.apply(mockProperty));
+        assertTrue(isBinaryContentProperty.test(mockProperty));
     }
 
     @Test
@@ -210,11 +181,21 @@ public class FedoraTypesUtilsTest {
     }
 
     @Test
+    public void testIsWeakReferenceProperty() throws RepositoryException {
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockPropertyDefinition });
+        when(mockPropertyDefinition.getName()).thenReturn("some:reference_property");
+        when(mockPropertyDefinition.getRequiredType()).thenReturn(PropertyType.WEAKREFERENCE);
+        assertTrue(isReferenceProperty(mockNode, "some:reference_property"));
+    }
+
+    @Test
     public void testIsReferencePropertyForOtherPropertyTypes() throws RepositoryException {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[] { mockPropertyDefinition });
         when(mockPropertyDefinition.getName()).thenReturn("some:reference_property");
         when(mockPropertyDefinition.getRequiredType()).thenReturn(PropertyType.BINARY);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] { });
         assertFalse(isReferenceProperty(mockNode, "some:reference_property"));
     }
 
@@ -236,14 +217,14 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsNotBinaryContentProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.STRING);
-        assertFalse(isBinaryContentProperty.apply(mockProperty));
+        assertFalse(isBinaryContentProperty.test(mockProperty));
     }
 
     @Test
     public void testContentButNotBinaryContentProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.STRING);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
-        assertFalse(isBinaryContentProperty.apply(mockProperty));
+        assertFalse(isBinaryContentProperty.test(mockProperty));
     }
 
     @Test
@@ -317,7 +298,7 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testGetClosestExistingAncestorRoot() throws RepositoryException {
-        when(mockSession.getNode("/")).thenReturn(mockRootNode);
+        when(mockSession.getRootNode()).thenReturn(mockRootNode);
         when(mockSession.nodeExists(anyString())).thenReturn(false);
 
         final Node closestExistingAncestor = getClosestExistingAncestor(mockSession, "/some/path");

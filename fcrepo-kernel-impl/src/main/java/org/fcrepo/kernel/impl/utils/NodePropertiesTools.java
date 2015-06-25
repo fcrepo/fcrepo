@@ -36,7 +36,6 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.modeshape.jcr.IsExternal;
 import org.slf4j.Logger;
 
@@ -206,7 +205,7 @@ public class NodePropertiesTools {
 
             property = node.getProperty(propertyName);
 
-            if (JcrPropertyFunctions.isMultipleValuedProperty.apply(property)) {
+            if (property.isMultiple()) {
 
                 final List<Value> newValues = new ArrayList<>();
 

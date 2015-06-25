@@ -40,7 +40,7 @@ public interface UncheckedFunction<T, R> extends Function<T, R> {
     }
 
     /**
-     * The same semantic as {@link #test(Object)}, but allowed to throw a {@link RepositoryException}
+     * The same semantic as {@link #apply(Object)}, but allowed to throw a {@link RepositoryException}
      *
      * @param elem
      * @return

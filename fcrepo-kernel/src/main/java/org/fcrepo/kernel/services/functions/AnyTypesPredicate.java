@@ -54,7 +54,7 @@ public class AnyTypesPredicate implements UncheckedPredicate<Node> {
     @Override
     public boolean testThrows(final Node input) throws RepositoryException {
         requireNonNull(input, "null node has no types!");
-        if (isFrozen.apply(input) && input.hasProperty(FROZEN_MIXIN_TYPES)) {
+        if (isFrozen.test(input) && input.hasProperty(FROZEN_MIXIN_TYPES)) {
             final Property frozenTypesProperty = input.getProperty(FROZEN_MIXIN_TYPES);
             final List<Value> values = copyOf(property2values.apply(frozenTypesProperty));
             if (values.stream().map(uncheck(Value::getString)).anyMatch(nodeTypes::contains)) {

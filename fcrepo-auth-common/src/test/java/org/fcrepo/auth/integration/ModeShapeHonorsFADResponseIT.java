@@ -16,17 +16,20 @@
 package org.fcrepo.auth.integration;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.apache.http.auth.BasicUserPrincipal;
+
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.impl.services.ContainerServiceImpl;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -103,7 +106,7 @@ public class ModeShapeHonorsFADResponseIT {
         }
         final ContainerService os = new ContainerServiceImpl();
         os.findOrCreate(session, "/myobject");
-        verify(fad, times(9)).hasPermission(any(Session.class), any(Path.class), any(String[].class));
+        verify(fad, atLeastOnce()).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
 
     @Test(expected = AccessDeniedException.class)

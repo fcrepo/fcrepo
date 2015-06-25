@@ -67,7 +67,6 @@ import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -213,7 +212,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_CONTAINER);
+        final boolean found = transform(asList(mixins), NodeType::getName).contains(FEDORA_CONTAINER);
         assertTrue("Mixin not found: " + FEDORA_CONTAINER, found);
 
         session.save();
@@ -232,7 +231,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name)
+        final boolean found = transform(asList(mixins), NodeType::getName)
                 .contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         assertTrue("Mixin not found: " + FEDORA_NON_RDF_SOURCE_DESCRIPTION, found);
 
@@ -250,7 +249,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
-        final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_BINARY);
+        final boolean found = transform(asList(mixins), NodeType::getName).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
         final File file = fileForNode();
