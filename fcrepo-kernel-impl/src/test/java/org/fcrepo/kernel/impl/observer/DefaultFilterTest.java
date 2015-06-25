@@ -22,22 +22,25 @@ import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.Repository;
 
 /**
  * @author ajs6f
  * @since 2013
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultFilterTest {
 
     private DefaultFilter testObj;
@@ -68,7 +71,6 @@ public class DefaultFilterTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = new DefaultFilter();
         when(fedoraResource.toString()).thenReturn(FEDORA_RESOURCE);
         when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
@@ -77,33 +79,33 @@ public class DefaultFilterTest {
     }
 
     @Test
-    public void shouldApplyToResource() throws Exception {
+    public void shouldApplyToResource() throws RepositoryException {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraResource });
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.test(mockEvent));
     }
 
     @Test
-    public void shouldApplyToObject() throws Exception {
+    public void shouldApplyToObject() throws RepositoryException {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.test(mockEvent));
     }
 
     @Test
-    public void shouldApplyToDatastream() throws Exception {
+    public void shouldApplyToDatastream() throws RepositoryException {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraDatastream });
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.test(mockEvent));
     }
 
     @Test
-    public void shouldApplyToBinary() throws Exception {
+    public void shouldApplyToBinary() throws RepositoryException {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraBinary });
-        assertTrue(testObj.getFilter(mockSession).apply(mockEvent));
+        assertTrue(testObj.test(mockEvent));
     }
 
 
     @Test
-    public void shouldNotApplyToNonFedoraNodes() throws Exception {
+    public void shouldNotApplyToNonFedoraNodes() throws RepositoryException {
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {  });
-        assertFalse(testObj.getFilter(mockSession).apply(mockEvent));
+        assertFalse(testObj.test(mockEvent));
     }
 }

@@ -15,10 +15,8 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
-import static com.google.common.base.Functions.toStringFunction;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Arrays.stream;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
@@ -27,18 +25,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Predicate;
-
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.observer.EventFilter;
+
 import org.slf4j.Logger;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.stream.Stream;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -61,35 +57,24 @@ public class DefaultFilter implements EventFilter {
     private static final HashSet<String> fedoraMixins =
             newHashSet(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_RESOURCE);
 
-    /**
-     * Default constructor.
-     */
-    public DefaultFilter() {
-    }
-
     @Override
-    public Predicate<Event> getFilter(final Session session) {
-        return new DefaultFilter();
-    }
-
-    @Override
-    public boolean apply(final Event event) {
+    public boolean test(final Event event) {
         try {
-            return !Collections.disjoint(getMixinTypes(event), fedoraMixins);
+            return getMixinTypes(event).anyMatch(fedoraMixins::contains);
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 
-    protected static Collection<String> getMixinTypes(final Event event)
+    protected static Stream<String> getMixinTypes(final Event event)
             throws PathNotFoundException, RepositoryException {
         try {
             final org.modeshape.jcr.api.observation.Event modeEvent =
                     (org.modeshape.jcr.api.observation.Event) event;
-            return transform(Arrays.asList(modeEvent.getMixinNodeTypes()), toStringFunction());
+            return stream(modeEvent.getMixinNodeTypes()).map(NodeType::toString);
         } catch (final ClassCastException e) {
             throw new ClassCastException(event + " is not a Modeshape Event");
         }

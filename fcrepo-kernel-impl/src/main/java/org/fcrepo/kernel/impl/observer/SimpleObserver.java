@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
 import static javax.jcr.observation.Event.NODE_ADDED;
@@ -26,10 +25,10 @@ import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.slf4j.LoggerFactory.getLogger;
+
 import  org.fcrepo.metrics.RegistryService;
 
 import java.util.Iterator;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -38,9 +37,11 @@ import javax.jcr.Session;
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.observer.EventFilter;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.observer.eventmappings.InternalExternalEventMapper;
+
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
@@ -48,9 +49,8 @@ import com.codahale.metrics.Counter;
 import com.google.common.eventbus.EventBus;
 
 /**
- * Simple JCR EventListener that filters JCR Events through a Fedora EventFilter
- * and puts the resulting stream onto the internal Fedora EventBus as a stream
- * of FedoraEvents.
+ * Simple JCR EventListener that filters JCR Events through a Fedora EventFilter, maps the results through a mapper,
+ * and puts the resulting stream onto the internal Fedora EventBus as a stream of FedoraEvents.
  *
  * @author eddies
  * @author ajs6f
@@ -106,9 +106,12 @@ public class SimpleObserver implements EventListener {
      */
     @PreDestroy
     public void stopListening() throws RepositoryException {
-        LOGGER.debug("Destroying an observer for JCR events...");
-        session.getWorkspace().getObservationManager().removeEventListener(this);
-        session.logout();
+        try {
+            LOGGER.debug("Destroying an observer for JCR events...");
+            session.getWorkspace().getObservationManager().removeEventListener(this);
+        } finally {
+            session.logout();
+        }
     }
 
     /**
@@ -121,23 +124,22 @@ public class SimpleObserver implements EventListener {
         Session lookupSession = null;
         try {
             lookupSession = repository.login();
-
             @SuppressWarnings("unchecked")
-            final Iterator<Event> filteredEvents = filter(events, eventFilter.getFilter(lookupSession));
+            final Iterator<Event> filteredEvents = filter(events, eventFilter::test);
             final Iterator<FedoraEvent> publishableEvents = eventMapper.apply(filteredEvents);
-            final Iterator<FedoraEvent> namespacedEvents =
-                    transform(publishableEvents, new GetNamespacedProperties(lookupSession));
-
-            while (namespacedEvents.hasNext()) {
-                eventBus.post(namespacedEvents.next());
-                EVENT_COUNTER.inc();
-            }
+            transform(publishableEvents, new GetNamespacedProperties(lookupSession)::apply)
+                .forEachRemaining(this::post);
         } catch (final RepositoryException ex) {
-            throw propagate(ex);
+            throw new RepositoryRuntimeException(ex);
         } finally {
             if (lookupSession != null) {
                 lookupSession.logout();
             }
         }
+    }
+
+    private void post(final FedoraEvent evt) {
+        eventBus.post(evt);
+        EVENT_COUNTER.inc();
     }
 }

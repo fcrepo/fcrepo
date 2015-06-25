@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl.observer;
 
+import static java.lang.Thread.sleep;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_RESOURCE;
@@ -29,6 +30,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
+
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -40,10 +42,10 @@ import org.fcrepo.kernel.exception.InvalidChecksumException;
 import org.fcrepo.kernel.impl.FedoraBinaryImpl;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.observer.FedoraEvent;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.ValueFactory;
 import org.springframework.test.context.ContextConfiguration;
@@ -79,7 +81,7 @@ public class SimpleObserverIT extends AbstractIT {
         se.logout();
 
         try {
-            Thread.sleep(500);
+            sleep(500);
         } catch (final InterruptedException e) {
             e.printStackTrace();
         }
@@ -103,8 +105,7 @@ public class SimpleObserverIT extends AbstractIT {
 
         final String content = "test content";
         final String checksum = "1eebdf4fdc9fc7bf283031b93f9aef3338de9052";
-        final Binary bin = ((ValueFactory)se.getValueFactory()).createBinary(
-                new ByteArrayInputStream(content.getBytes()), null );
+        ((ValueFactory) se.getValueFactory()).createBinary(new ByteArrayInputStream(content.getBytes()), null);
 
         final Node contentNode = jcrTools.findOrCreateChild(n, JCR_CONTENT, NT_RESOURCE);
         contentNode.addMixin(FEDORA_BINARY);
@@ -116,7 +117,7 @@ public class SimpleObserverIT extends AbstractIT {
         se.logout();
 
         try {
-            Thread.sleep(500);
+            sleep(500);
         } catch (final InterruptedException e) {
             e.printStackTrace();
         }

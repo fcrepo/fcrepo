@@ -25,7 +25,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import javax.jcr.RepositoryException;
@@ -36,7 +35,9 @@ import org.fcrepo.kernel.observer.FedoraEvent;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Iterator;
 
@@ -45,6 +46,7 @@ import java.util.Iterator;
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class AllNodeEventsOneEventTest {
 
 
@@ -87,7 +89,6 @@ public class AllNodeEventsOneEventTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         when(mockEvent1.getPath()).thenReturn(TEST_PATH1);
         when(mockEvent1.getType()).thenReturn(NODE_ADDED);
         when(mockEvent2.getPath()).thenReturn(TEST_PATH2);
@@ -139,7 +140,7 @@ public class AllNodeEventsOneEventTest {
     }
 
     @Test
-    public void testPropertyEvents() throws RepositoryException {
+    public void testPropertyEvents() {
         final Iterator<FedoraEvent> iterator = testMapping.apply(mockIterator);
         assertNotNull(iterator);
         assertTrue("Iterator is empty!", iterator.hasNext());
