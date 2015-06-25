@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static com.google.common.base.Predicates.not;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -77,7 +76,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
         }
 
         final UnmodifiableIterator<Property> properties =
-                Iterators.filter(allProperties, not(isInternalProperty));
+                Iterators.filter(allProperties, isInternalProperty.negate()::test);
         return Iterators.concat(Iterators.transform(properties, property2triple));
 
     }

@@ -15,12 +15,11 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
+
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -30,10 +29,11 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -52,123 +52,71 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.models.Container}.
      */
-    public static Predicate<Node> isContainer =
-            new AnyTypesPredicate(FEDORA_CONTAINER);
+    public static Predicate<Node> isContainer = new AnyTypesPredicate(FEDORA_CONTAINER);
 
     /**
      * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.models.NonRdfSourceDescription}
      */
-    public static Predicate<Node> isNonRdfSourceDescription =
-            new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+    public static Predicate<Node> isNonRdfSourceDescription = new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
 
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora
      * binary.
      */
-    public static Predicate<Node> isFedoraBinary =
-            new AnyTypesPredicate(FEDORA_BINARY);
+    public static Predicate<Node> isFedoraBinary = new AnyTypesPredicate(FEDORA_BINARY);
 
     /**
      * Predicate for determining whether this {@link FedoraResource} has a frozen node
      */
-    public static Predicate<FedoraResource> isFrozenNode =
-            new Predicate<FedoraResource>() {
-
-                @Override
-                public boolean apply(final FedoraResource f) {
-                    return f.hasType(FROZEN_NODE) || f.getPath().contains(JCR_FROZEN_NODE);
-                }
-     };
+    public static Predicate<FedoraResource> isFrozenNode = f -> f.hasType(FROZEN_NODE) ||
+            f.getPath().contains(JCR_FROZEN_NODE);
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora
      * binary.
      */
-    public static Predicate<Node> isBlankNode =
-            new AnyTypesPredicate(FEDORA_SKOLEM);
+    public static Predicate<Node> isBlankNode = new AnyTypesPredicate(FEDORA_SKOLEM);
 
     /**
      * Check if a property is a reference property.
      */
-    public static Predicate<Property> isInternalReferenceProperty =
-        new Predicate<Property>() {
-
-            @Override
-            public boolean apply(final Property p) {
-                try {
-                    return (p.getType() == REFERENCE || p.getType() == WEAKREFERENCE)
-                        && p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX);
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-            }
-        };
-
-    /**
-    * Check whether a property is an internal property that should be suppressed
-    * from external output.
-    */
-    public static Predicate<Property> isInternalProperty =
-        new Predicate<Property>() {
-
-            @Override
-            public boolean apply(final Property p) {
-                return JcrPropertyFunctions.isBinaryContentProperty.apply(p)
-                        || isProtectedAndShouldBeHidden.apply(p);
-            }
-        };
+    public static Predicate<Property> isInternalReferenceProperty = uncheck(p -> (p.getType() == REFERENCE ||
+            p.getType() == WEAKREFERENCE) &&
+            p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX));
 
     /**
      * Check whether a property is protected (ie, cannot be modified directly) but
      * is not one we've explicitly chosen to include.
      */
-    public static Predicate<Property> isProtectedAndShouldBeHidden = new ProtectedAndHiddenCheck();
-
-    private static class ProtectedAndHiddenCheck implements  Predicate<Property> {
-
-        @Override
-        public boolean apply(final Property p) {
-            try {
-                if (!p.getDefinition().isProtected()) {
-                    return false;
-                } else if (p.getParent().isNodeType(FROZEN_NODE)) {
-                    // everything on a frozen node is protected
-                    // but we wish to display it anyway and there's
-                    // another mechanism in place to make clear that
-                    // things cannot be edited.
-                    return false;
-                } else {
-                    final String name = p.getName();
-                    for (String exposedName : EXPOSED_PROTECTED_JCR_TYPES) {
-                        if (name.equals(exposedName)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
+    public static Predicate<Property> isProtectedAndShouldBeHidden = uncheck(p -> {
+        if (!p.getDefinition().isProtected()) {
+            return false;
+        } else if (p.getParent().isNodeType(FROZEN_NODE)) {
+            // everything on a frozen node is protected
+            // but we wish to display it anyway and there's
+            // another mechanism in place to make clear that
+            // things cannot be edited.
+            return false;
+        } else {
+            return !EXPOSED_PROTECTED_JCR_TYPES.stream().anyMatch(p.getName()::equals);
         }
-    }
+    });
+
+    /**
+    * Check whether a property is an internal property that should be suppressed
+    * from external output.
+    */
+    public static Predicate<Property> isInternalProperty = p -> isBinaryContentProperty.apply(p) ||
+            isProtectedAndShouldBeHidden.test(p);
+
+
 
     /**
      * Check if a node is "internal" and should not be exposed e.g. via the REST
      * API
      */
-    public static Predicate<Node> isInternalNode = new Predicate<Node>() {
-
-        @Override
-        public boolean apply(final Node n) {
-            checkNotNull(n, "null is neither internal nor not internal!");
-            try {
-                return n.isNodeType("mode:system");
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
-    };
+    public static Predicate<Node> isInternalNode = uncheck(n -> n.isNodeType("mode:system"));
 
     /**
      * Get the JCR property type ID for a given property name. If unsure, mark

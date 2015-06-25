@@ -115,7 +115,7 @@ public class NodePropertiesTools {
             }
         }
 
-        if (!property.isMultiple() && !isInternalReferenceProperty.apply(property)) {
+        if (!property.isMultiple() && !isInternalReferenceProperty.test(property)) {
             final String referencePropertyName = getReferencePropertyName(propertyName);
             if (node.hasProperty(referencePropertyName)) {
                 node.setProperty(referencePropertyName, (Value[]) null);

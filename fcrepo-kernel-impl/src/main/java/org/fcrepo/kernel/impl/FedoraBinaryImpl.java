@@ -90,7 +90,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     private void initializeNewBinaryProperties() {
         try {
             decorateContentNode(node);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             LOGGER.warn("Count not decorate {} with FedoraBinary properties: {}", node, e);
         }
     }
@@ -374,6 +374,6 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      * @return whether the given node is a Fedora binary
      */
     public static boolean hasMixin(final Node node) {
-        return isFedoraBinary.apply(node);
+        return isFedoraBinary.test(node);
     }
 }

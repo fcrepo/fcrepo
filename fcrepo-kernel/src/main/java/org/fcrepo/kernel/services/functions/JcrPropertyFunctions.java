@@ -18,7 +18,10 @@ package org.fcrepo.kernel.services.functions;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
+
 import org.fcrepo.kernel.FedoraJcrTypes;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -26,6 +29,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
+
 import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -57,23 +61,7 @@ public final class JcrPropertyFunctions {
                 return t.getName();
             }
         };
-    /**
-     * Translates a JCR {@link javax.jcr.Value} to its {@link String} expression.
-     */
-    public static Function<Value, String> value2string =
-        new Function<Value, String>() {
 
-            @Override
-            public String apply(final Value v) {
-                try {
-                    checkNotNull(v, "null has no appropriate "
-                                        + "String representation!");
-                    return v.getString();
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-        };
     /**
      * Constructs an {@link java.util.Iterator} of {@link javax.jcr.Value}s from any
      * {@link javax.jcr.Property}, multi-valued or not.
@@ -91,7 +79,7 @@ public final class JcrPropertyFunctions {
                     LOGGER.debug("Found single-valued property: {}", p);
                     return Iterators.forArray(p.getValue());
                 } catch (final Exception e) {
-                    throw propagate(e);
+                    throw new RepositoryRuntimeException(e);
                 }
             }
         };

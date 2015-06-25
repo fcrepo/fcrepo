@@ -136,7 +136,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                     if (TombstoneImpl.hasMixin(preexistingNode)) {
                         throw new TombstoneException(new TombstoneImpl(preexistingNode));
                     }
-                } catch (RepositoryException inner) {
+                } catch (final RepositoryException inner) {
                     LOGGER.debug("Error checking for parent tombstones", inner);
                 }
             }
@@ -316,7 +316,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
     private static String getPath(final FedoraResource resource) {
-        if (isFrozenNode.apply(resource)) {
+        if (isFrozenNode.test(resource)) {
             try {
 
                 // the versioned resource we're in

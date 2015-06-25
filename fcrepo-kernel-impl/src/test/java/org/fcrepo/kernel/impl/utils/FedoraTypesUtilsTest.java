@@ -27,8 +27,6 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isNonRdfSourceDescri
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isMultipleValuedProperty;
-import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -36,8 +34,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import java.io.InputStream;
 import java.util.Iterator;
 
@@ -64,9 +60,11 @@ import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.junit.Before;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.api.JcrConstants;
 
@@ -78,6 +76,7 @@ import com.google.common.base.Predicate;
  * @author awoods
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraTypesUtilsTest {
 
     @Mock
@@ -149,11 +148,6 @@ public class FedoraTypesUtilsTest {
     @Mock
     private Node mockContainer;
 
-    @Before
-    public void setUp() {
-        initMocks(this);
-    }
-
     @Test
     public void testIsMultipleValuedProperty() throws RepositoryException {
         final Property mockYes = mock(Property.class);
@@ -190,20 +184,20 @@ public class FedoraTypesUtilsTest {
     public void testIsInternalReferenceProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
         when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
-        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+        assertTrue(isInternalReferenceProperty.test(mockProperty));
     }
 
     @Test (expected = RepositoryRuntimeException.class)
     public void testIsInternalReferencePropertyException() throws RepositoryException {
         when(mockProperty.getType()).thenThrow(new RepositoryException());
-        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+        assertTrue(isInternalReferenceProperty.test(mockProperty));
     }
 
     @Test
     public void testIsInternalReferencePropertyWeak() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.WEAKREFERENCE);
         when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
-        assertTrue(isInternalReferenceProperty.apply(mockProperty));
+        assertTrue(isInternalReferenceProperty.test(mockProperty));
     }
 
     @Test
@@ -236,7 +230,7 @@ public class FedoraTypesUtilsTest {
     public void testIsInternalProperty() throws RepositoryException {
         when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
-        assertTrue(isInternalProperty.apply(mockProperty));
+        assertTrue(isInternalProperty.test(mockProperty));
     }
 
     @Test
@@ -255,10 +249,10 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsBlanknode() throws RepositoryException {
         when(mockNode.isNodeType(FEDORA_SKOLEM)).thenReturn(true);
-        assertTrue("Expected to be a blank node", isBlankNode.apply(mockNode));
+        assertTrue("Expected to be a blank node", isBlankNode.test(mockNode));
 
         when(mockNode.isNodeType(FEDORA_SKOLEM)).thenReturn(false);
-        assertFalse("Expected to not be a blank node", isBlankNode.apply(mockNode));
+        assertFalse("Expected to not be a blank node", isBlankNode.test(mockNode));
     }
 
     @Test
@@ -266,16 +260,16 @@ public class FedoraTypesUtilsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.isNodeType("mode:system")).thenReturn(true);
         assertTrue("mode:system nodes should be treated as internal nodes!",
-                isInternalNode.apply(mockNode));
+                isInternalNode.test(mockNode));
 
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNode.isNodeType("mode:system")).thenReturn(false);
         assertFalse("Nodes that are not mode:system types should not be "
-                + "treated as internal nodes!", isInternalNode.apply(mockNode));
+                + "treated as internal nodes!", isInternalNode.test(mockNode));
 
         when(mockNode.isNodeType("mode:system")).thenThrow(new RepositoryException());
         try {
-            isInternalNode.apply(mockNode);
+            isInternalNode.test(mockNode);
             fail("Unexpected completion of FedoraTypesUtils.isInternalNode" +
                  " after RepositoryException!");
         } catch (final RuntimeException e) {
@@ -289,39 +283,17 @@ public class FedoraTypesUtilsTest {
         when(mockNode.isNodeType(anyString())).thenThrow(new RepositoryException());
 
         try {
-            isContainer.apply(mockNode);
+            isContainer.test(mockNode);
             fail("Unexpected FedoraTypesUtils.isContainer" +
                     " completion after RepositoryException!");
         } catch (final RuntimeException e) {
             // expected
         }
         try {
-            isNonRdfSourceDescription.apply(mockNode);
+            isNonRdfSourceDescription.test(mockNode);
             fail("Unexpected FedoraTypesUtils.isNonRdfSourceDescription" +
                  " completion after RepositoryException!");
         } catch (final RuntimeException e) {
-            // expected
-        }
-    }
-
-    @Test
-    public void testValue2String() throws RepositoryException {
-        // test a valid Value
-        when(mockValue.getString()).thenReturn("foo");
-        assertEquals("foo", value2string.apply(mockValue));
-        when(mockValue.getString()).thenThrow(new RepositoryException());
-        try {
-            value2string.apply(mockValue);
-            fail("Unexpected FedoraTypesUtils.value2string" +
-                    " completion after RepositoryException!");
-        } catch (final RuntimeException e) {
-            // expected
-        }
-        try {
-            value2string.apply(null);
-            fail("Unexpected FedoraTypesUtils.value2string" +
-                    " completion with null argument!");
-        } catch (final NullPointerException e) {
             // expected
         }
     }
