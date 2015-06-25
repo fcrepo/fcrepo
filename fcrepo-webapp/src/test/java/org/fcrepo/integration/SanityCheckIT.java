@@ -16,18 +16,31 @@
 package org.fcrepo.integration;
 
 import static java.lang.Integer.MAX_VALUE;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-import org.apache.http.client.ClientProtocolException;
+import java.net.URI;
+
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.core.Link;
 
 /**
  * <p>SanityCheckIT class.</p>
@@ -71,13 +84,63 @@ public class SanityCheckIT {
 
     @Test
     public void doASanityCheck() throws IOException {
-        assertEquals(200, getStatus(new HttpGet(serverAddress + "rest/")));
+        executeAndVerify(new HttpGet(serverAddress + "rest/"), SC_OK);
     }
 
-    protected int getStatus(final HttpUriRequest method)
-            throws ClientProtocolException, IOException {
-        logger.debug("Executing: " + method.getMethod() + " to " +
-                method.getURI());
-        return client.execute(method).getStatusLine().getStatusCode();
+    private HttpResponse executeAndVerify(final HttpUriRequest method, final int statusCode) throws IOException {
+        logger.debug("Executing: " + method.getMethod() + " to " + method.getURI());
+        final HttpResponse response = client.execute(method);
+
+        assertEquals(statusCode, response.getStatusLine().getStatusCode());
+        return response;
     }
+
+    @Test
+    public void testConstraintLink() throws Exception {
+        // Create a resource
+        final HttpPost post = new HttpPost(serverAddress + "rest/");
+        final HttpResponse postResponse = executeAndVerify(post, SC_CREATED);
+
+        final String location = postResponse.getFirstHeader("Location").getValue();
+        logger.debug("new resource location: {}", location);
+
+        // GET the new resource
+        final HttpGet get = new HttpGet(location);
+        final HttpResponse getResponse = executeAndVerify(get, SC_OK);
+
+        final String body = EntityUtils.toString(getResponse.getEntity());
+        logger.debug("new resource body: {}", body);
+
+        // PUT the exact body back to the new resource... successfully
+        final HttpPut put = new HttpPut(location);
+        put.setEntity(new StringEntity(body));
+        put.setHeader("Content-Type", "text/turtle");
+        executeAndVerify(put, SC_NO_CONTENT);
+
+        // Update a server managed property in the resource body... not allowed!
+        final String body2 = body.replaceFirst("fedora:created \"2\\d\\d\\d", "fedora:created \"1999");
+
+        // PUT the erroneous body back to the new resource... unsuccessfully
+        final HttpPut put2 = new HttpPut(location);
+        put2.setEntity(new StringEntity(body2));
+        put2.setHeader("Content-Type", "text/turtle");
+        final HttpResponse put2Response = executeAndVerify(put2, SC_CONFLICT);
+
+        // Verify the returned LINK header
+        final String linkHeader = put2Response.getFirstHeader("Link").getValue();
+        final Link link = Link.valueOf(linkHeader);
+        logger.debug("constraint linkHeader: {}", linkHeader);
+
+        // Verify the LINK rel
+        final String linkRel = link.getRel();
+        assertEquals(CONSTRAINED_BY.getURI(), linkRel);
+
+        // Verify the LINK URI by fetching it
+        final URI linkURI = link.getUri();
+        logger.debug("constraint linkURI: {}", linkURI);
+
+        final HttpGet getLink = new HttpGet(linkURI);
+        executeAndVerify(getLink, SC_OK);
+    }
+
 }
