@@ -97,8 +97,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             // if it's not about a node, ignore it.
             if (!idTranslator.inDomain(subject) && !subject.isAnon()) {
                 LOGGER.error("subject ({}) is not in repository domain.", subject);
-                throw new OutOfDomainSubjectException(String.format(
-                    "Update RDF contains subject(s) (%s) not in the domain of this repository.", subject));
+                throw new OutOfDomainSubjectException(subject.toString());
             }
 
             final Statement s = jcrRdfTools.skolemize(idTranslator, input);
@@ -140,8 +139,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             // if it's not about a node, we don't care.
             if (!idTranslator.inDomain(subject)) {
                 LOGGER.error("subject ({}) is not in repository domain.", subject);
-                throw new OutOfDomainSubjectException(String.format(
-                    "Update RDF contains subject(s) (%s) not in the domain of this repository.", subject));
+                throw new OutOfDomainSubjectException(subject.toString());
             }
 
             final FedoraResource resource = idTranslator.convert(subject);
@@ -174,7 +172,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     public void assertNoExceptions() throws MalformedRdfException, AccessDeniedException {
         final StringBuilder sb = new StringBuilder();
-        for (Exception e : exceptions) {
+        for (final Exception e : exceptions) {
             sb.append(e.getMessage());
             sb.append("\n");
             if (e instanceof AccessDeniedException) {

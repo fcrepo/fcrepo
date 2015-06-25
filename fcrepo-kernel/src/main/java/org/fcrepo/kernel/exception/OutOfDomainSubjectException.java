@@ -26,12 +26,12 @@ public class OutOfDomainSubjectException extends ConstraintViolationException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Ordinary constructor.
+     * Takes the subject that is out of domain, creates message.
      *
-     * @param msg the message
+     * @param subject the subject
      */
-    public OutOfDomainSubjectException(final String msg) {
-        super(msg);
+    public OutOfDomainSubjectException(final String subject) {
+        super(String.format("RDF Stream contains subject(s) (%s) not in the domain of this repository.", subject));
     }
 
     /**

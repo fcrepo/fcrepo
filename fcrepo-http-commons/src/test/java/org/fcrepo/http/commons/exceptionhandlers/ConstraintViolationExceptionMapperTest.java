@@ -30,8 +30,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import static org.mockito.MockitoAnnotations.initMocks;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * ConstraintViolationExceptionMapperTest
@@ -39,6 +40,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author whikloj
  * @since 2015-06-22
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ConstraintViolationExceptionMapperTest {
 
     private UriInfo mockInfo;
@@ -48,7 +50,6 @@ public class ConstraintViolationExceptionMapperTest {
 
     @Before
     public void setUp() throws RepositoryException, URISyntaxException {
-        initMocks(this);
         this.mockInfo = getUriInfoImpl();
     }
 
