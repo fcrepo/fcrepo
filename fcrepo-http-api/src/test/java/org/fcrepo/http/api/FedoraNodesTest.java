@@ -29,6 +29,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.function.Supplier;
 
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
@@ -50,11 +51,11 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.mint.PidMinter;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.VersionService;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -108,7 +109,7 @@ public class FedoraNodesTest {
     private HttpServletResponse mockResponse;
 
     @Mock
-    private PidMinter mockPidMinter;
+    private Supplier<String> mockPidMinter;
 
     @Mock
     private Date mockDate;

@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.commons;
 
+import java.util.function.Supplier;
+
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -25,11 +27,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.mint.PidMinter;
 import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.VersionService;
+
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,7 +100,7 @@ public class AbstractResource {
      * A resource that can mint new Fedora PIDs.
      */
     @Autowired
-    protected PidMinter pidMinter;
+    protected Supplier<String> pidMinter;
 
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path

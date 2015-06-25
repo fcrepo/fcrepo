@@ -27,14 +27,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.EventType;
-
-import org.fcrepo.mint.PidMinter;
 import org.fcrepo.mint.UUIDPathMinter;
 
 import com.google.common.base.Function;
@@ -56,7 +55,7 @@ public class FedoraEvent {
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
 
-    private static final PidMinter pidMinter = new UUIDPathMinter();
+    private static final Supplier<String> pidMinter = new UUIDPathMinter();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
@@ -65,7 +64,7 @@ public class FedoraEvent {
      */
     public FedoraEvent(final Event e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
-        eventID = pidMinter.mintPid();
+        eventID = pidMinter.get();
         this.e = e;
     }
 

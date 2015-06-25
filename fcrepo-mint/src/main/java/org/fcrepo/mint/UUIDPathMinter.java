@@ -18,6 +18,7 @@ package org.fcrepo.mint;
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.UUID.randomUUID;
 
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.StringJoiner;
 
@@ -30,7 +31,7 @@ import com.codahale.metrics.Timer;
  *
  * @author awoods
  */
-public class UUIDPathMinter implements PidMinter {
+public class UUIDPathMinter implements Supplier<String> {
 
     static final Timer timer = RegistryService.getInstance().getMetrics().timer(
             name(UUIDPathMinter.class, "mint"));
@@ -70,7 +71,7 @@ public class UUIDPathMinter implements PidMinter {
      * @return uuid
      */
     @Override
-    public String mintPid() {
+    public String get() {
 
         try (final Timer.Context context = timer.time()) {
             final String s = randomUUID().toString();
@@ -79,11 +80,11 @@ public class UUIDPathMinter implements PidMinter {
                 return s;
             }
 
-            final StringJoiner joiner = new StringJoiner("/");
+            final StringJoiner joiner = new StringJoiner("/", "", "/" + s);
             IntStream.rangeClosed(0, count - 1)
                      .forEach(x -> joiner.add(s.substring(x * length, (x + 1) * length)));
 
-            return joiner.add(s).toString();
+            return joiner.toString();
         }
     }
 }

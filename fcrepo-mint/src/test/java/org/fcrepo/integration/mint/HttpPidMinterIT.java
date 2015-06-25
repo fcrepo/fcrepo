@@ -54,7 +54,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST", "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -64,7 +64,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST", "", "", " ", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -74,7 +74,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "WHATEVER", "", "", " ", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -99,7 +99,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "GET", "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -109,7 +109,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "PUT", "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -119,7 +119,7 @@ public class HttpPidMinterIT{
         final String server = PREFIX + getPort() + res;
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, null, "", "", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -130,7 +130,7 @@ public class HttpPidMinterIT{
         addHandler("<test><id>baz</id></test>", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST"
                 , "", "", "", "/test/id");
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "baz");
     }
 
@@ -141,7 +141,7 @@ public class HttpPidMinterIT{
         addHandler("abc", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST",
                 "fedoraAdmin", "secret", ".*/", null);
-        final String pid = minter.mintPid();
+        final String pid = minter.get();
         assertEquals(pid, "abc");
     }
 
@@ -152,7 +152,7 @@ public class HttpPidMinterIT{
         addHandler("<test><id>baz</id></tet>", res);
         final HttpPidMinter minter = new HttpPidMinter(server, "POST"
                 , "", "", "", "/test/id");
-        minter.mintPid();
+        minter.get();
     }
 
 }

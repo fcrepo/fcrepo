@@ -19,11 +19,13 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.util.function.Supplier;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.mint.PidMinter;
 import org.fcrepo.kernel.services.NodeService;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -42,7 +44,7 @@ public class AbstractResourceTest {
     private NodeService mockNodes;
 
     @Mock
-    private PidMinter mockPids;
+    private Supplier<String> mockPids;
 
     @Mock
     private UriInfo mockUris;

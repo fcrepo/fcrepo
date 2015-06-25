@@ -16,16 +16,16 @@
 package org.fcrepo.mint;
 
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import org.slf4j.Logger;
 
 import com.codahale.metrics.annotation.Timed;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.util.function.Supplier;
 
 import org.w3c.dom.Document;
 
@@ -59,8 +59,9 @@ import org.xml.sax.SAXException;
  * @author escowles
  * @since 04/28/2014
  */
-public class HttpPidMinter implements PidMinter {
+public class HttpPidMinter implements Supplier<String> {
 
+    private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
     private static final Logger LOGGER = getLogger(HttpPidMinter.class);
     protected final String url;
     protected final String method;
@@ -70,6 +71,7 @@ public class HttpPidMinter implements PidMinter {
     private XPathExpression xpath;
 
     protected HttpClient client;
+    private final PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
 
     /**
      * Create a new HttpPidMinter.
@@ -88,17 +90,17 @@ public class HttpPidMinter implements PidMinter {
     public HttpPidMinter( final String url, final String method, final String username,
         final String password, final String regex, final String xpath ) {
 
-        checkArgument( !isBlank(url), "Minter URL must be specified!" );
+        checkArgument( !isNullOrEmpty(url), "Minter URL must be specified!" );
 
         this.url = url;
         this.method = (method == null ? "post" : method);
         this.username = username;
         this.password = password;
         this.regex = regex;
-        if ( !isBlank(xpath) ) {
+        if ( !isNullOrEmpty(xpath) ) {
             try {
                 this.xpath = XPathFactory.newInstance().newXPath().compile(xpath);
-            } catch ( XPathException ex ) {
+            } catch ( final XPathException ex ) {
                 LOGGER.warn("Error parsing xpath ({}): {}", xpath, ex );
                 throw new IllegalArgumentException("Error parsing xpath" + xpath, ex);
             }
@@ -111,9 +113,8 @@ public class HttpPidMinter implements PidMinter {
      * @return the setup of authentication
     **/
     protected HttpClient buildClient() {
-        HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties().setConnectionManager(
-            new PoolingHttpClientConnectionManager());
-        if (!isBlank(username) && !isBlank(password)) {
+        HttpClientBuilder builder = HttpClientBuilder.create().useSystemProperties().setConnectionManager(connManager);
+        if (!isNullOrEmpty(username) && !isNullOrEmpty(password)) {
             final URI uri = URI.create(url);
             final CredentialsProvider credsProvider = new BasicCredentialsProvider();
             credsProvider.setCredentials(new AuthScope(uri.getHost(), uri.getPort()),
@@ -127,10 +128,10 @@ public class HttpPidMinter implements PidMinter {
      * Instantiate a request object based on the method variable.
     **/
     private HttpUriRequest minterRequest() {
-        switch (method) {
-            case "GET": case "get":
+        switch (method.toUpperCase()) {
+            case "GET":
                 return new HttpGet(url);
-            case "PUT": case "put":
+            case "PUT":
                 return new HttpPut(url);
             default:
                 return new HttpPost(url);
@@ -146,12 +147,12 @@ public class HttpPidMinter implements PidMinter {
     **/
     protected String responseToPid( final String responseText ) throws IOException {
         LOGGER.debug("responseToPid({})", responseText);
-        if ( !isBlank(regex) ) {
+        if ( !isNullOrEmpty(regex) ) {
             return responseText.replaceFirst(regex,"");
         } else if ( xpath != null ) {
             try {
                 return xpath( responseText, xpath );
-            } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
+            } catch (ParserConfigurationException | SAXException | XPathExpressionException e) {
                 throw new IOException(e);
             }
         } else {
@@ -164,7 +165,7 @@ public class HttpPidMinter implements PidMinter {
     **/
     private static String xpath( final String xml, final XPathExpression xpath )
             throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
-        final DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        final DocumentBuilder builder = DOCUMENT_BUILDER_FACTORY.newDocumentBuilder();
         final Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes()));
         return xpath.evaluate(doc);
     }
@@ -175,17 +176,17 @@ public class HttpPidMinter implements PidMinter {
      */
     @Timed
     @Override
-    public String mintPid() {
+    public String get() {
         try {
             LOGGER.debug("mintPid()");
             final HttpResponse resp = client.execute( minterRequest() );
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
-        } catch ( IOException ex ) {
+        } catch ( final IOException ex ) {
             LOGGER.warn("Error minting pid from {}: {}", url, ex);
-            throw new PidMinterException("Error minting pid", ex);
-        } catch ( Exception ex ) {
+            throw new PidMintingException("Error minting pid", ex);
+        } catch ( final Exception ex ) {
             LOGGER.warn("Error processing minter response", ex);
-            throw new PidMinterException("Error processing minter response", ex);
+            throw new PidMintingException("Error processing minter response", ex);
         }
     }
 }
