@@ -15,10 +15,8 @@
  */
 package org.fcrepo.kernel.impl.observer;
 
-import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Predicate;
 import org.fcrepo.kernel.observer.EventFilter;
 
 /**
@@ -33,12 +31,7 @@ import org.fcrepo.kernel.observer.EventFilter;
 public class NOOPFilter implements EventFilter {
 
     @Override
-    public Predicate<Event> getFilter(final Session session) {
-        return this;
-    }
-
-    @Override
-    public boolean apply(final Event event) {
+    public boolean test(final Event event) {
         return true;
     }
 

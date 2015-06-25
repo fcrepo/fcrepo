@@ -26,8 +26,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
-
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -49,6 +47,7 @@ import com.google.common.eventbus.Subscribe;
  * <p>SuppressByMixinFilterIT class.</p>
  *
  * @author escowles
+ * @author ajs6f
  * @since 2015-04-15
  */
 @ContextConfiguration({"/spring-test/eventing-suppress.xml", "/spring-test/repo.xml"})
@@ -65,7 +64,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     @Inject
     private EventBus eventBus;
 
-    private Set<String> eventsReceived = new HashSet<>();
+    private final Set<String> eventsReceived = new HashSet<>();
 
     @Test(timeout = TIMEOUT)
     public void shouldSuppressWithMixin() throws RepositoryException {
@@ -115,7 +114,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     }
 
     @Subscribe
-    public void receiveEvents(final FedoraEvent e) throws RepositoryException {
+    public void receiveEvents(final FedoraEvent e) {
         final Set<String> properties = e.getProperties();
         assertNotNull(properties);
 
@@ -126,13 +125,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     }
 
     private void waitForEvent(final String id) {
-        await().pollInterval(ONE_SECOND).until(new Callable<Boolean>() {
-
-            @Override
-            public Boolean call() {
-                return eventsReceived.contains(id);
-            }
-        });
+        await().pollInterval(ONE_SECOND).until(() -> eventsReceived.contains(id));
     }
 
 }

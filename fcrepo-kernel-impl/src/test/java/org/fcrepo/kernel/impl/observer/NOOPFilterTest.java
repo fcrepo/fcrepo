@@ -16,33 +16,29 @@
 package org.fcrepo.kernel.impl.observer;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import javax.jcr.observation.Event;
 
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>NOOPFilterTest class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class NOOPFilterTest {
 
     @Mock
     Event mockEvent;
 
-    @Before
-    public void setUp() {
-        initMocks(this);
-    }
-
     @Test
     public void testApply() {
         assertTrue("Failed to pass an event through a NO-OP filter!",
-                   new NOOPFilter().getFilter(null).apply(mockEvent));
+                   new NOOPFilter().test(mockEvent));
     }
 
 }

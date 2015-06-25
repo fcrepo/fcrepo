@@ -16,16 +16,14 @@
 package org.fcrepo.kernel.observer.eventmappings;
 
 import java.util.Iterator;
+import java.util.function.Function;
 
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.observer.FedoraEvent;
 
-import com.google.common.base.Function;
-
 /**
- * Maps {@link Iterator}-packages of {@link Event}s to
- * {@link Iterator}s of {@link FedoraEvent}s according to some algorithm
+ * Maps {@link Iterator}s of {@link Event}s to {@link Iterator}s of {@link FedoraEvent}s according to some algorithm
  *
  * @author ajs6f
  * @since Feb 27, 2014

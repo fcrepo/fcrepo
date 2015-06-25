@@ -18,21 +18,22 @@ package org.fcrepo.kernel.impl.observer.eventmappings;
 import static com.google.common.collect.Iterators.size;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import java.util.Iterator;
 
 import javax.jcr.observation.Event;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>OneToOneTest class.</p>
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class OneToOneTest {
 
     final private OneToOne testMapping = new OneToOne();
@@ -51,7 +52,6 @@ public class OneToOneTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         when(mockIterator.next()).thenReturn(mockEvent1, mockEvent2, mockEvent3);
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
     }
@@ -61,5 +61,4 @@ public class OneToOneTest {
         assertEquals("Didn't get a FedoraEvent for every input JCR Event!", 3, size(testMapping
                 .apply(mockIterator)));
     }
-
 }

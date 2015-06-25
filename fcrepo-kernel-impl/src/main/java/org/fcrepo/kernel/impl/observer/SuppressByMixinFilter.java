@@ -19,49 +19,38 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.observation.Event;
 
-import com.google.common.base.Predicate;
-
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.observer.EventFilter;
+
 import org.slf4j.Logger;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
- * {@link EventFilter} that extends {@link DefaultFilter} to also suppress events
- * emitted by nodes with a provided set of mixins.
+ * Suppresses events emitted by nodes with a provided set of mixins.
  *
  * @author escowles
+ * @author ajs6f
  * @since 2015-04-15
  */
-public class SuppressByMixinFilter extends DefaultFilter implements EventFilter {
+public class SuppressByMixinFilter extends DefaultFilter {
 
     private static final Logger LOGGER = getLogger(SuppressByMixinFilter.class);
-    private Set<String> suppressedMixins;
+    private final Set<String> suppressedMixins;
 
     /**
      * @param suppressedMixins Resources with these mixins will be filtered out
      */
     public SuppressByMixinFilter(final Set<String> suppressedMixins) {
         this.suppressedMixins = suppressedMixins;
-        for (String mixin : suppressedMixins) {
-            LOGGER.info("Suppressing events for nodes with mixin: {}", mixin);
-        }
+        LOGGER.info("Suppressing events for nodes with mixins: {}", suppressedMixins);
     }
 
     @Override
-    public Predicate<Event> getFilter(final Session session) {
-        return this;
-    }
-
-    @Override
-    public boolean apply(final Event event) {
+    public boolean test(final Event event) {
         try {
-            return super.apply(event) && Collections.disjoint(getMixinTypes(event), suppressedMixins);
+            return super.test(event) && !getMixinTypes(event).anyMatch(suppressedMixins::contains);
         } catch (final PathNotFoundException e) {
             LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
             return false;
