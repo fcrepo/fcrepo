@@ -15,21 +15,21 @@
  */
 package org.fcrepo.jms.headers;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.Set;
-import java.util.stream.Collectors;
-
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-import org.apache.commons.lang.StringUtils;
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
 import org.fcrepo.kernel.observer.FedoraEvent;
 import org.fcrepo.kernel.utils.EventType;
+
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,7 +83,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         // extract baseURL and userAgent from event UserData
         try {
             final String userdata = jcrEvent.getUserData();
-            if (!StringUtils.isBlank(userdata)) {
+            if (!isNullOrEmpty(userdata)) {
                 final ObjectMapper mapper = new ObjectMapper();
                 final JsonNode json = mapper.readTree(userdata);
                 String url = json.get("baseURL").asText();
@@ -120,7 +120,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
                                  .map(EventType::valueOf)
                                  .map(EventType::toString)
                                  .map(REPOSITORY_NAMESPACE::concat)
-                                 .collect(Collectors.joining(","));
+                                 .collect(joining(","));
 
         LOGGER.debug("Constructed event type URIs: {}", uris);
         return uris;
