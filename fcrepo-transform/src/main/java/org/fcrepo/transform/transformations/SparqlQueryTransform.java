@@ -62,24 +62,12 @@ public class SparqlQueryTransform implements Transformation<QueryExecution> {
     }
 
     @Override
-    public InputStream getQuery() {
-        return query;
-    }
-
-    @Override
     public boolean equals(final Object other) {
-        return other instanceof SparqlQueryTransform &&
-                   query.equals(((SparqlQueryTransform)other).getQuery());
+        return other instanceof SparqlQueryTransform && query.equals(((SparqlQueryTransform)other).query);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getQuery());
+        return Objects.hashCode(query);
     }
-
-    @Override
-    public SparqlQueryTransform newTransform(final InputStream query) {
-        return new SparqlQueryTransform(query);
-    }
-
 }

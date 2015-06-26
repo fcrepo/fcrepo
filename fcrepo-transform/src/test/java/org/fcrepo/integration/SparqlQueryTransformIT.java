@@ -17,12 +17,14 @@ package org.fcrepo.integration;
 
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
+
 import org.fcrepo.kernel.models.Container;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
@@ -31,8 +33,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
+import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
@@ -44,6 +48,7 @@ import static org.junit.Assert.assertTrue;
  * <p>SparqlQueryTransformIT class.</p>
  *
  * @author cbeer
+ * @author ajs6f
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
@@ -51,7 +56,11 @@ import static org.junit.Assert.assertTrue;
 public class SparqlQueryTransformIT extends AbstractResourceIT {
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
+
+    @Inject
+    private Repository repo;
+
     private SparqlQueryTransform testObj;
 
     @Test

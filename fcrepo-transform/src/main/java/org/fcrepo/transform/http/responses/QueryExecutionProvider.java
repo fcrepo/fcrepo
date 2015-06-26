@@ -60,7 +60,7 @@ public class QueryExecutionProvider implements MessageBodyWriter<QueryExecution>
                         mediaType);
 
         // add standard headers
-        httpHeaders.put("Content-type", singletonList((Object) mediaType.toString()));
+        httpHeaders.put("Content-type", singletonList(mediaType.toString()));
 
         try {
             final ResultSet resultSet = qexec.execSelect();
