@@ -84,15 +84,7 @@ public class SinglePrefer {
                 .findFirst().orElse(emptyTag());
     }
 
-    private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
-            new HttpHeaderReader.ListElementCreator<PreferTag>() {
-
-                @Override
-                public PreferTag create(final HttpHeaderReader reader) throws ParseException {
-                    return new PreferTag(reader);
-                }
-            };
-
+    private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR = r -> new PreferTag(r);
 
     protected Set<PreferTag> preferTags() {
         return preferTags;

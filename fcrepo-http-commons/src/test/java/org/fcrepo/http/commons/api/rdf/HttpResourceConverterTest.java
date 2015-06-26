@@ -190,6 +190,9 @@ public class HttpResourceConverterTest {
         when(versionedNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);
         when(mockProperty.getString()).thenReturn("some-identifier");
         when(node.getIdentifier()).thenReturn("some-identifier");
+        when(mockVersionManager.getVersionHistory("/" + path)).thenReturn(mockVersionHistory);
+        when(mockVersionHistory.hasVersionLabel("x")).thenReturn(true);
+        when(mockVersionHistory.getVersionByLabel("x")).thenReturn(mockVersion);
         final FedoraResource converted = converter.convert(versionedResource);
         assertEquals(versionedNode, converted.getNode());
     }

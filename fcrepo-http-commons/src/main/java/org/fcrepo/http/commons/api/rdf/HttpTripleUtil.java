@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
+import static org.fcrepo.kernel.utils.iterators.RdfStream.fromModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
@@ -22,9 +23,11 @@ import java.util.Map;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
+
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -62,19 +65,11 @@ public class HttpTripleUtil implements ApplicationContextAware {
             final IdentifierConverter<Resource,FedoraResource> idTranslator) {
 
         LOGGER.debug("Adding additional HTTP context triples to stream");
-        for (final Map.Entry<String, UriAwareResourceModelFactory> e : getUriAwareTripleFactories()
-                .entrySet()) {
-            final String beanName = e.getKey();
-            final UriAwareResourceModelFactory uriAwareResourceModelFactory =
-                    e.getValue();
-            LOGGER.debug("Adding response information using: {}", beanName);
-
-            final Model m =
-                    uriAwareResourceModelFactory.createModelForResource(
-                            resource, uriInfo, idTranslator);
-            rdfStream.concat(RdfStream.fromModel(m));
-        }
-
+        getUriAwareTripleFactories().forEach((bean, factory) -> {
+            LOGGER.debug("Adding response information using: {}", bean);
+            final Model m = factory.createModelForResource(resource, uriInfo, idTranslator);
+            rdfStream.concat(fromModel(m));
+        });
     }
 
     private Map<String, UriAwareResourceModelFactory> getUriAwareTripleFactories() {

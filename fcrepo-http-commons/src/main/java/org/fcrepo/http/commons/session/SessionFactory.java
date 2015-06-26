@@ -15,13 +15,14 @@
  */
 package org.fcrepo.http.commons.session;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.Principal;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -33,9 +34,9 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.Transaction;
 import org.fcrepo.kernel.services.TransactionService;
+
 import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Factory for generating sessions for HTTP requests, taking
@@ -63,17 +64,16 @@ public class SessionFactory {
 
     private static final Logger LOGGER = getLogger(SessionFactory.class);
 
-    @Autowired
+    @Inject
     private Repository repo;
 
-    @Autowired
+    @Inject
     private TransactionService transactionService;
 
     /**
-     * initialize an empty session factory
+     * Default constructor
      */
     public SessionFactory() {
-
     }
 
     /**
@@ -93,7 +93,7 @@ public class SessionFactory {
      */
     @PostConstruct
     public void init() {
-        checkNotNull(repo, "SessionFactory requires a Repository instance!");
+        requireNonNull(repo, "SessionFactory requires a Repository instance!");
     }
 
     /**

@@ -16,7 +16,9 @@
 package org.fcrepo.http.commons.domain;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.fcrepo.kernel.services.ExternalContentService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.WebApplicationException;
@@ -24,14 +26,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-
+import static java.util.Arrays.stream;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 /**
@@ -47,7 +49,7 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
     @Autowired
     private ExternalContentService contentService;
 
-    private static final Class contentLocationClass = ContentLocation.class;
+    private static final Class<ContentLocation> contentLocationClass = ContentLocation.class;
 
     @Override
     public boolean isReadable(final Class<?> type,
@@ -55,9 +57,7 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
                               final Annotation[] annotations,
                               final MediaType mediaType) {
         return InputStream.class.isAssignableFrom(type) &&
-                    Arrays.asList(annotations).stream()
-                          .map(Annotation::annotationType)
-                          .anyMatch(contentLocationClass::equals);
+                    stream(annotations).map(Annotation::annotationType).anyMatch(contentLocationClass::equals);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
 
             try {
                 return contentService.retrieveExternalContent(new URI(location));
-            } catch (URISyntaxException e) {
+            } catch (final URISyntaxException e) {
                 throw new WebApplicationException(e, BAD_REQUEST);
             }
 

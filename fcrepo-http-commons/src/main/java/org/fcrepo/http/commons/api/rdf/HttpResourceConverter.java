@@ -15,11 +15,9 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.ImmutableList.of;
-import static com.google.common.collect.Iterables.concat;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singleton;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.apache.commons.lang.StringUtils.replaceOnce;
 import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
@@ -35,6 +33,7 @@ import static org.springframework.web.context.ContextLoader.getCurrentWebApplica
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +62,6 @@ import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.base.Converter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -136,7 +134,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                     if (TombstoneImpl.hasMixin(preexistingNode)) {
                         throw new TombstoneException(new TombstoneImpl(preexistingNode));
                     }
-                } catch (RepositoryException inner) {
+                } catch (final RepositoryException inner) {
                     LOGGER.debug("Error checking for parent tombstones", inner);
                 }
             }
@@ -379,14 +377,10 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     protected void resetTranslationChain() {
         if (translationChain == null) {
             translationChain = getTranslationChain();
-
-            final Converter<String,String> transactionIdentifierConverter = new TransactionIdentifierConverter(session);
-
-            @SuppressWarnings("unchecked")
-            final ImmutableList<Converter<String, String>> chain = copyOf(
-                    concat(newArrayList(transactionIdentifierConverter),
-                            translationChain));
-            setTranslationChain(chain);
+            final List<Converter<String, String>> newChain =
+                    new ArrayList<>(singleton(new TransactionIdentifierConverter(session)));
+            newChain.addAll(translationChain);
+            setTranslationChain(newChain);
         }
     }
 
@@ -403,9 +397,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
 
-    private static final List<Converter<String, String>> minimalTranslationChain = of(
-                    new NamespaceConverter(), (Converter<String, String>) new HashConverter()
-            );
+    private static final List<Converter<String, String>> minimalTranslationChain =
+            of(new NamespaceConverter(), new HashConverter());
 
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
