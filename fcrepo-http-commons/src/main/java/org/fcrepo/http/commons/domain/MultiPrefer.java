@@ -42,8 +42,6 @@ public class MultiPrefer extends SinglePrefer {
      */
     public MultiPrefer(final @HeaderParam("Prefer") Set<SinglePrefer> prefers) throws ParseException {
         super("");
-        for (SinglePrefer prefer : prefers) {
-            preferTags().addAll(prefer.preferTags());
-        }
+        prefers.forEach(p -> preferTags().addAll(p.preferTags()));
     }
 }

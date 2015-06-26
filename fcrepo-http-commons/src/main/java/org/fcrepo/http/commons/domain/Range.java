@@ -108,7 +108,6 @@ public class Range {
             return new Range();
         }
 
-        matcher.matches();
         final String from = matcher.group(1);
         final String to = matcher.group(2);
 
