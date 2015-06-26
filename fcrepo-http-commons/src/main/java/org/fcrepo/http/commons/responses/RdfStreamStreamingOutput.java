@@ -17,13 +17,12 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.Maps.filterEntries;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static org.fcrepo.kernel.utils.UncheckedBiConsumer.uncheck;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Function;
 
 import javax.ws.rs.WebApplicationException;
@@ -119,11 +118,9 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
          *  - xmlns, which Sesame helpfully serializes, but normal parsers may complain
          *     about in some serializations (e.g. RDF/XML where xmlns:xmlns is forbidden by XML);
          */
-        final Map<String,String> namespaces = filterEntries(rdfStream.namespaces(), e -> !e.getKey().equals("xmlns"));
+        filterEntries(rdfStream.namespaces(), e -> !e.getKey().equals("xmlns"))
+                .forEach(uncheck(writer::handleNamespace));
 
-        for (final Entry<String, String> e : namespaces.entrySet()) {
-            writer.handleNamespace(e.getKey(), e.getValue());
-        }
         Rio.write(model, writer);
     }
 
