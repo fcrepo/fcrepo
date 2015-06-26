@@ -30,7 +30,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
@@ -45,11 +44,12 @@ import java.nio.file.Path;
 import javax.jcr.NamespaceRegistry;
 
 import org.infinispan.schematic.document.Document;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.ExecutionContext;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
@@ -67,6 +67,7 @@ import org.slf4j.Logger;
  * @author Andrew Woods
  *         Date: 2/3/14
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraFileSystemConnectorTest {
 
     private FedoraFileSystemConnector connector;
@@ -100,7 +101,7 @@ public class FedoraFileSystemConnectorTest {
     @Mock
     private BinaryValue binaryValue;
 
-    private ExecutionContext mockContext = new ExecutionContext();
+    private final ExecutionContext mockContext = new ExecutionContext();
 
     private static final Logger logger =
         getLogger(FedoraFileSystemConnectorTest.class);
@@ -111,6 +112,7 @@ public class FedoraFileSystemConnectorTest {
         tmpFile =
             createTempFile(directoryPath, "fedora-filesystemtestfile",
                     "txt").toFile();
+        tmpFile.deleteOnExit();
         try (FileOutputStream outputStream = new FileOutputStream(tmpFile)) {
             outputStream.write("hello".getBytes());
         } catch (final IOException e) {
@@ -121,6 +123,7 @@ public class FedoraFileSystemConnectorTest {
         tmpFile2 =
             createTempFile(directoryPath, "fedora-filesystemtestfile",
                     "txt").toFile();
+        tmpFile2.deleteOnExit();
         try (FileOutputStream outputStream = new FileOutputStream(tmpFile2)) {
             outputStream.write("goodbye".getBytes());
         } catch (final IOException e) {
@@ -129,24 +132,8 @@ public class FedoraFileSystemConnectorTest {
         }
     }
 
-    @AfterClass
-    public static void afterClass() {
-        try {
-            if ( tmpFile.exists() ) {
-                tmpFile.delete();
-            }
-            if ( tmpFile2.exists() ) {
-                tmpFile2.delete();
-            }
-        } catch (final Exception e) {
-            logger.error("Error deleting: " + tmpFile.getAbsolutePath()
-                    + " - " + e.getMessage());
-        }
-    }
-
     @Before
-    public void setUp() throws Exception {
-        initMocks(this);
+    public void setUp() throws IOException {
 
         connector = new FedoraFileSystemConnector();
         setField(connector, "directoryPath", directoryPath.toString());
@@ -167,7 +154,7 @@ public class FedoraFileSystemConnectorTest {
     }
 
     @Test
-    public void testGetDocumentByIdDatastream() throws Exception {
+    public void testGetDocumentByIdDatastream() {
         when(mockTranslator.getPrimaryTypeName(any(Document.class)))
                 .thenReturn(NT_FILE);
         when(mockNameFactory.create(anyString())).thenReturn(
@@ -178,7 +165,7 @@ public class FedoraFileSystemConnectorTest {
     }
 
     @Test
-    public void testGetDocumentByIdContent() throws Exception {
+    public void testGetDocumentByIdContent() {
         when(mockTranslator.getPrimaryTypeName(any(Document.class)))
                 .thenReturn(NT_RESOURCE);
         when(mockNameFactory.create(anyString())).thenReturn(

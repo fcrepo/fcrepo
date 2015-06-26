@@ -60,75 +60,77 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
     @Test(expected = RepositoryRuntimeException.class)
     public void testWriteProperty() throws RepositoryException {
         final Session session = repo.login();
+        try {
+            final FedoraResource object = nodeService.find(session, testFilePath());
+            assertNotNull(object);
 
-        final FedoraResource object = nodeService.find(session, testFilePath());
-        assertNotNull(object);
+            final String sparql = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
+                    "INSERT DATA { " +
+                    "<info:fedora" + testFilePath() + "> " +
+                    "fedora:name " +
+                    "'some-test-name' }";
 
-        final String sparql = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
-                "INSERT DATA { " +
-                "<info:fedora" + testFilePath() + "> " +
-                "fedora:name " +
-                "'some-test-name' }";
+            // Write the properties
+            object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new RdfStream());
 
+            // Verify
+            final Property property = object.getNode().getProperty("fedora:name");
+            assertNotNull(property);
+            assertEquals("some-test-name", property.getValues()[0].toString());
 
-        // Write the properties
-        object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new RdfStream());
-
-        // Verify
-        final Property property = object.getNode().getProperty("fedora:name");
-        assertNotNull(property);
-        assertEquals("some-test-name", property.getValues()[0].toString());
-
-        session.save();
-        session.logout();
+            session.save();
+        } finally {
+            session.logout();
+        }
     }
 
     @Test(expected = RepositoryRuntimeException.class)
     public void testRemoveProperty() throws RepositoryException {
         final Session session = repo.login();
-
-        final FedoraResource object = nodeService.find(session, testFilePath());
-        assertNotNull(object);
-
-        final String sparql = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
-                "INSERT DATA { " +
-                "<info:fedora" + testFilePath() + "> " +
-                "fedora:remove " +
-                "'some-property-to-remove' }";
-
-        // Write the properties
-        final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
-        object.updateProperties(graphSubjects, sparql, new RdfStream());
-
-        // Verify property exists
-        final Property property = object.getNode().getProperty("fedora:remove");
-        assertNotNull(property);
-        assertEquals("some-property-to-remove", property.getValues()[0].getString());
-
-        final String sparqlRemove = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
-                "DELETE {" +
-                "  <info:fedora" + testFilePath() + "> fedora:remove ?s " +
-                "} WHERE { " +
-                "  <info:fedora" + testFilePath() + "> fedora:remove ?s" +
-                "}";
-
-        // Remove the properties
-        object.updateProperties(graphSubjects,
-                sparqlRemove,
-                object.getTriples(graphSubjects, PropertiesRdfContext.class));
-
-        // Persist the object (although the propery will be removed from memory without this.)
-        session.save();
-
-        // Verify
-        boolean thrown = false;
         try {
-            object.getNode().getProperty("fedora:remove");
-        } catch (final PathNotFoundException e) {
-            thrown = true;
-        }
-        assertTrue("Exception expected - property should be missing", thrown);
+            final FedoraResource object = nodeService.find(session, testFilePath());
+            assertNotNull(object);
 
-        session.logout();
+            final String sparql = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
+                    "INSERT DATA { " +
+                    "<info:fedora" + testFilePath() + "> " +
+                    "fedora:remove " +
+                    "'some-property-to-remove' }";
+
+            // Write the properties
+            final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
+            object.updateProperties(graphSubjects, sparql, new RdfStream());
+
+            // Verify property exists
+            final Property property = object.getNode().getProperty("fedora:remove");
+            assertNotNull(property);
+            assertEquals("some-property-to-remove", property.getValues()[0].getString());
+
+            final String sparqlRemove = "PREFIX fedora: <" + REPOSITORY_NAMESPACE + "> " +
+                    "DELETE {" +
+                    "  <info:fedora" + testFilePath() + "> fedora:remove ?s " +
+                    "} WHERE { " +
+                    "  <info:fedora" + testFilePath() + "> fedora:remove ?s" +
+                    "}";
+
+            // Remove the properties
+            object.updateProperties(graphSubjects,
+                    sparqlRemove,
+                    object.getTriples(graphSubjects, PropertiesRdfContext.class));
+
+            // Persist the object (although the propery will be removed from memory without this.)
+            session.save();
+
+            // Verify
+            boolean thrown = false;
+            try {
+                object.getNode().getProperty("fedora:remove");
+            } catch (final PathNotFoundException e) {
+                thrown = true;
+            }
+            assertTrue("Exception expected - property should be missing", thrown);
+        } finally {
+            session.logout();
+        }
     }
 }
