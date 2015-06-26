@@ -17,7 +17,6 @@ package org.fcrepo.transform;
 
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 
-import java.io.InputStream;
 import java.util.function.Function;
 
 /**
@@ -27,25 +26,5 @@ import java.util.function.Function;
  * @author cbeer
  */
 public interface Transformation<T> extends Function<RdfStream, T> {
-
-    /**
-     * Execute a transform on an rdf stream
-     * @param stream the stream
-     * @return transformed output
-     */
-    @Override
-    T apply(final RdfStream stream);
-
-    /**
-     * Get the Query the transformation is using
-     * @return query used by the transformation as an input stream
-     */
-    InputStream getQuery();
-
-    /**
-     * @param query the query
-     * @return a new Transform of this type, for use as a factory
-     */
-    Transformation<T> newTransform(InputStream query);
 
 }

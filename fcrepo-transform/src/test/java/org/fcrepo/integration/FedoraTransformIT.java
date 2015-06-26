@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration;
 
+import static java.util.UUID.randomUUID;
 import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
 import static org.junit.Assert.assertEquals;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
@@ -49,7 +51,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
     @Test
     public void testLdpathWithConfiguredProgram() throws IOException {
 
-        final String pid = UUID.randomUUID().toString();
+        final String pid = "testLdpathWithConfiguredProgram-" + randomUUID();
         createObject(pid);
         final HttpGet postLdpathProgramRequest
                 = new HttpGet(serverAddress + "/" + pid + "/fcr:transform/default");
@@ -66,7 +68,7 @@ public class FedoraTransformIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testLdpathWithProgramBody() throws Exception {
+    public void testLdpathWithProgramBody() throws ParseException, IOException {
 
         final String pid = UUID.randomUUID().toString();
         createObject(pid);

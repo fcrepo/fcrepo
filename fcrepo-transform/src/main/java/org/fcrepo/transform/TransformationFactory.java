@@ -23,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
 import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
@@ -31,18 +32,20 @@ import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_R
  * Get a Transformation from a MediaType
  *
  * @author cbeer
+ * @author ajs6f
  */
 public class TransformationFactory {
 
-    private Map<String, Transformation<?>> mimeToTransform = new HashMap<>();
+    @SuppressWarnings("rawtypes")
+    private final Map<String, Function<InputStream, Transformation>> mimeToTransform = new HashMap<>();
 
     /**
      * Get a new TransformationFactory with the default classes
      * @throws SecurityException if security exception occurred
      */
     public TransformationFactory() {
-        mimeToTransform.put(contentTypeSPARQLQuery, new SparqlQueryTransform(null));
-        mimeToTransform.put(APPLICATION_RDF_LDPATH, new LDPathTransform(null));
+        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform::new);
+        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform::new);
     }
 
     /**
@@ -56,7 +59,7 @@ public class TransformationFactory {
     public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {
         final String mimeType = contentType.toString();
         if (mimeToTransform.containsKey(mimeType)) {
-            return (Transformation<T>) mimeToTransform.get(contentType.toString()).newTransform(inputStream);
+            return mimeToTransform.get(contentType.toString()).apply(inputStream);
         }
         throw new UnsupportedOperationException(
                 "No transform type exists for media type " + mimeType + "!");

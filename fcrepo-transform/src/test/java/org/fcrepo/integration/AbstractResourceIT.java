@@ -16,55 +16,35 @@
 package org.fcrepo.integration;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.fcrepo.http.commons.test.util.SpringContextSingleton;
-import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.jcr.Repository;
 import java.io.IOException;
-import java.util.UUID;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.Assert.assertEquals;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * <p>Abstract AbstractResourceIT class.</p>
  *
  * @author cbeer
+ * @author ajs6f
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 public abstract class AbstractResourceIT {
 
-    protected Repository repo;
-
-    protected Logger logger;
-
-    @Before
-    public void setRepo() {
-        repo =
-                SpringContextSingleton.getApplicationContext().getBean(
-                        Repository.class);
-    }
-
-    @Before
-    public void setLogger() {
-        logger = LoggerFactory.getLogger(this.getClass());
-    }
+    protected static Logger logger = getLogger(AbstractResourceIT.class);
 
     protected static final int SERVER_PORT = parseInt(getProperty("fcrepo.dynamic.test.port",
                                                                          "8080"));
-
     protected static final String HOSTNAME = "localhost";
 
     protected static final String serverAddress = "http://" + HOSTNAME + ":"
@@ -78,24 +58,6 @@ public abstract class AbstractResourceIT {
                     .setMaxConnTotal(MAX_VALUE);
         client = b.build();
     }
-
-    protected int getStatus(final HttpUriRequest method)
-            throws ClientProtocolException, IOException {
-        logger.debug("Executing: " + method.getMethod() + " to " +
-                             method.getURI());
-        return client.execute(method).getStatusLine().getStatusCode();
-    }
-
-    /**
-     * Gets a random (but valid) pid for use in testing.  This pid
-     * is guaranteed to be unique within runs of this application.
-     *
-     * @return string containing new random unique Pid
-     */
-    protected static String getRandomUniquePid() {
-        return UUID.randomUUID().toString();
-    }
-
 
     protected static HttpPost postObjMethod(final String pid) {
         return new HttpPost(serverAddress + pid);

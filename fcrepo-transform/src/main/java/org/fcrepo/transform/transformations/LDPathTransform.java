@@ -22,9 +22,11 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.marmotta.ldpath.LDPath;
 import org.apache.marmotta.ldpath.backend.jena.GenericJenaBackend;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
+
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.transform.Transformation;
+
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
@@ -41,6 +43,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.google.common.collect.ImmutableList.builder;
 import static com.google.common.collect.ImmutableSortedSet.orderedBy;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -57,21 +60,14 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
 
     public static final String CONFIGURATION_FOLDER = "/fedora:system/fedora:transform/fedora:ldpath/";
 
+    private static final Comparator<NodeType> BY_NAME =
+            (final NodeType o1, final NodeType o2) -> o1.getName().compareTo(o2.getName());
 
     // TODO: this mime type was made up
     public static final String APPLICATION_RDF_LDPATH = "application/rdf+ldpath";
     private final InputStream query;
 
     private static final Logger LOGGER = getLogger(LDPathTransform.class);
-
-    private static final Comparator<NodeType> nodeTypeComp = new Comparator<NodeType>() {
-
-        @Override
-        public int compare(final NodeType o1, final NodeType o2) {
-            return o1.getName().compareTo(o2.getName());
-
-        }
-    };
 
     /**
      * Construct a new Transform from the InputStream
@@ -97,27 +93,20 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
 
         final NodeType primaryNodeType = node.getPrimaryNodeType();
 
-        final Set<NodeType> supertypes =
-            orderedBy(nodeTypeComp).add(primaryNodeType.getSupertypes())
-                    .build();
-        final Set<NodeType> mixinTypes =
-            orderedBy(nodeTypeComp).add(node.getMixinNodeTypes()).build();
+        final Set<NodeType> supertypes = orderedBy(BY_NAME).add(primaryNodeType.getSupertypes()).build();
+        final Set<NodeType> mixinTypes = orderedBy(BY_NAME).add(node.getMixinNodeTypes()).build();
 
         // start with mixins, primary type, and supertypes of primary type
-        final ImmutableList.Builder<NodeType> nodeTypesB =
-            new ImmutableList.Builder<NodeType>().addAll(mixinTypes).add(
-                    primaryNodeType).addAll(supertypes);
+        final ImmutableList.Builder<NodeType> nodeTypesB = builder();
+        nodeTypesB.addAll(mixinTypes).add(primaryNodeType).addAll(supertypes);
 
         // add supertypes of mixins
-        for (final NodeType mixin : mixinTypes) {
-            nodeTypesB.addAll(orderedBy(nodeTypeComp).add(
-                    mixin.getDeclaredSupertypes()).build());
-        }
+        mixinTypes.stream().map(mixin -> orderedBy(BY_NAME).add(mixin.getDeclaredSupertypes()).build())
+            .forEach(nodeTypesB::addAll);
 
         final List<NodeType> nodeTypes = nodeTypesB.build();
 
         LOGGER.debug("Discovered node types: {}", nodeTypes);
-
         for (final NodeType nodeType : nodeTypes) {
             if (programNode.hasNode(nodeType.toString())) {
                 return new LDPathTransform(programNode.getNode(nodeType.toString())
@@ -153,19 +142,13 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
     }
 
     @Override
-    public InputStream getQuery() {
-        return query;
-    }
-
-    @Override
     public boolean equals(final Object other) {
-        return other instanceof LDPathTransform &&
-                   query.equals(((LDPathTransform)other).getQuery());
+        return other instanceof LDPathTransform && ((LDPathTransform) other).query.equals(query);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getQuery());
+        return Objects.hashCode(query);
     }
 
     /**
@@ -177,10 +160,5 @@ public class LDPathTransform implements Transformation<List<Map<String, Collecti
 
         return new LDPath<>(new GenericJenaBackend(rdfStream.asModel()));
 
-    }
-
-    @Override
-    public LDPathTransform newTransform(final InputStream query) {
-        return new LDPathTransform(query);
     }
 }
