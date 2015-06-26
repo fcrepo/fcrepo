@@ -40,7 +40,7 @@ import com.google.common.collect.Multimap;
 
 /**
  * Maps all JCR {@link Event}s concerning one JCR node to one {@link FedoraEvent}. Adds the types of those JCR events
- * together to calculate the final type of the emitted FedoraEvent. <br/>
+ * together to calculate the final type of the emitted FedoraEvent.
  * TODO stop aggregating events in the heap, if possible
  *
  * @author ajs6f

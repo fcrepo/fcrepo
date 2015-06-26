@@ -89,7 +89,7 @@ public class SimpleObserverTest {
         testObserver = new SimpleObserver();
         setField(testObserver, "repository", mockRepository);
         setField(testObserver, "eventMapper", new OneToOne());
-        setField(testObserver, "eventFilter", new NOOPFilter());
+        setField(testObserver, "eventFilter", (EventFilter) x -> true);
         setField(testObserver, "eventBus", mockBus);
         setField(testObserver, "session", mockSession);
     }
