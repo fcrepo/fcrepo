@@ -41,7 +41,7 @@ public class SinglePrefer {
      * @throws ParseException if parse exception occurred
      */
     public SinglePrefer(final String header) throws ParseException {
-        preferTags.addAll(HttpHeaderReader.readList(PREFER_CREATOR, header));
+        preferTags.addAll(HttpHeaderReader.readList(PreferTag::new, header));
     }
 
     /**
@@ -83,16 +83,6 @@ public class SinglePrefer {
                 .filter(x -> x.getTag().equals("handling"))
                 .findFirst().orElse(emptyTag());
     }
-
-    private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
-            new HttpHeaderReader.ListElementCreator<PreferTag>() {
-
-                @Override
-                public PreferTag create(final HttpHeaderReader reader) throws ParseException {
-                    return new PreferTag(reader);
-                }
-            };
-
 
     protected Set<PreferTag> preferTags() {
         return preferTags;

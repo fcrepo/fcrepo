@@ -72,7 +72,7 @@ public class PreferTagTest {
                 false);
     }
 
-    private void doTestHashCode(final PreferTag tag0, final PreferTag tag1, final boolean expectEqual)    {
+    private static void doTestHashCode(final PreferTag tag0, final PreferTag tag1, final boolean expectEqual)    {
         assertEquals(expectEqual, tag0.equals(tag1));
         assertEquals(expectEqual, tag0.hashCode() == tag1.hashCode());
     }

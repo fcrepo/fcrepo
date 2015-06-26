@@ -16,9 +16,11 @@
 package org.fcrepo.http.commons.responses;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
@@ -37,18 +39,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
+
 import org.fcrepo.http.commons.api.rdf.TripleOrdering;
 import org.fcrepo.kernel.RdfLexicon;
+
 import org.slf4j.Logger;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Ordering;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -362,7 +363,9 @@ public class ViewHelpers {
      * @return iterator of alphabetized triples
      */
     public List<Triple> getSortedTriples(final Model model, final Iterator<Triple> it) {
-        return Ordering.from(new TripleOrdering(model)).sortedCopy(ImmutableList.copyOf(it));
+        final List<Triple> triples = newArrayList(it);
+        triples.sort(new TripleOrdering(model));
+        return triples;
     }
 
     /**
@@ -408,17 +411,8 @@ public class ViewHelpers {
      * @return prefix preamble
      */
     public String getPrefixPreamble(final PrefixMapping mapping) {
-        final StringBuilder sb = new StringBuilder();
-
-        final Map<String, String> nsPrefixMap = mapping.getNsPrefixMap();
-
-        for (final Map.Entry<String, String> entry : nsPrefixMap.entrySet()) {
-            sb.append("PREFIX " + entry.getKey() + ": <" + entry.getValue() +
-                    ">\n");
-        }
-
-        sb.append("\n");
-        return sb.toString();
+        return mapping.getNsPrefixMap().entrySet().stream()
+                .map(e -> "PREFIX " + e.getKey() + ": <" + e.getValue() + ">").collect(joining("\n", "", "\n\n"));
     }
 
     /**
@@ -433,10 +427,8 @@ public class ViewHelpers {
                                  final Node subject,
                                  final String namespace,
                                  final String resource) {
-        final Iterator<Triple> it = graph.find(subject,
-                                               createResource(RDF_NAMESPACE + "type").asNode(),
-                                               createResource(namespace + resource).asNode());
-        return it.hasNext();
+        return graph.find(subject, createResource(RDF_NAMESPACE + "type").asNode(),
+                createResource(namespace + resource).asNode()).hasNext();
     }
 
     /**
