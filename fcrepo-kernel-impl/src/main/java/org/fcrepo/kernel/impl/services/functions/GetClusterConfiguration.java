@@ -15,12 +15,13 @@
  */
 package org.fcrepo.kernel.impl.services.functions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.jcr.Repository;
 
@@ -31,16 +32,13 @@ import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
-
 /**
  * Extract the Infinispan cluster configuration and state
  * from a running Modeshape repository
  * @author Gregory Jansen
  * @since Apr 26, 2013
  */
-public class GetClusterConfiguration implements
-        Function<Repository, Map<String, String>> {
+public class GetClusterConfiguration implements Function<Repository, Map<String, String>> {
 
     private static final Logger LOGGER =
             getLogger(GetClusterConfiguration.class);
@@ -54,7 +52,7 @@ public class GetClusterConfiguration implements
     public static final String CLUSTER_MEMBERS = "clusterMembers";
     public static final int UNKNOWN_NODE_VIEW = -1;
 
-    private GetBinaryStore getBinaryStore = new GetBinaryStore();
+    private final GetBinaryStore getBinaryStore = new GetBinaryStore();
 
     /**
      * Extract the BinaryStore out of Modeshape
@@ -63,7 +61,7 @@ public class GetClusterConfiguration implements
      */
     @Override
     public Map<String, String> apply(final Repository input) {
-        checkNotNull(input, "null cannot have a BinaryStore!");
+        requireNonNull(input, "null cannot have a BinaryStore!");
 
         final Map<String, String> result =
             new LinkedHashMap<>();

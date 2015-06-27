@@ -40,6 +40,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Listen to Jena statement events, and when the statement is changed in the
@@ -171,15 +172,14 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @throws javax.jcr.AccessDeniedException if access denied exception occurred
      */
     public void assertNoExceptions() throws MalformedRdfException, AccessDeniedException {
-        final StringBuilder sb = new StringBuilder();
-        for (final Exception e : exceptions) {
-            sb.append(e.getMessage());
-            sb.append("\n");
-            if (e instanceof AccessDeniedException) {
-                throw new AccessDeniedException(sb.toString());
-            }
-        }
         if (!exceptions.isEmpty()) {
+            final StringJoiner sb = new StringJoiner("\n");
+            for (final Exception e : exceptions) {
+                sb.add(e.getMessage());
+                if (e instanceof AccessDeniedException) {
+                    throw new AccessDeniedException(sb.toString());
+                }
+            }
             throw new MalformedRdfException(sb.toString());
         }
     }

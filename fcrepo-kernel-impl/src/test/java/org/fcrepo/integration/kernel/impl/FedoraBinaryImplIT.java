@@ -16,6 +16,7 @@
 package org.fcrepo.integration.kernel.impl;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MESSAGE_DIGEST;
@@ -30,7 +31,6 @@ import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -277,12 +277,13 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testChecksumBlobs() throws RepositoryException, InvalidChecksumException {
-
+        final String pid = "testChecksumBlobs-" + randomUUID();
         final Session session = repo.login();
         try {
-            containerService.findOrCreate(session, "/testLLObject");
 
-            binaryService.findOrCreate(session, "/testLLObject/testRepositoryContent").setContent(
+            containerService.findOrCreate(session, pid);
+
+            binaryService.findOrCreate(session, pid + "/testRepositoryContent").setContent(
                     new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
                     "application/octet-stream",
                     null,
@@ -292,8 +293,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             session.save();
 
-            final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/"
-                    + "testRepositoryContent");
+            final FedoraBinary ds = binaryService.findOrCreate(session, pid + "/testRepositoryContent");
 
             final Model fixityResults = ds.getFixity(idTranslator).asModel();
 

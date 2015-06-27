@@ -15,15 +15,16 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import static com.google.common.collect.Iterables.toArray;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isMultivaluedProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -32,16 +33,19 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
+
 import org.modeshape.jcr.IsExternal;
 import org.slf4j.Logger;
 
 /**
  * Tools for replacing, appending and deleting JCR node properties
  * @author Chris Beer
+ * @author ajs6f
  * @since May 10, 2013
  */
 public class NodePropertiesTools {
@@ -58,10 +62,9 @@ public class NodePropertiesTools {
      * @param propertyName a name of a JCR property (either pre-existing or
      *   otherwise)
      * @param newValue the JCR value to insert
-     * @return the property
      * @throws RepositoryException if repository exception occurred
      */
-    public Property appendOrReplaceNodeProperty(final Node node, final String propertyName, final Value newValue)
+    public void appendOrReplaceNodeProperty(final Node node, final String propertyName, final Value newValue)
         throws RepositoryException {
 
         final Property property;
@@ -77,25 +80,23 @@ public class NodePropertiesTools {
                              propertyName);
 
                 // if the property is multi-valued, go ahead and append to it.
-                final List<Value> newValues = new ArrayList<>();
-                Collections.addAll(newValues,
-                                   node.getProperty(propertyName).getValues());
+                final List<Value> newValues = new ArrayList<>(asList(node.getProperty(propertyName).getValues()));
 
                 if (!newValues.contains(newValue)) {
                     newValues.add(newValue);
-                    property.setValue(toArray(newValues, Value.class));
+                    property.setValue(newValues.toArray(new Value[newValues.size()]));
                 }
             } else {
-                // or we'll just overwrite it
+                // or we'll just overwrite its single value
                 LOGGER.debug("Overwriting {} property {} with new value {}", PropertyType.nameFromValue(property
                         .getType()), propertyName, newValue);
                 property.setValue(newValue);
             }
         } else {
+            // we're creating a new property on this node, so we check whether it should be multi-valued
             boolean isMultiple = true;
             try {
                 isMultiple = isMultivaluedProperty(node, propertyName);
-
             } catch (final NoSuchPropertyDefinitionException e) {
                 // simply represents a new kind of property on this node
             }
@@ -117,11 +118,9 @@ public class NodePropertiesTools {
         if (!property.isMultiple() && !isInternalReferenceProperty.test(property)) {
             final String referencePropertyName = getReferencePropertyName(propertyName);
             if (node.hasProperty(referencePropertyName)) {
-                node.setProperty(referencePropertyName, (Value[]) null);
+                node.getProperty(referencePropertyName).remove();
             }
         }
-
-        return property;
     }
 
     /**
@@ -149,11 +148,11 @@ public class NodePropertiesTools {
 
             if (!isMultivaluedProperty(node, propertyName)) {
                 if (node.hasProperty(referencePropertyName)) {
-                    node.setProperty(referencePropertyName, (Value[]) null);
+                    node.getProperty(referencePropertyName).remove();
                 }
 
                 if (node.hasProperty(propertyName)) {
-                    node.setProperty(propertyName, (Value) null);
+                    node.getProperty(propertyName).remove();
                 }
             }
 
@@ -193,55 +192,43 @@ public class NodePropertiesTools {
      * @param propertyName a name of a JCR property (either pre-existing or
      *   otherwise)
      * @param valueToRemove the JCR value to remove
-     * @return the property
      * @throws RepositoryException if repository exception occurred
      */
-    public Property removeNodeProperty(final Node node, final String propertyName, final Value valueToRemove)
+    public void removeNodeProperty(final Node node, final String propertyName, final Value valueToRemove)
         throws RepositoryException {
-        final Property property;
 
         // if the property doesn't exist, we don't need to worry about it.
         if (node.hasProperty(propertyName)) {
 
-            property = node.getProperty(propertyName);
+            final Property property = node.getProperty(propertyName);
 
             if (property.isMultiple()) {
-
-                final List<Value> newValues = new ArrayList<>();
-
-                boolean remove = false;
-
-                for (final Value v : node.getProperty(propertyName).getValues()) {
+                final AtomicBoolean remove = new AtomicBoolean();
+                final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(v -> {
                     if (v.equals(valueToRemove)) {
-                        remove = true;
-                    } else {
-                        newValues.add(v);
+                        remove.set(true);
+                        return false;
                     }
-                }
+                    return true;
+                }).toArray(Value[]::new);
 
                 // we only need to update the property if we did anything.
-                if (remove) {
-                    if (newValues.isEmpty()) {
+                if (remove.get()) {
+                    if (newValues.length == 0) {
                         LOGGER.debug("Removing property {}", propertyName);
-                        property.setValue((Value[])null);
+                        property.remove();
                     } else {
-                        LOGGER.debug("Removing value {} from property {}",
-                                     valueToRemove, propertyName);
-                        property
-                            .setValue(toArray(newValues, Value.class));
+                        LOGGER.debug("Removing value {} from property {}", valueToRemove, propertyName);
+                        property.setValue(newValues);
                     }
                 }
 
             } else {
                 if (property.getValue().equals(valueToRemove)) {
                     LOGGER.debug("Removing value from property {}", propertyName);
-                    property.setValue((Value)null);
+                    property.remove();
                 }
             }
-        } else {
-            property = null;
         }
-
-        return property;
     }
 }

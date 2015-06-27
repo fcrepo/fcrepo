@@ -86,7 +86,7 @@ public class RdfRemoverTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         testRemover = new RdfRemover(mockGraphSubjects, mockSession, testStream);
         testRemover.operateOnProperty(descriptiveStmnt, resource);
-        verify(mockProperty).setValue((Value) null);
+        verify(mockProperty).remove();
     }
 
     @Test

@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-
 import javax.jcr.Property;
 
-import org.fcrepo.kernel.impl.services.functions.GetClusterExecutor;
 import org.fcrepo.kernel.utils.FixityResult;
+
+import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.modeshape.jcr.value.BinaryKey;
 import org.modeshape.jcr.value.binary.infinispan.ChunkBinaryMetadata;
@@ -45,7 +45,6 @@ import com.google.common.collect.ImmutableSet;
 public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     private static final Logger LOGGER = getLogger(InfinispanCacheStoreEntry.class);
 
-    private static final GetClusterExecutor EXECUTOR_FACTORY = new GetClusterExecutor();
     /**
      *
      * @param store the store
@@ -91,6 +90,6 @@ public class InfinispanCacheStoreEntry extends LocalBinaryStoreEntry {
     }
 
     private DistributedExecutorService clusterExecutor() {
-        return EXECUTOR_FACTORY.apply((InfinispanBinaryStore)store());
+        return new DefaultExecutorService(((InfinispanBinaryStore) store()).getCaches().get(1));
     }
 }

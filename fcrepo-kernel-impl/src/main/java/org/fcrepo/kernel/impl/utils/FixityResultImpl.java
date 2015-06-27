@@ -38,13 +38,13 @@ public class FixityResultImpl implements FixityResult {
      * the size computed by the fixity check
      * @todo make this private
      */
-    private long computedSize;
+    private final long computedSize;
 
     /**
      * the checksum computed by the fixity check
      * @todo make this private
      */
-    private URI computedChecksum;
+    private final URI computedChecksum;
 
     private final String storeIdentifier;
 
@@ -111,8 +111,7 @@ public class FixityResultImpl implements FixityResult {
 
     @Override
     public String toString() {
-        return "Fixity: checksum: " + computedChecksum + " / " +
-            Long.toString(computedSize);
+        return "Fixity: checksum: " + computedChecksum + " / " + computedSize;
     }
 
     /**
