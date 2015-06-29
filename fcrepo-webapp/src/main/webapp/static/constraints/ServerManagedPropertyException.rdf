@@ -16,7 +16,7 @@
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <owl:Ontology rdf:about="static/constraints/ServerManagedPropertyException">
         <rdfs:label xml:lang="en">Server Managed Property Exception</rdfs:label>
-        <rdfs:comment xml:lang="en">The RDF attempted to alter a property in the <http://fedora.info/definitions/v4/repository#> namespace. 
+        <rdfs:comment xml:lang="en">The RDF attempted to alter a property in the &lt;http://fedora.info/definitions/v4/repository#&gt; namespace. 
         These are system managed properties.</rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>
