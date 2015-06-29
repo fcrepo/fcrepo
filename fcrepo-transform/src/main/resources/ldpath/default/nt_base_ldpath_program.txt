@@ -2,5 +2,5 @@
 id      = . :: xsd:string ;
 title = dc:title :: xsd:string;
 created = fedora:created :: xsd:dateTime;
-lastModified = fedora:lastModified :: xsd:dateTime;
-hasParent = fedora:hasParent :: xsd:string;
+last_modified = fedora:lastModified :: xsd:dateTime;
+has_parent = fedora:hasParent :: xsd:string;
