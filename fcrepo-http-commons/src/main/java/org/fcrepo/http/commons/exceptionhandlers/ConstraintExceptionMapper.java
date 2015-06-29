@@ -25,7 +25,7 @@ import org.fcrepo.kernel.exception.ConstraintViolationException;
 
 /**
  * Abstract class for constraint violation subclasses
- * 
+ *
  * @author whikloj
  * @since 2015-06-24
  * @param <T> Throwable subclass of ConstraintViolationException
@@ -33,14 +33,22 @@ import org.fcrepo.kernel.exception.ConstraintViolationException;
 public abstract class ConstraintExceptionMapper<T extends ConstraintViolationException> implements ExceptionMapper<T> {
 
     /**
+     * Where the RDF exception files sit.
+     */
+    private static final String CONSTRAINT_DIR = "/static/constraints/";
+
+    /**
      * Creates a constrainedBy link header with the appropriate RDF URL for the exception.
      *
      * @param e ConstraintViolationException Exception which implements the buildContraintUri method.
      * @param uriInfo UriInfo UriInfo from the ExceptionMapper.
-     * @return Link A LDP constrainedBy link header
+     * @return Link A http://www.w3.org/ns/ldp#constrainedBy link header
      */
     public static Link buildConstraintLink(final ConstraintViolationException e, final UriInfo uriInfo) {
-        return Link.fromUri(e.buildConstraintUri(uriInfo)).rel(CONSTRAINED_BY.getURI()).build();
+        final String constraintURI = uriInfo == null ? "" : String.format("%s://%s%s%s.rdf",
+                uriInfo.getBaseUri().getScheme(), uriInfo.getBaseUri().getAuthority(),
+                CONSTRAINT_DIR, e.getClass().toString().substring(e.getClass().toString().lastIndexOf('.') + 1));
+        return Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build();
     }
 
 }

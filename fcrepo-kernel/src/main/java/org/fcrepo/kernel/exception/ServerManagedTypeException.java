@@ -41,14 +41,4 @@ public class ServerManagedTypeException extends ConstraintViolationException {
         super(rootCause);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ServerManagedTypeException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
-
 }

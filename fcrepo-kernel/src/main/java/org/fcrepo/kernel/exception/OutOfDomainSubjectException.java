@@ -34,13 +34,4 @@ public class OutOfDomainSubjectException extends ConstraintViolationException {
         super(String.format("RDF Stream contains subject(s) (%s) not in the domain of this repository.", subject));
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public OutOfDomainSubjectException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
 }

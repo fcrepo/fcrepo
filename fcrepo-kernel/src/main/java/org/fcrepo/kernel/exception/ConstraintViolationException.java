@@ -15,8 +15,6 @@
  */
 package org.fcrepo.kernel.exception;
 
-import javax.ws.rs.core.UriInfo;
-
 /**
  * A constraint has been violated.
  *
@@ -26,8 +24,6 @@ import javax.ws.rs.core.UriInfo;
 public class ConstraintViolationException extends MalformedRdfException {
 
     private static final long serialVersionUID = 1L;
-
-    private static final String CONSTRAINT_DIR = "/static/constraints/";
 
     /**
      * Ordinary constructor.
@@ -47,26 +43,4 @@ public class ConstraintViolationException extends MalformedRdfException {
         super(rootCause);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ConstraintViolationException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
-
-    /**
-     * Generates a link header for a constraint based on UriInfo and the name of the Exception class.
-     * @return Link
-     */
-    public String buildConstraintUri(final UriInfo uriInfo) {
-        final String constraintURI =
-            uriInfo == null ? "" : String.format("%s://%s%s%s.rdf", uriInfo.getBaseUri().getScheme(), uriInfo
-                .getBaseUri().getAuthority(),
-                CONSTRAINT_DIR, this.getClass().toString().substring(this.getClass().toString().lastIndexOf('.') + 1));
-        return constraintURI;
-
-    }
 }
