@@ -21,7 +21,7 @@ package org.fcrepo.mint;
  * @since 2015-06-05
  * @author escowles
  */
-public class PidMinterException extends RuntimeException {
+public class PidMintingException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
@@ -29,7 +29,7 @@ public class PidMinterException extends RuntimeException {
      * Constructor with message.
      * @param msg Exception message.
     **/
-    public PidMinterException(final String msg) {
+    public PidMintingException(final String msg) {
         super(msg);
     }
 
@@ -37,7 +37,7 @@ public class PidMinterException extends RuntimeException {
      * Constructor with cause.
      * @param cause Original exception.
     **/
-    public PidMinterException(final Throwable cause) {
+    public PidMintingException(final Throwable cause) {
         super(cause);
     }
 
@@ -46,7 +46,7 @@ public class PidMinterException extends RuntimeException {
      * @param msg Exception message.
      * @param cause Original exception.
     **/
-    public PidMinterException(final String msg, final Throwable cause) {
+    public PidMintingException(final String msg, final Throwable cause) {
         super(msg, cause);
     }
 }

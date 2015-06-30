@@ -40,7 +40,7 @@ public class UUIDPidMinterTest {
     @Test
     public void testMintPid() {
 
-        final String pid = testMinter.mintPid();
+        final String pid = testMinter.get();
 
         assertTrue("PID wasn't a UUID", compile(PID_PATTERN).matcher(pid)
                 .find());

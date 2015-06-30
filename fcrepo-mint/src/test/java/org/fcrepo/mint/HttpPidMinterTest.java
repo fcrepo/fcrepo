@@ -48,7 +48,7 @@ public class HttpPidMinterTest {
         when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
         when(mockResponse.getEntity()).thenReturn(entity);
 
-        final String pid = testMinter.mintPid();
+        final String pid = testMinter.get();
         verify(mockClient).execute(isA(HttpUriRequest.class));
         assertEquals( pid, "baz" );
     }
@@ -66,7 +66,7 @@ public class HttpPidMinterTest {
         when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
         when(mockResponse.getEntity()).thenReturn(entity);
 
-        final String pid = testMinter.mintPid();
+        final String pid = testMinter.get();
         verify(mockClient).execute(isA(HttpUriRequest.class));
         assertEquals( pid, "baz" );
     }
@@ -84,7 +84,7 @@ public class HttpPidMinterTest {
         when(mockClient.execute(isA(HttpUriRequest.class))).thenReturn(mockResponse);
         when(mockResponse.getEntity()).thenReturn(entity);
 
-        final String pid = testMinter.mintPid();
+        final String pid = testMinter.get();
         verify(mockClient).execute(isA(HttpUriRequest.class));
         assertEquals(pid, "baz");
     }
