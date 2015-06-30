@@ -37,7 +37,6 @@ import java.util.Map;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.REFERENCE;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.impl.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
@@ -99,14 +98,6 @@ public class PropertyConverterTest {
         when(mockNamespacedProperty.getNamespaceURI()).thenThrow(new RepositoryException());
         testObj.convert(mockNamespacedProperty);
         fail("Unexpected completion after RepositoryException!");
-    }
-
-    @Test
-    public final void shouldMapRdfPredicatesToJcrProperties() throws RepositoryException {
-
-        final Property p = createProperty(REPOSITORY_NAMESPACE, "uuid");
-        assertEquals("jcr:uuid", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
-
     }
 
     @Test(expected = FedoraInvalidNamespaceException.class)

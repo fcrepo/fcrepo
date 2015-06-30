@@ -78,8 +78,7 @@ public class LDPathServiceIT {
         final String s = "@prefix dces : <http://purl.org/dc/elements/1.1/>\n" +
                        "@prefix fcrepo : <" + REPOSITORY_NAMESPACE + ">\n" +
                            "id      = . :: xsd:string ;\n" +
-                           "title = dc:title :: xsd:string ;\n" +
-                           "uuid = fcrepo:uuid :: xsd:string ;";
+                           "title = dc:title :: xsd:string ;";
         final InputStream stringReader = new ByteArrayInputStream(s.getBytes());
 
         testObj = new LDPathTransform(stringReader);
@@ -103,6 +102,5 @@ public class LDPathServiceIT {
         assertEquals("Got wrong subject in identifier!", subjects.toDomain("/testObject").getURI(), stuff.get(
                 "id").iterator().next());
         assertEquals("Got wrong title!", "some-title", stuff.get("title").iterator().next());
-        assertEquals("Got wrong UUID!", object.getNode().getIdentifier(), stuff.get("uuid").iterator().next());
     }
 }
