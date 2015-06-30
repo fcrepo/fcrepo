@@ -15,47 +15,51 @@
  */
 package org.fcrepo.connector.file;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
 
 import java.io.File;
 import java.io.IOException;
 
 import static java.nio.file.Files.createTempDirectory;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Mike Durbin
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ExternalJsonSidecarExtraPropertyStoreTest {
+
+    @Mock
+    private FedoraFileSystemConnector mockConnector;
+
+    @Mock
+    private DocumentTranslator mockTranslator;
 
     private static final String FEDERATION_ROOT = "/federation-root";
     private static final String FILE_PATH = "/federation-root/file";
     @Test
     public void testSidecarFile() throws IOException {
         final File tmp = createTempDirectory("filesystem-federation").toFile();
-        try {
-            final FedoraFileSystemConnector mockConnector = mock(FedoraFileSystemConnector.class);
-            final DocumentTranslator mockTranslator = mock(DocumentTranslator.class);
-            when(mockConnector.fileFor("/")).thenReturn(new File(FEDERATION_ROOT));
-            when(mockConnector.isContentNode("/")).thenReturn(false);
-            when(mockConnector.isRoot("/")).thenReturn(true);
-            when(mockConnector.fileFor("/file")).thenReturn(new File(FILE_PATH));
-            when(mockConnector.isContentNode("/file")).thenReturn(false);
-            when(mockConnector.fileFor("/file/fcr:content")).thenReturn(new File(FILE_PATH));
-            when(mockConnector.isContentNode("/file/fcr:content")).thenReturn(true);
+        tmp.deleteOnExit();
 
-            final ExternalJsonSidecarExtraPropertyStore store
-                    = new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
-            Assert.assertEquals(new File(tmp, "federation-root.modeshape.json"), store.sidecarFile("/"));
-            Assert.assertEquals(new File(tmp, "file.modeshape.json"), store.sidecarFile("/file"));
-            Assert.assertEquals(new File(tmp, "file.content.modeshape.json"), store.sidecarFile("/file/fcr:content"));
-        } finally {
-            FileUtils.deleteDirectory(tmp);
-        }
+        when(mockConnector.fileFor("/")).thenReturn(new File(FEDERATION_ROOT));
+        when(mockConnector.isContentNode("/")).thenReturn(false);
+        when(mockConnector.isRoot("/")).thenReturn(true);
+        when(mockConnector.fileFor("/file")).thenReturn(new File(FILE_PATH));
+        when(mockConnector.isContentNode("/file")).thenReturn(false);
+        when(mockConnector.fileFor("/file/fcr:content")).thenReturn(new File(FILE_PATH));
+        when(mockConnector.isContentNode("/file/fcr:content")).thenReturn(true);
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+        assertEquals(new File(tmp, "federation-root.modeshape.json"), store.sidecarFile("/"));
+        assertEquals(new File(tmp, "file.modeshape.json"), store.sidecarFile("/file"));
+        assertEquals(new File(tmp, "file.content.modeshape.json"), store.sidecarFile("/file/fcr:content"));
     }
 
 }

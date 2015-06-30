@@ -86,7 +86,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
                            final NodeTypeManager nodeTypeManager) throws IOException {
         try {
             super.initialize(registry, nodeTypeManager);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException("Error initializing FedoraFileSystemConnector!", e);
         }
 

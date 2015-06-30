@@ -19,6 +19,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.lang.System.clearProperty;
 import static java.lang.System.getProperty;
 import static java.lang.System.setProperty;
+import static java.nio.file.Files.write;
 import static java.util.Arrays.asList;
 import static com.google.common.collect.Lists.transform;
 import static org.fcrepo.kernel.FedoraJcrTypes.CONTENT_SIZE;
@@ -38,7 +39,6 @@ import static org.modeshape.common.util.SecureHash.Algorithm.SHA_1;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -55,9 +55,11 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import com.hp.hpl.jena.rdf.model.Model;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.kernel.models.Container;
@@ -66,6 +68,7 @@ import org.fcrepo.kernel.services.BinaryService;
 import org.fcrepo.kernel.services.NodeService;
 import org.fcrepo.kernel.services.ContainerService;
 import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -192,7 +195,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
             final String path = f.getAbsolutePath();
             try {
                 Files.deleteIfExists(Paths.get(path));
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 logger.error("Error in clean up", e);
                 fail("Unable to delete work files from a previous test run. File=" + path);
             }
@@ -250,7 +253,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final boolean found = transform(asList(mixins), JcrPropertyFunctions.nodetype2name).contains(FEDORA_BINARY);
         assertTrue("Mixin not found: " + FEDORA_BINARY, found);
 
-        final File file = fileForNode(node);
+        final File file = fileForNode();
 
         assertTrue(file.getAbsolutePath(), file.exists());
         assertEquals(file.length(), node.getProperty(CONTENT_SIZE).getLong());
@@ -277,8 +280,8 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final String originalFixity = checkFixity(binary);
 
-        final File file = fileForNode(null);
-        appendToFile(file, " ");
+        final File file = fileForNode();
+        write(file.toPath(), " ".getBytes("UTF-8"));
 
         final String newFixity = checkFixity(binary);
 
@@ -288,17 +291,11 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         session.logout();
     }
 
-    private static void appendToFile(final File f, final String data) throws IOException {
-        try (final FileOutputStream fos = new FileOutputStream(f, true)) {
-            fos.write(data.getBytes("UTF-8"));
-        }
-    }
-
     private String checkFixity(final FedoraBinary binary)
             throws IOException, NoSuchAlgorithmException, RepositoryException {
         assertNotNull(binary);
 
-        final File file = fileForNode(null);
+        final File file = fileForNode();
         final byte[] hash = getHash(SHA_1, file);
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
@@ -318,7 +315,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         return calculatedChecksum.toString();
     }
 
-    protected File fileForNode(@SuppressWarnings("unused") final Node node) {
+    protected File fileForNode() {
         return new File(getFederationRoot(), testFilePath().replace(federationName(), ""));
     }
 
@@ -334,7 +331,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     protected File propertyFileForNode(final Node node) {
         try {
             System.out.println("NODE PATH: " + node.getPath());
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         return new File(getProperty(PROP_EXT_TEST_DIR),

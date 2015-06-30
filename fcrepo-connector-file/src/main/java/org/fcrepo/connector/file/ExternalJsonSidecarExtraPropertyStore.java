@@ -15,7 +15,10 @@
  */
 package org.fcrepo.connector.file;
 
+import static java.nio.file.Files.deleteIfExists;
+
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+
 import org.infinispan.schematic.Schematic;
 import org.infinispan.schematic.document.Document;
 import org.infinispan.schematic.document.EditableDocument;
@@ -41,12 +44,13 @@ import java.io.FileOutputStream;
  *
  * @author Mike Durbin
  * @author acoburn
+ * @author ajs6f
  */
 public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesStore {
 
-    private FedoraFileSystemConnector connector;
+    private final FedoraFileSystemConnector connector;
 
-    private File propertyStoreRoot;
+    private final File propertyStoreRoot;
 
     private final DocumentTranslator translator;
 
@@ -87,7 +91,7 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
     }
 
     /**
-     * This is a trivial reimplementation of the private modeshape implementation in
+     * This is a trivial reimplementation of the private Modeshape implementation in
      * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
      *
      * See: https://github.com/ModeShape/modeshape/blob/modeshape-4.2.0.Final/modeshape-jcr/src/main/java/
@@ -98,12 +102,11 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
      */
     @Override
     public boolean removeProperties(final String id) {
-        final File file = sidecarFile(id);
-        if (!file.exists()) {
-            return false;
+        try {
+            return deleteIfExists(sidecarFile(id).toPath());
+        } catch (final IOException e) {
+            throw new RepositoryRuntimeException(id, e);
         }
-        file.delete();
-        return true;
     }
 
 
@@ -123,12 +126,12 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
         if (!sidecarFile.exists()) {
             return Collections.emptyMap();
         }
-        try {
-            final Document document = Json.read(new FileInputStream(sidecarFile), false);
-            final Map<Name, Property> results = new HashMap<Name, Property>();
+        try (final FileInputStream sidecarStream = new FileInputStream(sidecarFile)) {
+            final Document document = Json.read(sidecarStream, false);
+            final Map<Name, Property> results = new HashMap<>();
             translator.getProperties(document, results);
             return results;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RepositoryRuntimeException(id, e);
         }
     }
@@ -147,7 +150,7 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
     public void updateProperties(final String id, final Map<Name, Property> properties ) {
         final File sidecarFile = sidecarFile(id);
         try {
-            EditableDocument document = null;
+            final EditableDocument document;
             if (!sidecarFile.exists()) {
                 if (properties.isEmpty()) {
                     return;
@@ -155,19 +158,22 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
                 sidecarFile.createNewFile();
                 document = Schematic.newDocument();
             } else {
-                final Document existing = Json.read(new FileInputStream(sidecarFile), false);
-                document = Schematic.newDocument(existing);
+                try (final FileInputStream sidecarStream = new FileInputStream(sidecarFile)) {
+                    final Document existing = Json.read(sidecarStream, false);
+                    document = Schematic.newDocument(existing);
+                }
             }
-            for (Map.Entry<Name, Property> entry : properties.entrySet()) {
-                final Property property = entry.getValue();
+            properties.forEach((key, property) -> {
                 if (property == null) {
-                    translator.removeProperty(document, entry.getKey(), null, null);
+                    translator.removeProperty(document, key, null, null);
                 } else {
                     translator.setProperty(document, property, null, null);
                 }
+            });
+            try (final FileOutputStream outputStream = new FileOutputStream(sidecarFile)) {
+                Json.write(document, outputStream);
             }
-            Json.write(document, new FileOutputStream(sidecarFile));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RepositoryRuntimeException(id, e);
         }
     }
@@ -193,14 +199,16 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
                 sidecarFile.createNewFile();
             }
             final EditableDocument document = Schematic.newDocument();
-            for (Property property : properties.values()) {
+            for (final Property property : properties.values()) {
                 if (property == null) {
                     continue;
                 }
                 translator.setProperty(document, property, null, null);
             }
-            Json.write(document, new FileOutputStream(sidecarFile));
-        } catch (IOException e) {
+            try (final FileOutputStream outputStream = new FileOutputStream(sidecarFile)) {
+                Json.write(document, outputStream);
+            }
+        } catch (final IOException e) {
             throw new RepositoryRuntimeException(id, e);
         }
     }
