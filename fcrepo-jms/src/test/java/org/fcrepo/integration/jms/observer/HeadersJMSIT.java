@@ -16,7 +16,6 @@
 package org.fcrepo.integration.jms.observer;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.any;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static javax.jcr.observation.Event.NODE_ADDED;
@@ -38,8 +37,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
-
 import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -69,8 +66,6 @@ import org.slf4j.Logger;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import com.google.common.base.Predicate;
 
 
 /**
@@ -196,24 +191,14 @@ public class HeadersJMSIT implements MessageListener {
     }
 
     private void awaitMessageOrFail(final String id, final String eventType, final String property) {
-        await().pollInterval(ONE_SECOND).until(new Callable<Boolean>() {
-
-            @Override
-            public Boolean call() {
-                return any(messages, new Predicate<Message>() {
-
-                    @Override
-                    public boolean apply(final Message message) {
-                        try {
-                            return getPath(message).equals(id) && getEventTypes(message).contains(eventType)
-                                    && (property == null || getProperties(message).contains(property));
-                        } catch (final JMSException e) {
-                            throw propagate(e);
-                        }
-                    }
-                });
+        await().pollInterval(ONE_SECOND).until(() -> messages.stream().anyMatch(msg -> {
+            try {
+                return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType)
+                        && (property == null || getProperties(msg).contains(property));
+            } catch (final JMSException e) {
+                throw propagate(e);
             }
-        });
+        }));
     }
 
     @Test(timeout = TIMEOUT)
@@ -259,7 +244,7 @@ public class HeadersJMSIT implements MessageListener {
     @After
     public void releaseConnection() throws JMSException {
         // ignore any remaining or queued messages
-        consumer.setMessageListener(new NoopListener());
+        consumer.setMessageListener(msg -> { });
         // and shut the listening machinery down
         LOGGER.debug(this.getClass().getName() + " releasing JMS connection.");
         consumer.close();

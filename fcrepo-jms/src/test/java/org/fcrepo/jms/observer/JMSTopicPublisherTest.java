@@ -21,22 +21,24 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.IOException;
 
-import javax.jcr.RepositoryException;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+
 import org.fcrepo.kernel.observer.FedoraEvent;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.google.common.eventbus.EventBus;
 
@@ -45,6 +47,7 @@ import com.google.common.eventbus.EventBus;
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class JMSTopicPublisherTest {
 
     private JMSTopicPublisher testJMSTopicPublisher;
@@ -70,7 +73,6 @@ public class JMSTopicPublisherTest {
     @Before
     public void setUp() {
         testJMSTopicPublisher = new JMSTopicPublisher();
-        initMocks(this);
         setField(testJMSTopicPublisher, "eventFactory", mockEventFactory);
         setField(testJMSTopicPublisher, "producer", mockProducer);
         setField(testJMSTopicPublisher, "connectionFactory", mockConnections);
@@ -87,7 +89,7 @@ public class JMSTopicPublisherTest {
     }
 
     @Test
-    public void testPublishJCREvent() throws RepositoryException, IOException, JMSException {
+    public void testPublishJCREvent() throws IOException, JMSException {
         final Message mockMsg = mock(Message.class);
         final FedoraEvent mockEvent = mock(FedoraEvent.class);
         when(mockEventFactory.getMessage(eq(mockEvent), any(javax.jms.Session.class))).thenReturn(mockMsg);
