@@ -44,8 +44,8 @@ public class TransformationFactory {
      * @throws SecurityException if security exception occurred
      */
     public TransformationFactory() {
-        mimeToTransform.put(contentTypeSPARQLQuery, is -> new SparqlQueryTransform(is));
-        mimeToTransform.put(APPLICATION_RDF_LDPATH, is -> new LDPathTransform(is));
+        mimeToTransform.put(contentTypeSPARQLQuery, SparqlQueryTransform::new);
+        mimeToTransform.put(APPLICATION_RDF_LDPATH, LDPathTransform::new);
     }
 
     /**
