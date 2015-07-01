@@ -38,9 +38,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-
+import static java.util.Objects.requireNonNull;
+import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 
@@ -49,6 +52,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author cbeer
  * @author ajs6f
+ * @author awoods
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration({"/spring-test/master.xml"})
@@ -64,24 +68,50 @@ public class SparqlQueryTransformIT extends AbstractResourceIT {
     private SparqlQueryTransform testObj;
 
     @Test
-    public void shouldDoStuff() throws RepositoryException {
+    public void testQueryPrimaryType() throws RepositoryException, IOException {
         final Session session = repo.login();
+        try {
+            final Container object = containerService.findOrCreate(session, "/testObject-" + randomUUID());
 
-        final Container object = containerService.findOrCreate(session, "/testObject");
+            final String s = "SELECT ?x ?type\n" +
+                    "WHERE { ?x  <" + REPOSITORY_NAMESPACE + "primaryType> ?type }";
+            try (final InputStream stringReader = new ByteArrayInputStream(s.getBytes())) {
 
-        final String s = "SELECT ?x ?uuid\n" +
-                "WHERE { ?x  <" + REPOSITORY_NAMESPACE + "uuid> ?uuid }";
-        final InputStream stringReader = new ByteArrayInputStream(s.getBytes());
+                testObj = new SparqlQueryTransform(stringReader);
 
-        testObj = new SparqlQueryTransform(stringReader);
+                final RdfStream stream = object.getTriples(new DefaultIdentifierTranslator(session),
+                        PropertiesRdfContext.class);
+                try (final QueryExecution qexec = testObj.apply(stream)) {
+                    final ResultSet results = requireNonNull(qexec).execSelect();
+                    assertTrue(requireNonNull(results).hasNext());
+                }
+            }
+        } finally {
+            session.logout();
+        }
+    }
 
-        final RdfStream stream = object.getTriples(new DefaultIdentifierTranslator(session),
-                PropertiesRdfContext.class);
-        try (final QueryExecution qexec = testObj.apply(stream)) {
-            assert (qexec != null);
-            final ResultSet results = qexec.execSelect();
-            assert (results != null);
-            assertTrue(results.hasNext());
+    @Test
+    public void testQueryNoUUID() throws RepositoryException, IOException {
+        final Session session = repo.login();
+        try {
+            final Container object = containerService.findOrCreate(session, "/testObject-" + randomUUID());
+
+            final String s = "SELECT ?x ?uuid\n" +
+                    "WHERE { ?x  <" + REPOSITORY_NAMESPACE + "uuid> ?uuid }";
+            try (final InputStream stringReader = new ByteArrayInputStream(s.getBytes())) {
+
+                testObj = new SparqlQueryTransform(stringReader);
+
+                final RdfStream stream = object.getTriples(new DefaultIdentifierTranslator(session),
+                        PropertiesRdfContext.class);
+                try (final QueryExecution qexec = testObj.apply(stream)) {
+                    final ResultSet results = requireNonNull(qexec).execSelect();
+                    assertFalse(requireNonNull(results).hasNext());
+                }
+            }
+        } finally {
+            session.logout();
         }
     }
 }
