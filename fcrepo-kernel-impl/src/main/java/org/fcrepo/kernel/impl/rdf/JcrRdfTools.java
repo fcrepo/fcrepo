@@ -166,7 +166,7 @@ public class JcrRdfTools {
                              final RDFNode data,
                              final String propertyName) throws RepositoryException {
         final ValueFactory valueFactory = node.getSession().getValueFactory();
-        return createValue(valueFactory, data, getPropertyType(node, propertyName));
+        return createValue(valueFactory, data, getPropertyType(node, propertyName).orElse(UNDEFINED));
     }
 
     /**

@@ -85,7 +85,7 @@ public class BlankNodeRdfContext extends NodeRdfContext {
 
         final Iterator<Node> nodes = Iterators.transform(new PropertyValueIterator(references), getNodesForValue);
 
-        return Iterators.filter(nodes, isBlankNode);
+        return Iterators.filter(nodes, isBlankNode::test);
     }
 
 

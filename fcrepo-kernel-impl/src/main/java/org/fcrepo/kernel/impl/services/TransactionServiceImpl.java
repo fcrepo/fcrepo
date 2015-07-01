@@ -19,12 +19,11 @@
 
 package org.fcrepo.kernel.impl.services;
 
+import static com.google.common.collect.Maps.filterValues;
 import static java.lang.System.currentTimeMillis;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jcr.RepositoryException;
@@ -37,6 +36,7 @@ import org.fcrepo.kernel.impl.TransactionImpl;
 import org.fcrepo.kernel.TxSession;
 import org.fcrepo.kernel.exception.TransactionMissingException;
 import org.fcrepo.kernel.services.TransactionService;
+
 import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -48,6 +48,7 @@ import org.springframework.stereotype.Component;
  * annotation is used for removing timed out Transactions
  *
  * @author frank asseg
+ * @author ajs6f
  */
 @Component
 public class TransactionServiceImpl extends AbstractService implements TransactionService {
@@ -94,22 +95,15 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     @Scheduled(fixedRate = REAP_INTERVAL)
     public void removeAndRollbackExpired() {
         synchronized (transactions) {
-            final Iterator<Entry<String, Transaction>> txs =
-                    transactions.entrySet().iterator();
-            while (txs.hasNext()) {
-                final Transaction tx = txs.next().getValue();
-                if (tx.getExpires().getTime() <= currentTimeMillis()) {
-                    try {
-                        tx.rollback();
-                    } catch (final RepositoryRuntimeException e) {
-                        LOGGER.error(
-                                "Got exception rolling back expired" +
-                                        " transaction {}: {}",
-                                        tx, e);
-                    }
-                    txs.remove();
-                }
-            }
+            filterValues(transactions, tx -> tx.getExpires().getTime() <= currentTimeMillis())
+                    .forEach((key, tx) -> {
+                        try {
+                            tx.rollback();
+                        } catch (final RepositoryRuntimeException e) {
+                            LOGGER.error("Got exception rolling back expired transaction {}: {}", tx, e);
+                        }
+                        transactions.remove(key);
+                    });
         }
     }
 
@@ -134,13 +128,9 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
 
     @Override
     public Transaction getTransaction(final String txId, final String userName) {
-        final Transaction tx = transactions.get(txId);
-
-        if (tx == null) {
-            throw new TransactionMissingException(
-                    "Transaction is not available");
-        }
-
+        final Transaction tx = transactions.computeIfAbsent(txId, s -> {
+            throw new TransactionMissingException("Transaction with id: " + s + " is not available");
+        });
         if (!tx.isAssociatedWithUser(userName)) {
             throw new TransactionMissingException("Transaction with id " +
                         txId + " is not available for user " + userName);
@@ -163,14 +153,9 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
             throw new TransactionMissingException(
                     "Transaction is not available");
         }
-        final Transaction tx = transactions.get(txId);
-
-        if (tx == null) {
-            throw new TransactionMissingException(
-                    "Transaction is not available");
-        }
-
-        return tx;
+        return transactions.computeIfAbsent(txId, s -> {
+            throw new TransactionMissingException("Transaction with id: " + s + " is not available");
+        });
     }
 
     /**

@@ -76,7 +76,7 @@ public class ModeShapeRepositoryFactoryBean implements
                 LOGGER.error("ModeShape Start Problem: {}", p.getMessageString());
                 // TODO determine problems that should be runtime errors
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -92,14 +92,17 @@ public class ModeShapeRepositoryFactoryBean implements
         LOGGER.info("Initiating shutdown of ModeShape");
         final String repoName = repository.getName();
         try {
-            final Future<Boolean> futureUndeployRepo =
-                    modeShapeEngine.undeploy(repoName);
-            futureUndeployRepo.get();
+            final Future<Boolean> futureUndeployRepo = modeShapeEngine.undeploy(repoName);
+            if (futureUndeployRepo.get()) {
+                LOGGER.info("ModeShape repository {} has undeployed.", repoName);
+            } else {
+                LOGGER.error("ModeShape repository {} undeploy failed without an exception, still deployed.", repoName);
+            }
             LOGGER.info("Repository {} undeployed.", repoName);
         } catch (final NoSuchRepositoryException e) {
             LOGGER.error("Repository {} unknown, cannot undeploy.", repoName, e);
         } catch (final ExecutionException e) {
-            LOGGER.error("Repository {} cannot undeploy.", repoName, e);
+            LOGGER.error("Repository {} cannot undeploy.", repoName, e.getCause());
         }
         final Future<Boolean> futureShutdownEngine = modeShapeEngine.shutdown();
         try {
@@ -109,7 +112,7 @@ public class ModeShapeRepositoryFactoryBean implements
                 LOGGER.error("ModeShape Engine shutdown failed without an exception, still running.");
             }
         } catch (final ExecutionException e) {
-            LOGGER.error("ModeShape Engine shutdown failed.", e);
+            LOGGER.error("ModeShape Engine shutdown failed.", e.getCause());
         }
     }
 

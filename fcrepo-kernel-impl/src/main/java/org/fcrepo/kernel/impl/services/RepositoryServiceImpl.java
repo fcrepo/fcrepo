@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.impl.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static com.google.common.base.Throwables.propagate;
 import static org.fcrepo.kernel.impl.services.ServiceHelpers.getRepositoryCount;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -73,7 +72,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
 
             }
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 
@@ -87,7 +86,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
         try {
             return getRepositoryCount(repo);
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 

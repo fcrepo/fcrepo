@@ -314,7 +314,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
     private static String getPath(final FedoraResource resource) {
-        if (isFrozenNode.apply(resource)) {
+        if (isFrozenNode.test(resource)) {
             try {
 
                 // the versioned resource we're in

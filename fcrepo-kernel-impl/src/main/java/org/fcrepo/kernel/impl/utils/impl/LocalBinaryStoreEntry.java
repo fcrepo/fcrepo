@@ -24,9 +24,11 @@ import java.net.URISyntaxException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.impl.services.functions.GetBinaryKey;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.impl.utils.BasicCacheEntry;
+
 import org.modeshape.jcr.value.BinaryKey;
+import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.binary.BinaryStore;
 
 /**
@@ -36,7 +38,6 @@ import org.modeshape.jcr.value.binary.BinaryStore;
  */
 public class LocalBinaryStoreEntry extends BasicCacheEntry {
 
-    private GetBinaryKey getBinaryKey = new GetBinaryKey();
     private final BinaryStore store;
     private final Property property;
 
@@ -71,7 +72,7 @@ public class LocalBinaryStoreEntry extends BasicCacheEntry {
     public String getExternalIdentifier() {
         try {
             return new URI("info", store.toString(), null) + "/" + binaryKey();
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             return binaryKey().toString();
         }
     }
@@ -105,7 +106,11 @@ public class LocalBinaryStoreEntry extends BasicCacheEntry {
     }
 
     protected BinaryKey binaryKey() {
-        return getBinaryKey.apply(property);
+        try {
+            return ((BinaryValue) property.getBinary()).getKey();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
 }

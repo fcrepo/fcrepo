@@ -15,22 +15,22 @@
  */
 package org.fcrepo.kernel.impl.utils;
 
-import com.google.common.collect.ImmutableSet;
-import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.utils.CacheEntry;
 import org.fcrepo.kernel.utils.ContentDigest;
 import org.fcrepo.kernel.utils.FixityResult;
+
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
-import static com.google.common.base.Throwables.propagate;
-import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
+import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -40,6 +40,10 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author fasseg
  */
 public abstract class BasicCacheEntry implements CacheEntry {
+
+    public static final int DEV_NULL_BUFFER_SIZE = 4096;
+
+    private static final byte[] devNull = new byte[DEV_NULL_BUFFER_SIZE];
 
     private static final Logger LOGGER = getLogger(BasicCacheEntry.class);
 
@@ -57,8 +61,8 @@ public abstract class BasicCacheEntry implements CacheEntry {
 
         try (FixityInputStream fixityInputStream = new FixityInputStream(this.getInputStream(),
                 MessageDigest.getInstance(digest))) {
-
-            IOUtils.copy(fixityInputStream, NULL_OUTPUT_STREAM);
+            // exhaust our source
+            while (fixityInputStream.read(devNull) != -1) { }
 
             final URI calculatedChecksum = ContentDigest.asURI(digest,
                                                                   fixityInputStream.getMessageDigest().digest());
@@ -69,12 +73,12 @@ public abstract class BasicCacheEntry implements CacheEntry {
 
             LOGGER.debug("Got {}", result.toString());
 
-            return ImmutableSet.of(result);
+            return asList(result);
         } catch (final IOException e) {
             LOGGER.debug("Got error closing input stream: {}", e);
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         } catch (final NoSuchAlgorithmException e1) {
-            throw propagate(e1);
+            throw new RepositoryRuntimeException(e1);
         }
 
     }

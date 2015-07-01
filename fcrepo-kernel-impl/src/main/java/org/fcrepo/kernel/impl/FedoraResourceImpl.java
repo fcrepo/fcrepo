@@ -31,7 +31,7 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.property2values;
-import static org.fcrepo.kernel.services.functions.JcrPropertyFunctions.value2string;
+import static org.fcrepo.kernel.utils.UncheckedFunction.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -181,7 +181,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 public boolean apply(final Node n) {
                     LOGGER.trace("Testing child node {}", n);
                     try {
-                        return isInternalNode.apply(n)
+                        return isInternalNode.test(n)
                                 || n.getName().equals(JCR_CONTENT)
                                 || TombstoneImpl.hasMixin(n)
                                 || n.getName().equals("#");
@@ -380,9 +380,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public boolean hasType(final String type) {
         try {
-            if (isFrozen.apply(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
+            if (isFrozen.test(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
                 final List<String> types = newArrayList(
-                    transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), value2string)
+                    transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), uncheck(Value::getString)::apply)
                 );
                 return types.contains(type);
             }
@@ -433,7 +433,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @param updateStmt SPARQL Update statement specified by the user
      * @return whether the statement is deemed to be not problematic for ModeShape
      */
-    private boolean clean(final String updateStmt) {
+    private static boolean clean(final String updateStmt) {
         final int start = updateStmt.indexOf("INSERT");
         final int end = updateStmt.lastIndexOf("}");
 
@@ -610,7 +610,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
     @Override
     public boolean isFrozenResource() {
-        return isFrozenNode.apply(this);
+        return isFrozenNode.test(this);
     }
 
     @Override

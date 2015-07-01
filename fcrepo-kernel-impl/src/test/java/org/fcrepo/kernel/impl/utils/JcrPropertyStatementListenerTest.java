@@ -29,6 +29,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -37,11 +38,13 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeManager;
 
 import com.hp.hpl.jena.vocabulary.RDF;
+
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -102,7 +105,7 @@ public class JcrPropertyStatementListenerTest {
     @Mock
     private Model mockModel;
 
-    private Map<String, String> mockNsMapping = Collections.emptyMap();
+    private final Map<String, String> mockNsMapping = Collections.emptyMap();
 
     @Mock
     private NodePropertiesTools mockPropertiesTools;
@@ -235,7 +238,7 @@ public class JcrPropertyStatementListenerTest {
         when(mockNodeTypeManager.hasNodeType("fedora:object")).thenReturn(false);
 
 
-        when(getPropertyType(mockSubjectNode, "rdf:type")).thenReturn(URI);
+        when(getPropertyType(mockSubjectNode, "rdf:type")).thenReturn(Optional.of(URI));
 
         when(mockSession.getNamespacePrefix(REPOSITORY_NAMESPACE))
                 .thenReturn("fedora");
