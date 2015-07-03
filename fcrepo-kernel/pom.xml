@@ -101,11 +101,6 @@
       <artifactId>modeshape-jcr-api</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
-    </dependency>
-
     <!-- test gear -->
     <dependency>
       <groupId>junit</groupId>
