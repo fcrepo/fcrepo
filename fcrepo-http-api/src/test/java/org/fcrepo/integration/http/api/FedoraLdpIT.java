@@ -37,6 +37,7 @@ import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
@@ -1037,6 +1038,32 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(serverAddress + pid + "/x", location);
 
+    }
+
+    /**
+     * @author griffinj
+     * Ensure that the objects cannot be pairtree child resources
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1505">FCREPO-1505</a>
+     *
+     */
+    @Test
+    public void testIngestOnPairtree() throws Exception {
+        HttpPost method = postObjMethod("");
+        HttpResponse response = client.execute(method);
+        final String location = response.getFirstHeader("Location").getValue();
+
+        // Get the segments from the URL
+        final String[] segments = location.split("/");
+
+        LOGGER.info("POSTing to " + serverAddress + "/" + segments[4] + "/");
+
+        // Attempt to POST to the child of the pairtree resource...
+        method = new HttpPost(serverAddress + segments[3] + "/" + segments[4] + "/");
+        response = client.execute(method);
+
+        // ...which should be a forbidden operation
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Created a child Object for a pairtree child node", FORBIDDEN.getStatusCode(), status);
     }
 
     @Test

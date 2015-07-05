@@ -28,6 +28,7 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -39,6 +40,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -389,6 +391,10 @@ public class FedoraLdp extends ContentExposingResource {
      * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
      * requests without a Content-Type get routed here.
      *
+     * @author griffinj
+     * Ensure that the parent resource is not a pairtree
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1505">FCREPO-1505</a>
+     *
      * @param checksum the checksum value
      * @param contentDisposition the content Disposition value
      * @param requestContentType the request content type
@@ -415,6 +421,9 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
+        } else if (resource().hasType(FEDORA_PAIRTREE)) {
+
+            throw new ClientErrorException("Object cannot themselves be children of a pairtree child node", FORBIDDEN);
         }
 
         final MediaType contentType = getSimpleContentType(requestContentType);
