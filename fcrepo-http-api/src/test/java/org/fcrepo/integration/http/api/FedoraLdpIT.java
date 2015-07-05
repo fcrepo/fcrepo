@@ -37,6 +37,7 @@ import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
@@ -51,6 +52,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
@@ -1039,6 +1041,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = response.getFirstHeader("Location").getValue();
         assertEquals(serverAddress + pid + "/x", location);
 
+    }
+
+    /**
+     * Ensure that the objects cannot be pairtree child resources
+     *
+     */
+    @Test
+    public void testIngestOnPairtree() throws Exception {
+        final HttpResponse response = createObject("");
+
+        //  Following the approach undertaken for FedoraExportIT#shouldRoundTripOnePairtree
+        final String objName = response.getFirstHeader("Location").getValue();
+        final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
+
+        final GraphStore graphStore = getGraphStore(getObjMethod(pairtreeName));
+        assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
+                createResource(serverAddress + pairtreeName).asNode(),
+                createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
+                createLiteral(FEDORA_PAIRTREE)));
+
+        // Attempting to POST to the child of the pairtree node...
+        final int status = getStatus(postObjMethod(pairtreeName));
+        assertEquals("Created an Object under a pairtree node!", FORBIDDEN.getStatusCode(), status);
     }
 
     @Test
