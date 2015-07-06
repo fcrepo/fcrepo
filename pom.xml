@@ -48,7 +48,7 @@
     <spring.version>4.1.1.RELEASE</spring.version>
     <grizzly.version>2.3.16</grizzly.version>
     <jena.version>2.12.1</jena.version>
-    <jsonld.version>0.5.0</jsonld.version>
+    <jsonld.version>0.5.1</jsonld.version>
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <guava.version>18.0</guava.version>
@@ -195,6 +195,25 @@
           <exclusion>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.jena</groupId>
+        <artifactId>jena-arq</artifactId>
+        <version>${jena.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.github.jsonld-java</groupId>
+            <artifactId>jsonld-java</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
