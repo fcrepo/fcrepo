@@ -284,9 +284,9 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             binaryService.findOrCreate(session, "/testLLObject/testRepositoryContent").setContent(
                     new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
-                    "application/octet-stream",
+                    "text/plain",
                     null,
-                    null,
+                    "numbers.txt",
                     null
                     );
 
@@ -303,6 +303,11 @@ public class FedoraBinaryImplIT extends AbstractIT {
                     fixityResults.contains(null,
                             HAS_MESSAGE_DIGEST,
                             createResource("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf")));
+
+            assertEquals("Expected to find mime type",
+                    ds.getNode().getProperty("ebucore:hasMimeType").getString(), "text/plain");
+            assertEquals("Expected to find file name",
+                    ds.getNode().getProperty("ebucore:filename").getString(), "numbers.txt");
         } finally {
             session.logout();
         }

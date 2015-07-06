@@ -51,7 +51,9 @@ public interface FedoraJcrTypes {
 
     String JCR_CREATEDBY = "jcr:createdBy";
 
-    String PREMIS_FILE_NAME = "premis:hasOriginalName";
+    String FILENAME = "ebucore:filename";
+
+    String HAS_MIME_TYPE = "ebucore:hasMimeType";
 
     String CONTENT_SIZE = "premis:hasSize";
 

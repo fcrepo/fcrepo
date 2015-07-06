@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
+import static org.fcrepo.kernel.FedoraJcrTypes.HAS_MIME_TYPE;
 
 /**
  * <p>DatastreamImplTest class.</p>
@@ -172,7 +172,7 @@ public class FedoraBinaryImplTest implements FedoraJcrTypes {
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
         testObj.setContent(mockStream, null, null, "xyz", null);
-        verify(mockContent).setProperty(PREMIS_FILE_NAME, "xyz");
+        verify(mockContent).setProperty(FILENAME, "xyz");
     }
 
     @Test(expected = InvalidChecksumException.class)
@@ -220,10 +220,10 @@ public class FedoraBinaryImplTest implements FedoraJcrTypes {
         getContentNodeMock(mockContent, 8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
-        when(mockContent.hasProperty(JCR_MIME_TYPE)).thenReturn(true);
+        when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
 
         final Property mockProperty = mock(Property.class);
-        when(mockContent.getProperty(JCR_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockContent.getProperty(HAS_MIME_TYPE)).thenReturn(mockProperty);
         when(mockProperty.getString()).thenReturn("application/x-mime-type");
         assertEquals("application/x-mime-type", testObj.getMimeType());
     }
@@ -239,7 +239,7 @@ public class FedoraBinaryImplTest implements FedoraJcrTypes {
         getContentNodeMock(mockContent, 8);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
-        when(mockContent.hasProperty(JCR_MIME_TYPE)).thenReturn(false);
+        when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(false);
 
         assertEquals("application/octet-stream", testObj.getMimeType());
     }

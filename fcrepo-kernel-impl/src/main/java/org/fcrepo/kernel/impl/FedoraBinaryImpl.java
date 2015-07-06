@@ -50,10 +50,11 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.kernel.FedoraJcrTypes.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.FedoraJcrTypes.FILENAME;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.JCR_MIME_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -152,11 +153,11 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             }
 
             if (contentType != null) {
-                contentNode.setProperty(JCR_MIME_TYPE, contentType);
+                contentNode.setProperty(HAS_MIME_TYPE, contentType);
             }
 
             if (originalFileName != null) {
-                contentNode.setProperty(PREMIS_FILE_NAME, originalFileName);
+                contentNode.setProperty(FILENAME, originalFileName);
             }
 
             LOGGER.debug("Created content node at path: {}", contentNode.getPath());
@@ -244,8 +245,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getMimeType() {
         try {
-            if (hasProperty(JCR_MIME_TYPE)) {
-                return getProperty(JCR_MIME_TYPE).getString();
+            if (hasProperty(HAS_MIME_TYPE)) {
+                return getProperty(HAS_MIME_TYPE).getString();
             }
             return "application/octet-stream";
         } catch (final RepositoryException e) {
@@ -260,8 +261,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getFilename() {
         try {
-            if (hasProperty(PREMIS_FILE_NAME)) {
-                return getProperty(PREMIS_FILE_NAME).getString();
+            if (hasProperty(FILENAME)) {
+                return getProperty(FILENAME).getString();
             }
             return node.getParent().getName();
         } catch (final RepositoryException e) {
