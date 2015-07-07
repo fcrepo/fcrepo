@@ -391,10 +391,6 @@ public class FedoraLdp extends ContentExposingResource {
      * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
      * requests without a Content-Type get routed here.
      *
-     * @author griffinj
-     * Ensure that the parent resource is not a pairtree
-     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1505">FCREPO-1505</a>
-     *
      * @param checksum the checksum value
      * @param contentDisposition the content Disposition value
      * @param requestContentType the request content type
@@ -422,8 +418,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
         } else if (resource().hasType(FEDORA_PAIRTREE)) {
-
-            throw new ClientErrorException("Object cannot themselves be children of a pairtree child node", FORBIDDEN);
+            throw new ClientErrorException("Objects cannot be created under the children of pairtree nodes", FORBIDDEN);
         }
 
         final MediaType contentType = getSimpleContentType(requestContentType);

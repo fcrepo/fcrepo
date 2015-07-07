@@ -52,6 +52,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
@@ -1041,29 +1042,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     /**
-     * @author griffinj
      * Ensure that the objects cannot be pairtree child resources
-     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1505">FCREPO-1505</a>
      *
      */
     @Test
     public void testIngestOnPairtree() throws Exception {
         HttpPost method = postObjMethod("");
         HttpResponse response = client.execute(method);
-        final String location = response.getFirstHeader("Location").getValue();
 
-        // Get the segments from the URL
-        final String[] segments = location.split("/");
+        //  Following the approach undertaken for FedoraExportIT#shouldRoundTripOnePairtree
+        final String objName = response.getFirstHeader("Location").getValue();
+        final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
 
-        LOGGER.info("POSTing to " + serverAddress + "/" + segments[4] + "/");
+        final GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + pairtreeName));
+        assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
+                createResource(serverAddress + pairtreeName).asNode(),
+                createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
+                createLiteral(FEDORA_PAIRTREE)));
 
-        // Attempt to POST to the child of the pairtree resource...
-        method = new HttpPost(serverAddress + segments[3] + "/" + segments[4] + "/");
+        // Attempting to POST to the child of the pairtree node...
+        method = new HttpPost(serverAddress + pairtreeName);
         response = client.execute(method);
-
-        // ...which should be a forbidden operation
         final int status = response.getStatusLine().getStatusCode();
-        assertEquals("Created a child Object for a pairtree child node", FORBIDDEN.getStatusCode(), status);
+        assertEquals("Created an Object under the child of a pairtree node!", FORBIDDEN.getStatusCode(), status);
     }
 
     @Test
