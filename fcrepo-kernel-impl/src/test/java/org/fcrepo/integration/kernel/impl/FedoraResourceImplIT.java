@@ -189,7 +189,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         p = createURI(REPOSITORY_NAMESPACE + "hasNodeType");
         o = createLiteral(FEDORA_RESOURCE);
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, o));
 
     }
 
