@@ -103,6 +103,8 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Variant;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
@@ -2429,6 +2431,42 @@ public class FedoraLdpIT extends AbstractResourceIT {
         LOGGER.error(EntityUtils.toString(getResponse.getEntity()));
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getResponse.getStatusLine().getStatusCode());
         assertEquals("http://www.example.com/file", getResponse.getFirstHeader("Location").getValue());
+    }
+
+    @Test
+    public void testJsonLdProfile() throws IOException {
+        // Create a resource
+        final HttpPost method = postObjMethod("");
+        method.addHeader("Content-Type", "application/n3");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"this is a french title\"@fr ." +
+                "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        method.setEntity(entity);
+
+        final HttpResponse response = client.execute(method);
+        final String content = EntityUtils.toString(response.getEntity());
+        final int status = response.getStatusLine().getStatusCode();
+        assertEquals("Didn't get a CREATED response! Got content:\n" + content, CREATED.getStatusCode(), status);
+
+        final String location = response.getFirstHeader("Location").getValue();
+
+        // GET the resource with a JSON profile
+        final HttpGet httpGet = new HttpGet(location);
+        httpGet.setHeader("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#flattened\"");
+        final HttpResponse responseGET = client.execute(httpGet);
+
+        // Inspect the response
+        final ObjectMapper mapper = new ObjectMapper();
+        final JsonNode json = mapper.readTree(responseGET.getEntity().getContent());
+
+        final List<JsonNode> titlesList = json.findValues("http://purl.org/dc/elements/1.1/title");
+        assertNotNull(titlesList);
+        assertEquals("Should be list of lists", 1, titlesList.size());
+
+        final JsonNode titles = titlesList.get(0);
+        assertEquals("Should be two langs!", 2, titles.findValues("@language").size());
+        assertEquals("Should be two values!", 2, titles.findValues("@value").size());
     }
 
     private Date getDateFromModel(final Model model, final Resource subj, final Property pred) throws Exception {

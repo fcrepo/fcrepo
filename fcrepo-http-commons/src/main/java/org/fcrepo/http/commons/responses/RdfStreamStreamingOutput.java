@@ -64,6 +64,8 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private final RDFFormat format;
 
+    private final MediaType mediaType;
+
     private final RdfStream rdfStream;
 
     /**
@@ -85,6 +87,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         final RDFFormat format = Rio.getWriterFormatForMIMEType(mediaType.toString());
         if (format != null) {
             this.format = format;
+            this.mediaType = mediaType;
             LOGGER.debug("Setting up to serialize to: {}", format);
         } else {
             throw new WebApplicationException(NOT_ACCEPTABLE);
@@ -97,7 +100,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     public void write(final OutputStream output) {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
-            write(() -> rdfStream.transform(toStatement::apply), output, format);
+            write(() -> rdfStream.transform(toStatement::apply), output, format, mediaType);
         } catch (final RDFHandlerException e) {
             setException(e);
             LOGGER.debug("Error serializing RDF", e);
@@ -107,9 +110,10 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private void write(final Iterable<Statement> model,
                        final OutputStream output,
-                       final RDFFormat dataFormat)
+                       final RDFFormat dataFormat,
+                       final MediaType dataMediaType)
             throws RDFHandlerException {
-        final WriterConfig settings = new WriterConfig();
+        final WriterConfig settings = WriterConfigHelper.apply(dataMediaType);
         final RDFWriter writer = Rio.createWriter(dataFormat, output);
         writer.setWriterConfig(settings);
 
