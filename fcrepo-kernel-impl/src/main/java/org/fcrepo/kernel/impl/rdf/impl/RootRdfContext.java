@@ -24,7 +24,6 @@ import static org.fcrepo.kernel.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_NODE_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -39,9 +38,6 @@ import java.util.SortedMap;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
-import javax.jcr.nodetype.NodeTypeIterator;
-import javax.jcr.nodetype.NodeTypeManager;
 
 import org.fcrepo.kernel.impl.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.JcrRepository;
@@ -99,15 +95,6 @@ public class RootRdfContext extends NodeRdfContext {
                 b.add(create(subject(), createURI(uri.toString()),
                         createLiteral(descriptor)));
             }
-        }
-        final NodeTypeManager nodeTypeManager =
-            resource().getNode().getSession().getWorkspace().getNodeTypeManager();
-
-        final NodeTypeIterator nodeTypes = nodeTypeManager.getAllNodeTypes();
-        while (nodeTypes.hasNext()) {
-            final NodeType nodeType = nodeTypes.nextNodeType();
-            b.add(create(subject(), HAS_NODE_TYPE.asNode(),
-                    createLiteral(nodeType.getName())));
         }
 
         /*
