@@ -62,8 +62,16 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private static ValueFactory vfactory = getInstance();
 
+    /**
+     * This field is used to determine the correct {@link org.openrdf.rio.RDFWriter} created for the
+     * {@link javax.ws.rs.core.StreamingOutput}.
+     */
     private final RDFFormat format;
 
+    /**
+     * This field is used to determine the {@link org.openrdf.rio.WriterConfig} details used by the created
+     * {@link org.openrdf.rio.RDFWriter}.
+     */
     private final MediaType mediaType;
 
     private final RdfStream rdfStream;
