@@ -31,6 +31,8 @@ import static org.fcrepo.http.commons.responses.WriterConfigHelper.PROFILE_FLATT
 import static org.fcrepo.http.commons.responses.WriterConfigHelper.PROFILE_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.runners.Parameterized.Parameter;
+import static org.junit.runners.Parameterized.Parameters;
 import static org.openrdf.rio.helpers.JSONLDMode.COMPACT;
 import static org.openrdf.rio.helpers.JSONLDMode.EXPAND;
 import static org.openrdf.rio.helpers.JSONLDMode.FLATTEN;
@@ -43,13 +45,13 @@ import static org.openrdf.rio.helpers.JSONLDSettings.JSONLD_MODE;
 @RunWith(Parameterized.class)
 public class WriterConfigHelperTest {
 
-    @Parameterized.Parameter(value = 0)
+    @Parameter(value = 0)
     public MediaType mediaType;
 
-    @Parameterized.Parameter(value = 1)
+    @Parameter(value = 1)
     public JSONLDMode profile;
 
-    @Parameterized.Parameters(name = "{index}: mediaType:{0} => {1}")
+    @Parameters(name = "{index}: mediaType:{0} => {1}")
     public static Iterable<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {new MediaType(null, null), null},
