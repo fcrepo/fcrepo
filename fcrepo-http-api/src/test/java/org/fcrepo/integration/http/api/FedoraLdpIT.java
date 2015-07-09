@@ -1047,7 +1047,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      */
     @Test
     public void testIngestOnPairtree() throws Exception {
-        HttpResponse response = createObject("");
+        final HttpResponse response = createObject("");
 
         //  Following the approach undertaken for FedoraExportIT#shouldRoundTripOnePairtree
         final String objName = response.getFirstHeader("Location").getValue();
