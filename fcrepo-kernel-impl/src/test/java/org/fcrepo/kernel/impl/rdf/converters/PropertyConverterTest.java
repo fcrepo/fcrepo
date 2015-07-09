@@ -104,9 +104,8 @@ public class PropertyConverterTest {
     @Test
     public final void shouldMapRdfPredicatesToJcrProperties() throws RepositoryException {
 
-        final Property p = createProperty(REPOSITORY_NAMESPACE, "uuid");
-        assertEquals("jcr:uuid", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
-
+        final Property p = createProperty(REPOSITORY_NAMESPACE, "created");
+        assertEquals("jcr:created", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
     }
 
     @Test(expected = FedoraInvalidNamespaceException.class)
