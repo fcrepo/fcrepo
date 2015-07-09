@@ -418,7 +418,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
         } else if (resource().hasType(FEDORA_PAIRTREE)) {
-            throw new ClientErrorException("Objects cannot be created under the children of pairtree nodes", FORBIDDEN);
+            throw new ClientErrorException("Objects cannot be created under pairtree nodes", FORBIDDEN);
         }
 
         final MediaType contentType = getSimpleContentType(requestContentType);

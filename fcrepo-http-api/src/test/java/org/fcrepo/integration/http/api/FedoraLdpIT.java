@@ -1047,24 +1047,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
      */
     @Test
     public void testIngestOnPairtree() throws Exception {
-        HttpPost method = postObjMethod("");
-        HttpResponse response = client.execute(method);
+        HttpResponse response = createObject("");
 
         //  Following the approach undertaken for FedoraExportIT#shouldRoundTripOnePairtree
         final String objName = response.getFirstHeader("Location").getValue();
         final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
 
-        final GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + pairtreeName));
+        final GraphStore graphStore = getGraphStore(getObjMethod(pairtreeName));
         assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
                 createResource(serverAddress + pairtreeName).asNode(),
                 createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
                 createLiteral(FEDORA_PAIRTREE)));
 
         // Attempting to POST to the child of the pairtree node...
-        method = new HttpPost(serverAddress + pairtreeName);
-        response = client.execute(method);
-        final int status = response.getStatusLine().getStatusCode();
-        assertEquals("Created an Object under the child of a pairtree node!", FORBIDDEN.getStatusCode(), status);
+        final int status = getStatus(postObjMethod(pairtreeName));
+        assertEquals("Created an Object under a pairtree node!", FORBIDDEN.getStatusCode(), status);
     }
 
     @Test
