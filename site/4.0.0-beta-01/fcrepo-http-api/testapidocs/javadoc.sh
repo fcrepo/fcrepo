@@ -1,1 +1,0 @@
-/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.60-2.4.5.0.fc19.x86_64/jre/../bin/javadoc @options @packages

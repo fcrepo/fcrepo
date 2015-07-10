@@ -1,6 +1,0 @@
-org.fcrepo.http.api
-org.fcrepo.http.api.repository
-org.fcrepo.http.api.url
-org.fcrepo.integration.http.api
-org.fcrepo.integration.http.api.html
-org.fcrepo.integration.http.api.ldp

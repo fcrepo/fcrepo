@@ -1,7 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-fcrepo-auth-common,org.fcrepo.auth.common,FedoraUserSecurityContext,28,98,11,15,9,26,12,9,2,6
-fcrepo-auth-common,org.fcrepo.auth.common,OAuthAuthenticationProvider,8,0,0,0,2,0,2,0,2,0
-fcrepo-auth-common,org.fcrepo.auth.common,FedoraAdminSecurityContext,31,0,2,0,11,0,7,0,6,0
-fcrepo-auth-common,org.fcrepo.auth.common,HTTPHeaderPrincipalFactory,5,0,0,0,2,0,2,0,2,0
-fcrepo-auth-common,org.fcrepo.auth.common,ServletContainerAuthenticationProvider.new Principal() {...},0,5,0,0,0,2,0,2,0,2
-fcrepo-auth-common,org.fcrepo.auth.common,ServletContainerAuthenticationProvider,37,98,4,10,9,25,6,10,2,7
