@@ -19,15 +19,12 @@ import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 import javax.jcr.Repository;
 
-import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
-import org.modeshape.jcr.GetBinaryStore;
 import org.modeshape.jcr.value.binary.BinaryStore;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
@@ -53,6 +50,7 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
     public static final int UNKNOWN_NODE_VIEW = -1;
 
     private final GetBinaryStore getBinaryStore = new GetBinaryStore();
+    private final GetCacheManager getCacheManager = new GetCacheManager();
 
     /**
      * Extract the BinaryStore out of Modeshape
@@ -71,14 +69,10 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
             return result;
         }
 
-        final InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
-
-        final List<Cache<?, ?>> caches = ispnStore.getCaches();
-        final DefaultCacheManager cm =
-            (DefaultCacheManager) caches.get(0).getCacheManager();
+        final DefaultCacheManager cm = (DefaultCacheManager)getCacheManager.apply(input);
 
         if (cm == null) {
-            LOGGER.debug("Could not get cluster configuration information");
+            LOGGER.debug("Could not access infinispan configuration");
             return result;
         }
 

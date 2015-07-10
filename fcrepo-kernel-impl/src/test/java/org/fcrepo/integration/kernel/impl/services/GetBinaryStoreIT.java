@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.modeshape.jcr;
+package org.fcrepo.kernel.impl.services.functions;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
@@ -45,7 +45,5 @@ public class GetBinaryStoreIT {
         final BinaryStore binaryStore = testObj.apply(repo);
 
         assertThat(binaryStore, instanceOf(TransientBinaryStore.class));
-
     }
-
 }

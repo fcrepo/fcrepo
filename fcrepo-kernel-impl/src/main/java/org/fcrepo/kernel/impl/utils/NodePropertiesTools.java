@@ -39,7 +39,6 @@ import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.IdentifierConversionException;
 import org.fcrepo.kernel.exception.NoSuchPropertyDefinitionException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.slf4j.Logger;
 
 /**
@@ -138,7 +137,7 @@ public class NodePropertiesTools {
         try {
             final Node refNode = idTranslator.convert(resource).getNode();
 
-            if (isExternalNode.apply(refNode)) {
+            if (isExternalNode.test(refNode)) {
                  //we can't apply REFERENCE properties to external resources
                 return;
             }

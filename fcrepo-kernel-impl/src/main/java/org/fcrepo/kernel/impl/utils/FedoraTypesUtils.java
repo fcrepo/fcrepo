@@ -22,7 +22,6 @@ import java.util.function.Predicate;
 import org.fcrepo.kernel.FedoraJcrTypes;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.services.functions.AnyTypesPredicate;
-import org.fcrepo.kernel.services.functions.JcrPropertyFunctions;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.cache.NodeKey;
 import org.slf4j.Logger;
@@ -125,42 +124,33 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
     /**
      * Check if a node is externally managed.
+     *
+     * Note: modeshape uses a source-workspace-identifier scheme
+     * to identify whether a node is externally-managed.
+     * Ordinary (non-external) nodes will have simple UUIDs
+     * as an identifier. These are never external nodes.
+     *
+     * External nodes will have a 7-character hex code
+     * identifying the "source", followed by another
+     * 7-character hex code identifying the "workspace", followed
+     * by a "/" and then the rest of the "identifier".
+     *
+     * Following that scheme, if a node's "source" key does not
+     * match the repository's configured store name, then it is an
+     * external node.
      */
-    public static Predicate<Node> isExternalNode = new Predicate<Node>() {
-        @Override
-        public boolean apply(final Node n) {
-            checkNotNull(n, "null is neither external nor not external!");
-            /**
-             * modeshape uses a source-workspace-identifier scheme
-             * to identify whether a node is externally-managed.
-             * Ordinary (non-external) nodes will have simple UUIDs
-             * as an identifier. These are never external nodes.
-             *
-             * External nodes will have a 7-character hex code
-             * identifying the "source", followed by another
-             * 7-character hex code identifying the "workspace", followed
-             * by a "/" and then the rest of the "identifier".
-             *
-             * Following that scheme, if a node's "source" key does not
-             * match the repository's configured store name, then it is an
-             * external node.
-             */
-            try {
-                if (NodeKey.isValidRandomIdentifier(n.getIdentifier())) {
-                    return false;
-                } else {
-                    final NodeKey key = new NodeKey(n.getIdentifier());
-                    final String source = NodeKey.keyForSourceName(
-                            ((JcrRepository)n.getSession().getRepository())
-                                .getConfiguration()
-                                .getStoreName());
-                    return key.getSourceKey() != source;
-                }
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
+    public static Predicate<Node> isExternalNode = uncheck(n ->  {
+        if (NodeKey.isValidRandomIdentifier(n.getIdentifier())) {
+            return false;
+        } else {
+            final NodeKey key = new NodeKey(n.getIdentifier());
+            final String source = NodeKey.keyForSourceName(
+                    ((JcrRepository)n.getSession().getRepository())
+                        .getConfiguration()
+                        .getStoreName());
+            return key.getSourceKey() != source;
         }
-    };
+    });
 
     /**
      * Get the JCR property type ID for a given property name. If unsure, mark
