@@ -1,5 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-fcrepo-generator-dc,org.fcrepo.generator,DublinCoreGenerator,10,41,1,3,1,9,1,3,0,2
-fcrepo-generator-dc,org.fcrepo.generator.dublincore,JcrPropertiesGenerator,32,90,1,5,4,14,1,5,0,3
-fcrepo-generator-dc,org.fcrepo.generator.dublincore,WorstCaseGenerator,19,0,0,0,5,0,3,0,3,0
-fcrepo-generator-dc,org.fcrepo.generator.dublincore,WellKnownDatastreamGenerator,7,37,0,2,3,10,0,6,0,5

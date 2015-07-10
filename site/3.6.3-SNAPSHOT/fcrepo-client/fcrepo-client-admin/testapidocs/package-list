@@ -1,6 +1,0 @@
-org.fcrepo.client
-org.fcrepo.client.utility
-org.fcrepo.client.utility.validate
-org.fcrepo.client.utility.validate.process
-org.fcrepo.client.utility.validate.types
-org.fcrepo.mock.client.utility.validate

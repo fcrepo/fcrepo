@@ -1,7 +1,0 @@
-org.fcrepo.integration
-org.fcrepo.integration.transform.http
-org.fcrepo.transform
-org.fcrepo.transform.http
-org.fcrepo.transform.http.responses
-org.fcrepo.transform.sparql
-org.fcrepo.transform.transformations

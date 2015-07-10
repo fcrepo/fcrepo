@@ -1,8 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-fcrepo-metrics,org.fcrepo.metrics,RegistryService,3,32,0,0,1,7,1,3,1,3
-fcrepo-metrics,org.fcrepo.metrics,MetricsProvider,4,0,0,0,2,0,1,0,1,0
-fcrepo-metrics,org.fcrepo.metrics,MetricsContextListener,9,0,0,0,3,0,3,0,3,0
-fcrepo-metrics,org.fcrepo.metrics,ReporterFactory,56,0,0,0,12,0,5,0,5,0
-fcrepo-metrics,org.fcrepo.metrics,MetricsConfig.JmxConfig,18,0,0,0,4,0,2,0,2,0
-fcrepo-metrics,org.fcrepo.metrics,MetricsConfig.GraphiteConfig,36,0,0,0,7,0,3,0,3,0
-fcrepo-metrics,org.fcrepo.metrics,MetricsConfig,7,0,0,0,3,0,2,0,2,0
