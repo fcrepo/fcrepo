@@ -19,16 +19,14 @@ import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 import javax.jcr.Repository;
 
-import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
-import org.modeshape.jcr.GetBinaryStore;
-import org.modeshape.jcr.value.binary.BinaryStore;
+import org.modeshape.jcr.JcrRepository;
+import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 import org.slf4j.Logger;
 
@@ -40,8 +38,7 @@ import org.slf4j.Logger;
  */
 public class GetClusterConfiguration implements Function<Repository, Map<String, String>> {
 
-    private static final Logger LOGGER =
-            getLogger(GetClusterConfiguration.class);
+    private static final Logger LOGGER = getLogger(GetClusterConfiguration.class);
 
     public static final String CLUSTER_NAME = "clusterName";
     public static final String CACHE_MODE = "clusterCacheMode";
@@ -52,7 +49,7 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
     public static final String CLUSTER_MEMBERS = "clusterMembers";
     public static final int UNKNOWN_NODE_VIEW = -1;
 
-    private final GetBinaryStore getBinaryStore = new GetBinaryStore();
+    private final GetCacheManager getCacheManager = new GetCacheManager();
 
     /**
      * Extract the BinaryStore out of Modeshape
@@ -63,22 +60,22 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
     public Map<String, String> apply(final Repository input) {
         requireNonNull(input, "null cannot have a BinaryStore!");
 
-        final Map<String, String> result =
-            new LinkedHashMap<>();
-        final BinaryStore store = getBinaryStore.apply(input);
+        final Map<String, String> result = new LinkedHashMap<>();
 
-        if (!(store instanceof InfinispanBinaryStore)) {
-            return result;
+        final RepositoryConfiguration config = ((JcrRepository)input).getConfiguration();
+
+        try {
+            if (!(config.getBinaryStorage().getBinaryStore() instanceof InfinispanBinaryStore)) {
+                return result;
+            }
+        } catch (Exception ex) {
+            LOGGER.debug("Could not extract BinaryStore configuration", ex);
         }
 
-        final InfinispanBinaryStore ispnStore = (InfinispanBinaryStore) store;
-
-        final List<Cache<?, ?>> caches = ispnStore.getCaches();
-        final DefaultCacheManager cm =
-            (DefaultCacheManager) caches.get(0).getCacheManager();
+        final DefaultCacheManager cm = (DefaultCacheManager)getCacheManager.apply(input);
 
         if (cm == null) {
-            LOGGER.debug("Could not get cluster configuration information");
+            LOGGER.debug("Could not access infinispan configuration");
             return result;
         }
 
@@ -91,16 +88,12 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
         }
 
         result.put(CLUSTER_NAME, cm.getClusterName());
-        result.put(CACHE_MODE, cm.getCache().getCacheConfiguration()
-                                   .clustering().cacheMode().toString());
+        result.put(CACHE_MODE, cm.getCache().getCacheConfiguration().clustering().cacheMode().toString());
         result.put(NODE_ADDRESS, cm.getNodeAddress());
         result.put(PHYSICAL_ADDRESS, cm.getPhysicalAddresses());
-        result.put(NODE_VIEW, nodeView == UNKNOWN_NODE_VIEW ?
-                                  "Unknown" :
-                                  String.valueOf(nodeView));
+        result.put(NODE_VIEW, nodeView == UNKNOWN_NODE_VIEW ? "Unknown" : String.valueOf(nodeView));
         result.put(CLUSTER_SIZE, String.valueOf(cm.getClusterSize()));
         result.put(CLUSTER_MEMBERS, cm.getClusterMembers());
         return result;
     }
-
 }

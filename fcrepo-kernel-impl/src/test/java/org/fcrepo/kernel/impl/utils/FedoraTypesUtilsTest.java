@@ -25,6 +25,7 @@ import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalReferenceP
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isNonRdfSourceDescription;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isContainer;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isExternalNode;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,8 +33,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
+
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -63,7 +66,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrValueFactory;
+import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.api.JcrConstants;
 
 /**
@@ -143,6 +148,12 @@ public class FedoraTypesUtilsTest {
 
     @Mock
     private Node mockContainer;
+
+    @Mock
+    private JcrRepository mockJcrRepository;
+
+    @Mock
+    private RepositoryConfiguration mockConfig;
 
     @Test
     public void testIsBinaryContentProperty() throws RepositoryException {
@@ -327,4 +338,33 @@ public class FedoraTypesUtilsTest {
         assertEquals(mockNode, closestExistingAncestor);
     }
 
+    @Test
+    public void testIsExternalNode1() throws RepositoryException {
+        when(mockNode.getIdentifier()).thenReturn(UUID.randomUUID().toString());
+        assertFalse(isExternalNode.test(mockNode));
+    }
+
+    @Test
+    public void testIsExternalNode2() throws RepositoryException {
+        // sha1 of "BinaryStore" is 952357dbe6acf9e88a6d0164807a79a40993003f
+        // so sourceKey is 952357d
+        when(mockNode.getIdentifier()).thenReturn("952357ddefault/some/path");
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getRepository()).thenReturn(mockJcrRepository);
+        when(mockJcrRepository.getConfiguration()).thenReturn(mockConfig);
+        when(mockConfig.getStoreName()).thenReturn("BinaryStore");
+        assertFalse(isExternalNode.test(mockNode));
+    }
+
+    @Test
+    public void testIsExternalNode3() throws RepositoryException {
+        // sha1 of "BinaryStore" is 952357dbe6acf9e88a6d0164807a79a40993003f
+        // so sourceKey is 952357d which doesn't match 07f66ed
+        when(mockNode.getIdentifier()).thenReturn("07f66eddefault/some/path");
+        when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockSession.getRepository()).thenReturn(mockJcrRepository);
+        when(mockJcrRepository.getConfiguration()).thenReturn(mockConfig);
+        when(mockConfig.getStoreName()).thenReturn("BinaryStore");
+        assertTrue(isExternalNode.test(mockNode));
+    }
 }

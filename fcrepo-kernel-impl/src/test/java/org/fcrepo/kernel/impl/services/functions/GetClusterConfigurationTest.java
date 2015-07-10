@@ -19,9 +19,7 @@ import static org.infinispan.configuration.cache.CacheMode.LOCAL;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -34,31 +32,23 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.modeshape.jcr.GetBinaryStore;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.RepositoryConfiguration;
-import org.modeshape.jcr.RepositoryConfiguration.BinaryStorage;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 /**
- * @author ?
+ * @author acoburn
 **/
+@RunWith(MockitoJUnitRunner.class)
 public class GetClusterConfigurationTest {
 
     private GetClusterConfiguration testObj;
 
     @Mock
-    private GetBinaryStore mockGetBinaryStore;
-
-    @Mock
-    private RepositoryConfiguration mockConfig;
-
-    @Mock
     private JcrRepository mockRepo;
-
-    @Mock
-    private BinaryStorage mockStorage;
 
     @Mock
     private Cache<Object, Object> mockCache;
@@ -78,35 +68,38 @@ public class GetClusterConfigurationTest {
     @Mock
     private CacheContainer mockCacheContainer;
 
+    @Mock
+    private GetCacheManager mockGetCacheManager;
+
+    @Mock
+    private RepositoryConfiguration mockConfig;
+
+    @Mock
+    private RepositoryConfiguration.BinaryStorage mockStorage;
+
     @Before
     public void setUp() throws Exception {
-        initMocks(this);
         testObj = new GetClusterConfiguration();
-        final Field field =
-                GetClusterConfiguration.class
-                        .getDeclaredField("getBinaryStore");
-        field.setAccessible(true);
-        field.set(testObj, mockGetBinaryStore);
+        final Field cmField = GetClusterConfiguration.class.getDeclaredField("getCacheManager");
+        cmField.setAccessible(true);
+        cmField.set(testObj, mockGetCacheManager);
 
         when(mockRepo.getConfiguration()).thenReturn(mockConfig);
         when(mockConfig.getBinaryStorage()).thenReturn(mockStorage);
-        when(mockCacheContainer.getCache(any(String.class))).thenReturn(mockCache);
+        when(mockCM.getCache()).thenReturn(mockCache);
         when(mockCache.getCacheConfiguration()).thenReturn(mockCC);
         when(mockCC.clustering()).thenReturn(mockClustering);
         when(mockCC.transaction()).thenReturn(mockTransactionConfiguration);
         when(mockCC.transaction().transactionMode()).thenReturn(null);
         when(mockClustering.cacheMode()).thenReturn(LOCAL);
-        when(mockCM.getCache()).thenReturn(mockCache);
 
-        final InfinispanBinaryStore mockStore = new InfinispanBinaryStore(mockCacheContainer, false, "x", "y");
-
-        when(mockGetBinaryStore.apply(mockRepo)).thenReturn(mockStore);
-        mockStore.start();
+        final InfinispanBinaryStore testStore = new InfinispanBinaryStore(mockCacheContainer, false, "x", "y");
+        when(mockStorage.getBinaryStore()).thenReturn(testStore);
     }
 
     @Test
     public void testGood() {
-        when(mockCache.getCacheManager()).thenReturn(mockCM);
+        when(mockGetCacheManager.apply(mockRepo)).thenReturn(mockCM);
         final Map<String, String> actual = testObj.apply(mockRepo);
         assertNotNull(actual);
         assertFalse(actual.isEmpty());
