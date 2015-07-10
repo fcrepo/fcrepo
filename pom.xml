@@ -1323,11 +1323,11 @@
   </issueManagement>
   <mailingLists>
     <mailingList>
-      <name>ff-tech</name>
-      <subscribe>ff-tech+subscribe@googlegroups.com</subscribe>
-      <unsubscribe>ff-tech+unsubscribe@googlegroups.com</unsubscribe>
-      <post>ff-tech@googlegroups.com</post>
-      <archive>https://groups.google.com/d/forum/ff-tech</archive>
+      <name>fedora-tech</name>
+      <subscribe>fedora-tech+subscribe@googlegroups.com</subscribe>
+      <unsubscribe>fedora-tech+unsubscribe@googlegroups.com</unsubscribe>
+      <post>fedora-tech@googlegroups.com</post>
+      <archive>https://groups.google.com/d/forum/fedora-tech</archive>
     </mailingList>
   </mailingLists>
 </project>
