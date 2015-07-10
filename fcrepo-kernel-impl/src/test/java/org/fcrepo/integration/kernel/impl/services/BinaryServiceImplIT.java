@@ -15,7 +15,7 @@
  */
 package org.fcrepo.integration.kernel.impl.services;
 
-import static org.fcrepo.kernel.FedoraJcrTypes.PREMIS_FILE_NAME;
+import static org.fcrepo.kernel.FedoraJcrTypes.FILENAME;
 import static org.jgroups.util.Util.assertEquals;
 import static org.jgroups.util.Util.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -92,7 +92,7 @@ public class BinaryServiceImplIT extends AbstractIT {
 
         assertTrue(session.getRootNode().hasNode("testDatastreamNode"));
         assertEquals("xyz.jpg", session.getNode("/testDatastreamNode").getNode(JCR_CONTENT)
-                .getProperty(PREMIS_FILE_NAME).getString());
+                .getProperty(FILENAME).getString());
         session.logout();
     }
 
