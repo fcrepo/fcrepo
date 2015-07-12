@@ -43,7 +43,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     @Test
     public void testGetNode() throws Exception {
 
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         createObject(pid);
 
         final HttpGet method = new HttpGet(serverAddress + pid);
@@ -54,7 +54,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     @Test
     public void testGetDatastreamNode() throws Exception {
 
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         createObject(pid);
 
         createDatastream(pid, "ds1", "foo");
@@ -68,7 +68,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
     @Test
     public void testGetTemplate() throws Exception {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         createObject(pid);
         addMixin(pid, REPOSITORY_NAMESPACE + "Resource");
 

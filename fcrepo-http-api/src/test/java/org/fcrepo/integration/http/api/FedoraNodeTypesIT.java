@@ -16,9 +16,10 @@
 package org.fcrepo.integration.http.api;
 
 
-import com.hp.hpl.jena.update.GraphStore;
 import org.apache.http.client.methods.HttpGet;
-import org.fcrepo.http.commons.domain.RDFMediaType;
+
+import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.RDFS.Class;
+import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,25 +42,22 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
 
     @Test
     public void itShouldContainFcrepoClasses() throws IOException {
-
         final HttpGet httpGet = new HttpGet(serverAddress + "/fcr:nodetypes");
         httpGet.addHeader("Accept", "application/n-triples");
-        final GraphStore graphStore = getGraphStore(httpGet);
-
-        assertTrue(graphStore.contains(ANY, createURI(REPOSITORY_NAMESPACE
-                + "Resource"), type.asNode(), Class.asNode()));
-        assertTrue(graphStore.contains(ANY, createURI(REPOSITORY_NAMESPACE
-                + "Container"), type.asNode(), Class.asNode()));
-        assertTrue(graphStore.contains(ANY, createURI(REPOSITORY_NAMESPACE
-                + "NonRdfSourceDescription"), type.asNode(), Class.asNode()));
+        try (final CloseableGraphStore graphStore = getGraphStore(httpGet)) {
+            assertTrue(graphStore.contains(ANY,
+                    createURI(REPOSITORY_NAMESPACE + "Resource"), type.asNode(), Class.asNode()));
+            assertTrue(graphStore.contains(ANY,
+                    createURI(REPOSITORY_NAMESPACE + "Container"), type.asNode(), Class.asNode()));
+            assertTrue(graphStore.contains(ANY,
+                    createURI(REPOSITORY_NAMESPACE + "NonRdfSourceDescription"), type.asNode(), Class.asNode()));
+        }
     }
 
     @Test
-    public void testResponseContentTypes() throws Exception {
-        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
-            final HttpGet method =
-                    new HttpGet(serverAddress + "fcr:nodetypes");
-
+    public void testResponseContentTypes() throws IOException {
+        for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method = new HttpGet(serverAddress + "fcr:nodetypes");
             method.addHeader("Accept", type);
             assertEquals(type, getContentType(method));
         }

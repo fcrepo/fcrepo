@@ -46,7 +46,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
     public void shouldRoundTripOneContainer() throws IOException {
-        final String objName = getRandomUniquePid();
+        final String objName = getRandomUniqueId();
 
         // set up the object
         createObject(objName);
@@ -86,7 +86,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
         // delete it
         execute(new HttpDelete(serverAddress + objName));
-        assertDeleted(serverAddress + objName);
+        assertDeleted(objName);
         final HttpResponse tombstoneResponse = execute(new HttpDelete(serverAddress + objName + "/fcr:tombstone"));
         assertEquals(204, tombstoneResponse.getStatusLine().getStatusCode());
 
@@ -108,7 +108,7 @@ public class FedoraExportIT extends AbstractResourceIT {
             void
             shouldMoveObjectToTheRootLevelUsingTheRepositoryWideApi()
                                                                      throws IOException {
-        final String objName = getRandomUniquePid();
+        final String objName = getRandomUniqueId();
 
         // set up the object
         createObject(objName);
@@ -126,7 +126,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
         // delete it
         execute(new HttpDelete(serverAddress + objName));
-        assertDeleted(serverAddress + objName);
+        assertDeleted(objName);
         execute(new HttpDelete(serverAddress + objName + "/fcr:tombstone"));
 
         // try to import it
@@ -142,7 +142,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
     public void shouldFailToImportOverExistingNode() throws IOException {
-        final String objName = getRandomUniquePid();
+        final String objName = getRandomUniqueId();
 
         // set up the object
         createObject(objName);
@@ -164,7 +164,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
     public void shouldExportUsingTheRepositoryWideApi() throws IOException {
-        final String objName = getRandomUniquePid();
+        final String objName = getRandomUniqueId();
 
         // set up the object
         createObject(objName);
@@ -184,7 +184,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
     public void shouldExportObjectWithNoBinary() throws IOException {
-        final String objName = getRandomUniquePid();
+        final String objName = getRandomUniqueId();
         final String binaryValue = "stuff";
         // set up the object
         createObject(objName);
@@ -216,7 +216,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
     public void shouldExportObjectRecurse() throws IOException {
-        final String objName = getRandomUniquePid();
+        final String objName = getRandomUniqueId();
         final String childName = "testDS";
         final String binaryValue = "stuff";
         // set up the object
@@ -268,7 +268,7 @@ public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
     public void testExportBinary() throws IOException {
-        final String objName = getRandomUniquePid();
+        final String objName = getRandomUniqueId();
         createObject(objName);
         createDatastream(objName, "testDS", "stuff");
         final String dsName = objName + "/testDS";
