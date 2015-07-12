@@ -49,7 +49,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
     @Test
     public void testCheckDatastreamFixity() throws Exception {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
 
         createObject(pid);
         createDatastream(pid, "zxc", "foo");
@@ -76,7 +76,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
     @Test
     public void testResponseContentTypes() throws Exception {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         createObject(pid);
         createDatastream(pid, "zxc", "foo");
 
@@ -91,7 +91,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
     @Test
     public void testBinaryVersionFixity() throws Exception {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
 
         createObject(pid);
         createDatastream(pid, "dsid", "foo");

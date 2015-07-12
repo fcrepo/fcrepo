@@ -80,7 +80,7 @@ public class FedoraBackupIT extends AbstractResourceIT {
         assertEquals(204, response.getStatusLine().getStatusCode());
 
         // Verify object removed
-        assertDeleted(serverAddress + objName);
+        assertDeleted(objName);
 
         // try to restore it
         final HttpPost restoreMethod =

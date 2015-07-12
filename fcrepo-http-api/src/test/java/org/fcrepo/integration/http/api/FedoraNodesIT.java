@@ -15,176 +15,127 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 
-import org.apache.http.HttpResponse;
+import javax.ws.rs.core.Link;
+
+import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+
 import org.apache.http.annotation.NotThreadSafe;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.BasicHttpEntity;
-import org.junit.Test;
+import org.apache.http.entity.StringEntity;
 import org.junit.Ignore;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.update.GraphStore;
-
-import javax.ws.rs.core.Link;
+import org.junit.Test;
 
 /**
  * <p>FedoraNodesIT class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test
-    public void testCopy() throws Exception {
-        final HttpResponse response  = createObject("");
-        final String pid = getRandomUniquePid();
-        final String location = response.getFirstHeader("Location").getValue();
+    public void testCopy() throws IOException {
+        final String subject = serverAddress + getRandomUniqueId();
+        final String location = getLocation(postObjMethod());
         final HttpCopy request = new HttpCopy(location);
-        request.addHeader("Destination", serverAddress + pid);
-        client.execute(request);
-
-        final HttpGet httpGet = new HttpGet(serverAddress + pid);
-
-        final HttpResponse copiedResult = client.execute(httpGet);
-        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
-
-        final HttpResponse originalResult = client.execute(new HttpGet(location));
-        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+        request.addHeader("Destination", subject);
+        executeAndClose(request);
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(subject)));
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(location)));
     }
 
     @Test
-    public void testCopyDestExists() throws Exception {
-
-        final HttpResponse response1 = createObject("");
-        final String location1 = response1.getFirstHeader("Location").getValue();
-        final HttpResponse response2 = createObject("");
-        final String location2 = response2.getFirstHeader("Location").getValue();
-
-        final HttpCopy request = new HttpCopy(location1);
-        request.addHeader("Destination", location2);
-        final HttpResponse result = client.execute(request);
-
-        assertEquals(PRECONDITION_FAILED.getStatusCode(), result.getStatusLine().getStatusCode());
+    public void testCopyDestExists() throws IOException {
+        final HttpCopy request = new HttpCopy(getLocation(postObjMethod()));
+        request.addHeader("Destination", getLocation(postObjMethod()));
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), getStatus(request));
     }
 
     @Test
-    public void testCopyInvalidDest() throws Exception {
-
-        final HttpResponse response1 = createObject("");
-        final String location1 = response1.getFirstHeader("Location").getValue();
-
+    public void testCopyInvalidDest() throws IOException {
+        final String location1 = getLocation(postObjMethod());
         final HttpCopy request = new HttpCopy(location1);
         request.addHeader("Destination", serverAddress + "non/existent/path");
         assertEquals(CONFLICT.getStatusCode(), getStatus(request));
     }
 
     @Test
-    public void testMoveAndTombstoneFromRoot() throws Exception {
+    public void testMoveAndTombstoneFromRoot() throws IOException {
+        final String subject = serverAddress + getRandomUniqueId();
+        final String location = serverAddress + getRandomUniqueId();
+        createObjectAndClose(location.substring(serverAddress.length()));
+        final HttpMove request = new HttpMove(location);
+        request.addHeader("Destination", subject);
+        executeAndClose(request);
 
-        final String pid = getRandomUniquePid();
-        final String location = serverAddress + getRandomUniquePid();
-        createObject(location.substring(serverAddress.length()));
+        final HttpGet httpGet = new HttpGet(subject);
+        assertEquals(OK.getStatusCode(), getStatus(httpGet));
+        try (final CloseableHttpResponse originalResult = execute(new HttpGet(location))) {
+            assertEquals(GONE.getStatusCode(), getStatus(originalResult));
+            final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
+            assertEquals("hasTombstone", tombstone.getRel());
+        }
+    }
+
+    @Test
+    public void testMoveAndTombstone() throws IOException {
+        final String id = getRandomUniqueId();
+        final String location = getLocation(postObjMethod());
 
         final HttpMove request = new HttpMove(location);
-        request.addHeader("Destination", serverAddress + pid);
-        client.execute(request);
+        request.addHeader("Destination", serverAddress + id);
+        executeAndClose(request);
 
-        final HttpGet httpGet = new HttpGet(serverAddress + pid);
-
-        final HttpResponse copiedResult = client.execute(httpGet);
-        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
-
-        final HttpResponse originalResult = client.execute(new HttpGet(location));
-        assertEquals(GONE.getStatusCode(), originalResult.getStatusLine().getStatusCode());
-
-        final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
-        assertEquals("hasTombstone", tombstone.getRel());
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + id)));
+        try (final CloseableHttpResponse originalResult = execute(new HttpGet(location))) {
+            assertEquals(GONE.getStatusCode(), getStatus(originalResult));
+            final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
+            assertEquals("hasTombstone", tombstone.getRel());
+        }
     }
 
     @Test
-    public void testMoveAndTombstone() throws Exception {
-
-        final String pid = getRandomUniquePid();
-        final HttpResponse response = createObject("");
-        final String location = response.getFirstHeader("Location").getValue();
-
-        final HttpMove request = new HttpMove(location);
-        request.addHeader("Destination", serverAddress + pid);
-        client.execute(request);
-
-        final HttpGet httpGet = new HttpGet(serverAddress + pid);
-
-        final HttpResponse copiedResult = client.execute(httpGet);
-        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
-
-        final HttpResponse originalResult = client.execute(new HttpGet(location));
-        assertEquals(GONE.getStatusCode(), originalResult.getStatusLine().getStatusCode());
-
-        final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
-        assertEquals("hasTombstone", tombstone.getRel());
+    public void testMoveDestExists() throws IOException {
+        final HttpMove request = new HttpMove(getLocation(postObjMethod()));
+        request.addHeader("Destination", getLocation(postObjMethod()));
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), getStatus(request));
     }
 
     @Test
-    public void testMoveDestExists() throws Exception {
-
-        final HttpResponse response1 = createObject("");
-        final String location1 = response1.getFirstHeader("Location").getValue();
-        final HttpResponse response2 = createObject("");
-        final String location2 = response2.getFirstHeader("Location").getValue();
-
-        final HttpMove request = new HttpMove(location1);
-        request.addHeader("Destination", location2);
-        final HttpResponse result = client.execute(request);
-
-        assertEquals(PRECONDITION_FAILED.getStatusCode(), result.getStatusLine().getStatusCode());
-    }
-
-    @Test
-    public void testMoveInvalidDest() throws Exception {
-
-        final HttpResponse response1 = createObject("");
-        final String location1 = response1.getFirstHeader("Location").getValue();
-
-        final HttpMove request = new HttpMove(location1);
+    public void testMoveInvalidDest() throws IOException {
+        final HttpMove request = new HttpMove(getLocation(postObjMethod()));
         request.addHeader("Destination", serverAddress + "non/existent/destination");
         assertEquals(CONFLICT.getStatusCode(), getStatus(request));
     }
 
     @Test
-    public void testMoveWithBadEtag() throws Exception {
-
-        final String pid = getRandomUniquePid();
-        final HttpResponse response = createObject("");
-        final String location = response.getFirstHeader("Location").getValue();
-
-        final HttpMove request = new HttpMove(location);
-        request.addHeader("Destination", serverAddress + pid);
+    public void testMoveWithBadEtag() throws IOException {
+        final HttpMove request = new HttpMove(getLocation(postObjMethod()));
+        request.addHeader("Destination", serverAddress + getRandomUniqueId());
         request.addHeader("If-Match", "\"doesnt-match\"");
-        final HttpResponse moveResponse = client.execute(request);
-        assertEquals(412, moveResponse.getStatusLine().getStatusCode());
+        assertEquals(PRECONDITION_FAILED.getStatusCode(), getStatus(request));
     }
 
     @NotThreadSafe // HttpRequestBase is @NotThreadSafe
     private class HttpCopy extends HttpRequestBase {
-
-        public final static String METHOD_NAME = "COPY";
-
 
         /**
          * @throws IllegalArgumentException if the uri is invalid.
@@ -196,16 +147,12 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         @Override
         public String getMethod() {
-            return METHOD_NAME;
+            return "COPY";
         }
-
     }
 
     @NotThreadSafe // HttpRequestBase is @NotThreadSafe
     private class HttpMove extends HttpRequestBase {
-
-        public final static String METHOD_NAME = "MOVE";
-
 
         /**
          * @throws IllegalArgumentException if the uri is invalid.
@@ -217,9 +164,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
 
         @Override
         public String getMethod() {
-            return METHOD_NAME;
+            return "MOVE";
         }
-
     }
 
     /**
@@ -230,56 +176,42 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testCopyToProjection() throws IOException {
         // create object in the repository
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         createDatastream(pid, "ds1", "abc123");
 
         // copy to federated filesystem
         final HttpCopy request = new HttpCopy(serverAddress + pid);
         request.addHeader("Destination", serverAddress + "files/copy-" + pid);
-        final HttpResponse copyResponse = client.execute(request);
-        assertEquals(CREATED.getStatusCode(), copyResponse.getStatusLine().getStatusCode());
+        assertEquals(CREATED.getStatusCode(), getStatus(request));
 
         // federated copy should now exist
         final HttpGet copyGet = new HttpGet(serverAddress + "files/copy-" + pid);
-        final HttpResponse copiedResult = client.execute(copyGet);
-        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
+        assertEquals(OK.getStatusCode(), getStatus(copyGet));
 
         // repository copy should still exist
         final HttpGet originalGet = new HttpGet(serverAddress + pid);
-        final HttpResponse originalResult = client.execute(originalGet);
-        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+        assertEquals(OK.getStatusCode(), getStatus(originalGet));
     }
 
     /**
      * I should be able to copy objects from a federated filesystem to the repository.
-     *
-     * @throws IOException exception thrown during this function
     **/
     @Test
-    public void testCopyFromProjection() throws IOException {
-        final String destination = serverAddress + "copy-" + getRandomUniquePid() + "-ds1";
+    public void testCopyFromProjection() {
+        final String destination = serverAddress + "copy-" + getRandomUniqueId() + "-ds1";
         final String source = serverAddress + "files/FileSystem1/ds1";
 
         // ensure the source is present
-        final HttpGet get = new HttpGet(source);
-        final HttpResponse getResponse = client.execute(get);
-        assertEquals(OK.getStatusCode(), getResponse.getStatusLine().getStatusCode());
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(source)));
 
         // copy to repository
         final HttpCopy request = new HttpCopy(source);
         request.addHeader("Destination", destination);
-        final HttpResponse copyRequest = client.execute(request);
-        assertEquals(CREATED.getStatusCode(), copyRequest.getStatusLine().getStatusCode());
+        assertEquals(CREATED.getStatusCode(), getStatus(request));
 
         // repository copy should now exist
-        final HttpGet copyGet = new HttpGet(destination);
-        final HttpResponse copiedResult = client.execute(copyGet);
-        assertEquals(OK.getStatusCode(), copiedResult.getStatusLine().getStatusCode());
-
-        // federated filesystem copy should still exist
-        final HttpGet originalGet = new HttpGet(source);
-        final HttpResponse originalResult = client.execute(originalGet);
-        assertEquals(OK.getStatusCode(), originalResult.getStatusLine().getStatusCode());
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(destination)));
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(source)));
     }
 
     /**
@@ -289,41 +221,34 @@ public class FedoraNodesIT extends AbstractResourceIT {
      * @throws Exception exception thrown during this function
     **/
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
-    public void testFederatedMoveWithProperties() throws Exception {
+    public void testFederatedMoveWithProperties() throws IOException {
         // create object on federation
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         final String source = serverAddress + "files/" + pid + "/src";
         createObject("files/" + pid + "/src");
 
         // add properties
         final HttpPatch patch = new HttpPatch(source);
         patch.addHeader("Content-Type", "application/sparql-update");
-        final BasicHttpEntity e = new BasicHttpEntity();
-        final String sparql = "insert { <> <http://purl.org/dc/elements/1.1/identifier> \"identifier.123\" . "
-            + "<> <http://purl.org/dc/elements/1.1/title> \"title.123\" } where {}";
-        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
-        patch.setEntity(e);
-        final HttpResponse response = client.execute(patch);
-        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode());
+        patch.setEntity(new StringEntity(
+                "insert { <> <http://purl.org/dc/elements/1.1/identifier> \"identifier.123\" . "
+                        + "<> <http://purl.org/dc/elements/1.1/title> \"title.123\" } where {}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
 
         // move object
         final String destination = serverAddress + "files/" + pid + "/dst";
         final HttpMove request = new HttpMove(source);
         request.addHeader("Destination", destination);
-        final HttpResponse moveRequest = client.execute(request);
-        assertEquals(CREATED.getStatusCode(), moveRequest.getStatusLine().getStatusCode());
+        assertEquals(CREATED.getStatusCode(), getStatus(request));
 
         // check properties
-        final HttpGet get =  new HttpGet(destination);
+        final HttpGet get = new HttpGet(destination);
         get.addHeader("Accept", "application/n-triples");
-        final GraphStore graphStore = getGraphStore(get);
-        assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(destination),
-                                                 NodeFactory.createURI("http://purl.org/dc/elements/1.1/identifier"),
-                                                 NodeFactory.createLiteral("identifier.123")));
-        assertTrue(graphStore.contains(Node.ANY, NodeFactory.createURI(destination),
-                                                 NodeFactory.createURI("http://purl.org/dc/elements/1.1/title"),
-                                                 NodeFactory.createLiteral("title.123")));
+        try (final CloseableGraphStore graphStore = getGraphStore(get)) {
+            assertTrue(graphStore.contains(ANY, createURI(destination),
+                    createURI("http://purl.org/dc/elements/1.1/identifier"), createLiteral("identifier.123")));
+            assertTrue(graphStore.contains(ANY, createURI(destination),
+                    createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("title.123")));
+        }
     }
-
-
 }

@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.integration.http.api;
 
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
+import static com.google.common.collect.Iterators.size;
+import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.RdfLexicon.MIX_NAMESPACE;
@@ -36,20 +41,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import java.io.ByteArrayInputStream;
+
 import java.io.IOException;
 import java.util.Iterator;
 
-import org.apache.http.HttpResponse;
+import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.RdfLexicon;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
@@ -58,45 +63,46 @@ import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
 
 /**
- * <p>FedoraVersionsIT class.</p>
+ * <p>
+ * FedoraVersionsIT class.
+ * </p>
  *
  * @author awoods
  * @author ajs6f
  */
 public class FedoraVersionsIT extends AbstractResourceIT {
 
+    private static final String[] jcrVersioningTriples = new String[] {
+        REPOSITORY_NAMESPACE + "baseVersion",
+        REPOSITORY_NAMESPACE + "isCheckedOut",
+        REPOSITORY_NAMESPACE + "predecessors",
+        REPOSITORY_NAMESPACE + "versionHistory" };
+
     @Test
-    public void testGetObjectVersionProfile() throws Exception {
-        final String pid = getRandomUniquePid();
+    public void testGetObjectVersionProfile() throws IOException {
+        final String id = getRandomUniqueId();
         final String label = "v0.0.1";
 
-        createObject(pid);
-        enableVersioning(pid);
-        postObjectVersion(pid, label);
-        final HttpGet getVersion =
-            new HttpGet(serverAddress + pid + "/fcr:versions");
+        createObjectAndClose(id);
+        enableVersioning(id);
+        postObjectVersion(id, label);
         logger.debug("Retrieved version profile:");
-        final GraphStore results = getGraphStore(getVersion);
-        assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
-        final Resource subject = createResource(serverAddress + pid);
-        final Iterator<Quad> hasVersionTriple = results.find(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY);
-        assertTrue("Didn't find a version triple!", hasVersionTriple.hasNext());
-        final Node versionURI = hasVersionTriple.next().getObject();
-        assertFalse("Found extra version triple!", hasVersionTriple.hasNext());
-        assertTrue("Version label wasn't presented!",
-                results.contains(ANY, versionURI, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
-        assertTrue("Version creation date wasn't present!",
-                results.contains(ANY, versionURI, CREATED_DATE.asNode(), ANY));
+        try (final CloseableGraphStore results = getGraphStore(new HttpGet(serverAddress + id + "/fcr:versions"))) {
+            assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
+            final Resource subject = createResource(serverAddress + id);
+            final Iterator<Quad> hasVersionTriple = results.find(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY);
+            assertTrue("Didn't find a version triple!", hasVersionTriple.hasNext());
+            final Node versionURI = hasVersionTriple.next().getObject();
+            assertFalse("Found extra version triple!", hasVersionTriple.hasNext());
+            assertTrue("Version label wasn't presented!",
+                    results.contains(ANY, versionURI, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
+            assertTrue("Version creation date wasn't present!",
+                    results.contains(ANY, versionURI, CREATED_DATE.asNode(), ANY));
+        }
     }
 
     private static int countTriples(final GraphStore g) {
-        int count = 0;
-        final Iterator<Quad> it = g.find();
-        while (it.hasNext()) {
-            count ++;
-            it.next();
-        }
-        return count;
+        return size(g.find());
     }
 
     private static void enableVersioning(final String pid) {
@@ -109,126 +115,104 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetUnversionedObjectVersionProfile() throws Exception {
-        final String pid = getRandomUniquePid();
+    public void testGetUnversionedObjectVersionProfile() {
+        final String pid = getRandomUniqueId();
 
         createObject(pid);
 
         final HttpGet getVersion = new HttpGet(serverAddress + pid + "/fcr:versions");
-        assertEquals(404, getStatus(getVersion));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getVersion));
     }
 
     @Test
-    public void testAddAndRetrieveVersion() throws Exception {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-        enableVersioning(pid);
+    public void testAddAndRetrieveVersion() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
 
         logger.debug("Setting a title");
-        patchLiteralProperty(serverAddress + pid, DC_TITLE.getURI(), "First Title");
+        patchLiteralProperty(serverAddress + id, DC_TITLE.getURI(), "First Title");
 
-        final GraphStore nodeResults = getContent(serverAddress + pid);
-        assertTrue("Should find original title", nodeResults.contains(ANY,
-                                                                      ANY,
-                                                                      DC_TITLE.asNode(),
-                                                                      createLiteral("First Title")));
-
+        try (final CloseableGraphStore nodeResults = getContent(serverAddress + id)) {
+            assertTrue("Should find original title", nodeResults.contains(ANY,
+                    ANY, DC_TITLE.asNode(), createLiteral("First Title")));
+        }
         logger.debug("Posting version v0.0.1");
-        postObjectVersion(pid, "v0.0.1");
+        postObjectVersion(id, "v0.0.1");
 
         logger.debug("Replacing the title");
-        patchLiteralProperty(serverAddress + pid, DC_TITLE.getURI(), "Second Title");
+        patchLiteralProperty(serverAddress + id, DC_TITLE.getURI(), "Second Title");
 
-        final GraphStore versionResults = getContent(serverAddress + pid + "/fcr:versions/v0.0.1");
-        logger.debug("Got version profile:");
+        try (final CloseableGraphStore versionResults = getContent(serverAddress + id + "/fcr:versions/v0.0.1")) {
+            logger.debug("Got version profile:");
 
-        assertTrue("Didn't find a version triple!",
-                      versionResults.contains(ANY,
-                                              ANY, HAS_PRIMARY_TYPE.asNode(),
-                                              createLiteral("nt:frozenNode")));
-
-        assertTrue("Should find a title in historic version",
-                   versionResults.contains(ANY, ANY, DC_TITLE.asNode(), ANY));
-        assertTrue("Should find original title in historic version",
-                   versionResults.contains(ANY,
-                                           ANY,
-                                           DC_TITLE.asNode(),
-                                           createLiteral("First Title")));
-        assertFalse("Should not find the updated title in historic version",
-                    versionResults.contains(ANY,
-                                            ANY,
-                                            DC_TITLE.asNode(),
-                                            createLiteral("Second Title")));
-    }
-
-    @Test
-    public void testVersioningANodeWithAVersionableChild() throws Exception {
-        final String pid = getRandomUniquePid();
-
-        createObject(pid);
-        enableVersioning(pid);
-
-        logger.debug("Adding a child");
-        createDatastream(pid, "ds", "This DS will not be versioned");
-
-        logger.debug("Posting version");
-        postObjectVersion(pid, "label");
-
-        final HttpGet getVersion =
-                new HttpGet(serverAddress + pid + "/fcr:versions");
-        logger.debug("Retrieved version profile:");
-        final GraphStore results = getGraphStore(getVersion);
-        final Resource subject =
-                createResource(serverAddress + pid);
-        assertTrue("Didn't find a version triple!",
-                results.contains(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY));
-
-        final Iterator<Quad> versionIt = results.find(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY);
-
-        while (versionIt.hasNext()) {
-            final String url = versionIt.next().getObject().getURI();
-            assertEquals("Version " + url + " isn't accessible!",
-                    200, getStatus(new HttpGet(url)));
+            assertTrue("Didn't find a version triple!", versionResults.contains(ANY,
+                    ANY, HAS_PRIMARY_TYPE.asNode(), createLiteral("nt:frozenNode")));
+            assertTrue("Should find a title in historic version", versionResults.contains(ANY,
+                    ANY, DC_TITLE.asNode(), ANY));
+            assertTrue("Should find original title in historic version", versionResults.contains(ANY,
+                    ANY, DC_TITLE.asNode(), createLiteral("First Title")));
+            assertFalse("Should not find the updated title in historic version", versionResults.contains(ANY,
+                    ANY, DC_TITLE.asNode(), createLiteral("Second Title")));
         }
     }
 
     @Test
-    public void testCreateLabeledVersion() throws Exception {
+    public void testVersioningANodeWithAVersionableChild() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
+        logger.debug("Adding a child");
+        createDatastream(id, "ds", "This DS will not be versioned");
+        logger.debug("Posting version");
+        postObjectVersion(id, "label");
+
+        logger.debug("Retrieved version profile:");
+        try (final CloseableGraphStore results = getGraphStore(new HttpGet(serverAddress + id + "/fcr:versions"))) {
+            final Node subject = createURI(serverAddress + id);
+            assertTrue("Didn't find a version triple!", results.contains(ANY, subject, HAS_VERSION.asNode(), ANY));
+            final Iterator<Quad> versionIt = results.find(ANY, subject, HAS_VERSION.asNode(), ANY);
+            while (versionIt.hasNext()) {
+                final String url = versionIt.next().getObject().getURI();
+                assertEquals("Version " + url + " isn't accessible!", OK.getStatusCode(), getStatus(new HttpGet(url)));
+            }
+        }
+    }
+
+    @Test
+    public void testCreateLabeledVersion() throws IOException {
         logger.debug("Creating an object");
-        final String objId = getRandomUniquePid();
-        createObject(objId);
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
 
         logger.debug("Setting a title");
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Example Title");
-
         logger.debug("Posting a labeled version");
         postObjectVersion(objId, "label");
     }
 
     @Test
-    public void testCreateUnlabeledVersion() throws Exception {
+    public void testCreateUnlabeledVersion() throws IOException {
         logger.debug("Creating an object");
-        final String objId = getRandomUniquePid();
-        createObject(objId);
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
-
         logger.debug("Setting a title");
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Example Title");
 
         logger.debug("Posting an unlabeled version");
         final HttpPost postVersion = postObjMethod(objId + "/fcr:versions");
-        final HttpResponse response = execute(postVersion);
-        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode());
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postVersion));
     }
 
     @Test
-    public void testVersionLabelWithSpace() throws Exception {
+    public void testVersionLabelWithSpace() throws IOException {
         final String label = "label with space";
 
         logger.debug("creating an object");
-        final String objId = getRandomUniquePid();
-        createObject(objId);
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
 
         logger.debug("Posting a version with label \"" + label + "\"");
@@ -236,85 +220,79 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testVersionLabelWithInvalidCharacters() throws Exception {
+    public void testVersionLabelWithInvalidCharacters() {
         final String label = "\"label with quotes";
-        final String objId = getRandomUniquePid();
-        createObject(objId);
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
         final HttpPost postVersion = postObjMethod(objId + "/fcr:versions");
         postVersion.addHeader("Slug", label);
-        final HttpResponse response = execute(postVersion);
-        assertEquals(BAD_REQUEST.getStatusCode(), response.getStatusLine().getStatusCode() );
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postVersion));
     }
 
     @Test
-    public void testCreateTwoVersionsWithSameLabel() throws Exception {
+    public void testCreateTwoVersionsWithSameLabel() throws IOException {
         final String label1 = "label";
         final String label2 = "different-label";
         logger.debug("creating an object");
-        final String objId = getRandomUniquePid();
-        createObject(objId);
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
 
         logger.debug("Setting a title");
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "First title");
-
         logger.debug("Posting a version with label \"" + label1 + "\"");
         postObjectVersion(objId, label1);
-
         logger.debug("Resetting the title");
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Second title");
 
         logger.debug("Posting a version with label \"" + label1 + "\"");
         final HttpPost postVersion = postObjMethod(objId + "/fcr:versions");
         postVersion.addHeader("Slug", "label");
-        final HttpResponse response = execute(postVersion);
         assertEquals("Must not be allowed to create a version with a duplicate label!",
-                CONFLICT.getStatusCode(), response.getStatusLine().getStatusCode());
+                CONFLICT.getStatusCode(), getStatus(postVersion));
 
-        final HttpGet getVersions =
-                new HttpGet(serverAddress + objId + "/fcr:versions");
+        final HttpGet getVersions = new HttpGet(serverAddress + objId + "/fcr:versions");
         logger.debug("Retrieved versions");
-        final GraphStore results = getGraphStore(getVersions);
-        assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
+        try (final CloseableGraphStore results = getGraphStore(getVersions)) {
+            assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
+            logger.debug("Posting a version with label \"" + label2 + "\"");
+            postObjectVersion(objId, label2);
 
-        logger.debug("Posting a version with label \"" + label2 + "\"");
-        postObjectVersion(objId, label2);
+            logger.debug("Deleting first labeled version \"" + label1 + "\"");
+            final HttpDelete remove = new HttpDelete(serverAddress + objId + "/fcr:versions/" + label1);
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(remove));
 
-        logger.debug("Deleting first labeled version \"" + label1 + "\"");
-        final HttpDelete remove = new HttpDelete(serverAddress + objId + "/fcr:versions/" + label1);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(remove));
-
-        /**
-         * This is the behavior we support... allowing a label to be reused if it's been
-         * deleted.
-         */
-        logger.debug("Making a new version with label \"" + label1 + "\"");
-        postObjectVersion(objId, label1);
-
+            /**
+             * This is the behavior we support... allowing a label to be reused if it's been deleted.
+             */
+            logger.debug("Making a new version with label \"" + label1 + "\"");
+            postObjectVersion(objId, label1);
+        }
     }
 
     /**
-     * This test just makes sure that while an object may not have two
-     * versions with the same label, two different objects may have versions
-     * with the same label.
+     * This test just makes sure that while an object may not have two versions with the same label, two different
+     * objects may have versions with the same label.
      *
-     * @throws Exception exception thrown during this function
+     * @throws IOException exception thrown during this function
      */
     @Test
-    public void testCreateTwoObjectsWIthVersionsWithTheSameLabel() throws Exception {
+    // TODO this test requires some kind of assertion or negative assertion to make its intent more clear
+            public
+            void testCreateTwoObjectsWithVersionsWithTheSameLabel() throws IOException {
         final String label = "label";
         logger.debug("creating an object");
-        final String objId1 = getRandomUniquePid();
-        createObject(objId1);
+        final String objId1 = getRandomUniqueId();
+        createObjectAndClose(objId1);
         enableVersioning(objId1);
 
         logger.debug("Posting a version with label \"" + label + "\"");
         postObjectVersion(objId1, label);
 
         logger.debug("creating another object");
-        final String objId2 = getRandomUniquePid();
-        createObject(objId2);
+        final String objId2 = getRandomUniqueId();
+        createObjectAndClose(objId2);
         enableVersioning(objId2);
 
         logger.debug("Posting a version with label \"" + label + "\"");
@@ -323,54 +301,42 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testGetDatastreamVersionNotFound() throws Exception {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
 
-        createObject(pid);
+        createObjectAndClose(pid);
         enableVersioning(pid);
         createDatastream(pid, "ds1", "foo");
         enableVersioning(pid + "/ds1");
 
-        final HttpGet getVersion =
-            new HttpGet(serverAddress
-                    + pid + "/ds1/fcr:versions/lastVersion");
-        final HttpResponse resp = execute(getVersion);
-        assertEquals(404, resp.getStatusLine().getStatusCode());
+        final HttpGet getVersion = new HttpGet(serverAddress + pid + "/ds1/fcr:versions/lastVersion");
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getVersion));
     }
 
-    public void mutateDatastream(final String objName, final String dsName,
-                                 final String contentText) throws IOException {
-        final HttpPut mutateDataStreamMethod =
-                putDSMethod(objName, dsName, contentText);
-        final HttpResponse response = execute(mutateDataStreamMethod);
-        final int status = response.getStatusLine().getStatusCode();
-        if (status != NO_CONTENT.getStatusCode()) {
-            logger.error(EntityUtils.toString(response.getEntity()));
-        }
-        assertEquals("Couldn't mutate a datastream!", NO_CONTENT.getStatusCode(), status);
-
+    public void mutateDatastream(final String objName, final String dsName, final String contentText)
+            throws IOException {
+        assertEquals("Couldn't mutate a datastream!",
+                NO_CONTENT.getStatusCode(), getStatus(putDSMethod(objName, dsName, contentText)));
     }
 
     @Test
-    public void testInvalidVersionReversion() throws Exception {
-        final String objId = getRandomUniquePid();
-        createObject(objId);
-
+    public void testInvalidVersionReversion() {
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
-
-        final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/invalid-version-label");
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(patch));
+        assertEquals(NOT_FOUND.getStatusCode(),
+                getStatus(new HttpPatch(serverAddress + objId + "/fcr:versions/invalid-version-label")));
     }
 
     @Test
-    public void testVersionReversion() throws Exception {
-        final String objId = getRandomUniquePid();
-        final Resource subject = createResource(serverAddress + objId);
+    public void testVersionReversion() throws IOException {
+        final String objId = getRandomUniqueId();
+        final Node subject = createURI(serverAddress + objId);
         final String title1 = "foo";
         final String firstVersionLabel = "v1";
         final String title2 = "bar";
         final String secondVersionLabel = "v2";
 
-        createObject(objId);
+        createObjectAndClose(objId);
         enableVersioning(objId);
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title1);
         postObjectVersion(objId, firstVersionLabel);
@@ -378,177 +344,166 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title2);
         postObjectVersion(objId, secondVersionLabel);
 
-        final GraphStore preRollback = getGraphStore(new HttpGet(serverAddress + objId));
-        assertTrue("First title must be present!", preRollback.contains(ANY, subject.asNode(), DC_TITLE.asNode(),
-                createLiteral(title1)));
-        assertTrue("Second title must be present!", preRollback.contains(ANY, subject.asNode(), DC_TITLE.asNode(),
-                createLiteral(title2)));
-
+        try (final CloseableGraphStore preRollback = getGraphStore(new HttpGet(serverAddress + objId))) {
+            assertTrue("First title must be present!", preRollback.contains(ANY,
+                    subject, DC_TITLE.asNode(), createLiteral(title1)));
+            assertTrue("Second title must be present!", preRollback.contains(ANY,
+                    subject, DC_TITLE.asNode(), createLiteral(title2)));
+        }
         revertToVersion(objId, firstVersionLabel);
-
-        final GraphStore postRollback = getGraphStore(new HttpGet(serverAddress + objId));
-        assertTrue("First title must be present!", postRollback.contains(ANY, subject.asNode(), DC_TITLE.asNode(),
-                createLiteral(title1)));
-        assertFalse("Second title must NOT be present!",
-                    postRollback.contains(ANY,
-                                          subject.asNode(),
-                                          DC_TITLE.asNode(),
-                                          createLiteral(title2)));
-
+        try (final CloseableGraphStore postRollback = getGraphStore(new HttpGet(serverAddress + objId))) {
+            assertTrue("First title must be present!", postRollback.contains(ANY,
+                    subject, DC_TITLE.asNode(), createLiteral(title1)));
+            assertFalse("Second title must NOT be present!", postRollback.contains(ANY,
+                    subject, DC_TITLE.asNode(), createLiteral(title2)));
+        }
         /*
-         * Make the sure the node is checked out and able to be updated.
-         *
-         * Because the JCR concept of checked-out is something we don't
-         * intend to expose through Fedora in the future, the following
-         * line is simply to test that writes can be completed after a
-         * reversion.
+         * Make the sure the node is checked out and able to be updated. Because the JCR concept of checked-out is
+         * something we don't intend to expose through Fedora in the future, the following line is simply to test that
+         * writes can be completed after a reversion.
          */
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "additional change");
     }
 
     @Test
-    public void testRemoveVersion() throws Exception {
+    public void testRemoveVersion() throws IOException {
         // create an object and a named version
-        final String objId = getRandomUniquePid();
+        final String objId = getRandomUniqueId();
         final String versionLabel1 = "versionLabelNumberOne";
         final String versionLabel2 = "versionLabelNumberTwo";
 
         createResource(serverAddress + objId);
-        createObject(objId);
+        createObjectAndClose(objId);
         enableVersioning(objId);
         postObjectVersion(objId, versionLabel1);
         postObjectVersion(objId, versionLabel2);
 
         // make sure the version exists
-        final HttpGet get1 = new HttpGet(serverAddress + objId + "/fcr:versions/" + versionLabel1);
-        assertEquals(OK.getStatusCode(), getStatus(get1));
+        assertEquals(OK.getStatusCode(),
+                getStatus(new HttpGet(serverAddress + objId + "/fcr:versions/" + versionLabel1)));
 
         // remove the version we created
-        final HttpDelete remove = new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel1);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(remove));
+        assertEquals(NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel1)));
 
         // make sure the version is gone
-        final HttpGet get2 = new HttpGet(serverAddress + objId + "/fcr:versions/" + versionLabel1);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(get2));
+        assertEquals(NOT_FOUND.getStatusCode(),
+                getStatus(new HttpGet(serverAddress + objId + "/fcr:versions/" + versionLabel1)));
     }
 
     @Test
-    public void testRemoveInvalidVersion() throws Exception {
+    public void testRemoveInvalidVersion() {
         // create an object
-        final String objId = getRandomUniquePid();
-        createObject(objId);
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
 
         // removing a non-existent version should 404
-        final HttpDelete delete = new HttpDelete(serverAddress + objId + "/fcr:versions/invalid-version-label");
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(delete));
+        assertEquals(NOT_FOUND.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + objId + "/fcr:versions/invalid-version-label")));
     }
 
     @Test
-    public void testRemoveCurrentVersion() throws Exception {
+    public void testRemoveCurrentVersion() throws IOException {
         // create an object
         final String versionLabel = "testVersionNumberUno";
-        final String objId = getRandomUniquePid();
-        createObject(objId);
+        final String objId = getRandomUniqueId();
+        createObjectAndClose(objId);
         enableVersioning(objId);
         postObjectVersion(objId, versionLabel);
 
         // removing the current version should 400
-        final HttpDelete delete = new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel);
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(delete));
+        assertEquals(BAD_REQUEST.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + objId + "/fcr:versions/" + versionLabel)));
     }
 
     @Test
-    public void testVersionOperationAddsVersionableMixin() throws Exception {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-
-        final GraphStore originalObjectProperties = getContent(serverAddress + pid);
-        assertFalse("Node must not have versionable mixin.",
-                originalObjectProperties.contains(ANY, createResource(serverAddress + pid).asNode(),
-                        createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
-
-        postObjectVersion(pid, "label");
-
-        final GraphStore updatedObjectProperties = getContent(serverAddress + pid);
-        assertTrue("Node is expected to have versionable mixin.",
-                updatedObjectProperties.contains(ANY, createResource(serverAddress + pid).asNode(),
-                        createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
+    public void testVersionOperationAddsVersionableMixin() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final Node subject = createURI(serverAddress + id);
+        try (final CloseableGraphStore originalObjectProperties = getContent(serverAddress + id)) {
+            assertFalse("Node must not have versionable mixin.", originalObjectProperties.contains(ANY,
+                    subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+        }
+        postObjectVersion(id, "label");
+        try (final CloseableGraphStore updatedObjectProperties = getContent(serverAddress + id)) {
+            assertTrue("Node is expected to have versionable mixin.", updatedObjectProperties.contains(ANY,
+                    subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+        }
     }
 
     @Test
     public void testDatastreamAutoMixinAndRevert() throws IOException {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         final String dsid = "ds1";
-        createObject(pid);
+        createObjectAndClose(pid);
 
         final String originalContent = "This is the original content";
         final String versionLabel = "ver1";
         createDatastream(pid, dsid, originalContent);
 
         // datastream should not have fcr:versions endpoint
-        assertEquals(404, getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
+        assertEquals(NOT_FOUND.getStatusCode(),
+                getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
 
         // datastream should not be versionable
-        final GraphStore originalObjectProperties = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata");
-        assertFalse("Node must not have versionable mixin.",
-                originalObjectProperties.contains(ANY, createResource(serverAddress + pid + "/" + dsid).asNode(),
-                createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
-
+        try (final CloseableGraphStore originalObjectProperties =
+                getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
+            assertFalse("Node must not have versionable mixin.",
+                    originalObjectProperties.contains(ANY, createURI(serverAddress + pid + "/" + dsid),
+                            type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+        }
         // creating a version should succeed
         final HttpPost httpPost = new HttpPost(serverAddress + pid + "/" + dsid + "/fcr:versions");
         httpPost.setHeader("Slug", versionLabel);
-        assertEquals( 204, getStatus(httpPost));
-
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPost));
         // datastream should then have versions endpoint
-        assertEquals( 200, getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")) );
-
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
         // datastream should then be versionable
-        final GraphStore updatedDSProperties = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata");
-        assertTrue("Node must have versionable mixin.",
-                updatedDSProperties.contains(ANY,
-                        createResource(serverAddress + pid + "/" + dsid + "/fcr:metadata").asNode(),
-                        createURI(RDF_TYPE), createURI(MIX_NAMESPACE + "versionable")));
-
+        try (final CloseableGraphStore updatedDSProperties =
+                getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
+            assertTrue("Node must have versionable mixin.", updatedDSProperties.contains(ANY,
+                    createURI(serverAddress + pid + "/" + dsid + "/fcr:metadata"), type.asNode(),
+                    createURI(MIX_NAMESPACE + "versionable")));
+        }
         // update the content
         final String updatedContent = "This is the updated content";
-        execute(putDSMethod(pid,dsid,updatedContent));
-        assertEquals( updatedContent, EntityUtils.toString(execute(getDSMethod(pid, dsid)).getEntity()) );
-
+        executeAndClose(putDSMethod(pid, dsid, updatedContent));
+        try (final CloseableHttpResponse dsResponse = execute(getDSMethod(pid, dsid))) {
+            assertEquals(updatedContent, EntityUtils.toString(dsResponse.getEntity()));
+        }
         // revert to the original content
         revertToVersion(pid + "/" + dsid, versionLabel);
-        assertEquals( originalContent, EntityUtils.toString(execute(getDSMethod(pid, dsid)).getEntity()) );
+        try (final CloseableHttpResponse dsResponse2 = execute(getDSMethod(pid, dsid))) {
+            assertEquals(originalContent, EntityUtils.toString(dsResponse2.getEntity()));
+        }
     }
 
-
     @Test
-    public void testIndexResponseContentTypes() throws Exception {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-        enableVersioning(pid);
+    public void testIndexResponseContentTypes() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
 
-        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
-            final HttpGet method =
-                    new HttpGet(serverAddress + pid + "/fcr:versions");
-
+        for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method = new HttpGet(serverAddress + id + "/fcr:versions");
             method.addHeader("Accept", type);
             assertEquals(type, getContentType(method));
         }
     }
 
     @Test
-    public void testGetVersionResponseContentTypes() throws Exception {
-        final String pid = getRandomUniquePid();
+    public void testGetVersionResponseContentTypes() throws IOException {
+        final String id = getRandomUniqueId();
         final String versionName = "v1";
 
-        createObject(pid);
-        enableVersioning(pid);
-        postObjectVersion(pid, versionName);
+        createObjectAndClose(id);
+        enableVersioning(id);
+        postObjectVersion(id, versionName);
 
-        for (final String type : RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
-            final HttpGet method =
-                    new HttpGet(serverAddress + pid + "/fcr:versions/" + versionName);
-
+        for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
+            final HttpGet method = new HttpGet(serverAddress + id + "/fcr:versions/" + versionName);
             method.addHeader("Accept", type);
             assertEquals(type, getContentType(method));
         }
@@ -556,61 +511,43 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testOmissionOfJCRCVersionRDF() throws IOException {
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-        enableVersioning(pid);
-        final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid));
-
-        final Resource subject = createResource(serverAddress + pid);
-        final String [] jcrVersioningTriples = new String[] {
-                REPOSITORY_NAMESPACE + "baseVersion",
-                REPOSITORY_NAMESPACE + "isCheckedOut",
-                REPOSITORY_NAMESPACE + "predecessors",
-                REPOSITORY_NAMESPACE + "versionHistory" };
-
-        for (final String prohibitedProperty : jcrVersioningTriples) {
-            assertFalse(prohibitedProperty + " must not appear in RDF for version-enabled node!",
-                    rdf.contains(
-                    ANY,
-                    subject.asNode(),
-                    createResource(prohibitedProperty).asNode(),
-                    ANY));
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
+        try (final CloseableGraphStore rdf = getGraphStore(new HttpGet(serverAddress + id))) {
+            final Node subject = createURI(serverAddress + id);
+            for (final String prohibitedProperty : jcrVersioningTriples) {
+                assertFalse(prohibitedProperty + " must not appear in RDF for version-enabled node!",
+                        rdf.contains(ANY, subject, createURI(prohibitedProperty), ANY));
+            }
         }
-
     }
 
     @Test
     public void testInabilityToExportJCRXML() throws IOException {
         final String versionLabel = "l1";
-        final String pid = getRandomUniquePid();
-        createObject(pid);
-        enableVersioning(pid);
-        postObjectVersion(pid, versionLabel);
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
+        postObjectVersion(id, versionLabel);
 
-        final GraphStore rdf = getGraphStore(new HttpGet(serverAddress + pid + "/fcr:versions/" + versionLabel));
-        assertFalse("Historic version must not have any serialization defined.",
-                rdf.find(ANY, ANY, RdfLexicon.HAS_SERIALIZATION.asNode(), ANY).hasNext());
+        try (final CloseableGraphStore rdf =
+                getGraphStore(new HttpGet(serverAddress + id + "/fcr:versions/" + versionLabel))) {
+            assertFalse("Historic version must not have any serialization defined.",
+                    rdf.contains(ANY, ANY, HAS_SERIALIZATION.asNode(), ANY));
+        }
     }
 
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)
             throws IOException {
-        final HttpPatch updateObjectGraphMethod =
-                new HttpPatch(url);
-        updateObjectGraphMethod.addHeader("Content-Type",
-                "application/sparql-update");
-
-        final BasicHttpEntity e = new BasicHttpEntity();
-        e.setContent(new ByteArrayInputStream(
-                ("INSERT DATA { <> <" + predicate + "> \"" + literal + "\" } ")
-                        .getBytes()));
-        updateObjectGraphMethod.setEntity(e);
-
-        final HttpResponse response = execute(updateObjectGraphMethod);
-        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(url);
+        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.setEntity(new StringEntity(
+                "INSERT DATA { <> <" + predicate + "> \"" + literal + "\" } "));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
     }
 
-    private GraphStore getContent(final String url) throws IOException {
+    private CloseableGraphStore getContent(final String url) throws IOException {
         final HttpGet getVersion = new HttpGet(url);
         getVersion.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINS.toString() + "\"");
         return getGraphStore(getVersion);
@@ -632,14 +569,14 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         logger.debug("Posting version");
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
         postVersion.addHeader("Slug", label);
-        final HttpResponse response = execute(postVersion);
-        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine().getStatusCode() );
-        final String locationHeader = response.getFirstHeader("Location").getValue();
-        assertNotNull( "No version location header found", locationHeader );
+        try (final CloseableHttpResponse response = execute(postVersion)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            assertNotNull("No version location header found", getLocation(response));
+        }
     }
 
-    private static void revertToVersion(final String objId, final String versionLabel) throws IOException {
-        final HttpPatch patch = new HttpPatch(serverAddress + objId + "/fcr:versions/" + versionLabel);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+    private static void revertToVersion(final String objId, final String versionLabel) {
+        assertEquals(NO_CONTENT.getStatusCode(),
+                getStatus(new HttpPatch(serverAddress + objId + "/fcr:versions/" + versionLabel)));
     }
 }

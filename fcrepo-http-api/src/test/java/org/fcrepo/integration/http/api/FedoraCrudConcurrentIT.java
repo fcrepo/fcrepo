@@ -77,7 +77,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
         // Create object
         logger.info("# Starting " + numThreads + " concurrent threads to create object...");
         for (int i = 0; i < numThreads; i++) {
-            pid = getRandomUniquePid();
+            pid = getRandomUniqueId();
             pids.add(pid);
             final String taskName = "Thread " + (i + 1) + " to create object " + pid;
             final HttpRequestBase request = postObjMethod("/");
