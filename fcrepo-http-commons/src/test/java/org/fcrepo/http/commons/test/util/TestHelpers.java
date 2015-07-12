@@ -57,10 +57,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
+
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.models.FedoraBinary;
 import org.fcrepo.mint.UUIDPidMinter;
+
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -69,7 +71,6 @@ import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 
 /**
@@ -227,7 +228,7 @@ public abstract class TestHelpers {
             final MessageDigest md;
             try {
                 md = MessageDigest.getInstance("SHA-1");
-            } catch (NoSuchAlgorithmException e) {
+            } catch (final NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
             final byte[] digest = md.digest(content.getBytes());
@@ -248,7 +249,7 @@ public abstract class TestHelpers {
             final MessageDigest md;
             try {
                 md = MessageDigest.getInstance("SHA-1");
-            } catch (NoSuchAlgorithmException e) {
+            } catch (final NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
             final byte[] digest = md.digest(content.getBytes());
@@ -268,21 +269,18 @@ public abstract class TestHelpers {
         return lang.getName();
     }
 
-    public static GraphStore parseTriples(final HttpEntity entity) throws IOException {
+    public static CloseableGraphStore parseTriples(final HttpEntity entity) throws IOException {
         return parseTriples(entity.getContent(), getRdfSerialization(entity));
     }
 
-    public static GraphStore parseTriples(final InputStream content) {
+    public static CloseableGraphStore parseTriples(final InputStream content) {
         return parseTriples(content, "N3");
     }
 
-    public static GraphStore parseTriples(final InputStream content,
-            final String contentType) {
+    public static CloseableGraphStore parseTriples(final InputStream content, final String contentType) {
         final Model model = createDefaultModel();
-
         model.read(content, "", contentType);
-
-        return GraphStoreFactory.create(model);
+        return new CloseableGraphStore(GraphStoreFactory.create(model));
     }
 
     /**
@@ -292,15 +290,14 @@ public abstract class TestHelpers {
      * @param name the name of the field
      * @param obj the value to set
      */
-    public static void setField(final Object parent, final String name,
-            final Object obj) {
+    public static void setField(final Object parent, final String name, final Object obj) {
         /* check the parent class too if the field could not be found */
         try {
             final Field f = findField(parent.getClass(), name);
             f.setAccessible(true);
             f.set(parent, obj);
-        } catch (final Exception e) {
-            e.printStackTrace();
+        } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException e) {
+            throw new RuntimeException(e);
         }
     }
 
