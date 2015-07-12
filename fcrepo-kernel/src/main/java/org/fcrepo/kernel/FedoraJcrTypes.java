@@ -58,7 +58,7 @@ public interface FedoraJcrTypes {
 
     String CONTENT_SIZE = "premis:hasSize";
 
-    String CONTENT_DIGEST = "fedora:digest";
+    String CONTENT_DIGEST = "premis:hasMessageDigest";
 
     String FCR_METADATA = "fcr:metadata";
 
