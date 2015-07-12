@@ -62,7 +62,7 @@ public class GeonameIT extends AbstractIntegrationRdfIT {
                 "    dcterms:modified \"2012-03-30\"^^<http://www.w3.org/2001/XMLSchema#date> ;\n" +
                 "    a foaf:Document ;\n" +
                 "    foaf:primaryTopic <http://sws.geonames.org/3020251/> .";
-        createLDPRSAndCheckResponse(getRandomUniquePid(), s);
+        createLDPRSAndCheckResponse(getRandomUniqueId(), s);
 
     }
 }

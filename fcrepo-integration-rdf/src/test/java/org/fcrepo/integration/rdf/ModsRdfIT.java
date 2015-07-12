@@ -162,6 +162,6 @@ public class ModsRdfIT extends AbstractIntegrationRdfIT {
                 "    a madsrdf:PersonalName ;\n" +
                 "    rdfs:label \"  David A.  Schneider    \" .";
 
-        createLDPRSAndCheckResponse(getRandomUniquePid(), s);
+        createLDPRSAndCheckResponse(getRandomUniqueId(), s);
     }
 }

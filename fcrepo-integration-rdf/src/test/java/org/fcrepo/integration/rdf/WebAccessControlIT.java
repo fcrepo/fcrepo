@@ -25,7 +25,7 @@ import java.io.IOException;
 public class WebAccessControlIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExample() throws IOException {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         final String card = createObject(pid + "-card").getFirstHeader("Location").getValue();
         final String s = "@prefix acl: <http://www.w3.org/ns/auth/acl#> . \n" +
                 "@prefix foaf: <http://xmlns.com/foaf/0.1/> . \n" +
@@ -34,6 +34,6 @@ public class WebAccessControlIT extends AbstractIntegrationRdfIT {
                 "   acl:mode acl:Read, acl:Write; \n" +
                 "   acl:agent <" + card + "#me> .";
 
-        createLDPRSAndCheckResponse(getRandomUniquePid(), s);
+        createLDPRSAndCheckResponse(getRandomUniqueId(), s);
     }
 }
