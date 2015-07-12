@@ -25,6 +25,6 @@ import java.io.IOException;
 public class VivoIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExampleRecord() throws IOException {
-        createLDPRSAndCheckResponse(getRandomUniquePid(), getContentFromClasspath("/examples/vivo.ttl"));
+        createLDPRSAndCheckResponse(getRandomUniqueId(), getContentFromClasspath("/examples/vivo.ttl"));
     }
 }

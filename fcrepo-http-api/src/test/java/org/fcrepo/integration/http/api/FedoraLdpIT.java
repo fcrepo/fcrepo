@@ -468,6 +468,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
+    /**
+     * Descriptions of bitstreams contain triples about the described thing, so only triples with the described thing
+     * as their subject are legal.
+     *
+     * @throws IOException in case of IOException
+     */
     @Test
     public void testPatchBinaryDescription() throws IOException {
         final String id = getRandomUniqueId();
@@ -791,21 +797,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
     /**
      * Ensure that the objects cannot be pairtree child resources
      *
+     * @throws IOException in case of IOException
      */
     @Test
-    public void testIngestOnPairtree() throws Exception {
-        final HttpResponse response = createObject("");
-
+    public void testIngestOnPairtree() throws IOException {
         //  Following the approach undertaken for FedoraExportIT#shouldRoundTripOnePairtree
-        final String objName = response.getFirstHeader("Location").getValue();
+        final String objName = getLocation(postObjMethod());
         final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
 
-        final GraphStore graphStore = getGraphStore(getObjMethod(pairtreeName));
+        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod(pairtreeName))) {
         assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
-                createResource(serverAddress + pairtreeName).asNode(),
-                createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
+                createURI(serverAddress + pairtreeName),  createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
                 createLiteral(FEDORA_PAIRTREE)));
-
+        }
         // Attempting to POST to the child of the pairtree node...
         final int status = getStatus(postObjMethod(pairtreeName));
         assertEquals("Created an Object under a pairtree node!", FORBIDDEN.getStatusCode(), status);
@@ -1299,7 +1303,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     /**
      * I should be able to create two subdirectories of a non-existent parent directory.
      *
-     * @throws Exception thrown during this function
+     * @throws IOException thrown during this function
      **/
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     // TODO
@@ -1345,7 +1349,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     /**
      * I should be able to link to content on a federated filesystem.
      *
-     * @throws IOException
+     * @throws IOException in case of IOException
      **/
     @Test
     public void testFederatedDatastream() throws IOException {
@@ -1382,12 +1386,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * When I make changes to a resource in a federated filesystem, the parent folder's Last-Modified header should be
      * updated.
      *
-     * @throws InterruptedException
-     * @throws IOException thrown during this function
-     * @throws ParseException
+     * @throws IOException in case of IOException
      **/
     @Test
-    public void testLastModifiedUpdatedAfterUpdates() throws IOException, InterruptedException, ParseException {
+    public void testLastModifiedUpdatedAfterUpdates() throws IOException  {
 
         // create directory containing a file in filesystem
         final File fed = new File("target/test-classes/test-objects");
@@ -1398,7 +1400,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         dir.mkdir();
         child.mkdir();
         // TODO this seems really brittle
-        sleep(2000);
+        try {
+            sleep(2000);
+        } catch (final InterruptedException e) {
+        }
 
         // check Last-Modified header is current
         final long lastmod1;
@@ -1406,18 +1411,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(resp1));
             lastmod1 = headerFormat.parse(resp1.getFirstHeader("Last-Modified").getValue()).getTime();
             assertTrue((timestamp1 - lastmod1) < 1000); // because rounding
-        }
-        // remove the file and wait for the TTL to expire
-        final long timestamp2 = currentTimeMillis();
-        child.delete();
-        sleep(2000);
 
-        // check Last-Modified header is updated
-        try (final CloseableHttpResponse resp2 = execute(new HttpHead(serverAddress + "files/" + id))) {
-            assertEquals(OK.getStatusCode(), getStatus(resp2));
-            final long lastmod2 = headerFormat.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
-            assertTrue((timestamp2 - lastmod2) < 1000); // because rounding
-            assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
+            // remove the file and wait for the TTL to expire
+            final long timestamp2 = currentTimeMillis();
+            child.delete();
+            try {
+                sleep(2000);
+            } catch (final InterruptedException e) {
+            }
+
+            // check Last-Modified header is updated
+            try (final CloseableHttpResponse resp2 = execute(new HttpHead(serverAddress + "files/" + id))) {
+                assertEquals(OK.getStatusCode(), getStatus(resp2));
+                final long lastmod2 = headerFormat.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
+                assertTrue((timestamp2 - lastmod2) < 1000); // because rounding
+                assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
+            } catch (final ParseException e) {
+                fail();
+            }
+        } catch (final ParseException e) {
+            fail();
         }
     }
 

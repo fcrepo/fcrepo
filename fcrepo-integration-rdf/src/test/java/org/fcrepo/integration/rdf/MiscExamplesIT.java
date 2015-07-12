@@ -26,7 +26,7 @@ public class MiscExamplesIT extends AbstractIntegrationRdfIT {
 
     @Test
     public void testSyntacticallyInvalidDate() {
-        createLDPRSAndCheckResponse(getRandomUniquePid(), "<> <info:some/property> \"dunno\"^^<http://www.w3" +
+        createLDPRSAndCheckResponse(getRandomUniqueId(), "<> <info:some/property> \"dunno\"^^<http://www.w3" +
                 ".org/2001/XMLSchema#dateTime>");
     }
 }

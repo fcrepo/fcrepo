@@ -16,10 +16,14 @@
 package org.fcrepo.integration.http.api;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -27,8 +31,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import com.hp.hpl.jena.update.GraphStore;
-import org.apache.http.HttpResponse;
+import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -41,103 +46,90 @@ import org.modeshape.common.util.Base64;
  * <p>FedoraExportIT class.</p>
  *
  * @author awoods
+ * @author ajs6f
  */
 public class FedoraExportIT extends AbstractResourceIT {
 
     @Test
     public void shouldRoundTripOneContainer() throws IOException {
         final String objName = getRandomUniqueId();
-
         // set up the object
-        createObject(objName);
+        createObjectAndClose(objName);
         createDatastream(objName, "testDS", "stuff");
-
         testRoundtrip(objName);
     }
 
     @Test
     public void shouldRoundTripOnePairtree() throws IOException {
         // set up the object
-        final HttpResponse response = createObject("");
-        final String objName = response.getFirstHeader("Location").getValue();
+        final String objName = getLocation(postObjMethod());
         final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
 
-        final GraphStore graphStore = getGraphStore(new HttpGet(serverAddress + pairtreeName));
-        assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
-                createResource(serverAddress + pairtreeName).asNode(),
-                createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
-                createLiteral(FEDORA_PAIRTREE)));
-
+        try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(serverAddress + pairtreeName))) {
+            assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.",
+                    graphStore.contains(ANY, createURI(serverAddress + pairtreeName),
+                            createURI(REPOSITORY_NAMESPACE + "mixinTypes"), createLiteral(FEDORA_PAIRTREE)));
+        }
         testRoundtrip(pairtreeName);
     }
 
-    private void testRoundtrip(final String objName) throws IOException {
+    private static void testRoundtrip(final String objName) throws IOException {
         // export it
         logger.debug("Attempting to export: " + objName);
-        final HttpGet getObjMethod =
-                new HttpGet(serverAddress + objName + "/fcr:export");
-        HttpResponse response = execute(getObjMethod);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        assertEquals("application/xml", response.getEntity().getContentType()
-                .getValue());
-        logger.debug("Successfully exported: " + objName);
-        final String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Found exported object: " + content);
-
+        final String content;
+        try (CloseableHttpResponse response = execute(new HttpGet(serverAddress + objName + "/fcr:export"))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            assertEquals("application/xml", response.getEntity().getContentType().getValue());
+            logger.debug("Successfully exported: " + objName);
+            content = EntityUtils.toString(response.getEntity());
+            logger.debug("Found exported object: " + content);
+        }
         // delete it
-        execute(new HttpDelete(serverAddress + objName));
+        executeAndClose(new HttpDelete(serverAddress + objName));
         assertDeleted(objName);
-        final HttpResponse tombstoneResponse = execute(new HttpDelete(serverAddress + objName + "/fcr:tombstone"));
-        assertEquals(204, tombstoneResponse.getStatusLine().getStatusCode());
+        assertEquals(NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + objName + "/fcr:tombstone")));
 
         // try to import it
-        final String parentName = objName.contains("/")
-                ? objName.substring(0, objName.lastIndexOf('/')) : "";
+        final String parentName = objName.contains("/") ? objName.substring(0, objName.lastIndexOf('/')) : "";
         final HttpPost importMethod = new HttpPost(serverAddress + parentName + "/fcr:import");
         importMethod.setEntity(new StringEntity(content));
-        assertEquals("Couldn't import!", 201, getStatus(importMethod));
+        assertEquals("Couldn't import!", CREATED.getStatusCode(), getStatus(importMethod));
 
         // check that we made it
-        response = execute(new HttpGet(serverAddress + objName));
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + objName)));
     }
 
     @Test
-    public
-            void
-            shouldMoveObjectToTheRootLevelUsingTheRepositoryWideApi()
-                                                                     throws IOException {
+    public void shouldMoveObjectToTheRootLevelUsingTheRepositoryWideApi() throws IOException {
         final String objName = getRandomUniqueId();
 
         // set up the object
-        createObject(objName);
+        createObjectAndClose(objName);
         createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
-        final HttpGet getObjMethod =
-            new HttpGet(serverAddress + objName + "/fcr:export");
-        HttpResponse response = execute(getObjMethod);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        logger.debug("Successfully exported: " + objName);
-        final String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Found exported object: " + content);
-
+        final HttpGet getObjMethod = new HttpGet(serverAddress + objName + "/fcr:export");
+        final String content;
+        try (CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            logger.debug("Successfully exported: " + objName);
+            content = EntityUtils.toString(response.getEntity());
+            logger.debug("Found exported object: " + content);
+        }
         // delete it
-        execute(new HttpDelete(serverAddress + objName));
+        executeAndClose(new HttpDelete(serverAddress + objName));
         assertDeleted(objName);
-        execute(new HttpDelete(serverAddress + objName + "/fcr:tombstone"));
+        executeAndClose(new HttpDelete(serverAddress + objName + "/fcr:tombstone"));
 
         // try to import it
         final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
         importMethod.setEntity(new StringEntity(content));
-        assertEquals("Couldn't import!", 201, getStatus(importMethod));
+        assertEquals("Couldn't import!", CREATED.getStatusCode(), getStatus(importMethod));
 
         // check that we made it
-        response = execute(new HttpGet(serverAddress + objName));
-        assertEquals(200, response.getStatusLine().getStatusCode());
-
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + objName)));
     }
 
     @Test
@@ -145,21 +137,21 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniqueId();
 
         // set up the object
-        createObject(objName);
+        createObjectAndClose(objName);
         createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
-        final HttpGet getObjMethod =
-            new HttpGet(serverAddress + objName + "/fcr:export?skipBinary=false&recurse=true");
-        final HttpResponse response = execute(getObjMethod);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        final String content = EntityUtils.toString(response.getEntity());
-
+        final String content;
+        try (final CloseableHttpResponse response =
+                execute(new HttpGet(serverAddress + objName + "/fcr:export?skipBinary=false&recurse=true"))) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            content = EntityUtils.toString(response.getEntity());
+        }
         // try to import it
         final HttpPost importMethod = new HttpPost(serverAddress + objName + "/fcr:import");
         importMethod.setEntity(new StringEntity(content));
-        assertEquals( 409, getStatus(importMethod));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(importMethod));
     }
 
     @Test
@@ -167,19 +159,18 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniqueId();
 
         // set up the object
-        createObject(objName);
+        createObjectAndClose(objName);
         createDatastream(objName, "testDS", "stuff");
 
         // export it
         logger.debug("Attempting to export: " + objName);
-        final HttpGet getObjMethod =
-            new HttpGet(serverAddress + objName + "/fcr:export");
-        final HttpResponse response = client.execute(getObjMethod);
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        logger.debug("Successfully exported: " + objName);
-        final String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Found exported object: " + content);
-
+        try (final CloseableHttpResponse response =
+                client.execute(new HttpGet(serverAddress + objName + "/fcr:export"))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            logger.debug("Successfully exported: " + objName);
+            final String content = EntityUtils.toString(response.getEntity());
+            logger.debug("Found exported object: " + content);
+        }
     }
 
     @Test
@@ -187,31 +178,29 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String objName = getRandomUniqueId();
         final String binaryValue = "stuff";
         // set up the object
-        createObject(objName);
+        createObjectAndClose(objName);
         createDatastream(objName, "testDS", binaryValue);
 
         // export it
         logger.debug("Attempting to export: " + objName);
-        final HttpGet getObjMethod =
-            new HttpGet(serverAddress + objName + "/fcr:export?recurse=true");
-        HttpResponse response = execute(getObjMethod);
-        assertEquals("application/xml", response.getEntity().getContentType()
-                .getValue());
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        logger.debug("Successfully exported: " + objName);
-        final String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Found exported object: " + content);
-        final char[] base64Value = Base64.encodeBytes(binaryValue.getBytes("UTF-8")).toCharArray();
-        assertFalse(content.indexOf(String.valueOf(base64Value)) >= 0);
-
+        final char[] base64Value;
+        try (CloseableHttpResponse response =
+                execute(new HttpGet(serverAddress + objName + "/fcr:export?recurse=true"))) {
+            assertEquals("application/xml", response.getEntity().getContentType().getValue());
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            logger.debug("Successfully exported: " + objName);
+            final String content = EntityUtils.toString(response.getEntity());
+            logger.debug("Found exported object: " + content);
+            base64Value = Base64.encodeBytes(binaryValue.getBytes("UTF-8")).toCharArray();
+            assertFalse(content.contains(String.valueOf(base64Value)));
+        }
         // Contains the binary value otherwise
-        final HttpGet getObjWithBinaryMethod = new HttpGet(
-                serverAddress + objName + "/fcr:export?recurse=true&skipBinary=false");
-        response = execute(getObjWithBinaryMethod);
-        assertEquals("application/xml", response.getEntity().getContentType()
-                .getValue());
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        assertTrue(EntityUtils.toString(response.getEntity()).indexOf(String.valueOf(base64Value)) >= 0);
+        try (CloseableHttpResponse response = execute(new HttpGet(
+                serverAddress + objName + "/fcr:export?recurse=true&skipBinary=false"))) {
+            assertEquals("application/xml", response.getEntity().getContentType().getValue());
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            assertTrue(EntityUtils.toString(response.getEntity()).contains(String.valueOf(base64Value)));
+        }
     }
 
     @Test
@@ -220,42 +209,41 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String childName = "testDS";
         final String binaryValue = "stuff";
         // set up the object
-        createObject(objName);
+        createObjectAndClose(objName);
         createDatastream(objName, childName, binaryValue);
         // export it
         logger.debug("Attempting to export: " + objName);
-        final HttpGet getObjMethod =
-            new HttpGet(serverAddress + objName + "/fcr:export");
-        HttpResponse response = execute(getObjMethod);
-        assertEquals("application/xml", response.getEntity().getContentType()
-                .getValue());
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        logger.debug("Successfully exported: " + objName);
-        final String content = EntityUtils.toString(response.getEntity());
-        logger.debug("Found exported object: " + content);
-        assertFalse(content.indexOf("sv:name=\"" + childName + "\"") > 0);
-
+        try (CloseableHttpResponse response = execute(new HttpGet(serverAddress + objName + "/fcr:export"))) {
+            assertEquals("application/xml", response.getEntity().getContentType().getValue());
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            logger.debug("Successfully exported: " + objName);
+            final String content = EntityUtils.toString(response.getEntity());
+            logger.debug("Found exported object: " + content);
+            assertFalse(content.contains("sv:name=\"" + childName + "\""));
+        }
         // Contains the child node otherwise
-        final HttpGet getObjWithBinaryMethod = new HttpGet(serverAddress + objName + "/fcr:export?recurse=true");
-        response = execute(getObjWithBinaryMethod);
-        assertEquals("application/xml", response.getEntity().getContentType()
-                .getValue());
-        assertEquals(200, response.getStatusLine().getStatusCode());
-        assertTrue(EntityUtils.toString(response.getEntity()).indexOf("sv:name=\"" + childName + "\"") > 0);
+        try (CloseableHttpResponse response =
+                execute(new HttpGet(serverAddress + objName + "/fcr:export?recurse=true"))) {
+            assertEquals("application/xml", response.getEntity().getContentType().getValue());
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            assertTrue(EntityUtils.toString(response.getEntity()).contains("sv:name=\"" + childName + "\""));
+        }
     }
 
     @Test
     public void importNonJCRXMLShouldFail() throws IOException {
         final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
         importMethod.setEntity(new StringEntity("<test><this></this></test>"));
-        assertEquals("Should not have been able to import non JCR/XML.", 400, getStatus(importMethod));
+        assertEquals("Should not have been able to import non JCR/XML.",
+                BAD_REQUEST.getStatusCode(), getStatus(importMethod));
     }
 
     @Test
     public void importMalformedXMLShouldFail() throws IOException {
         final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
         importMethod.setEntity(new StringEntity("this isn't xml at all."));
-        assertEquals("Should not have been able to import malformed XML.", 400, getStatus(importMethod));
+        assertEquals("Should not have been able to import malformed XML.",
+                BAD_REQUEST.getStatusCode(), getStatus(importMethod));
     }
 
     @Test
@@ -263,19 +251,18 @@ public class FedoraExportIT extends AbstractResourceIT {
         final HttpPost importMethod = new HttpPost(serverAddress + "fcr:import");
         importMethod.setEntity(
                 new StringEntity("<sv:value xmlns:sv=\"http://www.jcp.org/jcr/sv/1.0\">just a value?</sv:value>"));
-        assertEquals("Should not have been able to import nonsensical JCR/XML..", 400, getStatus(importMethod));
+        assertEquals("Should not have been able to import nonsensical JCR/XML..",
+                BAD_REQUEST.getStatusCode(), getStatus(importMethod));
     }
 
     @Test
     public void testExportBinary() throws IOException {
         final String objName = getRandomUniqueId();
-        createObject(objName);
+        createObjectAndClose(objName);
         createDatastream(objName, "testDS", "stuff");
         final String dsName = objName + "/testDS";
 
-        final HttpGet exportMethod = new HttpGet(serverAddress + dsName + "/fcr:export");
-        final HttpResponse response = execute(exportMethod);
-        assertEquals("Should not be able to export binary content.", 400, response.getStatusLine().getStatusCode());
-
+        assertEquals("Should not be able to export binary content.", BAD_REQUEST.getStatusCode(),
+                getStatus(new HttpGet(serverAddress + dsName + "/fcr:export")));
     }
 }

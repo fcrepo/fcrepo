@@ -143,22 +143,42 @@ public abstract class AbstractResourceIT {
         return new HttpGet(serverAddress + pid + "/" + ds + "/" + FCR_METADATA);
     }
 
-    protected static CloseableHttpResponse execute(final HttpUriRequest method) throws ClientProtocolException,
-            IOException {
-        logger.debug("Executing: " + method.getMethod() + " to " + method.getURI());
-        return client.execute(method);
+    /**
+     * Execute an HTTP request and return the open response.
+     *
+     * @param req Request to execute
+     * @return the open response
+     * @throws IOException in case of an IOException
+     */
+    protected static CloseableHttpResponse execute(final HttpUriRequest req) throws IOException {
+        logger.debug("Executing: " + req.getMethod() + " to " + req.getURI());
+        return client.execute(req);
     }
 
-    protected static void executeAndClose(final HttpUriRequest method) {
-        logger.debug("Executing: " + method.getMethod() + " to " + method.getURI());
+    /**
+     * Execute an HTTP request and close the response.
+     *
+     * @param req the request to execute
+     */
+    protected static void executeAndClose(final HttpUriRequest req) {
+        logger.debug("Executing: " + req.getMethod() + " to " + req.getURI());
         try {
-            execute(method).close();
+            execute(req).close();
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    // Executes requests with preemptive basic authentication
+
+    /**
+     * Execute an HTTP request with preemptive basic authentication.
+     *
+     * @param request the request to execute
+     * @param username usename to use
+     * @param password password to use
+     * @return the open responses
+     * @throws IOException in case of IOException
+     */
     @SuppressWarnings("resource")
     protected CloseableHttpResponse executeWithBasicAuth(final HttpUriRequest request, final String username,
             final String password) throws IOException {
@@ -178,12 +198,24 @@ public abstract class AbstractResourceIT {
         return httpclient.execute(request, localContext);
     }
 
+    /**
+     * Retrieve the HTTP status code from an open response.
+     *
+     * @param response the open response
+     * @return the HTTP status code of the response
+     */
     protected static int getStatus(final HttpResponse response) {
         return response.getStatusLine().getStatusCode();
     }
 
-    protected static int getStatus(final HttpUriRequest method) {
-        try (final CloseableHttpResponse response = execute(method)) {
+    /**
+     * Executes an HTTP request and returns the status code of the response, closing the response.
+     *
+     * @param req the request to execute
+     * @return the HTTP status code of the response
+     */
+    protected static int getStatus(final HttpUriRequest req) {
+        try (final CloseableHttpResponse response = execute(req)) {
             final int result = getStatus(response);
             if (!(result > 199) || !(result < 400)) {
                 logger.warn("Got status {}", result);
@@ -198,39 +230,53 @@ public abstract class AbstractResourceIT {
     }
 
     /**
-     * Executes the input method and returns any Location header in the response.
+     * Executes an HTTP request and returns the first Location header in the response, then closes the response.
      *
-     * @param method
-     * @return
-     * @throws ClientProtocolException
-     * @throws IOException
+     * @param req the request to execute
+     * @return the value of the first Location header in the response
+     * @throws IOException in case of IOException
      */
-    protected static String getLocation(final HttpUriRequest method) throws ClientProtocolException, IOException {
-        try (final CloseableHttpResponse response = execute(method)) {
+    protected static String getLocation(final HttpUriRequest req) throws IOException {
+        try (final CloseableHttpResponse response = execute(req)) {
             return getLocation(response);
         }
     }
 
+    /**
+     * Retrieve the value of the first Location header from an open HTTP response.
+     *
+     * @param response the open response
+     * @return the value of the first Location header in the response
+     */
     protected static String getLocation(final HttpResponse response) {
         return response.getFirstHeader("Location").getValue();
     }
 
     protected String getContentType(final HttpUriRequest method) throws ClientProtocolException, IOException {
         try (final CloseableHttpResponse response = execute(method)) {
-            final int result = response.getStatusLine().getStatusCode();
+            final int result = getStatus(response);
             assertEquals(OK.getStatusCode(), result);
             return response.getFirstHeader("Content-Type").getValue();
         }
     }
 
-    protected CloseableGraphStore getGraphStore(final CloseableHttpClient client, final HttpUriRequest method)
+    /**
+     * Executes an HTTP request and parses the RDF found in the response, returning it in a
+     * {@link CloseableGraphStore}, then closes the response.
+     *
+     * @param client the client to use
+     * @param req the request to execute
+     * @return the graph retrieved
+     * @throws IOException in case of IOException
+     */
+    protected CloseableGraphStore getGraphStore(final CloseableHttpClient client, final HttpUriRequest req)
             throws IOException {
-        if (!method.containsHeader("Accept")) {
-            method.addHeader("Accept", "application/n-triples");
+        if (!req.containsHeader("Accept")) {
+            req.addHeader("Accept", "application/n-triples");
         }
-        logger.debug("Retrieving RDF using mimeType: {}", method.getFirstHeader("Accept"));
+        logger.debug("Retrieving RDF using mimeType: {}", req.getFirstHeader("Accept"));
 
-        try (final CloseableHttpResponse response = client.execute(method)) {
+        try (final CloseableHttpResponse response = client.execute(req)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             final CloseableGraphStore result = parseTriples(response.getEntity());
             logger.trace("Retrieved RDF: {}", result);
@@ -239,6 +285,13 @@ public abstract class AbstractResourceIT {
 
     }
 
+    /**
+     * Parses the RDF found in and HTTP response, returning it in a {@link CloseableGraphStore}.
+     *
+     * @param response the response to parse
+     * @return the graph retrieved
+     * @throws IOException in case of IOException
+     */
     protected CloseableGraphStore getGraphStore(final HttpResponse response) throws IOException {
         assertEquals(OK.getStatusCode(), getStatus(response));
         final CloseableGraphStore result = parseTriples(response.getEntity());
@@ -246,8 +299,16 @@ public abstract class AbstractResourceIT {
         return result;
     }
 
-    protected CloseableGraphStore getGraphStore(final HttpUriRequest method) throws IOException {
-        return getGraphStore(client, method);
+    /**
+     * Executes an HTTP request and parses the RDF found in the response, returning it in a
+     * {@link CloseableGraphStore}, then closes the response.
+     *
+     * @param req the request to execute
+     * @return the constructed graph
+     * @throws IOException in case of IOException
+     */
+    protected CloseableGraphStore getGraphStore(final HttpUriRequest req) throws IOException {
+        return getGraphStore(client, req);
     }
 
     protected CloseableHttpResponse createObject() {
@@ -301,6 +362,7 @@ public abstract class AbstractResourceIT {
 
     /**
      * Creates a transaction, asserts that it's successful and returns the transaction location.
+     *
      * @return string containing transaction location
      * @throws IOException exception thrown during the function
      */

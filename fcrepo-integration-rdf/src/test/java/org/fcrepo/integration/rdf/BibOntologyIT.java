@@ -25,6 +25,6 @@ import java.io.IOException;
 public class BibOntologyIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExampleRecord() throws IOException {
-        createLDPRSAndCheckResponse(getRandomUniquePid(), getContentFromClasspath("/examples/bibontology.ttl"));
+        createLDPRSAndCheckResponse(getRandomUniqueId(), getContentFromClasspath("/examples/bibontology.ttl"));
     }
 }
