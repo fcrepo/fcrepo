@@ -32,7 +32,7 @@ import static org.junit.Assert.assertFalse;
 public class LdpIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExample10() throws IOException {
-        final String pid = getRandomUniquePid();
+        final String pid = getRandomUniqueId();
         final HttpResponse response = createObject(pid);
         final String location = response.getFirstHeader("Location").getValue();
 

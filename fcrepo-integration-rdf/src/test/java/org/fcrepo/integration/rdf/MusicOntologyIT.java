@@ -25,6 +25,6 @@ import java.io.IOException;
 public class MusicOntologyIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExampleRecord() throws IOException {
-        createLDPRSAndCheckResponse(getRandomUniquePid(), getContentFromClasspath("/examples/musicontology.ttl"));
+        createLDPRSAndCheckResponse(getRandomUniqueId(), getContentFromClasspath("/examples/musicontology.ttl"));
     }
 }

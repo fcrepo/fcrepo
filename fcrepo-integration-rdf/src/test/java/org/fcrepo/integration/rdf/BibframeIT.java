@@ -66,7 +66,7 @@ public class BibframeIT extends AbstractIntegrationRdfIT {
                 "                    bf:identifierAssigner \"SOA Watch, P.O. Box 4566, Washington, DC 20017\" ;\n" +
                 "                    bf:identifierScheme \"stockNumber\" ] ] .";
 
-        createLDPRSAndCheckResponse(getRandomUniquePid(), bibframe);
+        createLDPRSAndCheckResponse(getRandomUniqueId(), bibframe);
     }
 
 }

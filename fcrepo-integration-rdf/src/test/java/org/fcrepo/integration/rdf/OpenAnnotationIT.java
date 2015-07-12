@@ -48,6 +48,6 @@ public class OpenAnnotationIT extends AbstractIntegrationRdfIT {
                 "   ];\n" +
                 "   openannotation:hasTarget <http://purl.stanford.edu/kq131cs7229>;\n" +
                 "   openannotation:motivatedBy openannotation:commenting .";
-        createLDPRSAndCheckResponse(getRandomUniquePid(), s);
+        createLDPRSAndCheckResponse(getRandomUniqueId(), s);
     }
 }

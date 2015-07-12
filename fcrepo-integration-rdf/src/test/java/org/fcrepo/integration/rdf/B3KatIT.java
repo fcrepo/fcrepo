@@ -25,6 +25,6 @@ import java.io.IOException;
 public class B3KatIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExampleRecord() throws IOException {
-        createLDPRSAndCheckResponse(getRandomUniquePid(), getContentFromClasspath("/examples/b3kat.ttl"));
+        createLDPRSAndCheckResponse(getRandomUniqueId(), getContentFromClasspath("/examples/b3kat.ttl"));
     }
 }

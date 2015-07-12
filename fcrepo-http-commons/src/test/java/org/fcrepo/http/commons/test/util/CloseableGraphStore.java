@@ -30,7 +30,7 @@ public class CloseableGraphStore extends GraphStoreWrapper implements AutoClosea
     /**
      * Default constructor.
      *
-     * @param graphStore
+     * @param graphStore GraphStore to wrap
      */
     public CloseableGraphStore(final GraphStore graphStore) {
         super(graphStore);

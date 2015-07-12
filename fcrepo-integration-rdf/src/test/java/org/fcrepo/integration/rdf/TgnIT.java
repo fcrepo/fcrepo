@@ -25,6 +25,6 @@ import java.io.IOException;
 public class TgnIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExampleRecord() throws IOException {
-        createLDPRSAndCheckResponse(getRandomUniquePid(), getContentFromClasspath("/examples/tgn.ttl"));
+        createLDPRSAndCheckResponse(getRandomUniqueId(), getContentFromClasspath("/examples/tgn.ttl"));
     }
 }
