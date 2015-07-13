@@ -95,31 +95,11 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     @Override
     public void addedStatement(final Statement input) {
-        LOGGER.debug(">> added statement {}", input);
 
+        final Resource subject = input.getSubject();
         try {
-            // if it's not about the right kind of node, ignore it.
-            final Resource subject = input.getSubject();
-            final String subjectURI = subject.getURI();
-            // blank nodes are okay
-            if (!subject.isAnon()) {
-                // hash URIs with the same base as the topic are okay
-                final int hashIndex = subjectURI.lastIndexOf("#");
-                if (!(hashIndex > 0 && topic.getURI().equals(subjectURI.substring(0, hashIndex)))) {
-                    // the topic itself is okay
-                    if (!topic.equals(subject.asNode())) {
-                        // it's a bad subject, but it could still be in-domain
-                        if (idTranslator.inDomain(subject)) {
-                            LOGGER.error("{} is not in the topic of this RDF, which is {}.", subject, topic);
-                            throw new IncorrectTripleSubjectException(subject +
-                                    " is not in the topic of this RDF, which is " + topic);
-                        }
-                        // it's not even in the right domain!
-                        LOGGER.error("subject ({}) is not in repository domain.", subject);
-                        throw new OutOfDomainSubjectException(subject.asNode());
-                    }
-                }
-            }
+            validateSubject(subject);
+            LOGGER.debug(">> adding statement {}", input);
 
             final Statement s = jcrRdfTools.skolemize(idTranslator, input);
 
@@ -152,32 +132,11 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     @Override
     public void removedStatement(final Statement s) {
-        LOGGER.trace(">> removed statement {}", s);
-
         try {
             // if it's not about the right kind of node, ignore it.
             final Resource subject = s.getSubject();
-            final String subjectURI = subject.getURI();
-            // blank nodes are okay
-            if (!subject.isAnon()) {
-                // hash URIs with the same base as the topic are okay
-                final int hashIndex = subjectURI.lastIndexOf("#");
-                if (!(hashIndex > 0 && topic.getURI().equals(subjectURI.substring(0, hashIndex)))) {
-                    // the topic itself is okay
-                    if (!topic.equals(subject.asNode())) {
-                        // it's a bad subject, but it could still be in-domain
-                        if (idTranslator.inDomain(subject)) {
-                            LOGGER.error("{} is not in the topic of this RDF, which is {}.", subject, topic);
-                            throw new IncorrectTripleSubjectException(subject +
-                                    " is not in the topic of this RDF, which is " + topic);
-                        }
-                        // it's not even in the right domain!
-                        LOGGER.error("subject ({}) is not in repository domain.", subject);
-                        throw new OutOfDomainSubjectException(subject.asNode());
-                    }
-
-                }
-            }
+            validateSubject(subject);
+            LOGGER.trace(">> removing statement {}", s);
 
             final FedoraResource resource = idTranslator.convert(subject);
 
@@ -200,6 +159,34 @@ public class JcrPropertyStatementListener extends StatementListener {
             exceptions.add(e);
         }
 
+    }
+
+    /**
+     * If it's not the right kind of node, throw an appropriate unchecked exception.
+     *
+     * @param subject
+     */
+    private void validateSubject(final Resource subject) {
+        final String subjectURI = subject.getURI();
+        // blank nodes are okay
+        if (!subject.isAnon()) {
+            // hash URIs with the same base as the topic are okay
+            final int hashIndex = subjectURI.lastIndexOf("#");
+            if (!(hashIndex > 0 && topic.getURI().equals(subjectURI.substring(0, hashIndex)))) {
+                // the topic itself is okay
+                if (!topic.equals(subject.asNode())) {
+                    // it's a bad subject, but it could still be in-domain
+                    if (idTranslator.inDomain(subject)) {
+                        LOGGER.error("{} is not in the topic of this RDF, which is {}.", subject, topic);
+                        throw new IncorrectTripleSubjectException(subject +
+                                " is not in the topic of this RDF, which is " + topic);
+                    }
+                    // it's not even in the right domain!
+                    LOGGER.error("subject ({}) is not in repository domain.", subject);
+                    throw new OutOfDomainSubjectException(subject.asNode());
+                }
+            }
+        }
     }
 
     /**
