@@ -76,8 +76,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             f.getPath().contains(JCR_FROZEN_NODE);
 
     /**
-     * Predicate for determining whether this {@link Node} is a Fedora
-     * binary.
+     * Predicate for determining whether this {@link Node} is a Fedora Skolem node.
      */
     public static Predicate<Node> isBlankNode = new AnyTypesPredicate(FEDORA_SKOLEM);
 
