@@ -357,7 +357,7 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsExternalNode3() throws RepositoryException {
         // sha1 of "BinaryStore" is 952357dbe6acf9e88a6d0164807a79a40993003f
-        // so sourceKey is 952357d which doesn't match 07f66ed 
+        // so sourceKey is 952357d which doesn't match 07f66ed
         when(mockNode.getIdentifier()).thenReturn("07f66eddefault/some/path");
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockJcrRepository);
