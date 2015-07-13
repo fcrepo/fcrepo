@@ -18,6 +18,7 @@ package org.fcrepo.kernel.impl.services.functions;
 import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
 import java.util.function.Function;
 
 import javax.jcr.Repository;
@@ -32,7 +33,7 @@ import org.slf4j.Logger;
  *
  * @author acoburn
  */
-public class GetCacheManager implements Function<Repository, CacheManager> {
+class GetCacheManager implements Function<Repository, CacheManager> {
 
     private static final Logger LOGGER =
             getLogger(GetCacheManager.class);
@@ -46,9 +47,8 @@ public class GetCacheManager implements Function<Repository, CacheManager> {
                         .getConfiguration()
                         .getCacheConfiguration());
             }
-        } catch (final Exception ex) {
+        } catch (final IOException ex) {
             LOGGER.debug("Could not extract JcrRepository cache configuration", ex);
-
         }
         return null;
     }

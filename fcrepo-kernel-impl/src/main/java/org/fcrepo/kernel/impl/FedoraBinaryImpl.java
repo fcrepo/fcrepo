@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
@@ -283,7 +282,6 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
         try (final Timer.Context context = timer.time()) {
 
-            final Repository repo = node.getSession().getRepository();
             LOGGER.debug("Checking resource: " + getPath());
 
             final String algorithm = ContentDigest.getAlgorithm(digestUri);

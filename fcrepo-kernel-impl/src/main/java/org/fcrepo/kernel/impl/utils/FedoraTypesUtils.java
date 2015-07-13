@@ -148,7 +148,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
                     ((JcrRepository)n.getSession().getRepository())
                         .getConfiguration()
                         .getStoreName());
-            return key.getSourceKey() != source;
+            return !key.getSourceKey().equals(source);
         }
     });
 

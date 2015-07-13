@@ -36,6 +36,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.JcrRepository;
+import org.modeshape.jcr.RepositoryConfiguration;
 import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 
 /**
@@ -45,9 +46,6 @@ import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
 public class GetClusterConfigurationTest {
 
     private GetClusterConfiguration testObj;
-
-    @Mock
-    private GetBinaryStore mockGetBinaryStore;
 
     @Mock
     private JcrRepository mockRepo;
@@ -73,19 +71,22 @@ public class GetClusterConfigurationTest {
     @Mock
     private GetCacheManager mockGetCacheManager;
 
+    @Mock
+    private RepositoryConfiguration mockConfig;
+
+    @Mock
+    private RepositoryConfiguration.BinaryStorage mockStorage;
+
     @Before
     public void setUp() throws Exception {
         testObj = new GetClusterConfiguration();
-        final Field field =
-                GetClusterConfiguration.class
-                        .getDeclaredField("getBinaryStore");
-        field.setAccessible(true);
-        field.set(testObj, mockGetBinaryStore);
         final Field cmField = GetClusterConfiguration.class
                         .getDeclaredField("getCacheManager");
         cmField.setAccessible(true);
         cmField.set(testObj, mockGetCacheManager);
 
+        when(mockRepo.getConfiguration()).thenReturn(mockConfig);
+        when(mockConfig.getBinaryStorage()).thenReturn(mockStorage);
         when(mockCM.getCache()).thenReturn(mockCache);
         when(mockCache.getCacheConfiguration()).thenReturn(mockCC);
         when(mockCC.clustering()).thenReturn(mockClustering);
@@ -93,9 +94,8 @@ public class GetClusterConfigurationTest {
         when(mockCC.transaction().transactionMode()).thenReturn(null);
         when(mockClustering.cacheMode()).thenReturn(LOCAL);
 
-        final InfinispanBinaryStore mockStore = new InfinispanBinaryStore(mockCacheContainer, false, "x", "y");
-
-        when(mockGetBinaryStore.apply(mockRepo)).thenReturn(mockStore);
+        final InfinispanBinaryStore testStore = new InfinispanBinaryStore(mockCacheContainer, false, "x", "y");
+        when(mockStorage.getBinaryStore()).thenReturn(testStore);
     }
 
     @Test
