@@ -195,7 +195,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testObjectGraph() throws RepositoryException {
+    public void testObjectGraph() {
 
         final String pid = "/" + getRandomPid();
         final FedoraResource object =
