@@ -314,9 +314,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     /**
      * Tests that caching headers are disabled during transactions. The Last-Modified date is only updated when
-     * Modeshape's {@link Session#save()} is invoked. Since this operation is not invoked during a Fedora transaction,
-     * the Last-Modified date never gets updated during a transaction and the delivered content may be stale. Etag
-     * won't work either because it is directly derived from Last-Modified.
+     * Modeshape's <code>Session#save()</code> is invoked. Since this operation is not invoked during a Fedora
+     * transaction, the Last-Modified date never gets updated during a transaction and the delivered content may be
+     * stale. Etag won't work either because it is directly derived from Last-Modified.
      *
      * @throws IOException exception thrown during this function
      */

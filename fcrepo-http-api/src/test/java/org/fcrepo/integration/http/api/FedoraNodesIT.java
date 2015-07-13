@@ -218,7 +218,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
      * I should be able to move a node within a federated filesystem with
      * properties preserved.
      *
-     * @throws Exception exception thrown during this function
+     * @throws IOException exception thrown during this function
     **/
     @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
     public void testFederatedMoveWithProperties() throws IOException {
