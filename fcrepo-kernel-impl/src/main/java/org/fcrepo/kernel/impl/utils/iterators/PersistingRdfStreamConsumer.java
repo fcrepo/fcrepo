@@ -17,13 +17,13 @@ package org.fcrepo.kernel.impl.utils.iterators;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.lang.String.join;
 import static org.fcrepo.kernel.impl.rdf.ManagedRdf.isManagedMixin;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.base.Joiner;
-
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.ConstraintViolationException;
+import org.fcrepo.kernel.exception.IncorrectTripleSubjectException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.exception.OutOfDomainSubjectException;
@@ -38,9 +38,9 @@ import org.fcrepo.kernel.utils.iterators.RdfStream;
 import org.fcrepo.kernel.utils.iterators.RdfStreamConsumer;
 import org.slf4j.Logger;
 
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -48,6 +48,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author ajs6f
@@ -81,28 +82,36 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             final Session session, final RdfStream stream) {
         this.idTranslator = idTranslator;
         this.jcrRdfTools = new JcrRdfTools(idTranslator, session);
-        this.isFedoraSubjectTriple = new Predicate<Triple>() {
+        this.isFedoraSubjectTriple = t -> {
 
-            @Override
-            public boolean apply(final Triple t) {
+            final Node subject = t.getSubject();
+            final Node topic = stream().topic();
 
-                final boolean result = idTranslator.inDomain(m.asStatement(t).getSubject())
-                        || t.getSubject().isBlank();
-                if (result) {
-                    LOGGER.debug(
-                            "Discovered a Fedora-relevant subject in triple: {}.",
-                            t);
-                } else {
-                    LOGGER.error("subject ({}) is not in repository domain.", t.getSubject().toString());
-                    throw new OutOfDomainSubjectException(t.getSubject().toString());
+            // blank nodes are okay
+            if (!t.getSubject().isBlank()) {
+                final String subjectURI = subject.getURI();
+                final int hashIndex = subjectURI.lastIndexOf("#");
+                // a hash URI with the same base as the topic is okay, as is the topic itself
+                if ((hashIndex > 0 && topic.getURI().equals(subjectURI.substring(0, hashIndex)))
+                        || topic.equals(subject)) {
+                    LOGGER.debug("Discovered a Fedora-relevant subject in triple: {}.", t);
+                    return true;
                 }
-                return result;
+                // the subject was inappropriate in one of two ways
+                if (translator().inDomain(m.asRDFNode(subject).asResource())) {
+                    // it was in-domain, but not within this resource
+                    LOGGER.error("{} is not in the topic of this RDF, which is {}.", subject, topic);
+                    throw new IncorrectTripleSubjectException(subject +
+                            " is not in the topic of this RDF, which is " + topic);
+                }
+                // it wasn't even in in-domain!
+                LOGGER.error("subject {} is not in repository domain.", subject);
+                throw new OutOfDomainSubjectException(subject);
             }
-
+            return true;
         };
         // we fail on non-Fedora RDF
-        this.stream =
-                stream.withThisContext(stream.filter(isFedoraSubjectTriple));
+        this.stream = stream.withThisContext(stream.filter(isFedoraSubjectTriple::test));
 
         this.exceptions = new ArrayList<>();
     }
@@ -123,7 +132,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         }
 
         if (!exceptions.isEmpty()) {
-            throw new MalformedRdfException(Joiner.on("\n").join(exceptions));
+            throw new MalformedRdfException(join("\n", exceptions));
         }
     }
 

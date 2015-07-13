@@ -54,6 +54,7 @@ import org.slf4j.Logger;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
@@ -62,6 +63,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  *
  * @author awoods
  */
+// TODO why are we ignoring this test?
 @Ignore
 public class JcrPropertyStatementListenerTest {
 
@@ -111,11 +113,14 @@ public class JcrPropertyStatementListenerTest {
     private NodePropertiesTools mockPropertiesTools;
 
     @Mock
-    private com.hp.hpl.jena.rdf.model.RDFNode mockValue;
+    private RDFNode mockValue;
 
     private Resource mockResource;
 
     private FedoraResource resource;
+
+    @Mock
+    private com.hp.hpl.jena.graph.Node mockTopic;
 
 
     @Before
@@ -124,7 +129,7 @@ public class JcrPropertyStatementListenerTest {
 
         idTranslator = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getSession()).thenReturn(mockSession);
-        testObj = new JcrPropertyStatementListener(idTranslator, mockJcrRdfTools);
+        testObj = new JcrPropertyStatementListener(idTranslator, mockJcrRdfTools, mockTopic);
         mockResource = idTranslator.toDomain("/xyz");
         when(mockStatement.getSubject()).thenReturn(mockResource);
         when(mockStatement.getPredicate()).thenReturn(mockPredicate);

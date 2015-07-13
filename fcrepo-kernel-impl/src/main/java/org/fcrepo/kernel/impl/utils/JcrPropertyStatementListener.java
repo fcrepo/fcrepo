@@ -23,6 +23,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.exception.ConstraintViolationException;
+import org.fcrepo.kernel.exception.IncorrectTripleSubjectException;
 import org.fcrepo.kernel.exception.MalformedRdfException;
 import org.fcrepo.kernel.exception.OutOfDomainSubjectException;
 import org.fcrepo.kernel.exception.RepositoryRuntimeException;
@@ -31,6 +32,7 @@ import org.fcrepo.kernel.impl.rdf.JcrRdfTools;
 
 import org.slf4j.Logger;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -58,6 +60,8 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final List<Exception> exceptions;
 
+    private final Node topic;
+
     /**
      * Construct a statement listener within the given session
      *
@@ -65,8 +69,8 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param session the session
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                        final Session session) {
-        this(idTranslator, new JcrRdfTools(idTranslator, session));
+                                        final Session session, final Node topic) {
+        this(idTranslator, new JcrRdfTools(idTranslator, session), topic);
     }
 
     /**
@@ -76,11 +80,12 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param jcrRdfTools the jcr rdf tools
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                        final JcrRdfTools jcrRdfTools) {
+                                        final JcrRdfTools jcrRdfTools, final Node topic) {
         super();
         this.idTranslator = idTranslator;
         this.jcrRdfTools = jcrRdfTools;
         this.exceptions = new ArrayList<>();
+        this.topic = topic;
     }
 
     /**
@@ -90,16 +95,11 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     @Override
     public void addedStatement(final Statement input) {
-        LOGGER.debug(">> added statement {}", input);
 
+        final Resource subject = input.getSubject();
         try {
-            final Resource subject = input.getSubject();
-
-            // if it's not about a node, ignore it.
-            if (!idTranslator.inDomain(subject) && !subject.isAnon()) {
-                LOGGER.error("subject ({}) is not in repository domain.", subject);
-                throw new OutOfDomainSubjectException(subject.toString());
-            }
+            validateSubject(subject);
+            LOGGER.debug(">> adding statement {}", input);
 
             final Statement s = jcrRdfTools.skolemize(idTranslator, input);
 
@@ -132,16 +132,11 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     @Override
     public void removedStatement(final Statement s) {
-        LOGGER.trace(">> removed statement {}", s);
-
         try {
+            // if it's not about the right kind of node, ignore it.
             final Resource subject = s.getSubject();
-
-            // if it's not about a node, we don't care.
-            if (!idTranslator.inDomain(subject)) {
-                LOGGER.error("subject ({}) is not in repository domain.", subject);
-                throw new OutOfDomainSubjectException(subject.toString());
-            }
+            validateSubject(subject);
+            LOGGER.trace(">> removing statement {}", s);
 
             final FedoraResource resource = idTranslator.convert(subject);
 
@@ -164,6 +159,34 @@ public class JcrPropertyStatementListener extends StatementListener {
             exceptions.add(e);
         }
 
+    }
+
+    /**
+     * If it's not the right kind of node, throw an appropriate unchecked exception.
+     *
+     * @param subject
+     */
+    private void validateSubject(final Resource subject) {
+        final String subjectURI = subject.getURI();
+        // blank nodes are okay
+        if (!subject.isAnon()) {
+            // hash URIs with the same base as the topic are okay
+            final int hashIndex = subjectURI.lastIndexOf("#");
+            if (!(hashIndex > 0 && topic.getURI().equals(subjectURI.substring(0, hashIndex)))) {
+                // the topic itself is okay
+                if (!topic.equals(subject.asNode())) {
+                    // it's a bad subject, but it could still be in-domain
+                    if (idTranslator.inDomain(subject)) {
+                        LOGGER.error("{} is not in the topic of this RDF, which is {}.", subject, topic);
+                        throw new IncorrectTripleSubjectException(subject +
+                                " is not in the topic of this RDF, which is " + topic);
+                    }
+                    // it's not even in the right domain!
+                    LOGGER.error("subject ({}) is not in repository domain.", subject);
+                    throw new OutOfDomainSubjectException(subject.asNode());
+                }
+            }
+        }
     }
 
     /**
