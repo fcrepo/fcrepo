@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
@@ -24,6 +25,7 @@ import static org.fcrepo.kernel.FedoraJcrTypes.FROZEN_NODE;
 import static org.fcrepo.kernel.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.kernel.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.impl.testutilities.TestNodeIterator.nodeIterator;
+import static org.fcrepo.kernel.utils.iterators.RdfStream.fromModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -268,7 +270,7 @@ public class FedoraResourceImplTest {
     }
 
     @Test(expected = MalformedRdfException.class)
-    public void testReplacePropertiesDataset() throws Exception {
+    public void testReplacePropertiesDataset() throws RepositoryException {
 
         final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);
 
@@ -280,7 +282,7 @@ public class FedoraResourceImplTest {
             propertiesModel.createProperty("b"),
             "c");
 
-        final RdfStream propertiesStream = RdfStream.fromModel(propertiesModel);
+        final RdfStream propertiesStream = fromModel(propertiesModel).topic(createURI("info:fedora/xyz"));
 
         final Model replacementModel = createDefaultModel();
 
@@ -288,9 +290,7 @@ public class FedoraResourceImplTest {
             replacementModel.createProperty("b"),
             "n");
 
-        testObj.replaceProperties(defaultGraphSubjects,
-            replacementModel,
-            propertiesStream);
+        testObj.replaceProperties(defaultGraphSubjects, replacementModel, propertiesStream);
     }
 
     @Test

@@ -410,8 +410,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         final Model model = originalTriples.asModel();
 
-        final JcrPropertyStatementListener listener =
-                new JcrPropertyStatementListener(idTranslator, getSession());
+        final JcrPropertyStatementListener listener = new JcrPropertyStatementListener(
+                idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());
 
         model.register(listener);
 
@@ -537,7 +537,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
-        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap());
+        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap())
+                .topic(idTranslator.reverse().convert(this).asNode());
 
         final GraphDifferencingIterator differencer =
             new GraphDifferencingIterator(inputModel, originalTriples);

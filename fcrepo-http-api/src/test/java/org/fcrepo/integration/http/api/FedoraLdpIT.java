@@ -482,11 +482,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = serverAddress + id + "/x/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
         patch.addHeader("Content-Type", "application/sparql-update");
-        patch.setEntity(new StringEntity("INSERT { <" + location + "> "
+        patch.setEntity(new StringEntity("INSERT { <" + serverAddress + id + "/x> "
                 + "<http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
     }
 
+    /**
+     * Descriptions of bitstreams contain only triples about the described thing, so only triples with the described
+     * thing as their subject are legal.
+     *
+     * @throws IOException on error
+     */
     @Test
     public void testPatchBinaryDescriptionWithBinaryProperties() throws IOException {
         final String id = getRandomUniqueId();
@@ -1670,7 +1676,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "return=representation; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
         try (final CloseableGraphStore graphStore = getGraphStore(httpGet)) {
             assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
-                    createURI(serverAddress + id + "/" + binaryId + "/fcr:metadata"),
+                    createURI(serverAddress + id + "/" + binaryId),
                     createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("this is a title")));
         }
     }
@@ -1741,4 +1747,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static Collection<String> getLinkHeaders(final HttpResponse response) {
         return stream(response.getHeaders("Link")).map(Header::getValue).collect(toList());
     }
+
+    @Test
+    public void testUpdateObjectGraphWithNonLocalTriples() throws IOException {
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+        final String otherPid = getRandomUniqueId();
+        createObject(otherPid);
+        final String location = serverAddress + pid;
+        final String otherLocation = serverAddress + otherPid;
+        final HttpPatch updateObjectGraphMethod = new HttpPatch(location);
+        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.setEntity(new StringEntity("INSERT { <" + location +
+                "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\". " + "<" + otherLocation +
+                "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\"" + " } WHERE {}"));
+        assertEquals("It ought not be possible to use PATCH to create non-local triples!",
+                FORBIDDEN.getStatusCode(),getStatus(updateObjectGraphMethod));
+    }
+
 }
