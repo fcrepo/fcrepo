@@ -38,8 +38,7 @@ import org.slf4j.Logger;
  */
 public class GetClusterConfiguration implements Function<Repository, Map<String, String>> {
 
-    private static final Logger LOGGER =
-            getLogger(GetClusterConfiguration.class);
+    private static final Logger LOGGER = getLogger(GetClusterConfiguration.class);
 
     public static final String CLUSTER_NAME = "clusterName";
     public static final String CACHE_MODE = "clusterCacheMode";
@@ -61,8 +60,7 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
     public Map<String, String> apply(final Repository input) {
         requireNonNull(input, "null cannot have a BinaryStore!");
 
-        final Map<String, String> result =
-            new LinkedHashMap<>();
+        final Map<String, String> result = new LinkedHashMap<>();
 
         final RepositoryConfiguration config = ((JcrRepository)input).getConfiguration();
 
@@ -73,7 +71,6 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
         } catch (Exception ex) {
             LOGGER.debug("Could not extract BinaryStore configuration", ex);
         }
-
 
         final DefaultCacheManager cm = (DefaultCacheManager)getCacheManager.apply(input);
 
@@ -91,13 +88,10 @@ public class GetClusterConfiguration implements Function<Repository, Map<String,
         }
 
         result.put(CLUSTER_NAME, cm.getClusterName());
-        result.put(CACHE_MODE, cm.getCache().getCacheConfiguration()
-                                   .clustering().cacheMode().toString());
+        result.put(CACHE_MODE, cm.getCache().getCacheConfiguration().clustering().cacheMode().toString());
         result.put(NODE_ADDRESS, cm.getNodeAddress());
         result.put(PHYSICAL_ADDRESS, cm.getPhysicalAddresses());
-        result.put(NODE_VIEW, nodeView == UNKNOWN_NODE_VIEW ?
-                                  "Unknown" :
-                                  String.valueOf(nodeView));
+        result.put(NODE_VIEW, nodeView == UNKNOWN_NODE_VIEW ? "Unknown" : String.valueOf(nodeView));
         result.put(CLUSTER_SIZE, String.valueOf(cm.getClusterSize()));
         result.put(CLUSTER_MEMBERS, cm.getClusterMembers());
         return result;

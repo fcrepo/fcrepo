@@ -35,17 +35,14 @@ import org.slf4j.Logger;
  */
 class GetCacheManager implements Function<Repository, CacheManager> {
 
-    private static final Logger LOGGER =
-            getLogger(GetCacheManager.class);
+    private static final Logger LOGGER = getLogger(GetCacheManager.class);
 
     @Override
     public CacheManager apply(final Repository repo) {
         requireNonNull(repo, "null cannot have a CacheManager");
         try {
             if (repo instanceof JcrRepository) {
-                return new DefaultCacheManager(((JcrRepository)repo)
-                        .getConfiguration()
-                        .getCacheConfiguration());
+                return new DefaultCacheManager(((JcrRepository)repo).getConfiguration().getCacheConfiguration());
             }
         } catch (final IOException ex) {
             LOGGER.debug("Could not extract JcrRepository cache configuration", ex);

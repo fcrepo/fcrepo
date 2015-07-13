@@ -33,8 +33,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
+
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.UUID;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -338,7 +340,7 @@ public class FedoraTypesUtilsTest {
 
     @Test
     public void testIsExternalNode1() throws RepositoryException {
-        when(mockNode.getIdentifier()).thenReturn("ab305d54-82b3-4a16-adb3-ad6b9e54601f");
+        when(mockNode.getIdentifier()).thenReturn(UUID.randomUUID().toString());
         assertFalse(isExternalNode.test(mockNode));
     }
 

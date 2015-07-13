@@ -18,9 +18,9 @@ package org.fcrepo.kernel.impl.utils;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.getReferencePropertyName;
+import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isExternalNode;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isMultivaluedProperty;
-import static org.fcrepo.kernel.impl.utils.FedoraTypesUtils.isExternalNode;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
@@ -138,7 +138,7 @@ public class NodePropertiesTools {
             final Node refNode = idTranslator.convert(resource).getNode();
 
             if (isExternalNode.test(refNode)) {
-                 //we can't apply REFERENCE properties to external resources
+                // we can't apply REFERENCE properties to external resources
                 return;
             }
 

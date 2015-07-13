@@ -80,8 +80,7 @@ public class GetClusterConfigurationTest {
     @Before
     public void setUp() throws Exception {
         testObj = new GetClusterConfiguration();
-        final Field cmField = GetClusterConfiguration.class
-                        .getDeclaredField("getCacheManager");
+        final Field cmField = GetClusterConfiguration.class.getDeclaredField("getCacheManager");
         cmField.setAccessible(true);
         cmField.set(testObj, mockGetCacheManager);
 
