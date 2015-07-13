@@ -16,7 +16,6 @@
 package org.fcrepo.http.api;
 
 
-import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
@@ -211,7 +210,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     return input.getPredicate().equals(RDF.type.asNode())
                             && isManagedNamespace.apply(input.getObject().getNameSpace());
                 }
-            }.negate().and(not(isManagedTriple)::apply);
+            }.or(isManagedTriple::apply).negate();
         }
 
         if (ldpPreferences.prefersServerManaged()) {
