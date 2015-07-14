@@ -130,7 +130,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -469,6 +468,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
+    /**
+     * Descriptions of bitstreams contain triples about the described thing, so only triples with the described thing
+     * as their subject are legal.
+     *
+     * @throws IOException in case of IOException
+     */
     @Test
     public void testPatchBinaryDescription() throws IOException {
         final String id = getRandomUniqueId();
