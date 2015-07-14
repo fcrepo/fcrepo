@@ -112,6 +112,10 @@ public abstract class AbstractResourceIT {
         return new HttpGet(serverAddress + id);
     }
 
+    protected static HttpHead headObjMethod(final String id) {
+        return new HttpHead(serverAddress + id);
+    }
+
     protected static HttpDelete deleteObjMethod(final String id) {
         return new HttpDelete(serverAddress + id);
     }
