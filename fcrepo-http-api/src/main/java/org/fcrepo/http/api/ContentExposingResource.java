@@ -590,7 +590,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final RdfStream resourceTriples)
                     throws MalformedRdfException, AccessDeniedException {
         if (resource instanceof NonRdfSourceDescription) {
-            // update the description instead
+            // update the described resource instead
             ((NonRdfSourceDescription) resource).getDescribedResource()
                     .updateProperties(translator(), requestBody, resourceTriples);
         } else {

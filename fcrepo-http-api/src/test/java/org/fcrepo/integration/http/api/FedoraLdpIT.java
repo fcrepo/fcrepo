@@ -602,6 +602,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 .getStatusCode());
     }
 
+    /**
+     * Descriptions of bitstreams contain only triples about the described thing, so only triples with the described
+     * thing as their subject are legal.
+     *
+     * @throws Exception
+     */
     @Test
     public void testPatchBinaryDescriptionWithBinaryProperties() throws Exception {
         final String pid = getRandomUniquePid();
