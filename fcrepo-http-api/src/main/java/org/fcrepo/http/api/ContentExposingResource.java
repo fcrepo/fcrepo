@@ -16,11 +16,11 @@
 package org.fcrepo.http.api;
 
 
-import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.ok;
@@ -105,7 +105,6 @@ import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -113,6 +112,7 @@ import com.hp.hpl.jena.vocabulary.RDF;
  * content.
  *
  * @author Mike Durbin
+ * @author ajs6f
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
@@ -135,6 +135,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected FedoraResource resource;
 
     private static final long MAX_BUFFER_SIZE = 10240000;
+
+    private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
+            isManagedNamespace.apply(t.getObject().getNameSpace());
 
     protected abstract String externalPath();
 
@@ -205,13 +208,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (ldpPreferences.prefersServerManaged()) {
             tripleFilter = x -> true;
         } else {
-            tripleFilter = new Predicate<Triple>() {
-                @Override
-                public boolean test(final Triple input) {
-                    return input.getPredicate().equals(RDF.type.asNode())
-                            && isManagedNamespace.apply(input.getObject().getNameSpace());
-                }
-            }.negate().and(not(isManagedTriple)::apply);
+            tripleFilter = IS_MANAGED_TYPE.or(isManagedTriple::apply).negate();
         }
 
         if (ldpPreferences.prefersServerManaged()) {
