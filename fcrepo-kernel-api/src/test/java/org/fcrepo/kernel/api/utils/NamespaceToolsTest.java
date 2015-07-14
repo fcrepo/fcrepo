@@ -27,6 +27,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
@@ -99,6 +100,12 @@ public class NamespaceToolsTest {
         when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("broken")).thenThrow(new RepositoryException());
         validatePath(mockSession, "test/a/broken:namespace-registry");
+    }
+
+    @Test (expected = InvalidResourceIdentifierException.class)
+    public void testValidatePathEmptyPathElement() throws RepositoryException {
+        when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        validatePath(mockSession, "test/a//b/c/d");
     }
 
 }

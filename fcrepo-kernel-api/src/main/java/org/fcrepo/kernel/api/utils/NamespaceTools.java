@@ -23,6 +23,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
@@ -76,11 +77,14 @@ public final class NamespaceTools {
     }
 
     /**
-     * Validate resource path for unregistered namespace prefixes
+     * Validate resource path for:
+     * - unregistered namespace prefixes, and
+     * - empty path segements
      *
      * @param session the JCR session to use
      * @param path the absolute path to the object
      * @throws org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException on unregistered namespaces
+     * @throws org.fcrepo.kernel.exception.InvalidResourceIdentifierException on empty element paths
      * @throws org.fcrepo.kernel.api.exception.RepositoryRuntimeException if repository runtime exception occurred
      */
     public static void validatePath(final Session session, final String path) {
@@ -90,6 +94,12 @@ public final class NamespaceTools {
         final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
         final String[] pathSegments = relPath.split("/");
         for (final String segment : pathSegments) {
+            // Empty path elements are not valid!
+            if (segment.length() == 0) {
+                throw new InvalidResourceIdentifierException("Path contains empty element! " + path);
+            }
+
+            // Is the segment namespace prefix valid?
             if (segment.length() > 0 && segment.contains(":") &&
                     !segment.substring(0, segment.indexOf(':')).equals("fedora")) {
                 final String prefix = segment.substring(0, segment.indexOf(':'));

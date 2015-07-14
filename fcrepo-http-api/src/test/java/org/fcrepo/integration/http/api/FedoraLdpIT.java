@@ -1845,6 +1845,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Should be two values!", 2, titles.findValues("@value").size());
     }
 
+    @Test
+    public void testEmptyPath() {
+        final String badLocation = "test/me/mb/er/s//members/9528a300-22da-40f2-bf3c-5b345d71affb";
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(headObjMethod(badLocation)));
+    }
+
     private static Optional<Date> getDateFromModel(final Model model, final Resource subj, final Property pred)
             throws NoSuchElementException, ParseException {
         final StmtIterator stmts = model.listStatements(subj, pred, (String) null);
