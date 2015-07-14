@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.exception;
 
-import com.hp.hpl.jena.graph.Node;
-
 /**
- * Fedora does not accept RDF with subjects that are not local to the repository.
+ * Represents the condition that an attempt has been made to persist RDF to the repository as properties of a
+ * particular resource, but the subject of a triple in that RDF is not the resource in question.
  *
- * @author whikloj
- * @since 2015-05-29
+ * @author ajs6f
  */
-public class OutOfDomainSubjectException extends ConstraintViolationException {
+public class IncorrectTripleSubjectException extends ConstraintViolationException {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Takes the subject that is out of domain, creates message.
-     *
-     * @param subject the subject
+     * @param message
      */
-    public OutOfDomainSubjectException(final Node subject) {
-        super(String.format("RDF Stream contains subject(s) (%s) not in the domain of this repository.", subject));
+    public IncorrectTripleSubjectException(final String message) {
+        super(message);
     }
 
 }
