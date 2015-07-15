@@ -271,6 +271,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
             throw new ClientErrorException("An If-Match header is required", 428);
+        } else if (resource.hasType(FEDORA_PAIRTREE)) {
+            throw new ClientErrorException("Graphs cannot be created for resources under pairtree nodes", FORBIDDEN);
         }
 
         evaluateRequestPreconditions(request, servletResponse, resource, session);
