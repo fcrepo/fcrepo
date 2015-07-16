@@ -67,8 +67,6 @@ import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MIME_TYPE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_COUNT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
@@ -541,44 +539,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testPatchWithBlankNode() throws Exception {
-        final String pid = getRandomUniqueId();
-
-        createObject(pid);
-
-        final String location = serverAddress + pid;
-        final HttpPatch updateObjectGraphMethod = new HttpPatch(location);
-        updateObjectGraphMethod.addHeader("Content-Type",
-                "application/sparql-update");
-        final BasicHttpEntity e = new BasicHttpEntity();
-        e.setContent(new ByteArrayInputStream(
-                ("INSERT { <" + location +
-                        "> <info:some-predicate> _:a .\n" +
-                        "_:a <http://purl.org/dc/elements/1.1/title> \"this is a title\"\n" +
-                        " } WHERE {}")
-                        .getBytes()));
-        updateObjectGraphMethod.setEntity(e);
-        final HttpResponse response = client.execute(updateObjectGraphMethod);
-        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-
-
-        final HttpGet httpGet = new HttpGet(location);
-
-        final GraphStore graphStore = getGraphStore(httpGet);
-
-        assertTrue(graphStore.contains(ANY, createResource(location).asNode(),
-                createProperty("info:some-predicate").asNode(), ANY));
-
-        final Node bnode = graphStore.find(ANY, createResource(location).asNode(),
-                createProperty("info:some-predicate").asNode(), ANY).next().getObject();
-
-        final HttpGet bnodeHttpGet = new HttpGet(bnode.getURI());
-
-        final GraphStore bnodeGraphStore = getGraphStore(bnodeHttpGet);
-
-        assertTrue(bnodeGraphStore.contains(ANY, bnode, DC_TITLE.asNode(), createLiteral("this is a title")));
-
->>>>>>> Allow updating mimeType and filename properties
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
 
         final String location = serverAddress + id;
         final HttpPatch updateObjectGraphMethod = patchObjMethod(id);
