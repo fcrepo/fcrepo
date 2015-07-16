@@ -1097,7 +1097,84 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetObjectGraphLacksUUID() throws IOException {
+    public void testGetObjectReferencesIndirect() throws Exception {
+        final String uuid = getRandomUniqueId();
+        final String pid1 = uuid + "/parent";
+        final String pid2 = uuid + "/child";
+        createObjectAndClose(pid1);
+        createObjectAndClose(pid2);
+
+        final String memberRelation = "http://pcdm.org/models#hasMember";
+
+        // create an indirect container
+        final HttpPut createContainer = new HttpPut(serverAddress + pid1 + "/members");
+        createContainer.addHeader("Content-Type", "text/turtle");
+        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
+            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
+            + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.openarchives.org/ore/terms/proxyFor>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + pid1 + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals(CREATED.getStatusCode(), getStatus(createContainer));
+
+        // create a proxy in the indirect container
+        final HttpPost createProxy = new HttpPost(serverAddress + pid1 + "/members");
+        createProxy.addHeader("Content-Type", "text/turtle");
+        final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + pid2 + ">;"
+            + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + pid1 + "> .";
+        createProxy.setEntity(new StringEntity(proxyRDF));
+        assertEquals(CREATED.getStatusCode(), getStatus(createProxy));
+
+        // retrieve the parent and verify the outbound triples exist
+        final HttpGet getParent =  new HttpGet(serverAddress + pid1);
+        getParent.addHeader("Accept", "application/n-triples");
+        try (final CloseableGraphStore parentGraph = getGraphStore(getParent)) {
+            assertTrue(parentGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid2)));
+        }
+
+        // retrieve the members container and verify the LDP triples exist
+        final HttpGet getContainer =  new HttpGet(serverAddress + pid1 + "/members");
+        getContainer.addHeader("Prefer", "return=representation;include=\"http://www.w3.org/ns/ldp#PreferMembership\"");
+        getContainer.addHeader("Accept", "application/n-triples");
+        try (final CloseableGraphStore containerGraph = getGraphStore(getContainer)) {
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
+                    createURI(memberRelation)));
+
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#insertedContentRelation"),
+                    createURI("http://www.openarchives.org/ore/terms/proxyFor")));
+
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#membershipResource"),
+                    createURI(serverAddress + pid1)));
+        }
+
+
+        // retrieve the member and verify inbound triples exist
+        final HttpGet getMember =  new HttpGet(serverAddress + pid2);
+        getMember.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES.toString() + "\"");
+        getMember.addHeader("Accept", "application/n-triples");
+        try (final CloseableGraphStore memberGraph = getGraphStore(getMember)) {
+            assertTrue(memberGraph.contains(Node.ANY,
+                    Node.ANY,
+                    createURI("http://www.openarchives.org/ore/terms/proxyFor"),
+                    createURI(serverAddress + pid2)));
+
+            assertTrue(memberGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid2)));
+        }
+    }
+
+    @Test
+    public void testGetObjectGraphLacksUUID() throws Exception {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
         try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {

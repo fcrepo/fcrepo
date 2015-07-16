@@ -27,6 +27,7 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -153,15 +154,26 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         }
     }
 
-    private RDFNode traverseLink(final Value v)
-            throws RepositoryException {
-        final javax.jcr.Node refNode;
+    private RDFNode traverseLink(final Value v) throws RepositoryException {
+        return getGraphSubject(nodeForValue(session,v));
+    }
+
+    /**
+     * Get the node that a property value refers to.
+     * @param session Session to use to load the node.
+     * @param v Value that refers to a node.
+     * @throws RepositoryException When there is an error accessing the node.
+     * @throws RepositoryRuntimeException When the value type is not PATH, REFERENCE or WEAKREFERENCE.
+    **/
+    public static javax.jcr.Node nodeForValue(final Session session, final Value v) throws RepositoryException {
         if (v.getType() == PATH) {
-            refNode = session.getNode(v.getString());
+            return session.getNode(v.getString());
+        } else if (v.getType() == REFERENCE || v.getType() == WEAKREFERENCE) {
+            return session.getNodeByIdentifier(v.getString());
         } else {
-            refNode = session.getNodeByIdentifier(v.getString());
+            throw new RepositoryRuntimeException("Cannot convert value of type "
+                    + PropertyType.nameFromValue(v.getType()) + " to a node reference");
         }
-        return getGraphSubject(refNode);
     }
 
     private RDFNode getGraphSubject(final javax.jcr.Node n) {
