@@ -107,12 +107,16 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     });
 
     /**
+     * Check if a property is a reference property.
+     */
+    public static Predicate<Property> isSuppressedProperty = uncheck(p -> p.getName().equals("jcr:mimeType"));
+
+    /**
     * Check whether a property is an internal property that should be suppressed
     * from external output.
     */
     public static Predicate<Property> isInternalProperty = p -> isBinaryContentProperty.test(p) ||
-            isProtectedAndShouldBeHidden.test(p);
-
+            isProtectedAndShouldBeHidden.test(p) || isSuppressedProperty.test(p);
 
 
     /**

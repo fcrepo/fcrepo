@@ -66,6 +66,8 @@ import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.RdfLexicon.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
@@ -514,7 +516,35 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchWithBlankNode() throws IOException {
+    public void testPatchBinaryNameAndType() throws Exception {
+        final String pid = getRandomUniqueId();
+
+        createDatastream(pid, "x", "some content");
+
+        final String location = serverAddress + pid + "/x/fcr:metadata";
+        final HttpPatch patch = new HttpPatch(location);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final BasicHttpEntity e = new BasicHttpEntity();
+        final String sparql = "INSERT DATA { <" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/plain\""
+                                       + " . <" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }";
+        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
+        patch.setEntity(e);
+        final HttpResponse response = client.execute(patch);
+        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
+                .getStatusCode());
+
+        final GraphStore graphStore = getGraphStore(new HttpGet(location));
+        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
+                HAS_MIME_TYPE.asNode(), createLiteral("text/plain")));
+        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
+                HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
+        assertFalse("Should not contain old mime type property",
+                graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
+                createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY));
+    }
+
+    @Test
+    public void testPatchWithBlankNode() throws Exception {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
 
