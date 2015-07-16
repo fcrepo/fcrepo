@@ -24,6 +24,7 @@ import org.mockito.Mock;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -71,6 +72,8 @@ public class ReferencesRdfContextTest {
     @Mock
     private Value mockStrongValue;
 
+    @Mock
+    private PropertyIterator mockPropertyIterator;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -101,6 +104,9 @@ public class ReferencesRdfContextTest {
 
         strongReferencesProperties = new TestPropertyIterator(mockStrongProperty);
         when(mockNode.getReferences()).thenReturn(strongReferencesProperties);
+
+        when(mockPropertyParent.getProperties()).thenReturn(mockPropertyIterator);
+        when(mockPropertyIterator.hasNext()).thenReturn(false);
 
         testObj = new ReferencesRdfContext(mockResource, translator);
     }
