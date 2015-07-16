@@ -203,7 +203,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 return Iterators.transform(values, new Function<Value, Triple>() {
                     @Override
                     public Triple apply(final Value input) {
-                        final RDFNode membershipResource = new ValueConverter(session(), translator())
+                        final RDFNode membershipResource = new ValueConverter(session(),translator())
                                 .convert(input);
                         return create(subject(), memberRelation, membershipResource.asNode());
                     }
