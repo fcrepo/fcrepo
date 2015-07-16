@@ -1062,7 +1062,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectReferencesIndirect() throws Exception {
-        final String uuid = getRandomUniquePid();
+        final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
         final String pid2 = uuid + "/child";
         createObject(pid1);
@@ -1094,9 +1094,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final GraphStore parentGraph = getGraphStore(getParent);
 
         assertTrue(parentGraph.contains(Node.ANY,
-                NodeFactory.createURI(serverAddress + pid1),
-                NodeFactory.createURI(memberRelation),
-                NodeFactory.createURI(serverAddress + pid2)));
+                createURI(serverAddress + pid1),
+                createURI(memberRelation),
+                createURI(serverAddress + pid2)));
 
         // retrieve the members container and verify the LDP triples exist
         final HttpGet getContainer =  new HttpGet(serverAddress + pid1 + "/members");
@@ -1105,19 +1105,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final GraphStore containerGraph = getGraphStore(getContainer);
 
         assertTrue(containerGraph.contains(Node.ANY,
-                NodeFactory.createURI(serverAddress + pid1 + "/members"),
-                NodeFactory.createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
-                NodeFactory.createURI(memberRelation)));
+                createURI(serverAddress + pid1 + "/members"),
+                createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
+                createURI(memberRelation)));
 
         assertTrue(containerGraph.contains(Node.ANY,
-                NodeFactory.createURI(serverAddress + pid1 + "/members"),
-                NodeFactory.createURI("http://www.w3.org/ns/ldp#insertedContentRelation"),
-                NodeFactory.createURI("http://www.openarchives.org/ore/terms/proxyFor")));
+                createURI(serverAddress + pid1 + "/members"),
+                createURI("http://www.w3.org/ns/ldp#insertedContentRelation"),
+                createURI("http://www.openarchives.org/ore/terms/proxyFor")));
 
         assertTrue(containerGraph.contains(Node.ANY,
-                NodeFactory.createURI(serverAddress + pid1 + "/members"),
-                NodeFactory.createURI("http://www.w3.org/ns/ldp#membershipResource"),
-                NodeFactory.createURI(serverAddress + pid1)));
+                createURI(serverAddress + pid1 + "/members"),
+                createURI("http://www.w3.org/ns/ldp#membershipResource"),
+                createURI(serverAddress + pid1)));
 
 
         // retrieve the member and verify inbound triples exist
@@ -1128,13 +1128,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertTrue(memberGraph.contains(Node.ANY,
                 Node.ANY,
-                NodeFactory.createURI("http://www.openarchives.org/ore/terms/proxyFor"),
-                NodeFactory.createURI(serverAddress + pid2)));
+                createURI("http://www.openarchives.org/ore/terms/proxyFor"),
+                createURI(serverAddress + pid2)));
 
         assertTrue(memberGraph.contains(Node.ANY,
-                NodeFactory.createURI(serverAddress + pid1),
-                NodeFactory.createURI(memberRelation),
-                NodeFactory.createURI(serverAddress + pid2)));
+                createURI(serverAddress + pid1),
+                createURI(memberRelation),
+                createURI(serverAddress + pid2)));
     }
 
     @Test
