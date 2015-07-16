@@ -643,6 +643,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 HAS_MIME_TYPE.asNode(), createLiteral("text/plain")));
         assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
                 HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
+        assertFalse("Should not contain old mime type property",
+                graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
+                createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY));
     }
 
     @Test
