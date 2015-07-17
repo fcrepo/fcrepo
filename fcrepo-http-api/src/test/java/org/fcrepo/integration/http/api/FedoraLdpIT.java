@@ -91,6 +91,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.text.ParseException;
@@ -386,13 +387,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
         try (final CloseableHttpResponse response = execute(getDSDescMethod(id, "x"));
-                final CloseableGraphStore graphStore = getGraphStore(response)) {
-            final String dsSubject = serverAddress + id + "/x";
-            final Node fedoraNonRdfSourceDescription = createURI(REPOSITORY_NAMESPACE + "NonRdfSourceDescription");
-            assertTrue("Description should be a fedora:NonRdfSourceDescription", graphStore.contains(ANY,
-                    createURI(dsSubject + "/" + FCR_METADATA), rdfType, fedoraNonRdfSourceDescription));
-            assertTrue("Binary should be a ldp:NonRDFSource", graphStore.contains(ANY,
-                    createURI(dsSubject), rdfType, NON_RDF_SOURCE.asNode()));
+                final CloseableGraphStore graph = getGraphStore(response)) {
+            final Node correctDSSubject = createURI(serverAddress + id + "/x");
+            assertTrue("Binary should be a ldp:NonRDFSource", graph.contains(ANY,
+                    correctDSSubject, rdfType, NON_RDF_SOURCE.asNode()));
+            // every triple in the response should have a subject of the actual resource described
+            logger.info("Found graph:\n{}", graph);
+            graph.find().forEachRemaining(quad -> {
+                assertEquals("Found a triple with incorrect subject!", correctDSSubject, quad.getSubject());
+            });
         }
     }
 
@@ -516,7 +519,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchBinaryNameAndType() throws Exception {
+    public void testPatchBinaryNameAndType() throws IOException {
         final String pid = getRandomUniqueId();
 
         createDatastream(pid, "x", "some content");
@@ -524,23 +527,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = serverAddress + pid + "/x/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
         patch.addHeader("Content-Type", "application/sparql-update");
-        final BasicHttpEntity e = new BasicHttpEntity();
-        final String sparql = "INSERT DATA { <" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/plain\""
-                                       + " . <" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }";
-        e.setContent(new ByteArrayInputStream(sparql.getBytes()));
-        patch.setEntity(e);
-        final HttpResponse response = client.execute(patch);
-        assertEquals(NO_CONTENT.getStatusCode(), response.getStatusLine()
-                .getStatusCode());
-
-        final GraphStore graphStore = getGraphStore(new HttpGet(location));
-        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
-                HAS_MIME_TYPE.asNode(), createLiteral("text/plain")));
-        assertTrue(graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
-                HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
-        assertFalse("Should not contain old mime type property",
-                graphStore.contains(ANY, createURI(serverAddress + pid + "/x"),
-                createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY));
+        patch.setEntity(new StringEntity("INSERT DATA { <" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE +
+                "> \"text/plain\"" + " . <" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }"));
+        try (final CloseableHttpResponse response = client.execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+                final Node subject = createURI(serverAddress + pid + "/x");
+                assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/plain")));
+                assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
+                assertFalse("Should not contain old mime type property", graphStore.contains(ANY,
+                        subject, createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY));
+            }
+        }
     }
 
     @Test
@@ -1285,7 +1283,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testRoundTripReplaceGraphForDatastream() throws IOException {
+    public void testRoundTripReplaceGraphForDatastreamDescription() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id + "/ds1";
         createDatastream(id, "ds1", "some-content");
@@ -1294,14 +1292,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getObjMethod.addHeader("Accept", "text/turtle");
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
-            model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
+            final String graph = EntityUtils.toString(getResponse.getEntity());
+            logger.trace("Got serialized object graph for testRoundTripReplaceGraphForDatastream():\n {}", graph);
+            try (final StringReader r = new StringReader(graph)) {
+                model.read(r, subjectURI, "TURTLE");
+            }
         }
-
         final HttpPut replaceMethod = new HttpPut(subjectURI + "/" + FCR_METADATA);
         try (final StringWriter w = new StringWriter()) {
             model.write(w, "N-TRIPLE");
-            replaceMethod.setEntity(new ByteArrayEntity(w.toString().getBytes()));
-            logger.trace("Retrieved object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
+            replaceMethod.setEntity(new StringEntity(w.toString()));
+            logger.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
         }
         replaceMethod.addHeader("Content-Type", "application/n-triples");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));

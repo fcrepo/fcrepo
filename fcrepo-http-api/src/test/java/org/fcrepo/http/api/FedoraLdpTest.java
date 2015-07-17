@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.api;
 
-import static com.google.common.collect.Iterables.any;
+import static com.google.common.base.Predicates.containsPattern;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
 
@@ -61,6 +61,7 @@ import java.net.URI;
 import java.text.ParseException;
 import java.util.List;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -79,6 +80,8 @@ import javax.ws.rs.core.UriBuilder;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -99,9 +102,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -195,7 +198,6 @@ public class FedoraLdpTest {
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
     }
 
-    @SuppressWarnings("unchecked")
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
         final FedoraResource mockResource = mock(klass);
 
@@ -367,7 +369,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()), x -> x.toString());
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
@@ -392,7 +394,8 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()), x -> x.toString());
+
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
@@ -447,7 +450,8 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()), x -> x.toString());
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
+
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
                 "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext"
@@ -472,7 +476,7 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()), x -> x.toString());
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         assertTrue("Should include membership contexts",
                 rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
 
@@ -491,7 +495,8 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()), x -> x.toString());
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
+
         assertFalse("Should not include membership contexts",
                 rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
         assertFalse("Should not include membership contexts",
@@ -511,10 +516,12 @@ public class FedoraLdpTest {
 
         final RdfStream entity = (RdfStream) actual.getEntity();
         final Model model = entity.asModel();
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), x -> x.toString());
+
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         log.debug("Received RDF nodes: {}", rdfNodes);
         final String referencesContextClassName = ReferencesRdfContext.class.getName();
-        assertTrue("Should include references contexts", any(rdfNodes, x -> x.contains(referencesContextClassName)));
+        assertTrue("Should include references contexts",
+                rdfNodes.stream().anyMatch(containsPattern(referencesContextClassName)::apply));
     }
 
     @Test
@@ -552,8 +559,8 @@ public class FedoraLdpTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testGetWithBinaryDescription() throws Exception {
+    public void testGetWithBinaryDescription() throws RepositoryException, IOException {
+
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
@@ -570,9 +577,9 @@ public class FedoraLdpTest {
                 mockResponse.getHeaders("Link")
                         .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
 
-        final RdfStream entity = (RdfStream) actual.getEntity();
-        final Model model = entity.asModel();
-        final List<String> rdfNodes = Lists.transform(Lists.newArrayList(model.listObjects()), x -> x.toString());
+        final Model model = ((RdfStream) actual.getEntity()).asModel();
+        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
+        log.info("Found RDF objects\n{}", rdfNodes);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
                 "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
@@ -581,8 +588,7 @@ public class FedoraLdpTest {
                 "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext",
                 "class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext",
                 "class org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext",
-                "child:properties"
+                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext"
         )));
 
     }
@@ -687,8 +693,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testPatchBinaryDescription() throws Exception {
+    public void testPatchBinaryDescription() throws RepositoryException, MalformedRdfException, IOException {
 
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
@@ -703,114 +708,100 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchWithoutContent() throws Exception {
+    public void testPatchWithoutContent() throws MalformedRdfException, AccessDeniedException, IOException {
         testObj.updateSparql(null);
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchWithMissingContent() throws Exception {
+    public void testPatchWithMissingContent() throws RepositoryException, MalformedRdfException, IOException {
         setResource(Container.class);
-
         testObj.updateSparql(toInputStream(""));
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchBinary() throws Exception {
+    public void testPatchBinary() throws RepositoryException, MalformedRdfException, IOException {
         setResource(FedoraBinary.class);
-
         testObj.updateSparql(toInputStream(""));
     }
 
     @Test
-    public void testCreateNewObject() throws Exception {
-
+    public void testCreateNewObject() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
+            IOException {
         setResource(Container.class);
-
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
-
         final Response actual = testObj.createObject(null, null, null, "b", null, null);
-
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
     @Test
-    public void testCreateNewObjectWithSparql() throws Exception {
+    public void testCreateNewObjectWithSparql() throws RepositoryException, MalformedRdfException,
+            InvalidChecksumException, IOException {
 
         setResource(Container.class);
-
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
-
         final Response actual = testObj.createObject(null, null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"), null);
-
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockContainer).updateProperties(eq(idTranslator), eq("x"), any(RdfStream.class));
     }
 
     @Test
-    public void testCreateNewObjectWithRdf() throws Exception {
-
+    public void testCreateNewObjectWithRdf() throws RepositoryException, MalformedRdfException,
+            InvalidChecksumException, IOException {
         setResource(Container.class);
-
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
-
         final Response actual = testObj.createObject(null, null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c ."), null);
-
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
 
 
     @Test
-    public void testCreateNewBinary() throws Exception {
-
+    public void testCreateNewBinary() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
+            IOException {
         setResource(Container.class);
-
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
-
         try (final InputStream content = toInputStream("x")) {
             final Response actual = testObj.createObject(null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
                     content, null);
-
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
         }
     }
 
     @Test
-    public void testCreateNewBinaryWithContentTypeWithParams() throws Exception {
+    public void testCreateNewBinaryWithContentTypeWithParams() throws RepositoryException, MalformedRdfException,
+            InvalidChecksumException, IOException {
 
         setResource(Container.class);
-
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
-
         try (final InputStream content = toInputStream("x")) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final Response actual = testObj.createObject(null, null, requestContentType, "b",
                     content, null);
-
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), null, "", null);
         }
     }
 
     @Test(expected = ClientErrorException.class)
-    public void testPostToBinary() throws Exception {
+    public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException,
+            IOException, RepositoryException {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
-
         testObj.createObject(null, null, null, null, null, null);
-
     }
 
     @Test(expected = ServerErrorException.class)
-    public void testLDPRNotImplemented() throws Exception {
+    public void testLDPRNotImplemented() throws MalformedRdfException, AccessDeniedException,
+            InvalidChecksumException, IOException {
         testObj.createObject(null, null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
     }
 
     @Test(expected = ClientErrorException.class)
-    public void testLDPRNotImplementedInvalidLink() throws Exception {
+    public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, AccessDeniedException,
+            InvalidChecksumException, IOException {
         testObj.createObject(null, null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type");
     }
 
@@ -818,7 +809,6 @@ public class FedoraLdpTest {
     public void testGetSimpleContentType() {
         final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
         final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
-
         assertEquals("text/plain", sanitizedMediaType.toString());
     }
 
@@ -829,7 +819,6 @@ public class FedoraLdpTest {
         doReturn(mockWorkspace).when(mockSession).getWorkspace();
         doReturn(mockManager).when(mockWorkspace).getObservationManager();
         final String json = "{\"baseURL\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
-
         testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
         verify(mockManager).setUserData(eq(json));
     }
