@@ -18,6 +18,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -50,6 +51,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * PropertiesRdfContextTest class.
  *
  * @author awoods
+ * @author ajs6f
  * @since 2015-03-08
  */
 public class PropertiesRdfContextTest {
@@ -151,10 +153,11 @@ public class PropertiesRdfContextTest {
     @Test
     public void testFedoraBinaryProperties() throws RepositoryException {
         final Model results = new PropertiesRdfContext(mockBinary, idTranslator).asModel();
-
-        assertTrue("Should contain RdfSource statement: " + results + " -- " + RDF_SOURCE_STMT,
-                results.contains(RDF_SOURCE_STMT));
-
+        final Resource correctSubject = idTranslator.reverse().convert(mockBinary);
+        results.listStatements().forEachRemaining(stmnt -> {
+            assertEquals("All subjects in triples created should be the resource processed!",
+                    correctSubject, stmnt.getSubject());
+        });
         assertTrue("Should contain NonRdfSource statement: " + results + " -- " + NON_RDF_SOURCE_STMT,
                 results.contains(NON_RDF_SOURCE_STMT));
     }

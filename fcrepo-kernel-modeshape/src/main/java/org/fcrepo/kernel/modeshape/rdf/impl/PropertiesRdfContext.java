@@ -26,7 +26,6 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 
@@ -69,23 +68,9 @@ public class PropertiesRdfContext extends NodeRdfContext {
     private Iterator<Triple> triplesFromProperties(final FedoraResource n)
         throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
-
-        final Iterator<Property> allProperties;
-        @SuppressWarnings("unchecked")
         final Iterator<Property> nodeProps = n.getNode().getProperties();
-        if (n instanceof FedoraBinary) {
-            final FedoraResource description = ((FedoraBinary)n).getDescription();
-            @SuppressWarnings("unchecked")
-            final Iterator<Property> descProps = description.getNode().getProperties();
-            allProperties = Iterators.concat(nodeProps, descProps);
-        } else {
-            allProperties = nodeProps;
-        }
-
-        final Iterator<Property> properties = Iterators.filter(allProperties,
+        final Iterator<Property> properties = Iterators.filter(nodeProps,
                 isInternalProperty.negate().and(IS_NOT_UUID)::test);
         return flatMap(properties, property2triple);
-
     }
-
 }
