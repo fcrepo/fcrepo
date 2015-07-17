@@ -15,26 +15,33 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSource;
+import org.fcrepo.kernel.api.utils.UncheckedFunction;
+
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeType;
-import java.util.Iterator;
-import java.util.Set;
 
-import static com.google.common.base.Throwables.propagate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -58,71 +65,36 @@ public class TypeRdfContext extends NodeRdfContext {
 
         //include rdf:type for primaryType, mixins, and their supertypes
         concatRdfTypes();
+        if (resource() instanceof NonRdfSource) {
+            // gather versionability info from the parent
+            if (resource().getNode().getParent().isNodeType("mix:versionable")) {
+                concat(create(subject(), type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+            }
+        }
     }
 
     private void concatRdfTypes() throws RepositoryException {
-        final ImmutableList.Builder<NodeType> nodeTypesB = ImmutableList.<NodeType>builder();
-
+        final List<NodeType> nodeTypes = new ArrayList<>();
         final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();
-
-        if (primaryNodeType != null) {
-            nodeTypesB.add(primaryNodeType);
-        }
-
-        try {
-            final Set<NodeType> primarySupertypes = ImmutableSet.<NodeType>builder()
-                    .add(primaryNodeType.getSupertypes()).build();
-            nodeTypesB.addAll(primarySupertypes);
-        } catch (NullPointerException e) {
-            // ignore
-        }
-
+        nodeTypes.add(primaryNodeType);
+        nodeTypes.addAll(asList(primaryNodeType.getSupertypes()));
         final NodeType[] mixinNodeTypesArr = resource().getNode().getMixinNodeTypes();
-
-        if (mixinNodeTypesArr != null) {
-            final Set<NodeType> mixinNodeTypes = ImmutableSet.<NodeType>builder().add(mixinNodeTypesArr).build();
-            nodeTypesB.addAll(mixinNodeTypes);
-
-            final ImmutableSet.Builder<NodeType> mixinSupertypes = ImmutableSet.<NodeType>builder();
-            for (final NodeType mixinNodeType : mixinNodeTypes) {
-                mixinSupertypes.addAll(ImmutableSet.<NodeType>builder().add(mixinNodeType.getSupertypes()).build());
-            }
-
-            nodeTypesB.addAll(mixinSupertypes.build());
-        }
-
-        final ImmutableList<NodeType> nodeTypes = nodeTypesB.build();
-        final Iterator<NodeType> nodeTypesIt = nodeTypes.iterator();
-
-        concat(Iterators.transform(nodeTypesIt, nodetype2triple()));
+        stream(mixinNodeTypesArr).forEach(nodeTypes::add);
+        stream(mixinNodeTypesArr).map(NodeType::getSupertypes).flatMap(Arrays::stream).forEach(nodeTypes::add);
+        concat(nodeTypes.stream().map(nodetype2triple).iterator());
     }
 
-    private Function<NodeType, Triple> nodetype2triple() {
-        return new Function<NodeType, Triple>() {
-
-            @Override
-            public Triple apply(final NodeType nodeType) {
-                try {
-                    final String name = nodeType.getName();
-                    final String prefix = name.split(":")[0];
-                    final String typeName = name.split(":")[1];
-                    final String namespace = getJcrUri(prefix);
-                    final com.hp.hpl.jena.graph.Node rdfType =
-                            createURI(getRDFNamespaceForJcrNamespace(namespace)
-                                    + typeName);
-                    LOGGER.trace("Translating mixin: {} w/ namespace: {} into resource: {}", name, namespace, rdfType);
-                    return create(subject(), type.asNode(), rdfType);
-                } catch (final RepositoryException e) {
-                    throw propagate(e);
-                }
-            }
-
-        };
-    }
+    private final Function<NodeType, Triple> nodetype2triple = uncheck(nodeType -> {
+        final String name = nodeType.getName();
+        final String prefix = name.split(":")[0];
+        final String typeName = name.split(":")[1];
+        final String namespace = getJcrUri(prefix);
+        final com.hp.hpl.jena.graph.Node rdfType = createURI(getRDFNamespaceForJcrNamespace(namespace) + typeName);
+        LOGGER.trace("Translating mixin: {} w/ namespace: {} into resource: {}", name, namespace, rdfType);
+        return create(subject(), type.asNode(), rdfType);
+    });
 
     private String getJcrUri(final String prefix) throws RepositoryException {
-        return resource().getNode().getSession().getWorkspace().getNamespaceRegistry()
-                .getURI(prefix);
+        return resource().getNode().getSession().getWorkspace().getNamespaceRegistry().getURI(prefix);
     }
-
 }

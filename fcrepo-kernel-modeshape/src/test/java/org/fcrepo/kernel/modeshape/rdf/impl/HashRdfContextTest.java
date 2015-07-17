@@ -94,7 +94,9 @@ public class HashRdfContextTest {
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getNode("#")).thenReturn(mockContainer);
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockChildNode.getSession()).thenReturn(mockSession);
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {});
         when(mockNodeType.getName()).thenReturn("some:type");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
@@ -126,6 +128,7 @@ public class HashRdfContextTest {
             }
         });
         when(mockChildNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockChildNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
 
         when(mockProperty.getParent()).thenReturn(mockChildNode);
         when(mockProperty.getType()).thenReturn(STRING);
