@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.impl.rdf.impl;
 
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.impl.rdf.converters.ValueConverter.nodeForValue;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
@@ -28,7 +29,6 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.Value;
 
 import java.util.Iterator;
@@ -42,7 +42,6 @@ import java.util.Iterator;
 public class ReferencesRdfContext extends NodeRdfContext {
 
     private final PropertyToTriple property2triple;
-    private final Session session;
 
     /**
      * Add the inbound references from other nodes to this resource to the stream
@@ -57,7 +56,6 @@ public class ReferencesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         super(resource, idTranslator);
         property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        session = resource.getNode().getSession();
         putReferencesIntoContext(resource.getNode().getWeakReferences());
         putReferencesIntoContext(resource.getNode().getReferences());
     }
@@ -80,10 +78,8 @@ public class ReferencesRdfContext extends NodeRdfContext {
         }
     }
     private void putProxyReferencesIntoContext(final Value v) throws RepositoryException {
-        if (v.getType() == PATH) {
-            putProxyReferencesIntoContext(session.getNode(v.getString()));
-        } else if (v.getType() == REFERENCE || v.getType() == WEAKREFERENCE) {
-            putProxyReferencesIntoContext(session.getNodeByIdentifier(v.getString()));
+        if (v.getType() == PATH || v.getType() == REFERENCE || v.getType() == WEAKREFERENCE) {
+            putProxyReferencesIntoContext(nodeForValue(session(), v));
         }
     }
     private void putProxyReferencesIntoContext(final Node n) throws RepositoryException {

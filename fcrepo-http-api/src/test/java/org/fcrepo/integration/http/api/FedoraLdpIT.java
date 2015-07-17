@@ -1065,8 +1065,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
         final String pid2 = uuid + "/child";
-        createObject(pid1);
-        createObject(pid2);
+        createObjectAndClose(pid1);
+        createObjectAndClose(pid2);
 
         final String memberRelation = "http://pcdm.org/models#hasMember";
 
@@ -1091,50 +1091,50 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // retrieve the parent and verify the outbound triples exist
         final HttpGet getParent =  new HttpGet(serverAddress + pid1);
         getParent.addHeader("Accept", "application/n-triples");
-        final GraphStore parentGraph = getGraphStore(getParent);
-
-        assertTrue(parentGraph.contains(Node.ANY,
-                createURI(serverAddress + pid1),
-                createURI(memberRelation),
-                createURI(serverAddress + pid2)));
+        try (final CloseableGraphStore parentGraph = getGraphStore(getParent)) {
+            assertTrue(parentGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid2)));
+        }
 
         // retrieve the members container and verify the LDP triples exist
         final HttpGet getContainer =  new HttpGet(serverAddress + pid1 + "/members");
         getContainer.addHeader("Prefer", "return=representation;include=\"http://www.w3.org/ns/ldp#PreferMembership\"");
         getContainer.addHeader("Accept", "application/n-triples");
-        final GraphStore containerGraph = getGraphStore(getContainer);
+        try (final CloseableGraphStore containerGraph = getGraphStore(getContainer)) {
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
+                    createURI(memberRelation)));
 
-        assertTrue(containerGraph.contains(Node.ANY,
-                createURI(serverAddress + pid1 + "/members"),
-                createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
-                createURI(memberRelation)));
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#insertedContentRelation"),
+                    createURI("http://www.openarchives.org/ore/terms/proxyFor")));
 
-        assertTrue(containerGraph.contains(Node.ANY,
-                createURI(serverAddress + pid1 + "/members"),
-                createURI("http://www.w3.org/ns/ldp#insertedContentRelation"),
-                createURI("http://www.openarchives.org/ore/terms/proxyFor")));
-
-        assertTrue(containerGraph.contains(Node.ANY,
-                createURI(serverAddress + pid1 + "/members"),
-                createURI("http://www.w3.org/ns/ldp#membershipResource"),
-                createURI(serverAddress + pid1)));
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#membershipResource"),
+                    createURI(serverAddress + pid1)));
+        }
 
 
         // retrieve the member and verify inbound triples exist
         final HttpGet getMember =  new HttpGet(serverAddress + pid2);
         getMember.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES.toString() + "\"");
         getMember.addHeader("Accept", "application/n-triples");
-        final GraphStore memberGraph = getGraphStore(getMember);
+        try (final CloseableGraphStore memberGraph = getGraphStore(getMember)) {
+            assertTrue(memberGraph.contains(Node.ANY,
+                    Node.ANY,
+                    createURI("http://www.openarchives.org/ore/terms/proxyFor"),
+                    createURI(serverAddress + pid2)));
 
-        assertTrue(memberGraph.contains(Node.ANY,
-                Node.ANY,
-                createURI("http://www.openarchives.org/ore/terms/proxyFor"),
-                createURI(serverAddress + pid2)));
-
-        assertTrue(memberGraph.contains(Node.ANY,
-                createURI(serverAddress + pid1),
-                createURI(memberRelation),
-                createURI(serverAddress + pid2)));
+            assertTrue(memberGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid2)));
+        }
     }
 
     @Test

@@ -203,13 +203,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 return Iterators.transform(values, new Function<Value, Triple>() {
                     @Override
                     public Triple apply(final Value input) {
-                        try {
-                            final RDFNode membershipResource = new ValueConverter(resource().getNode().getSession(),
-                                    translator()).convert(input);
-                            return create(subject(), memberRelation, membershipResource.asNode());
-                        } catch (final RepositoryException e) {
-                            throw new RepositoryRuntimeException(e);
-                        }
+                        final RDFNode membershipResource = new ValueConverter(session(),
+                                translator()).convert(input);
+                        return create(subject(), memberRelation, membershipResource.asNode());
                     }
                 });
             } catch (final RepositoryException e) {

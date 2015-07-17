@@ -18,7 +18,9 @@ package org.fcrepo.kernel.impl.rdf.impl;
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeToResource;
 
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.utils.iterators.RdfStream;
@@ -53,6 +55,11 @@ public class NodeRdfContext extends RdfStream {
         this.resource = resource;
         this.idTranslator = idTranslator;
         this.subject = idTranslator.reverse().convert(resource).asNode();
+        try {
+            session(resource.getNode().getSession());
+        } catch (RepositoryException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
     }
 
     /**

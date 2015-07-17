@@ -25,6 +25,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.models.Container;
@@ -51,6 +53,10 @@ public class LdpRdfContextTest {
 
     @Mock
     private Container mockContainer;
+
+    @Mock
+    private Node mockNode;
+
     @Mock
     private Session mockSession;
 
@@ -60,11 +66,15 @@ public class LdpRdfContextTest {
 
 
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
         when(mockBinary.getPath()).thenReturn("/a");
         when(mockContainer.getPath()).thenReturn("/a");
+        when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockBinary.getNode()).thenReturn(mockNode);
+        when(mockContainer.getNode()).thenReturn(mockNode);
+        when(mockNode.getSession()).thenReturn(mockSession);
 
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
