@@ -153,7 +153,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                             subjectNode, mixinResource);
                     operateOnMixin(mixinResource, subjectNode);
                 } else {
-                    LOGGER.debug("Found repository-managed mixin on which we will not operate.");
+                    LOGGER.error("Found repository-managed mixin {} in triple {} on which we will not operate.",
+                            mixinResource, t);
                     throw new ServerManagedTypeException(String.format(
                             "The repository type (%s) of this resource is system managed.", mixinResource));
                 }
