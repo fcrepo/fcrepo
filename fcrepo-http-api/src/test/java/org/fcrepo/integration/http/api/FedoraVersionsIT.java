@@ -464,7 +464,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         try (final CloseableGraphStore updatedDSProperties =
                 getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
             assertTrue("Node must have versionable mixin.", updatedDSProperties.contains(ANY,
-                    createURI(serverAddress + pid + "/" + dsid + "/fcr:metadata"), type.asNode(),
+                    createURI(serverAddress + pid + "/" + dsid), type.asNode(),
                     createURI(MIX_NAMESPACE + "versionable")));
         }
         // update the content

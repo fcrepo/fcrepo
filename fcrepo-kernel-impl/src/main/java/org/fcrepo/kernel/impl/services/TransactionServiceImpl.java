@@ -53,7 +53,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TransactionServiceImpl extends AbstractService implements TransactionService {
 
-    private static final Logger LOGGER = getLogger(TransactionService.class);
+    private static final Logger LOGGER = getLogger(TransactionServiceImpl.class);
 
     /**
      * A key for looking up the transaction id in a session key-value pair
