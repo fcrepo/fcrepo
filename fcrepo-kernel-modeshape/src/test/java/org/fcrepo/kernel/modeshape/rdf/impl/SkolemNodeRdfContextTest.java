@@ -119,6 +119,16 @@ public class SkolemNodeRdfContextTest {
         when(mockOtherNode.getSession()).thenReturn(mockSession);
         when(mockNestedBlankNode.getSession()).thenReturn(mockSession);
 
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[]{});
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockBlankNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockOtherNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNestedBlankNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+        when(mockBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+        when(mockOtherNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+        when(mockNestedBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+
         when(mockProperty.getType()).thenReturn(BINARY);
 
         when(mockBnodeReferenceProperty.getType()).thenReturn(REFERENCE);
@@ -199,9 +209,6 @@ public class SkolemNodeRdfContextTest {
 
     @Test
     public void testWithNestedBlanknodes() throws RepositoryException {
-
-
-
         when(mockNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
             public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
@@ -210,16 +217,14 @@ public class SkolemNodeRdfContextTest {
         });
         when(mockBnodeReferenceProperty.getParent()).thenReturn(mockNode);
 
-
         when(mockBlankNode.getProperties()).thenAnswer(new Answer<TestPropertyIterator>() {
             @Override
             public TestPropertyIterator answer(final InvocationOnMock invocationOnMock) {
                 return new TestPropertyIterator(mockOtherBnodeReferenceProperty);
             }
         });
+
         when(mockOtherBnodeReferenceProperty.getParent()).thenReturn(mockBlankNode);
-
-
         when(mockNestedBlankNode.getProperties()).thenReturn(new TestPropertyIterator());
         when(mockNestedBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
 
