@@ -68,8 +68,8 @@
   <modules>
     <module>fcrepo-boms</module>
     <module>fcrepo-mint</module>
-    <module>fcrepo-kernel</module>
-    <module>fcrepo-kernel-impl</module>
+    <module>fcrepo-kernel-api</module>
+    <module>fcrepo-kernel-modeshape</module>
     <module>fcrepo-webapp</module>
     <module>fcrepo-jms</module>
     <module>fcrepo-http-commons</module>

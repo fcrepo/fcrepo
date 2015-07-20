@@ -31,9 +31,9 @@ import javax.jcr.Session;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

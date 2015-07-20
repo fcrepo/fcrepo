@@ -17,7 +17,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,7 +26,7 @@ import javax.ws.rs.core.Response;
 
 import java.io.IOException;
 
-import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 
 /**

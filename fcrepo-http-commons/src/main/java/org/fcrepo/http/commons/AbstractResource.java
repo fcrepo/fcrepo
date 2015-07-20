@@ -25,12 +25,12 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.services.BinaryService;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.services.VersionService;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.services.VersionService;
 
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.bridge.SLF4JBridgeHandler;

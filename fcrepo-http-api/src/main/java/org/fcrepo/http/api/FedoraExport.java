@@ -35,7 +35,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.InvalidSerializationFormatException;
 import org.fcrepo.serialization.SerializerUtil;

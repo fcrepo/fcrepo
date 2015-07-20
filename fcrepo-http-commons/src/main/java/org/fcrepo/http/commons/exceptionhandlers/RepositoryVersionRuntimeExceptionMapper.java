@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.RepositoryVersionRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

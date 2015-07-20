@@ -15,13 +15,13 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import org.fcrepo.kernel.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 
 /**
  * Abstract class for constraint violation subclasses

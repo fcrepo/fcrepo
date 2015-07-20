@@ -31,9 +31,9 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.exception.TransactionMissingException;
-import org.fcrepo.kernel.services.TransactionService;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

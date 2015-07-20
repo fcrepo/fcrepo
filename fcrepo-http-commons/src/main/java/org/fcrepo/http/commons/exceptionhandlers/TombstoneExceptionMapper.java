@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.TombstoneException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

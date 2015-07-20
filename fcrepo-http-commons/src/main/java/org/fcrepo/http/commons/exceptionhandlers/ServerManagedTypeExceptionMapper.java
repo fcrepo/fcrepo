@@ -24,7 +24,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 
 /**
  * @author whikloj

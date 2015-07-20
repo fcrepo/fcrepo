@@ -22,8 +22,8 @@ import java.io.OutputStream;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.springframework.stereotype.Component;
 
 /**

@@ -22,7 +22,7 @@ import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.transform.Transformation;
 
 import java.io.IOException;

@@ -20,9 +20,9 @@ import org.junit.Test;
 
 import java.text.ParseException;
 
-import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
-import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 

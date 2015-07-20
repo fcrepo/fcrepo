@@ -17,7 +17,7 @@ package org.fcrepo.connector.file;
 
 import static java.nio.file.Files.deleteIfExists;
 
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 import org.infinispan.schematic.Schematic;
 import org.infinispan.schematic.document.Document;

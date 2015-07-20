@@ -17,7 +17,7 @@ package org.fcrepo.jms.headers;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.joining;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -27,8 +27,8 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
-import org.fcrepo.kernel.observer.FedoraEvent;
-import org.fcrepo.kernel.utils.EventType;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.utils.EventType;
 
 import org.slf4j.Logger;
 

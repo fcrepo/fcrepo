@@ -24,8 +24,8 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.fcrepo.kernel.RdfLexicon.JCR_NAMESPACE;
-import static org.fcrepo.kernel.impl.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -69,10 +69,10 @@ import org.apache.velocity.tools.generic.FieldTool;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.RdfLexicon;
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.NamespaceRdfContext;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 

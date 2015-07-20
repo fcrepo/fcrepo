@@ -23,8 +23,8 @@ import org.apache.marmotta.ldpath.LDPath;
 import org.apache.marmotta.ldpath.backend.jena.GenericJenaBackend;
 import org.apache.marmotta.ldpath.exception.LDPathParseException;
 
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.transform.Transformation;
 
 import org.slf4j.Logger;

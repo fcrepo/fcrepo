@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.junit.Before;
 import org.junit.Test;
 

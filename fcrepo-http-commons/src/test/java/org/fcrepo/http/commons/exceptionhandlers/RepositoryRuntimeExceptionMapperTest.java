@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

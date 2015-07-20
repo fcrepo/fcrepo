@@ -16,7 +16,7 @@
 package org.fcrepo.webapp;
 
 import org.junit.Assert;
-import org.fcrepo.kernel.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.junit.Test;
 import org.reflections.Reflections;
 

@@ -13,12 +13,12 @@
   <dependencies>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel</artifactId>
+      <artifactId>fcrepo-kernel-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -128,8 +128,8 @@
               org.fcrepo.jms.observer;version=${project.version}
             </Export-Package>
             <Import-Package>
-              org.fcrepo.kernel,
-              org.fcrepo.kernel.impl
+              org.fcrepo.kernel.api,
+              org.fcrepo.kernel.modeshape
             </Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>
