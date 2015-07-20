@@ -17,7 +17,6 @@ package org.fcrepo.kernel.impl.rdf.impl;
 
 import static org.fcrepo.kernel.impl.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.impl.rdf.converters.ValueConverter.nodeForValue;
-import static java.util.Collections.addAll;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
@@ -31,15 +30,13 @@ import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
+import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyValueIterator;
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Accumulate inbound references to a given resource
@@ -80,20 +77,11 @@ public class ReferencesRdfContext extends NodeRdfContext {
     private Function<Property, Iterator<Value>> potentialProxies = new Function<Property, Iterator<Value>>() {
         @Override
         public Iterator<Value> apply(final Property p) {
-            final Set<Value> values = new HashSet<Value>();
             try {
-                for ( final PropertyIterator it = p.getParent().getProperties(); it.hasNext(); ) {
-                    final Property potentialProxy = it.nextProperty();
-                    if (potentialProxy.isMultiple()) {
-                        addAll(values, potentialProxy.getValues());
-                    } else {
-                        values.add(potentialProxy.getValue());
-                    }
-                }
+                return Iterators.filter(new PropertyValueIterator(p.getParent().getProperties()), isReference);
             } catch (RepositoryException ex) {
                 throw new RepositoryRuntimeException(ex);
             }
-            return Iterators.filter(values.iterator(), isReference);
         }
     };
     private Function<Value, Iterator<Triple>> triplesForValue = new Function<Value, Iterator<Triple>>() {
