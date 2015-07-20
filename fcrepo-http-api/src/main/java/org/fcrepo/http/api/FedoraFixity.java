@@ -38,8 +38,8 @@ import javax.ws.rs.Produces;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 

@@ -34,9 +34,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.TxSession;
-import org.fcrepo.kernel.services.TransactionService;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TxSession;
+import org.fcrepo.kernel.api.services.TransactionService;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;

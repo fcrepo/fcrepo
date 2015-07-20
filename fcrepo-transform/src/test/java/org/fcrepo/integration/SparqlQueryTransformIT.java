@@ -18,11 +18,11 @@ package org.fcrepo.integration;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.ResultSet;
 
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.transform.transformations.SparqlQueryTransform;
 
 import org.junit.Test;
@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import static java.util.Objects.requireNonNull;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 

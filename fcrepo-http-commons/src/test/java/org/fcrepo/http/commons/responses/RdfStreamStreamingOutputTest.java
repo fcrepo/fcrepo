@@ -45,7 +45,7 @@ import javax.ws.rs.core.MediaType;
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

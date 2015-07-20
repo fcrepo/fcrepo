@@ -38,7 +38,7 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -121,7 +121,7 @@
     <!-- test gear -->
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
       <type>test-jar</type>
@@ -218,12 +218,12 @@
               org.fcrepo.http.api.url;version=${project.version}
             </Export-Package>
             <Import-Package>
-              org.fcrepo.kernel.impl,
-              org.fcrepo.kernel.impl.rdf,
-              org.fcrepo.kernel.impl.utils,
-              org.fcrepo.kernel.impl.utils.impl,
-              org.fcrepo.kernel.impl.utils.iterators,
-              org.fcrepo.kernel.impl.utils.infinispan,
+              org.fcrepo.kernel.api,
+              org.fcrepo.kernel.modeshape,
+              org.fcrepo.kernel.modeshape.rdf,
+              org.fcrepo.kernel.modeshape.utils,
+              org.fcrepo.kernel.modeshape.utils.impl,
+              org.fcrepo.kernel.modeshape.utils.iterators,
               org.fcrepo.auth.common,
               org.fcrepo.mint,
               org.fcrepo.serialization,

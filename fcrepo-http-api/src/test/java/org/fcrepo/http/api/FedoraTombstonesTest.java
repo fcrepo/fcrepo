@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.kernel.models.Tombstone;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

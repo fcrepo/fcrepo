@@ -38,12 +38,12 @@ import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.impl.rdf.impl.VersionsRdfContext;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.VersionService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

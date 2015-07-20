@@ -23,7 +23,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.slf4j.Logger;
 
 /**

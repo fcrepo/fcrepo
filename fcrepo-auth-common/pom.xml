@@ -132,7 +132,7 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>

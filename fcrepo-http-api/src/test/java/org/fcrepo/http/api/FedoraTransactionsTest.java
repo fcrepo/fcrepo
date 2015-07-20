@@ -31,10 +31,10 @@ import javax.jcr.Workspace;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.TxSession;
-import org.fcrepo.kernel.impl.TxAwareSession;
-import org.fcrepo.kernel.services.TransactionService;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TxSession;
+import org.fcrepo.kernel.api.services.TransactionService;
+import org.fcrepo.kernel.modeshape.TxAwareSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

@@ -31,7 +31,7 @@ import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.services.RepositoryService;
+import org.fcrepo.kernel.api.services.RepositoryService;
 import org.modeshape.jcr.api.Problem;
 import org.modeshape.jcr.api.Problems;
 import org.slf4j.Logger;

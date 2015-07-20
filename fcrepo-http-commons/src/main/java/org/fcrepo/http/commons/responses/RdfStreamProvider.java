@@ -44,8 +44,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.impl.rdf.impl.NamespaceRdfContext;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.NamespaceRdfContext;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFWriterRegistry;
 import org.openrdf.rio.ntriples.NTriplesWriterFactory;

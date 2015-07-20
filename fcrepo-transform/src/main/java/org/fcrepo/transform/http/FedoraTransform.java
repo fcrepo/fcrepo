@@ -54,8 +54,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.fcrepo.http.api.ContentExposingResource;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.transform.TransformationFactory;
 import org.jvnet.hk2.annotations.Optional;
 import org.modeshape.jcr.api.JcrTools;

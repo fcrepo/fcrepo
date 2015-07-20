@@ -63,7 +63,7 @@
       </dependency>
       <dependency>
         <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-kernel</artifactId>
+        <artifactId>fcrepo-kernel-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -73,7 +73,7 @@
       </dependency>
       <dependency>
         <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-kernel-impl</artifactId>
+        <artifactId>fcrepo-kernel-modeshape</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -20,7 +20,7 @@ import static java.net.URI.create;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.junit.Assert.assertNotNull;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.kernel.utils.ContentDigest.asURI;
+import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,8 +59,8 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.mint.UUIDPidMinter;
 
 import org.mockito.Mockito;

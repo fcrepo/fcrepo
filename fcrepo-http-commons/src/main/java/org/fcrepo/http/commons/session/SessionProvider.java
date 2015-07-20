@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.session;
 
-import static org.fcrepo.kernel.impl.services.TransactionServiceImpl.isInTransaction;
+import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.isInTransaction;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
