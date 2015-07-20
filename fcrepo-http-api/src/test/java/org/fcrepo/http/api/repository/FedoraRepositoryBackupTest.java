@@ -31,7 +31,7 @@ import java.io.InputStream;
 
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.services.RepositoryService;
+import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

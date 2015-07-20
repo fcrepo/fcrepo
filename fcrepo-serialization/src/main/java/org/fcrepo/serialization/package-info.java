@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * This package provides serialization capability. A {@link org.fcrepo.kernel.models.Container FedoraObject} can
+ * This package provides serialization capability. A {@link org.fcrepo.kernel.api.models.Container FedoraObject} can
  * be serialized to an XML stream. A {@link org.fcrepo.serialization.FedoraObjectSerializer
  * FedoraObjectSerializer} is responsible for the serialization mechanism.
  *

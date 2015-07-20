@@ -32,7 +32,7 @@ import javax.jms.MessageProducer;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
 
 import org.junit.Before;
 import org.junit.Test;

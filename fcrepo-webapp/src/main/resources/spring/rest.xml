@@ -19,9 +19,9 @@
     <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
     
     <!-- Identifier translation chain -->
-    <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
-        <bean class="org.fcrepo.kernel.impl.identifiers.HashConverter"/>
-        <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
+    <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
+        <bean class="org.fcrepo.kernel.modeshape.identifiers.HashConverter"/>
+        <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
     </util:list>
     
     <context:component-scan base-package="org.fcrepo"/>

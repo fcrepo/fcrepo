@@ -15,8 +15,8 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.models.Tombstone;
-import org.fcrepo.kernel.exception.TombstoneException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

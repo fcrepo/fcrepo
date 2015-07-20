@@ -15,7 +15,7 @@
  */
 package org.fcrepo.integration.connector.file;
 
-import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
 import org.junit.Test;
 

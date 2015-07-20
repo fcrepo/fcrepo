@@ -37,9 +37,9 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.impl.FedoraResourceImpl;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.services.VersionService;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

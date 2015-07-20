@@ -17,11 +17,11 @@ package org.fcrepo.http.api.url;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.kernel.FedoraJcrTypes.ROOT;
-import static org.fcrepo.kernel.RdfLexicon.HAS_FIXITY_SERVICE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_SERIALIZATION;
-import static org.fcrepo.kernel.RdfLexicon.HAS_TRANSACTION_SERVICE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_HISTORY;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -34,8 +34,8 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;

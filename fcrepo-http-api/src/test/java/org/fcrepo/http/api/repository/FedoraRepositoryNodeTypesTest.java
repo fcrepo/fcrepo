@@ -30,8 +30,8 @@ import javax.jcr.Session;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

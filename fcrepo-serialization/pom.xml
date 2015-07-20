@@ -15,7 +15,7 @@
   <dependencies>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel</artifactId>
+      <artifactId>fcrepo-kernel-api</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -57,7 +57,7 @@
           <instructions>
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>org.fcrepo.serialization;version=${project.version}</Export-Package>
-            <Import-Package>org.fcrepo.kernel</Import-Package>
+            <Import-Package>org.fcrepo.kernel.api</Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>
         </configuration>

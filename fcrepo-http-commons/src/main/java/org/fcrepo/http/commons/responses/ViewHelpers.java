@@ -21,16 +21,16 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.stream.Collectors.joining;
-import static org.fcrepo.kernel.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.FedoraJcrTypes.FCR_METADATA;
-import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.RdfLexicon.DCTERMS_TITLE;
-import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.RdfLexicon.RDFS_LABEL;
-import static org.fcrepo.kernel.RdfLexicon.SKOS_PREFLABEL;
-import static org.fcrepo.kernel.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.DC_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.SKOS_PREFLABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.text.SimpleDateFormat;
@@ -45,7 +45,7 @@ import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
 
 import org.fcrepo.http.commons.api.rdf.TripleOrdering;
-import org.fcrepo.kernel.RdfLexicon;
+import org.fcrepo.kernel.api.RdfLexicon;
 
 import org.slf4j.Logger;
 

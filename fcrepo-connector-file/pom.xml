@@ -14,7 +14,7 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -67,9 +67,9 @@
               org.fcrepo.connector.file;version=${project.version}
             </Export-Package>
             <Import-Package>
-              org.fcrepo.kernel,
-              org.fcrepo.kernel.impl.utils,
-              org.fcrepo.kernel.impl.utils.impl
+              org.fcrepo.kernel.api,
+              org.fcrepo.kernel.modeshape.utils,
+              org.fcrepo.kernel.modeshape.utils.impl
             </Import-Package>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>

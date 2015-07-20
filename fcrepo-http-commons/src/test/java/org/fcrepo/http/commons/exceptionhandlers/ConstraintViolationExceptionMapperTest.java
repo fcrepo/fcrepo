@@ -22,10 +22,10 @@ import javax.jcr.RepositoryException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;

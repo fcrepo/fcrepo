@@ -18,7 +18,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 
-import org.fcrepo.kernel.exception.IncorrectTripleSubjectException;
+import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;

@@ -30,10 +30,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 
-import org.fcrepo.kernel.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.exception.TransactionMissingException;
-import org.fcrepo.kernel.Transaction;
-import org.fcrepo.kernel.services.TransactionService;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.services.TransactionService;
 
 import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
