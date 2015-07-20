@@ -21,17 +21,23 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.models.FedoraResource;
 import org.fcrepo.kernel.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.impl.rdf.impl.mappings.PropertyToTriple;
-import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Accumulate inbound references to a given resource
@@ -56,33 +62,41 @@ public class ReferencesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         super(resource, idTranslator);
         property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        putReferencesIntoContext(resource.getNode().getWeakReferences());
-        putReferencesIntoContext(resource.getNode().getReferences());
+        putReferencesIntoContext(resource, property2triple);
+        putReferencesIntoContext(resource, property2proxyRefs);
     }
 
-    private void putReferencesIntoContext(final Iterator<Property> properties) throws RepositoryException {
-        while (properties.hasNext()) {
-            final Property p = properties.next();
-            concat(property2triple.apply(p));
+    private void putReferencesIntoContext(final FedoraResource resource, final Function f) throws RepositoryException {
+        concat(Iterators.concat(Iterators.transform(resource.getNode().getWeakReferences(), f)));
+        concat(Iterators.concat(Iterators.transform(resource.getNode().getReferences(), f)));
+    }
 
-            for ( final PropertyIterator it = p.getParent().getProperties(); it.hasNext(); ) {
-                final Property potentialProxy = it.nextProperty();
-                if (potentialProxy.isMultiple()) {
-                    for ( Value v : potentialProxy.getValues() ) {
-                        putProxyReferencesIntoContext(v);
+    private Function<Property, Iterator<Triple>> property2proxyRefs = new Function<Property, Iterator<Triple>>() {
+        @Override
+        public Iterator<Triple> apply(final Property p) {
+            final Set<Iterator<Triple>> triples = new HashSet<>();
+            try {
+                for ( final PropertyIterator it = p.getParent().getProperties(); it.hasNext(); ) {
+                    final Property potentialProxy = it.nextProperty();
+                    if (potentialProxy.isMultiple()) {
+                        for ( Value v : potentialProxy.getValues() ) {
+                            triples.add(findProxies(v));
+                        }
+                    } else {
+                        triples.add(findProxies(potentialProxy.getValue()));
                     }
-                } else {
-                    putProxyReferencesIntoContext(potentialProxy.getValue());
                 }
+            } catch (RepositoryException ex) {
+                throw new RepositoryRuntimeException(ex);
             }
+            return Iterators.concat(triples.iterator());
         }
-    }
-    private void putProxyReferencesIntoContext(final Value v) throws RepositoryException {
+    };
+    private Iterator<Triple> findProxies(final Value v) throws RepositoryException {
         if (v.getType() == PATH || v.getType() == REFERENCE || v.getType() == WEAKREFERENCE) {
-            putProxyReferencesIntoContext(nodeForValue(session(), v));
+            return new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(session(), v)), translator());
+        } else {
+            return Collections.<Triple>emptyIterator();
         }
-    }
-    private void putProxyReferencesIntoContext(final Node n) throws RepositoryException {
-        concat(new LdpContainerRdfContext(nodeConverter.convert(n), translator()));
     }
 }
