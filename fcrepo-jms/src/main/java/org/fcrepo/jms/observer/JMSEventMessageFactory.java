@@ -20,7 +20,7 @@ import java.io.IOException;
 import javax.jms.JMSException;
 import javax.jms.Message;
 
-import org.fcrepo.kernel.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
 
 /**
  * Produce a JMS Message from a JCR Event

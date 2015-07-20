@@ -18,7 +18,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
-import org.fcrepo.kernel.exception.OutOfDomainSubjectException;
+import org.fcrepo.kernel.api.exception.OutOfDomainSubjectException;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;

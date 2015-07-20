@@ -34,10 +34,10 @@ import java.util.UUID;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

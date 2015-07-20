@@ -16,11 +16,11 @@
 package org.fcrepo.integration;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.transform.transformations.LDPathTransform;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.List;
 
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

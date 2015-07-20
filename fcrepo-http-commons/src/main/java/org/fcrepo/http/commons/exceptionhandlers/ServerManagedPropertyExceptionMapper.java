@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;

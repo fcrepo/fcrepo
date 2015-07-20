@@ -20,7 +20,7 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-api</artifactId>
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
@@ -79,6 +79,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
       <type>test-jar</type>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -178,7 +185,7 @@
             <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
             <Export-Package>org.fcrepo.transform;version=${project.version}</Export-Package>
             <Import-Package>
-              org.fcrepo.kernel.impl,
+              org.fcrepo.kernel.api,
               org.fcrepo.http.commons,
               org.fcrepo.http.api
             </Import-Package>

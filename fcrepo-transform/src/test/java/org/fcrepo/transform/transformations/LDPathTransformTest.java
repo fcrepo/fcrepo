@@ -40,7 +40,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.WebApplicationException;
 
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

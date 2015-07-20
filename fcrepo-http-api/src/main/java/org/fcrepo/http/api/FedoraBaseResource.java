@@ -22,10 +22,10 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.lang.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.models.Tombstone;
-import org.fcrepo.kernel.exception.TombstoneException;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.slf4j.Logger;
 
 import javax.jcr.Session;

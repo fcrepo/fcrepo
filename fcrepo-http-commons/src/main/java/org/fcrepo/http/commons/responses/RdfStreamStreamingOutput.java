@@ -17,7 +17,7 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.Maps.filterEntries;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static org.fcrepo.kernel.utils.UncheckedBiConsumer.uncheck;
+import static org.fcrepo.kernel.api.utils.UncheckedBiConsumer.uncheck;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -29,7 +29,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;

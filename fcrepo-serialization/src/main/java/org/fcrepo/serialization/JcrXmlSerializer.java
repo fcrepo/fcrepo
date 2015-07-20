@@ -16,7 +16,7 @@
 package org.fcrepo.serialization;
 
 import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.springframework.stereotype.Component;
 
 import javax.jcr.ImportUUIDBehavior;
@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 
 /**
  * Serialize a FedoraObject using the modeshape-provided JCR/XML format

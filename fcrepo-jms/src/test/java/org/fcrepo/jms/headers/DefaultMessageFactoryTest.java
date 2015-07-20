@@ -26,7 +26,7 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
@@ -39,8 +39,8 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.command.ActiveMQObjectMessage;
-import org.fcrepo.kernel.observer.FedoraEvent;
-import org.fcrepo.kernel.utils.EventType;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.utils.EventType;
 
 import org.junit.Before;
 import org.junit.Test;

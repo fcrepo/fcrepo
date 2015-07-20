@@ -29,8 +29,8 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
-import static org.fcrepo.kernel.RdfLexicon.HAS_SIZE;
-import static org.fcrepo.kernel.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.jgroups.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -49,14 +49,14 @@ import javax.jms.MessageListener;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-import org.fcrepo.kernel.exception.InvalidChecksumException;
-import org.fcrepo.kernel.impl.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.services.BinaryService;
-import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.utils.EventType;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.utils.EventType;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 
 import org.junit.After;
 import org.junit.Before;

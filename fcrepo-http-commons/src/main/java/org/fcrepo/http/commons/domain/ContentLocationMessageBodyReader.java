@@ -17,7 +17,7 @@ package org.fcrepo.http.commons.domain;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import org.fcrepo.kernel.services.ExternalContentService;
+import org.fcrepo.kernel.api.services.ExternalContentService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 

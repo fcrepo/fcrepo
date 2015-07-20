@@ -14,8 +14,8 @@
   <bean class="org.fcrepo.mint.UUIDPidMinter"/>
 
   <!-- Identifier translation chain -->
-  <util:list id="translationChain" value-type="org.fcrepo.kernel.identifiers.InternalIdentifierConverter">
-    <bean class="org.fcrepo.kernel.impl.identifiers.NamespaceConverter"/>
+  <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
+    <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
   </util:list>
 
   <context:annotation-config/>

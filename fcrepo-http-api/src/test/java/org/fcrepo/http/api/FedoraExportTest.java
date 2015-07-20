@@ -32,8 +32,8 @@ import javax.jcr.Session;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.fcrepo.http.commons.test.util.TestHelpers;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.services.ContainerService;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.JcrXmlSerializer;
 import org.fcrepo.serialization.SerializerUtil;

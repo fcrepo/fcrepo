@@ -34,14 +34,14 @@ import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
-import static org.fcrepo.kernel.FedoraJcrTypes.LDP_BASIC_CONTAINER;
-import static org.fcrepo.kernel.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -80,16 +80,16 @@ import javax.ws.rs.core.UriBuilder;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
-import org.fcrepo.kernel.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.impl.rdf.impl.ReferencesRdfContext;
-import org.fcrepo.kernel.models.Container;
-import org.fcrepo.kernel.models.FedoraBinary;
-import org.fcrepo.kernel.models.FedoraResource;
-import org.fcrepo.kernel.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.services.BinaryService;
-import org.fcrepo.kernel.services.ContainerService;
-import org.fcrepo.kernel.services.NodeService;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -377,14 +377,14 @@ public class FedoraLdpTest {
             }
         });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext"
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext"
         )));
 
     }
@@ -407,14 +407,14 @@ public class FedoraLdpTest {
                     }
                 });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext"
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext"
         )));
 
     }
@@ -468,15 +468,15 @@ public class FedoraLdpTest {
                     }
                 });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext"
+                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext"
         )));
 
         assertFalse("Included non-minimal contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext"));
+                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
 
         assertFalse("Included non-minimal contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext"));
+                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext"));
 
     }
 
@@ -499,10 +499,10 @@ public class FedoraLdpTest {
                     }
                 });
         assertTrue("Should include membership contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext"));
+                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
 
         assertFalse("Should not include containment contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext"));
+                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext"));
 
     }
 
@@ -524,12 +524,12 @@ public class FedoraLdpTest {
                     }
                 });
         assertFalse("Should not include membership contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext"));
+                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
         assertFalse("Should not include membership contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext"));
+                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext"));
 
         assertTrue("Should include containment contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext"));
+                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext"));
 
     }
 
@@ -617,14 +617,14 @@ public class FedoraLdpTest {
                     }
                 });
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpContainerRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.LdpRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.PropertiesRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ChildrenRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.impl.rdf.impl.ParentRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext",
+                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext",
                 "child:properties"
         )));
 

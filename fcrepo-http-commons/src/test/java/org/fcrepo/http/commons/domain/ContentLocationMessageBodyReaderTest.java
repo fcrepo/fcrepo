@@ -22,7 +22,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.InputStream;
 import java.net.URI;
 
-import org.fcrepo.kernel.services.ExternalContentService;
+import org.fcrepo.kernel.api.services.ExternalContentService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

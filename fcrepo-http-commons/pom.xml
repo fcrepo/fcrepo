@@ -46,7 +46,7 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-impl</artifactId>
+      <artifactId>fcrepo-kernel-modeshape</artifactId>
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
@@ -307,7 +307,8 @@
             <Import-Package>
               org.fcrepo.metrics,
               org.fcrepo.mint,
-              org.fcrepo.kernel.impl,
+              org.fcrepo.kernel.api,
+              org.fcrepo.kernel.modeshape,
               org.fcrepo.serialization
             </Import-Package>
             <Embed-Transitive>true</Embed-Transitive>

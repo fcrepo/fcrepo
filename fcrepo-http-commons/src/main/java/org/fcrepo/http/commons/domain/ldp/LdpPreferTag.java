@@ -17,10 +17,10 @@ package org.fcrepo.http.commons.domain.ldp;
 
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
-import static org.fcrepo.kernel.RdfLexicon.EMBED_CONTAINS;
-import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.RdfLexicon.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
 
 import java.util.List;
 import java.util.Optional;

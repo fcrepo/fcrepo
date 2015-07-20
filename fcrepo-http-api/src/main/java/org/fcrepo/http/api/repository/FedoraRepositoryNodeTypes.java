@@ -35,7 +35,7 @@ import javax.ws.rs.Produces;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
