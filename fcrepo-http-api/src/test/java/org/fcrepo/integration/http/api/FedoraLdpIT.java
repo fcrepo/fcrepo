@@ -1846,7 +1846,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testEmptyPath() {
+    public void testPathWithEmptySegment() {
         final String badLocation = "test/me/mb/er/s//members/9528a300-22da-40f2-bf3c-5b345d71affb";
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(headObjMethod(badLocation)));
     }
