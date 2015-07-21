@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.exception.InvalidResourceIdentifierException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
@@ -27,7 +27,8 @@ import static javax.ws.rs.core.Response.status;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * The class translates {@link org.fcrepo.kernel.exception.InvalidResourceIdentifierException}s to proper response code.
+ * The class translates {@link org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException}s to its proper
+ * response code.
  *
  * @author awoods
  * @since July 14, 2015.

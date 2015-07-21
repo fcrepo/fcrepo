@@ -84,7 +84,7 @@ public final class NamespaceTools {
      * @param session the JCR session to use
      * @param path the absolute path to the object
      * @throws org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException on unregistered namespaces
-     * @throws org.fcrepo.kernel.exception.InvalidResourceIdentifierException on empty element paths
+     * @throws org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException on empty element paths
      * @throws org.fcrepo.kernel.api.exception.RepositoryRuntimeException if repository runtime exception occurred
      */
     public static void validatePath(final Session session, final String path) {

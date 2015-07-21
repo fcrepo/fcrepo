@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.exception;
+package org.fcrepo.kernel.api.exception;
 
 /**
  * This exception is used for invalid resource identifiers, such as when a resource path has empty segments.
