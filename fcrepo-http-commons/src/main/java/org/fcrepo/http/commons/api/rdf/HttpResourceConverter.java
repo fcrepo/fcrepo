@@ -48,6 +48,7 @@ import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
 import org.fcrepo.kernel.api.exception.IdentifierConversionException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -218,6 +219,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             if (path.isEmpty()) {
                 return "/";
+            }
+
+            // Validate path
+            if (path.contains("//")) {
+                throw new InvalidResourceIdentifierException("Path contains empty element! " + path);
             }
             return path;
         }

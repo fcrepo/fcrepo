@@ -17,6 +17,7 @@ package org.fcrepo.http.commons.api.rdf;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.TxSession;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -247,5 +248,10 @@ public class HttpResourceConverterTest {
     @Test
     public void testToStringWithRoot() {
         assertEquals("/", converter.asString(createResource("http://localhost:8080/some/")));
+    }
+
+    @Test (expected = InvalidResourceIdentifierException.class)
+    public void testToStringWithEmptPathSegment() {
+        converter.asString(createResource("http://localhost:8080/some/test/a//b/c/d"));
     }
 }
