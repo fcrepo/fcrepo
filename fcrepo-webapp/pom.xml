@@ -28,7 +28,6 @@
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
-    <jetty.version>8.1.13.v20130916</jetty.version>
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
   </properties>
 
@@ -171,6 +170,10 @@
         <exclusion>
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-io</artifactId>
         </exclusion>
         <exclusion>
           <groupId>org.eclipse.jetty</groupId>
@@ -375,15 +378,9 @@
       </plugin>
 
       <plugin>
-        <groupId>org.mortbay.jetty</groupId>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
         <configuration>
-          <loginServices>
-            <loginService implementation="org.eclipse.jetty.security.HashLoginService">
-              <name>fcrepo</name>
-              <config>${jetty.users.file}</config>
-            </loginService>
-          </loginServices>
           <scanIntervalSeconds>2</scanIntervalSeconds>
           <stopKey>STOP</stopKey>
           <webApp>
@@ -400,16 +397,15 @@
               <goal>start</goal>
             </goals>
             <configuration>
-              <connectors>
-                <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-                  <port>${fcrepo.dynamic.test.port}</port>
-                  <maxIdleTime>60000</maxIdleTime>
-                </connector>
-              </connectors>
-              <daemon>true</daemon>
+              <jettyXml>${project.artifactId}/src/test/resources/jetty-test.xml</jettyXml>
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
+                <systemProperty>
+                  <name>fcrepo.dynamic.test.port</name>
+                  <value>${fcrepo.dynamic.test.port}</value>
+                </systemProperty>
+
                 <systemProperty>
                   <name>fcrepo.dynamic.jms.port</name>
                   <value>${fcrepo.dynamic.jms.port}</value>
