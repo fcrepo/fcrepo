@@ -194,7 +194,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testHeadObject() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
-        final HttpHead headObjMethod = new HttpHead(serverAddress + id);
+        final HttpHead headObjMethod = headObjMethod(id);
         assertEquals(OK.getStatusCode(), getStatus(headObjMethod));
     }
 
@@ -202,7 +202,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testHeadDefaultContainer() throws IOException {
         final String id = getRandomUniqueId();
         createObject(id).close();
-        final HttpHead headObjMethod = new HttpHead(serverAddress + id);
+        final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertTrue("Didn't find LDP container link header!", getLinkHeaders(response).contains(
                     BASIC_CONTAINER_LINK_HEADER));
@@ -216,7 +216,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         addMixin(id, BASIC_CONTAINER.getURI());
 
-        final HttpHead headObjMethod = new HttpHead(serverAddress + id);
+        final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
@@ -229,7 +229,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         addMixin(id, DIRECT_CONTAINER.getURI());
 
-        final HttpHead headObjMethod = new HttpHead(serverAddress + id);
+        final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(DIRECT_CONTAINER_LINKHEADER));
@@ -242,7 +242,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         addMixin(id, INDIRECT_CONTAINER.getURI());
 
-        final HttpHead headObjMethod = new HttpHead(serverAddress + id);
+        final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(INDIRECT_CONTAINER_LINK_HEADER));
@@ -254,7 +254,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "123");
 
-        final HttpHead headObjMethod = new HttpHead(serverAddress + id + "/x");
+        final HttpHead headObjMethod = headObjMethod(id + "/x");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(TEXT_PLAIN, response.getFirstHeader("Content-Type").getValue());
@@ -1520,7 +1520,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // check Last-Modified header is current
         final long lastmod1;
-        try (final CloseableHttpResponse resp1 = execute(new HttpHead(serverAddress + "files/" + id))) {
+        try (final CloseableHttpResponse resp1 = execute(headObjMethod("files/" + id))) {
             assertEquals(OK.getStatusCode(), getStatus(resp1));
             lastmod1 = headerFormat.parse(resp1.getFirstHeader("Last-Modified").getValue()).getTime();
             assertTrue((timestamp1 - lastmod1) < 1000); // because rounding
@@ -1534,7 +1534,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             }
 
             // check Last-Modified header is updated
-            try (final CloseableHttpResponse resp2 = execute(new HttpHead(serverAddress + "files/" + id))) {
+            try (final CloseableHttpResponse resp2 = execute(headObjMethod("files/" + id))) {
                 assertEquals(OK.getStatusCode(), getStatus(resp2));
                 final long lastmod2 = headerFormat.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
                 assertTrue((timestamp2 - lastmod2) < 1000); // because rounding
