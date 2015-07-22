@@ -37,8 +37,6 @@ import java.util.HashMap;
 import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.infinispan.schematic.document.Document;
 import org.modeshape.connector.filesystem.FileSystemConnector;
@@ -324,12 +322,10 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
 
     /* Overriding so unit test can mock. */
     @Override
-    @VisibleForTesting
     protected File fileFor( final String id ) {
         return super.fileFor(id);
     }
     @Override
-    @VisibleForTesting
     protected DocumentReader readDocument( final Document document ) {
         return super.readDocument(document);
     }
