@@ -53,6 +53,10 @@
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <guava.version>18.0</guava.version>
+    <!-- OSGi -->
+    <osgi.import.packages/>
+    <osgi.private.packages/>
+    <osgi.export.packages/>
     <!-- plugin versions -->
     <checkstyle.plugin.version>2.15</checkstyle.plugin.version>
     <jacoco.plugin.version>0.7.5.201505241946</jacoco.plugin.version>
@@ -591,6 +595,15 @@
           <artifactId>maven-bundle-plugin</artifactId>
           <version>2.5.3</version>
           <extensions>true</extensions>
+          <configuration>
+            <instructions>
+              <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+              <Export-Package>${osgi.export.packages}</Export-Package>
+              <Import-Package>${osgi.import.packages}</Import-Package>
+              <Private-Package>${osgi.private.packages}</Private-Package>
+              <Embed-Transitive>true</Embed-Transitive>
+            </instructions>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
