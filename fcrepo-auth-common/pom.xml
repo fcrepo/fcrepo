@@ -10,6 +10,20 @@
   <description>Provides unified policy enforcement points for various access control implementations.</description>
   <packaging>bundle</packaging>
 
+  <properties>
+    <osgi.import.packages>
+      javax.jcr,
+      javax.servlet.http,
+      
+      org.modeshape.jcr.*,
+      
+      *
+    </osgi.import.packages>
+    <osgi.export.packages>
+      org.fcrepo.auth.common;version=${project.version}
+    </osgi.export.packages>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.modeshape</groupId>
@@ -161,21 +175,6 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>
-              org.fcrepo.auth.common;version=${project.version}
-            </Export-Package>
-            <Import-Package>
-              org.fcrepo.serialization,
-              org.fcrepo.mint,
-              org.fcrepo.http.commons
-            </Import-Package>
-            <Embed-Transitive>true</Embed-Transitive>
-          </instructions>
-        </configuration>
       </plugin>
     </plugins>
   </build>

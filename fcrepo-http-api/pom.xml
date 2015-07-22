@@ -12,6 +12,42 @@
   <description>The Fedora Commons repository HTTP API: Provides a RESTful HTTP API to interact with the Fedora Commons repository.</description>
   <packaging>bundle</packaging>
 
+  <properties>
+    <osgi.import.packages>
+        org.fcrepo.http.commons.*,
+        org.fcrepo.kernel.api.*,
+        org.fcrepo.kernel.modeshape.*,
+        org.fcrepo.serialization,
+
+        javax.annotation,
+        javax.inject,
+        javax.jcr.*,
+        javax.servlet.http,
+        javax.ws.rs.*,
+
+        org.apache.commons.lang,
+        org.apache.commons.io,
+        org.apache.jena.riot.*,
+        org.apache.velocity.*,
+        org.glassfish.jersey.media.multipart,
+        org.modeshape.jcr.api.*,
+
+        org.springframework.beans.*,
+        org.springframework.stereotype,
+        org.springframework.context.*,
+
+        com.codahale.metrics.*,
+        com.fasterxml.jackson.*,
+        com.google.common.*,
+        com.hp.hpl.jena.*,
+
+        *
+    </osgi.import.packages>
+    <osgi.export.packages>
+      org.fcrepo.http.api.*;version=${project.version}
+    </osgi.export.packages>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -207,35 +243,6 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>
-              org.fcrepo.http.api;version=${project.version},
-              org.fcrepo.http.api.repository;version=${project.version},
-              org.fcrepo.http.api.responses;version=${project.version},
-              org.fcrepo.http.api.url;version=${project.version}
-            </Export-Package>
-            <Import-Package>
-              org.fcrepo.kernel.api,
-              org.fcrepo.kernel.modeshape,
-              org.fcrepo.kernel.modeshape.rdf,
-              org.fcrepo.kernel.modeshape.utils,
-              org.fcrepo.kernel.modeshape.utils.impl,
-              org.fcrepo.kernel.modeshape.utils.iterators,
-              org.fcrepo.auth.common,
-              org.fcrepo.mint,
-              org.fcrepo.serialization,
-              org.fcrepo.http.commons.api.rdf,
-              org.fcrepo.http.commons.domain,
-              org.fcrepo.http.commons.domain.ldp,
-              org.fcrepo.http.commons.responses,
-              org.fcrepo.http.commons.session,
-              org.fcrepo.connector.file
-            </Import-Package>
-          </instructions>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
