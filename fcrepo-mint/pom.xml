@@ -10,6 +10,26 @@
   <description>The Fedora Commons repository Minter module: Provides repository identifier and path services.</description>
   <packaging>bundle</packaging>
 
+  <properties>
+    <osgi.import.packages>
+      org.fcrepo.metrics,
+
+      javax.xml.*,
+
+      org.apache.http.*,
+      org.w3c.dom,
+      org.xml.sax,
+      com.codahale.metrics.*,
+      com.google.common.base,
+      com.google.common.lang,
+
+      *
+    </osgi.import.packages>
+    <osgi.export.packages>
+      org.fcrepo.mint;version=${project.version}
+    </osgi.export.packages>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -93,17 +113,6 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>org.fcrepo.mint;version=${project.version}</Export-Package>
-            <Import-Package>
-              org.fcrepo.metrics
-            </Import-Package>
-            <Embed-Transitive>true</Embed-Transitive>
-          </instructions>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>

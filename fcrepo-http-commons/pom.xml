@@ -10,6 +10,47 @@
   <description>The Fedora Commons repository HTTP commons module: Provides HTTP (JAX-RS) resources and helpers for use in assembling HTTP APIs over the Fedora Commons repository framework.</description>
   <packaging>bundle</packaging>
 
+  <properties>
+    <osgi.import.packages>
+      org.fcrepo.metrics,
+      org.fcrepo.mint,
+      org.fcrepo.kernel.api,
+      org.fcrepo.kernel.modeshape,
+      org.fcrepo.serialization,
+
+      javax.annotation,
+      javax.inject,
+      javax.jcr,
+      javax.servlet.http,
+      javax.ws.rs.*,
+      
+      com.codahale.metrics.*
+      com.fasterxml.jackson.core
+      com.hp.hpl.jena.*,
+      com.google.common.*,
+      org.apache.jena.riot,
+      org.apache.commons.codec.*,
+      org.apache.commons.io.*
+      org.apache.commons.lang,
+      org.glassfish.hk2.*,
+      org.glassfish.jersey.*,
+      org.jvnet.hk2.annotations,
+      org.modeshape.jcr.*,
+      org.openrdf.model.*
+      org.openrdf.rio,
+      
+      org.springframework.beans.*,
+      org.springframework.context,
+      org.springframework.stereotype,
+      org.springframework.web.context,
+
+      *
+    </osgi.import.packages>
+    <osgi.export.packages>
+      org.fcrepo.http.commons.*;version=${project.version},
+    </osgi.export.packages>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -290,30 +331,6 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-            <Export-Package>
-              org.fcrepo.http.commons;version=${project.version},
-              org.fcrepo.http.commons.api;version=${project.version},
-              org.fcrepo.http.commons.api.rdf;version=${project.version},
-              org.fcrepo.http.commons.domain;version=${project.version},
-              org.fcrepo.http.commons.domain.ldp;version=${project.version},
-              org.fcrepo.http.commons.responses;version=${project.version},
-              org.fcrepo.http.commons.session;version=${project.version},
-              org.fcrepo.http.commons.exceptionhandlers;version=${project.version}
-            </Export-Package>
-            <Import-Package>
-              org.fcrepo.metrics,
-              org.fcrepo.mint,
-              org.fcrepo.kernel.api,
-              org.fcrepo.kernel.modeshape,
-              org.fcrepo.serialization
-            </Import-Package>
-            <Embed-Transitive>true</Embed-Transitive>
-          </instructions>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
