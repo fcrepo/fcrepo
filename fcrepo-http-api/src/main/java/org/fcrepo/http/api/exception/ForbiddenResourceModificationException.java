@@ -18,7 +18,7 @@ import javax.ws.rs.ForbiddenException;
 
 /**
  * An extension of {@link javax.ws.rs.ForbiddenException} that may be thrown when attempting a
- * forbidden or unsupported operation on a {@link org.fcrepo.kernel.models.FedoraResource}.
+ * forbidden or unsupported operation on a resource.
  *
  * @author jrgriffiniii
  */
