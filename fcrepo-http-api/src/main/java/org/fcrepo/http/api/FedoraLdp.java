@@ -88,6 +88,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
+import org.fcrepo.http.api.exception.ForbiddenResourceModificationException;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.riot.RiotException;
@@ -272,7 +274,8 @@ public class FedoraLdp extends ContentExposingResource {
         if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
             throw new ClientErrorException("An If-Match header is required", 428);
         } else if (resource.hasType(FEDORA_PAIRTREE)) {
-            throw new ClientErrorException("Graphs cannot be created for resources under pairtree nodes", FORBIDDEN);
+            throw new ForbiddenResourceModificationException("Graphs cannot be created for resources " +
+                                                              "under pairtree nodes");
         }
 
         evaluateRequestPreconditions(request, servletResponse, resource, session);
