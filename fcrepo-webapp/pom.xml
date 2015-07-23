@@ -397,7 +397,7 @@
               <goal>start</goal>
             </goals>
             <configuration>
-              <jettyXml>${project.artifactId}/src/test/resources/jetty-test.xml</jettyXml>
+              <jettyXml>${project.basedir}/src/test/resources/jetty-test.xml</jettyXml>
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
