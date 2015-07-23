@@ -16,12 +16,12 @@
 
       javax.xml.*,
 
+      org.apache.commons.lang,
       org.apache.http.*,
       org.w3c.dom,
       org.xml.sax,
       com.codahale.metrics.*,
       com.google.common.base,
-      com.google.common.lang,
 
       *
     </osgi.import.packages>

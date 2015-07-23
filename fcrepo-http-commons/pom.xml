@@ -43,8 +43,6 @@
       org.springframework.context,
       org.springframework.stereotype,
       org.springframework.web.context,
-
-      *
     </osgi.import.packages>
     <osgi.export.packages>
       org.fcrepo.http.commons.*;version=${project.version},
