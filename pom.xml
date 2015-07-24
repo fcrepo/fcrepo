@@ -8,7 +8,7 @@
   </parent>
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.2.1-SNAPSHOT</version>
+  <version>4.3.0</version>
   <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons 4</description>
   <organization>
@@ -54,9 +54,9 @@
     <github.global.server>github</github.global.server>
     <guava.version>18.0</guava.version>
     <!-- OSGi -->
-    <osgi.import.packages/>
-    <osgi.private.packages/>
-    <osgi.export.packages/>
+    <osgi.import.packages />
+    <osgi.private.packages />
+    <osgi.export.packages />
     <!-- plugin versions -->
     <checkstyle.plugin.version>2.15</checkstyle.plugin.version>
     <jacoco.plugin.version>0.7.5.201505241946</jacoco.plugin.version>
@@ -1197,7 +1197,7 @@
     <developerConnection>scm:git:git@github.com:fcrepo4/${project_name}.git
     </developerConnection>
     <url>https://github.com/fcrepo4/fcrepo4</url>
-    <tag>HEAD</tag>
+    <tag>fcrepo-4.3.0</tag>
   </scm>
   <prerequisites>
     <maven>3.0.0</maven>
