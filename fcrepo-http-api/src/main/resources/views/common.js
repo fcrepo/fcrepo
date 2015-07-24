@@ -8,7 +8,7 @@ function addChild()
 
     var mixin = $("#new_mixin").val();
 
-    var newURI = $('#main').attr('resource') + "/" + id;
+    var newURI = $('#main').attr('resource') + (!id ? "" : "/" + id);
 
     var postURI = newURI;
 
