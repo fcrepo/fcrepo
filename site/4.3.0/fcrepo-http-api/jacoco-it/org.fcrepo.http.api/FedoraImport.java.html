@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraImport.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraImport.java</span></div><h1>FedoraImport.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.status;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.inject.Inject;
+import javax.jcr.ItemExistsException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.http.commons.domain.ContentLocation;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.serialization.InvalidSerializationFormatException;
+import org.fcrepo.serialization.SerializerUtil;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+
+/**
+ * Import serialized objects at a given endpoint
+ *
+ * @author ajs6f
+ * @author cbeer
+ */
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:import&quot;)
+<span class="fc" id="L56">public class FedoraImport extends FedoraBaseResource {</span>
+
+    @Inject
+    protected Session session;
+
+    @Autowired
+    protected SerializerUtil serializers;
+
+<span class="fc" id="L64">    private static final Logger LOGGER = getLogger(FedoraImport.class);</span>
+
+    /**
+     * Deserialize a serialized object at the current path POST
+     * /fcr:import?format=jcr/xml (with a JCR/XML payload)
+     *
+     * @param externalPath the external path
+     * @param format the format
+     * @param requestBodyStream the request body stream
+     * @return 201 with Location header to the path of the imported resource
+     * @throws IOException if IO exception occurred
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws URISyntaxException if uri syntax exception
+     */
+    @POST
+    public Response importObject(@PathParam(&quot;path&quot;) final String externalPath,
+        @QueryParam(&quot;format&quot;) @DefaultValue(&quot;jcr/xml&quot;) final String format,
+        @ContentLocation final InputStream requestBodyStream)
+        throws IOException, InvalidChecksumException, URISyntaxException {
+
+<span class="fc" id="L84">        final String path = toPath(translator(), externalPath);</span>
+<span class="fc" id="L85">        LOGGER.info(&quot;Deserializing to {}, '{}'&quot;, format, path);</span>
+
+        try {
+<span class="fc" id="L88">            serializers.getSerializer(format)</span>
+<span class="fc" id="L89">                    .deserialize(session, path, requestBodyStream);</span>
+<span class="fc" id="L90">            session.save();</span>
+<span class="fc" id="L91">            return created(new URI(path)).build();</span>
+<span class="fc" id="L92">        } catch ( ItemExistsException ex ) {</span>
+<span class="fc" id="L93">            return status(CONFLICT).entity(&quot;Item already exists&quot;).build();</span>
+<span class="nc" id="L94">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L95">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L96">        } catch (InvalidSerializationFormatException e) {</span>
+<span class="fc" id="L97">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    protected Session session() {
+<span class="fc" id="L103">        return session;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
