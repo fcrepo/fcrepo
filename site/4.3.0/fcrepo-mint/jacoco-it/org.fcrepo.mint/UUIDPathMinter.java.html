@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>UUIDPathMinter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Minter Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.mint</a> &gt; <span class="el_source">UUIDPathMinter.java</span></div><h1>UUIDPathMinter.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.mint;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static java.util.UUID.randomUUID;
+
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.StringJoiner;
+
+import org.fcrepo.metrics.RegistryService;
+
+import com.codahale.metrics.Timer;
+
+/**
+ * PID minter that creates hierarchical IDs for a UUID
+ *
+ * @author awoods
+ */
+public class UUIDPathMinter implements Supplier&lt;String&gt; {
+
+<span class="nc" id="L36">    static final Timer timer = RegistryService.getInstance().getMetrics().timer(</span>
+<span class="nc" id="L37">            name(UUIDPathMinter.class, &quot;mint&quot;));</span>
+
+    private static final int DEFAULT_LENGTH = 2;
+
+    private static final int DEFAULT_COUNT = 4;
+
+    private final int length;
+
+    private final int count;
+
+    /**
+     * Configure the path minter using some reasonable defaults for the length
+     * and count of the branch nodes
+     */
+    public UUIDPathMinter() {
+<span class="nc" id="L52">        this(DEFAULT_LENGTH, DEFAULT_COUNT);</span>
+<span class="nc" id="L53">    }</span>
+
+    /**
+     * Configure the path minter for the length of the keys and depth of the
+     * branch node prefix
+     *
+     * @param length how long the branch node identifiers should be
+     * @param count how many branch nodes should be inserted
+     */
+    public UUIDPathMinter(final int length, final int count) {
+<span class="nc" id="L63">        super();</span>
+<span class="nc" id="L64">        this.length = length;</span>
+<span class="nc" id="L65">        this.count = count;</span>
+<span class="nc" id="L66">    }</span>
+
+    /**
+     * Mint a unique identifier as a UUID
+     *
+     * @return uuid
+     */
+    @Override
+    public String get() {
+
+<span class="nc" id="L76">        try (final Timer.Context context = timer.time()) {</span>
+<span class="nc" id="L77">            final String s = randomUUID().toString();</span>
+
+<span class="nc bnc" id="L79" title="All 4 branches missed.">            if (length == 0 || count == 0) {</span>
+<span class="nc" id="L80">                return s;</span>
+            }
+
+<span class="nc" id="L83">            final StringJoiner joiner = new StringJoiner(&quot;/&quot;, &quot;&quot;, &quot;/&quot; + s);</span>
+<span class="nc" id="L84">            IntStream.rangeClosed(0, count - 1)</span>
+<span class="nc" id="L85">                     .forEach(x -&gt; joiner.add(s.substring(x * length, (x + 1) * length)));</span>
+
+<span class="nc" id="L87">            return joiner.toString();</span>
+<span class="nc bnc" id="L88" title="All 12 branches missed.">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
