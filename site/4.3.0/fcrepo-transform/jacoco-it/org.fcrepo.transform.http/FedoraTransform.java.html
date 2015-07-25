@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraTransform.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository RDF Transformations Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.transform.http</a> &gt; <span class="el_source">FedoraTransform.java</span></div><h1>FedoraTransform.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.transform.http;
+
+import static javax.jcr.nodetype.NodeType.NT_BASE;
+import static javax.jcr.nodetype.NodeType.NT_FILE;
+import static javax.jcr.nodetype.NodeType.NT_FOLDER;
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeResultsBIO;
+import static org.apache.jena.riot.WebContent.contentTypeResultsJSON;
+import static org.apache.jena.riot.WebContent.contentTypeResultsXML;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLQuery;
+import static org.apache.jena.riot.WebContent.contentTypeSSE;
+import static org.apache.jena.riot.WebContent.contentTypeTextCSV;
+import static org.apache.jena.riot.WebContent.contentTypeTextPlain;
+import static org.apache.jena.riot.WebContent.contentTypeTextTSV;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.fcrepo.transform.transformations.LDPathTransform.APPLICATION_RDF_LDPATH;
+import static org.fcrepo.transform.transformations.LDPathTransform.CONFIGURATION_FOLDER;
+import static org.fcrepo.transform.transformations.LDPathTransform.getNodeTypeTransform;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.fcrepo.http.api.ContentExposingResource;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.transform.TransformationFactory;
+import org.jvnet.hk2.annotations.Optional;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * Endpoint for transforming object properties using stored
+ * or POSTed transformations.
+ *
+ * @author cbeer
+ */
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}/fcr:transform&quot;)
+public class FedoraTransform extends ContentExposingResource {
+
+    @Inject
+    protected Session session;
+
+<span class="fc" id="L81">    private static final Logger LOGGER = getLogger(FedoraTransform.class);</span>
+
+    @Inject
+    @Optional
+    private TransformationFactory transformationFactory;
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    /**
+     * Default entry point
+     */
+<span class="fc" id="L92">    public FedoraTransform() { }</span>
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param externalPath the external path
+     */
+    @VisibleForTesting
+<span class="nc" id="L99">    public FedoraTransform(final String externalPath) {</span>
+<span class="nc" id="L100">        this.externalPath = externalPath;</span>
+<span class="nc" id="L101">    }</span>
+
+
+    /**
+     * Register the LDPath configuration tree in JCR
+     *
+     * @throws RepositoryException if repository exception occurred
+     * @throws java.io.IOException if IO exception occurred
+     * @throws SecurityException if security exception occurred
+     */
+    @PostConstruct
+    public void setUpRepositoryConfiguration() throws RepositoryException, IOException {
+
+<span class="fc" id="L114">        final JcrTools jcrTools = new JcrTools(true);</span>
+<span class="fc" id="L115">        final Session internalSession = sessions.getInternalSession();</span>
+        try {
+            // register our CND
+<span class="fc" id="L118">            jcrTools.registerNodeTypes(internalSession, &quot;ldpath.cnd&quot;);</span>
+
+            // create the configuration base path
+<span class="fc" id="L121">            jcrTools.findOrCreateNode(internalSession, &quot;/fedora:system/fedora:transform&quot;, &quot;fedora:Configuration&quot;,</span>
+                    &quot;fedora:NodeTypeConfiguration&quot;);
+<span class="fc" id="L123">            final Node node =</span>
+<span class="fc" id="L124">                jcrTools.findOrCreateNode(internalSession, CONFIGURATION_FOLDER + &quot;default&quot;, NT_FOLDER, NT_FOLDER);</span>
+<span class="fc" id="L125">            LOGGER.debug(&quot;Transforming node: {}&quot;, node.getPath());</span>
+
+            // register an initial default program
+<span class="fc bfc" id="L128" title="All 2 branches covered.">            if (!node.hasNode(NT_BASE)) {</span>
+<span class="fc" id="L129">                final Node baseConfig = node.addNode(NT_BASE, NT_FILE);</span>
+<span class="fc" id="L130">                jcrTools.uploadFile(internalSession, baseConfig.getPath(), getClass().getResourceAsStream(</span>
+                        &quot;/ldpath/default/nt_base_ldpath_program.txt&quot;));
+            }
+<span class="fc" id="L133">            internalSession.save();</span>
+        } finally {
+<span class="pc" id="L135">            internalSession.logout();</span>
+<span class="fc" id="L136">        }</span>
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Execute an LDpath program transform
+     *
+     * @param program the LDpath program
+     * @return Binary blob
+     * @throws RepositoryException if repository exception occurred
+     */
+    @GET
+    @Path(&quot;{program}&quot;)
+    @Produces({APPLICATION_JSON})
+    @Timed
+    public Object evaluateLdpathProgram(@PathParam(&quot;program&quot;) final String program)
+            throws RepositoryException {
+<span class="fc" id="L152">        LOGGER.info(&quot;GET transform, '{}', for '{}'&quot;, program, externalPath);</span>
+
+<span class="fc" id="L154">        final RdfStream rdfStream = getResourceTriples().session(session)</span>
+<span class="fc" id="L155">                .topic(translator().reverse().convert(resource()).asNode());</span>
+
+<span class="fc" id="L157">        return getNodeTypeTransform(resource().getNode(), program).apply(rdfStream);</span>
+
+    }
+
+    /**
+     * Get the LDPath output as a JSON stream appropriate for e.g. Solr
+     *
+     * @param contentType the content type
+     * @param requestBodyStream the request body stream
+     * @return LDPath as a JSON stream
+     */
+    @POST
+    @Consumes({APPLICATION_RDF_LDPATH, contentTypeSPARQLQuery})
+    @Produces({APPLICATION_JSON, contentTypeTextTSV, contentTypeTextCSV,
+            contentTypeSSE, contentTypeTextPlain, contentTypeResultsJSON,
+            contentTypeResultsXML, contentTypeResultsBIO, contentTypeTurtle,
+            contentTypeN3, contentTypeNTriples, contentTypeRDFXML})
+    @Timed
+    public Object evaluateTransform(@HeaderParam(&quot;Content-Type&quot;) final MediaType contentType,
+                                    final InputStream requestBodyStream) {
+
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">        if (transformationFactory == null) {</span>
+<span class="fc" id="L179">            transformationFactory = new TransformationFactory();</span>
+        }
+<span class="fc" id="L181">        LOGGER.info(&quot;POST transform for '{}'&quot;, externalPath);</span>
+
+<span class="fc" id="L183">        final RdfStream rdfStream = getResourceTriples().session(session)</span>
+<span class="fc" id="L184">                .topic(translator().reverse().convert(resource()).asNode());</span>
+
+<span class="fc" id="L186">        return transformationFactory.getTransform(contentType, requestBodyStream).apply(rdfStream);</span>
+
+    }
+
+    @Override
+    protected Session session() {
+<span class="fc" id="L192">        return session;</span>
+    }
+
+    @Override
+    protected String externalPath() {
+<span class="fc" id="L197">        return externalPath;</span>
+    }
+
+    @Override
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+<span class="nc" id="L202">        throw new UnsupportedOperationException();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

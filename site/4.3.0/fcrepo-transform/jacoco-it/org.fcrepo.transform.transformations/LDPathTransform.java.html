@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>LDPathTransform.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository RDF Transformations Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.transform.transformations</a> &gt; <span class="el_source">LDPathTransform.java</span></div><h1>LDPathTransform.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.transform.transformations;
+
+import com.google.common.collect.ImmutableList;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.apache.marmotta.ldpath.LDPath;
+import org.apache.marmotta.ldpath.backend.jena.GenericJenaBackend;
+import org.apache.marmotta.ldpath.exception.LDPathParseException;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.transform.Transformation;
+
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
+import javax.ws.rs.WebApplicationException;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+import static com.google.common.collect.ImmutableList.builder;
+import static com.google.common.collect.ImmutableSortedSet.orderedBy;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Utilities for working with LDPath
+ *
+ * @author cbeer
+ */
+public class LDPathTransform implements Transformation&lt;List&lt;Map&lt;String, Collection&lt;Object&gt;&gt;&gt;&gt;  {
+
+    public static final String CONFIGURATION_FOLDER = &quot;/fedora:system/fedora:transform/fedora:ldpath/&quot;;
+
+<span class="fc" id="L63">    private static final Comparator&lt;NodeType&gt; BY_NAME =</span>
+<span class="fc" id="L64">            (final NodeType o1, final NodeType o2) -&gt; o1.getName().compareTo(o2.getName());</span>
+
+    // TODO: this mime type was made up
+    public static final String APPLICATION_RDF_LDPATH = &quot;application/rdf+ldpath&quot;;
+    private final InputStream query;
+
+<span class="fc" id="L70">    private static final Logger LOGGER = getLogger(LDPathTransform.class);</span>
+
+    /**
+     * Construct a new Transform from the InputStream
+     * @param query the query
+     */
+<span class="fc" id="L76">    public LDPathTransform(final InputStream query) {</span>
+<span class="fc" id="L77">        this.query = query;</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+     * Pull a node-type specific transform out of JCR
+     * @param node the node
+     * @param key the key
+     * @return node-type specific transform
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static LDPathTransform getNodeTypeTransform(final Node node,
+        final String key) throws RepositoryException {
+
+<span class="fc" id="L90">        final Node programNode = node.getSession().getNode(CONFIGURATION_FOLDER + key);</span>
+
+<span class="fc" id="L92">        LOGGER.debug(&quot;Found program node: {}&quot;, programNode.getPath());</span>
+
+<span class="fc" id="L94">        final NodeType primaryNodeType = node.getPrimaryNodeType();</span>
+
+<span class="fc" id="L96">        final Set&lt;NodeType&gt; supertypes = orderedBy(BY_NAME).add(primaryNodeType.getSupertypes()).build();</span>
+<span class="fc" id="L97">        final Set&lt;NodeType&gt; mixinTypes = orderedBy(BY_NAME).add(node.getMixinNodeTypes()).build();</span>
+
+        // start with mixins, primary type, and supertypes of primary type
+<span class="fc" id="L100">        final ImmutableList.Builder&lt;NodeType&gt; nodeTypesB = builder();</span>
+<span class="fc" id="L101">        nodeTypesB.addAll(mixinTypes).add(primaryNodeType).addAll(supertypes);</span>
+
+        // add supertypes of mixins
+<span class="fc" id="L104">        mixinTypes.stream().map(mixin -&gt; orderedBy(BY_NAME).add(mixin.getDeclaredSupertypes()).build())</span>
+<span class="fc" id="L105">            .forEach(nodeTypesB::addAll);</span>
+
+<span class="fc" id="L107">        final List&lt;NodeType&gt; nodeTypes = nodeTypesB.build();</span>
+
+<span class="fc" id="L109">        LOGGER.debug(&quot;Discovered node types: {}&quot;, nodeTypes);</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        for (final NodeType nodeType : nodeTypes) {</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">            if (programNode.hasNode(nodeType.toString())) {</span>
+<span class="fc" id="L112">                return new LDPathTransform(programNode.getNode(nodeType.toString())</span>
+<span class="fc" id="L113">                                               .getNode(JCR_CONTENT)</span>
+<span class="fc" id="L114">                                               .getProperty(JCR_DATA)</span>
+<span class="fc" id="L115">                                               .getBinary().getStream());</span>
+            }
+<span class="fc" id="L117">        }</span>
+
+<span class="nc" id="L119">        throw new WebApplicationException(new Exception(</span>
+<span class="nc" id="L120">                &quot;Couldn't find transformation for &quot; + node.getPath()</span>
+                        + &quot; and transformation key &quot; + key), SC_BAD_REQUEST);
+    }
+
+    @Override
+    public List&lt;Map&lt;String, Collection&lt;Object&gt;&gt;&gt; apply(final RdfStream stream) {
+<span class="fc" id="L126">        final LDPath&lt;RDFNode&gt; ldpathForResource =</span>
+<span class="fc" id="L127">            getLdpathResource(stream);</span>
+
+<span class="fc" id="L129">        final Resource context = createResource(stream.topic().getURI());</span>
+
+        try {
+<span class="fc" id="L132">            return ImmutableList.of(unsafeCast(</span>
+<span class="fc" id="L133">                ldpathForResource.programQuery(context, new InputStreamReader(query))));</span>
+<span class="nc" id="L134">        } catch (final LDPathParseException e) {</span>
+<span class="nc" id="L135">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private static &lt;F, T&gt; T unsafeCast(final F from) {
+<span class="fc" id="L141">        return (T) from;</span>
+    }
+
+    @Override
+    public boolean equals(final Object other) {
+<span class="nc bnc" id="L146" title="All 4 branches missed.">        return other instanceof LDPathTransform &amp;&amp; ((LDPathTransform) other).query.equals(query);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L151">        return Objects.hashCode(query);</span>
+    }
+
+    /**
+     * Get the LDPath resource for an object
+     * @param rdfStream
+     * @return the LDPath resource for the given object
+     */
+    private static LDPath&lt;RDFNode&gt; getLdpathResource(final RdfStream rdfStream) {
+
+<span class="fc" id="L161">        return new LDPath&lt;&gt;(new GenericJenaBackend(rdfStream.asModel()));</span>
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
