@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ValueConverter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation based on Modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.converters</a> &gt; <span class="el_source">ValueConverter.java</span></div><h1>ValueConverter.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.converters;
+
+import com.google.common.base.Converter;
+import com.google.common.base.Splitter;
+import com.hp.hpl.jena.datatypes.BaseDatatype;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.PropertyType;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFactory;
+
+import java.util.Iterator;
+
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static javax.jcr.PropertyType.BOOLEAN;
+import static javax.jcr.PropertyType.DATE;
+import static javax.jcr.PropertyType.DECIMAL;
+import static javax.jcr.PropertyType.DOUBLE;
+import static javax.jcr.PropertyType.LONG;
+import static javax.jcr.PropertyType.PATH;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.STRING;
+import static javax.jcr.PropertyType.UNDEFINED;
+import static javax.jcr.PropertyType.URI;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @since 10/8/14
+ */
+public class ValueConverter extends Converter&lt;Value, RDFNode&gt; {
+
+<span class="fc" id="L62">    private static final Logger LOGGER = getLogger(ValueConverter.class);</span>
+
+    private final Session session;
+    private final Converter&lt;Node, Resource&gt; graphSubjects;
+
+    /**
+     * Convert values between JCR values and RDF objects with the given session and subjects
+     * @param session the session
+     * @param graphSubjects the graph subjects
+     */
+    public ValueConverter(final Session session,
+<span class="fc" id="L73">                          final Converter&lt;Resource, FedoraResource&gt; graphSubjects) {</span>
+<span class="fc" id="L74">        this.session = session;</span>
+<span class="fc" id="L75">        this.graphSubjects = nodeToResource(graphSubjects);</span>
+<span class="fc" id="L76">    }</span>
+
+    @Override
+    protected RDFNode doForward(final Value value) {
+        try {
+<span class="pc bpc" id="L81" title="5 of 8 branches missed.">            switch (value.getType()) {</span>
+                case BOOLEAN:
+<span class="nc" id="L83">                    return literal2node(value.getBoolean());</span>
+                case DATE:
+<span class="fc" id="L85">                    return literal2node(value.getDate());</span>
+                case DECIMAL:
+<span class="nc" id="L87">                    return literal2node(value.getDecimal());</span>
+                case DOUBLE:
+<span class="nc" id="L89">                    return literal2node(value.getDouble());</span>
+                case LONG:
+<span class="nc" id="L91">                    return literal2node(value.getLong());</span>
+                case URI:
+<span class="nc" id="L93">                    return createResource(value.getString());</span>
+                case REFERENCE:
+                case WEAKREFERENCE:
+                case PATH:
+<span class="fc" id="L97">                    return traverseLink(value);</span>
+                default:
+<span class="fc" id="L99">                    return stringliteral2node(value.getString());</span>
+            }
+<span class="nc" id="L101">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L102">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    protected Value doBackward(final RDFNode resource) {
+
+        try {
+
+<span class="fc" id="L111">            final ValueFactory valueFactory = session.getValueFactory();</span>
+
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">            if (resource.isAnon()) {</span>
+                // a non-URI resource (e.g. a blank node)
+<span class="nc" id="L115">                return valueFactory.createValue(resource.toString(), UNDEFINED);</span>
+            }
+
+<span class="fc" id="L118">            final RdfLiteralJcrValueBuilder rdfLiteralJcrValueBuilder = new RdfLiteralJcrValueBuilder();</span>
+
+<span class="fc bfc" id="L120" title="All 2 branches covered.">            if (resource.isURIResource()) {</span>
+<span class="fc" id="L121">                rdfLiteralJcrValueBuilder.value(resource.asResource().getURI()).datatype(&quot;URI&quot;);</span>
+            } else {
+
+<span class="fc" id="L124">                final Literal literal = resource.asLiteral();</span>
+<span class="fc" id="L125">                final RDFDatatype dataType = literal.getDatatype();</span>
+
+<span class="fc" id="L127">                rdfLiteralJcrValueBuilder.value(literal.getString()).datatype(dataType).lang(literal.getLanguage());</span>
+            }
+
+<span class="fc" id="L130">            return valueFactory.createValue(rdfLiteralJcrValueBuilder.toString(), STRING);</span>
+<span class="nc" id="L131">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L132">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    private static Literal literal2node(final Object literal) {
+<span class="fc" id="L137">        final Literal result = createTypedLiteral(literal);</span>
+<span class="fc" id="L138">        LOGGER.trace(&quot;Converting {} into {}&quot;, literal, result);</span>
+<span class="fc" id="L139">        return result;</span>
+    }
+
+
+    private static RDFNode stringliteral2node(final String literal) {
+<span class="fc" id="L144">        final RdfLiteralJcrValueBuilder rdfLiteralJcrValueBuilder = new RdfLiteralJcrValueBuilder(literal);</span>
+
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (rdfLiteralJcrValueBuilder.hasLang()) {</span>
+<span class="nc" id="L147">            return createLangLiteral(rdfLiteralJcrValueBuilder.value(), rdfLiteralJcrValueBuilder.lang());</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">        } else if (rdfLiteralJcrValueBuilder.isResource()) {</span>
+<span class="nc" id="L149">            return createResource(rdfLiteralJcrValueBuilder.value());</span>
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">        } else if (rdfLiteralJcrValueBuilder.hasDatatypeUri()) {</span>
+<span class="nc" id="L151">            return createTypedLiteral(rdfLiteralJcrValueBuilder.value(), rdfLiteralJcrValueBuilder.datatype());</span>
+        } else {
+<span class="fc" id="L153">            return createPlainLiteral(literal);</span>
+        }
+    }
+
+    private RDFNode traverseLink(final Value v) throws RepositoryException {
+<span class="fc" id="L158">        return getGraphSubject(nodeForValue(session,v));</span>
+    }
+
+    /**
+     * Get the node that a property value refers to.
+     * @param session Session to use to load the node.
+     * @param v Value that refers to a node.
+     * @throws RepositoryException When there is an error accessing the node.
+     * @throws RepositoryRuntimeException When the value type is not PATH, REFERENCE or WEAKREFERENCE.
+    **/
+    public static javax.jcr.Node nodeForValue(final Session session, final Value v) throws RepositoryException {
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">        if (v.getType() == PATH) {</span>
+<span class="nc" id="L170">            return session.getNode(v.getString());</span>
+<span class="pc bpc" id="L171" title="1 of 4 branches missed.">        } else if (v.getType() == REFERENCE || v.getType() == WEAKREFERENCE) {</span>
+<span class="fc" id="L172">            return session.getNodeByIdentifier(v.getString());</span>
+        } else {
+<span class="nc" id="L174">            throw new RepositoryRuntimeException(&quot;Cannot convert value of type &quot;</span>
+<span class="nc" id="L175">                    + PropertyType.nameFromValue(v.getType()) + &quot; to a node reference&quot;);</span>
+        }
+    }
+
+    private RDFNode getGraphSubject(final javax.jcr.Node n) {
+<span class="fc" id="L180">        return graphSubjects.convert(n);</span>
+    }
+
+    protected static class RdfLiteralJcrValueBuilder {
+        private static final String FIELD_DELIMITER = &quot;\30^^\30&quot;;
+<span class="fc" id="L185">        public static final Splitter JCR_VALUE_SPLITTER = Splitter.on(FIELD_DELIMITER);</span>
+
+        private String value;
+        private String datatypeUri;
+        private String lang;
+
+<span class="fc" id="L191">        RdfLiteralJcrValueBuilder() {</span>
+
+<span class="fc" id="L193">        }</span>
+
+        public RdfLiteralJcrValueBuilder(final String literal) {
+<span class="fc" id="L196">            this();</span>
+
+<span class="fc" id="L198">            final Iterator&lt;String&gt; tokenizer = JCR_VALUE_SPLITTER.split(literal).iterator();</span>
+
+<span class="fc" id="L200">            value = tokenizer.next();</span>
+
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">            if (tokenizer.hasNext()) {</span>
+<span class="nc" id="L203">                datatypeUri = tokenizer.next();</span>
+            }
+
+<span class="pc bpc" id="L206" title="1 of 2 branches missed.">            if (tokenizer.hasNext()) {</span>
+<span class="nc" id="L207">                lang = tokenizer.next();</span>
+            }
+<span class="fc" id="L209">        }</span>
+
+        @Override
+        public String toString() {
+<span class="fc" id="L213">            final StringBuilder b = new StringBuilder();</span>
+
+<span class="fc" id="L215">            b.append(value);</span>
+
+<span class="fc bfc" id="L217" title="All 2 branches covered.">            if (hasDatatypeUri()) {</span>
+<span class="fc" id="L218">                b.append(FIELD_DELIMITER);</span>
+<span class="fc" id="L219">                b.append(datatypeUri);</span>
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">            } else if (hasLang()) {</span>
+                // if it has a language, but not a datatype, add a placeholder.
+<span class="nc" id="L222">                b.append(FIELD_DELIMITER);</span>
+            }
+
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">            if (hasLang()) {</span>
+<span class="nc" id="L226">                b.append(FIELD_DELIMITER);</span>
+<span class="nc" id="L227">                b.append(lang);</span>
+            }
+
+<span class="fc" id="L230">            return b.toString();</span>
+
+        }
+
+        public String value() {
+<span class="nc" id="L235">            return value;</span>
+        }
+
+        public RDFDatatype datatype() {
+<span class="nc bnc" id="L239" title="All 2 branches missed.">            if (hasDatatypeUri()) {</span>
+<span class="nc" id="L240">                return new BaseDatatype(datatypeUri);</span>
+            }
+<span class="nc" id="L242">            return null;</span>
+        }
+
+        public String lang() {
+<span class="nc" id="L246">            return lang;</span>
+        }
+
+        public RdfLiteralJcrValueBuilder value(final String value) {
+<span class="fc" id="L250">            this.value = value;</span>
+<span class="fc" id="L251">            return this;</span>
+        }
+
+        public RdfLiteralJcrValueBuilder datatype(final String datatypeUri) {
+<span class="fc" id="L255">            this.datatypeUri = datatypeUri;</span>
+<span class="fc" id="L256">            return this;</span>
+        }
+
+        public RdfLiteralJcrValueBuilder datatype(final RDFDatatype datatypeUri) {
+<span class="pc bpc" id="L260" title="3 of 4 branches missed.">            if (datatypeUri != null &amp;&amp; !datatypeUri.getURI().isEmpty()) {</span>
+<span class="nc" id="L261">                this.datatypeUri = datatypeUri.getURI();</span>
+            }
+<span class="fc" id="L263">            return this;</span>
+        }
+
+        public RdfLiteralJcrValueBuilder lang(final String lang) {
+<span class="fc" id="L267">            this.lang = lang;</span>
+<span class="fc" id="L268">            return this;</span>
+        }
+
+        public boolean hasLang() {
+<span class="pc bpc" id="L272" title="1 of 4 branches missed.">            return lang != null &amp;&amp; !lang.isEmpty();</span>
+        }
+
+        public boolean hasDatatypeUri() {
+<span class="pc bpc" id="L276" title="1 of 4 branches missed.">            return datatypeUri != null &amp;&amp; !datatypeUri.isEmpty();</span>
+        }
+
+        public boolean isResource() {
+<span class="pc bpc" id="L280" title="3 of 4 branches missed.">            return hasDatatypeUri() &amp;&amp; datatypeUri.equals(&quot;URI&quot;);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

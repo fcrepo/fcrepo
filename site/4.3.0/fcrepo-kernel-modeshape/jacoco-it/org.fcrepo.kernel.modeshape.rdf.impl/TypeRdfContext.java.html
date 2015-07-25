@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TypeRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation based on Modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">TypeRdfContext.java</span></div><h1>TypeRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.slf4j.Logger;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
+import java.util.Iterator;
+import java.util.Set;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @since 10/1/14
+ */
+public class TypeRdfContext extends NodeRdfContext {
+<span class="fc" id="L45">    private static final Logger LOGGER = getLogger(TypeRdfContext.class);</span>
+
+    /**
+     * Default constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
+     */
+    public TypeRdfContext(final FedoraResource resource,
+                          final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator)
+            throws RepositoryException {
+<span class="fc" id="L57">        super(resource, idTranslator);</span>
+
+        //include rdf:type for primaryType, mixins, and their supertypes
+<span class="fc" id="L60">        concatRdfTypes();</span>
+<span class="fc" id="L61">    }</span>
+
+    private void concatRdfTypes() throws RepositoryException {
+<span class="fc" id="L64">        final ImmutableList.Builder&lt;NodeType&gt; nodeTypesB = ImmutableList.&lt;NodeType&gt;builder();</span>
+
+<span class="fc" id="L66">        final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();</span>
+
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (primaryNodeType != null) {</span>
+<span class="fc" id="L69">            nodeTypesB.add(primaryNodeType);</span>
+        }
+
+        try {
+<span class="fc" id="L73">            final Set&lt;NodeType&gt; primarySupertypes = ImmutableSet.&lt;NodeType&gt;builder()</span>
+<span class="fc" id="L74">                    .add(primaryNodeType.getSupertypes()).build();</span>
+<span class="fc" id="L75">            nodeTypesB.addAll(primarySupertypes);</span>
+<span class="nc" id="L76">        } catch (NullPointerException e) {</span>
+            // ignore
+<span class="fc" id="L78">        }</span>
+
+<span class="fc" id="L80">        final NodeType[] mixinNodeTypesArr = resource().getNode().getMixinNodeTypes();</span>
+
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        if (mixinNodeTypesArr != null) {</span>
+<span class="fc" id="L83">            final Set&lt;NodeType&gt; mixinNodeTypes = ImmutableSet.&lt;NodeType&gt;builder().add(mixinNodeTypesArr).build();</span>
+<span class="fc" id="L84">            nodeTypesB.addAll(mixinNodeTypes);</span>
+
+<span class="fc" id="L86">            final ImmutableSet.Builder&lt;NodeType&gt; mixinSupertypes = ImmutableSet.&lt;NodeType&gt;builder();</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">            for (final NodeType mixinNodeType : mixinNodeTypes) {</span>
+<span class="fc" id="L88">                mixinSupertypes.addAll(ImmutableSet.&lt;NodeType&gt;builder().add(mixinNodeType.getSupertypes()).build());</span>
+<span class="fc" id="L89">            }</span>
+
+<span class="fc" id="L91">            nodeTypesB.addAll(mixinSupertypes.build());</span>
+        }
+
+<span class="fc" id="L94">        final ImmutableList&lt;NodeType&gt; nodeTypes = nodeTypesB.build();</span>
+<span class="fc" id="L95">        final Iterator&lt;NodeType&gt; nodeTypesIt = nodeTypes.iterator();</span>
+
+<span class="fc" id="L97">        concat(Iterators.transform(nodeTypesIt, nodetype2triple()));</span>
+<span class="fc" id="L98">    }</span>
+
+    private Function&lt;NodeType, Triple&gt; nodetype2triple() {
+<span class="fc" id="L101">        return new Function&lt;NodeType, Triple&gt;() {</span>
+
+            @Override
+            public Triple apply(final NodeType nodeType) {
+                try {
+<span class="fc" id="L106">                    final String name = nodeType.getName();</span>
+<span class="fc" id="L107">                    final String prefix = name.split(&quot;:&quot;)[0];</span>
+<span class="fc" id="L108">                    final String typeName = name.split(&quot;:&quot;)[1];</span>
+<span class="fc" id="L109">                    final String namespace = getJcrUri(prefix);</span>
+<span class="fc" id="L110">                    final com.hp.hpl.jena.graph.Node rdfType =</span>
+<span class="fc" id="L111">                            createURI(getRDFNamespaceForJcrNamespace(namespace)</span>
+                                    + typeName);
+<span class="fc" id="L113">                    LOGGER.trace(&quot;Translating mixin: {} w/ namespace: {} into resource: {}&quot;, name, namespace, rdfType);</span>
+<span class="fc" id="L114">                    return create(subject(), type.asNode(), rdfType);</span>
+<span class="nc" id="L115">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L116">                    throw propagate(e);</span>
+                }
+            }
+
+        };
+    }
+
+    private String getJcrUri(final String prefix) throws RepositoryException {
+<span class="fc" id="L124">        return resource().getNode().getSession().getWorkspace().getNamespaceRegistry()</span>
+<span class="fc" id="L125">                .getURI(prefix);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

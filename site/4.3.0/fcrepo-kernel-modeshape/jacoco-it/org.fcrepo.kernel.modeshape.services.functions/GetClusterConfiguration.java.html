@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>GetClusterConfiguration.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation based on Modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services.functions</a> &gt; <span class="el_source">GetClusterConfiguration.java</span></div><h1>GetClusterConfiguration.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services.functions;
+
+import static java.util.Objects.requireNonNull;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+import javax.jcr.Repository;
+
+import org.infinispan.manager.DefaultCacheManager;
+import org.modeshape.jcr.JcrRepository;
+import org.modeshape.jcr.RepositoryConfiguration;
+import org.modeshape.jcr.value.binary.infinispan.InfinispanBinaryStore;
+import org.slf4j.Logger;
+
+/**
+ * Extract the Infinispan cluster configuration and state
+ * from a running Modeshape repository
+ * @author Gregory Jansen
+ * @since Apr 26, 2013
+ */
+<span class="fc" id="L39">public class GetClusterConfiguration implements Function&lt;Repository, Map&lt;String, String&gt;&gt; {</span>
+
+<span class="fc" id="L41">    private static final Logger LOGGER = getLogger(GetClusterConfiguration.class);</span>
+
+    public static final String CLUSTER_NAME = &quot;clusterName&quot;;
+    public static final String CACHE_MODE = &quot;clusterCacheMode&quot;;
+    public static final String NODE_ADDRESS = &quot;clusterNodeAddress&quot;;
+    public static final String PHYSICAL_ADDRESS = &quot;clusterPhysicalAddress&quot;;
+    public static final String NODE_VIEW = &quot;clusterNodeView&quot;;
+    public static final String CLUSTER_SIZE = &quot;clusterSize&quot;;
+    public static final String CLUSTER_MEMBERS = &quot;clusterMembers&quot;;
+    public static final int UNKNOWN_NODE_VIEW = -1;
+
+<span class="fc" id="L52">    private final GetCacheManager getCacheManager = new GetCacheManager();</span>
+
+    /**
+     * Extract the BinaryStore out of Modeshape
+     * (infinspan, jdbc, file, transient, etc)
+     * @return the binary store configuration as a map
+     */
+    @Override
+    public Map&lt;String, String&gt; apply(final Repository input) {
+<span class="fc" id="L61">        requireNonNull(input, &quot;null cannot have a BinaryStore!&quot;);</span>
+
+<span class="fc" id="L63">        final Map&lt;String, String&gt; result = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="fc" id="L65">        final RepositoryConfiguration config = ((JcrRepository)input).getConfiguration();</span>
+
+        try {
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">            if (!(config.getBinaryStorage().getBinaryStore() instanceof InfinispanBinaryStore)) {</span>
+<span class="fc" id="L69">                return result;</span>
+            }
+<span class="nc" id="L71">        } catch (Exception ex) {</span>
+<span class="nc" id="L72">            LOGGER.debug(&quot;Could not extract BinaryStore configuration&quot;, ex);</span>
+<span class="nc" id="L73">        }</span>
+
+<span class="nc" id="L75">        final DefaultCacheManager cm = (DefaultCacheManager)getCacheManager.apply(input);</span>
+
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (cm == null) {</span>
+<span class="nc" id="L78">            LOGGER.debug(&quot;Could not access infinispan configuration&quot;);</span>
+<span class="nc" id="L79">            return result;</span>
+        }
+
+        final int nodeView;
+
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (cm.getTransport() != null) {</span>
+<span class="nc" id="L85">            nodeView = cm.getTransport().getViewId() + 1;</span>
+        } else {
+<span class="nc" id="L87">            nodeView = UNKNOWN_NODE_VIEW;</span>
+        }
+
+<span class="nc" id="L90">        result.put(CLUSTER_NAME, cm.getClusterName());</span>
+<span class="nc" id="L91">        result.put(CACHE_MODE, cm.getCache().getCacheConfiguration().clustering().cacheMode().toString());</span>
+<span class="nc" id="L92">        result.put(NODE_ADDRESS, cm.getNodeAddress());</span>
+<span class="nc" id="L93">        result.put(PHYSICAL_ADDRESS, cm.getPhysicalAddresses());</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        result.put(NODE_VIEW, nodeView == UNKNOWN_NODE_VIEW ? &quot;Unknown&quot; : String.valueOf(nodeView));</span>
+<span class="nc" id="L95">        result.put(CLUSTER_SIZE, String.valueOf(cm.getClusterSize()));</span>
+<span class="nc" id="L96">        result.put(CLUSTER_MEMBERS, cm.getClusterMembers());</span>
+<span class="nc" id="L97">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
