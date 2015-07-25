@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultMessageFactory.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository JMS Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jms.headers</a> &gt; <span class="el_source">DefaultMessageFactory.java</span></div><h1>DefaultMessageFactory.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.jms.headers;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.joining;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.util.Set;
+import javax.jms.JMSException;
+import javax.jms.Message;
+
+import org.fcrepo.jms.observer.JMSEventMessageFactory;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.utils.EventType;
+
+import org.slf4j.Logger;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+
+/**
+ * Generates JMS {@link Message}s composed entirely of headers, based entirely
+ * on information found in the {@link FedoraEvent} that triggers publication.
+ *
+ * @author ajs6f
+ * @author escowles
+ * @since Dec 2, 2013
+ */
+<span class="fc" id="L46">public class DefaultMessageFactory implements JMSEventMessageFactory {</span>
+
+    public static final String JMS_NAMESPACE = &quot;org.fcrepo.jms.&quot;;
+
+    public static final String TIMESTAMP_HEADER_NAME = JMS_NAMESPACE
+            + &quot;timestamp&quot;;
+
+    public static final String IDENTIFIER_HEADER_NAME = JMS_NAMESPACE
+            + &quot;identifier&quot;;
+
+    public static final String EVENT_TYPE_HEADER_NAME = JMS_NAMESPACE
+            + &quot;eventType&quot;;
+
+    public static final String BASE_URL_HEADER_NAME = JMS_NAMESPACE
+            + &quot;baseURL&quot;;
+
+    public static final String PROPERTIES_HEADER_NAME = JMS_NAMESPACE
+            + &quot;properties&quot;;
+
+    public static final String USER_HEADER_NAME = JMS_NAMESPACE + &quot;user&quot;;
+    public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + &quot;userAgent&quot;;
+    public static final String EVENT_ID_HEADER_NAME = JMS_NAMESPACE + &quot;eventID&quot;;
+
+    private String baseURL;
+    private String userAgent;
+
+    @Override
+    public Message getMessage(final FedoraEvent jcrEvent,
+        final javax.jms.Session jmsSession) throws JMSException {
+
+<span class="fc" id="L76">        final Message message = jmsSession.createMessage();</span>
+<span class="fc" id="L77">        message.setLongProperty(TIMESTAMP_HEADER_NAME, jcrEvent.getDate());</span>
+<span class="fc" id="L78">        String path = jcrEvent.getPath();</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if ( path.endsWith(&quot;/&quot; + JCR_CONTENT) ) {</span>
+<span class="fc" id="L80">            path = path.replaceAll(&quot;/&quot; + JCR_CONTENT,&quot;&quot;);</span>
+        }
+
+        // extract baseURL and userAgent from event UserData
+        try {
+<span class="fc" id="L85">            final String userdata = jcrEvent.getUserData();</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">            if (!isNullOrEmpty(userdata)) {</span>
+<span class="nc" id="L87">                final ObjectMapper mapper = new ObjectMapper();</span>
+<span class="nc" id="L88">                final JsonNode json = mapper.readTree(userdata);</span>
+<span class="nc" id="L89">                String url = json.get(&quot;baseURL&quot;).asText();</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">                while (url.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L91">                    url = url.substring(0, url.length() - 1);</span>
+                }
+<span class="nc" id="L93">                this.baseURL = url;</span>
+<span class="nc" id="L94">                this.userAgent = json.get(&quot;userAgent&quot;).asText();</span>
+<span class="nc" id="L95">                LOGGER.debug(&quot;MessageFactory baseURL: {}, userAgent: {}&quot;, baseURL, userAgent);</span>
+
+<span class="nc" id="L97">            } else {</span>
+<span class="fc" id="L98">                LOGGER.warn(&quot;MessageFactory event UserData is empty!&quot;);</span>
+            }
+
+<span class="nc" id="L101">        } catch ( final IOException ex ) {</span>
+<span class="nc" id="L102">            LOGGER.warn(&quot;Error setting baseURL or userAgent&quot;, ex);</span>
+<span class="fc" id="L103">        }</span>
+
+<span class="fc" id="L105">        message.setStringProperty(IDENTIFIER_HEADER_NAME, path);</span>
+<span class="fc" id="L106">        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs( jcrEvent</span>
+<span class="fc" id="L107">                .getTypes()));</span>
+<span class="fc" id="L108">        message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);</span>
+<span class="fc" id="L109">        message.setStringProperty(USER_HEADER_NAME, jcrEvent.getUserID());</span>
+<span class="fc" id="L110">        message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);</span>
+<span class="fc" id="L111">        message.setStringProperty(PROPERTIES_HEADER_NAME, String.join(&quot;,&quot;, jcrEvent.getProperties()));</span>
+<span class="fc" id="L112">        message.setStringProperty(EVENT_ID_HEADER_NAME, jcrEvent.getEventID());</span>
+
+<span class="fc" id="L114">        LOGGER.trace(&quot;getMessage() returning: {}&quot;, message);</span>
+<span class="fc" id="L115">        return message;</span>
+    }
+
+    private static String getEventURIs(final Set&lt;Integer&gt; types) {
+<span class="fc" id="L119">        final String uris = types.stream()</span>
+<span class="fc" id="L120">                                 .map(EventType::valueOf)</span>
+<span class="fc" id="L121">                                 .map(EventType::toString)</span>
+<span class="fc" id="L122">                                 .map(REPOSITORY_NAMESPACE::concat)</span>
+<span class="fc" id="L123">                                 .collect(joining(&quot;,&quot;));</span>
+
+<span class="fc" id="L125">        LOGGER.debug(&quot;Constructed event type URIs: {}&quot;, uris);</span>
+<span class="fc" id="L126">        return uris;</span>
+    }
+
+<span class="fc" id="L129">    private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
