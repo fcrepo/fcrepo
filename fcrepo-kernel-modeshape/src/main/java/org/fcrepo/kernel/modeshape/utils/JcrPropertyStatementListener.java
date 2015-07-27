@@ -67,6 +67,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      *
      * @param idTranslator the id translator
      * @param session the session
+     * @param topic the topic of the RDF statement
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                         final Session session, final Node topic) {
@@ -78,6 +79,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      *
      * @param idTranslator the id translator
      * @param jcrRdfTools the jcr rdf tools
+     * @param topic the topic of the RDF statement
      */
     public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                         final JcrRdfTools jcrRdfTools, final Node topic) {

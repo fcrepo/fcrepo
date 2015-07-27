@@ -26,7 +26,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  * Operations that throw {@link RepositoryException} cannot be used as lambdas without "unchecking" those exceptions.
  *
  * @author ajs6f
- * @param <T>
+ * @param <T> the type of the input to the predicate
  */
 @FunctionalInterface
 public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.base.Predicate<T> {
@@ -48,13 +48,14 @@ public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.b
     /**
      * The same semantic as {@link #test(Object)}, but allowed to throw a {@link RepositoryException}
      *
-     * @param elem
-     * @return
-     * @throws RepositoryException
+     * @param elem the input argument
+     * @return true if the input matches the predicate, otherwise false
+     * @throws RepositoryException a repository-related exception
      */
     boolean testThrows(T elem) throws RepositoryException;
 
     /**
+     * @param <T> the type of the input to the predicate
      * @param p a lambda expression
      * @return an unchecked version of that lambda
      */

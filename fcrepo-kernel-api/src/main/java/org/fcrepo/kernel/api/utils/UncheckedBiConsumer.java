@@ -25,8 +25,8 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  * recovery is available.
  *
  * @author ajs6f
- * @param <S>
- * @param <T>
+ * @param <S> the type of the first argument to the operation
+ * @param <T> the type of the second argument to the operation
  */
 @FunctionalInterface
 public interface UncheckedBiConsumer<S, T> extends BiConsumer<S, T> {
@@ -43,16 +43,18 @@ public interface UncheckedBiConsumer<S, T> extends BiConsumer<S, T> {
     /**
      * The same semantic as {@link #accept(Object, Object)}, but allowed to throw exceptions.
      *
-     * @param first
-     * @param second
-     * @throws Exception
+     * @param first the first input argument
+     * @param second the second input argument
+     * @throws Exception the underlying exception
      */
     void acceptThrows(final S first, final T second) throws Exception;
 
     /**
      * A convenience method to construct <code>UncheckedBiConsumers</code> from lambda syntax.
      *
-     * @param c
+     * @param <S> the type of the first argument
+     * @param <T> the type of the second argument
+     * @param c an arity-2 lambda function
      * @return an UncheckedBiConsumer
      */
     static <S, T> UncheckedBiConsumer<S, T> uncheck(final UncheckedBiConsumer<S, T> c) {
