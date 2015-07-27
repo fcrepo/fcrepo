@@ -19,6 +19,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.union;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
@@ -27,14 +28,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.utils.EventType;
-import org.fcrepo.mint.UUIDPathMinter;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -55,8 +54,6 @@ public class FedoraEvent {
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
 
-    private static final Supplier<String> pidMinter = new UUIDPathMinter();
-
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
      *
@@ -64,7 +61,7 @@ public class FedoraEvent {
      */
     public FedoraEvent(final Event e) {
         checkArgument(e != null, "null cannot support a FedoraEvent!");
-        eventID = pidMinter.get();
+        eventID = randomUUID().toString();
         this.e = e;
     }
 
