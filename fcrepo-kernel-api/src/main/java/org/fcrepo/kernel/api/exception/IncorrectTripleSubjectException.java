@@ -27,7 +27,7 @@ public class IncorrectTripleSubjectException extends ConstraintViolationExceptio
     private static final long serialVersionUID = 1L;
 
     /**
-     * @param message
+     * @param message the error message
      */
     public IncorrectTripleSubjectException(final String message) {
         super(message);

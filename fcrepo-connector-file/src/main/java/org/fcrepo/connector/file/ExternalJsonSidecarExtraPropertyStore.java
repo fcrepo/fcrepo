@@ -57,6 +57,7 @@ public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesSto
     /**
      * Default constructor.
      * @param connector the FileSystemConnector for which this class will store properties.
+     * @param translator the utility to translate properties to/from the JSON configuration
      * @param propertyStoreRoot the root of a filesystem into which properties will be
      *                          serialized.
      */

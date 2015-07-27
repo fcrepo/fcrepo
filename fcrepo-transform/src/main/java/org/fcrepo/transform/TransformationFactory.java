@@ -51,6 +51,7 @@ public class TransformationFactory {
     /**
      * Get a Transformation from a MediaType and an InputStream with
      * the transform program
+     * @param <T> the transformation type
      * @param contentType the content type
      * @param inputStream the input stream
      * @return T a Transformation
