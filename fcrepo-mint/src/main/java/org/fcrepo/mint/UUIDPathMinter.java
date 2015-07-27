@@ -18,11 +18,11 @@ package org.fcrepo.mint;
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.util.UUID.randomUUID;
 
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.StringJoiner;
 
 import org.fcrepo.metrics.RegistryService;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 
 import com.codahale.metrics.Timer;
 
@@ -31,14 +31,10 @@ import com.codahale.metrics.Timer;
  *
  * @author awoods
  */
-public class UUIDPathMinter implements Supplier<String> {
+public class UUIDPathMinter implements HierarchicalIdentifierSupplier {
 
     static final Timer timer = RegistryService.getInstance().getMetrics().timer(
             name(UUIDPathMinter.class, "mint"));
-
-    private static final int DEFAULT_LENGTH = 2;
-
-    private static final int DEFAULT_COUNT = 4;
 
     private final int length;
 

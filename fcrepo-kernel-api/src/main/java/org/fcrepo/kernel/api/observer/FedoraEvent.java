@@ -27,14 +27,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
+import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.api.utils.EventType;
-import org.fcrepo.mint.UUIDPathMinter;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -55,7 +55,7 @@ public class FedoraEvent {
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
 
-    private static final Supplier<String> pidMinter = new UUIDPathMinter();
+    private static final UniqueValueSupplier pidMinter = new DefaultPathMinter();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
@@ -202,4 +202,6 @@ public class FedoraEvent {
             Joiner.on(',').join(eventProperties)).add("Path:", getPath()).add("Date: ",
             getDate()).add("Info:", getInfo()).toString();
     }
+
+    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 }

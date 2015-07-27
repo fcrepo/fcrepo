@@ -24,7 +24,6 @@ import com.codahale.metrics.annotation.Timed;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.function.Supplier;
 
 import org.w3c.dom.Document;
 
@@ -49,6 +48,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.xml.sax.SAXException;
 
 
@@ -58,7 +58,7 @@ import org.xml.sax.SAXException;
  * @author escowles
  * @since 04/28/2014
  */
-public class HttpPidMinter implements Supplier<String> {
+public class HttpPidMinter implements UniqueValueSupplier {
 
     private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
     private static final Logger LOGGER = getLogger(HttpPidMinter.class);
