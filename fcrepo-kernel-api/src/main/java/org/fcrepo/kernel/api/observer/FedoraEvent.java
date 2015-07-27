@@ -124,6 +124,7 @@ public class FedoraEvent {
      * Get the path of the node related to this event (removing property names
      * from the end of property nodes).
      * @param e JCR Event
+     * @return the node path for this event
     **/
     public static String getPath(final Event e) {
         try {

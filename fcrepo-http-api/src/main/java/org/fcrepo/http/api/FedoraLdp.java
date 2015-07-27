@@ -231,6 +231,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param checksum the checksum value
      * @param contentDisposition the content disposition value
      * @param ifMatch the if-match value
+     * @param link the link value
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
@@ -396,6 +397,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestContentType the request content type
      * @param slug the slug value
      * @param requestBodyStream the request body stream
+     * @param link the link value
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred

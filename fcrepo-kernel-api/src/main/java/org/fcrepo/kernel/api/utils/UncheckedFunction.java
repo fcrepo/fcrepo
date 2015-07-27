@@ -25,7 +25,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  * Operations that throw {@link RepositoryException} cannot be used as lambdas without "unchecking" those exceptions.
  *
  * @author ajs6f
- * @param <T>
+ * @param <T> the type of the input to the function
  */
 @FunctionalInterface
 public interface UncheckedFunction<T, R> extends Function<T, R> {
@@ -42,13 +42,15 @@ public interface UncheckedFunction<T, R> extends Function<T, R> {
     /**
      * The same semantic as {@link #apply(Object)}, but allowed to throw a {@link RepositoryException}
      *
-     * @param elem
-     * @return
-     * @throws RepositoryException
+     * @param elem the input argument
+     * @return the function result
+     * @throws RepositoryException the underlying repository error
      */
     R applyThrows(T elem) throws RepositoryException;
 
     /**
+     * @param <T> the type of the input to the function
+     * @param <R> the type of the output of the function
      * @param p a lambda expression
      * @return an unchecked version of that lambda
      */

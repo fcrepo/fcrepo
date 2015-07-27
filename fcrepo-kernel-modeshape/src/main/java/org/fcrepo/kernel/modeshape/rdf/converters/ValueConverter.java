@@ -162,6 +162,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
      * Get the node that a property value refers to.
      * @param session Session to use to load the node.
      * @param v Value that refers to a node.
+     * @return the JCR node
      * @throws RepositoryException When there is an error accessing the node.
      * @throws RepositoryRuntimeException When the value type is not PATH, REFERENCE or WEAKREFERENCE.
     **/
