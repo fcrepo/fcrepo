@@ -35,7 +35,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -59,9 +58,10 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
+import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.utils.NodePropertiesTools;
-import org.fcrepo.mint.UUIDPathMinter;
 
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
@@ -108,7 +108,7 @@ public class JcrRdfTools {
 
     private static final Model m = createDefaultModel();
 
-    private static final Supplier<String> pidMinter =  new UUIDPathMinter();
+    private static final UniqueValueSupplier pidMinter =  new DefaultPathMinter();
 
     /**
      * Constructor with even more context.
@@ -432,5 +432,7 @@ public class JcrRdfTools {
     private static String skolemizedPrefix() {
         return "/.well-known/genid/";
     }
+
+    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 
 }
