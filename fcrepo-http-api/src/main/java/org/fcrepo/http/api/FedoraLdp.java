@@ -275,8 +275,8 @@ public class FedoraLdp extends ContentExposingResource {
         if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
             throw new ClientErrorException("An If-Match header is required", 428);
         } else if (resource.hasType(FEDORA_PAIRTREE)) {
-            throw new ForbiddenResourceModificationException("Graphs cannot be created for resources " +
-                                                              "under pairtree nodes");
+            throw new ForbiddenResourceModificationException("Resources cannot be manually created " +
+                                                             "under pairtree elements!");
         }
 
         evaluateRequestPreconditions(request, servletResponse, resource, session);
@@ -425,7 +425,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
         } else if (resource().hasType(FEDORA_PAIRTREE)) {
-            throw new ClientErrorException("Objects cannot be created under pairtree nodes", FORBIDDEN);
+            throw new ForbiddenResourceModificationException("Objects cannot be created under pairtree nodes");
         }
 
         final MediaType contentType = getSimpleContentType(requestContentType);

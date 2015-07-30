@@ -724,7 +724,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         put.addHeader("Content-Type", "application/n3");
         put.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
 
-        assertEquals("Created a Graph for resources under pairtree nodes!", FORBIDDEN.getStatusCode(), getStatus(put));
+        assertEquals("Created a resource under a pairtree node!", FORBIDDEN.getStatusCode(), getStatus(put));
     }
 
     @Test
