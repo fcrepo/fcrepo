@@ -15,18 +15,17 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
+import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
@@ -38,6 +37,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * Accumulate inbound references to a given resource
@@ -48,6 +49,8 @@ import java.util.Iterator;
 public class ReferencesRdfContext extends NodeRdfContext {
 
     private final PropertyToTriple property2triple;
+
+    public static final List<Integer> REFERENCE_TYPES = asList(PATH, REFERENCE, WEAKREFERENCE);
 
     /**
      * Add the inbound references from other nodes to this resource to the stream
@@ -66,40 +69,23 @@ public class ReferencesRdfContext extends NodeRdfContext {
     }
 
     private void putReferencesIntoContext(final Node node) throws RepositoryException {
-        concat(Iterators.concat(Iterators.transform(
-            Iterators.concat(node.getReferences(), node.getWeakReferences()), property2triple)));
-        concat(Iterators.concat(Iterators.transform(Iterators.concat(Iterators.transform(
-            Iterators.concat(node.getReferences(), node.getWeakReferences()), potentialProxies)), triplesForValue)));
+        Iterator<Property> references = node.getReferences();
+        Iterator<Property> weakReferences = node.getWeakReferences();
+        Iterator<Property> allReferences = Iterators.concat(references, weakReferences);
+        concat(flatMap(allReferences, property2triple));
+
+        references = node.getReferences();
+        weakReferences = node.getWeakReferences();
+        allReferences = Iterators.concat(references, weakReferences);
+        concat(flatMap(flatMap( allReferences, potentialProxies), triplesForValue));
     }
 
     /* References from LDP indirect containers are generated dynamically by LdpContainerRdfContext, so they won't
-       show up in getReferences()/getWeakReferences().  Instead, we should check referrers to see if they are
+       show up in getReferences()/getWeakReferences().  Instead, we should check referencers to see if they are
        members of an IndirectContainer and generate the appropriate inbound references. */
-    private Function<Property, Iterator<Value>> potentialProxies = new Function<Property, Iterator<Value>>() {
-        @Override
-        public Iterator<Value> apply(final Property p) {
-            try {
-                return Iterators.filter(new PropertyValueIterator(p.getParent().getProperties()), isReference);
-            } catch (RepositoryException ex) {
-                throw new RepositoryRuntimeException(ex);
-            }
-        }
-    };
-    private Function<Value, Iterator<Triple>> triplesForValue = new Function<Value, Iterator<Triple>>() {
-        @Override
-        public Iterator<Triple> apply(final Value v) {
-            try {
-                return new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(session(), v)), translator());
-            } catch (RepositoryException ex) {
-                throw new RepositoryRuntimeException(ex);
-            }
-        }
-    };
-    private Predicate<Value> isReference = new Predicate<Value>() {
-        @Override
-        public boolean apply(final Value v) {
-            return v.getType() == PATH || v.getType() == REFERENCE || v.getType() == WEAKREFERENCE;
-        }
-    };
+    private final Function<Property, Iterator<Value>> potentialProxies = uncheck(p -> Iterators.filter(
+            new PropertyValueIterator(p.getParent().getProperties()), v -> REFERENCE_TYPES.contains(v.getType())));
 
+    private final Function<Value, Iterator<Triple>> triplesForValue = uncheck(v ->
+        new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(session(), v)), translator()));
 }
