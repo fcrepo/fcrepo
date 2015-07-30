@@ -50,7 +50,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author cabeer
  * @author ajs6f
  */
-public class BlankNodeRdfContextTest {
+public class SkolemNodeRdfContextTest {
 
     @Mock
     private FedoraResource mockResource;
@@ -114,6 +114,7 @@ public class BlankNodeRdfContextTest {
         when(mockResource.getPath()).thenReturn("/x");
 
         when(mockNode.getSession()).thenReturn(mockSession);
+        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockBlankNode.getSession()).thenReturn(mockSession);
         when(mockOtherNode.getSession()).thenReturn(mockSession);
         when(mockNestedBlankNode.getSession()).thenReturn(mockSession);
@@ -127,6 +128,7 @@ public class BlankNodeRdfContextTest {
         when(mockBnodeValue.getString()).thenReturn("xxxx");
         when(mockSession.getNodeByIdentifier("xxxx")).thenReturn(mockBlankNode);
         when(mockBlankNode.isNodeType(FEDORA_SKOLEM)).thenReturn(true);
+        when(mockBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockBlankNode.getPath()).thenReturn("/.well-known/gen/xxxx");
         when(mockBlankNode.getPrimaryNodeType()).thenReturn(mockNodeType);
 
@@ -140,7 +142,7 @@ public class BlankNodeRdfContextTest {
         when(mockNestedBlankNode.isNodeType(FEDORA_SKOLEM)).thenReturn(true);
         when(mockNestedBlankNode.getPath()).thenReturn("/.well-known/gen/yyyy");
         when(mockNestedBlankNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-
+        when(mockNodeType.getSupertypes()).thenReturn(new NodeType[]{});
         when(mockNodeType.getName()).thenReturn("some:type");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
@@ -157,21 +159,21 @@ public class BlankNodeRdfContextTest {
     @Test
     public void testWithoutProperties() throws RepositoryException {
         when(mockNode.getProperties()).thenReturn(new TestPropertyIterator());
-        testObj = new BlankNodeRdfContext(mockResource, subjects);
+        testObj = new SkolemNodeRdfContext(mockResource, subjects);
         assertTrue("Expected no triples", testObj.asModel().isEmpty());
     }
 
     @Test
     public void testWithoutReferenceProperties() throws RepositoryException {
         when(mockNode.getProperties()).thenReturn(new TestPropertyIterator(mockProperty));
-        testObj = new BlankNodeRdfContext(mockResource, subjects);
+        testObj = new SkolemNodeRdfContext(mockResource, subjects);
         assertTrue("Expected no triples", testObj.asModel().isEmpty());
     }
 
     @Test
     public void testWithoutBlanknodeReferences() throws RepositoryException {
         when(mockNode.getProperties()).thenReturn(new TestPropertyIterator(mockReferenceProperty));
-        testObj = new BlankNodeRdfContext(mockResource, subjects);
+        testObj = new SkolemNodeRdfContext(mockResource, subjects);
         assertTrue("Expected no triples", testObj.asModel().isEmpty());
     }
 
@@ -186,7 +188,7 @@ public class BlankNodeRdfContextTest {
             }
         });
 
-        testObj = new BlankNodeRdfContext(mockResource, subjects);
+        testObj = new SkolemNodeRdfContext(mockResource, subjects);
 
         final Model actual = testObj.asModel();
 
@@ -219,7 +221,9 @@ public class BlankNodeRdfContextTest {
 
 
         when(mockNestedBlankNode.getProperties()).thenReturn(new TestPropertyIterator());
-        testObj = new BlankNodeRdfContext(mockResource, subjects);
+        when(mockNestedBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
+
+        testObj = new SkolemNodeRdfContext(mockResource, subjects);
 
         final Model actual = testObj.asModel();
 

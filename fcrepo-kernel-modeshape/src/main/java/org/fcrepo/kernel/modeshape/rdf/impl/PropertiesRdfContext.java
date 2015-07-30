@@ -33,7 +33,6 @@ import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 import org.slf4j.Logger;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -63,7 +62,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
+        property2triple = new PropertyToTriple(session(), translator());
         concat(triplesFromProperties(resource()));
     }
 
@@ -72,16 +71,18 @@ public class PropertiesRdfContext extends NodeRdfContext {
         LOGGER.trace("Creating triples for node: {}", n);
 
         final Iterator<Property> allProperties;
+        final Iterator<Property> nodeProps = n.getNode().getProperties();
         if (n instanceof FedoraBinary) {
             final FedoraResource description = ((FedoraBinary)n).getDescription();
-            allProperties = Iterators.concat(n.getNode().getProperties(), description.getNode().getProperties());
+            final Iterator<Property> descProps = description.getNode().getProperties();
+            allProperties = Iterators.concat(nodeProps, descProps);
         } else {
-            allProperties = n.getNode().getProperties();
+            allProperties = nodeProps;
         }
 
-        final UnmodifiableIterator<Property> properties =
-                Iterators.filter(allProperties, isInternalProperty.negate().and(IS_NOT_UUID)::test);
-        return Iterators.concat(Iterators.transform(properties, property2triple));
+        final Iterator<Property> properties = Iterators.filter(allProperties,
+                isInternalProperty.negate().and(IS_NOT_UUID)::test);
+        return flatMap(properties, property2triple);
 
     }
 
