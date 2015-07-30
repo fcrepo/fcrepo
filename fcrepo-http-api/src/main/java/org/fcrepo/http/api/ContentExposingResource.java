@@ -82,7 +82,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
-import org.fcrepo.kernel.modeshape.rdf.impl.BlankNodeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
@@ -253,7 +253,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // Embed all hash and blank nodes
             rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter::test));
-            rdfStream.concat(filter(getTriples(BlankNodeRdfContext.class), tripleFilter::test));
+            rdfStream.concat(filter(getTriples(SkolemNodeRdfContext.class), tripleFilter::test));
 
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
@@ -268,7 +268,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 rdfStream.concat(filter(concat(transform(children, child ->
                 child.getTriples(translator(),
                         ImmutableList.of(
-                                TypeRdfContext.class, PropertiesRdfContext.class, BlankNodeRdfContext.class)))),
+                                TypeRdfContext.class, PropertiesRdfContext.class, SkolemNodeRdfContext.class)))),
                         tripleFilter::test));
 
             }

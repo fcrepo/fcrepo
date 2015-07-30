@@ -80,7 +80,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     /**
      * Predicate for determining whether this {@link Node} is a Fedora Skolem node.
      */
-    public static Predicate<Node> isBlankNode = new AnyTypesPredicate(FEDORA_SKOLEM);
+    public static Predicate<Node> isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);
 
     /**
      * Check if a property is a reference property.

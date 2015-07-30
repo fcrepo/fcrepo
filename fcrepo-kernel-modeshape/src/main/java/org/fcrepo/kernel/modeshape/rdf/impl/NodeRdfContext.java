@@ -54,10 +54,10 @@ public class NodeRdfContext extends RdfStream {
         super();
         this.resource = resource;
         this.idTranslator = idTranslator;
-        this.subject = idTranslator.reverse().convert(resource).asNode();
+        this.subject = uriFor(resource);
         try {
             session(resource.getNode().getSession());
-        } catch (RepositoryException ex) {
+        } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);
         }
     }
@@ -74,6 +74,14 @@ public class NodeRdfContext extends RdfStream {
      */
     public IdentifierConverter<Resource, FedoraResource> translator() {
         return idTranslator;
+    }
+
+    /**
+     * @param resource a Fedora model instance that must be identified by an URI
+     * @return a translated URI for that resource
+     */
+    protected com.hp.hpl.jena.graph.Node uriFor(final FedoraResource resource) {
+        return translator().reverse().convert(resource).asNode();
     }
 
     /**
