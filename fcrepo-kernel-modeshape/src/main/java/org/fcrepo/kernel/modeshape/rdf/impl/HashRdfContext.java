@@ -15,10 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -28,15 +24,20 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
-
+import java.util.List;
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/9/14
  */
 public class HashRdfContext extends NodeRdfContext {
 
+
+    private static final List<Class<? extends NodeRdfContext>> contexts = asList(TypeRdfContext.class,
+            PropertiesRdfContext.class, SkolemNodeRdfContext.class);
 
     /**
      * Default constructor.
@@ -53,17 +54,7 @@ public class HashRdfContext extends NodeRdfContext {
         final Node node = resource().getNode();
         if (node.hasNode("#")) {
             final Iterator<Node> hashChildrenNodes = node.getNode("#").getNodes();
-            concat(Iterators.concat(Iterators.transform(hashChildrenNodes,
-                    new Function<Node, Iterator<Triple>>() {
-                        @Override
-                        public Iterator<Triple> apply(final Node input) {
-                            final FedoraResource resource = nodeConverter.convert(input);
-
-                            return resource.getTriples(idTranslator, ImmutableList.of(TypeRdfContext.class,
-                                    PropertiesRdfContext.class,
-                                    BlankNodeRdfContext.class));
-                        }
-                    })));
+            concat(flatMap(hashChildrenNodes, n -> nodeConverter.convert(n).getTriples(idTranslator, contexts)));
         }
     }
 }

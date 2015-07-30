@@ -15,14 +15,11 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
@@ -32,20 +29,21 @@ import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static javax.jcr.PropertyType.PATH;
-import static javax.jcr.PropertyType.REFERENCE;
-import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
+import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/7/14
  */
 public class LdpIsMemberOfRdfContext extends NodeRdfContext {
@@ -77,7 +75,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
         final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
 
         final Resource memberRelation = createResource(property.getString());
-        final Resource membershipResource = getMemberResource(container);
+        final Node membershipResource = getMemberResource(container);
 
         if (membershipResource == null) {
             return;
@@ -92,11 +90,11 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
                 return;
             }
         } else {
-            insertedContainerProperty = RdfLexicon.MEMBER_SUBJECT.getURI();
+            insertedContainerProperty = MEMBER_SUBJECT.getURI();
         }
 
-        if (insertedContainerProperty.equals(RdfLexicon.MEMBER_SUBJECT.getURI())) {
-            concat(create(subject(), memberRelation.asNode(), membershipResource.asNode()));
+        if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
+            concat(create(subject(), memberRelation.asNode(), membershipResource));
         } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {
             final String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(), createResource
                     (insertedContainerProperty), null);
@@ -110,20 +108,10 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
 
             final Iterator<RDFNode> insertedContentRelations = Iterators.filter(
                     Iterators.transform(values, valueConverter),
-                    new Predicate<RDFNode>() {
-                        @Override
-                        public boolean apply(final RDFNode input) {
-                            return input.isURIResource() && translator().inDomain(input.asResource());
-                        }
-                    });
+                    n -> n.isURIResource() && translator().inDomain(n.asResource()));
 
-            concat(Iterators.transform(insertedContentRelations, new Function<RDFNode, Triple>() {
-                @Override
-                public Triple apply(final RDFNode input) {
-                    return create(input.asNode(), memberRelation.asNode(), membershipResource.asNode());
-                }
-            }));
-
+            concat(Iterators.transform(insertedContentRelations,
+                    s -> create(s.asNode(), memberRelation.asNode(), membershipResource)));
         }
     }
 
@@ -133,20 +121,19 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
      * @return
      * @throws RepositoryException
      */
-    private Resource getMemberResource(final FedoraResource parent) throws RepositoryException {
-        final Resource membershipResource;
+    private Node getMemberResource(final FedoraResource parent) throws RepositoryException {
+        final Node membershipResource;
 
         if (parent.hasProperty(LDP_MEMBER_RESOURCE)) {
             final Property memberResource = parent.getProperty(LDP_MEMBER_RESOURCE);
 
-            final int type = memberResource.getType();
-            if ( type == REFERENCE || type == WEAKREFERENCE || type == PATH) {
-                membershipResource = nodeConverter().convert(memberResource.getNode());
+            if (REFERENCE_TYPES.contains(memberResource.getType())) {
+                membershipResource = nodeConverter().convert(memberResource.getNode()).asNode();
             } else {
-                membershipResource = createResource(memberResource.getString());
+                membershipResource = createURI(memberResource.getString());
             }
         } else {
-            membershipResource = translator().reverse().convert(parent);
+            membershipResource = uriFor(parent);
         }
 
         return membershipResource;

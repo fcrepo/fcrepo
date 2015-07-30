@@ -19,11 +19,11 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Value;
 
+import org.fcrepo.kernel.api.utils.UncheckedFunction;
+
 import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import org.fcrepo.kernel.api.utils.UncheckedFunction;
 
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.singletonIterator;
@@ -42,11 +42,11 @@ public final class JcrPropertyFunctions {
     }
 
     /**
-     * Constructs an {@link java.util.Iterator} of {@link javax.jcr.Value}s from any
-     * {@link javax.jcr.Property}, multi-valued or not.
+     * Constructs an {@link java.util.Iterator} of {@link javax.jcr.Value}s from any {@link javax.jcr.Property},
+     * multi- or single-valued.
      */
     public static Function<Property, Iterator<Value>> property2values = UncheckedFunction.uncheck(
-            p -> p.isMultiple() ? forArray(p.getValues()) : singletonIterator(p.getValue()));
+            (final Property p) -> p.isMultiple() ? forArray(p.getValues()) : singletonIterator(p.getValue()));
 
     /**
      * Check if a JCR property is a binary jcr:data property

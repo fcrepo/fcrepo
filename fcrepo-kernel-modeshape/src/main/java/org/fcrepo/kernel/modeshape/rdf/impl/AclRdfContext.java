@@ -43,20 +43,13 @@ public class AclRdfContext extends NodeRdfContext {
                          final IdentifierConverter<Resource, FedoraResource> idTranslator) throws RepositoryException {
         super(resource, idTranslator);
 
-        // include writable status
-        concatWritable();
-    }
-
-    private void concatWritable() throws RepositoryException {
         boolean writable = false;
         try {
             resource().getNode().getSession().checkPermission( resource().getPath(), "add_node,set_property,remove" );
             writable = true;
-        } catch ( AccessControlException ex ) {
+        } catch ( final AccessControlException ex ) {
             writable = false;
         }
-
         concat(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean)));
     }
-
 }

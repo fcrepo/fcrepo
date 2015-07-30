@@ -25,8 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
-import org.slf4j.Logger;
-
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
@@ -46,13 +44,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
  */
 public class LdpContainerRdfContextTest {
-    private static final Logger LOGGER = getLogger(LdpContainerRdfContextTest.class);
 
     @Mock
     private FedoraResource mockResource;

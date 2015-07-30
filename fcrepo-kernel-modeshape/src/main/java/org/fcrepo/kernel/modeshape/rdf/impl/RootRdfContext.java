@@ -20,6 +20,8 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
@@ -34,11 +36,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.metrics.RegistryService;
 
 import java.util.Map;
-import java.util.SortedMap;
-
 import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-
 import org.fcrepo.kernel.modeshape.services.functions.GetClusterConfiguration;
 import org.modeshape.jcr.JcrRepository;
 import org.slf4j.Logger;
@@ -55,6 +53,10 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class RootRdfContext extends NodeRdfContext {
 
+    private static final String PREFIX = "org.fcrepo.services.";
+    private static final String FIXITY_REPAIRED_COUNTER = "LowLevelStorageService.fixity-repaired-counter";
+    private static final String FIXITY_ERROR_COUNTER = "LowLevelStorageService.fixity-error-counter";
+    private static final String FIXITY_CHECK_COUNTER = "LowLevelStorageService.fixity-check-counter";
     private static final Logger LOGGER = getLogger(RootRdfContext.class);
     static final RegistryService registryService = RegistryService.getInstance();
 
@@ -63,11 +65,9 @@ public class RootRdfContext extends NodeRdfContext {
      *
      * @param resource the resource
      * @param idTranslator the id translator
-     * @throws RepositoryException if repository exception occurred
      */
     public RootRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
 
         if (resource().hasType(ROOT)) {
@@ -75,27 +75,22 @@ public class RootRdfContext extends NodeRdfContext {
         }
     }
 
-    private void concatRepositoryTriples() throws RepositoryException {
+    private void concatRepositoryTriples() {
         LOGGER.trace("Creating RDF triples for repository description");
-        final Repository repository = resource().getNode().getSession().getRepository();
+        final Repository repository = session().getRepository();
 
         final ImmutableSet.Builder<Triple> b = builder();
-
-        for (final String key : repository.getDescriptorKeys()) {
+        stream(repository.getDescriptorKeys()).forEach(key -> {
             final String descriptor = repository.getDescriptor(key);
             if (descriptor != null) {
                 // Create a URI from the jcr.Repository constant values,
                 // converting them from dot notation (identifier.stability)
                 // to the camel case that is more common in RDF properties.
-                final StringBuilder uri = new StringBuilder(REPOSITORY_NAMESPACE);
-                uri.append("repository");
-                for (final String segment : key.split("\\.")) {
-                    uri.append(StringUtils.capitalize(segment));
-                }
-                b.add(create(subject(), createURI(uri.toString()),
-                        createLiteral(descriptor)));
+                final String uri = stream(key.split("\\."))
+                        .map(StringUtils::capitalize).collect(joining("", REPOSITORY_NAMESPACE + "repository", ""));
+                b.add(create(subject(), createURI(uri), createLiteral(descriptor)));
             }
-        }
+        });
 
         /*
             FIXME: removing due to performance problems, esp. w/ many files on federated filesystem
@@ -111,52 +106,30 @@ public class RootRdfContext extends NodeRdfContext {
         // this ugly test checks to see whether this is an ordinary JCR
         // repository or a ModeShape repo, which will possess the extra info
         if (JcrRepository.class.isAssignableFrom(repository.getClass())) {
-            final Map<String, String> config =
-                new GetClusterConfiguration().apply(repository);
+            final Map<String, String> config = new GetClusterConfiguration().apply(repository);
             assert (config != null);
-
-            for (final Map.Entry<String, String> entry : config.entrySet()) {
-                b.add(create(subject(), createURI(REPOSITORY_NAMESPACE + entry.getKey()),
-                        createLiteral(entry.getValue())));
-            }
+            config.forEach((k, v) -> b.add(create(subject(), createURI(REPOSITORY_NAMESPACE + k), createLiteral(v))));
         }
 
         // retrieve the metrics from the service
-        final SortedMap<String, Counter> counters = registryService.getMetrics().getCounters();
+        final Map<String, Counter> counters = registryService.getMetrics().getCounters();
         // and add the repository metrics to the RDF model
-        if (counters.containsKey("LowLevelStorageService.fixity-check-counter")) {
+        if (counters.containsKey(FIXITY_CHECK_COUNTER)) {
             b.add(create(subject(), HAS_FIXITY_CHECK_COUNT.asNode(),
-                    createTypedLiteral(
-                            counters.get(
-                                    "org.fcrepo.services."
-                                            + "LowLevelStorageService."
-                                            + "fixity-check-counter")
-                                    .getCount()).asNode()));
+                    createTypedLiteral(counters.get(PREFIX + FIXITY_CHECK_COUNTER).getCount()).asNode()));
         }
 
-        if (counters.containsKey("LowLevelStorageService.fixity-error-counter")) {
+        if (counters.containsKey(FIXITY_ERROR_COUNTER)) {
             b.add(create(subject(), HAS_FIXITY_ERROR_COUNT.asNode(),
-                    createTypedLiteral(
-                            counters.get(
-                                    "org.fcrepo.services."
-                                            + "LowLevelStorageService."
-                                            + "fixity-error-counter")
-                                    .getCount()).asNode()));
+                    createTypedLiteral(counters.get(PREFIX + FIXITY_ERROR_COUNTER).getCount()).asNode()));
         }
 
-        if (counters
-                .containsKey("LowLevelStorageService.fixity-repaired-counter")) {
+        if (counters.containsKey(FIXITY_REPAIRED_COUNTER)) {
             b.add(create(subject(), HAS_FIXITY_REPAIRED_COUNT.asNode(),
-                    createTypedLiteral(
-                            counters.get(
-                                    "org.fcrepo.services."
-                                            + "LowLevelStorageService."
-                                            + "fixity-repaired-counter")
-                                    .getCount()).asNode()));
+                    createTypedLiteral(counters.get(PREFIX + FIXITY_REPAIRED_COUNTER).getCount()).asNode()));
         }
 
         // offer all these accumulated triples
         concat(b.build());
     }
-
 }

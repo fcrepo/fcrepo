@@ -15,30 +15,27 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 
-import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.util.Iterator;
+import java.util.function.Function;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
-
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.impl.LiteralLabel;
 import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
-import org.slf4j.Logger;
-import com.google.common.base.Function;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -47,101 +44,51 @@ import com.hp.hpl.jena.graph.Triple;
  * @author ajs6f
  * @since Oct 10, 2013
  */
-public class PropertyToTriple implements
-        Function<Property, Iterator<Triple>> {
+public class PropertyToTriple implements Function<Property, Iterator<Triple>> {
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
     private final ValueConverter valueConverter;
-    private Converter<Node, Resource> graphSubjects;
-
-    private static final Logger LOGGER = getLogger(PropertyToTriple.class);
+    private final Converter<Node, Resource> translator;
 
     /**
-     * Default constructor. We require a {@link Converter} in order to
-     * construct the externally-meaningful RDF subjects of our triples.
+     * Default constructor. We require a {@link Converter} in order to construct the RDF subjects of our triples.
      *
-     * @param graphSubjects the graph subjects
-     * @param session the session
+     * @param converter a converter between RDF and the Fedora model
+     * @param session the JCR session
      */
-    public PropertyToTriple(final Session session, final Converter<Resource, FedoraResource> graphSubjects) {
-        this.valueConverter = new ValueConverter(session, graphSubjects);
-        this.graphSubjects = nodeToResource(graphSubjects);
+    public PropertyToTriple(final Session session, final Converter<Resource, FedoraResource> converter) {
+        this.valueConverter = new ValueConverter(session, converter);
+        this.translator = nodeToResource(converter);
     }
 
-    /**
-     * This nightmare of Java signature verbosity is a curried transformation.
-     * We want to go from an iterator of JCR {@link Property} to an iterator
-     * of RDF {@link Triple}s. An annoyance: some properties may produce several
-     * triples (multi-valued properties). So we cannot find a simple Property to
-     * Triple mapping. Instead, we wax clever and offer a function from any
-     * specific property to a new function, one that takes multiple values (such
-     * as occur in our multi-valued properties) to multiple triples. In other
-     * words, this is a function the outputs of which are functions specific to
-     * a given JCR property. Each output knows how to take any specific value of
-     * its specific property to a triple representing the fact that its specific
-     * property obtains that specific value on the node to which that property
-     * belongs. All of this is useful because with these operations represented
-     * as functions instead of ordinary methods, which may have side-effects, we
-     * can use efficient machinery to manipulate iterators of the objects in
-     * which we are interested, and that's exactly what we want to do in this
-     * class. See {@link org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext#triplesFromProperties} for an
-     * example of the use of this class with ZippingIterator.
-     *
-     * @see <a href="http://en.wikipedia.org/wiki/Currying">Currying</a>
-     */
     @Override
     public Iterator<Triple> apply(final Property p) {
-        return Iterators.transform(new PropertyValueIterator(p), new Function<Value, Triple>() {
-
-            @Override
-            public Triple apply(final Value v) {
-                return propertyvalue2triple(p, v);
-            }
-        });
-    }
-
-    /**
-     * @param p A JCR {@link Property}
-     * @param v The {@link Value} of that Property to use (in the case of
-     *        multi-valued properties)  For single valued properties this
-     *        must be that single value.
-     * @return An RDF {@link Triple} representing that property.
-     */
-    private Triple propertyvalue2triple(final Property p, final Value v) {
-        LOGGER.trace("Rendering triple for Property: {} with Value: {}", p, v);
         try {
-
-            final Triple triple = create(graphSubjects.convert(p.getParent()).asNode(),
-                    propertyConverter.convert(p).asNode(),
-                    convertObject(p, v));
-
-            LOGGER.trace("Created triple: {} ", triple);
-            return triple;
-        } catch (final RepositoryException e) {
-            throw propagate(e);
-        }
-    }
-
-    private com.hp.hpl.jena.graph.Node convertObject(final Property p, final Value v) throws RepositoryException {
-        final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
-
-        if (object.isLiteral()) {
+            final com.hp.hpl.jena.graph.Node subject = translator.convert(p.getParent()).asNode();
+            final com.hp.hpl.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();
             final String propertyName = p.getName();
-            final int i = propertyName.indexOf('@');
 
-            if (i > 0) {
-                final LiteralLabel literal = object.getLiteral();
-                final String datatypeURI = literal.getDatatypeURI();
-
-                if (datatypeURI.isEmpty() || datatypeURI.equals(XSDDatatype.XSDstring.getURI())) {
-
-                    final String lang = propertyName.substring(i + 1);
-                    return createLiteral(literal.getLexicalForm(), lang, literal.getDatatype());
+            return Iterators.transform(new PropertyValueIterator(p), v -> {
+                final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
+                if (object.isLiteral()) {
+                    // unpack the name of the property for information about what kind of literal
+                    final int i = propertyName.indexOf('@');
+                    if (i > 0) {
+                        final LiteralLabel literal = object.getLiteral();
+                        final RDFDatatype datatype = literal.getDatatype();
+                        final String datatypeURI = datatype.getURI();
+                        if (datatypeURI.isEmpty() || datatype.equals(XSDstring)) {
+                            // this is an RDF string literal and could involve an RDF lang tag
+                            final String lang = propertyName.substring(i + 1);
+                            final String lex = literal.getLexicalForm();
+                            return create(subject, propPredicate, createLiteral(lex, lang, datatype));
+                        }
+                    }
                 }
-            }
+                return create(subject, propPredicate, object);
+            });
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-
-        return object;
     }
-
 }

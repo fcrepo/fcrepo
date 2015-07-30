@@ -15,16 +15,17 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static com.google.common.collect.ImmutableSet.builder;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTENT_LOCATION_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.FIXITY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CONTENT_LOCATION;
@@ -32,19 +33,15 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_CONTENT_LOCATION_VALUE;
 
 import java.net.URI;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Iterator;
-import javax.jcr.RepositoryException;
+import java.util.Set;
+import java.util.function.Function;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.vocabulary.RDF;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.utils.FixityResult;
-
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -71,70 +68,27 @@ public class FixityRdfContext extends NodeRdfContext {
                             final URI digest,
                             final long size) {
         super(resource, idTranslator);
+        final Function<FixityResult, Iterator<Triple>> f = uncheck(blob -> {
+            final com.hp.hpl.jena.graph.Node resultSubject =
+                    createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
+            final Set<Triple> b = new HashSet<>();
 
-        concat(Iterators.concat(Iterators.transform(blobs.iterator(),
-                new FixityResultIteratorFunction(resource, idTranslator, digest, size))));
-    }
+            b.add(create(subject(), HAS_FIXITY_RESULT.asNode(), resultSubject));
+            b.add(create(resultSubject, type.asNode(), FIXITY_TYPE.asNode()));
+            final String storeIdentifier = blob.getStoreIdentifier();
+            final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier).asNode();
 
-    private class FixityResultIteratorFunction implements Function<FixityResult, Iterator<Triple>> {
+            blob.getStatus(size, digest).stream().map(state -> createLiteral(state.toString()))
+                    .map(state -> create(resultSubject, HAS_FIXITY_STATE.asNode(), state)).forEach(b::add);
 
-        private final FedoraResource resource;
-        private final IdentifierConverter<Resource, FedoraResource> idTranslator;
-        private URI digest;
-        private final long size;
-
-        public FixityResultIteratorFunction(final FedoraResource resource,
-                                            final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                            final URI digest,  final long size) {
-            this.resource = resource;
-            this.idTranslator = idTranslator;
-            this.digest = digest;
-            this.size = size;
-        }
-
-        @Override
-        public Iterator<Triple> apply(final FixityResult blob) {
-            final com.hp.hpl.jena.graph.Node resultSubject = getTransientFixitySubject();
-            final ImmutableSet.Builder<Triple> b = builder();
-            try {
-                b.add(create(idTranslator.reverse().convert(resource).asNode(),
-                        HAS_FIXITY_RESULT.asNode(), resultSubject));
-                b.add(create(resultSubject, RDF.type.asNode(), FIXITY_TYPE.asNode()));
-                final String storeIdentifier = blob.getStoreIdentifier();
-                final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier)
-                        .asNode();
-
-                for (final FixityResult.FixityState state : blob.getStatus(size, digest)) {
-                    b.add(create(resultSubject, HAS_FIXITY_STATE
-                            .asNode(), createLiteral(state
-                            .toString())));
-                }
-                final String checksum =
-                        blob.getComputedChecksum().toString();
-                b.add(create(resultSubject, HAS_MESSAGE_DIGEST
-                        .asNode(), createURI(checksum)));
-                b.add(create(resultSubject, HAS_SIZE.asNode(),
-                        createTypedLiteral(
-                                blob.getComputedSize())
-                                .asNode()));
-                b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(),
-                        contentLocation));
-                b.add(create(contentLocation,
-                        RDF.type.asNode(),
-                        CONTENT_LOCATION_TYPE.asNode()));
-                b.add(create(contentLocation,
-                        HAS_CONTENT_LOCATION_VALUE.asNode(),
-                        createLiteral(storeIdentifier)));
-
-                return b.build().iterator();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
-
-    }
-
-    private com.hp.hpl.jena.graph.Node getTransientFixitySubject() {
-        return createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
+            final String checksum = blob.getComputedChecksum().toString();
+            b.add(create(resultSubject, HAS_MESSAGE_DIGEST.asNode(), createURI(checksum)));
+            b.add(create(resultSubject, HAS_SIZE.asNode(),createTypedLiteral(blob.getComputedSize()).asNode()));
+            b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(), contentLocation));
+            b.add(create(contentLocation, type.asNode(), CONTENT_LOCATION_TYPE.asNode()));
+            b.add(create(contentLocation, HAS_CONTENT_LOCATION_VALUE.asNode(), createLiteral(storeIdentifier)));
+            return b.iterator();
+        });
+        concat(flatMap(blobs.iterator(), f));
     }
 }

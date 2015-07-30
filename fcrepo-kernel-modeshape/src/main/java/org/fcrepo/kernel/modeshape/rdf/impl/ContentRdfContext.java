@@ -29,6 +29,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * @author cabeer
+ * @author ajs6f
  * @since 10/16/14
  */
 public class ContentRdfContext extends NodeRdfContext {
@@ -42,20 +43,17 @@ public class ContentRdfContext extends NodeRdfContext {
                              final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
 
-        // if there's an accessible jcr:content node, include information about
-        // it
+        // if there's an accessible jcr:content node, include information about it
         if (resource instanceof NonRdfSourceDescription) {
             final FedoraResource contentNode = ((NonRdfSourceDescription) resource()).getDescribedResource();
-            final Node subject = translator().reverse().convert(resource()).asNode();
-            final Node contentSubject = translator().reverse().convert(contentNode).asNode();
+            final Node subject = uriFor(resource());
+            final Node contentSubject = uriFor(contentNode);
             // add triples representing parent-to-content-child relationship
             concat(create(subject, DESCRIBES.asNode(), contentSubject));
 
         } else if (resource instanceof FedoraBinary) {
             final FedoraResource description = ((FedoraBinary) resource).getDescription();
-            concat(create(translator().reverse().convert(resource).asNode(),
-                    DESCRIBED_BY.asNode(),
-                    translator().reverse().convert(description).asNode()));
+            concat(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description)));
         }
     }
 }
