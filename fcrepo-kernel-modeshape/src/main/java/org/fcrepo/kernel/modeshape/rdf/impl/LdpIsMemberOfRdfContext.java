@@ -42,6 +42,8 @@ import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPr
 import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link com.hp.hpl.jena.graph.Triple}s linking
+ * to LDP Containers from their members.
  * @author cabeer
  * @author ajs6f
  * @since 10/7/14

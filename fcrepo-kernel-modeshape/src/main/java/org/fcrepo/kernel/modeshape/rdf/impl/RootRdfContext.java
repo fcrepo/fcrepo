@@ -46,7 +46,8 @@ import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * Assemble {@link Triple}s derived from the root of a repository.
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link Triple}s derived from the root of a
+ * repository, including repository configuration and metrics.
  *
  * @author ajs6f
  * @since Oct 18, 2013

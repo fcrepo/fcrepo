@@ -29,6 +29,8 @@ import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link com.hp.hpl.jena.graph.Triple}s about
+ * child nodes of the special "#" node, representing their subjects as hash URIs.
  * @author cabeer
  * @author ajs6f
  * @since 10/9/14

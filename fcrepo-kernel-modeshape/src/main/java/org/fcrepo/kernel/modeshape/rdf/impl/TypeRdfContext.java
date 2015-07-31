@@ -43,6 +43,8 @@ import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains RDF type {@link Triple}s for the resource's
+ * primary type and mixins.
  * @author cabeer
  * @author ajs6f
  * @since 10/1/14

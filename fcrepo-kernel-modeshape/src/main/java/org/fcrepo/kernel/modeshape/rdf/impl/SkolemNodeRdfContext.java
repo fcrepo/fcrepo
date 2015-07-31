@@ -39,7 +39,8 @@ import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENC
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isBlankNode;
 
 /**
- * Embed triples describing all skolem nodes in the RDF stream
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link com.hp.hpl.jena.graph.Triple}s
+ * describing all skolem nodes (blank nodes that have been assigned identifiers) in the RDF stream.
  *
  * @author cabeer
  * @author ajs6f

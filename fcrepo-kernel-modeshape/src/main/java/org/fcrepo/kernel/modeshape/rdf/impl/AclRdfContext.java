@@ -28,6 +28,8 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link com.hp.hpl.jena.graph.Triple}s
+ * indicating whether this resource is writable or not.
  * @author cabeer
  * @since 10/1/14
  */

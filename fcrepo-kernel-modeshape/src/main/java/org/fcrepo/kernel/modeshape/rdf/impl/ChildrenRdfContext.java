@@ -33,6 +33,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link Triple}s linking from this resource
+ * to its child nodes.
  * @author cabeer
  * @author ajs6f
  * @since 9/16/14

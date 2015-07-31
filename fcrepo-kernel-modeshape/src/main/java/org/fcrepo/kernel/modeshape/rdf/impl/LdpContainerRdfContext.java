@@ -53,6 +53,8 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePro
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link Triple}s linking from LDP
+ * DirectContainers or IndirectContainers to their members.
  * @author cabeer
  * @author ajs6f
  * @since 9/25/14
@@ -88,8 +90,8 @@ public class LdpContainerRdfContext extends NodeRdfContext {
     }
 
     /**
-     * Get the member relations assert on the subject by the given node
-     * @param container
+     * Get the member relations asserted on the subject by the given node
+     * @param container to check for members
      * @return
      * @throws RepositoryException
      */
@@ -97,11 +99,14 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         final com.hp.hpl.jena.graph.Node memberRelation;
 
         if (container.hasProperty(LDP_HAS_MEMBER_RELATION)) {
+            // if there is an ldp:memberRelation property, use its value as the predicate
             final Property property = container.getProperty(LDP_HAS_MEMBER_RELATION);
             memberRelation = createURI(property.getString());
         } else if (container.hasType(LDP_BASIC_CONTAINER)) {
+            // otherwise, use ldp:hasMember for BasicContainers
             memberRelation = LDP_MEMBER.asNode();
         } else {
+            // if we can't find a suitable predicate, then there's nothing for us to do
             return emptyIterator();
         }
 
@@ -109,11 +114,13 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
         if (container.hasType(LDP_INDIRECT_CONTAINER)) {
             if (container.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
+                // IndirectContainers should declare the insertedContentRelation to identify the container
                 insertedContainerProperty = container.getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
             } else {
                 return emptyIterator();
             }
         } else {
+            // other containers used a fixed property
             insertedContainerProperty = MEMBER_SUBJECT.getURI();
         }
 
@@ -123,8 +130,11 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                             ? uriFor(((NonRdfSourceDescription) child).getDescribedResource()) : uriFor(child);
 
                     if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
+                        // in the simple case, we can create the link
                         return singletonIterator(create(subject(), memberRelation, childSubject));
                     }
+
+                    // for IndirectContainers, we need to find the property or an inbound reference to it
                     String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
                             createResource(insertedContainerProperty), null);
 

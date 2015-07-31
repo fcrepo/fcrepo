@@ -41,7 +41,8 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * Accumulate inbound references to a given resource
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains inbound references ({@link Triple}s linking
+ * to this resource from other resources), including references managed by LDP Containers.
  *
  * @author cabeer
  * @author escowles
@@ -65,19 +66,13 @@ public class ReferencesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         super(resource, idTranslator);
         property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        putReferencesIntoContext(resource.getNode());
+        concat(flatMap(allReferences(resource.getNode()), property2triple));
+        concat(flatMap(flatMap( allReferences(resource.getNode()), potentialProxies), triplesForValue));
     }
 
-    private void putReferencesIntoContext(final Node node) throws RepositoryException {
-        Iterator<Property> references = node.getReferences();
-        Iterator<Property> weakReferences = node.getWeakReferences();
-        Iterator<Property> allReferences = Iterators.concat(references, weakReferences);
-        concat(flatMap(allReferences, property2triple));
-
-        references = node.getReferences();
-        weakReferences = node.getWeakReferences();
-        allReferences = Iterators.concat(references, weakReferences);
-        concat(flatMap(flatMap( allReferences, potentialProxies), triplesForValue));
+    /* Get a combined iterator of inbound references and weak references. */
+    private static Iterator<Property> allReferences(final Node node) throws RepositoryException {
+        return Iterators.concat(node.getReferences(), node.getWeakReferences());
     }
 
     /* References from LDP indirect containers are generated dynamically by LdpContainerRdfContext, so they won't

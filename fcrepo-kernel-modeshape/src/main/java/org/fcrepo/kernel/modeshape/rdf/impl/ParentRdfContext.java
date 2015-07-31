@@ -28,6 +28,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link com.hp.hpl.jena.graph.Triple}s linking
+ * from a resource to its parent.
  * @author cabeer
  * @author ajs6f
  * @since 9/16/14

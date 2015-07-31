@@ -28,6 +28,8 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains {@link com.hp.hpl.jena.graph.Triple}s linking
+ * between a content node and its description.
  * @author cabeer
  * @author ajs6f
  * @since 10/16/14
@@ -45,13 +47,11 @@ public class ContentRdfContext extends NodeRdfContext {
 
         // if there's an accessible jcr:content node, include information about it
         if (resource instanceof NonRdfSourceDescription) {
-            final FedoraResource contentNode = ((NonRdfSourceDescription) resource()).getDescribedResource();
-            final Node subject = uriFor(resource());
-            final Node contentSubject = uriFor(contentNode);
-            // add triples representing parent-to-content-child relationship
-            concat(create(subject, DESCRIBES.asNode(), contentSubject));
-
+            // add triple representing parent-to-content-child relationship
+            final Node contentSubject = uriFor(((NonRdfSourceDescription) resource()).getDescribedResource());
+            concat(create(uriFor(resource()), DESCRIBES.asNode(), contentSubject));
         } else if (resource instanceof FedoraBinary) {
+            // add triple linking from the resource to its description
             final FedoraResource description = ((FedoraBinary) resource).getDescription();
             concat(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description)));
         }

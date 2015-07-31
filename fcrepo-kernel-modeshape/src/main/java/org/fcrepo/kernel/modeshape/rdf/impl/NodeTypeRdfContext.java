@@ -49,7 +49,7 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 
 /**
- * Assemble {@link Triple}s derived from the {@link NodeType}s in a repository.
+ * {@link RdfStream} that contains {@link Triple}s derived from the {@link NodeType}s in a repository.
  *
  * @author cbeer
  */

@@ -32,6 +32,7 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
+ * {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} that contains RDF type {@link Triple}s for LDP resources.
  * @author cabeer
  * @since 9/16/14
  */

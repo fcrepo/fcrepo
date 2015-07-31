@@ -70,7 +70,7 @@ public class NodeRdfContext extends RdfStream {
     }
 
     /**
-     * @return local {@link org.fcrepo.kernel.api.identifiers.IdentifierConverter}
+     * @return local {@link org.fcrepo.kernel.api.identifiers.IdentifierConverter} to convert URIs to FedoraResources.
      */
     public IdentifierConverter<Resource, FedoraResource> translator() {
         return idTranslator;
@@ -85,7 +85,7 @@ public class NodeRdfContext extends RdfStream {
     }
 
     /**
-     * @return local {@link org.fcrepo.kernel.api.identifiers.IdentifierConverter}
+     * @return local {@link org.fcrepo.kernel.api.identifiers.IdentifierConverter} to convert JCR Nodes to URIs.
      */
     public Converter<Node, Resource> nodeConverter() {
         return nodeToResource(idTranslator);
