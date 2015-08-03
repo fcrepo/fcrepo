@@ -75,7 +75,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             final Graph tidiedGraph = getTidiedGraph(graphStore);
             final Model expected = ModelFactory.createDefaultModel().read(IOUtils.toInputStream(body), location, "TTL");
 
-            final boolean isomorphicWith = tidiedGraph.isIsomorphicWith(expected.getGraph());
+            final boolean isomorphicWith = tidiedGraph.isIsomorphicWith(getTidiedGraph(expected.getGraph()));
 
             final String description;
 
@@ -104,8 +104,12 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
     }
 
     private static Graph getTidiedGraph(final GraphStore graphStore) {
+        return getTidiedGraph(graphStore.getDefaultGraph());
+    }
+
+    private static Graph getTidiedGraph(final Graph graph) {
         final Graph betterGraph = GraphFactory.createDefaultGraph();
-        final ExtendedIterator<Triple> triples = graphStore.getDefaultGraph().find(Node.ANY, Node.ANY, Node.ANY);
+        final ExtendedIterator<Triple> triples = graph.find(Node.ANY, Node.ANY, Node.ANY);
         final Map<Node, Node> bnodeMap = new HashMap<>();
 
         while (triples.hasNext()) {
