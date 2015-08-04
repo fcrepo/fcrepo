@@ -38,6 +38,6 @@ public class OneToOne implements InternalExternalEventMapper {
 
     @Override
     public Iterator<FedoraEvent> apply(final Iterator<Event> jcrEvents) {
-        return transform(jcrEvents, e -> new FedoraEvent(e));
+        return transform(jcrEvents, FedoraEvent::new);
     }
 }

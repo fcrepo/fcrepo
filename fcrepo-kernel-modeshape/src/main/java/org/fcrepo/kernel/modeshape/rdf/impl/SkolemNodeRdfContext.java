@@ -36,7 +36,7 @@ import static javax.jcr.PropertyType.PATH;
 import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isBlankNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isSkolemNode;
 
 /**
  * Embed triples describing all skolem nodes in the RDF stream
@@ -73,6 +73,6 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
                 UncheckedFunction.<Value, Node>uncheck(v -> v.getType() == PATH ?
                         session().getNode(v.getString()) : session().getNodeByIdentifier(v.getString()))::apply);
 
-        return Iterators.filter(nodes, isBlankNode::test);
+        return Iterators.filter(nodes, isSkolemNode::test);
     }
 }

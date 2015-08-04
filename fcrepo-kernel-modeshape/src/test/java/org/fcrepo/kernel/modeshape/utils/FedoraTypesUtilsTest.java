@@ -19,7 +19,7 @@ import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isBlankNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isSkolemNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
@@ -241,10 +241,10 @@ public class FedoraTypesUtilsTest {
     @Test
     public void testIsBlanknode() throws RepositoryException {
         when(mockNode.isNodeType(FEDORA_SKOLEM)).thenReturn(true);
-        assertTrue("Expected to be a blank node", isBlankNode.test(mockNode));
+        assertTrue("Expected to be a blank node", isSkolemNode.test(mockNode));
 
         when(mockNode.isNodeType(FEDORA_SKOLEM)).thenReturn(false);
-        assertFalse("Expected to not be a blank node", isBlankNode.test(mockNode));
+        assertFalse("Expected to not be a blank node", isSkolemNode.test(mockNode));
     }
 
     @Test
