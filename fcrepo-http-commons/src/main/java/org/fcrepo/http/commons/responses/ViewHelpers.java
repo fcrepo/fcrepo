@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.responses;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.stream.Collectors.joining;
@@ -51,7 +52,6 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -280,6 +280,7 @@ public class ViewHelpers {
      */
     public String getObjectsAsString(final Graph graph,
             final Node subject, final Resource predicate, final boolean uriAsLink) {
+        LOGGER.trace("Getting Objects as String: s:{}, p:{}, g:{}", subject, predicate, graph);
         final Iterator<Triple> iterator = getObjects(graph, subject, predicate);
 
         if (iterator.hasNext()) {
@@ -427,6 +428,7 @@ public class ViewHelpers {
                                  final Node subject,
                                  final String namespace,
                                  final String resource) {
+        LOGGER.trace("Is RDF Resource? s:{}, ns:{}, r:{}, g:{}", subject, namespace, resource, graph);
         return graph.find(subject, createResource(RDF_NAMESPACE + "type").asNode(),
                 createResource(namespace + resource).asNode()).hasNext();
     }
@@ -492,7 +494,7 @@ public class ViewHelpers {
      * @return content-bearing node for the given subject
      */
     public Node getContentNode(final Node subject) {
-        return NodeFactory.createURI(subject.getURI().replace(FCR_METADATA, ""));
+        return (null == subject) ? null : createURI(subject.getURI().replace("/" + FCR_METADATA, ""));
     }
 
     /**
