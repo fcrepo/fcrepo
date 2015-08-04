@@ -1,4 +1,4 @@
-#set ($content = $helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.DESCRIBES, false))
+#set ($content = $helpers.getContentNode($topic))
 #set ($writable = $helpers.isWritable($rdf, $topic))
 #set ($frozen = $helpers.isFrozenNode($rdf, $topic))
 
@@ -14,7 +14,7 @@
     <button type="submit" class="btn btn-danger standalone">Delete this Version</button>
 </form>
 #else
-#if ($content != "")
+#if ($helpers.isRdfResource($rdf, $content, "http://fedora.info/definitions/v4/repository#", "Binary"))
     <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a><br/><br/>
 	<a href="$content/fcr:fixity" class="btn btn-success btn-lg">Fixity</a>
     #if ($writable == true)
