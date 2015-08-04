@@ -104,7 +104,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         String path = resource.getPath();
         path = path.endsWith(JCR_CONTENT) ? path.replace("/" + JCR_CONTENT, "") : path;
-        final Map<String, String> pathMap = singletonMap("path", path .substring(1));
+        final Map<String, String> pathMap = singletonMap("path", path.substring(1));
 
         // fcr:versions
         if (resource.isVersioned()) {
