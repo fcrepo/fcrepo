@@ -65,6 +65,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import org.apache.jena.atlas.RuntimeIOException;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -578,8 +580,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                              final RdfStream resourceTriples) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
-        final Model inputModel = createDefaultModel()
-                .read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+        final Model inputModel = createDefaultModel();
+        try {
+            inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+
+        } catch (RuntimeIOException e) {
+            if (e.getCause() instanceof JsonParseException) {
+                throw new MalformedRdfException(e.getCause());
+            }
+            throw new RepositoryRuntimeException(e);
+        }
 
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }

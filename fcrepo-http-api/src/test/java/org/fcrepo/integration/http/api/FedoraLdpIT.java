@@ -1928,4 +1928,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    public void testPutEmptyBody() throws IOException {
+        final HttpPut httpPut = putObjMethod(getRandomUniqueId());
+        httpPut.addHeader("Content-Type", "application/ld+json");
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Should be a client error", BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+    }
+
 }
