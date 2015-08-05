@@ -2,13 +2,21 @@ $(document).ready(function() {
   $("#new_id").attr("placeholder", "(auto-generated identifier)");
 });
 
+function removeTrailingSlash(origURI) {
+    var trimmed = origURI;
+    while (trimmed.lastIndexOf('/') == trimmed.length - 1) {
+        trimmed = trimmed.substr(0, trimmed.length - 1);
+    }
+    return trimmed;
+}
+
 function addChild()
 {
     var id = $("#new_id").val().trim();
 
     var mixin = $("#new_mixin").val();
 
-    var newURI = $('#main').attr('resource') + (!id ? "" : "/" + id);
+    var newURI = removeTrailingSlash($('#main').attr('resource')) + (!id ? "" : "/" + id);
 
     var postURI = newURI;
 
