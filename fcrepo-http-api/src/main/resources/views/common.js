@@ -8,7 +8,12 @@ function addChild()
 
     var mixin = $("#new_mixin").val();
 
-    var newURI = $('#main').attr('resource') + (!id ? "" : "/" + id);
+    var base = $('#main').attr('resource');
+
+    // Remove trailing '/' if it exists
+    var cleanedBase = base.lastIndexOf('/') == base.length - 1 ? base.substr(0, base.length - 1) : base;
+
+    var newURI = cleanedBase + (!id ? "" : "/" + id);
 
     var postURI = newURI;
 
