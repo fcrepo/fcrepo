@@ -18,7 +18,7 @@ package org.fcrepo.kernel.api.services.functions;
 import java.util.function.Supplier;
 
 /**
- * Unique value minter that creates unique IDs
+ * A {@link java.util.function.Supplier<String>} interface that guarantees the uniqueness of its provided values.
  *
  * @author acoburn
  */
