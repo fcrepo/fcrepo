@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 import java.util.StringJoiner;
 
 import org.fcrepo.metrics.RegistryService;
-import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 
 import com.codahale.metrics.Timer;
 
@@ -31,14 +31,10 @@ import com.codahale.metrics.Timer;
  *
  * @author awoods
  */
-public class UUIDPathMinter implements UniqueValueSupplier {
+public class UUIDPathMinter implements HierarchicalIdentifierSupplier {
 
     static final Timer timer = RegistryService.getInstance().getMetrics().timer(
             name(UUIDPathMinter.class, "mint"));
-
-    private static final int DEFAULT_LENGTH = 2;
-
-    private static final int DEFAULT_COUNT = 4;
 
     private final int length;
 

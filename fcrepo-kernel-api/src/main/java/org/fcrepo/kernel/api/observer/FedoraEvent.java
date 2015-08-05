@@ -33,6 +33,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.api.utils.EventType;
 
@@ -204,5 +205,5 @@ public class FedoraEvent {
             getDate()).add("Info:", getInfo()).toString();
     }
 
-    private class DefaultPathMinter implements UniqueValueSupplier { }
+    private class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 }

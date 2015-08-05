@@ -58,6 +58,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.utils.NodePropertiesTools;
@@ -432,6 +433,6 @@ public class JcrRdfTools {
         return "/.well-known/genid/";
     }
 
-    private class DefaultPathMinter implements UniqueValueSupplier { }
+    private class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 
 }

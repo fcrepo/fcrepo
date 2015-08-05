@@ -15,35 +15,13 @@
  */
 package org.fcrepo.kernel.api.services.functions;
 
-import static java.util.UUID.randomUUID;
-
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
-import java.util.StringJoiner;
 
 /**
- * Unique value minter that creates hierarchical IDs from a UUID
+ * Unique value minter that creates unique IDs
  *
- * @author awoods
  * @author acoburn
  */
 public interface UniqueValueSupplier extends Supplier<String> {
 
-    /**
-     * Mint a unique identifier as a UUID
-     *
-     * @return uuid
-     */
-    default public String get() {
-        final int defaultLength = 2;
-        final int defaultCount = 4;
-
-        final String s = randomUUID().toString();
-        final StringJoiner joiner = new StringJoiner("/", "", "/" + s);
-
-        IntStream.rangeClosed(0, defaultCount - 1)
-                 .forEach(x -> joiner.add(s.substring(x * defaultLength, (x + 1) * defaultLength)));
-
-        return joiner.toString();
-    }
 }
