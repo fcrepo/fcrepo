@@ -18,7 +18,7 @@ package org.fcrepo.kernel.api.services.functions;
 import java.util.function.Supplier;
 
 /**
- * A {@link java.util.function.Supplier<String>} interface that guarantees the uniqueness of its provided values.
+ * A {@link java.util.function.Supplier} interface that guarantees the uniqueness of its provided values.
  *
  * @author acoburn
  */
