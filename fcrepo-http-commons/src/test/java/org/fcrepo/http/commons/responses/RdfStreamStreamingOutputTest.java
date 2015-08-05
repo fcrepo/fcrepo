@@ -209,7 +209,7 @@ public class RdfStreamStreamingOutputTest {
 
         assertOutputContainsTriple(create(createURI("info:testSubject"),
                 createURI("info:testPredicate"),
-                NodeFactory.createLiteral("french string", "fr", XSDDatatype.XSDstring)));
+                NodeFactory.createLiteral("french string", "fr")));
 
     }
 
