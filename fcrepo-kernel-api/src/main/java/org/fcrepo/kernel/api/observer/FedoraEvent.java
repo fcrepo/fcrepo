@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
@@ -55,8 +54,6 @@ public class FedoraEvent {
 
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
-
-    @Inject
     private UniqueValueSupplier pidMinter = new DefaultPathMinter();
 
     /**
