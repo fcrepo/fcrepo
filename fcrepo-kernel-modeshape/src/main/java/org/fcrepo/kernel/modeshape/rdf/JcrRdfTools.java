@@ -108,7 +108,7 @@ public class JcrRdfTools {
 
     private static final Model m = createDefaultModel();
 
-    private final UniqueValueSupplier pidMinter =  new DefaultPathMinter();
+    private static final UniqueValueSupplier pidMinter =  new DefaultPathMinter();
 
     /**
      * Constructor with even more context.
@@ -433,6 +433,6 @@ public class JcrRdfTools {
         return "/.well-known/genid/";
     }
 
-    private class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
+    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 
 }
