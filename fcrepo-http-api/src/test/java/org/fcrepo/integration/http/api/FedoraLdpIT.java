@@ -1897,4 +1897,35 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 FORBIDDEN.getStatusCode(),getStatus(updateObjectGraphMethod));
     }
 
+    @Test
+    public void testPutMalformedHeader() throws IOException {
+        // Create a resource
+        final String id = getRandomUniqueId();
+        executeAndClose(putObjMethod(id));
+
+        // Get the resource's etag
+        String etag;
+        final HttpHead httpHead = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(httpHead)) {
+            etag = response.getFirstHeader("ETag").getValue();
+            assertNotNull("ETag was missing!?", etag);
+        }
+
+        // PUT properly formatted etag
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader("If-Match", etag);
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(response));
+        }
+
+        // PUT improperly formatted etag ... not quoted.
+        final HttpPut httpPut2 = putObjMethod(id);
+        httpPut2.addHeader("If-Match", etag.replace("\"", ""));
+
+        try (final CloseableHttpResponse response = execute(httpPut2)) {
+            assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+    }
+
 }
