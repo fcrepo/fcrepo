@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Calendar;
+import java.util.function.Predicate;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -37,8 +38,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import com.google.common.base.Predicate;
 
 /**
  * <p>FedoraObjectImplTest class.</p>
@@ -95,7 +94,7 @@ public class ContainerImplTest implements FedoraJcrTypes {
 
             when(mockObjNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
 
-            when(mockPredicate.apply(mockObjNode)).thenReturn(true);
+            when(mockPredicate.test(mockObjNode)).thenReturn(true);
 
         } catch (final RepositoryException e) {
             e.printStackTrace();

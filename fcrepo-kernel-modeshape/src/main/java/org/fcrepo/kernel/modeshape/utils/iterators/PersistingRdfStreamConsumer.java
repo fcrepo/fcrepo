@@ -148,7 +148,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             // mixins. If it isn't, treat it as a "data" property.
             if (t.getPredicate().equals(type) && t.getObject().isResource()) {
                 final Resource mixinResource = t.getObject().asResource();
-                if (!isManagedMixin.apply(mixinResource)) {
+                if (!isManagedMixin.test(mixinResource)) {
                     LOGGER.debug("Operating on node: {} with mixin: {}.",
                             subjectNode, mixinResource);
                     operateOnMixin(mixinResource, subjectNode);

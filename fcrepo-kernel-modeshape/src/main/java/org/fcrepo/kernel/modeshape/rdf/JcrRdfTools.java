@@ -262,7 +262,7 @@ public class JcrRdfTools {
 
         final Node node = resource.getNode();
 
-        if (isManagedPredicate.apply(predicate)) {
+        if (isManagedPredicate.test(predicate)) {
 
             throw new ServerManagedPropertyException("Could not persist triple containing predicate "
                     + predicate.toString()
@@ -322,7 +322,7 @@ public class JcrRdfTools {
         final Node node = resource.getNode();
         final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
 
-        if (isManagedPredicate.apply(predicate)) {
+        if (isManagedPredicate.test(predicate)) {
 
             throw new ServerManagedPropertyException("Could not remove triple containing predicate "
                     + predicate.toString()

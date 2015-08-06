@@ -72,10 +72,12 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
         final Iterator<Property> memberReferences = resource.getNode().getReferences(LDP_MEMBER_RESOURCE);
-        final Iterator<Property> properties = Iterators.filter(memberReferences, UncheckedPredicate.uncheck(p -> {
-            final Node container = p.getParent();
-            return container.isNodeType(LDP_DIRECT_CONTAINER) || container.isNodeType(LDP_INDIRECT_CONTAINER);
-        }));
+        final Iterator<Property> properties = Iterators.filter(memberReferences, UncheckedPredicate.uncheck(
+                    (final Property p) -> {
+                        final Node container = p.getParent();
+                        return container.isNodeType(LDP_DIRECT_CONTAINER)
+                            || container.isNodeType(LDP_INDIRECT_CONTAINER);
+                    })::test);
 
         if (properties.hasNext()) {
             LOGGER.trace("Found membership containers for {}", resource);

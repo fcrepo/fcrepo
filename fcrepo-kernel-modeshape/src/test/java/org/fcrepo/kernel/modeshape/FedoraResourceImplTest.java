@@ -71,7 +71,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -207,13 +206,7 @@ public class FedoraResourceImplTest {
         final ResIterator resIterator = model.listSubjects();
 
         final ImmutableSet<String> resources = ImmutableSet.copyOf(
-                Iterators.transform(resIterator,
-                        new Function<Resource, String>() {
-                            @Override
-                            public String apply(final Resource resource) {
-                                return resource.getURI();
-                            }
-                        }));
+                Iterators.transform(resIterator, x -> x.getURI()));
 
         assertTrue(resources.contains("MockTriplesContextClass"));
     }

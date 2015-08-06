@@ -54,7 +54,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
-import com.google.common.base.Function;
 
 /**
  * <p>FedoraHtmlResponsesIT class.</p>
@@ -370,14 +369,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
 
     private static <T> List<T> castList(final List<?> l) {
-        return transform(l, new Function<Object, T>() {
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final Object input) {
-                return (T) input;
-            }
-        });
+        return transform(l, x -> (T) x);
     }
 
     private static class SuppressWarningIncorrectnessListener

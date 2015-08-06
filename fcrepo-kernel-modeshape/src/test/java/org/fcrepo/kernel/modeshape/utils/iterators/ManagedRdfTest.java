@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
-import static com.google.common.base.Predicates.not;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -54,7 +53,7 @@ public class ManagedRdfTest {
         initMocks(this);
         testStream =
             new RdfStream(managedTriple, unManagedTriple)
-                    .filter(not(isManagedTriple));
+                    .filter(isManagedTriple.negate());
     }
 
     @Test
@@ -66,9 +65,9 @@ public class ManagedRdfTest {
 
     @Test
     public void testMixinFiltering() {
-        assertTrue(isManagedMixin.apply(createResource(REPOSITORY_NAMESPACE
+        assertTrue(isManagedMixin.test(createResource(REPOSITORY_NAMESPACE
                 + "thing")));
-        assertFalse(isManagedMixin.apply(createResource("myNS:thing")));
+        assertFalse(isManagedMixin.test(createResource("myNS:thing")));
     }
 
 }

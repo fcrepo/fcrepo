@@ -15,7 +15,8 @@
  */
 package org.fcrepo.kernel.api.utils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
+import java.util.function.Function;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.Node;
@@ -25,8 +26,6 @@ import javax.jcr.Session;
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.api.NamespaceRegistry;
-
-import com.google.common.base.Function;
 
 /**
  * Tools for working with the JCR Namespace Registry
@@ -47,7 +46,7 @@ public final class NamespaceTools {
         @Override
         public NamespaceRegistry apply(final Node n) {
             try {
-                checkNotNull(n, "null has no Namespace Registry associated with it!");
+                Objects.requireNonNull(n, "null has no Namespace Registry associated with it!");
                 return (org.modeshape.jcr.api.NamespaceRegistry)n.getSession().getWorkspace().getNamespaceRegistry();
             } catch (final RepositoryException e) {
                 throw new IllegalStateException(e);
@@ -67,7 +66,7 @@ public final class NamespaceTools {
         try {
             namespaceRegistry =
                     session.getWorkspace().getNamespaceRegistry();
-            checkNotNull(namespaceRegistry,
+            Objects.requireNonNull(namespaceRegistry,
                     "Couldn't find namespace registry in repository!");
             return namespaceRegistry;
         } catch (final RepositoryException e) {
