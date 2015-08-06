@@ -55,7 +55,7 @@ public class FedoraEvent {
     private Set<Integer> eventTypes = new HashSet<>();
     private Set<String> eventProperties = new HashSet<>();
 
-    private final static UniqueValueSupplier pidMinter = new DefaultPathMinter();
+    private static final UniqueValueSupplier pidMinter = new DefaultPathMinter();
 
     /**
      * Wrap a JCR Event with our FedoraEvent decorators
