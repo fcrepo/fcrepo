@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 
-import com.google.common.base.Function;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -27,6 +26,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.ItemDefinition;
 import javax.jcr.nodetype.NodeType;
 import java.util.Iterator;
+import java.util.function.Function;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;

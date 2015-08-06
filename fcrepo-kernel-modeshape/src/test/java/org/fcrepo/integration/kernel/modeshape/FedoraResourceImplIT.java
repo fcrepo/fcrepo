@@ -30,6 +30,7 @@ import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -59,7 +60,6 @@ import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 import javax.jcr.version.Version;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
@@ -585,16 +585,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
 
         final UnmodifiableIterator<javax.jcr.Property> relation
-            = Iterators.filter(properties, new Predicate<javax.jcr.Property>() {
-                @Override
-                public boolean apply(final javax.jcr.Property property) {
-                    try {
-                        return property.getName().contains("xyz_ref");
-                    } catch (final RepositoryException e) {
-                        return false;
-                    }
-                }
-        });
+            = Iterators.filter(properties, uncheck(
+                        (final javax.jcr.Property p) -> p.getName().contains("xyz_ref"))::test);
 
         assertTrue(relation.hasNext());
 

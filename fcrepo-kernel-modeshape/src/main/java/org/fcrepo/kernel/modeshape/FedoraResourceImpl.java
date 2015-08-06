@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
@@ -43,6 +42,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
@@ -58,8 +59,6 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import com.google.common.base.Converter;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -72,6 +71,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.utils.UncheckedPredicate;
 import org.fcrepo.kernel.api.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
@@ -155,8 +155,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      */
     private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
         final Iterator<Node> allChildren = input.getNodes();
-        final Iterator<Node> children = filter(allChildren, not(nastyChildren));
-        return transform(children, new Function<Node, Iterator<FedoraResource>>() {
+        final Iterator<Node> children = filter(allChildren, nastyChildren.negate()::test);
+        return transform(children, (new Function<Node, Iterator<FedoraResource>>() {
 
             @Override
             public Iterator<FedoraResource> apply(final Node input) {
@@ -169,28 +169,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     throw new RepositoryRuntimeException(e);
                 }
             }
-        });
+        })::apply);
     }
+
     /**
      * Children for whom we will not generate triples.
      */
-    private static Predicate<Node> nastyChildren =
-            new Predicate<Node>() {
-
-                @Override
-                public boolean apply(final Node n) {
-                    LOGGER.trace("Testing child node {}", n);
-                    try {
-                        return isInternalNode.test(n)
-                                || n.getName().equals(JCR_CONTENT)
-                                || TombstoneImpl.hasMixin(n)
-                                || n.getName().equals("#");
-                    } catch (final RepositoryException e) {
-                        throw new RepositoryRuntimeException(e);
-                    }
-                }
-            };
-
+    private static Predicate<Node> nastyChildren = isInternalNode
+                    .or(TombstoneImpl::hasMixin)
+                    .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
+                    .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
 
     private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
             = new Converter<FedoraResource, FedoraResource>() {

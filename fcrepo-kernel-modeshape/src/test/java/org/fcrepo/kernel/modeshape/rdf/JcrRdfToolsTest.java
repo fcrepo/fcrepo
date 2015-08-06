@@ -43,6 +43,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.function.Function;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -83,7 +84,6 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.value.BinaryValue;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.google.common.base.Function;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;

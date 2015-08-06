@@ -15,15 +15,13 @@
  */
 package org.fcrepo.kernel.api;
 
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.or;
 import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -95,7 +93,7 @@ public final class RdfLexicon {
      * Is this namespace one that the repository manages?
      */
     public static final Predicate<String> isManagedNamespace =
-        in(managedNamespaces);
+        p -> managedNamespaces.contains(p);
 
     public static final String RDF_NAMESPACE =
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
@@ -310,43 +308,23 @@ public final class RdfLexicon {
     }
 
     private static Predicate<Property> hasJcrNamespace =
-        new Predicate<Property>() {
-
-            @Override
-            public boolean apply(final Property p) {
-                return !p.isAnon() && p.getNameSpace().equals(JCR_NAMESPACE);
-
-            }
-        };
+        p -> !p.isAnon() && p.getNameSpace().equals(JCR_NAMESPACE);
 
     private static Predicate<Property> hasFedoraNamespace =
-        new Predicate<Property>() {
-
-            @Override
-            public boolean apply(final Property p) {
-                return !p.isAnon()
-                        && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
-
-            }
-        };
+        p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
 
     /**
      * Detects whether an RDF property is managed by the repository.
      */
     @SuppressWarnings("unchecked")
-    public static final Predicate<Property> isManagedPredicate = or(
-            in(managedProperties), hasJcrNamespace, hasFedoraNamespace);
+    public static final Predicate<Property> isManagedPredicate =
+        hasJcrNamespace.or(hasFedoraNamespace).or(p -> managedProperties.contains(p));
 
     /**
      * Detects whether an RDF predicate URI is managed by the repository.
     **/
     public static Predicate<String> isManagedPredicateURI =
-        new Predicate<String>() {
-            @Override
-            public boolean apply(final String uri) {
-                return isManagedPredicate.apply( createProperty(uri) );
-            }
-        };
+        p -> isManagedPredicate.test(createProperty(p));
 
     private RdfLexicon() {
 

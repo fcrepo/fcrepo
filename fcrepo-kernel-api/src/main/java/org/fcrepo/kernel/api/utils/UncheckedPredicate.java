@@ -29,7 +29,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  * @param <T> the type of the input to the predicate
  */
 @FunctionalInterface
-public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.base.Predicate<T> {
+public interface UncheckedPredicate<T> extends Predicate<T> {
 
     @Override
     default boolean test(final T elem) {
@@ -38,11 +38,6 @@ public interface UncheckedPredicate<T> extends Predicate<T>, com.google.common.b
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-    }
-
-    @Override
-    default boolean apply(final T elem) {
-        return test(elem);
     }
 
     /**

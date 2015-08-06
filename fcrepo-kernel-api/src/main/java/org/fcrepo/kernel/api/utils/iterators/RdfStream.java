@@ -25,11 +25,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javax.jcr.Session;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ForwardingIterator;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
@@ -64,7 +64,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
      */
     public <Tr extends Triple, T extends Iterator<Tr>> RdfStream(final T triples) {
         super();
-        this.triples = Iterators.transform(triples, cast());
+        this.triples = Iterators.transform(triples, cast()::apply);
     }
 
     /**
@@ -110,7 +110,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
     @SafeVarargs
     public <T extends Statement> RdfStream(final T... statements) {
         this(Iterators.transform(Iterators.forArray(statements),
-                statement2triple));
+                x -> x.asTriple()));
     }
 
     /**
@@ -214,24 +214,24 @@ public class RdfStream extends ForwardingIterator<Triple> {
     }
 
     /**
-     * As {@link Iterators#filter(Iterator, Predicate)} while maintaining context.
+     * Filter the RDF triples while maintaining context.
      *
      * @param predicate the predicate
      * @return RdfStream
      */
     public RdfStream filter(final Predicate<? super Triple> predicate) {
-        return withThisContext(Iterators.filter(this, predicate));
+        return withThisContext(Iterators.filter(this, predicate::test));
     }
 
     /**
-     * As {@link Iterators#transform(Iterator, Function)}.
+     * Apply a Function to an Iterator.
      *
      * @param f the parameter f
      * @param <ToType> extends {@link Iterator}
      * @return Iterator
      */
     public <ToType> Iterator<ToType> transform(final Function<? super Triple, ToType> f) {
-        return Iterators.transform(this, f);
+        return Iterators.transform(this, f::apply);
     }
 
     /**
@@ -310,18 +310,9 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * @return RDFStream
      */
     public static RdfStream fromModel(final Model model) {
-        final Iterator<Triple> triples = Iterators.transform(model.listStatements(), statement2triple);
+        final Iterator<Triple> triples = Iterators.transform(model.listStatements(), x -> x.asTriple());
         return new RdfStream(triples).namespaces(model.getNsPrefixMap());
     }
-
-    private static Function<Statement, Triple> statement2triple = new Function<Statement, Triple>() {
-
-        @Override
-        public Triple apply(final Statement s) {
-            return s.asTriple();
-        }
-
-    };
 
     @Override
     protected Iterator<Triple> delegate() {
@@ -359,8 +350,7 @@ public class RdfStream extends ForwardingIterator<Triple> {
         };
     }
 
-    protected static <From, To> Iterator<To> flatMap(final Iterator<From> i,
-            final java.util.function.Function<From, Iterator<To>> f) {
+    protected static <From, To> Iterator<To> flatMap(final Iterator<From> i, final Function<From, Iterator<To>> f) {
         return Iterators.concat(Iterators.transform(i, f::apply));
     }
 

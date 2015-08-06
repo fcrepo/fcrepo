@@ -31,8 +31,6 @@ import java.util.List;
 import org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter;
 import org.slf4j.Logger;
 
-import com.google.common.base.Function;
-
 /**
  * Injects and extracts segments of hierarchy before the last segment of a
  * multi-part identifier to ensure efficient performance of the JCR.
@@ -47,14 +45,6 @@ public class HierarchyConverter extends InternalIdentifierConverter {
     private String separator = DEFAULT_SEPARATOR;
 
     private String prefix = "";
-
-    private final Function<String, String> addPrefix = new Function<String, String>() {
-
-        @Override
-        public String apply(final String input) {
-            return prefix + input;
-        }
-    };
 
     private static final int DEFAULT_LENGTH = 2;
 
@@ -124,7 +114,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
         if (levels == 0) {
             return emptyList();
         }
-        return transform(fixedLength(length).splitToList(createHierarchyCharacterBlock()), addPrefix);
+        return transform(fixedLength(length).splitToList(createHierarchyCharacterBlock()), x -> prefix + x);
     }
 
     private CharSequence createHierarchyCharacterBlock() {

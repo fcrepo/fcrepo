@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
+import java.util.function.Function;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -37,7 +38,6 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -81,12 +81,10 @@ public class VersionsRdfContext extends RdfStream {
 
     private Iterator<Triple> versionTriples() throws RepositoryException {
         final Iterator<Version> allVersions = versionHistory.getAllVersions();
-        return Iterators.concat(Iterators.transform(allVersions, version2triples));
+        return Iterators.concat(Iterators.transform(allVersions, version2triples::apply));
     }
 
-    private final Function<Version, Iterator<Triple>> version2triples = new Version2Triples();
-
-    private class Version2Triples implements Function<Version, Iterator<Triple>> {
+    private final Function<Version, Iterator<Triple>> version2triples = new Function<Version, Iterator<Triple>> () {
 
         @Override
         public Iterator<Triple> apply(final Version version) {
@@ -121,7 +119,7 @@ public class VersionsRdfContext extends RdfStream {
                 throw propagate(e);
             }
         }
-    }
+    };
 
 
 }
