@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
@@ -35,10 +36,6 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.api.utils.EventType;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 
 /**
  * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
@@ -191,16 +188,15 @@ public class FedoraEvent {
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("Event types:",
-            Joiner.on(',').join(Iterables.transform(getTypes(), new Function<Integer, String>() {
 
-                @Override
-                public String apply(final Integer type) {
-                    return EventType.valueOf(type).getName();
-                }
-            }))).add("Event properties:",
-            Joiner.on(',').join(eventProperties)).add("Path:", getPath()).add("Date: ",
-            getDate()).add("Info:", getInfo()).toString();
+        return toStringHelper(this)
+            .add("Event types:", String.join(",", getTypes().stream()
+                            .map(x -> EventType.valueOf(x).getName())
+                            .collect(Collectors.toList())))
+            .add("Event properties:", String.join(",", eventProperties))
+            .add("Path:", getPath())
+            .add("Date: ", getDate())
+            .add("Info:", getInfo()).toString();
     }
 
     private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }

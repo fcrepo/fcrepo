@@ -137,7 +137,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private static final long MAX_BUFFER_SIZE = 10240000;
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
-            isManagedNamespace.apply(t.getObject().getNameSpace());
+            isManagedNamespace.test(t.getObject().getNameSpace());
 
     protected abstract String externalPath();
 
@@ -208,7 +208,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (ldpPreferences.prefersServerManaged()) {
             tripleFilter = x -> true;
         } else {
-            tripleFilter = IS_MANAGED_TYPE.or(isManagedTriple::apply).negate();
+            tripleFilter = IS_MANAGED_TYPE.or(isManagedTriple).negate();
         }
 
         if (ldpPreferences.prefersServerManaged()) {

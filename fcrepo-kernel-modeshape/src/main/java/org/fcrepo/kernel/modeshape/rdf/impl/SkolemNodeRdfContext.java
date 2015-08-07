@@ -67,10 +67,10 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
         final Iterator<Property> properties = resource().getNode().getProperties();
 
         final Iterator<Property> references = Iterators.filter(properties,
-                uncheck(p -> REFERENCE_TYPES.contains(p.getType())));
+                uncheck((final Property p) -> REFERENCE_TYPES.contains(p.getType()))::test);
 
         final Iterator<Node> nodes = Iterators.transform(new PropertyValueIterator(references),
-                UncheckedFunction.<Value, Node>uncheck(v -> v.getType() == PATH ?
+                UncheckedFunction.uncheck((final Value v) -> v.getType() == PATH ?
                         session().getNode(v.getString()) : session().getNodeByIdentifier(v.getString()))::apply);
 
         return Iterators.filter(nodes, isSkolemNode::test);

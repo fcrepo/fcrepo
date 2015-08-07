@@ -15,12 +15,14 @@
  */
 package org.fcrepo.http.commons.webxml;
 
-import static com.google.common.collect.Collections2.filter;
 import static java.util.Collections.unmodifiableList;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
@@ -33,8 +35,6 @@ import org.fcrepo.http.commons.webxml.bind.FilterMapping;
 import org.fcrepo.http.commons.webxml.bind.Listener;
 import org.fcrepo.http.commons.webxml.bind.Servlet;
 import org.fcrepo.http.commons.webxml.bind.ServletMapping;
-
-import com.google.common.base.Predicate;
 
 /**
  * <p>WebAppConfig class.</p>
@@ -75,11 +75,11 @@ public class WebAppConfig extends Displayable {
     List<FilterMapping> filterMappings;
 
     public Collection<ServletMapping> servletMappings(final String servletName) {
-        return filter(servletMappings, new SMapFilter(servletName));
+        return servletMappings.stream().filter(new SMapFilter(servletName)).collect(Collectors.toList());
     }
 
     public Collection<FilterMapping> filterMappings(final String filterName) {
-        return filter(filterMappings, new FMapFilter(filterName));
+        return filterMappings.stream().filter(new FMapFilter(filterName)).collect(Collectors.toList());
     }
 
     private static List<ContextParam> NO_CP = unmodifiableList(new ArrayList<ContextParam>(0));
@@ -116,7 +116,7 @@ public class WebAppConfig extends Displayable {
         }
 
         @Override
-        public boolean apply(final ServletMapping input) {
+        public boolean test(final ServletMapping input) {
             return (servletName == null) ? input.servletName() == null
                     : servletName.equals(input.servletName());
         }
@@ -132,7 +132,7 @@ public class WebAppConfig extends Displayable {
         }
 
         @Override
-        public boolean apply(final FilterMapping input) {
+        public boolean test(final FilterMapping input) {
             return (filterName == null) ? input.filterName() == null
                     : filterName.equals(input.filterName());
         }

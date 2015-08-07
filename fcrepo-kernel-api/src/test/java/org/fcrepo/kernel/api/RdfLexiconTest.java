@@ -31,99 +31,99 @@ public class RdfLexiconTest {
 
     @Test
     public void repoPredicatesAreManaged() {
-        assertTrue( isManagedPredicateURI.apply( PREMIS_NAMESPACE + "hasSize") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "primaryType") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryCustomRepName") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryIdentifierStability") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryName") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryVendor") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryVendorUrl") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryVersion") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryJcrSpecificationName") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryJcrSpecificationVersion") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryLevel1Supported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE + "repositoryLevel2Supported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( PREMIS_NAMESPACE + "hasSize") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "primaryType") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryCustomRepName") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryIdentifierStability") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryName") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryVendor") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryVendorUrl") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryJcrRepositoryVersion") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryJcrSpecificationName") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryJcrSpecificationVersion") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryLevel1Supported") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE + "repositoryLevel2Supported") );
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementAutocreatedDefinitionsSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementInheritance") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementMultipleBinaryPropertiesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementMultivaluedPropertiesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementOrderableChildNodesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementOverridesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementPrimaryItemNameSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementPropertyTypes") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementResidualDefinitionsSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementSameNameSiblingsSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementUpdateInUseSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryNodeTypeManagementValueConstraintsSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionAccessControlSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionActivitiesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionBaselinesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionJournaledObservationSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionLifecycleSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionLockingSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionNodeAndPropertyWithSameNameSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionNodeTypeManagementSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionObservationSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionQuerySqlSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionRetentionSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionShareableNodesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionSimpleVersioningSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionTransactionsSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionUnfiledContentSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionUpdateMixinNodeTypesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionUpdatePrimaryNodeTypeSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionVersioningSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionWorkspaceManagementSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionXmlExportSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryOptionXmlImportSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryQueryFullTextSearchSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryQueryJoins") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryQueryStoredQueriesSupported") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryQueryXpathDocOrder") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryQueryXpathPosIndex") );
-        assertTrue( isManagedPredicateURI.apply( REPOSITORY_NAMESPACE +
+        assertTrue( isManagedPredicateURI.test( REPOSITORY_NAMESPACE +
                     "repositoryWriteSupported") );
     }
     @Test
     public void otherPredicatesAreNotManaged() {
-        assertTrue( !isManagedPredicateURI.apply( "http://purl.org/dc/elements/1.1/title") );
+        assertTrue( !isManagedPredicateURI.test( "http://purl.org/dc/elements/1.1/title") );
     }
 }

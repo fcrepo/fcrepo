@@ -38,8 +38,6 @@ import javax.jcr.Session;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.graph.Node;
@@ -255,17 +253,9 @@ public class RdfStreamTest {
 
     @Test
     public void testFilter() {
-        final Predicate<Triple> predicate = new Predicate<Triple>() {
-
-            @Override
-            public boolean apply(final Triple t) {
-                return t.equals(triple);
-            }
-
-        };
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
         when(mockIterator.next()).thenReturn(triple1, triple2, triple);
-        testStream = testStream.filter(predicate);
+        testStream = testStream.filter(p -> p.equals(triple));
         assertEquals(triple, testStream.next());
     }
 
@@ -276,17 +266,10 @@ public class RdfStreamTest {
 
         final String otherResult = "The other result";
 
-        final Function<Triple, String> f = new Function<Triple, String>() {
-
-            @Override
-            public String apply(final Triple t) {
-                return t.equals(triple) ? oneResult : otherResult;
-            }
-
-        };
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
         when(mockIterator.next()).thenReturn(triple1, triple2, triple);
-        final Iterator<String> testIterator = testStream.transform(f);
+        final Iterator<String> testIterator = testStream.transform(
+                x -> x.equals(triple) ? oneResult : otherResult);
         assertEquals(otherResult, testIterator.next());
         assertEquals(otherResult, testIterator.next());
         assertEquals(oneResult, testIterator.next());
