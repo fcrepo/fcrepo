@@ -2,71 +2,63 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>9</version>
+    <groupId>org.fcrepo</groupId>
+    <artifactId>fcrepo-parent</artifactId>
+    <version>4.3.1-SNAPSHOT</version>
+    <relativePath>./fcrepo-parent</relativePath>
   </parent>
+
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
   <version>4.3.1-SNAPSHOT</version>
   <name>Fedora Commons 4</name>
-  <description>Parent project for Fedora Commons 4</description>
-  <organization>
-    <name>DuraSpace, Inc.</name>
-    <url>http://www.duraspace.org/</url>
-  </organization>
-  <inceptionYear>2013</inceptionYear>
+  <description>Parent project for Fedora Commons Repository</description>
+  <url>http://fedorarepository.org</url>
   <packaging>pom</packaging>
+
   <properties>
-    <!-- Use ${project_name} instead of ${project.artifactId} to avoid incorrect 
-      replacements of "fcrepo4" in child modules (for scm, site-distribution, etc -->
+    <!-- Use ${project_name} and ${project_organization instead of ${project.artifactId}
+      to avoid incorrect replacements of "fcrepo4" in child modules
+      (for scm, site-distribution, etc -->
     <project_name>fcrepo4</project_name>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <project.copyrightYear>2015</project.copyrightYear>
+    <project_organization>fcrepo4</project_organization>
     <!-- Dependency version properties -->
     <activemq.version>5.10.0</activemq.version>
-    <commons-compress.version>1.9</commons-compress.version>
+    <commons-io.version>2.4</commons-io.version>
     <commons-lang.version>3.3.2</commons-lang.version>
     <jetty.version>9.3.1.v20150714</jetty.version>
-    <enunciate.version>1.27</enunciate.version>
+    <guava.version>18.0</guava.version>
     <hk2.version>2.3.0</hk2.version>
     <htmlunit.version>2.15</htmlunit.version>
-    <httpcomponents.version>4.3.2</httpcomponents.version>
     <httpclient.version>4.3.3</httpclient.version>
+    <httpcomponents.version>4.3.2</httpcomponents.version>
     <infinispan.version>6.0.2.Final</infinispan.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
+    <javaee-api.version>7.0</javaee-api.version>
     <jackson2.version>2.3.2</jackson2.version>
-    <jaxb.version>2.2.7</jaxb.version>
+    <jboss-logging.version>3.1.3.GA</jboss-logging.version>
+    <jcr.version>2.0</jcr.version>
+    <jena.version>2.13.0</jena.version>
     <jersey.version>2.13</jersey.version>
     <jgroups.version>3.5.0.Final</jgroups.version>
-    <joda-time.version>2.4</joda-time.version>
+    <jsonld.version>0.5.1</jsonld.version>
     <logback.version>1.1.2</logback.version>
-    <modeshape.version>4.2.0.Final</modeshape.version>
     <metrics.version>3.1.0</metrics.version>
-    <mockito.version>1.10.8</mockito.version>
+    <modeshape.version>4.2.0.Final</modeshape.version>
     <sesame.version>2.7.13</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
     <spring.version>4.1.1.RELEASE</spring.version>
+    <xml-apis.version>1.4.01</xml-apis.version>
+    <velocity.version>1.7</velocity.version>
+    <!-- test gear -->
+    <awaitility.version>1.6.2</awaitility.version>
     <grizzly.version>2.3.16</grizzly.version>
-    <jena.version>2.13.0</jena.version>
-    <jsonld.version>0.5.1</jsonld.version>
-    <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
-    <github.global.server>github</github.global.server>
-    <guava.version>18.0</guava.version>
-    <!-- OSGi -->
-    <osgi.import.packages />
-    <osgi.private.packages />
-    <osgi.export.packages />
-    <!-- plugin versions -->
-    <checkstyle.plugin.version>2.15</checkstyle.plugin.version>
-    <jacoco.plugin.version>0.7.5.201505241946</jacoco.plugin.version>
-    <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
-    <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>
-    <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
-    <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
-    <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
-    <javadoc.plugin.version>2.10.3</javadoc.plugin.version>
+    <junit.version>4.11</junit.version>
+    <mockito.version>1.10.8</mockito.version>
+    <!-- fcrepo4-specific plugins -->
+    <enforcer.plugin.version>1.4</enforcer.plugin.version>
+    <enforce-victims.rule.version>1.3.4</enforce-victims.rule.version>
+    <war.plugin.version>2.6</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
   </properties>
@@ -85,15 +77,16 @@
     <module>fcrepo-auth-common</module>
     <module>fcrepo-connector-file</module>
     <module>fcrepo-configs</module>
+    <module>fcrepo-parent</module>
     <module>fcrepo-integration-ldp</module>
     <module>fcrepo-integration-rdf</module>
   </modules>
   <dependencyManagement>
     <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the 
-        "dependenciesManagement" section defaults for all of the modules we might 
-        need, but we still have to include in the "dependencies" section the modules 
-        we DO need. The benefit is that we don't have to specify the versions of 
+      <!-- Import the ModeShape BOM for embedded usage. This adds to the
+        "dependenciesManagement" section defaults for all of the modules we might
+        need, but we still have to include in the "dependencies" section the modules
+        we DO need. The benefit is that we don't have to specify the versions of
         any of those modules. -->
       <dependency>
         <groupId>org.modeshape.bom</groupId>
@@ -111,12 +104,12 @@
       <dependency>
         <groupId>org.jboss.logging</groupId>
         <artifactId>jboss-logging</artifactId>
-        <version>3.1.3.GA</version>
+        <version>${jboss-logging.version}</version>
       </dependency>
       <dependency>
         <groupId>javax</groupId>
         <artifactId>javaee-api</artifactId>
-        <version>7.0</version>
+        <version>${javaee-api.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -132,24 +125,14 @@
       <dependency>
         <groupId>javax.jcr</groupId>
         <artifactId>jcr</artifactId>
-        <version>2.0</version>
+        <version>${jcr.version}</version>
         <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>javax.mail</groupId>
-        <artifactId>mail</artifactId>
-        <version>1.4.4</version>
       </dependency>
       <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
         <version>${javax.servlet-api.version}</version>
         <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>joda-time</groupId>
-        <artifactId>joda-time</artifactId>
-        <version>${joda-time.version}</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
@@ -160,34 +143,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.abdera</groupId>
-        <artifactId>abdera-parser</artifactId>
-        <version>1.1.3</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <!-- abdera-parser declares a dependency on jaxen-1.1.1, but via 
-            axiom-api transitively depends on jaxen-1.1.4 -->
-          <exclusion>
-            <groupId>jaxen</groupId>
-            <artifactId>jaxen</artifactId>
-          </exclusion>
-          <!-- abdera-parser (via abdera-core) depends on commons-codec-1.4 
-            but we're using commons-codec-1.6 elsewhere -->
-          <exclusion>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-compress</artifactId>
-        <version>${commons-compress.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.jena</groupId>
@@ -202,6 +157,21 @@
           <exclusion>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.jena</groupId>
+        <artifactId>jena-core</artifactId>
+        <version>${jena.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -227,7 +197,7 @@
       <dependency>
         <groupId>org.apache.velocity</groupId>
         <artifactId>velocity</artifactId>
-        <version>1.7</version>
+        <version>${velocity.version}</version>
       </dependency>
       <dependency>
         <groupId>org.infinispan</groupId>
@@ -243,12 +213,6 @@
         <groupId>org.jgroups</groupId>
         <artifactId>jgroups</artifactId>
         <version>${jgroups.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.osgi</groupId>
-        <artifactId>org.osgi.core</artifactId>
-        <version>5.0.0</version>
-        <!-- <scope>provided</scope> -->
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -331,7 +295,7 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <!-- sesame/openrdf dependencies that were previously provided by the 
+      <!-- sesame/openrdf dependencies that were previously provided by the
         Aduna Maven repo -->
       <dependency>
         <groupId>org.openrdf.sesame</groupId>
@@ -384,26 +348,14 @@
         <version>${commons-lang.version}</version>
       </dependency>
       <dependency>
-        <groupId>asm</groupId>
-        <artifactId>asm</artifactId>
-        <version>3.1</version>
-      </dependency>
-      <dependency>
         <groupId>xml-apis</groupId>
         <artifactId>xml-apis</artifactId>
-        <version>1.4.01</version>
+        <version>${xml-apis.version}</version>
       </dependency>
       <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
-        <version>2.4</version>
-      </dependency>
-      <!-- test gear -->
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.11</version>
-        <scope>test</scope>
+        <version>${commons-io.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -414,9 +366,6 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${httpclient.version}</version>
-        <!-- commented out since fcrepo-webhooks uses httpclient at compile 
-          time -->
-        <!-- <scope>test</scope> -->
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -434,6 +383,13 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <!-- test gear -->
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -453,7 +409,7 @@
         <version>${mockito.version}</version>
         <scope>test</scope>
         <exclusions>
-          <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls 
+          <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls
             in the more recent 1.3 -->
           <exclusion>
             <groupId>org.hamcrest</groupId>
@@ -473,12 +429,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <dependency>
-        <groupId>org.javassist</groupId>
-        <artifactId>javassist</artifactId>
-        <version>3.18.1-GA</version>
-      </dependency>
-
       <dependency>
         <groupId>org.glassfish.grizzly</groupId>
         <artifactId>grizzly-http-server</artifactId>
@@ -500,12 +450,12 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>jul-to-slf4j</artifactId>
-        <version>1.7.7</version>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>com.jayway.awaitility</groupId>
         <artifactId>awaitility</artifactId>
-        <version>1.6.2</version>
+        <version>${awaitility.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -514,157 +464,7 @@
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>com.github.github</groupId>
-          <artifactId>site-maven-plugin</artifactId>
-          <version>0.12</version>
-          <configuration>
-            <message>Creating site for ${project.artifactId},
-              ${project.version}</message>
-            <!-- this does the trick to place every module in the correct 
-              subfolder -->
-            <path>${project.distributionManagement.site.url}</path>
-            <merge>true</merge>
-            <excludes>
-            <!-- Excluding test-related javadocs in order to keep the site 
-              deployment smaller than 30M.
-              see: https://github.com/github/maven-plugins/issues/54 -->
-              <exclude>xref-test/**</exclude>
-              <exclude>testapidocs/**</exclude>
-            </excludes>
-          </configuration>
-          <executions>
-            <execution>
-              <id>github</id>
-              <goals>
-                <goal>site</goal>
-              </goals>
-              <phase>site-deploy</phase>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${javadoc.plugin.version}</version>
-          <configuration>
-            <quiet>true</quiet>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>com.lazerycode.jmeter</groupId>
-          <artifactId>jmeter-maven-plugin</artifactId>
-          <version>1.10.1</version>
-        </plugin>
-        <plugin>
-          <groupId>com.mycila</groupId>
-          <artifactId>license-maven-plugin</artifactId>
-          <version>2.9</version>
-          <configuration>
-            <header>fcrepo-license/LICENSE_HEADER.txt</header>
-            <includes>
-              <include>**/src/main/java/**</include>
-              <include>**/src/test/java/**</include>
-            </includes>
-            <excludes>
-              <exclude>target/**</exclude>
-              <exclude>**/src/test/resources/**</exclude>
-              <exclude>**/src/main/resources/**</exclude>
-              <exclude>**/*.properties</exclude>
-            </excludes>
-            <properties>
-              <name>${project.artifactId}</name>
-              <year>${project.copyrightYear}</year>
-              <holder>${project.organization.name}</holder>
-            </properties>
-            <encoding>UTF-8</encoding>
-            <strictCheck>true</strictCheck>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.fcrepo</groupId>
-              <artifactId>fcrepo-build-tools</artifactId>
-              <version>${project.version}</version>
-            </dependency>
-          </dependencies>
-          <executions>
-            <execution>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>2.5.3</version>
-          <extensions>true</extensions>
-          <configuration>
-            <instructions>
-              <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-              <Export-Package>${osgi.export.packages}</Export-Package>
-              <Import-Package>${osgi.import.packages}</Import-Package>
-              <Private-Package>${osgi.private.packages}</Private-Package>
-              <Embed-Transitive>true</Embed-Transitive>
-            </instructions>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>${checkstyle.plugin.version}</version>
-          <dependencies>
-            <dependency>
-              <groupId>org.fcrepo</groupId>
-              <artifactId>fcrepo-build-tools</artifactId>
-              <version>${project.version}</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <includeTestSourceDirectory>true</includeTestSourceDirectory>
-            <consoleOutput>true</consoleOutput>
-            <logViolationsToConsole>true</logViolationsToConsole>
-            <failsOnError>true</failsOnError>
-            <failOnViolation>true</failOnViolation>
-            <violationSeverity>warning</violationSeverity>
-            <configLocation>fcrepo-checkstyle/checkstyle.xml</configLocation>
-            <suppressionsLocation>fcrepo-checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
-          </configuration>
-          <executions>
-            <execution>
-              <id>checkstyle</id>
-              <phase>verify</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <version>2.6.1</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.2</version>
-          <configuration>
-            <debug>true</debug>
-            <source>1.8</source>
-            <target>1.8</target>
-            <compilerArgument>-Xlint:unchecked</compilerArgument>
-          </configuration>
-        </plugin>
-        <plugin>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>2.10</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>2.8.2</version>
-        </plugin>
-        <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.18.1</version>
           <configuration>
             <systemPropertyVariables>
               <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
@@ -678,91 +478,19 @@
               <integration-test>true</integration-test>
             </systemPropertyVariables>
           </configuration>
-          <executions>
-            <execution>
-              <id>integration-test</id>
-              <goals>
-                <goal>integration-test</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>verify</id>
-              <goals>
-                <goal>verify</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
-        <plugin>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>2.5.2</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>2.5</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>2.5.1</version>
-          <configuration>
-            <!-- see http://jira.codehaus.org/browse/MRELEASE-424 -->
-            <mavenExecutorId>forked-path</mavenExecutorId>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.scm</groupId>
-              <artifactId>maven-scm-provider-gitexe</artifactId>
-              <version>1.8.1</version>
-            </dependency>
-          </dependencies>
-        </plugin>
-        <plugin>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>2.7</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-remote-resources-plugin</artifactId>
-          <version>1.5</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-site-plugin</artifactId>
-          <version>3.4</version>
-          <configuration>
-            <skipDeploy>true</skipDeploy>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <!-- allows markdown syntax for site generation. To use it 
-                place files below src/site/markdown/[filename].md -->
-              <groupId>org.apache.maven.doxia</groupId>
-              <artifactId>doxia-module-markdown</artifactId>
-              <version>1.6</version>
-            </dependency>
-          </dependencies>
-        </plugin>
-        <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.18.1</version>
-          <configuration>
-            <argLine>-Xms512m -Xmx1024m</argLine>
-          </configuration>
-        </plugin>
+
         <plugin>
           <artifactId>maven-war-plugin</artifactId>
-          <version>2.6</version>
+          <version>${war.plugin.version}</version>
           <configuration>
             <failOnMissingWebXml>false</failOnMissingWebXml>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.codehaus.enunciate</groupId>
-          <artifactId>maven-enunciate-cxf-plugin</artifactId>
-          <version>1.29</version>
-        </plugin>
+
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
-          <version>1.9.1</version>
           <!-- reserve a port under the property ${fcrepo.dynamic.test.port} for integration
             tests -->
           <configuration>
@@ -780,86 +508,69 @@
             </execution>
           </executions>
         </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>versions-maven-plugin</artifactId>
-          <version>2.1</version>
-        </plugin>
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <versionRange>[2.1,)</versionRange>
-                    <goals>
-                      <goal>copy</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.scala-tools</groupId>
-                    <artifactId>maven-scala-plugin</artifactId>
-                    <versionRange>[2.15.2,)</versionRange>
-                    <goals>
-                      <goal>add-source</goal>
-                      <goal>compile</goal>
-                      <goal>testCompile</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-enforcer-plugin</artifactId>
-                    <versionRange>[1.0.0,)</versionRange>
-                    <goals>
-                      <goal>enforce</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <execute />
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <versionRange>[0.5.3,)</versionRange>
-                    <goals>
-                      <goal>prepare-agent</goal>
-                      <goal>report</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore />
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>
+
         <plugin>
           <groupId>org.eclipse.jetty</groupId>
           <artifactId>jetty-maven-plugin</artifactId>
           <version>${jetty.version}</version>
         </plugin>
-        <plugin>
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>${jacoco.plugin.version}</version>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>site-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <argLine>${jacoco.agent.it.arg}</argLine>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-site-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!--
+            This line enables code-coverage. However, it also blows the build's permgen.
+            Fix me!
+          -->
+          <argLine>-XX:-UseSplitVerifier ${jacoco.agent.unit.arg}</argLine>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
           <executions>
             <execution>
               <id>default-prepare-agent</id>
@@ -900,37 +611,30 @@
               </goals>
             </execution>
           </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-    <plugins>
-      <plugin>
-        <groupId>com.github.github</groupId>
-        <artifactId>site-maven-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
+        <artifactId>maven-source-plugin</artifactId>
       </plugin>
+
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-changelog-plugin</artifactId>
+      </plugin>
+
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.4</version>
+        <version>${enforcer.plugin.version}</version>
         <dependencies>
           <dependency>
             <groupId>com.redhat.victims</groupId>
             <artifactId>enforce-victims-rule</artifactId>
-            <version>1.3.4</version>
+            <version>${enforce-victims.rule.version}</version>
             <type>jar</type>
           </dependency>
         </dependencies>
@@ -982,309 +686,9 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <configuration>
-          <argLine>${jacoco.agent.it.arg}</argLine>
-        </configuration>
-        <executions>
-          <execution>
-            <id>default-integration-test</id>
-            <goals>
-              <goal>integration-test</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <artifactId>maven-site-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <!--
-            This line enables code-coverage. However, it also blows the build's permgen.
-            Fix me!
-          -->
-          <argLine>-XX:-UseSplitVerifier ${jacoco.agent.unit.arg}</argLine>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>verify-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
     </plugins>
   </build>
-  <reporting>
-    <plugins>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.17</version>
-      </plugin>
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>${javadoc.plugin.version}</version>
-        <configuration>
-          <linksource>true</linksource>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-jxr-plugin</artifactId>
-        <version>2.5</version>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.18.1</version>
-        <configuration>
-          <argLine>-XX:-UseSplitVerifier</argLine>
-          <outputName>surefire-report</outputName>
-          <aggregate>true</aggregate>
-          <reportsDirectories>
-            <reportsDirectory>${project.build.directory}/surefire-reports/</reportsDirectory>
-            <reportsDirectory>${project.build.directory}/failsafe-reports/</reportsDirectory>
-          </reportsDirectories>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-changelog-plugin</artifactId>
-        <version>2.3</version>
-        <configuration>
-          <displayFileDetailUrl>http://github.com/mediashelf/${project_name}/blob/master/%FILE% </displayFileDetailUrl>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.8</version>
-        <configuration>
-          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-          <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${jacoco.plugin.version}</version>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>versions-maven-plugin</artifactId>
-        <version>2.1</version>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <report>dependency-updates-report</report>
-              <report>plugin-updates-report</report>
-              <report>property-updates-report</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-    </plugins>
-  </reporting>
 
-  <repositories>
-    <repository>
-      <id>jboss-public-repository-group</id>
-      <name>JBoss Public Maven Repository Group</name>
-      <url>http://repository.jboss.org/nexus/content/groups/public/</url>
-      <layout>default</layout>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>jboss-public-repository-group-snapshot</id>
-      <name>JBoss Public Maven Repository Group</name>
-      <url>http://snapshots.jboss.org/maven2/</url>
-      <layout>default</layout>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>maven2-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>http://download.java.net/maven/2/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>apache-snapshot</id>
-      <name>Apache Snapshot Repository</name>
-      <url>http://repository.apache.org/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>egit</id>
-      <name>Eclipse egit</name>
-      <url>https://repo.eclipse.org/content/repositories/egit-releases/</url>
-    </repository>
-
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-
-    <pluginRepository>
-      <id>sonatype-nexus-staging</id>
-      <name>Nexus Release Repository</name>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
-
-  <scm>
-    <connection>scm:git:git://github.com/fcrepo4/${project_name}.git
-    </connection>
-    <developerConnection>scm:git:git@github.com:fcrepo4/${project_name}.git
-    </developerConnection>
-    <url>https://github.com/fcrepo4/fcrepo4</url>
-    <tag>HEAD</tag>
-  </scm>
-  <prerequisites>
-    <maven>3.0.0</maven>
-  </prerequisites>
-  <profiles>
-    <profile>
-      <id>release-sign-artifacts</id>
-      <activation>
-        <property>
-          <name>performRelease</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <useAgent>true</useAgent>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-     <profile>
-      <id>graph-dependencies</id>
-      <pluginRepositories>
-        <pluginRepository>
-          <id>mvnplugins.fusesource.org</id>
-          <url>http://mvnplugins.fusesource.org/repo/release</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-        </pluginRepository>
-      </pluginRepositories>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.fusesource.mvnplugins</groupId>
-            <artifactId>maven-graph-plugin</artifactId>
-            <version>1.4</version>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    
-  </profiles>
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-      <comments>Copyright (c) 2015 DuraSpace</comments>
-    </license>
-  </licenses>
-  <distributionManagement>
-    <site>
-      <id>gh-pages</id>
-      <name>Deployment through GitHub's site deployment plugin</name>
-      <url>site/${project.version}</url>
-    </site>
-  </distributionManagement>
   <developers>
     <developer>
       <id>ajs6f</id>
@@ -1353,17 +757,15 @@
       <timezone>-7</timezone>
     </developer>
   </developers>
+
   <issueManagement>
     <system>GitHub</system>
     <url>https://github.com/fcrepo4/fcrepo4/issues</url>
   </issueManagement>
-  <mailingLists>
-    <mailingList>
-      <name>fedora-tech</name>
-      <subscribe>fedora-tech+subscribe@googlegroups.com</subscribe>
-      <unsubscribe>fedora-tech+unsubscribe@googlegroups.com</unsubscribe>
-      <post>fedora-tech@googlegroups.com</post>
-      <archive>https://groups.google.com/d/forum/fedora-tech</archive>
-    </mailingList>
-  </mailingLists>
+
+  <ciManagement>
+    <system>Jenkins</system>
+    <url>http://jenkins.fcrepo.org/job/fcrepo4</url>
+  </ciManagement>
+
 </project>
