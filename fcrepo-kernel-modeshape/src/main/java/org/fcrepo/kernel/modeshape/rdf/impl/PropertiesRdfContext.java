@@ -71,9 +71,11 @@ public class PropertiesRdfContext extends NodeRdfContext {
         LOGGER.trace("Creating triples for node: {}", n);
 
         final Iterator<Property> allProperties;
+        @SuppressWarnings("unchecked")
         final Iterator<Property> nodeProps = n.getNode().getProperties();
         if (n instanceof FedoraBinary) {
             final FedoraResource description = ((FedoraBinary)n).getDescription();
+            @SuppressWarnings("unchecked")
             final Iterator<Property> descProps = description.getNode().getProperties();
             allProperties = Iterators.concat(nodeProps, descProps);
         } else {

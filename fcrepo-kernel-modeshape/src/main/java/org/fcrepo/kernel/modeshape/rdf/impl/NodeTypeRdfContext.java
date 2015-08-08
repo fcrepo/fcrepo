@@ -63,13 +63,12 @@ public class NodeTypeRdfContext extends RdfStream {
      * @param nodeTypeManager the node type manager
      * @throws RepositoryException if repository exception occurred
      */
-    public NodeTypeRdfContext(final NodeTypeManager nodeTypeManager)
-        throws RepositoryException {
+    @SuppressWarnings("unchecked")
+    public NodeTypeRdfContext(final NodeTypeManager nodeTypeManager) throws RepositoryException {
         super();
 
         concat(new NodeTypeRdfContext(nodeTypeManager.getPrimaryNodeTypes()));
         concat(new NodeTypeRdfContext(nodeTypeManager.getMixinNodeTypes()));
-
     }
 
     /**

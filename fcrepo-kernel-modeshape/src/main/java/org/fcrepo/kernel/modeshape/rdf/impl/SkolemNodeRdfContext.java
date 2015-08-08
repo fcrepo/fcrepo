@@ -63,6 +63,7 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
         concat(flatMap(getBlankNodesIterator(), n -> nodeConverter.convert(n).getTriples(idTranslator, contexts)));
     }
 
+    @SuppressWarnings("unchecked")
     private Iterator<Node> getBlankNodesIterator() throws RepositoryException {
         final Iterator<Property> properties = resource().getNode().getProperties();
 

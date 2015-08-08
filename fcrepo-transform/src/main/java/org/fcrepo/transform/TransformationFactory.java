@@ -56,7 +56,7 @@ public class TransformationFactory {
      * @param inputStream the input stream
      * @return T a Transformation
      */
-
+    @SuppressWarnings("unchecked")
     public <T> Transformation<T> getTransform(final MediaType contentType, final InputStream inputStream) {
         final String mimeType = contentType.toString();
         if (mimeToTransform.containsKey(mimeType)) {

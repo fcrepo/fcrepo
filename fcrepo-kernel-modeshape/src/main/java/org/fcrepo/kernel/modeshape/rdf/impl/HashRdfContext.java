@@ -53,6 +53,7 @@ public class HashRdfContext extends NodeRdfContext {
 
         final Node node = resource().getNode();
         if (node.hasNode("#")) {
+            @SuppressWarnings("unchecked")
             final Iterator<Node> hashChildrenNodes = node.getNode("#").getNodes();
             concat(flatMap(hashChildrenNodes, n -> nodeConverter.convert(n).getTriples(idTranslator, contexts)));
         }
