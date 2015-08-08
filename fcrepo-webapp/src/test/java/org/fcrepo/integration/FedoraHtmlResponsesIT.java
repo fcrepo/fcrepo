@@ -367,7 +367,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     }
 
-
+    @SuppressWarnings("unchecked")
     private static <T> List<T> castList(final List<?> l) {
         return transform(l, x -> (T) x);
     }

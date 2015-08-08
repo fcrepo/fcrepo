@@ -68,6 +68,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
         putReferencesIntoContext(resource.getNode());
     }
 
+    @SuppressWarnings("unchecked")
     private void putReferencesIntoContext(final Node node) throws RepositoryException {
         Iterator<Property> references = node.getReferences();
         Iterator<Property> weakReferences = node.getWeakReferences();
@@ -83,6 +84,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
     /* References from LDP indirect containers are generated dynamically by LdpContainerRdfContext, so they won't
        show up in getReferences()/getWeakReferences().  Instead, we should check referencers to see if they are
        members of an IndirectContainer and generate the appropriate inbound references. */
+    @SuppressWarnings("unchecked")
     private final Function<Property, Iterator<Value>> potentialProxies = uncheck(p -> Iterators.filter(
             new PropertyValueIterator(p.getParent().getProperties()), v -> REFERENCE_TYPES.contains(v.getType())));
 
