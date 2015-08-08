@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>fcrepo-kernel-modeshape</artifactId>
-  <name>Fedora Repository Kernel Implementation based on Modeshape</name>
+  <name>Fedora Repository Kernel Implementation (Modeshape)</name>
   <description>The Fedora Commons repository kernel: Provides the basic abstractions at the heart of the Fedora
     information architecture and machinery for manipulating them.</description>
   <packaging>bundle</packaging>

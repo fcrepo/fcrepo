@@ -20,7 +20,7 @@
       javax.jms,
       
       com.fasterxml.jackson.*,
-      com.google.common.*
+      com.google.common.*,
       org.apache.activemq,
       org.modeshape.jcr.api,
 

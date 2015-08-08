@@ -16,12 +16,12 @@
     <osgi.import.packages>
       org.fcrepo.kernel.api.*,
 
-      javax.annotation
+      javax.annotation,
       javax.jcr.*,
       javax.xml.*,
 
       org.apache.commons.io,
-      org.springframework.beans.*
+      org.springframework.beans.*,
       org.springframework.context,
       org.springframework.stereotype,
 
