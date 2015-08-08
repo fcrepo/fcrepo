@@ -23,7 +23,6 @@ import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -148,9 +147,10 @@ public class FedoraEvent {
     /**
      * @return the info map of the underlying JCR {@link Event}s
      */
+    @SuppressWarnings("unchecked")
     public Map<Object, Object> getInfo() {
         try {
-            return new HashMap<>(e.getInfo());
+            return e.getInfo();
         } catch (RepositoryException e1) {
             throw new RepositoryRuntimeException("Error getting event info!", e1);
         }

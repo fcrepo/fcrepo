@@ -77,6 +77,7 @@ public class FedoraFixityTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testGetDatastreamFixity() {
         final RdfStream expected = new RdfStream();
 

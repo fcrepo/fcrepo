@@ -162,6 +162,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
+        @SuppressWarnings("unchecked")
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(2, resultPrincipals.size());
@@ -208,6 +209,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
+        @SuppressWarnings("unchecked")
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(3, resultPrincipals.size());
@@ -259,6 +261,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
+        @SuppressWarnings("unchecked")
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(expected, resultPrincipals.size());

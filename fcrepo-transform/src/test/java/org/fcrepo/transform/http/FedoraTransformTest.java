@@ -90,6 +90,7 @@ public class FedoraTransformTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testEvaluateTransform() {
         final RdfStream stream = new RdfStream();
         when(mockResource.getTriples(any(IdentifierConverter.class), any(Class.class))).thenReturn(stream);

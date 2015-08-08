@@ -79,6 +79,7 @@ public class VersionsRdfContext extends RdfStream {
         concat(versionTriples());
     }
 
+    @SuppressWarnings("unchecked")
     private Iterator<Triple> versionTriples() throws RepositoryException {
         final Iterator<Version> allVersions = versionHistory.getAllVersions();
         return Iterators.concat(Iterators.transform(allVersions, version2triples::apply));

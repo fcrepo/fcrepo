@@ -154,6 +154,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      * @throws RepositoryException
      */
     private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
+        @SuppressWarnings("unchecked")
         final Iterator<Node> allChildren = input.getNodes();
         final Iterator<Node> children = filter(allChildren, nastyChildren.negate()::test);
         return transform(children, (new Function<Node, Iterator<FedoraResource>>() {
@@ -274,7 +275,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     @Override
     public void delete() {
         try {
+            @SuppressWarnings("unchecked")
             final Iterator<Property> references = node.getReferences();
+            @SuppressWarnings("unchecked")
             final Iterator<Property> weakReferences = node.getWeakReferences();
             final Iterator<Property> inboundProperties = Iterators.concat(references, weakReferences);
 

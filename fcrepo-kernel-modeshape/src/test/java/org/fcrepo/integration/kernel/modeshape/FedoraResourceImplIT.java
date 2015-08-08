@@ -582,6 +582,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class));
 
+        @SuppressWarnings("unchecked")
         final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
 
         final UnmodifiableIterator<javax.jcr.Property> relation

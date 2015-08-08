@@ -178,7 +178,8 @@ public class RdfStream extends ForwardingIterator<Triple> {
      * @param <T> extends {@link Triple}
      * @return This object for continued use.
      */
-    public <T extends Triple> RdfStream concat(@SuppressWarnings("unchecked") final T... newTriples) {
+    @SuppressWarnings("unchecked")
+    public <T extends Triple> RdfStream concat(final T... newTriples) {
         triples = Iterators.concat(triples, Iterators.forArray(newTriples));
         return this;
     }

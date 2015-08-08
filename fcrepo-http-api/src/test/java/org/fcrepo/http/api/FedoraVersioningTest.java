@@ -109,6 +109,7 @@ public class FedoraVersioningTest {
 
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testGetVersionList() {
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
                 mockVariant);

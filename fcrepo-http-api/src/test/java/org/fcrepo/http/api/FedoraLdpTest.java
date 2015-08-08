@@ -195,6 +195,7 @@ public class FedoraLdpTest {
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
     }
 
+    @SuppressWarnings("unchecked")
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
         final FedoraResource mockResource = mock(klass);
 
@@ -551,6 +552,7 @@ public class FedoraLdpTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testGetWithBinaryDescription() throws Exception {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
@@ -685,6 +687,7 @@ public class FedoraLdpTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testPatchBinaryDescription() throws Exception {
 
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);

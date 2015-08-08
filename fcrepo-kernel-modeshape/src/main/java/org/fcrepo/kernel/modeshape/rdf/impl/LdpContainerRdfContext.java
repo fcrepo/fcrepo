@@ -71,6 +71,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                                   final IdentifierConverter<Resource, FedoraResource> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
+        @SuppressWarnings("unchecked")
         final Iterator<Property> memberReferences = resource.getNode().getReferences(LDP_MEMBER_RESOURCE);
         final Iterator<Property> properties = Iterators.filter(memberReferences, UncheckedPredicate.uncheck(
                     (final Property p) -> {
