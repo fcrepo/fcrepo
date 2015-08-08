@@ -15,13 +15,6 @@
     <!-- integration test properties -->
     <fcrepo.test.context.path>/</fcrepo.test.context.path>
     
-    <!-- jmeter -->
-    <jmeter.loop_count>100</jmeter.loop_count>
-    <jmeter.num_threads>10</jmeter.num_threads>
-    <jmeter.exit.check.pause>2000</jmeter.exit.check.pause>
-    <jmeter.fixtures.dir>${project.build.directory}${file.separator}jmeter${file.separator}fixtures</jmeter.fixtures.dir>
-    <jmeter.log.dir>${project.build.directory}${file.separator}jmeter${file.separator}log</jmeter.log.dir>
-  
     <!-- sonar -->
     <sonar.artifact.path>${project.build.directory}${file.separator}${project.artifactId}-${project.version}.war</sonar.artifact.path>
 
@@ -476,42 +469,4 @@
     </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>jmeter</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.lazerycode.jmeter</groupId>
-            <artifactId>jmeter-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>jmeter-tests</id>
-                <phase>integration-test</phase>
-                <goals>
-                  <goal>jmeter</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <propertiesJMeter>
-                <!-- Extend the period (in ms) JMeter waits for threads to close -->
-                <!-- See: https://github.com/Ronnie76er/jmeter-maven-plugin/issues/56 -->
-                <jmeter.exit.check.pause>${jmeter.exit.check.pause}</jmeter.exit.check.pause>
-              </propertiesJMeter>
-              <propertiesUser>
-                <fedora_4_port>${fcrepo.dynamic.test.port}</fedora_4_port>
-                <fedora_4_context>rest</fedora_4_context>
-                <loop_count>${jmeter.loop_count}</loop_count>
-                <num_threads>${jmeter.num_threads}</num_threads>
-                <fixtures>${jmeter.fixtures.dir}</fixtures>
-                <log>${jmeter.log.dir}</log>
-              </propertiesUser>
-              <resultsFileNameDateFormat>'jmeter'</resultsFileNameDateFormat>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>
