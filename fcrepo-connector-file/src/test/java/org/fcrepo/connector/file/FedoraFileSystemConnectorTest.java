@@ -19,6 +19,7 @@ import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -76,6 +78,9 @@ public class FedoraFileSystemConnectorTest {
 
     private static File tmpFile;
     private static File tmpFile2;
+    private static final String ROOT_PATH = "/";
+    private static final String PARENT_FIELD = "parent";
+    private static final String CHILD_FIELD = "children";
 
     @Mock
     private NamespaceRegistry mockRegistry;
@@ -160,8 +165,42 @@ public class FedoraFileSystemConnectorTest {
         when(mockNameFactory.create(anyString())).thenReturn(
                 new BasicName("", tmpFile.getName()));
 
-        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
+        final Document doc = connector.getDocumentById(ROOT_PATH + tmpFile.getName());
         assertNotNull(doc);
+        assertTrue(doc.containsField(PARENT_FIELD));
+        assertTrue(doc.containsField(CHILD_FIELD));
+        assertEquals(ROOT_PATH, doc.getString(PARENT_FIELD));
+        assertNull(doc.getString(CHILD_FIELD));
+    }
+
+    @Test
+    public void testGetDocumentByIdObject() {
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn(NT_FOLDER);
+        when(mockNameFactory.create(anyString())).thenReturn(
+                new BasicName("", tmpFile.getName()));
+
+        final Document doc = connector.getDocumentById(ROOT_PATH + tmpFile.getName());
+        assertNotNull(doc);
+        assertTrue(doc.containsField(PARENT_FIELD));
+        assertTrue(doc.containsField(CHILD_FIELD));
+        assertEquals(ROOT_PATH, doc.getString(PARENT_FIELD));
+        assertNull(doc.getString(CHILD_FIELD));
+    }
+
+    @Test
+    public void testGetDocumentByIdNone() {
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn("");
+        when(mockNameFactory.create(anyString())).thenReturn(
+                new BasicName("", tmpFile.getName()));
+
+        final Document doc = connector.getDocumentById(ROOT_PATH + tmpFile.getName());
+        assertNotNull(doc);
+        assertTrue(doc.containsField(PARENT_FIELD));
+        assertTrue(doc.containsField(CHILD_FIELD));
+        assertEquals(ROOT_PATH, doc.getString(PARENT_FIELD));
+        assertNull(doc.getString(CHILD_FIELD));
     }
 
     @Test
@@ -175,8 +214,13 @@ public class FedoraFileSystemConnectorTest {
         when(mockTranslator.getProperty(any(Document.class), eq(JCR_DATA)))
                 .thenReturn(binaryProperty);
 
-        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
+        final Document doc = connector.getDocumentById(ROOT_PATH + tmpFile.getName());
+
         assertNotNull(doc);
+        assertTrue(doc.containsField(PARENT_FIELD));
+        assertTrue(doc.containsField(CHILD_FIELD));
+        assertEquals(ROOT_PATH, doc.getString(PARENT_FIELD));
+        assertNull(doc.getString(CHILD_FIELD));
     }
 
     @Test
