@@ -16,7 +16,7 @@
 package org.fcrepo.mint;
 
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import org.slf4j.Logger;
 
