@@ -17,7 +17,7 @@
 
       javax.xml.*,
 
-      org.apache.commons.lang,
+      org.apache.commons.lang3,
       org.apache.http.*,
       org.w3c.dom,
       org.xml.sax,
@@ -55,8 +55,8 @@
     </dependency>
 
     <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
     </dependency>
 
     <dependency>

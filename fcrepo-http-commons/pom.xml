@@ -24,14 +24,14 @@
       javax.servlet.http,
       javax.ws.rs.*,
       
-      com.codahale.metrics.*
-      com.fasterxml.jackson.core
+      com.codahale.metrics.*,
+      com.fasterxml.jackson.core,
       com.hp.hpl.jena.*,
       com.google.common.*,
       org.apache.jena.riot,
       org.apache.commons.codec.*,
-      org.apache.commons.io.*
-      org.apache.commons.lang,
+      org.apache.commons.io.*,
+      org.apache.commons.lang3,
       org.glassfish.hk2.*,
       org.glassfish.jersey.*,
       org.jvnet.hk2.annotations,
@@ -70,6 +70,10 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-mint</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>

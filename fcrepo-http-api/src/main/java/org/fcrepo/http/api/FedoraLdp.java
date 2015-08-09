@@ -90,7 +90,7 @@ import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.http.api.exception.ForbiddenResourceModificationException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;

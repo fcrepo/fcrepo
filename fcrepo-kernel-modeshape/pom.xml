@@ -24,7 +24,7 @@
 
       org.apache.commons.codec.digest,
       org.apache.commons.io.input,
-      org.apache.commons.lang,
+      org.apache.commons.lang3,
       org.apache.http.*,
       org.infinispan.manager,
       org.modeshape.jcr.*,
@@ -104,8 +104,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
     </dependency>
 
     <!-- test gear -->
