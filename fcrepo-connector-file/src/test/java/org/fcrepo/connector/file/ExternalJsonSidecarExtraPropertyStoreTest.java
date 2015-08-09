@@ -15,17 +15,37 @@
  */
 package org.fcrepo.connector.file;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.infinispan.schematic.document.Document;
+import org.infinispan.schematic.document.EditableDocument;
+import org.infinispan.schematic.document.Json;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
+import org.modeshape.jcr.value.Name;
+import org.modeshape.jcr.value.Property;
+import org.modeshape.jcr.value.basic.BasicName;
+import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.nio.file.Files.createTempDirectory;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -42,11 +62,9 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
 
     private static final String FEDERATION_ROOT = "/federation-root";
     private static final String FILE_PATH = "/federation-root/file";
-    @Test
-    public void testSidecarFile() throws IOException {
-        final File tmp = createTempDirectory("filesystem-federation").toFile();
-        tmp.deleteOnExit();
 
+    @Before
+    public void setUp() {
         when(mockConnector.fileFor("/")).thenReturn(new File(FEDERATION_ROOT));
         when(mockConnector.isContentNode("/")).thenReturn(false);
         when(mockConnector.isRoot("/")).thenReturn(true);
@@ -54,12 +72,269 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
         when(mockConnector.isContentNode("/file")).thenReturn(false);
         when(mockConnector.fileFor("/file/fcr:content")).thenReturn(new File(FILE_PATH));
         when(mockConnector.isContentNode("/file/fcr:content")).thenReturn(true);
+        when(mockConnector.fileFor("/test/test")).thenReturn(new File(FEDERATION_ROOT + "/test/test"));
+        when(mockConnector.isContentNode("/test/test")).thenReturn(false);
+    }
+
+    @Test
+    public void testSidecarFile() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
 
         final ExternalJsonSidecarExtraPropertyStore store =
                 new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
         assertEquals(new File(tmp, "federation-root.modeshape.json"), store.sidecarFile("/"));
         assertEquals(new File(tmp, "file.modeshape.json"), store.sidecarFile("/file"));
         assertEquals(new File(tmp, "file.content.modeshape.json"), store.sidecarFile("/file/fcr:content"));
+        assertEquals(new File(tmp + "/test", "test.modeshape.json"), store.sidecarFile("/test/test"));
+    }
+
+    @Test
+    public void testEmptyPropertyFile() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        assertFalse(store.contains("/file"));
+        assertTrue(store.getProperties("/file").isEmpty());
+    }
+
+    @Test
+    public void testStoreProperties() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        final Map<Name, Property> properties = new HashMap<>();
+
+        store.storeProperties("/file", properties);
+
+        assertFalse(store.contains("/file"));
+        assertTrue(store.getProperties("/file").isEmpty());
+
+        final Name langProp = new BasicName("lang", "de");
+        final Name key1 = new BasicName("info", "one");
+        final Name key2 = new BasicName("info", "two");
+        final Name key3 = new BasicName("info", "three");
+        final Name key4 = new BasicName("info", "four");
+        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
+        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
+        final Property prop3 = new BasicSingleValueProperty(langProp, "drei");
+
+        properties.put(key1, prop1);
+        properties.put(key2, prop2);
+        properties.put(key3, prop3);
+        properties.put(key4, null);
+
+        store.storeProperties("/file", properties);
+        assertTrue(store.contains("/file"));
+
+        properties.forEach((key, property) -> {
+            if (property != null) {
+                verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(), anyObject());
+            }
+        });
+        verify(mockTranslator, times(3)).setProperty(any(EditableDocument.class),
+                    any(Property.class), anyObject(), anyObject());
+    }
+
+    @Test
+    public void testStoreExistingProperties() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        final File sidecarFile = new File(tmp, "file.modeshape.json");
+        tmp.deleteOnExit();
+        final String jsonString = "{}";
+        final FileOutputStream fos = new FileOutputStream(sidecarFile);
+        fos.write(jsonString.getBytes("UTF-8"));
+        fos.close();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        final Map<Name, Property> properties = new HashMap<>();
+
+        assertTrue(store.contains("/file"));
+
+        final Name langProp = new BasicName("lang", "de");
+        final Name key1 = new BasicName("info", "one");
+        final Name key2 = new BasicName("info", "two");
+        final Name key3 = new BasicName("info", "three");
+        final Name key4 = new BasicName("info", "four");
+        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
+        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
+        final Property prop3 = new BasicSingleValueProperty(langProp, "drei");
+
+        properties.put(key1, prop1);
+        properties.put(key2, prop2);
+        properties.put(key3, prop3);
+        properties.put(key4, null);
+
+        store.storeProperties("/file", properties);
+
+        properties.forEach((key, property) -> {
+            if (property != null) {
+                verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(), anyObject());
+            }
+        });
+        verify(mockTranslator, times(3)).setProperty(any(EditableDocument.class),
+                    any(Property.class), anyObject(), anyObject());
+    }
+
+
+    @Test
+    public void testUpdateProperties() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        final Map<Name, Property> properties = new HashMap<>();
+
+        store.updateProperties("/file", properties);
+
+        assertFalse(store.contains("/file"));
+        assertTrue(store.getProperties("/file").isEmpty());
+
+        final Name langProp = new BasicName("lang", "de");
+        final Name key1 = new BasicName("info", "one");
+        final Name key2 = new BasicName("info", "two");
+        final Name key3 = new BasicName("info", "three");
+        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
+        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
+
+        properties.put(key1, prop1);
+        properties.put(key2, prop2);
+        properties.put(key3, null);
+
+        store.updateProperties("/file", properties);
+
+        properties.forEach((key, property) -> {
+            if (property == null) {
+                verify(mockTranslator).removeProperty(any(EditableDocument.class), eq(key), anyObject(), anyObject());
+            } else {
+                verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(), anyObject());
+            }
+        });
+    }
+
+    @Test
+    public void testUpdateExistingProperties() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
+        final File sidecarFile = new File(tmp, "file.modeshape.json");
+        final String jsonString = "{}";
+        final FileOutputStream fos = new FileOutputStream(sidecarFile);
+        fos.write(jsonString.getBytes("UTF-8"));
+        fos.close();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        assertTrue(store.contains("/file"));
+
+        final Map<Name, Property> properties = new HashMap<>();
+
+        final Name langProp = new BasicName("lang", "de");
+        final Name key1 = new BasicName("info", "one");
+        final Name key2 = new BasicName("info", "two");
+        final Name key3 = new BasicName("info", "three");
+        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
+        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
+
+        properties.put(key1, prop1);
+        properties.put(key2, prop2);
+        properties.put(key3, null);
+
+        store.updateProperties("/file", properties);
+
+        properties.forEach((key, property) -> {
+            if (property == null) {
+                verify(mockTranslator).removeProperty(any(EditableDocument.class), eq(key), anyObject(), anyObject());
+            } else {
+                verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(), anyObject());
+            }
+        });
+    }
+
+    @Test
+    public void testRemoveProperties() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        final Map<Name, Property> properties = new HashMap<>();
+
+        final Name langProp = new BasicName("lang", "de");
+        final Name key1 = new BasicName("info", "one");
+        final Name key2 = new BasicName("info", "two");
+        final Name key3 = new BasicName("info", "three");
+        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
+        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
+        final Property prop3 = new BasicSingleValueProperty(langProp, "drei");
+
+        properties.put(key1, prop1);
+        properties.put(key2, prop2);
+        properties.put(key3, prop3);
+
+        store.updateProperties("/file", properties);
+        assertTrue(store.contains("/file"));
+
+        store.removeProperties("/file");
+        assertFalse(store.contains("/file"));
+    }
+
+    @Test
+    public void testGetProperties() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
+        final File sidecarFile = new File(tmp, "file.content.modeshape.json");
+        final String jsonString = "{" +
+            "\"properties\" : { " +
+                "\"http://www.jcp.org/jcr/1.0\" : {" +
+                    "\"created\" : { " +
+                        "\"$date\" : \"2008-09-23T15:19:20.000-04:00\" } } ," +
+                "\"http://fedora.info/definitions/v4/repository#\" : {" +
+                    "\"digest\" : { " +
+                        "\"$uri\" : \"urn:sha1:6e1a2e24a4cc3dde495877019f53830b8f1d20e3\" } } } }";
+        final FileOutputStream fos = new FileOutputStream(sidecarFile);
+        fos.write(jsonString.getBytes("UTF-8"));
+        fos.close();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        assertTrue(store.contains("/file/fcr:content"));
+
+        final FileInputStream sidecarStream = new FileInputStream(sidecarFile);
+        final Document document = Json.read(sidecarStream, false);
+        final Map<Name, Property> results = new HashMap<>();
+
+        store.getProperties("/file/fcr:content");
+
+        verify(mockTranslator).getProperties(eq(document), eq(results));
+    }
+
+    @Test(expected = RepositoryRuntimeException.class)
+    public void testGetPropertiesWithException() throws IOException {
+        final File tmp = createTempDirectory("filesystem-federation").toFile();
+        tmp.deleteOnExit();
+        final File sidecarFile = new File(tmp, "file.modeshape.json");
+        final String jsonString = "{ THIS ISN'T JSON !";
+        final FileOutputStream fos = new FileOutputStream(sidecarFile);
+        fos.write(jsonString.getBytes("UTF-8"));
+        fos.close();
+
+        final ExternalJsonSidecarExtraPropertyStore store =
+                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+
+        store.getProperties("/file");
     }
 
 }

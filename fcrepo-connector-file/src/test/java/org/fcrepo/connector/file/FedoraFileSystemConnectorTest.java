@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -157,6 +158,28 @@ public class FedoraFileSystemConnectorTest {
     public void testGetDocumentByIdDatastream() {
         when(mockTranslator.getPrimaryTypeName(any(Document.class)))
                 .thenReturn(NT_FILE);
+        when(mockNameFactory.create(anyString())).thenReturn(
+                new BasicName("", tmpFile.getName()));
+
+        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
+        assertNotNull(doc);
+    }
+
+    @Test
+    public void testGetDocumentByIdObject() {
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn(NT_FOLDER);
+        when(mockNameFactory.create(anyString())).thenReturn(
+                new BasicName("", tmpFile.getName()));
+
+        final Document doc = connector.getDocumentById("/" + tmpFile.getName());
+        assertNotNull(doc);
+    }
+
+    @Test
+    public void testGetDocumentByIdNone() {
+        when(mockTranslator.getPrimaryTypeName(any(Document.class)))
+                .thenReturn("");
         when(mockNameFactory.create(anyString())).thenReturn(
                 new BasicName("", tmpFile.getName()));
 
