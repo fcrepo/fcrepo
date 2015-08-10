@@ -27,6 +27,7 @@
     <!-- Dependency version properties -->
     <activemq.version>5.10.0</activemq.version>
     <commons-compress.version>1.9</commons-compress.version>
+    <commons-lang.version>3.3.2</commons-lang.version>
     <jetty.version>9.3.1.v20150714</jetty.version>
     <enunciate.version>1.27</enunciate.version>
     <hk2.version>2.3.0</hk2.version>
@@ -378,9 +379,9 @@
         <version>${sesame.version}</version>
       </dependency>
       <dependency>
-        <groupId>commons-lang</groupId>
-        <artifactId>commons-lang</artifactId>
-        <version>2.6</version>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>${commons-lang.version}</version>
       </dependency>
       <dependency>
         <groupId>asm</groupId>

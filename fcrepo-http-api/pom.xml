@@ -25,7 +25,7 @@
         javax.servlet.http,
         javax.ws.rs.*,
 
-        org.apache.commons.lang,
+        org.apache.commons.lang3,
         org.apache.commons.io,
         org.apache.jena.riot.*,
         org.apache.velocity.*,
