@@ -473,8 +473,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
+        final FedoraResource mutableResource = resource instanceof NonRdfSourceDescription
+                ? ((NonRdfSourceDescription) resource).getDescribedResource() : resource;
+        final EntityTag etag = new EntityTag(mutableResource.getEtagValue());
+        final Date date = mutableResource.getLastModifiedDate();
 
         if (!etag.getValue().isEmpty()) {
             servletResponse.addHeader("ETag", etag.toString());
