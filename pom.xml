@@ -56,6 +56,7 @@
     <junit.version>4.11</junit.version>
     <mockito.version>1.10.8</mockito.version>
     <!-- fcrepo4-specific plugins -->
+    <enforcer.plugin.version>1.4</enforcer.plugin.version>
     <enforce-victims.rule.version>1.3.4</enforce-victims.rule.version>
     <war.plugin.version>2.6</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
@@ -644,6 +645,7 @@
 
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${enforcer.plugin.version}</version>
         <dependencies>
           <dependency>
             <groupId>com.redhat.victims</groupId>
