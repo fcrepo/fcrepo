@@ -45,7 +45,7 @@ If you have problems building fcrepo4 with the above settings, you may need to a
 options to the JaCoCo code coverage plugin:
 
 ```bash
-$ MAVEN_OPTS="-Xmx1024m" mvn -Djacoco.agent.it.arg="-XX:MaxPermSize=1024m -Xmx1024m" -Djacoco.agent.ut.arg="-XX:MaxPermSize=256m -Xmx1024m"  clean install
+$ MAVEN_OPTS="-Xmx1024m" mvn -Djacoco.agent.it.arg="-Xmx1024m" -Djacoco.agent.ut.arg="-Xmx1024m"  clean install
 ```
 
 
