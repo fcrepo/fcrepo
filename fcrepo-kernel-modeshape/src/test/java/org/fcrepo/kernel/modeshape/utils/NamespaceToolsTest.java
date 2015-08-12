@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.utils;
+package org.fcrepo.kernel.modeshape.utils;
 
-import static org.fcrepo.kernel.api.utils.NamespaceTools.validatePath;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 

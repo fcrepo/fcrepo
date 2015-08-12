@@ -27,8 +27,8 @@ import javax.jcr.Session;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.jcrProperties;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

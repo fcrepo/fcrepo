@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.utils;
+package org.fcrepo.kernel.modeshape.utils;
 
-import java.util.Objects;
+import static java.util.Objects.requireNonNull;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.NamespaceRegistry;
@@ -27,8 +27,9 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
  * Tools for working with the JCR Namespace Registry
- * (wrapping some non-standard Modeshape machinery)
  * @author Benjamin Armintor
+ * @author acoburn
+ * @author ajs6f
  * @since May 13, 2013
  */
 public final class NamespaceTools {
@@ -37,19 +38,15 @@ public final class NamespaceTools {
     }
 
     /**
-     * Return the javax.jcr.NamespaceRegistry associated with the arg session.
+     * Return the {@link NamespaceRegistry} associated with the arg session.
      *
      * @param session containing the NamespaceRegistry
      * @return NamespaceRegistry
      */
     public static NamespaceRegistry getNamespaceRegistry(final Session session) {
-        final NamespaceRegistry namespaceRegistry;
         try {
-            namespaceRegistry =
-                    session.getWorkspace().getNamespaceRegistry();
-            Objects.requireNonNull(namespaceRegistry,
+            return requireNonNull(session.getWorkspace().getNamespaceRegistry(),
                     "Couldn't find namespace registry in repository!");
-            return namespaceRegistry;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -66,27 +63,24 @@ public final class NamespaceTools {
     public static void validatePath(final Session session, final String path) {
 
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
-
-        final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
-        final String[] pathSegments = relPath.split("/");
+        final String[] pathSegments = path.replaceAll("^/+", "").replaceAll("/+$", "").split("/");
         for (final String segment : pathSegments) {
-            if (segment.length() > 0 && segment.contains(":") &&
-                    !segment.substring(0, segment.indexOf(':')).equals("fedora")) {
-                final String prefix = segment.substring(0, segment.indexOf(':'));
-                if (prefix.length() == 0) {
-                    throw new FedoraInvalidNamespaceException(
-                            String.format("Unable to identify namespace for (%s)", segment));
-                }
-                try {
-                    namespaceRegistry.getURI(prefix);
-                } catch (final NamespaceException e) {
-                    throw new FedoraInvalidNamespaceException(
-                            String.format("The namespace prefix (%s) has not been registered", prefix), e);
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
+            final int colonPosition = segment.indexOf(':');
+            if (segment.length() > 0 && colonPosition > -1) {
+                final String prefix = segment.substring(0, colonPosition);
+                if (!prefix.equals("fedora")) {
+                    if (prefix.length() == 0) {
+                        throw new FedoraInvalidNamespaceException("Empty namespace in " + segment);
+                    }
+                    try {
+                        namespaceRegistry.getURI(prefix);
+                    } catch (final NamespaceException e) {
+                        throw new FedoraInvalidNamespaceException("Prefix " + prefix + " has not been registered", e);
+                    } catch (final RepositoryException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
                 }
             }
         }
     }
-
 }
