@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.utils;
+package org.fcrepo.kernel.modeshape.utils;
 
-import static org.fcrepo.kernel.api.utils.NamespaceTools.getNamespaceRegistry;
-import static org.fcrepo.kernel.api.utils.NamespaceTools.validatePath;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -57,11 +56,6 @@ public class NamespaceToolsTest {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWork);
-    }
-
-    @Test
-    public void testFunction() {
-        getNamespaceRegistry.apply(mockNode);
     }
 
     @Test (expected = NullPointerException.class)
