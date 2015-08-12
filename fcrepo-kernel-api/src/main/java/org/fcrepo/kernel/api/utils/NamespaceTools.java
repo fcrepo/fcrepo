@@ -16,16 +16,14 @@
 package org.fcrepo.kernel.api.utils;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 import javax.jcr.NamespaceException;
-import javax.jcr.Node;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.modeshape.jcr.api.NamespaceRegistry;
 
 /**
  * Tools for working with the JCR Namespace Registry
@@ -39,30 +37,13 @@ public final class NamespaceTools {
     }
 
     /**
-     * We need the Modeshape NamespaceRegistry, because it allows us to register
-     * anonymous namespaces.
-     */
-    public static Function<Node, NamespaceRegistry> getNamespaceRegistry = new Function<Node, NamespaceRegistry>() {
-        @Override
-        public NamespaceRegistry apply(final Node n) {
-            try {
-                Objects.requireNonNull(n, "null has no Namespace Registry associated with it!");
-                return (org.modeshape.jcr.api.NamespaceRegistry)n.getSession().getWorkspace().getNamespaceRegistry();
-            } catch (final RepositoryException e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-    };
-
-    /**
      * Return the javax.jcr.NamespaceRegistry associated with the arg session.
      *
      * @param session containing the NamespaceRegistry
      * @return NamespaceRegistry
      */
-    public static javax.jcr.NamespaceRegistry getNamespaceRegistry(final Session session) {
-        final javax.jcr.NamespaceRegistry namespaceRegistry;
+    public static NamespaceRegistry getNamespaceRegistry(final Session session) {
+        final NamespaceRegistry namespaceRegistry;
         try {
             namespaceRegistry =
                     session.getWorkspace().getNamespaceRegistry();
@@ -84,7 +65,7 @@ public final class NamespaceTools {
      */
     public static void validatePath(final Session session, final String path) {
 
-        final javax.jcr.NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
+        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
 
         final String relPath = path.replaceAll("^/+", "").replaceAll("/+$", "");
         final String[] pathSegments = relPath.split("/");

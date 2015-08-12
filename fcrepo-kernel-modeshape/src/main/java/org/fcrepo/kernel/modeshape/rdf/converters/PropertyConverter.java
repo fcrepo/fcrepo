@@ -32,11 +32,11 @@ import java.util.Map;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyOriginalName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
-import static org.fcrepo.kernel.api.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -94,7 +94,10 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
                                                       final Resource predicate,
                                                       final Map<String, String> namespaceMapping)
             throws RepositoryException {
-        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry.apply(node);
+
+        final NamespaceRegistry namespaceRegistry = uncheck((final Node n) ->
+                (NamespaceRegistry)n.getSession().getWorkspace().getNamespaceRegistry()).apply(node);
+
         return getPropertyNameFromPredicate(namespaceRegistry,
                 predicate, namespaceMapping);
     }

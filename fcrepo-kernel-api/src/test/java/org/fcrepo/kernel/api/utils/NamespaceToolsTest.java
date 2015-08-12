@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.api.utils;
 
-import static org.fcrepo.kernel.api.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.api.utils.NamespaceTools.validatePath;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -57,11 +56,6 @@ public class NamespaceToolsTest {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getWorkspace()).thenReturn(mockWork);
-    }
-
-    @Test
-    public void testFunction() {
-        getNamespaceRegistry.apply(mockNode);
     }
 
     @Test (expected = NullPointerException.class)
