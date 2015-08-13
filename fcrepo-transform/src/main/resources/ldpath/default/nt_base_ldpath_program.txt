@@ -1,6 +1,0 @@
-@prefix fedora : <http://fedora.info/definitions/v4/repository#>
-id      = . :: xsd:string ;
-title = dc:title :: xsd:string;
-created = fedora:created :: xsd:dateTime;
-last_modified = fedora:lastModified :: xsd:dateTime;
-has_parent = fedora:hasParent :: xsd:string;
