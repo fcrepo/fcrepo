@@ -123,6 +123,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     public static final String velocityPropertiesLocation =
             "/velocity.properties";
 
+    private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();
+
     private static final Logger LOGGER =
         getLogger(StreamingBaseHtmlProvider.class);
 
@@ -196,7 +198,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
             rdfStream.namespaces(nsRdfStream.namespaces());
 
-            final Node subject = rdfStream.topic();
+            final Node subject = VIEW_HELPERS.getContentNode(rdfStream.topic());
 
             final Model model = rdfStream.asModel();
 
@@ -221,7 +223,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
 
         final Context context = new VelocityContext();
         context.put("rdfLexicon", fieldTool.in(RdfLexicon.class));
-        context.put("helpers", ViewHelpers.getInstance());
+        context.put("helpers", VIEW_HELPERS);
         context.put("esc", escapeTool);
         context.put("rdf", model.getGraph());
 
@@ -244,7 +246,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                                   .findFirst();
 
         if (!template.isPresent()) {
-            LOGGER.trace("Attempting to discover the mixin types of the node for the resource in question...");
+            LOGGER.trace("Attempting to discover mixin types of node for resource in question: {}", subject);
             template = rdf.listObjectsOfProperty(createResource(subject.getURI()),
                                                  createProperty(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                                                      "mixinTypes"))
@@ -259,7 +261,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
             LOGGER.debug("Choosing template: {}", template.get().getName());
             return template.get();
         } else {
-            LOGGER.trace("Attempting to discover the primary type of the node for the resource in question...");
+            LOGGER.trace("Attempting to discover primary type of node for resource in question: {}", subject);
             return rdf.listObjectsOfProperty(createResource(subject.getURI()),
                                              createProperty(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
                                                      "primaryType"))

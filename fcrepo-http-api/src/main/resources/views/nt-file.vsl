@@ -47,7 +47,7 @@
                     <h4 class="panel-title">Properties</h4>
                 </div>
                 <div class="panel-body">
-                    #triples($topic)
+                    #triples($contentNode)
                 </div>
 
             ## output triples for the content node
@@ -63,40 +63,6 @@
             #end
             </div>
 
-        ## output other nodes
-
-        <h2>Other Resources</h2>
-        <div class="panel-group" id="accordion">
-            #foreach($subject in $model.listSubjects())
-                #if ($subject.getURI() != $contentNode.getURI())
-                    #if( $subject != $topic)
-                        #if ( $subject.getURI() )
-                        <div class="panel panel-default" resource="$subject.getURI()">
-                            <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
-                                <h3 class="panel-title ctitle"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
-                            </div>
-                            <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
-                                <div class="panel-body">
-                                    #triples($subject.asNode())
-                                </div>
-                            </div>
-                        </div>
-                        #else
-                            <div class="panel panel-default" resource="$subject.getId()">
-                                <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getId())_triples" >
-                                    <h3 class="panel-title ctitle"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
-                                </div>
-                                <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getId())_triples">
-                                    <div class="panel-body">
-                                        #triples($subject.asNode())
-                                    </div>
-                                </div>
-                            </div>
-                        #end
-                    #end
-                #end
-            #end
-            </div>
         </div>
 
 
