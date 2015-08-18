@@ -28,9 +28,14 @@ import org.springframework.context.annotation.Scope;
  * instead.
  *
  * @author cbeer
+ *
+ * @deprecated This endpoint will be removed and the feature will be implemented
+ * via some Camel machinery.
+ * See <a href="https://jira.duraspace.org/browse/FCREPO-1519">FCREPO-1519</a>.
  */
 @Scope("prototype")
 @Path("/fcr:import")
+@Deprecated
 public class FedoraRepositoryImport extends FedoraImport {
 
     @Inject
