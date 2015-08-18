@@ -29,9 +29,14 @@ import javax.ws.rs.Path;
  *
  * @author awoods
  * @author daines
+ *
+ * @deprecated This endpoint will be removed and the feature will be implemented
+ * via some Camel machinery.
+ * See <a href="https://jira.duraspace.org/browse/FCREPO-1519">FCREPO-1519</a>.
  */
 @Scope("prototype")
 @Path("/fcr:export")
+@Deprecated
 public class FedoraRepositoryExport extends FedoraExport {
 
     @Inject
