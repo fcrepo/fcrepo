@@ -64,11 +64,6 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-transform</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-auth-common</artifactId>
       <version>${project.version}</version>
     </dependency>
