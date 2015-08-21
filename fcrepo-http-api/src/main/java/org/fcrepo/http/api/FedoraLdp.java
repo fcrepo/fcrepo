@@ -90,7 +90,6 @@ import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -289,11 +288,7 @@ public class FedoraLdp extends ContentExposingResource {
             replaceResourceBinaryWithStream((FedoraBinary) resource,
                     requestBodyStream, contentDisposition, requestContentType, checksum);
         } else if (isRdfContentType(contentType.toString())) {
-            try {
-                replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
-            } catch (final RiotException e) {
-                throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
-            }
+            replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
         } else if (!resource.isNew()) {
             boolean emptyRequest = true;
             try {
