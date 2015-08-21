@@ -67,6 +67,7 @@ import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -584,7 +585,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         try {
             inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
 
-        } catch (RuntimeIOException e) {
+        } catch (final RiotException e) {
+            throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
+
+        } catch (final RuntimeIOException e) {
             if (e.getCause() instanceof JsonParseException) {
                 throw new MalformedRdfException(e.getCause());
             }
