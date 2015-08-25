@@ -39,6 +39,7 @@ import javax.jcr.Value;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Accumulate inbound references to a given resource
@@ -68,6 +69,10 @@ public class ReferencesRdfContext extends NodeRdfContext {
         putReferencesIntoContext(resource.getNode());
     }
 
+    private final Predicate<Triple> INBOUND = t -> {
+        return t.getObject().getURI().equals(uriFor(resource()).getURI());
+    };
+
     @SuppressWarnings("unchecked")
     private void putReferencesIntoContext(final Node node) throws RepositoryException {
         Iterator<Property> references = node.getReferences();
@@ -78,7 +83,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
         references = node.getReferences();
         weakReferences = node.getWeakReferences();
         allReferences = Iterators.concat(references, weakReferences);
-        concat(flatMap(flatMap( allReferences, potentialProxies), triplesForValue));
+        concat(Iterators.filter(flatMap(flatMap( allReferences, potentialProxies), triplesForValue), INBOUND::test));
     }
 
     /* References from LDP indirect containers are generated dynamically by LdpContainerRdfContext, so they won't
