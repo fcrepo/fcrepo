@@ -1098,9 +1098,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectReferencesIndirect() throws Exception {
         final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
-        final String pid2 = uuid + "/child";
+        final String pid2 = uuid + "/child1";
+        final String pid3 = uuid + "/child2";
         createObjectAndClose(pid1);
         createObjectAndClose(pid2);
+        createObjectAndClose(pid3);
 
         final String memberRelation = "http://pcdm.org/models#hasMember";
 
@@ -1114,13 +1116,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createContainer.setEntity(new StringEntity(membersRDF));
         assertEquals(CREATED.getStatusCode(), getStatus(createContainer));
 
-        // create a proxy in the indirect container
-        final HttpPost createProxy = new HttpPost(serverAddress + pid1 + "/members");
-        createProxy.addHeader("Content-Type", "text/turtle");
-        final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + pid2 + ">;"
-            + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + pid1 + "> .";
-        createProxy.setEntity(new StringEntity(proxyRDF));
-        assertEquals(CREATED.getStatusCode(), getStatus(createProxy));
+        // create proxies for the children in the indirect container
+        createProxy(pid1, pid2);
+        createProxy(pid1, pid3);
 
         // retrieve the parent and verify the outbound triples exist
         final HttpGet getParent =  new HttpGet(serverAddress + pid1);
@@ -1130,6 +1128,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(serverAddress + pid1),
                     createURI(memberRelation),
                     createURI(serverAddress + pid2)));
+            assertTrue(parentGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid3)));
         }
 
         // retrieve the members container and verify the LDP triples exist
@@ -1168,7 +1170,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(serverAddress + pid1),
                     createURI(memberRelation),
                     createURI(serverAddress + pid2)));
+
+            assertFalse("Should not contain inbound references to the other child", memberGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid3)));
         }
+    }
+    private void createProxy(final String parent, final String child) throws Exception {
+        final HttpPost createProxy = new HttpPost(serverAddress + parent + "/members");
+        createProxy.addHeader("Content-Type", "text/turtle");
+        final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + child + ">;"
+            + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + parent + "> .";
+        createProxy.setEntity(new StringEntity(proxyRDF));
+        assertEquals(CREATED.getStatusCode(), getStatus(createProxy));
     }
 
     @Test
