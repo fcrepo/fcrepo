@@ -478,14 +478,6 @@
               <integration-test>true</integration-test>
             </systemPropertyVariables>
           </configuration>
-          <executions>
-            <execution>
-              <id>verify</id>
-              <goals>
-                <goal>verify</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
 
         <plugin>
@@ -555,14 +547,6 @@
         <configuration>
           <argLine>${jacoco.agent.it.arg}</argLine>
         </configuration>
-        <executions>
-          <execution>
-            <id>default-integration-test</id>
-            <goals>
-              <goal>integration-test</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
