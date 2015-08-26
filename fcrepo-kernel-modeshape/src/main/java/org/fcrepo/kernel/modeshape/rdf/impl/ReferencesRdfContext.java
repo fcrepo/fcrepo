@@ -70,7 +70,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
     }
 
     private final Predicate<Triple> INBOUND = t -> {
-        return t.getObject().getURI().equals(translator().reverse().convert(resource()).getURI());
+        return t.getObject().getURI().equals(uriFor(resource()).getURI());
     };
 
     @SuppressWarnings("unchecked")
