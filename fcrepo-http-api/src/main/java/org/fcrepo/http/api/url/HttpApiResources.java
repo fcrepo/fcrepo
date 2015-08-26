@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -101,8 +102,9 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
     private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
         final Model model, final Resource s) {
 
-        final Map<String, String> pathMap =
-                singletonMap("path", resource.getPath().substring(1));
+        String path = resource.getPath();
+        path = path.endsWith(JCR_CONTENT) ? path.replace("/" + JCR_CONTENT, "") : path;
+        final Map<String, String> pathMap = singletonMap("path", path.substring(1));
 
         // fcr:versions
         if (resource.isVersioned()) {

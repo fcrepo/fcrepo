@@ -30,6 +30,7 @@ import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
@@ -102,7 +103,6 @@ import org.fcrepo.kernel.modeshape.services.TransactionServiceImpl;
 import org.apache.jena.riot.Lang;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
@@ -180,19 +180,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         } else {
             rdfStream.concat(getResourceTriples());
-
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
-
         }
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
-        return Response.ok(rdfStream).build();
+        return ok(rdfStream).build();
     }
 
     protected RdfStream getResourceTriples() {
-
+        // use the thing described, not the description, for the subject of descriptive triples
+        if (resource() instanceof NonRdfSourceDescription) {
+            resource = ((NonRdfSourceDescription) resource()).getDescribedResource();
+        }
         final PreferTag returnPreference;
 
         if (prefer != null && prefer.hasReturn()) {
@@ -207,12 +208,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final RdfStream rdfStream = new RdfStream();
 
-        final Predicate<Triple> tripleFilter;
-        if (ldpPreferences.prefersServerManaged()) {
-            tripleFilter = x -> true;
-        } else {
-            tripleFilter = IS_MANAGED_TYPE.or(isManagedTriple).negate();
-        }
+        final Predicate<Triple> tripleFilter = ldpPreferences.prefersServerManaged() ? x -> true :
+            IS_MANAGED_TYPE.or(isManagedTriple::test).negate();
 
         if (ldpPreferences.prefersServerManaged()) {
             rdfStream.concat(getTriples(LdpRdfContext.class));
@@ -241,17 +238,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             if (ldpPreferences.prefersMembership()) {
                 rdfStream.concat(getTriples(LdpContainerRdfContext.class));
                 rdfStream.concat(getTriples(LdpIsMemberOfRdfContext.class));
-            }
-
-            // Include binary properties if this is a binary description
-            if (resource() instanceof NonRdfSourceDescription) {
-                final FedoraResource described = ((NonRdfSourceDescription) resource()).getDescribedResource();
-                rdfStream.concat(filter(described.getTriples(translator(), ImmutableList.of(TypeRdfContext.class,
-                        PropertiesRdfContext.class,
-                        ContentRdfContext.class)), tripleFilter::test));
-                if (ldpPreferences.prefersServerManaged()) {
-                    rdfStream.concat(getTriples(described,LdpRdfContext.class));
-                }
             }
 
             // Embed all hash and blank nodes
@@ -396,7 +382,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource == null) {
             resource = getResourceFromPath(externalPath());
         }
-
         return resource;
     }
 
