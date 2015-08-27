@@ -718,7 +718,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
         final String subjectURI = serverAddress + pairtreeName;
 
-        final HttpPut put = putObjMethod(pairtreeName);
+        final HttpPut put = putObjMethod(pairtreeName + "/test");
         put.addHeader("Content-Type", "application/n3");
         put.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
 
