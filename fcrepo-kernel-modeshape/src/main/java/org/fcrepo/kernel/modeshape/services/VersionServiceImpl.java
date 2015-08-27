@@ -29,7 +29,6 @@ import javax.jcr.version.LabelExistsVersionException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionException;
 import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import java.util.regex.Matcher;
@@ -135,18 +134,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
         if (history.hasVersionLabel(label)) {
             return history.getVersionByLabel(label);
-        }
-        // there was no version with the given JCR Version Label, check to see if
-        // there's a version whose UUID is equal to the label
-        final VersionIterator versionIt = history.getAllVersions();
-        if (versionIt == null) {
-            return null;
-        }
-        while (versionIt.hasNext()) {
-            final Version v = versionIt.nextVersion();
-            if (v.getFrozenNode().getIdentifier().equals(label)) {
-                return v;
-            }
         }
         return null;
     }

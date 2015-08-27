@@ -18,17 +18,17 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 import java.util.function.Function;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
@@ -39,6 +39,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
 import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private final com.hp.hpl.jena.graph.Node subject;
+    private final Node subject;
 
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
@@ -97,17 +98,25 @@ public class VersionsRdfContext extends RdfStream {
                     return new RdfStream();
                 }
 
-                final Node frozenNode = version.getFrozenNode();
-                final com.hp.hpl.jena.graph.Node versionSubject
-                        = nodeToResource(idTranslator).convert(frozenNode).asNode();
+                final String[] labels = versionHistory.getVersionLabels(version);
+                if (labels.length == 0) {
+                    LOGGER.warn("An unlabeled version for {} was found!  Omitting from version listing!",
+                            subject.getURI());
+                    return new RdfStream();
+                } else if (labels.length > 1) {
+                    LOGGER.info("Multiple version labels found for {}!  Using first label, \"{}\".",
+                            subject.getURI(), labels[0]);
+                }
+                final Node versionSubject
+                        = createProperty(subject + "/" + FCR_VERSIONS + "/" + labels[0]).asNode();
+
 
                 final RdfStream results = new RdfStream();
 
                 results.concat(create(subject, HAS_VERSION.asNode(),
                         versionSubject));
 
-                for (final String label : versionHistory
-                        .getVersionLabels(version)) {
+                for (final String label : labels) {
                     results.concat(create(versionSubject, HAS_VERSION_LABEL
                             .asNode(), createLiteral(label)));
                 }
