@@ -392,19 +392,20 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // go querying for the version URI
         Resource s = createResource(createGraphSubjectNode(object).getURI());
-        Property p = createProperty(REPOSITORY_NAMESPACE + "hasVersion");
-        final ExtendedIterator<Statement> triples = graphStore.listStatements(s, p, (RDFNode)null);
+        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,
+                createProperty(REPOSITORY_NAMESPACE + "hasVersion"), (RDFNode)null);
 
         final List<Statement> list = triples.toList();
         assertEquals(1, list.size());
 
-        // make sure it matches the label
+        // make sure the URI is derived from the label
         s = list.get(0).getObject().asResource();
-        p = createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
-        final Literal o = createPlainLiteral("v0.0.1");
+        assertEquals("URI should be derived from label.", s.getURI(), createGraphSubjectNode(object).getURI()
+                + "/fcr:versions/v0.0.1");
 
-        assertTrue(graphStore.contains(s, p, o));
-
+        // make sure the label is listed
+        assertTrue(graphStore.contains(s, createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel"),
+                createPlainLiteral("v0.0.1")));
     }
 
     @Test(expected = MalformedRdfException.class)
