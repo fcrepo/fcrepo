@@ -260,6 +260,11 @@ public class FedoraLdp extends ContentExposingResource {
         if (nodeService.exists(session, path)) {
             resource = resource();
             response = noContent();
+
+            if (resource.hasType(FEDORA_PAIRTREE)) {
+              throw new ForbiddenResourceModificationException("Resources cannot be manually created " +
+                                                               "under pairtree elements!");
+            }
         } else {
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
