@@ -300,7 +300,7 @@ public final class RdfLexicon {
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
-        b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpProperties).addAll(
+        b.addAll(membershipProperties).addAll(ldpProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
                 otherServiceProperties).addAll(structProperties).addAll(contentProperties).addAll(
                 versioningProperties).addAll(jcrProperties);
