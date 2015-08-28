@@ -22,12 +22,20 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.BINARY;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_NODE_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
@@ -156,7 +164,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             containerService.findOrCreate(session, "/testNodeGraph");
 
         final Node s = subjects.reverse().convert(object).asNode();
-        final Node p = createURI(REPOSITORY_NAMESPACE + "primaryType");
+        final Node p = HAS_PRIMARY_TYPE.asNode();
         final Node o = createLiteral("nt:folder");
         assertTrue(object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph().contains(s, p, o));
     }
@@ -188,7 +196,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         Node o = createLiteral("http://www.modeshape.org");
         assertTrue(graph.contains(s, p, o));
 
-        p = createURI(REPOSITORY_NAMESPACE + "hasNodeType");
+        p = HAS_NODE_TYPE.asNode();
         o = createLiteral(FEDORA_RESOURCE);
         assertFalse(graph.contains(s, p, o));
 
@@ -204,12 +212,12 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // jcr property
         Node s = createGraphSubjectNode(object);
-        Node p = createURI(REPOSITORY_NAMESPACE + "uuid");
+        Node p = HAS_PRIMARY_IDENTIFIER.asNode();
         assertFalse(graph.contains(s, p, ANY));
 
         // multivalued property
         s = createGraphSubjectNode(object);
-        p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
+        p = HAS_MIXIN_TYPE.asNode();
         Node o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
@@ -318,7 +326,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // multivalued property
         final Node s = createGraphSubjectNode(object);
-        Node p = createURI(REPOSITORY_NAMESPACE + "mixinTypes");
+        Node p = HAS_MIXIN_TYPE.asNode();
         Node o = createLiteral(FEDORA_RESOURCE);
         assertTrue(graph.contains(s, p, o));
 
@@ -326,7 +334,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertTrue(graph.contains(s, p, o));
 
         // structure
-        p = createURI(REPOSITORY_NAMESPACE + "numberOfChildren");
+        p = HAS_CHILD_COUNT.asNode();
         //final RDFDatatype long_datatype = createTypedLiteral(0L).getDatatype();
         o = createLiteral("0");
 
@@ -392,8 +400,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // go querying for the version URI
         Resource s = createResource(createGraphSubjectNode(object).getURI());
-        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,
-                createProperty(REPOSITORY_NAMESPACE + "hasVersion"), (RDFNode)null);
+        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,HAS_VERSION, (RDFNode)null);
 
         final List<Statement> list = triples.toList();
         assertEquals(1, list.size());
@@ -401,11 +408,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         // make sure the URI is derived from the label
         s = list.get(0).getObject().asResource();
         assertEquals("URI should be derived from label.", s.getURI(), createGraphSubjectNode(object).getURI()
-                + "/fcr:versions/v0.0.1");
+                + "/" + FCR_VERSIONS + "/v0.0.1");
 
         // make sure the label is listed
-        assertTrue(graphStore.contains(s, createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel"),
-                createPlainLiteral("v0.0.1")));
+        assertTrue(graphStore.contains(s, HAS_VERSION_LABEL, createPlainLiteral("v0.0.1")));
     }
 
     @Test(expected = MalformedRdfException.class)
