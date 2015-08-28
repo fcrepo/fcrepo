@@ -20,10 +20,6 @@
         <version>${modeshape.version}</version>
         <scope>provided</scope>
         <exclusions>
-          <exclusion>
-            <groupId>org.gagravarr</groupId>
-            <artifactId>vorbis-java-tika</artifactId>
-          </exclusion>
           <!-- tika-parsers transitively depends on commons-codec-1.5 but httpclient is pulling in 1.6, so we explicitly 
             exclude commons-codec here and add commons-codec-1.6 as a dependency below -->
           <exclusion>
@@ -41,19 +37,6 @@
           <exclusion>
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <!-- vorbis-java-tika is only added here because it declares a dependency on tika-core:1.0, which we want to 
-        exclude in favor of version 1.3 which is a dependency of tika-parsers:1.3 -->
-      <dependency>
-        <groupId>org.gagravarr</groupId>
-        <artifactId>vorbis-java-tika</artifactId>
-        <version>0.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

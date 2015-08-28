@@ -1925,6 +1925,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
     public void testPutEmptyBody() throws IOException {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader("Content-Type", "application/ld+json");
@@ -1932,6 +1933,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Should be a client error", BAD_REQUEST.getStatusCode(), getStatus(response));
         }
+    }
+
+    @Test
+    public void testPutOgg() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", "OggS");
     }
 
 }
