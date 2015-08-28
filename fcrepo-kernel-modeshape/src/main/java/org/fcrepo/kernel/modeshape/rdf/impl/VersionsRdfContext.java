@@ -38,6 +38,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
 import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ import org.slf4j.Logger;
 
 /**
  * {@link RdfStream} that supplies {@link Triple}s concerning
- * the versions of a selected {@link com.hp.hpl.jena.graph.Node}.
+ * the versions of a selected {@link Node}.
  *
  * @author ajs6f
  * @since Oct 15, 2013
@@ -56,7 +57,7 @@ public class VersionsRdfContext extends RdfStream {
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private final com.hp.hpl.jena.graph.Node subject;
+    private final Node subject;
 
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
@@ -105,7 +106,7 @@ public class VersionsRdfContext extends RdfStream {
                     LOGGER.info("Multiple version labels found for {}!  Using first label, \"{}\".",
                             subject.getURI(), labels[0]);
                 }
-                final com.hp.hpl.jena.graph.Node versionSubject
+                final Node versionSubject
                         = createProperty(subject + "/fcr:versions/" + labels[0]).asNode();
 
 
