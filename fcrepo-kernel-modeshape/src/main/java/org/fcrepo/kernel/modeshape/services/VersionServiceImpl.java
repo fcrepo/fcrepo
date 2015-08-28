@@ -134,9 +134,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
         if (history.hasVersionLabel(label)) {
             return history.getVersionByLabel(label);
-        } else {
-            return null;
         }
+        return null;
     }
 
     private static boolean isVersioningEnabled(final Node n) throws RepositoryException {

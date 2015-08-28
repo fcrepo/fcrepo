@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 
 /**
  * {@link RdfStream} that supplies {@link Triple}s concerning
- * the versions of a selected {@link Node}.
+ * the versions of a selected {@link com.hp.hpl.jena.graph.Node}.
  *
  * @author ajs6f
  * @since Oct 15, 2013
