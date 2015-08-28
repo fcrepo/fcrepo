@@ -15,9 +15,11 @@
  */
 package org.fcrepo.auth.common;
 
-import org.modeshape.jcr.value.Path;
+import java.security.Principal;
 
 import javax.jcr.Session;
+
+import org.modeshape.jcr.value.Path;
 
 /**
  * An interface that can authorize access to specific resources within
@@ -77,5 +79,12 @@ public interface FedoraAuthorizationDelegate {
      *         the given actions, or false otherwise
      */
     boolean hasPermission(Session session, Path absPath, String[] actions);
+
+    /**
+     * The principal that this delegate uses to represent the public "EVERYONE" user.
+     *
+     * @return principal
+     */
+    public Principal getEveryonePrincipal();
 
 }

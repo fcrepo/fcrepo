@@ -15,6 +15,8 @@
  */
 package org.fcrepo.auth.integration;
 
+import java.security.Principal;
+
 import javax.jcr.Session;
 
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
@@ -30,6 +32,23 @@ public class PermitRootAndPathEndsWithPermitSuffixFAD implements
 
     Logger logger = LoggerFactory
             .getLogger(PermitRootAndPathEndsWithPermitSuffixFAD.class);
+
+    /**
+     * The security principal for every request.
+     */
+    private static final Principal EVERYONE = new Principal() {
+
+        @Override
+        public String getName() {
+            return "EVERYONE";
+        }
+
+        @Override
+        public String toString() {
+            return getName();
+        }
+
+    };
 
     /*
      * (non-Javadoc)
@@ -70,6 +89,11 @@ public class PermitRootAndPathEndsWithPermitSuffixFAD implements
                 .getLastSegment().getName().getLocalName().toLowerCase()
                 .endsWith("permit"));
 
+    }
+
+    @Override
+    public Principal getEveryonePrincipal() {
+        return EVERYONE;
     }
 
 }

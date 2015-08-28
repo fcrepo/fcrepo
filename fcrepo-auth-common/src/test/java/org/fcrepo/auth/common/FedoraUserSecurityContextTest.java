@@ -24,16 +24,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.security.Principal;
+
+import javax.jcr.Session;
+import javax.servlet.http.HttpServletRequest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider.Context;
 import org.modeshape.jcr.value.Path;
-
-import javax.jcr.Session;
-import javax.servlet.http.HttpServletRequest;
-
-import java.security.Principal;
 
 /**
  * @author bbpennel
@@ -48,12 +48,17 @@ public class FedoraUserSecurityContextTest {
     private Principal principal;
 
     @Mock
+    private Principal everyone;
+
+    @Mock
     private HttpServletRequest request;
 
     @Before
     public void setUp() {
         initMocks(this);
         when(request.getUserPrincipal()).thenReturn(principal);
+        when(fad.getEveryonePrincipal()).thenReturn(everyone);
+        when(everyone.getName()).thenReturn("EVERYONE");
     }
 
     @SuppressWarnings("unused")
@@ -85,14 +90,14 @@ public class FedoraUserSecurityContextTest {
 
         context.logout();
         assertEquals("User principal when logged out should be EVERYONE",
-                ServletContainerAuthenticationProvider.EVERYONE, context
+                fad.getEveryonePrincipal(), context
                 .getEffectiveUserPrincipal());
 
         context = new FedoraUserSecurityContext(null, fad);
 
         assertEquals(
                 "Effective user principal should be EVERYONE when none is provided",
-                ServletContainerAuthenticationProvider.EVERYONE, context
+                fad.getEveryonePrincipal(), context
                 .getEffectiveUserPrincipal());
     }
 
@@ -100,7 +105,7 @@ public class FedoraUserSecurityContextTest {
     public void testGetAnonymousUserName() {
         final FedoraUserSecurityContext context =
                 new FedoraUserSecurityContext(null, fad);
-        assertEquals(ServletContainerAuthenticationProvider.EVERYONE.getName(),
+        assertEquals(fad.getEveryonePrincipal().getName(),
                 context.getUserName());
     }
 
