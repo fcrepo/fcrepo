@@ -39,32 +39,13 @@ import org.slf4j.LoggerFactory;
  * @author Gregory Jansen
  */
 public final class ServletContainerAuthenticationProvider implements
-        AuthenticationProvider {
+AuthenticationProvider {
 
     private static ServletContainerAuthenticationProvider instance = null;
 
     private ServletContainerAuthenticationProvider() {
         instance = this;
     }
-
-    public static final String EVERYONE_NAME = "EVERYONE";
-
-    /**
-     * The security principal for every request.
-     */
-    public static final Principal EVERYONE = new Principal() {
-
-        @Override
-        public String getName() {
-            return ServletContainerAuthenticationProvider.EVERYONE_NAME;
-        }
-
-        @Override
-        public String toString() {
-            return getName();
-        }
-
-    };
 
     /**
      * User role for Fedora's admin users
@@ -116,23 +97,19 @@ public final class ServletContainerAuthenticationProvider implements
     /**
      * Authenticate the user that is using the supplied credentials.
      * <p>
-     * If the credentials given establish that the authenticated user has the
-     * fedoraAdmin role, construct an ExecutionContext with
-     * FedoraAdminSecurityContext as the SecurityContext. Otherwise, construct
-     * an ExecutionContext with FedoraUserSecurityContext as the
-     * SecurityContext.
+     * If the credentials given establish that the authenticated user has the fedoraAdmin role, construct an
+     * ExecutionContext with FedoraAdminSecurityContext as the SecurityContext. Otherwise, construct an
+     * ExecutionContext with FedoraUserSecurityContext as the SecurityContext.
      * </p>
      * <p>
-     * If the authenticated user does not have the fedoraAdmin role, session
-     * attributes will be assigned in the sessionAttributes map:
+     * If the authenticated user does not have the fedoraAdmin role, session attributes will be assigned in the
+     * sessionAttributes map:
      * </p>
      * <ul>
-     * <li>FEDORA_SERVLET_REQUEST will be assigned the ServletRequest instance
-     * associated with credentials.</li>
-     * <li>FEDORA_ALL_PRINCIPALS will be assigned the union of all principals
-     * obtained from configured PrincipalProvider instances plus the
-     * authenticated user's principal; FEDORA_ALL_PRINCIPALS will be assigned
-     * the singleton set containing the EVERYONE principal otherwise.</li>
+     * <li>FEDORA_SERVLET_REQUEST will be assigned the ServletRequest instance associated with credentials.</li>
+     * <li>FEDORA_ALL_PRINCIPALS will be assigned the union of all principals obtained from configured
+     * PrincipalProvider instances plus the authenticated user's principal; FEDORA_ALL_PRINCIPALS will be assigned the
+     * singleton set containing the fad.getEveryonePrincipal() principal otherwise.</li>
      * </ul>
      */
     @Override
@@ -168,7 +145,7 @@ public final class ServletContainerAuthenticationProvider implements
 
             final Set<Principal> principals = collectPrincipals(credentials);
             principals.add(userPrincipal);
-            principals.add(EVERYONE);
+            principals.add(fad.getEveryonePrincipal());
 
             sessionAttributes.put(
                     FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
@@ -177,12 +154,12 @@ public final class ServletContainerAuthenticationProvider implements
         } else {
 
             sessionAttributes
-                    .put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
-                            EVERYONE);
+            .put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
+                    fad.getEveryonePrincipal());
 
             sessionAttributes.put(
                     FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
-                    Collections.singleton(EVERYONE));
+                    Collections.singleton(fad.getEveryonePrincipal()));
 
         }
 
@@ -217,5 +194,14 @@ public final class ServletContainerAuthenticationProvider implements
         }
 
         return principals;
+    }
+
+    /**
+     * Get the principal that the injected authorization delegate uses to represent the "EVERYONE" user.
+     *
+     * @return principal representing "EVERYONE"
+     */
+    public Principal getEveryonePrincipal() {
+        return fad.getEveryonePrincipal();
     }
 }

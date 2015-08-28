@@ -15,15 +15,13 @@
  */
 package org.fcrepo.auth.common;
 
-import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.EVERYONE;
+import java.security.Principal;
 
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.SecurityContext;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.security.Principal;
 
 /**
  * The security context for Fedora servlet users. These users are not
@@ -34,7 +32,7 @@ import java.security.Principal;
  * @author Gregory Jansen
  */
 public class FedoraUserSecurityContext implements SecurityContext,
-        AdvancedAuthorizationProvider {
+AdvancedAuthorizationProvider {
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);
@@ -112,7 +110,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
         if (this.loggedIn && this.userPrincipal != null) {
             return this.userPrincipal;
         }
-        return EVERYONE;
+        return fad.getEveryonePrincipal();
     }
 
     /**

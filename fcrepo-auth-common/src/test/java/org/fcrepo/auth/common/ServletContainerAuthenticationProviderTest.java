@@ -16,7 +16,6 @@
 package org.fcrepo.auth.common;
 
 import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS;
-import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.EVERYONE;
 import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.getInstance;
@@ -68,6 +67,9 @@ public class ServletContainerAuthenticationProviderTest {
     private Principal principal;
 
     @Mock
+    private Principal everyone;
+
+    @Mock
     private HttpServletRequest request;
 
     private Map<String, Object> sessionAttributes;
@@ -81,6 +83,8 @@ public class ServletContainerAuthenticationProviderTest {
     public void setUp() {
         initMocks(this);
         when(request.getUserPrincipal()).thenReturn(principal);
+        when(fad.getEveryonePrincipal()).thenReturn(everyone);
+        when(everyone.getName()).thenReturn("EVERYONE");
         when(creds.getRequest()).thenReturn(request);
         context = new ExecutionContext();
         sessionAttributes = new HashMap<>();
@@ -167,7 +171,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         assertEquals(2, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
-                .contains(EVERYONE));
+                .contains(fad.getEveryonePrincipal()));
         assertTrue("User principal must be present", resultPrincipals
                 .contains(principal));
 
@@ -214,7 +218,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         assertEquals(3, resultPrincipals.size());
         assertTrue("EVERYONE principal must be present", resultPrincipals
-                .contains(EVERYONE));
+                .contains(fad.getEveryonePrincipal()));
         assertTrue("User principal must be present", resultPrincipals.contains(principal));
         assertTrue("Group Principal from factory must be present", resultPrincipals.contains(groupPrincipal));
 
@@ -265,7 +269,7 @@ public class ServletContainerAuthenticationProviderTest {
         final Set<Principal> resultPrincipals = (Set<Principal>) sessionAttributes.get(FEDORA_ALL_PRINCIPALS);
 
         assertEquals(expected, resultPrincipals.size());
-        assertTrue("EVERYONE principal must be present", resultPrincipals.contains(EVERYONE));
+        assertTrue("EVERYONE principal must be present", resultPrincipals.contains(fad.getEveryonePrincipal()));
 
         final Iterator<Principal> iterator = resultPrincipals.iterator();
         boolean succeeds = false;
@@ -273,11 +277,11 @@ public class ServletContainerAuthenticationProviderTest {
         while (iterator.hasNext()) {
             final String name = iterator.next().getName();
 
-            if (name != null && name.equals(EVERYONE.getName())) {
+            if (name != null && name.equals(fad.getEveryonePrincipal().getName())) {
                 succeeds = true;
             }
         }
 
-        assertTrue("Expected to find: " + EVERYONE.getName(), succeeds);
+        assertTrue("Expected to find: " + fad.getEveryonePrincipal().getName(), succeeds);
     }
 }
