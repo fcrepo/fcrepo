@@ -78,7 +78,7 @@ public interface FedoraAuthorizationDelegate {
      * @return true if the given session has permission at absPath for all of
      *         the given actions, or false otherwise
      */
-    boolean hasPermission(Session session, Path absPath, String[] actions);
+    public boolean hasPermission(Session session, Path absPath, String[] actions);
 
     /**
      * The principal that this delegate uses to represent the public "EVERYONE" user.
@@ -86,5 +86,12 @@ public interface FedoraAuthorizationDelegate {
      * @return principal
      */
     public Principal getEveryonePrincipal();
+
+    /**
+     * Get an instance of FedoraUserSecurityContext that is compatible with the auth module.
+     * @param userPrincipal the user principal associated with this security context
+     * @return auth module compatible instance of FedoraUserSecurityContext
+     */
+    public FedoraUserSecurityContext getFedoraUserSecurityContext(final Principal userPrincipal);
 
 }
