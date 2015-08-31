@@ -23,12 +23,14 @@ import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
+import static java.util.Arrays.asList;
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -38,6 +40,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -45,6 +48,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
@@ -55,6 +59,7 @@ import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -384,6 +389,42 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             throw new RepositoryRuntimeException(e);
         }
     }
+
+    @Override
+    public List<URI> getTypes() {
+        try {
+            final List<NodeType> nodeTypes = new ArrayList<>();
+            final NodeType primaryNodeType = node.getPrimaryNodeType();
+            nodeTypes.add(primaryNodeType);
+            nodeTypes.addAll(asList(primaryNodeType.getSupertypes()));
+            final List<NodeType> mixinTypes = asList(node.getMixinNodeTypes());
+
+            nodeTypes.addAll(mixinTypes);
+            mixinTypes.stream()
+                .map(NodeType::getSupertypes)
+                .flatMap(Arrays::stream)
+                .forEach(nodeTypes::add);
+
+            return nodeTypes.stream()
+                .map(uncheck(x -> x.getName()))
+                .distinct()
+                .map(nodeTypeNameToURI::apply)
+                .peek(x -> LOGGER.debug("node has rdf:type {}", x))
+                .collect(Collectors.toList());
+
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private Function<String, URI> nodeTypeNameToURI = uncheck(name -> {
+        final String prefix = name.split(":")[0];
+        final String typeName = name.split(":")[1];
+        final String namespace = getSession().getWorkspace().getNamespaceRegistry().getURI(prefix);
+        return URI.create(getRDFNamespaceForJcrNamespace(namespace) + typeName);
+    });
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraResource#updateProperties

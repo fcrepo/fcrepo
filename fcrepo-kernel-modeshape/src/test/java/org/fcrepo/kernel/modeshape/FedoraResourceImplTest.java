@@ -24,6 +24,8 @@ import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_NODE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.utils.iterators.RdfStream.fromModel;
 import static org.fcrepo.kernel.modeshape.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
@@ -45,7 +47,9 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -99,6 +103,18 @@ public class FedoraResourceImplTest {
     private Node mockContainer;
 
     @Mock
+    private NodeType mockPrimaryNodeType;
+
+    @Mock
+    private NodeType mockMixinNodeType;
+
+    @Mock
+    private NodeType mockPrimarySuperNodeType;
+
+    @Mock
+    private NodeType mockMixinSuperNodeType;
+
+    @Mock
     private Session mockSession;
 
     @Mock
@@ -147,6 +163,48 @@ public class FedoraResourceImplTest {
         when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate()
                 .getTime());
+    }
+
+    @Test
+    public void testGetTypes() throws RepositoryException {
+        final String mockNodeTypePrefix = "jcr";
+
+        final String mockPrimaryNodeTypeName = "somePrimaryType";
+        final String mockMixinNodeTypeName = "someMixinType";
+        final String mockPrimarySuperNodeTypeName = "somePrimarySuperType";
+        final String mockMixinSuperNodeTypeName = "someMixinSuperType";
+
+        final Workspace mockWorkspace = mock(Workspace.class);
+        final NamespaceRegistry mockNamespaceRegistry = mock(NamespaceRegistry.class);
+
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
+        when(mockPrimaryNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockPrimaryNodeTypeName);
+
+        when(mockNode.getMixinNodeTypes()).thenReturn(
+                new NodeType[]{mockMixinNodeType});
+        when(mockMixinNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockMixinNodeTypeName);
+
+        when(mockPrimaryNodeType.getSupertypes()).thenReturn(
+                new NodeType[]{mockPrimarySuperNodeType});
+        when(mockPrimarySuperNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockPrimarySuperNodeTypeName);
+
+        when(mockMixinNodeType.getSupertypes()).thenReturn(
+                new NodeType[] {mockMixinSuperNodeType, mockMixinSuperNodeType});
+        when(mockMixinSuperNodeType.getName()).thenReturn(
+                mockNodeTypePrefix + ":" + mockMixinSuperNodeTypeName);
+
+        final List<URI> types = testObj.getTypes();
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName)));
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockMixinNodeTypeName)));
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockPrimarySuperNodeTypeName)));
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockMixinSuperNodeTypeName)));
+        assertEquals(4, types.size());
     }
 
     @Test
