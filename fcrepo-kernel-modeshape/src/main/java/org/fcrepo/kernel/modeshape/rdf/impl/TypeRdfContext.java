@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -24,22 +23,12 @@ import org.fcrepo.kernel.api.models.NonRdfSource;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 
-import static java.util.Arrays.asList;
-import static java.util.Arrays.stream;
 import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
-import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -63,37 +52,14 @@ public class TypeRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         //include rdf:type for primaryType, mixins, and their supertypes
-        concatRdfTypes();
+        concat(resource().getTypes().stream()
+                .map(uri -> create(subject(), type.asNode(), createURI(uri.toString())))
+                .iterator());
         if (resource() instanceof NonRdfSource) {
             // gather versionability info from the parent
             if (resource().getNode().getParent().isNodeType("mix:versionable")) {
                 concat(create(subject(), type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
             }
         }
-    }
-
-    private void concatRdfTypes() throws RepositoryException {
-        final List<NodeType> nodeTypes = new ArrayList<>();
-        final NodeType primaryNodeType = resource().getNode().getPrimaryNodeType();
-        nodeTypes.add(primaryNodeType);
-        nodeTypes.addAll(asList(primaryNodeType.getSupertypes()));
-        final NodeType[] mixinNodeTypesArr = resource().getNode().getMixinNodeTypes();
-        stream(mixinNodeTypesArr).forEach(nodeTypes::add);
-        stream(mixinNodeTypesArr).map(NodeType::getSupertypes).flatMap(Arrays::stream).forEach(nodeTypes::add);
-        concat(nodeTypes.stream().map(nodetype2triple).iterator());
-    }
-
-    private final Function<NodeType, Triple> nodetype2triple = uncheck(nodeType -> {
-        final String name = nodeType.getName();
-        final String prefix = name.split(":")[0];
-        final String typeName = name.split(":")[1];
-        final String namespace = getJcrUri(prefix);
-        final com.hp.hpl.jena.graph.Node rdfType = createURI(getRDFNamespaceForJcrNamespace(namespace) + typeName);
-        LOGGER.trace("Translating mixin: {} w/ namespace: {} into resource: {}", name, namespace, rdfType);
-        return create(subject(), type.asNode(), rdfType);
-    });
-
-    private String getJcrUri(final String prefix) throws RepositoryException {
-        return session().getWorkspace().getNamespaceRegistry().getURI(prefix);
     }
 }

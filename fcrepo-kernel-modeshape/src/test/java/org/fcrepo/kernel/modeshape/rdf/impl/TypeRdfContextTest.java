@@ -34,10 +34,12 @@ import javax.jcr.nodetype.NodeType;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -98,33 +100,16 @@ public class TypeRdfContextTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockResource.getNode()).thenReturn(mockNode);
-        when(mockNode.getPrimaryNodeType()).thenReturn(mockPrimaryNodeType);
-        when(mockPrimaryNodeType.getName()).thenReturn(
-                mockNodeTypePrefix + ":" + mockPrimaryNodeTypeName);
+        final List<URI> types = new ArrayList<>();
+        types.add(URI.create(REPOSITORY_NAMESPACE + "somePrimaryType"));
+        types.add(URI.create(REPOSITORY_NAMESPACE + "someMixinType"));
+        types.add(URI.create(REPOSITORY_NAMESPACE + "somePrimarySuperType"));
+        types.add(URI.create(REPOSITORY_NAMESPACE + "someMixinSuperType"));
 
+        when(mockResource.getTypes()).thenReturn(types);
+        when(mockResource.getNode()).thenReturn(mockNode);
         when(mockResource.getPath()).thenReturn("/" + mockNodeName);
 
-        when(mockNode.getMixinNodeTypes()).thenReturn(
-                new NodeType[]{mockMixinNodeType});
-        when(mockMixinNodeType.getName()).thenReturn(
-                mockNodeTypePrefix + ":" + mockMixinNodeTypeName);
-
-        when(mockPrimaryNodeType.getSupertypes()).thenReturn(
-                new NodeType[]{mockPrimarySuperNodeType});
-        when(mockPrimarySuperNodeType.getName()).thenReturn(
-                mockNodeTypePrefix + ":" + mockPrimarySuperNodeTypeName);
-
-        when(mockMixinNodeType.getSupertypes()).thenReturn(
-                new NodeType[] {mockMixinSuperNodeType});
-        when(mockMixinSuperNodeType.getName()).thenReturn(
-                mockNodeTypePrefix + ":" + mockMixinSuperNodeTypeName);
-
-        when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockSession.getRepository()).thenReturn(mockRepository);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
-        when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
         idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 

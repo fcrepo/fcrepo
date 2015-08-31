@@ -18,6 +18,7 @@ package org.fcrepo.kernel.api.models;
 import java.net.URI;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
@@ -108,11 +109,23 @@ public interface FedoraResource {
     Date getLastModifiedDate();
 
     /**
-     * Check if this object uses a given mixin
+     * Check if this object uses a given RDF type
+     *
+     * <p>Note: the type parameter should be in prefixed short form, so ldp:Container or ex:Image
+     * are both acceptable types. This method does not assume any jcr to fedora prefix mappings are
+     * managed by the implementation, so hasType("jcr:frozenNode") is a valid use of this method.</p>
+     *
      * @param type the given type
-     * @return a collection of mixin names
+     * @return whether the object has the given type
      */
     boolean hasType(final String type);
+
+    /**
+     * Get the RDF:type values for this resource
+     * @return a list of types for this resource
+     */
+    List<URI> getTypes();
+
     /**
      * Update the provided properties with a SPARQL Update query. The updated
      * properties may be serialized to the JCR store.
