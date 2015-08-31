@@ -17,33 +17,24 @@ package org.fcrepo.auth.common;
 
 import java.security.Principal;
 
-import java.security.Principal;
-
-import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
+import org.apache.commons.lang.StringUtils;
 import org.modeshape.jcr.security.SecurityContext;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The security context for Fedora servlet users. These users are not
+ * The security context for Fedora WebAC servlet users. These users are not
  * necessarily authenticated by the container, i.e. users may include the
  * general public. This security context delegates all access decisions to the
  * configured authorization delegate.
  *
- * @author Gregory Jansen
+ * @author mohideen
  */
-public class FedoraUserSecurityContext implements SecurityContext,
-        AdvancedAuthorizationProvider {
+public class FedoraWebACUserSecurityContext extends FedoraUserSecurityContext {
 
     private static final Logger LOGGER = LoggerFactory
-            .getLogger(FedoraUserSecurityContext.class);
-
-    protected Principal userPrincipal = null;
-
-    protected FedoraAuthorizationDelegate fad = null;
-
-    protected boolean loggedIn = true;
+            .getLogger(FedoraWebACUserSecurityContext.class);
 
     /**
      * Constructs a new security context.
@@ -52,36 +43,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
      *        context
      * @param fad the authorization delegate
      */
-    protected FedoraUserSecurityContext(final Principal userPrincipal,
-            final FedoraAuthorizationDelegate fad) {
-        this.fad = fad;
-        this.userPrincipal = userPrincipal;
-
-        if (this.fad == null) {
-            LOGGER.warn("This security context must have a FAD injected");
-            throw new IllegalArgumentException(
-                    "This security context must have a FAD injected");
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @see org.modeshape.jcr.security.SecurityContext#isAnonymous()
-     */
-    @Override
-    public boolean isAnonymous() {
-        return this.userPrincipal == null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @see SecurityContext#getUserName()
-     */
-    @Override
-    public final String getUserName() {
-        return getEffectiveUserPrincipal().getName();
+    protected FedoraWebACUserSecurityContext(final Principal userPrincipal,
+                                        final FedoraAuthorizationDelegate fad) {
+        super(userPrincipal, fad);
     }
 
     /**
@@ -90,14 +54,16 @@ public class FedoraUserSecurityContext implements SecurityContext,
      * @see SecurityContext#hasRole(String)
      */
     @Override
-    public boolean hasRole(final String roleName) {
+    public final boolean hasRole(final String roleName) {
         // Under this custom PEP regime, all users have modeshape read and write
         // roles.
-        if ("read".equals(roleName)) {
+        if ("http://www.w3.org/ns/auth/acl#Read".equals(roleName)) {
             return true;
-        } else if ("write".equals(roleName)) {
+        } else if ("http://www.w3.org/ns/auth/acl#Write".equals(roleName)) {
             return true;
-        } else if ("admin".equals(roleName)) {
+        } else if ("http://www.w3.org/ns/auth/acl#Append".equals(roleName)) {
+            return true;
+        } else if ("http://www.w3.org/ns/auth/acl#Control".equals(roleName)) {
             return true;
         }
         return false;
@@ -115,16 +81,6 @@ public class FedoraUserSecurityContext implements SecurityContext,
         return fad.getEveryonePrincipal();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @see org.modeshape.jcr.security.SecurityContext#logout()
-     */
-    @Override
-    public void logout() {
-        this.loggedIn = false;
-    }
-
     /*
      * (non-Javadoc)
      * @see
@@ -134,7 +90,10 @@ public class FedoraUserSecurityContext implements SecurityContext,
      */
     @Override
     public boolean hasPermission(final Context context, final Path absPath,
-            final String... actions) {
+                                 final String... actions) {
+
+        LOGGER.debug("Verifying hasPermission on path: " + absPath + " for: " + StringUtils.join(actions));
+
         if (!this.loggedIn) {
             return false;
         }
