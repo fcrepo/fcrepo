@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * @author Gregory Jansen
  */
 public class FedoraUserSecurityContext implements SecurityContext,
-AdvancedAuthorizationProvider {
+        AdvancedAuthorizationProvider {
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);

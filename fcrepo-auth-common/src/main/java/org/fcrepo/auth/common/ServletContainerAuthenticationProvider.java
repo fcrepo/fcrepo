@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * @author Gregory Jansen
  */
 public final class ServletContainerAuthenticationProvider implements
-AuthenticationProvider {
+        AuthenticationProvider {
 
     private static ServletContainerAuthenticationProvider instance = null;
 
@@ -153,8 +153,7 @@ AuthenticationProvider {
 
         } else {
 
-            sessionAttributes
-            .put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
+            sessionAttributes.put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
                     fad.getEveryonePrincipal());
 
             sessionAttributes.put(
@@ -194,14 +193,5 @@ AuthenticationProvider {
         }
 
         return principals;
-    }
-
-    /**
-     * Get the principal that the injected authorization delegate uses to represent the "EVERYONE" user.
-     *
-     * @return principal representing "EVERYONE"
-     */
-    public Principal getEveryonePrincipal() {
-        return fad.getEveryonePrincipal();
     }
 }

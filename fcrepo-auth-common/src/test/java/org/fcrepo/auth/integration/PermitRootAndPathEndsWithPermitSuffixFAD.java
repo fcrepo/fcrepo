@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @author Gregory Jansen
  */
 public class PermitRootAndPathEndsWithPermitSuffixFAD implements
-FedoraAuthorizationDelegate {
+        FedoraAuthorizationDelegate {
 
     Logger logger = LoggerFactory
             .getLogger(PermitRootAndPathEndsWithPermitSuffixFAD.class);
