@@ -83,8 +83,8 @@ public interface FedoraAuthorizationDelegate {
 
     /**
      * Get an instance of FedoraUserSecurityContext that is compatible with the auth module.
-     * @param userPrincipal
-     * @return
+     * @param userPrincipal the user principal associated with this security context
+     * @return auth module compatible instance of FedoraUserSecurityContext
      */
     FedoraUserSecurityContext getFedoraUserSecurityContext(final Principal userPrincipal);
 
