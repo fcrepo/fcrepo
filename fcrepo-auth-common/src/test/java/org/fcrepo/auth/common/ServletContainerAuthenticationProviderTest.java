@@ -82,6 +82,7 @@ public class ServletContainerAuthenticationProviderTest {
         initMocks(this);
         when(request.getUserPrincipal()).thenReturn(principal);
         when(creds.getRequest()).thenReturn(request);
+        when(fad.getFedoraUserSecurityContext(principal)).thenReturn(new FedoraUserSecurityContext(principal, fad));
         context = new ExecutionContext();
         sessionAttributes = new HashMap<>();
     }
@@ -231,6 +232,7 @@ public class ServletContainerAuthenticationProviderTest {
         provider.setFad(fad);
 
         when(request.getUserPrincipal()).thenReturn(null);
+        when(fad.getFedoraUserSecurityContext(null)).thenReturn(new FedoraUserSecurityContext(null, fad));
 
         evaluateDefaultAuthenticateCase(provider, 1);
     }
