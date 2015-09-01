@@ -43,7 +43,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
 
     protected FedoraAuthorizationDelegate fad = null;
 
-    protected boolean loggedIn = true;
+    private boolean loggedIn = true;
 
     /**
      * Constructs a new security context.
@@ -52,7 +52,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
      *        context
      * @param fad the authorization delegate
      */
-    protected FedoraUserSecurityContext(final Principal userPrincipal,
+    public FedoraUserSecurityContext(final Principal userPrincipal,
             final FedoraAuthorizationDelegate fad) {
         this.fad = fad;
         this.userPrincipal = userPrincipal;
@@ -82,6 +82,15 @@ public class FedoraUserSecurityContext implements SecurityContext,
     @Override
     public final String getUserName() {
         return getEffectiveUserPrincipal().getName();
+    }
+
+    /**
+     * Getter for loggedIn
+     *
+     * @return loggedIn
+     */
+    protected boolean isLoggedIn() {
+        return loggedIn;
     }
 
     /**
