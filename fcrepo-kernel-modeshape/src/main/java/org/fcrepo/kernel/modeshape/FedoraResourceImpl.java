@@ -409,6 +409,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 .map(uncheck(x -> x.getName()))
                 .distinct()
                 .map(nodeTypeNameToURI::apply)
+                .peek(x -> LOGGER.debug("node has rdf:type {}", x))
                 .collect(Collectors.toList());
 
         } catch (final PathNotFoundException e) {

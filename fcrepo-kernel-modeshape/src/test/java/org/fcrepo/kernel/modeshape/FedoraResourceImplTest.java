@@ -200,10 +200,10 @@ public class FedoraResourceImplTest {
                 mockNodeTypePrefix + ":" + mockMixinSuperNodeTypeName);
 
         final List<URI> types = testObj.getTypes();
-        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + "somePrimaryType")));
-        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + "someMixinType")));
-        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + "somePrimarySuperType")));
-        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + "someMixinSuperType")));
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName)));
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockMixinNodeTypeName)));
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockPrimarySuperNodeTypeName)));
+        assertTrue(types.contains(URI.create(REPOSITORY_NAMESPACE + mockMixinSuperNodeTypeName)));
         assertEquals(4, types.size());
     }
 
