@@ -527,18 +527,28 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = serverAddress + pid + "/x/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
         patch.addHeader("Content-Type", "application/sparql-update");
-        patch.setEntity(new StringEntity("INSERT DATA { <" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE +
-                "> \"text/plain\"" + " . <" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }"));
+        patch.setEntity(new StringEntity("DELETE { " +
+                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } " +
+                "WHERE {" +
+                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } ; " +
+                "INSERT {" +
+                "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> \"text/awesome\" ." +
+                "<" + serverAddress + pid + "/x> <" + HAS_ORIGINAL_NAME + "> \"x.txt\" }" +
+                "WHERE {}"));
+
         try (final CloseableHttpResponse response = client.execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
             try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
                 final Node subject = createURI(serverAddress + pid + "/x");
-                assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/plain")));
+                assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/awesome")));
                 assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
                 assertFalse("Should not contain old mime type property", graphStore.contains(ANY,
                         subject, createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY));
             }
         }
+
+        // Ensure binary can be downloaded (test against regression of: https://jira.duraspace.org/browse/FCREPO-1720)
+        assertEquals(OK.getStatusCode(), getStatus(getDSMethod(pid, "x")));
     }
 
     @Test
