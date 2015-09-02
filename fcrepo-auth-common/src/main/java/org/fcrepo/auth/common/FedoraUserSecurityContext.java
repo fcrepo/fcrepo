@@ -144,6 +144,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
     @Override
     public boolean hasPermission(final Context context, final Path absPath,
             final String... actions) {
+        LOGGER.debug("Verifying hasPermission on path: {} for: {}", absPath, String.join(",", actions));
         if (!this.loggedIn) {
             return false;
         }
