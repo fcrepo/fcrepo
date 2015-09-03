@@ -25,7 +25,7 @@
       <persistence passivation="false">
         <file-store shared="false"
                     preload="false"
-                    fetch-state="false"
+                    fetch-state="true"
                     purge="false"
                     path="${fcrepo.ispn.repo.cache:target/FedoraRepository/storage}"/>
 
