@@ -28,7 +28,6 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -82,6 +81,7 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.http.api.exception.ForbiddenResourceModificationException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -259,6 +259,11 @@ public class FedoraLdp extends ContentExposingResource {
         if (nodeService.exists(session, path)) {
             resource = resource();
             response = noContent();
+
+            if (resource.hasType(FEDORA_PAIRTREE)) {
+              throw new ForbiddenResourceModificationException("Resources cannot be manually created " +
+                                                               "under pairtree elements!");
+            }
         } else {
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
@@ -415,7 +420,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
         } else if (resource().hasType(FEDORA_PAIRTREE)) {
-            throw new ClientErrorException("Objects cannot be created under pairtree nodes", FORBIDDEN);
+            throw new ForbiddenResourceModificationException("Objects cannot be created under pairtree nodes");
         }
 
         final MediaType contentType = getSimpleContentType(requestContentType);
