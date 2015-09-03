@@ -67,7 +67,8 @@
  * Some content that can have a checksum
  */
 [fedora:Binary] > fedora:Resource mixin
-  - premis:hasOriginalName (STRING)
+  - ebucore:filename (STRING)
+  - ebucore:hasMimeType (STRING)
   - premis:hasSize (LONG) COPY
   - premis:hasMessageDigest (URI) COPY
 
