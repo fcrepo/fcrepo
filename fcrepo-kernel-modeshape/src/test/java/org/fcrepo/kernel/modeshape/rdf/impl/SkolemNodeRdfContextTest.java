@@ -21,7 +21,6 @@ import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
@@ -51,7 +50,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author cabeer
  * @author ajs6f
  */
-@Ignore
 public class SkolemNodeRdfContextTest {
 
     @Mock
@@ -138,6 +136,7 @@ public class SkolemNodeRdfContextTest {
         when(mockBnodeReferenceProperty.getValue()).thenReturn(mockBnodeValue);
         when(mockBnodeReferenceProperty.getDefinition()).thenReturn(mockPropertyDefinition);
         when(mockBnodeValue.getString()).thenReturn("xxxx");
+        when(mockBnodeValue.getType()).thenReturn(REFERENCE);
         when(mockSession.getNodeByIdentifier("xxxx")).thenReturn(mockBlankNode);
         when(mockBlankNode.isNodeType(FEDORA_SKOLEM)).thenReturn(true);
         when(mockBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
@@ -163,6 +162,7 @@ public class SkolemNodeRdfContextTest {
         when(mockReferenceProperty.getType()).thenReturn(REFERENCE);
         when(mockReferenceProperty.getValue()).thenReturn(mockReferenceValue);
         when(mockReferenceValue.getString()).thenReturn("zzzz");
+        when(mockReferenceValue.getType()).thenReturn(REFERENCE);
         when(mockSession.getNodeByIdentifier("zzzz")).thenReturn(mockOtherNode);
 
         subjects = new DefaultIdentifierTranslator(mockSession);
