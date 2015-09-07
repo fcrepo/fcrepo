@@ -22,7 +22,6 @@ import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -52,6 +51,7 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.api.RdfLexicon.INACCESSIBLE_RESOURCE;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -160,8 +160,8 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         try {
             return getGraphSubject(nodeForValue(session, v));
         } catch (final AccessDeniedException e) {
-            LOGGER.error("Link inaccessible by requesting user: {}, {}", v, session.getUserID());
-            return ResourceFactory.createPlainLiteral("<resource-inaccessible>");
+            LOGGER.info("Link inaccessible by requesting user: {}, {}", v, session.getUserID());
+            return INACCESSIBLE_RESOURCE;
         }
     }
 

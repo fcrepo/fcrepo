@@ -79,7 +79,7 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
 
         final Iterator<Node> nodes = Iterators.transform(new PropertyValueIterator(references), valueToNode::apply);
 
-        return Iterators.filter(Iterators.filter(nodes, Objects::nonNull), isSkolemNode::test);
+        return Iterators.filter(nodes, n -> Objects.nonNull(n) && isSkolemNode.test(n));
     }
 
     private final Function<Value, Node> valueToNode = v -> {
