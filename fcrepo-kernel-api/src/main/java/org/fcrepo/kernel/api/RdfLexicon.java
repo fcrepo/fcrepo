@@ -235,6 +235,8 @@ public final class RdfLexicon {
     // CONTENT
     public static final Resource CONTENT_LOCATION_TYPE =
             createResource(PREMIS_NAMESPACE + "ContentLocation");
+    public static final Resource INACCESSIBLE_RESOURCE =
+            createResource(REPOSITORY_NAMESPACE + "InaccessibleResource");
     public static final Property HAS_CONTENT_LOCATION =
             createProperty(PREMIS_NAMESPACE + "hasContentLocation");
     public static final Property HAS_CONTENT_LOCATION_VALUE =
