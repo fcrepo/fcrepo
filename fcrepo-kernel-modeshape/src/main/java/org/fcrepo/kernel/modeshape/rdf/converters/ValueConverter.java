@@ -22,10 +22,12 @@ import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -155,7 +157,12 @@ public class ValueConverter extends Converter<Value, RDFNode> {
     }
 
     private RDFNode traverseLink(final Value v) throws RepositoryException {
-        return getGraphSubject(nodeForValue(session,v));
+        try {
+            return getGraphSubject(nodeForValue(session, v));
+        } catch (final AccessDeniedException e) {
+            LOGGER.error("Link inaccessible by requesting user: {}, {}", v, session.getUserID());
+            return ResourceFactory.createPlainLiteral("<resource-inaccessible>");
+        }
     }
 
     /**

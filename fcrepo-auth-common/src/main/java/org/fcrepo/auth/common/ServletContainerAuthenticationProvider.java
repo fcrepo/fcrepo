@@ -129,11 +129,14 @@ public final class ServletContainerAuthenticationProvider implements
 
         if (userPrincipal != null &&
                 servletRequest.isUserInRole(FEDORA_ADMIN_ROLE)) {
+            LOGGER.debug("Returning admin user");
+
             return repositoryContext.with(new FedoraAdminSecurityContext(
                     userPrincipal.getName()));
         }
 
         if (userPrincipal != null) {
+            LOGGER.debug("Found user-principal: {}.", userPrincipal.getName());
 
             sessionAttributes.put(
                     FedoraAuthorizationDelegate.FEDORA_SERVLET_REQUEST,
@@ -152,6 +155,7 @@ public final class ServletContainerAuthenticationProvider implements
                     principals);
 
         } else {
+            LOGGER.debug("No user-principal found.");
 
             sessionAttributes.put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
                     fad.getEveryonePrincipal());

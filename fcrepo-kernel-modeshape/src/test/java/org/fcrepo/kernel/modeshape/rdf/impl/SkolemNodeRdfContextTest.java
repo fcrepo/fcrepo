@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
@@ -50,6 +51,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author cabeer
  * @author ajs6f
  */
+@Ignore
 public class SkolemNodeRdfContextTest {
 
     @Mock
