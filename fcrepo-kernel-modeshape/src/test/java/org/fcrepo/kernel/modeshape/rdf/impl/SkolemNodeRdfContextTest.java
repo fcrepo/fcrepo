@@ -136,6 +136,7 @@ public class SkolemNodeRdfContextTest {
         when(mockBnodeReferenceProperty.getValue()).thenReturn(mockBnodeValue);
         when(mockBnodeReferenceProperty.getDefinition()).thenReturn(mockPropertyDefinition);
         when(mockBnodeValue.getString()).thenReturn("xxxx");
+        when(mockBnodeValue.getType()).thenReturn(REFERENCE);
         when(mockSession.getNodeByIdentifier("xxxx")).thenReturn(mockBlankNode);
         when(mockBlankNode.isNodeType(FEDORA_SKOLEM)).thenReturn(true);
         when(mockBlankNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
@@ -161,6 +162,7 @@ public class SkolemNodeRdfContextTest {
         when(mockReferenceProperty.getType()).thenReturn(REFERENCE);
         when(mockReferenceProperty.getValue()).thenReturn(mockReferenceValue);
         when(mockReferenceValue.getString()).thenReturn("zzzz");
+        when(mockReferenceValue.getType()).thenReturn(REFERENCE);
         when(mockSession.getNodeByIdentifier("zzzz")).thenReturn(mockOtherNode);
 
         subjects = new DefaultIdentifierTranslator(mockSession);

@@ -171,7 +171,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
             }
             return session.getNamespaceURI(FCREPO4_TX_ID);
         } catch (final RepositoryException e) {
-            LOGGER.trace("Unable to retrieve current transaction ID from session", e);
+            LOGGER.trace("Unable to retrieve current transaction ID from session: {}", e.getMessage());
             return null;
         }
     }

@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
@@ -50,6 +51,7 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.api.RdfLexicon.INACCESSIBLE_RESOURCE;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -155,7 +157,12 @@ public class ValueConverter extends Converter<Value, RDFNode> {
     }
 
     private RDFNode traverseLink(final Value v) throws RepositoryException {
-        return getGraphSubject(nodeForValue(session,v));
+        try {
+            return getGraphSubject(nodeForValue(session, v));
+        } catch (final AccessDeniedException e) {
+            LOGGER.info("Link inaccessible by requesting user: {}, {}", v, session.getUserID());
+            return INACCESSIBLE_RESOURCE;
+        }
     }
 
     /**
