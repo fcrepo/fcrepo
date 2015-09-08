@@ -545,7 +545,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>${jacoco.agent.it.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=128m ${jacoco.agent.it.arg}</argLine>
         </configuration>
       </plugin>
 
@@ -564,7 +564,7 @@
             This line enables code-coverage. However, it also blows the build's permgen.
             Fix me!
           -->
-          <argLine>-XX:-UseSplitVerifier ${jacoco.agent.unit.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.unit.arg}</argLine>
         </configuration>
       </plugin>
 

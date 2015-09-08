@@ -22,7 +22,7 @@ System Requirements
 ```bash
 $ git clone https://github.com/fcrepo4/fcrepo4.git
 $ cd fcrepo4
-$ MAVEN_OPTS="-Xmx1024m" mvn install
+$ MAVEN_OPTS="-Xmx1024m -XX:MaxMetaspaceSize=1024m" mvn install
 $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
 ```
@@ -45,7 +45,7 @@ If you have problems building fcrepo4 with the above settings, you may need to a
 options to the JaCoCo code coverage plugin:
 
 ```bash
-$ MAVEN_OPTS="-Xmx1024m" mvn -Djacoco.agent.it.arg="-Xmx1024m" -Djacoco.agent.ut.arg="-Xmx1024m"  clean install
+$ MAVEN_OPTS="-Xmx1024m" mvn -Djacoco.agent.it.arg="-XX:MaxMetaspaceSize=1024m -Xmx1024m" -Djacoco.agent.ut.arg="-XX:MaxMetaspaceSize=1024m -Xmx1024m"  clean install
 ```
 
 
