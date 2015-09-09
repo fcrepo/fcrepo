@@ -37,6 +37,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);
 
+    // Defined here because FedoraJcrTypes is in fcrepo-http-api, which would create a cyclic dependency
+    protected static final String JCR_CONTENT = "jcr:content";
+
     protected Principal userPrincipal = null;
 
     protected FedoraAuthorizationDelegate fad = null;
@@ -152,9 +155,18 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return actions.length == 1 && "read".equals(actions[0]);
         }
 
+        // Trim jcr:content from paths, if necessary
+        final Path path;
+        if (null != absPath.getLastSegment() && absPath.getLastSegment().getString().equals(JCR_CONTENT)) {
+            path = absPath.subpath(0, absPath.size() - 1);
+            LOGGER.debug("..new path to be verified: {}", path);
+        } else {
+            path = absPath;
+        }
+
         // delegate
         if (fad != null) {
-            return fad.hasPermission(context.getSession(), absPath, actions);
+            return fad.hasPermission(context.getSession(), path, actions);
         }
         return false;
     }
