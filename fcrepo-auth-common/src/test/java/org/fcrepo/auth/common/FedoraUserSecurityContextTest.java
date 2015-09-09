@@ -15,7 +15,7 @@
  */
 package org.fcrepo.auth.common;
 
-import static org.fcrepo.auth.common.FedoraUserSecurityContext.JCR_CONTENT;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
