@@ -37,9 +37,9 @@ public class FedoraUserSecurityContext implements SecurityContext,
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);
 
-    protected Principal userPrincipal = null;
+    private Principal userPrincipal = null;
 
-    protected FedoraAuthorizationDelegate fad = null;
+    private FedoraAuthorizationDelegate fad = null;
 
     private boolean loggedIn = true;
 
@@ -50,7 +50,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
      *        context
      * @param fad the authorization delegate
      */
-    public FedoraUserSecurityContext(final Principal userPrincipal,
+    protected FedoraUserSecurityContext(final Principal userPrincipal,
             final FedoraAuthorizationDelegate fad) {
         this.fad = fad;
         this.userPrincipal = userPrincipal;
@@ -83,21 +83,12 @@ public class FedoraUserSecurityContext implements SecurityContext,
     }
 
     /**
-     * Getter for loggedIn
-     *
-     * @return loggedIn
-     */
-    protected boolean isLoggedIn() {
-        return loggedIn;
-    }
-
-    /**
      * {@inheritDoc}
      *
      * @see SecurityContext#hasRole(String)
      */
     @Override
-    public boolean hasRole(final String roleName) {
+    public final boolean hasRole(final String roleName) {
         // Under this custom PEP regime, all users have modeshape read and write
         // roles.
         if ("read".equals(roleName)) {
@@ -142,7 +133,6 @@ public class FedoraUserSecurityContext implements SecurityContext,
     @Override
     public boolean hasPermission(final Context context, final Path absPath,
             final String... actions) {
-        LOGGER.debug("Verifying hasPermission on path: {} for: {}", absPath, String.join(",", actions));
         if (!this.loggedIn) {
             return false;
         }

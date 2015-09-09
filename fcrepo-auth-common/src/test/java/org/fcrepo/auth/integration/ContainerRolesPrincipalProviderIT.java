@@ -15,28 +15,13 @@
  */
 package org.fcrepo.auth.integration;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.security.Principal;
-
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.security.Privilege;
-import javax.servlet.http.HttpServletRequest;
+import org.apache.http.auth.BasicUserPrincipal;
 
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
-import org.fcrepo.auth.common.FedoraUserSecurityContext;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
-import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
+import org.fcrepo.kernel.api.services.ContainerService;
 
-import org.apache.http.auth.BasicUserPrincipal;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +32,19 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.security.Privilege;
+import javax.servlet.http.HttpServletRequest;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author osmandin
@@ -82,10 +80,8 @@ public class ContainerRolesPrincipalProviderIT {
                 request.isUserInRole(Mockito
                         .eq(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE)))
                 .thenReturn(true);
-        final FedoraUserSecurityContext context = new FedoraUserSecurityContext(request.getUserPrincipal(), fad);
         Mockito.reset(fad);
         when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true);
-        when(fad.getFedoraUserSecurityContext(any(Principal.class))).thenReturn(context);
 
         final ServletCredentials credentials =
                 new ServletCredentials(request);
