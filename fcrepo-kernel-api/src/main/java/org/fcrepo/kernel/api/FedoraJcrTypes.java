@@ -50,6 +50,8 @@ public interface FedoraJcrTypes {
 
     String JCR_LASTMODIFIED = "jcr:lastModified";
 
+    String JCR_CONTENT = "jcr:content";
+
     String JCR_CREATED = "jcr:created";
 
     String JCR_CREATEDBY = "jcr:createdBy";

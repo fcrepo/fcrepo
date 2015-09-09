@@ -15,6 +15,8 @@
  */
 package org.fcrepo.auth.common;
 
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
+
 import java.security.Principal;
 
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
@@ -36,9 +38,6 @@ public class FedoraUserSecurityContext implements SecurityContext,
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(FedoraUserSecurityContext.class);
-
-    // Defined here because FedoraJcrTypes is in fcrepo-http-api, which would create a cyclic dependency
-    protected static final String JCR_CONTENT = "jcr:content";
 
     protected Principal userPrincipal = null;
 
