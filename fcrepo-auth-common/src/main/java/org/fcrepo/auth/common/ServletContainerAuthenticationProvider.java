@@ -166,7 +166,8 @@ public final class ServletContainerAuthenticationProvider implements
 
         }
 
-        return repositoryContext.with(fad.getFedoraUserSecurityContext(userPrincipal));
+        return repositoryContext.with(new FedoraUserSecurityContext(
+                userPrincipal, fad));
     }
 
     /**

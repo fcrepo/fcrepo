@@ -20,8 +20,6 @@ import java.security.Principal;
 import javax.jcr.Session;
 
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
-import org.fcrepo.auth.common.FedoraUserSecurityContext;
-
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,11 +94,6 @@ public class PermitRootAndPathEndsWithPermitSuffixFAD implements
     @Override
     public Principal getEveryonePrincipal() {
         return EVERYONE;
-    }
-
-    @Override
-    public FedoraUserSecurityContext getFedoraUserSecurityContext(final Principal userPrincipal) {
-        return new FedoraUserSecurityContext(userPrincipal, this);
     }
 
 }
