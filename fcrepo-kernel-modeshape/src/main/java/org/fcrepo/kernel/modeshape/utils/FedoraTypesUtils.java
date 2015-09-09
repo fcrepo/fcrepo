@@ -146,6 +146,8 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     public static Predicate<Node> isExternalNode = uncheck(n ->  {
         if (NodeKey.isValidRandomIdentifier(n.getIdentifier())) {
             return false;
+        } else if (n.getPrimaryNodeType().getName().equals(ROOT)) {
+            return false;
         } else {
             final NodeKey key = new NodeKey(n.getIdentifier());
             final String source = NodeKey.keyForSourceName(

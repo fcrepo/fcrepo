@@ -54,7 +54,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         if (resource.getNode().hasNodes()) {
-            LOGGER.trace("Found children of this resource.");
+            LOGGER.trace("Found children of this resource: {}", resource.getPath());
             final Iterator<FedoraResource> niceChildren = resource().getChildren();
             concat(Iterators.transform(niceChildren, child2triple::apply));
         }

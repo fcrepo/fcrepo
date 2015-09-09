@@ -59,6 +59,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
+import org.fcrepo.kernel.api.FedoraJcrTypes;
 import org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
@@ -349,6 +350,8 @@ public class FedoraTypesUtilsTest {
         // sha1 of "BinaryStore" is 952357dbe6acf9e88a6d0164807a79a40993003f
         // so sourceKey is 952357d
         when(mockNode.getIdentifier()).thenReturn("952357ddefault/some/path");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn("junk");
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockJcrRepository);
         when(mockJcrRepository.getConfiguration()).thenReturn(mockConfig);
@@ -361,10 +364,21 @@ public class FedoraTypesUtilsTest {
         // sha1 of "BinaryStore" is 952357dbe6acf9e88a6d0164807a79a40993003f
         // so sourceKey is 952357d which doesn't match 07f66ed
         when(mockNode.getIdentifier()).thenReturn("07f66eddefault/some/path");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn("junk");
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockJcrRepository);
         when(mockJcrRepository.getConfiguration()).thenReturn(mockConfig);
         when(mockConfig.getStoreName()).thenReturn("BinaryStore");
         assertTrue(isExternalNode.test(mockNode));
     }
+
+    @Test
+    public void testIsExternalNode4() throws RepositoryException {
+        when(mockNode.getIdentifier()).thenReturn("junk");
+        when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn(FedoraJcrTypes.ROOT);
+        assertFalse(isExternalNode.test(mockNode));
+    }
+
 }

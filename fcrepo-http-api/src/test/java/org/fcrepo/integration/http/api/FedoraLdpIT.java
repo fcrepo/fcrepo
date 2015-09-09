@@ -1951,4 +1951,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "OggS");
     }
 
+    @Test
+    public void testPutReferenceRoot() throws Exception {
+        final HttpPut httpPut = putObjMethod(getRandomUniqueId());
+        httpPut.addHeader("Content-Type", "text/turtle");
+        httpPut.setEntity(new StringEntity("@prefix acl: <http://www.w3.org/ns/auth/acl#> . " +
+                "<> a acl:Authorization ; " +
+                "acl:agent \"smith123\" ; " +
+                "acl:mode acl:Read ;" +
+                "acl:accessTo <" + serverAddress + "> ."));
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
 }
