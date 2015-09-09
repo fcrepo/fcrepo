@@ -15,6 +15,8 @@
  */
 package org.fcrepo.auth.common;
 
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
+
 import java.security.Principal;
 
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
@@ -152,9 +154,18 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return actions.length == 1 && "read".equals(actions[0]);
         }
 
+        // Trim jcr:content from paths, if necessary
+        final Path path;
+        if (null != absPath.getLastSegment() && absPath.getLastSegment().getString().equals(JCR_CONTENT)) {
+            path = absPath.subpath(0, absPath.size() - 1);
+            LOGGER.debug("..new path to be verified: {}", path);
+        } else {
+            path = absPath;
+        }
+
         // delegate
         if (fad != null) {
-            return fad.hasPermission(context.getSession(), absPath, actions);
+            return fad.hasPermission(context.getSession(), path, actions);
         }
         return false;
     }

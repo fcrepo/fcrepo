@@ -15,6 +15,7 @@
  */
 package org.fcrepo.auth.common;
 
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -22,7 +23,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.security.Principal;
 
@@ -31,7 +31,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider.Context;
 import org.modeshape.jcr.value.Path;
 
@@ -39,6 +41,7 @@ import org.modeshape.jcr.value.Path;
  * @author bbpennel
  * @since Feb 12, 2014
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraUserSecurityContextTest {
 
     @Mock
@@ -55,7 +58,6 @@ public class FedoraUserSecurityContextTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         when(request.getUserPrincipal()).thenReturn(principal);
         when(fad.getEveryonePrincipal()).thenReturn(everyone);
         when(everyone.getName()).thenReturn("EVERYONE");
@@ -74,6 +76,7 @@ public class FedoraUserSecurityContextTest {
         assertFalse(context.isAnonymous());
     }
 
+    @Test
     public void testIsAnonymous() {
         final FedoraUserSecurityContext context =
                 new FedoraUserSecurityContext(null, fad);
@@ -157,6 +160,9 @@ public class FedoraUserSecurityContextTest {
         when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true);
 
         final Path path = mock(Path.class);
+        final Path.Segment segment = mock(Path.Segment.class);
+        when(path.getLastSegment()).thenReturn(segment);
+        when(segment.getString()).thenReturn("junk");
         assertTrue(context.hasPermission(mock(Context.class), path, new String[] {"read"}));
         verify(fad).hasPermission(any(Session.class), any(Path.class), any(String[].class));
 
@@ -164,4 +170,21 @@ public class FedoraUserSecurityContextTest {
         assertFalse("Granted permission when the context was logged out",
                 context.hasPermission(null, path, new String[] {"read"}));
     }
+
+    @Test
+    public void testHasPermissionBinary() {
+        final FedoraUserSecurityContext context = new FedoraUserSecurityContext(principal, fad);
+
+        final Path path = mock(Path.class);
+        final Path.Segment segment = mock(Path.Segment.class);
+        when(path.getLastSegment()).thenReturn(segment);
+        when(segment.getString()).thenReturn(JCR_CONTENT);
+        when(path.size()).thenReturn(2);
+        when(path.subpath(0, 1)).thenReturn(path);
+
+        when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true);
+
+        assertTrue(context.hasPermission(mock(Context.class), path, "read"));
+    }
+
 }
