@@ -62,6 +62,14 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
 
     private static final String FEDERATION_ROOT = "/federation-root";
     private static final String FILE_PATH = "/federation-root/file";
+    private static final Name KEY1 = new BasicName("info", "one");
+    private static final Name KEY2 = new BasicName("info", "two");
+    private static final Name KEY3 = new BasicName("info", "three");
+    private static final Name KEY4 = new BasicName("info", "four");
+    private static final Name LANG_PROP = new BasicName("lang", "de");
+    private static final Property PROP1 = new BasicSingleValueProperty(LANG_PROP, "eins");
+    private static final Property PROP2 = new BasicSingleValueProperty(LANG_PROP, "zwei");
+    private static final Property PROP3 = new BasicSingleValueProperty(LANG_PROP, "drei");
 
     @Before
     public void setUp() {
@@ -116,19 +124,10 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
         assertFalse(store.contains("/file"));
         assertTrue(store.getProperties("/file").isEmpty());
 
-        final Name langProp = new BasicName("lang", "de");
-        final Name key1 = new BasicName("info", "one");
-        final Name key2 = new BasicName("info", "two");
-        final Name key3 = new BasicName("info", "three");
-        final Name key4 = new BasicName("info", "four");
-        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
-        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
-        final Property prop3 = new BasicSingleValueProperty(langProp, "drei");
-
-        properties.put(key1, prop1);
-        properties.put(key2, prop2);
-        properties.put(key3, prop3);
-        properties.put(key4, null);
+        properties.put(KEY1, PROP1);
+        properties.put(KEY2, PROP2);
+        properties.put(KEY3, PROP3);
+        properties.put(KEY4, null);
 
         store.storeProperties("/file", properties);
         assertTrue(store.contains("/file"));
@@ -159,19 +158,10 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
 
         assertTrue(store.contains("/file"));
 
-        final Name langProp = new BasicName("lang", "de");
-        final Name key1 = new BasicName("info", "one");
-        final Name key2 = new BasicName("info", "two");
-        final Name key3 = new BasicName("info", "three");
-        final Name key4 = new BasicName("info", "four");
-        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
-        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
-        final Property prop3 = new BasicSingleValueProperty(langProp, "drei");
-
-        properties.put(key1, prop1);
-        properties.put(key2, prop2);
-        properties.put(key3, prop3);
-        properties.put(key4, null);
+        properties.put(KEY1, PROP1);
+        properties.put(KEY2, PROP2);
+        properties.put(KEY3, PROP3);
+        properties.put(KEY4, null);
 
         store.storeProperties("/file", properties);
 
@@ -200,16 +190,9 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
         assertFalse(store.contains("/file"));
         assertTrue(store.getProperties("/file").isEmpty());
 
-        final Name langProp = new BasicName("lang", "de");
-        final Name key1 = new BasicName("info", "one");
-        final Name key2 = new BasicName("info", "two");
-        final Name key3 = new BasicName("info", "three");
-        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
-        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
-
-        properties.put(key1, prop1);
-        properties.put(key2, prop2);
-        properties.put(key3, null);
+        properties.put(KEY1, PROP1);
+        properties.put(KEY2, PROP2);
+        properties.put(KEY3, null);
 
         store.updateProperties("/file", properties);
 
@@ -239,16 +222,9 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
 
         final Map<Name, Property> properties = new HashMap<>();
 
-        final Name langProp = new BasicName("lang", "de");
-        final Name key1 = new BasicName("info", "one");
-        final Name key2 = new BasicName("info", "two");
-        final Name key3 = new BasicName("info", "three");
-        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
-        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
-
-        properties.put(key1, prop1);
-        properties.put(key2, prop2);
-        properties.put(key3, null);
+        properties.put(KEY1, PROP1);
+        properties.put(KEY2, PROP2);
+        properties.put(KEY3, null);
 
         store.updateProperties("/file", properties);
 
@@ -271,17 +247,9 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
 
         final Map<Name, Property> properties = new HashMap<>();
 
-        final Name langProp = new BasicName("lang", "de");
-        final Name key1 = new BasicName("info", "one");
-        final Name key2 = new BasicName("info", "two");
-        final Name key3 = new BasicName("info", "three");
-        final Property prop1 = new BasicSingleValueProperty(langProp, "eins");
-        final Property prop2 = new BasicSingleValueProperty(langProp, "zwei");
-        final Property prop3 = new BasicSingleValueProperty(langProp, "drei");
-
-        properties.put(key1, prop1);
-        properties.put(key2, prop2);
-        properties.put(key3, prop3);
+        properties.put(KEY1, PROP1);
+        properties.put(KEY2, PROP2);
+        properties.put(KEY3, PROP3);
 
         store.updateProperties("/file", properties);
         assertTrue(store.contains("/file"));
