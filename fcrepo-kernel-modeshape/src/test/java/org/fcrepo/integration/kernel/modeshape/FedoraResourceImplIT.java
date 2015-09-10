@@ -627,6 +627,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testDeleteObjectWithInboundReferences() throws RepositoryException {
 
         final String pid = getRandomPid();
+        containerService.findOrCreate(session, "/" + pid);
         final FedoraResource resourceA = containerService.findOrCreate(session, "/" + pid + "/a");
         final FedoraResource resourceB = containerService.findOrCreate(session, "/" + pid + "/b");
 

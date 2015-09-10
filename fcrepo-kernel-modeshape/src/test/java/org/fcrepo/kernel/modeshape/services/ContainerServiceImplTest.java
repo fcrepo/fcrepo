@@ -28,12 +28,14 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.exception.ForbiddenResourceModificationException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.modeshape.jcr.api.JcrTools;
 
 /**
@@ -75,6 +77,8 @@ public class ContainerServiceImplTest implements FedoraJcrTypes {
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNode.getParent()).thenReturn(mockRoot);
         when(mockRoot.isNew()).thenReturn(false);
+        when(mockRoot.getPath()).thenReturn("/");
+        when(mockRoot.isNodeType(FEDORA_PAIRTREE)).thenReturn(false);
     }
 
     @Test
@@ -135,8 +139,19 @@ public class ContainerServiceImplTest implements FedoraJcrTypes {
         when(mockNode.isNew()).thenReturn(true);
 
         testObj.findOrCreate(mockSession, "/foo/bar");
-
     }
 
+    @Test (expected = ForbiddenResourceModificationException.class)
+    public void testCreateUnderPairtree() throws Exception {
+        final String containerPath = "/foo";
+        final String testPath = "/foo/bar";
+
+        final Node mockContainer = Mockito.mock(Node.class);
+        when(mockSession.nodeExists(containerPath)).thenReturn(true);
+        when(mockSession.getNode(containerPath)).thenReturn(mockContainer);
+        when(mockContainer.getPath()).thenReturn(containerPath);
+        when(mockContainer.isNodeType(FEDORA_PAIRTREE)).thenReturn(true);
+        testObj.findOrCreate(mockSession, testPath);
+    }
 
 }

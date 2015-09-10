@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.http.api.exception;
-import javax.ws.rs.ForbiddenException;
+package org.fcrepo.kernel.api.exception;
 
 /**
- * An extension of {@link javax.ws.rs.ForbiddenException} that may be thrown when attempting a
- * forbidden or unsupported operation on a resource.
+ * An exception that may be thrown when attempting a forbidden or unsupported operation on a resource.
  *
  * @author jrgriffiniii
+ * @since 2015-09-10
  */
-public class ForbiddenResourceModificationException extends ForbiddenException {
+public class ForbiddenResourceModificationException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
