@@ -78,10 +78,10 @@ import javax.ws.rs.core.UriBuilderException;
 
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.kernel.api.exception.ForbiddenResourceModificationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.http.api.exception.ForbiddenResourceModificationException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -260,10 +260,6 @@ public class FedoraLdp extends ContentExposingResource {
             resource = resource();
             response = noContent();
 
-            if (resource.hasType(FEDORA_PAIRTREE)) {
-              throw new ForbiddenResourceModificationException("Resources cannot be manually created " +
-                                                               "under pairtree elements!");
-            }
         } else {
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;

@@ -15,17 +15,20 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import org.fcrepo.kernel.api.exception.ForbiddenResourceModificationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -59,6 +62,8 @@ public class BinaryServiceImplTest {
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockNode);
         when(mockDsNode.getParent()).thenReturn(mockRoot);
         when(mockRoot.isNew()).thenReturn(false);
+        when(mockRoot.getPath()).thenReturn("/");
+        when(mockRoot.isNodeType(FEDORA_PAIRTREE)).thenReturn(false);
     }
 
     @Test
@@ -102,6 +107,19 @@ public class BinaryServiceImplTest {
     public void testAsBinaryWithNonbinary() throws Exception {
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(false);
         testObj.cast(mockNode);
+    }
+
+    @Test (expected = ForbiddenResourceModificationException.class)
+    public void testCreateUnderPairtree() throws Exception {
+        final String containerPath = "/foo";
+        final String testPath = "/foo/bar";
+
+        final Node mockContainer = Mockito.mock(Node.class);
+        when(mockSession.nodeExists(containerPath)).thenReturn(true);
+        when(mockSession.getNode(containerPath)).thenReturn(mockContainer);
+        when(mockContainer.getPath()).thenReturn(containerPath);
+        when(mockContainer.isNodeType(FEDORA_PAIRTREE)).thenReturn(true);
+        testObj.findOrCreate(mockSession, testPath);
     }
 
 }

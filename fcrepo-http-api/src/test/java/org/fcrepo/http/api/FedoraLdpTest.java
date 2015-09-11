@@ -45,6 +45,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -608,6 +609,7 @@ public class FedoraLdpTest {
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
         when(mockContainerService.findOrCreate(mockSession, "/some/path")).thenReturn(mockContainer);
+        when(mockSession.getNode(anyString())).thenReturn(mockNode);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null, null);
 
@@ -628,6 +630,7 @@ public class FedoraLdpTest {
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
         when(mockContainerService.findOrCreate(mockSession, "/some/path")).thenReturn(mockContainer);
+        when(mockSession.getNode(anyString())).thenReturn(mockNode);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c ."), null, null, null, null);
@@ -643,6 +646,7 @@ public class FedoraLdpTest {
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
         when(mockBinaryService.findOrCreate(mockSession, "/some/path")).thenReturn(mockBinary);
+        when(mockSession.getNode(anyString())).thenReturn(mockNode);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
                 toInputStream("xyz"), null, null, null, null);

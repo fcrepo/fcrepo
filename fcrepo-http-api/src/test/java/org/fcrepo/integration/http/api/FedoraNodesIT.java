@@ -73,7 +73,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
     public void testCopyInvalidDest() throws IOException {
         final String location1 = getLocation(postObjMethod());
         final HttpCopy request = new HttpCopy(location1);
-        request.addHeader("Destination", serverAddress + "non/existent/path");
+        final String pid = getRandomUniqueId();
+        request.addHeader("Destination", serverAddress + pid + "/non/existent/path");
         assertEquals(CONFLICT.getStatusCode(), getStatus(request));
     }
 
@@ -122,7 +123,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
     @Test
     public void testMoveInvalidDest() throws IOException {
         final HttpMove request = new HttpMove(getLocation(postObjMethod()));
-        request.addHeader("Destination", serverAddress + "non/existent/destination");
+        final String pid = getRandomUniqueId();
+        request.addHeader("Destination", serverAddress + pid + "/non/existent/destination");
         assertEquals(CONFLICT.getStatusCode(), getStatus(request));
     }
 
