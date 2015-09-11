@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import org.fcrepo.kernel.api.exception.ForbiddenResourceModificationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
@@ -47,6 +48,11 @@ public class AbstractService {
             throw new TombstoneException(new TombstoneImpl(preexistingNode));
         }
 
+        // Nodes should not be created as children of existing PairTree resources
+        if (isImmediateParent(preexistingNode.getPath(), path) && preexistingNode.isNodeType(FEDORA_PAIRTREE)) {
+            throw new ForbiddenResourceModificationException("Resources cannot be created under pairtree elements!");
+        }
+
         final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, finalNodeType);
 
         if (node.isNew()) {
@@ -54,6 +60,18 @@ public class AbstractService {
         }
 
         return node;
+    }
+
+    /**
+     * Returns true if arg 'possibleParent' path matches arg 'path' minus the last path segment.
+     *
+     * @param possibleParent of the arg 'path'
+     * @param path           whose parent path will be compared to the arg 'possibleParent'
+     * @return true if 'possibleParent' equals 'path' minus the last path segment
+     */
+    private boolean isImmediateParent(final String possibleParent, final String path) {
+        final String possibleChild = path.startsWith("/") ? path : "/" + path;
+        return possibleParent.equals(possibleChild.substring(0, possibleChild.lastIndexOf('/')));
     }
 
     protected Node findNode(final Session session, final String path) {

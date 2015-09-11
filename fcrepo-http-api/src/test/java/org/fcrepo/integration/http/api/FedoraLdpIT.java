@@ -716,6 +716,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 BAD_REQUEST.getStatusCode(), getStatus(put));
     }
 
+    /**
+     * Ensure that graphs cannot be created or replaced for pairtree child resources
+     */
+    @Test
+    public void testPutOnPairtree() throws IOException {
+        final String objName = getLocation(postObjMethod());
+        final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
+
+        final HttpPut put = putObjMethod(pairtreeName + "/test");
+        assertEquals("Created a resource under a pairtree node!", FORBIDDEN.getStatusCode(), getStatus(put));
+    }
+
     @Test
     public void testIngest() throws IOException {
         final String id = getRandomUniqueId();
@@ -1110,6 +1122,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String pid1 = uuid + "/parent";
         final String pid2 = uuid + "/child1";
         final String pid3 = uuid + "/child2";
+        createObjectAndClose(uuid);
         createObjectAndClose(pid1);
         createObjectAndClose(pid2);
         createObjectAndClose(pid3);
