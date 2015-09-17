@@ -32,7 +32,7 @@
     <htmlunit.version>2.15</htmlunit.version>
     <httpclient.version>4.3.3</httpclient.version>
     <httpcomponents.version>4.3.2</httpcomponents.version>
-    <infinispan.version>7.2.3.Final</infinispan.version>
+    <infinispan.version>7.2.4.Final</infinispan.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
     <javaee-api.version>7.0</javaee-api.version>
     <jackson2.version>2.3.2</jackson2.version>
@@ -40,7 +40,7 @@
     <jcr.version>2.0</jcr.version>
     <jena.version>2.13.0</jena.version>
     <jersey.version>2.13</jersey.version>
-    <jgroups.version>3.5.0.Final</jgroups.version>
+    <jgroups.version>3.6.2.Final</jgroups.version>
     <jsonld.version>0.5.1</jsonld.version>
     <logback.version>1.1.2</logback.version>
     <metrics.version>3.1.0</metrics.version>
