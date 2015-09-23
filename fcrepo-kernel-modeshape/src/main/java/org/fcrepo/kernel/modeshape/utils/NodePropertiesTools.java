@@ -17,6 +17,7 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isExternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
@@ -202,22 +203,18 @@ public class NodePropertiesTools {
 
             if (property.isMultiple()) {
                 final AtomicBoolean remove = new AtomicBoolean();
-                final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(v -> {
-                    String strVal = "";
-                    try {
-                        strVal = v.getString();
+                final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(uncheck(v -> {
+                    final String strVal = v.getString();
 
-                        if (strVal.equals(valueToRemove.getString())) {
-                            remove.set(true);
-                            return false;
-                        }
-
-                    } catch (RepositoryException e) {
-                        LOGGER.warn("Failed to remove value from property '{}'. Unable to compare value (type: {}) " +
-                            "'{}' to requested value '{}'", propertyName, v.getType(), strVal, valueToRemove);
+                    if (strVal.equals(valueToRemove.getString())) {
+                        remove.set(true);
+                        return false;
                     }
+
+                    LOGGER.warn("Failed to find value for property '{}'. Unable to compare value (type: {}) " +
+                       "'{}' to requested value '{}'", propertyName, v.getType(), strVal, valueToRemove);
                     return true;
-                }).toArray(Value[]::new);
+                })).toArray(Value[]::new);
 
                 // we only need to update the property if we did anything.
                 if (remove.get()) {
@@ -229,7 +226,7 @@ public class NodePropertiesTools {
                         property.setValue(newValues);
                     }
                 } else {
-                    LOGGER.info("Value not removed from property name '{}' (value '{}')", propertyName,
+                    LOGGER.warn("Value not removed from property name '{}' (value '{}')", propertyName,
                             valueToRemove);
                 }
 
@@ -243,7 +240,7 @@ public class NodePropertiesTools {
                         LOGGER.debug("single value: Removing value from property {}", propertyName);
                         property.remove();
                     } else {
-                        LOGGER.info("Value not removed from property name '{}' (value '{}')", propertyName,
+                        LOGGER.debug("Value not removed from property name '{}' (value '{}')", propertyName,
                                 valueToRemove);
                     }
                 } catch (RepositoryException e) {
