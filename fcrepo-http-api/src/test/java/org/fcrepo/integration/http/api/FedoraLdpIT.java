@@ -1965,5 +1965,43 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
     }
+    @Test
+    public void testDeleteLargeLiteralStoredAsBinary() throws IOException {
 
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+
+        final Node DC_TITLE = DC_11.title.asNode();
+        final String location = serverAddress + pid;
+        final HttpPatch patch = new HttpPatch(location);
+        final HttpPatch delPatch = new HttpPatch(location);
+
+        final String longLiteral =   // minimumBinaryInByteSize is currently 40 bytes
+                "01234567890123456789012345678901234567890123456789" +
+                        "01234567890123456789012345678901234567890123456789" +
+                        "01234567890123456789012345678901234567890123456789" +
+                        "01234567890123456789012345678901234567890123456789";
+
+        LOGGER.info("BINARY LITERAL TEST");
+
+        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT { <> <" + DC_TITLE + "> \"\"\"" + longLiteral + "\"\"\" } WHERE {}"));
+
+        assertEquals("Unable to add property value", NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        delPatch.addHeader("Content-Type", "application/sparql-update");
+        delPatch.setEntity(new StringEntity(
+                "DELETE WHERE { <> <" + DC_TITLE + "> \"\"\"" + longLiteral + "\"\"\"}"));
+
+        // delete that triple, or at least try to.
+        assertEquals("Unable to complete delete property HTTP request", NO_CONTENT.getStatusCode(),
+                getStatus(delPatch));
+
+        // now test if property exists anymore (it shouldn't).
+        try (final CloseableGraphStore graph = getGraphStore(getObjMethod(pid))) {
+            assertFalse("Found the literal we tried to delete!", graph.contains(ANY,createURI(location), DC_TITLE,
+                    createLiteral(longLiteral)));
+        }
+    }
 }
