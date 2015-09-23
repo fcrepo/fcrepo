@@ -194,7 +194,7 @@ public class NodePropertiesTools {
      */
     public void removeNodeProperty(final Node node, final String propertyName, final Value valueToRemove)
         throws RepositoryException {
-
+        LOGGER.debug("Request to remove {}", valueToRemove);
         // if the property doesn't exist, we don't need to worry about it.
         if (node.hasProperty(propertyName)) {
 
@@ -203,9 +203,18 @@ public class NodePropertiesTools {
             if (property.isMultiple()) {
                 final AtomicBoolean remove = new AtomicBoolean();
                 final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(v -> {
-                    if (v.equals(valueToRemove)) {
-                        remove.set(true);
-                        return false;
+                    String strVal = "";
+                    try {
+                        strVal = v.getString();
+
+                        if (strVal.equals(valueToRemove.getString())) {
+                            remove.set(true);
+                            return false;
+                        }
+
+                    } catch (RepositoryException e) {
+                        LOGGER.warn("Failed to remove value from property '{}'. Unable to compare value (type: {}) " +
+                            "'{}' to requested value '{}'", propertyName, v.getType(), strVal, valueToRemove);
                     }
                     return true;
                 }).toArray(Value[]::new);
@@ -213,18 +222,34 @@ public class NodePropertiesTools {
                 // we only need to update the property if we did anything.
                 if (remove.get()) {
                     if (newValues.length == 0) {
-                        LOGGER.debug("Removing property {}", propertyName);
+                        LOGGER.debug("Removing property '{}'", propertyName);
                         property.remove();
                     } else {
-                        LOGGER.debug("Removing value {} from property {}", valueToRemove, propertyName);
+                        LOGGER.debug("Removing value '{}' from property '{}'", valueToRemove, propertyName);
                         property.setValue(newValues);
                     }
+                } else {
+                    LOGGER.info("Value not removed from property name '{}' (value '{}')", propertyName,
+                            valueToRemove);
                 }
 
             } else {
-                if (property.getValue().equals(valueToRemove)) {
-                    LOGGER.debug("Removing value from property {}", propertyName);
-                    property.remove();
+
+                String strVal = "";
+                try {
+                    strVal = property.getValue().getString();
+
+                    if (property.getValue().equals(valueToRemove)) {
+                        LOGGER.debug("single value: Removing value from property {}", propertyName);
+                        property.remove();
+                    } else {
+                        LOGGER.info("Value not removed from property name '{}' (value '{}')", propertyName,
+                                valueToRemove);
+                    }
+                } catch (RepositoryException e) {
+                    LOGGER.warn("Failed to remove value from property '{}'. Unable to compare value '{}' " +
+                        "(type: {}) '{}' to requested value {}", propertyName, property.getValue().getType(),
+                        strVal, valueToRemove);
                 }
             }
         }
