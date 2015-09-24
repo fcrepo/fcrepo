@@ -17,7 +17,6 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.kernel.RdfLexicon.CONSTRAINED_BY;
 
 import javax.ws.rs.core.Link;
@@ -40,9 +39,6 @@ public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdf
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
         final String msg = e.getMessage();
 
-        if (msg.contains("server-managed predicate")) {
-            return status(CONFLICT).entity(msg).links(link).build();
-        }
         if (msg.matches(".*org.*Exception: .*")) {
             return status(BAD_REQUEST).entity(msg.replaceAll("org.*Exception: ", "")).links(link).build();
         }
