@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.FIXITY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.api.RdfLexicon.EVENT_OUTCOME_INFORMATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CONTENT_LOCATION;
@@ -75,6 +76,7 @@ public class FixityRdfContext extends NodeRdfContext {
 
             b.add(create(subject(), HAS_FIXITY_RESULT.asNode(), resultSubject));
             b.add(create(resultSubject, type.asNode(), FIXITY_TYPE.asNode()));
+            b.add(create(resultSubject, type.asNode(), EVENT_OUTCOME_INFORMATION.asNode()));
             final String storeIdentifier = blob.getStoreIdentifier();
             final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier).asNode();
 
