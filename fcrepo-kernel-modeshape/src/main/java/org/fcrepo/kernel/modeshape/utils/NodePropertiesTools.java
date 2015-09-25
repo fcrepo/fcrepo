@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.StringUtils;
+
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.PropertyType;
@@ -200,19 +202,21 @@ public class NodePropertiesTools {
         if (node.hasProperty(propertyName)) {
 
             final Property property = node.getProperty(propertyName);
+            final String strValueToRemove = valueToRemove.getString();
 
             if (property.isMultiple()) {
                 final AtomicBoolean remove = new AtomicBoolean();
                 final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(uncheck(v -> {
                     final String strVal = v.getString();
 
-                    if (strVal.equals(valueToRemove.getString())) {
+                    LOGGER.debug("v is '{}', valueToRemove is '{}'", v, strValueToRemove );
+                    if (strVal.equals(strValueToRemove)) {
                         remove.set(true);
                         return false;
                     }
 
                     LOGGER.warn("Failed to find value for property '{}'. Unable to compare value (type: {}) " +
-                       "'{}' to requested value '{}'", propertyName, v.getType(), strVal, valueToRemove);
+                       "'{}' to requested value '{}'", propertyName, v.getType(), strVal, strValueToRemove);
                     return true;
                 })).toArray(Value[]::new);
 
@@ -222,31 +226,28 @@ public class NodePropertiesTools {
                         LOGGER.debug("Removing property '{}'", propertyName);
                         property.remove();
                     } else {
-                        LOGGER.debug("Removing value '{}' from property '{}'", valueToRemove, propertyName);
+                        LOGGER.debug("Removing value '{}' from property '{}'", strValueToRemove, propertyName);
                         property.setValue(newValues);
                     }
                 } else {
-                    LOGGER.warn("Value not removed from property name '{}' (value '{}')", propertyName,
-                            valueToRemove);
+                    LOGGER.debug("Value not removed from property name '{}' (value '{}')", propertyName,
+                            strValueToRemove);
+                    throw new RepositoryException ("Property '" + propertyName + "': Unable to remove value '" +
+                            StringUtils.substring(strValueToRemove, 0, 50) + "...'");
                 }
-
             } else {
 
-                String strVal = "";
-                try {
-                    strVal = property.getValue().getString();
+                final String strPropVal = property.getValue().getString();
 
-                    if (property.getValue().equals(valueToRemove)) {
-                        LOGGER.debug("single value: Removing value from property {}", propertyName);
-                        property.remove();
-                    } else {
-                        LOGGER.debug("Value not removed from property name '{}' (value '{}')", propertyName,
-                                valueToRemove);
-                    }
-                } catch (RepositoryException e) {
-                    LOGGER.warn("Failed to remove value from property '{}'. Unable to compare value '{}' " +
-                        "(type: {}) '{}' to requested value {}", propertyName, property.getValue().getType(),
-                        strVal, valueToRemove);
+                LOGGER.debug("Removing string '{}'", strValueToRemove);
+                if (StringUtils.equals(strPropVal, strValueToRemove)) {
+                    LOGGER.debug("single value: Removing value from property '{}'", propertyName);
+                    property.remove();
+                } else {
+                    LOGGER.debug("Value not removed from property name '{}' (property value: '{}';compare value: '{}')",
+                            propertyName, strPropVal, strValueToRemove);
+                    throw new RepositoryException("Property '" + propertyName + "': Unable to remove value '" +
+                            StringUtils.substring(strValueToRemove, 0, 50) + "'");
                 }
             }
         }
