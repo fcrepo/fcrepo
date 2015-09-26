@@ -24,7 +24,6 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
-import static java.util.regex.Pattern.compile;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.property2values;
@@ -45,10 +44,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
@@ -87,6 +87,12 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.sparql.core.Quad;
+import com.hp.hpl.jena.sparql.modify.request.UpdateData;
+import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
+import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
+import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteWhere;
+import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
 import com.hp.hpl.jena.update.UpdateRequest;
 
 /**
@@ -101,16 +107,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
     protected Node node;
-
-    /*
-     * Helps split SPARQL Update statements, e.g., on <>, to enable individual processing
-     */
-    private static final Pattern subject = compile(".+<[a-zA-Z]*>");
-
-     /*
-     * Helps ensure there's no terminating slash in the predicate
-     */
-    private static final Pattern terminated = compile("/>");
 
     /**
      * Construct a {@link org.fcrepo.kernel.api.models.FedoraResource} from an existing JCR Node
@@ -435,59 +431,24 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
             throws MalformedRdfException, AccessDeniedException {
 
-        if (!clean(sparqlUpdateStatement)) {
-            throw new IllegalArgumentException("Invalid SPARQL UPDATE statement:"
-                    + sparqlUpdateStatement);
-        }
-
         final Model model = originalTriples.asModel();
+
+        final UpdateRequest request = create(sparqlUpdateStatement,
+                idTranslator.reverse().convert(this).toString());
+
+        checkInvalidPredicates(request).ifPresent(x -> {
+            throw new IllegalArgumentException("SPARQL UDPATE statement contains invalid URI: " + x);
+        });
 
         final JcrPropertyStatementListener listener = new JcrPropertyStatementListener(
                 idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());
 
         model.register(listener);
 
-        final UpdateRequest request = create(sparqlUpdateStatement,
-                idTranslator.reverse().convert(this).toString());
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
         listener.assertNoExceptions();
-    }
-
-    /**
-     * Helps ensure that there are no terminating slashes in the predicate.
-     * A terminating slash means ModeShape has trouble extracting the localName, e.g., for
-     * http://myurl.org/.
-     *
-     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
-     *
-     * @param updateStmt SPARQL Update statement specified by the user
-     * @return whether the statement is deemed to be not problematic for ModeShape
-     */
-    private static boolean clean(final String updateStmt) {
-        final int start = updateStmt.indexOf("INSERT");
-        final int end = updateStmt.lastIndexOf("}");
-
-        if (start < 0 || end < 0 || end < start) {
-            return true;
-        }
-
-        final String insertStmt = updateStmt.substring(start, end);
-        final String[] insert = subject.split(insertStmt);
-        int count = 0;
-        final String terminatorIndicator = terminated.pattern();
-
-        for (final String s: insert) {
-            if (s.contains(terminatorIndicator)) {
-                final String[] p = terminated.split(s);
-                count++;
-                LOGGER.info("Problematic token({}):{}{} in statement:{}",
-                        count, p[0], terminated, updateStmt);
-            }
-        }
-
-        return count == 0;
     }
 
     @Override
@@ -718,6 +679,31 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
             throw new RepositoryRuntimeException(e);
         }
 
+    }
+
+    /**
+     * Helps ensure that there are no terminating slashes in the predicate.
+     * A terminating slash means ModeShape has trouble extracting the localName, e.g., for
+     * http://myurl.org/.
+     *
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
+     */
+    private Optional<Quad> checkInvalidPredicates(final UpdateRequest request) {
+        return request.getOperations().stream()
+                .flatMap(x -> {
+                    if (x instanceof UpdateModify) {
+                        final UpdateModify y = (UpdateModify)x;
+                        return Stream.concat(y.getInsertQuads().stream(), y.getDeleteQuads().stream());
+                    } else if (x instanceof UpdateDataInsert || x instanceof UpdateDataDelete) {
+                        return ((UpdateData)x).getQuads().stream();
+                    } else if (x instanceof UpdateDeleteWhere) {
+                        return ((UpdateDeleteWhere)x).getQuads().stream();
+                    } else {
+                        return Stream.empty();
+                    }
+                })
+                .filter(x -> x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/"))
+                .findFirst();
     }
 
     private Node getFrozenNode(final String label) throws RepositoryException {

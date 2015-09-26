@@ -466,6 +466,17 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    public void testValidSparqlUpdateWithLiteralTrailingSlash() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "INSERT { <> <http://myurl.org/title> \"fancy title/\" . \n" +
+                " <> <http://myurl.org/title> \"fancy title 2<br/>\" . } WHERE { }",
+                new RdfStream());
+    }
+
+    @Test
     public void testValidSparqlUpdateValidationAltSyntax() throws RepositoryException {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object = containerService.findOrCreate(session, pid);
