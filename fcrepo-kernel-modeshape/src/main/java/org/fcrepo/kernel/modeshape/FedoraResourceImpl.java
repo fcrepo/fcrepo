@@ -40,11 +40,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -87,7 +87,6 @@ import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.sparql.modify.request.UpdateData;
 import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
 import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
@@ -436,9 +435,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final UpdateRequest request = create(sparqlUpdateStatement,
                 idTranslator.reverse().convert(this).toString());
 
-        checkInvalidPredicates(request).ifPresent(x -> {
-            throw new IllegalArgumentException("SPARQL UDPATE statement contains invalid URI: " + x);
-        });
+        for (final IllegalArgumentException ex : checkInvalidPredicates(request)) {
+            throw ex;
+        }
 
         final JcrPropertyStatementListener listener = new JcrPropertyStatementListener(
                 idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());
@@ -688,7 +687,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
      *
      * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
      */
-    private Optional<Quad> checkInvalidPredicates(final UpdateRequest request) {
+    private Collection<IllegalArgumentException> checkInvalidPredicates(final UpdateRequest request) {
         return request.getOperations().stream()
                 .flatMap(x -> {
                     if (x instanceof UpdateModify) {
@@ -703,7 +702,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     }
                 })
                 .filter(x -> x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/"))
-                .findFirst();
+                .map(x -> new IllegalArgumentException("Invalid predicate ends with '/': " + x.getPredicate().getURI()))
+                .collect(Collectors.toList());
     }
 
     private Node getFrozenNode(final String label) throws RepositoryException {
