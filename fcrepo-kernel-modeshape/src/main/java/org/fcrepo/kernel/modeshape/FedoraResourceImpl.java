@@ -24,6 +24,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.joining;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.property2values;
@@ -45,7 +46,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -89,8 +89,6 @@ import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.sparql.modify.request.UpdateData;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataDelete;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDataInsert;
 import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteWhere;
 import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -439,11 +437,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final Collection<IllegalArgumentException> errors = checkInvalidPredicates(request);
 
         if (!errors.isEmpty()) {
-            final StringJoiner errorMessages = new StringJoiner(", ");
-            for (final IllegalArgumentException ex : errors) {
-                errorMessages.add(ex.getMessage());
-            }
-            throw new IllegalArgumentException(errorMessages.toString());
+            throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
         }
 
         final JcrPropertyStatementListener listener = new JcrPropertyStatementListener(
@@ -700,7 +694,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                     if (x instanceof UpdateModify) {
                         final UpdateModify y = (UpdateModify)x;
                         return Stream.concat(y.getInsertQuads().stream(), y.getDeleteQuads().stream());
-                    } else if (x instanceof UpdateDataInsert || x instanceof UpdateDataDelete) {
+                    } else if (x instanceof UpdateData) {
                         return ((UpdateData)x).getQuads().stream();
                     } else if (x instanceof UpdateDeleteWhere) {
                         return ((UpdateDeleteWhere)x).getQuads().stream();
