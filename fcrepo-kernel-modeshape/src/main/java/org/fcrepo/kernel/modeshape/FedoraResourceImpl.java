@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -435,8 +436,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
         final UpdateRequest request = create(sparqlUpdateStatement,
                 idTranslator.reverse().convert(this).toString());
 
-        for (final IllegalArgumentException ex : checkInvalidPredicates(request)) {
-            throw ex;
+        final Collection<IllegalArgumentException> errors = checkInvalidPredicates(request);
+
+        if (!errors.isEmpty()) {
+            final StringJoiner errorMessages = new StringJoiner(", ");
+            for (final IllegalArgumentException ex : errors) {
+                errorMessages.add(ex.getMessage());
+            }
+            throw new IllegalArgumentException(errorMessages.toString());
         }
 
         final JcrPropertyStatementListener listener = new JcrPropertyStatementListener(
