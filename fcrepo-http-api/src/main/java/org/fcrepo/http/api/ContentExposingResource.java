@@ -31,9 +31,9 @@ import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;

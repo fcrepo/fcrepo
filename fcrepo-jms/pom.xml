@@ -13,12 +13,11 @@
   <properties>
     <osgi.import.packages>
       org.fcrepo.kernel.api.*,
-      org.fcrepo.kernel.modeshape,
 
       javax.annotation,
       javax.inject,
       javax.jms,
-      
+
       com.fasterxml.jackson.*,
       com.google.common.*,
       org.apache.activemq,

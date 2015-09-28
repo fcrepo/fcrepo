@@ -27,7 +27,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -41,7 +41,7 @@ import org.modeshape.jcr.api.JcrTools;
  *
  * @author ksclarke
  */
-public class ContainerServiceImplTest implements FedoraJcrTypes {
+public class ContainerServiceImplTest implements FedoraTypes {
 
     @Mock
     private Session mockSession;
@@ -94,7 +94,7 @@ public class ContainerServiceImplTest implements FedoraJcrTypes {
         final Node actual =
                 testObj.findOrCreate(mockSession, "/foo/bar").getNode();
         assertEquals(mockNode, actual);
-        verify(mockParent).addMixin(FedoraJcrTypes.FEDORA_PAIRTREE);
+        verify(mockParent).addMixin(FedoraTypes.FEDORA_PAIRTREE);
     }
 
     @Test
@@ -109,7 +109,7 @@ public class ContainerServiceImplTest implements FedoraJcrTypes {
 
         final Node actual = testObj.findOrCreate(mockSession, "/foo/bar").getNode();
         assertEquals(mockNode, actual);
-        verify(mockParent, never()).addMixin(FedoraJcrTypes.FEDORA_PAIRTREE);
+        verify(mockParent, never()).addMixin(FedoraTypes.FEDORA_PAIRTREE);
     }
 
 

@@ -20,7 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;

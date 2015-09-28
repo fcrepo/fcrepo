@@ -17,11 +17,11 @@ package org.fcrepo.http.api.url;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

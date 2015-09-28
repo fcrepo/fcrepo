@@ -41,7 +41,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_SKOLEM;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;

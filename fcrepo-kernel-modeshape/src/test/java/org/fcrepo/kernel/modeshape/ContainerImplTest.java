@@ -22,6 +22,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 
 import java.util.Calendar;
 import java.util.function.Predicate;
@@ -32,7 +34,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.Container;
 import org.junit.After;
 import org.junit.Before;
@@ -44,7 +46,7 @@ import org.mockito.Mock;
  *
  * @author ksclarke
  */
-public class ContainerImplTest implements FedoraJcrTypes {
+public class ContainerImplTest implements FedoraTypes {
 
     private static final String testPid = "testObj";
 

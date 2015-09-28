@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.After;
 import org.junit.Before;
@@ -34,6 +34,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 import static org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl.hasMixin;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -48,7 +50,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author ksclarke
  * @author ajs6f
  */
-public class NonRdfSourceDescriptionImplTest implements FedoraJcrTypes {
+public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
 
     private static final String testDsId = "testDs";
 

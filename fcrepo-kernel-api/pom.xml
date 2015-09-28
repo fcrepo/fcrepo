@@ -17,7 +17,6 @@
 
       com.google.common.*,
       com.hp.hpl.jena.*,
-      org.modeshape.jcr.api,
       org.apache.commons.codec.binary,
 
       *

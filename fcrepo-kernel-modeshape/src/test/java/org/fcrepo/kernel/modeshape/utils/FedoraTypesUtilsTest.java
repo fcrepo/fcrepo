@@ -15,7 +15,8 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_SKOLEM;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
@@ -60,7 +61,6 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 import org.junit.Test;
@@ -376,7 +376,7 @@ public class FedoraTypesUtilsTest {
     public void testIsExternalNode4() throws RepositoryException {
         when(mockNode.getIdentifier()).thenReturn("junk");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-        when(mockNodeType.getName()).thenReturn(FedoraJcrTypes.ROOT);
+        when(mockNodeType.getName()).thenReturn(ROOT);
         assertFalse(isExternalNode.test(mockNode));
     }
 

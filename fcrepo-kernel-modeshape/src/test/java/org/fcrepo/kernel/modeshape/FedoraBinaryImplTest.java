@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.modeshape;
 
 import org.apache.tika.io.IOUtils;
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.junit.After;
@@ -50,14 +50,16 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 
 /**
  * <p>DatastreamImplTest class.</p>
  *
  * @author ksclarke
  */
-public class FedoraBinaryImplTest implements FedoraJcrTypes {
+public class FedoraBinaryImplTest implements FedoraTypes {
 
     private static final String testDsId = "testDs";
 

@@ -26,6 +26,7 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
@@ -70,7 +71,7 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
@@ -96,7 +97,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * @author awoods
  * @author ajs6f
  */
-public class JcrRdfToolsTest implements FedoraJcrTypes {
+public class JcrRdfToolsTest implements FedoraTypes {
 
     private DefaultIdentifierTranslator testSubjects;
 

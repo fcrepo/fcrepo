@@ -56,7 +56,7 @@ import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;

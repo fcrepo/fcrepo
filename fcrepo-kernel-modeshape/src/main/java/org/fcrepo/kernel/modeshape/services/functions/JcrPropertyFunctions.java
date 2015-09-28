@@ -28,7 +28,7 @@ import java.util.function.Predicate;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static javax.jcr.PropertyType.BINARY;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_NODE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 

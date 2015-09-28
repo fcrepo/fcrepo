@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.VERSIONABLE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
