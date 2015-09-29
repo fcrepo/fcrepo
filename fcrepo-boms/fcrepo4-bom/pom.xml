@@ -31,11 +31,6 @@
       </dependency>
       <dependency>
         <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-build-tools</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
         <artifactId>fcrepo-configs</artifactId>
         <version>${project.version}</version>
       </dependency>
