@@ -17,10 +17,13 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Calendar;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -93,6 +96,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
             if (node.canAddMixin(FEDORA_CONTAINER)) {
                 node.addMixin(FEDORA_CONTAINER);
+                node.setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance());
             }
 
         } catch (final RepositoryException e) {

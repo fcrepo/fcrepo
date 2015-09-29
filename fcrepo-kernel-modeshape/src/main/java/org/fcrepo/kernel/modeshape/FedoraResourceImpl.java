@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
+
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
@@ -30,6 +31,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
@@ -47,6 +52,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -71,6 +77,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.NamespaceRegistry;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -273,6 +280,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void setURIProperty(final String relPath, final URI value) {
         try {
+            touch();
             getNode().setProperty(relPath, value.toString(), PropertyType.URI);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -355,7 +363,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Date getLastModifiedDate() {
 
         try {
-            if (hasProperty(JCR_LASTMODIFIED)) {
+            if (hasProperty(FEDORA_LASTMODIFIED)) {
+                return new Date(getProperty(FEDORA_LASTMODIFIED).getDate().getTimeInMillis());
+            } else if (hasProperty(JCR_LASTMODIFIED)) {
                 return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
             }
         } catch (final PathNotFoundException e) {
@@ -374,6 +384,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return null;
     }
 
+    /**
+     * Set the last-modified date to the current date.
+     */
+    @VisibleForTesting
+    public void touch() {
+        try {
+            getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance());
+        } catch (final RepositoryException e) {
+            e.printStackTrace();
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     @Override
     public boolean hasType(final String type) {
@@ -563,6 +585,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
+
+        touch();
 
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap())
                 .topic(idTranslator.reverse().convert(this).asNode());

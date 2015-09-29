@@ -55,6 +55,7 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -185,7 +186,25 @@ public class FedoraResourceImplIT extends AbstractIT {
         session = repo.login();
 
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
+        System.out.println("XXX cre: " + obj2.getCreatedDate().getTime());
+        System.out.println("XXX mod: " + obj2.getLastModifiedDate().getTime());
         assertFalse( obj2.getLastModifiedDate().before(obj2.getCreatedDate()) );
+    }
+
+    @Test
+    public void testTouch() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        containerService.findOrCreate(session, "/" + pid);
+
+        session.save();
+        session.logout();
+        session = repo.login();
+
+        final Container obj2 = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResourceImpl impl = new FedoraResourceImpl(obj2.getNode());
+        final Date oldMod = impl.getLastModifiedDate();
+        impl.touch();
+        assertTrue( oldMod.before(obj2.getLastModifiedDate()) );
     }
 
     @Test
@@ -880,14 +899,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
         assertNull(frozenResource.getNodeVersion("some-label"));
 
-    }
-
-    @Test
-    public void testNullLastModifiedDate() {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        assertFalse(object.hasProperty(JCR_LASTMODIFIED));
-        assertNull(object.getLastModifiedDate());
     }
 
     @Test

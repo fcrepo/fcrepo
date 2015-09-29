@@ -2136,6 +2136,36 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableGraphStore graph = getGraphStore(getObjMethod(pid))) {
             assertFalse("Found the literal we tried to delete!", graph.contains(ANY,createURI(location), DC_TITLE,
                     createLiteral(longLiteral)));
+    }
+
+    @Test
+    public void inboundLinksDoNotUpdateEtag() throws IOException {
+        final String id1 = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id1);
+        final String oldETag;
+        final String oldMod;
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            oldETag = response.getFirstHeader("ETag").getValue();
+            oldMod = response.getFirstHeader("Last-Modified").getValue();
+        }
+
+        final String id2 = getRandomUniqueId();
+        createObject(id2).close();
+
+        final HttpPatch patch = patchObjMethod(id2);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT { <> <http://purl.org/dc/elements/1.1/relation> <" + serverAddress + id1 + "> } WHERE {}"));
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        try (final CloseableHttpResponse response = execute(getObjMethod(id1))) {
+            final String etag = response.getFirstHeader("ETag").getValue();
+            final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+            assertEquals(oldMod, lastmod);
+            assertEquals(oldETag, etag);
         }
     }
 }
