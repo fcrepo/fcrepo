@@ -17,9 +17,6 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isExternalNode;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMultivaluedProperty;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,12 +30,7 @@ import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
-import com.hp.hpl.jena.rdf.model.Resource;
-
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.NoSuchPropertyDefinitionException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
 /**
@@ -112,75 +104,8 @@ public class NodePropertiesTools {
                 property = node.setProperty(propertyName, newValue, newValue.getType());
             }
         }
-
-        if (!property.isMultiple() && !isInternalReferenceProperty.test(property)) {
-            final String referencePropertyName = getReferencePropertyName(propertyName);
-            if (node.hasProperty(referencePropertyName)) {
-                node.getProperty(referencePropertyName).remove();
-            }
-        }
     }
 
-    /**
-     * Add a reference placeholder from one node to another in-domain resource
-     * @param idTranslator the id translator
-     * @param node the node
-     * @param propertyName the property name
-     * @param resource the resource
-     * @throws RepositoryException if repository exception occurred
-     */
-    public void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
-                                          final Node node,
-                                          final String propertyName,
-                                          final Resource resource) throws RepositoryException {
-
-        try {
-            final Node refNode = idTranslator.convert(resource).getNode();
-
-            if (isExternalNode.test(refNode)) {
-                // we can't apply REFERENCE properties to external resources
-                return;
-            }
-
-            final String referencePropertyName = getReferencePropertyName(propertyName);
-
-            if (!isMultivaluedProperty(node, propertyName)) {
-                if (node.hasProperty(referencePropertyName)) {
-                    node.getProperty(referencePropertyName).remove();
-                }
-
-                if (node.hasProperty(propertyName)) {
-                    node.getProperty(propertyName).remove();
-                }
-            }
-
-            final Value v = node.getSession().getValueFactory().createValue(refNode, true);
-            appendOrReplaceNodeProperty(node, referencePropertyName, v);
-
-        } catch (final IdentifierConversionException e) {
-            // no-op
-        }
-    }
-
-    /**
-     * Remove a reference placeholder that links one node to another in-domain resource
-     * @param idTranslator the id translator
-     * @param node the node
-     * @param propertyName the property name
-     * @param resource the resource
-     * @throws RepositoryException if repository exception occurred
-     */
-    public void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
-                                             final Node node,
-                                             final String propertyName,
-                                             final Resource resource) throws RepositoryException {
-
-        final String referencePropertyName = getReferencePropertyName(propertyName);
-
-        final Node refNode = idTranslator.convert(resource).getNode();
-        final Value v = node.getSession().getValueFactory().createValue(refNode, true);
-        removeNodeProperty(node, referencePropertyName, v);
-    }
     /**
      * Given a JCR node, property and value, remove the value (if it exists)
      * from the property, and remove the

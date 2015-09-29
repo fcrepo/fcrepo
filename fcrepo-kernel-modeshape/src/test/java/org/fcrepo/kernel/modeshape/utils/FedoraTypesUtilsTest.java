@@ -18,10 +18,8 @@ package org.fcrepo.kernel.modeshape.utils;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isSkolemNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isReferenceProperty;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isContainer;
@@ -61,7 +59,6 @@ import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.api.FedoraJcrTypes;
 import org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -161,26 +158,6 @@ public class FedoraTypesUtilsTest {
         when(mockProperty.getType()).thenReturn(PropertyType.BINARY);
         when(mockProperty.getName()).thenReturn(JcrConstants.JCR_DATA);
         assertTrue(isBinaryContentProperty.test(mockProperty));
-    }
-
-    @Test
-    public void testIsInternalReferenceProperty() throws RepositoryException {
-        when(mockProperty.getType()).thenReturn(PropertyType.REFERENCE);
-        when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
-        assertTrue(isInternalReferenceProperty.test(mockProperty));
-    }
-
-    @Test (expected = RepositoryRuntimeException.class)
-    public void testIsInternalReferencePropertyException() throws RepositoryException {
-        when(mockProperty.getType()).thenThrow(new RepositoryException());
-        assertTrue(isInternalReferenceProperty.test(mockProperty));
-    }
-
-    @Test
-    public void testIsInternalReferencePropertyWeak() throws RepositoryException {
-        when(mockProperty.getType()).thenReturn(PropertyType.WEAKREFERENCE);
-        when(mockProperty.getName()).thenReturn(getReferencePropertyName("foo"));
-        assertTrue(isInternalReferenceProperty.test(mockProperty));
     }
 
     @Test

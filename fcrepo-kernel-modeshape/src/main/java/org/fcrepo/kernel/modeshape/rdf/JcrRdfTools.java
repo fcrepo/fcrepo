@@ -29,7 +29,6 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getPropertyType;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -181,10 +180,8 @@ public class JcrRdfTools {
         throws RepositoryException {
         assert (valueFactory != null);
 
-
-        if (type == UNDEFINED || type == STRING) {
-            return valueConverter.reverse().convert(data);
-        } else if (type == REFERENCE || type == WEAKREFERENCE) {
+        if (type == REFERENCE || type == WEAKREFERENCE ||
+                (data.isURIResource() && idTranslator.inDomain(data.asResource()))) {
             // reference to another node (by path)
             if (!data.isURIResource()) {
                 throw new ValueFormatException("Reference properties can only refer to URIs, not literals");
@@ -196,6 +193,8 @@ public class JcrRdfTools {
             } catch (final RepositoryRuntimeException e) {
                 throw new MalformedRdfException("Unable to find referenced node", e);
             }
+        } else if (type == UNDEFINED || type == STRING) {
+            return valueConverter.reverse().convert(data);
         } else if (data.isResource()) {
             LOGGER.debug("Using default JCR value creation for RDF resource: {}",
                     data);
@@ -270,17 +269,9 @@ public class JcrRdfTools {
                     + node.getPath());
         }
 
-        final String propertyName =
-                getPropertyNameFromPredicate(node, predicate, namespaces);
-
-        if (value.isURIResource()
-                && idTranslator.inDomain(value.asResource())
-                && !isReferenceProperty(node, propertyName)) {
-            nodePropertiesTools.addReferencePlaceholders(idTranslator, node, propertyName, value.asResource());
-        } else {
-            final Value v = createValue(node, value, propertyName);
-            nodePropertiesTools.appendOrReplaceNodeProperty(node, propertyName, v);
-        }
+        final String propertyName = getPropertyNameFromPredicate(node, predicate, namespaces);
+        final Value v = createValue(node, value, propertyName);
+        nodePropertiesTools.appendOrReplaceNodeProperty(node, propertyName, v);
     }
 
     protected boolean repositoryHasType(final Session session, final String mixinName) throws RepositoryException {
@@ -330,17 +321,8 @@ public class JcrRdfTools {
                     + node.getPath());
         }
 
-        if (objectNode.isURIResource()
-                && idTranslator.inDomain(objectNode.asResource())
-                && !isReferenceProperty(node, propertyName)) {
-            nodePropertiesTools.removeReferencePlaceholders(idTranslator,
-                    node,
-                    propertyName,
-                    objectNode.asResource());
-        } else {
-            final Value v = createValue(node, objectNode, propertyName);
-            nodePropertiesTools.removeNodeProperty(node, propertyName, v);
-        }
+        final Value v = createValue(node, objectNode, propertyName);
+        nodePropertiesTools.removeNodeProperty(node, propertyName, v);
     }
 
     /**

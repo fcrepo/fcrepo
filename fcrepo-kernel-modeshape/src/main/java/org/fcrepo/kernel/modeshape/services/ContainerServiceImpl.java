@@ -17,11 +17,16 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Calendar;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -61,6 +66,13 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
             if (node.isNew()) {
                 initializeNewObjectProperties(node);
+
+                // update membershipResources for Direct/Indirect Containers
+                if (node.getParent().isNodeType(LDP_DIRECT_CONTAINER) ||
+                        node.getParent().isNodeType(LDP_INDIRECT_CONTAINER)) {
+                    final Node mr = node.getParent().getProperty(LDP_MEMBER_RESOURCE).getNode();
+                    mr.setProperty(JCR_LASTMODIFIED, Calendar.getInstance());
+                }
             }
 
             return new ContainerImpl(node);

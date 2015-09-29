@@ -49,8 +49,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public abstract class FedoraTypesUtils implements FedoraJcrTypes {
 
-    public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
-
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
     /**
@@ -81,13 +79,6 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * Predicate for determining whether this {@link Node} is a Fedora Skolem node.
      */
     public static Predicate<Node> isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);
-
-    /**
-     * Check if a property is a reference property.
-     */
-    public static Predicate<Property> isInternalReferenceProperty = uncheck(p -> (p.getType() == REFERENCE ||
-            p.getType() == WEAKREFERENCE) &&
-            p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX));
 
     /**
      * Check whether a property is protected (ie, cannot be modified directly) but
@@ -204,25 +195,6 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
         return primaryCandidate.isPresent() ? primaryCandidate :
                 stream(node.getMixinNodeTypes()).map(NodeType::getPropertyDefinitions).flatMap(Arrays::stream)
                         .filter(sameName).findFirst();
-    }
-
-    /**
-     * When we add certain URI properties, we also want to leave a reference node
-     * @param propertyName the property name
-     * @return property name as a reference
-     */
-    public static String getReferencePropertyName(final String propertyName) {
-        return propertyName + REFERENCE_PROPERTY_SUFFIX;
-    }
-
-    /**
-     * Given an internal reference node property, get the original name
-     * @param refPropertyName the reference node property name
-     * @return original property name of the reference property
-     */
-    public static String getReferencePropertyOriginalName(final String refPropertyName) {
-        final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);
-        return i < 0 ? refPropertyName : refPropertyName.substring(0, i);
     }
 
     /**

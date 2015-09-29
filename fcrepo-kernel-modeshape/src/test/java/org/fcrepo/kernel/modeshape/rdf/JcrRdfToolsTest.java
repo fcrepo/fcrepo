@@ -42,7 +42,6 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
 import java.util.Collections;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 import java.util.function.Function;
 
 import javax.jcr.Node;
@@ -194,29 +193,6 @@ public class JcrRdfToolsTest implements FedoraJcrTypes {
         // non-uri references - error
         final RDFNode n = createResource();
         testObj.createValue(mockValueFactory, n, REFERENCE);
-    }
-
-    @Test
-    public void shouldAddReferencePropertyForDomainObject() throws RepositoryException {
-        when(mockNodeType.getPropertyDefinitions()).thenReturn(new PropertyDefinition[]{});
-        when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
-
-        when(mockValueFactory.createValue(anyString(), eq(STRING))).thenReturn(mockValue);
-        when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockReferenceValue);
-
-        when(mockSession.getNode("/x")).thenReturn(mockNode);
-
-        when(mockNode.setProperty(anyString(), any(Value[].class), anyInt())).thenReturn(mockProperty);
-
-        when(mockNode.getIdentifier()).thenReturn(UUID.randomUUID().toString());
-
-        testObj.addProperty(mockFedoraResource,
-                createProperty("some:property"),
-                testSubjects.toDomain("x"),
-                Collections.<String,String>emptyMap());
-
-        verify(mockNode).setProperty("some:property_ref", new Value[]{mockReferenceValue}, mockReferenceValue.getType
-                ());
     }
 
     @Test

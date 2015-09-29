@@ -22,6 +22,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.testutilities.TestNodeIterator;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -219,6 +220,7 @@ public class LdpContainerRdfContextTest {
                 ResourceFactory.createPlainLiteral("x")));
     }
 
+    @Ignore
     @Test
     public void testLdpResourceWithIndirectContainerAssertingRelationReference() throws RepositoryException {
 

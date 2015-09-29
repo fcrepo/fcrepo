@@ -36,10 +36,8 @@ import java.util.Map;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.emptyMap;
-import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -80,18 +78,6 @@ public class PropertyConverterTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNsRegistry);
         mockNamespaceRegistry(mockNsRegistry);
-    }
-
-    @Test
-    public final void shouldMapInternalReferencePropertiesToPublicUris() throws RepositoryException {
-        when(mockNamespacedProperty.getNamespaceURI()).thenReturn("info:xyz#");
-        when(mockNamespacedProperty.getLocalName()).thenReturn(getReferencePropertyName("some_reference"));
-        when(mockNamespacedProperty.getType()).thenReturn(REFERENCE);
-        when(mockNamespacedProperty.getName()).thenReturn("xyz:" + getReferencePropertyName("some_reference"));
-        final Property property = testObj.convert(mockNamespacedProperty);
-
-        assert(property != null);
-        assertEquals("some_reference", property.getLocalName());
     }
 
     @Test(expected = RuntimeException.class)

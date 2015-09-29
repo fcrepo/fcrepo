@@ -187,34 +187,27 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void
-    testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException, InvalidChecksumException {
+    public void testModifyDatastreamContentDigestAndLength() throws Exception {
         final Session session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
 
-            binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3").setContent(
-                    new ByteArrayInputStream("asdf".getBytes()),
-                    "application/octet-stream",
-                    null,
-                    null,
-                    null
-                    );
+            // create binary
+            final FedoraBinary orig = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3");
+            orig.setContent(new ByteArrayInputStream("asdf".getBytes()), "application/octet-stream", null, null, null);
+            session.save();
+            final long origMod = orig.getLastModifiedDate().getTime();
 
+            // update binary
+            final FedoraBinary ds = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3");
+            ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
             session.save();
 
-            final FedoraBinary ds = binaryService.findOrCreate(session,
-                    "/testDatastreamObject/testDatastreamNode3");
-
-            ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
-
-            assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds
-                    .getContentDigest().toString());
+            assertEquals("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016", ds.getContentDigest().toString());
             assertEquals(10L, ds.getContentSize());
-
-            final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
-
-            assertEquals("0123456789", contentString);
+            assertEquals("0123456789", IOUtils.toString(ds.getContent(), "ASCII"));
+            assertTrue("Last-modified should be updated: " + origMod + ", " + ds.getLastModifiedDate().getTime(),
+                    ds.getLastModifiedDate().getTime() > origMod);
         } finally {
             session.logout();
         }

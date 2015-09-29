@@ -34,8 +34,6 @@ import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyOriginalName;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.api.utils.NamespaceTools.getNamespaceRegistry;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -56,17 +54,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
             if (property instanceof Namespaced) {
                 final Namespaced nsProperty = (Namespaced) property;
                 final String uri = nsProperty.getNamespaceURI();
-                final String localName = nsProperty.getLocalName();
-                final String rdfLocalName;
-
-                if (isInternalReferenceProperty.test(property)) {
-                    rdfLocalName = getReferencePropertyOriginalName(localName);
-                } else {
-                    rdfLocalName = localName;
-                }
-                return createProperty(
-                        getRDFNamespaceForJcrNamespace(uri),
-                        rdfLocalName);
+                return createProperty(getRDFNamespaceForJcrNamespace(uri), nsProperty.getLocalName());
             }
             return createProperty(property.getName());
         } catch (final RepositoryException e) {

@@ -15,10 +15,9 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.regex.Pattern.compile;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.commons.io.IOUtils.toInputStream;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -125,9 +124,9 @@ public class ContainerImplIT extends AbstractIT {
                 "INSERT { <" + graphSubject + "> dcterms:" +
                 "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
-        final Value refValue = object.getNode().getProperty("dcterms:isPartOf_ref").getValues()[0];
-        assertTrue(refValue.getString(), refValue.getString().equals(object.getNode().getIdentifier()));
-
+        final Value refValue = object.getNode().getProperty("dcterms:isPartOf").getValues()[0];
+        assertTrue(refValue.getString() + " != " + object.getNode().getIdentifier(),
+                refValue.getString().equals(object.getNode().getIdentifier()));
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "DELETE { <" + graphSubject + "> dc:title " +
@@ -159,20 +158,13 @@ public class ContainerImplIT extends AbstractIT {
 
         final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
         final String propertyName = prefix + ":urlProperty";
-        final String referencePropertyName = getReferencePropertyName(propertyName);
 
-        assertTrue(object.getNode().hasProperty(referencePropertyName));
-        assertFalse(object.getNode().hasProperty(propertyName));
-
-        assertEquals(object.getNode(), session.getNodeByIdentifier(
-                object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
+        assertTrue(object.getNode().hasProperty(propertyName));
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "DELETE { <" + graphSubject + "> some:urlProperty " +
                 "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
 
-
-        assertFalse(object.getNode().hasProperty(referencePropertyName));
         assertFalse(object.getNode().hasProperty(propertyName));
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
@@ -180,14 +172,7 @@ public class ContainerImplIT extends AbstractIT {
                 "       some:urlProperty <info:somewhere/else> . }",
                 object.getTriples(subjects, PropertiesRdfContext.class));
 
-
-        assertTrue(object.getNode().hasProperty(referencePropertyName));
         assertTrue(object.getNode().hasProperty(propertyName));
-
-        assertEquals(1, object.getNode().getProperty(prefix + ":urlProperty_ref").getValues().length);
-        assertEquals(object.getNode(), session.getNodeByIdentifier(
-                object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
-
     }
 
     @Test
@@ -242,4 +227,19 @@ public class ContainerImplIT extends AbstractIT {
           "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
     }
 
+    @Test
+    public void testInboundLinks() throws Exception {
+        final Container object1 = containerService.findOrCreate(session, "/inboundLinkTest1");
+        final Container object2 = containerService.findOrCreate(session, "/inboundLinkTest2");
+        session.save();
+
+        final long lastModifiedBefore = object1.getLastModifiedDate().getTime();
+
+        object2.updateProperties(subjects, "INSERT DATA { <> <http://purl.org/dc/terms/relation> <" +
+                subjects.reverse().convert(object1) + "> }", object2.getTriples(subjects, PropertiesRdfContext.class));
+        session.save();
+
+        final long lastModifiedAfter = object1.getLastModifiedDate().getTime();
+        assertEquals("Last-Modified should not be changed by inbound links", lastModifiedBefore, lastModifiedAfter);
+    }
 }
