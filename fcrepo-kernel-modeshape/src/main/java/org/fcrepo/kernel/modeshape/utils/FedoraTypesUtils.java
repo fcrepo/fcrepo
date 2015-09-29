@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.modeshape.utils;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -151,6 +152,12 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
         }
         return hasInternalNamespace.test(p.getName());
     });
+
+    /**
+     * Check if a property is intentionally suppressed.
+     */
+    final static List<String> suppressed = Arrays.asList("jcr:mimeType", "jcr:lastModified");
+    private static Predicate<Property> isSuppressedProperty = uncheck(p -> suppressed.contains(p.getName()));
 
     /**
     * Check whether a property is an internal property that should be suppressed

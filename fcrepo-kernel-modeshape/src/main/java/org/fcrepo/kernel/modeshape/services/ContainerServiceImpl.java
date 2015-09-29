@@ -17,6 +17,9 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
@@ -63,7 +66,18 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
                 initializeNewObjectProperties(node);
             }
 
-            return new ContainerImpl(node);
+            final ContainerImpl container = new ContainerImpl(node);
+            if (node.isNew()) {
+                container.touch();
+
+                // also update membershipResources for Direct/Indirect Containers
+                if (node.getParent().isNodeType(LDP_DIRECT_CONTAINER) ||
+                        node.getParent().isNodeType(LDP_INDIRECT_CONTAINER)) {
+                    new ContainerImpl(node.getParent().getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
+                }
+            }
+
+            return container;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

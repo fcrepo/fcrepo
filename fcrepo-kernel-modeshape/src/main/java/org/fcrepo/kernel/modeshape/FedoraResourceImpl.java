@@ -24,7 +24,9 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
+import static java.util.TimeZone.getTimeZone;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
@@ -58,6 +60,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -408,7 +411,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Date getCreatedDate() {
         try {
             if (hasProperty(JCR_CREATED)) {
-                return new Date(getProperty(JCR_CREATED).getDate().getTimeInMillis());
+                return new Date(getTimestamp(JCR_CREATED, 0L));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -425,9 +428,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Date getLastModifiedDate() {
 
+        final Date createdDate = getCreatedDate();
         try {
-            if (hasProperty(JCR_LASTMODIFIED)) {
-                return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+            final long created = createdDate == null ? 0L : createdDate.getTime();
+            if (hasProperty(FEDORA_LASTMODIFIED)) {
+                return new Date(getTimestamp(FEDORA_LASTMODIFIED, created));
+            } else if (hasProperty(JCR_LASTMODIFIED)) {
+                return new Date(getTimestamp(JCR_LASTMODIFIED, created));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -436,7 +443,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
         LOGGER.debug("Could not get last modified date property for node {}", node);
 
-        final Date createdDate = getCreatedDate();
         if (createdDate != null) {
             LOGGER.trace("Using created date for last modified date for node {}", node);
             return createdDate;
@@ -444,7 +450,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         return null;
     }
+    private long getTimestamp(final String property, final long created) throws RepositoryException {
+        LOGGER.trace("Using {} date", property);
+        final long timestamp = getProperty(property).getDate().getTimeInMillis();
+        if (timestamp < created && created > 0L && !isFrozenResource()) {
+            LOGGER.trace("Updating {} with later created date", property);
+            getNode().setProperty(property, created);
+            return created;
+        }
+        return timestamp;
+    }
 
+    /**
+     * Set the last-modified date to the current date.
+     */
+    public void touch() {
+        try {
+            getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance(getTimeZone("UTC")));
+        } catch (final RepositoryException e) {
+            LOGGER.error("Exception caught when trying to update lastModified date: {}", e.getMessage());
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     @Override
     public boolean hasType(final String type) {
@@ -556,6 +583,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         removeEmptyFragments();
 
         listener.assertNoExceptions();
+        touch();
     }
 
     @Override
@@ -643,6 +671,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             }
 
             removeEmptyFragments();
+            touch();
 
             if (exceptions.length() > 0) {
                 throw new MalformedRdfException(exceptions.toString());
@@ -677,6 +706,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         throw new RepositoryRuntimeException("Error removing empty fragments", ex);
                     }
                 });
+                touch();
             }
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error removing empty fragments", ex);

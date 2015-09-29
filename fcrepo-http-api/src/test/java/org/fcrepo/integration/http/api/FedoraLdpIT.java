@@ -62,6 +62,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
@@ -76,6 +77,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
@@ -2171,7 +2173,38 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreationResponseDefault() {
+    public void testInboundLinksDoNotUpdateEtag() throws IOException {
+        final String id1 = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id1);
+        final String oldETag;
+        final String oldMod;
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            oldETag = response.getFirstHeader("ETag").getValue();
+            oldMod = response.getFirstHeader("Last-Modified").getValue();
+        }
+
+        final String id2 = getRandomUniqueId();
+        createObject(id2).close();
+
+        final HttpPatch patch = patchObjMethod(id2);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT { <> <http://purl.org/dc/elements/1.1/relation> <" + serverAddress + id1 + "> } WHERE {}"));
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        try (final CloseableHttpResponse response = execute(getObjMethod(id1))) {
+            final String etag = response.getFirstHeader("ETag").getValue();
+            final String lastmod = response.getFirstHeader("Last-Modified").getValue();
+            assertEquals(oldMod, lastmod);
+            assertEquals(oldETag, etag);
+        }
+    }
+
+    @Test
+    public void testCreationResponseDefault() throws Exception {
         testCreationResponse(null, null, CREATED, "text/plain");
         testCreationResponse(null, "application/ld+json", NOT_ACCEPTABLE, "text/html");
     }
@@ -2220,5 +2253,113 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patchObjMethod("%5bfoo")));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postObjMethod("%5bfoo")));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(putObjMethod("%5bfoo")));
+    }
+
+    @Test
+    public void testBinaryLastModified() throws Exception {
+        final String objid = getRandomUniqueId();
+        final String objURI = serverAddress + objid;
+        final String binURI = objURI + "/binary1";
+
+        final long lastmod1;
+        try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "some test content"))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            lastmod1 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+        }
+
+        sleep(1000); // wait a second to make sure last-modified value will be different
+
+        try (final CloseableGraphStore graph = getGraphStore(new HttpGet(binURI + "/fcr:metadata"))) {
+            verifyModifiedMatchesCreated(graph);
+        }
+
+        final HttpPatch patchBinary = new HttpPatch(binURI + "/fcr:metadata");
+        patchBinary.addHeader("Content-Type", "application/sparql-update");
+        patchBinary.setEntity(new StringEntity("INSERT { <" + binURI + "> " +
+                "<http://www.w3.org/TR/rdf-schema/label> \"this is a label\" } WHERE {}"));
+        final long lastmod2;
+        try (final CloseableHttpResponse response = execute(patchBinary)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            lastmod2 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            assertTrue(lastmod2 > lastmod1);
+        }
+
+        sleep(1000); // wait a second to make sure last-modified value will be different
+
+        final long lastmod3;
+        try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "new test content"))) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            lastmod3 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            assertTrue(lastmod3 > lastmod2);
+        }
+    }
+
+    @Test
+    public void testContainerLastModified() throws Exception {
+        final String objid = getRandomUniqueId();
+        final String objURI = serverAddress + objid;
+
+        // create an object
+        final long lastmod1;
+        try (final CloseableHttpResponse response = execute(putObjMethod(objid))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            lastmod1 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+        }
+
+        sleep(1000); // wait a second to make sure last-modified value will be different
+
+        // initial created and last-modified properties should match
+        try (final CloseableGraphStore graph = getGraphStore(getObjMethod(objid))) {
+            verifyModifiedMatchesCreated(graph);
+        }
+
+        // update the object properties (last-modified should be updated)
+        final HttpPatch patchObject = new HttpPatch(objURI);
+        patchObject.addHeader("Content-Type", "application/sparql-update");
+        patchObject.setEntity(new StringEntity("INSERT { <> " +
+                "<http://www.w3.org/TR/rdf-schema/label> \"this is a label\" } WHERE {}"));
+        final long lastmod2;
+        try (final CloseableHttpResponse response = execute(patchObject)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            lastmod2 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            assertTrue(lastmod2 > lastmod1);
+        }
+
+        sleep(1000); // wait a second to make sure last-modified value will be different
+
+        // create a direct container (last-modified should be updated)
+        final long lastmod3;
+        final HttpPut createContainer = new HttpPut(objURI + "/members");
+        createContainer.addHeader("Content-Type", "text/turtle");
+        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
+            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + objURI + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        try (final CloseableHttpResponse response = execute(createContainer)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            lastmod3 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            assertTrue(lastmod3 > lastmod2);
+        }
+
+        sleep(1000); // wait a second to make sure last-modified value will be different
+
+        // create child in the container
+        final long lastmod4;
+        assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(objURI + "/members/member1")));
+
+        // last-modified should be updated
+        try (final CloseableHttpResponse response = execute(headObjMethod(objid))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            lastmod4 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            assertTrue(lastmod4 > lastmod3);
+        }
+    }
+
+    private static void verifyModifiedMatchesCreated(final GraphStore graph) {
+        final Node cre = graph.find(ANY, ANY, CREATED_DATE.asNode(), ANY).next().getObject();
+        final Node mod = graph.find(ANY, ANY, LAST_MODIFIED_DATE.asNode(), ANY).next().getObject();
+        System.out.println("cre: " + cre.getLiteralValue());
+        System.out.println("mod: " + mod.getLiteralValue());
+        assertEquals(cre.getLiteralValue(), mod.getLiteralValue());
     }
 }
