@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
-
+#if( $title.contains("fcr:versions/") )#set( $title = $uriInfo.getBaseUriBuilder().clone().path($uriInfo.getPath()).build() )#end
 #parse("views/common.vsl")
 <html>
 <head>

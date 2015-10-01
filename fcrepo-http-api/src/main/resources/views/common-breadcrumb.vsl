@@ -1,13 +1,16 @@
 
 #set( $breadcrumbs = $helpers.getNodeBreadcrumbs($uriInfo, $topic))
-
+#set( $index = 0 )
 <ul class="breadcrumb">
     <li><a href="$uriInfo.getBaseUri()">Home</a></li>
     #foreach($entry in $breadcrumbs.entrySet())
         #if ($entry.getKey() == $uriInfo.getAbsolutePath().toString())
             <li class="active">$entry.getValue()</li>
+        #elseif ( $index == $breadcrumbs.entrySet().size() - 1 )
+            <li ><a href="$uriInfo.getPathSegments().get($index)">$uriInfo.getPathSegments().get($index)</a></li>
         #else
             <li ><a href="$entry.getKey()">$entry.getValue()</a></li>
         #end
+        #set( $index = $index + 1 )
     #end
 </ul>

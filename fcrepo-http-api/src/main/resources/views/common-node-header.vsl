@@ -1,9 +1,10 @@
-
+#set( $title = $helpers.getObjectTitle($rdf, $topic) )
+#if( $title.contains("fcr:versions/") )#set( $title = $uriInfo.getBaseUriBuilder().clone().path($uriInfo.getPath()).build() )#end
 #parse("views/common-header.vsl")
 <div class="container">
   <div class="row">
       <div class="col-md-9">
-          <h1>$esc.html($helpers.getObjectTitle($rdf, $topic))</h1>
+          <h1>$esc.html($title)</h1>
       </div>
   </div>
 </div>
