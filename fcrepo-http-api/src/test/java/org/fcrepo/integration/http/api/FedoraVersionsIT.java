@@ -24,6 +24,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static com.google.common.collect.Iterators.size;
@@ -457,7 +458,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         // creating a version should succeed
         final HttpPost httpPost = new HttpPost(serverAddress + pid + "/" + dsid + "/fcr:versions");
         httpPost.setHeader("Slug", versionLabel);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPost));
+        assertEquals(CREATED.getStatusCode(), getStatus(httpPost));
         // datastream should then have versions endpoint
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
         // datastream should then be versionable
@@ -570,7 +571,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
         postVersion.addHeader("Slug", label);
         try (final CloseableHttpResponse response = execute(postVersion)) {
-            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
             assertNotNull("No version location header found", getLocation(response));
         }
     }

@@ -18,7 +18,7 @@ package org.fcrepo.integration.http.api;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
@@ -110,7 +110,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
         postVersion.addHeader("Slug", label);
         try (final CloseableHttpResponse response = execute(postVersion)) {
-            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
             final String locationHeader = getLocation(response);
             assertNotNull("No version location header found", locationHeader);
         }
