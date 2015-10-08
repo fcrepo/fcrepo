@@ -53,6 +53,7 @@ import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
@@ -892,6 +893,51 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertFalse(model2.contains(subjects.reverse().convert(subject),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
+    }
+
+    @Test
+    public void testDeleteLargeLiteralStoredAsBinary() throws RepositoryException {
+        //final String pid = UUID.randomUUID().toString();
+        //final FedoraResource resource = containerService.findOrCreate(session, pid);
+        final FedoraResource resource = containerService.findOrCreate(session, "/testNodeGraph");
+        final String prefix = "example: <http://myurl.org/>";
+        final String prop = "example:title";
+        final String longLiteral =   // minimumBinaryInByteSize is currently 40 bytes
+            "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+
+        final String fname = "testDeleteLargeLiteralStoredAsBinary";
+        logger.info(fname + " running");
+
+        resource.updateProperties(
+                subjects,
+                "PREFIX " + prefix + "\n" +
+                "INSERT { " +
+                "   <> " + prop +  " \"\"\"" + longLiteral + "\"\"\" ." +
+                "} WHERE { }",
+                new RdfStream());
+
+        logger.info(fname + ": added property " + prop);
+        // make sure it's there and that it's of type binary
+        assertTrue(resource.getNode().hasProperty(prop));
+        assertEquals(longLiteral, resource.getNode().getProperty(prop).getValues()[0].getString());
+
+        logger.info(fname + ": BEFORE num of values for prop is: " + Integer.toString(resource.getProperty(prop).getValues().length));
+        logger.info(fname + ": BEFORE resource has property? " + (resource.hasProperty(prop) ? "true" : "false"));
+
+        resource.updateProperties(
+                subjects,
+                "PREFIX " + prefix + "\n" +
+                "DELETE WHERE {" +
+                "    <> " + prop + " ?j" +
+                "}",
+                new RdfStream());
+
+        logger.info(fname + ": deleted property " + prop);
+        logger.info(fname + ": AFTER num of values for prop is: " + Integer.toString(resource.getProperty(prop).getValues().length));
+        logger.info(fname + ": AFTER resource has property? " + (resource.hasProperty(prop) ? "true" : "false"));
+        // should be gone now!
+        assertEquals(longLiteral, resource.getNode().getProperty(prop).getValues()[0].getString());
+        assertFalse(resource.getNode().hasProperty(prop));
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
