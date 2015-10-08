@@ -215,8 +215,6 @@ public class NodePropertiesTools {
                         return false;
                     }
 
-                    LOGGER.warn("Failed to find value for property '{}'. Unable to compare value (type: {}) " +
-                       "'{}' to requested value '{}'", propertyName, v.getType(), strVal, strValueToRemove);
                     return true;
                 })).toArray(Value[]::new);
 
