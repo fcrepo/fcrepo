@@ -916,15 +916,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertTrue("Expected Property not found!", resource.getNode().hasProperty(prop));
         assertEquals(longLiteral, resource.getNode().getProperty(prop).getValues()[0].getString());
 
-        final Model model = resource.getTriples(subjects, PropertiesRdfContext.class).asModel();
-
         resource.updateProperties(
                 subjects,
                 "PREFIX " + prefix + "\n" +
                 "DELETE WHERE { " +
                 "   <> " + prop + " ?j " +
                 "}",
-                RdfStream.fromModel(model));
+                resource.getTriples(subjects, PropertiesRdfContext.class));
 
         // should be gone now!
         assertFalse("Found unexpected property: " + prop, resource.getNode().hasProperty(prop));
