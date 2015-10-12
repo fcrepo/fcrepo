@@ -26,6 +26,7 @@ import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
+import static java.util.TimeZone.getTimeZone;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
@@ -280,8 +281,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void setURIProperty(final String relPath, final URI value) {
         try {
-            touch();
             getNode().setProperty(relPath, value.toString(), PropertyType.URI);
+            touch();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -390,9 +391,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @VisibleForTesting
     public void touch() {
         try {
-            getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance());
+            getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance(getTimeZone("UTC")));
         } catch (final RepositoryException e) {
-            e.printStackTrace();
+            LOGGER.info("Exception caught when trying to update lastModified date", e);
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -586,8 +587,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
-        touch();
-
         final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap())
                 .topic(idTranslator.reverse().convert(this).asNode());
 
@@ -617,6 +616,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         if (exceptions.length() > 0) {
             throw new MalformedRdfException(exceptions.toString());
         }
+
+        touch();
     }
 
     /* (non-Javadoc)

@@ -23,8 +23,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Calendar;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -66,7 +64,12 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
                 initializeNewObjectProperties(node);
             }
 
-            return new ContainerImpl(node);
+            final ContainerImpl container = new ContainerImpl(node);
+            if (node.isNew()) {
+                container.touch();
+            }
+
+            return container;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -96,7 +99,6 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
             if (node.canAddMixin(FEDORA_CONTAINER)) {
                 node.addMixin(FEDORA_CONTAINER);
-                node.setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance());
             }
 
         } catch (final RepositoryException e) {

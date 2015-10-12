@@ -186,9 +186,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         session = repo.login();
 
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
-        System.out.println("XXX cre: " + obj2.getCreatedDate().getTime());
-        System.out.println("XXX mod: " + obj2.getLastModifiedDate().getTime());
-        assertFalse( obj2.getLastModifiedDate().before(obj2.getCreatedDate()) );
+        assertFalse( obj2.getLastModifiedDate().getTime() + " should not be before " + obj2.getCreatedDate().getTime(),
+            obj2.getLastModifiedDate().before(obj2.getCreatedDate()) );
     }
 
     @Test
