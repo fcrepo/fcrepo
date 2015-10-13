@@ -186,8 +186,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         session = repo.login();
 
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
-        assertFalse( obj2.getLastModifiedDate().getTime() + " should not be before " + obj2.getCreatedDate().getTime(),
-            obj2.getLastModifiedDate().before(obj2.getCreatedDate()) );
+        final Date created = roundDate(obj2.getCreatedDate());
+        final Date modified = roundDate(obj2.getLastModifiedDate());
+        assertFalse(modified + " should not be before " + created, modified.before(created));
     }
 
     @Test
@@ -973,5 +974,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     private static void addVersionLabel(final String label, final Version v) throws RepositoryException {
         v.getContainingHistory().addVersionLabel(v.getName(), label, false);
+    }
+
+    private static Date roundDate(final Date date) {
+        return new Date(date.getTime() - date.getTime() % 1000);
     }
 }

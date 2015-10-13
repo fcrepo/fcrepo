@@ -393,7 +393,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         try {
             getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance(getTimeZone("UTC")));
         } catch (final RepositoryException e) {
-            LOGGER.info("Exception caught when trying to update lastModified date", e);
+            LOGGER.error("Exception caught when trying to update lastModified date: {}", e.getMessage());
             throw new RepositoryRuntimeException(e);
         }
     }
