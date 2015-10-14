@@ -1,0 +1,14 @@
+org.fcrepo.kernel.modeshape
+org.fcrepo.kernel.modeshape.identifiers
+org.fcrepo.kernel.modeshape.observer
+org.fcrepo.kernel.modeshape.observer.eventmappings
+org.fcrepo.kernel.modeshape.rdf
+org.fcrepo.kernel.modeshape.rdf.converters
+org.fcrepo.kernel.modeshape.rdf.impl
+org.fcrepo.kernel.modeshape.rdf.impl.mappings
+org.fcrepo.kernel.modeshape.services
+org.fcrepo.kernel.modeshape.services.functions
+org.fcrepo.kernel.modeshape.spring
+org.fcrepo.kernel.modeshape.utils
+org.fcrepo.kernel.modeshape.utils.impl
+org.fcrepo.kernel.modeshape.utils.iterators
