@@ -227,6 +227,7 @@ public abstract class AbstractResourceIT {
                     logger.trace(EntityUtils.toString(response.getEntity()));
                 }
             }
+            EntityUtils.consume(response.getEntity());
             return result;
         } catch (final IOException e) {
             throw new RuntimeException(e);
@@ -242,6 +243,7 @@ public abstract class AbstractResourceIT {
      */
     protected static String getLocation(final HttpUriRequest req) throws IOException {
         try (final CloseableHttpResponse response = execute(req)) {
+            EntityUtils.consume(response.getEntity());
             return getLocation(response);
         }
     }
@@ -260,6 +262,7 @@ public abstract class AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(method)) {
             final int result = getStatus(response);
             assertEquals(OK.getStatusCode(), result);
+            EntityUtils.consume(response.getEntity());
             return response.getFirstHeader("Content-Type").getValue();
         }
     }

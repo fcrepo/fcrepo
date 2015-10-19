@@ -102,7 +102,7 @@ public class HttpPidMinter implements UniqueValueSupplier {
             try {
                 this.xpath = XPathFactory.newInstance().newXPath().compile(xpath);
             } catch ( final XPathException ex ) {
-                LOGGER.warn("Error parsing xpath ({}): {}", xpath, ex );
+                LOGGER.warn("Error parsing xpath ({}): {}", xpath, ex.getMessage());
                 throw new IllegalArgumentException("Error parsing xpath" + xpath, ex);
             }
         }
@@ -183,10 +183,10 @@ public class HttpPidMinter implements UniqueValueSupplier {
             final HttpResponse resp = client.execute( minterRequest() );
             return responseToPid( EntityUtils.toString(resp.getEntity()) );
         } catch ( final IOException ex ) {
-            LOGGER.warn("Error minting pid from {}: {}", url, ex);
+            LOGGER.warn("Error minting pid from {}: {}", url, ex.getMessage());
             throw new PidMintingException("Error minting pid", ex);
         } catch ( final Exception ex ) {
-            LOGGER.warn("Error processing minter response", ex);
+            LOGGER.warn("Error processing minter response", ex.getMessage());
             throw new PidMintingException("Error processing minter response", ex);
         }
     }

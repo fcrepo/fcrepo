@@ -100,7 +100,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
                         try {
                             tx.rollback();
                         } catch (final RepositoryRuntimeException e) {
-                            LOGGER.error("Got exception rolling back expired transaction {}: {}", tx, e);
+                            LOGGER.error("Got exception rolling back expired transaction {}: {}", tx, e.getMessage());
                         }
                         transactions.remove(key);
                     });
