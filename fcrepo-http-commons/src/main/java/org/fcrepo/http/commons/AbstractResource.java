@@ -33,7 +33,6 @@ import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.VersionService;
 
 import org.jvnet.hk2.annotations.Optional;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.google.common.eventbus.EventBus;
 
@@ -43,13 +42,6 @@ import com.google.common.eventbus.EventBus;
  * @author ajs6f
  */
 public class AbstractResource {
-
-    static {
-        // the SLF4J to JUL bridge normally adds its attachments
-        // we want them to _replace_ the JUL loggers, to avoid logging outputs except those controlled by SLF4J
-        SLF4JBridgeHandler.removeHandlersForRootLogger();
-        SLF4JBridgeHandler.install();
-    }
 
     /**
      * Useful for constructing URLs
