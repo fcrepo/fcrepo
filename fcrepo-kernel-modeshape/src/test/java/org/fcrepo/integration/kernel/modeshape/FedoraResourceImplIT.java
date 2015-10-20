@@ -58,7 +58,6 @@ import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
@@ -178,7 +177,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testLastModified() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
 
         session.save();
@@ -193,7 +192,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testTouch() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
 
         session.save();
@@ -509,7 +508,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test (expected = IllegalArgumentException.class)
     public void testInvalidSparqlUpdateValidation() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
         object.updateProperties(
@@ -538,7 +537,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testValidSparqlUpdateWithLiteralTrailingSlash() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final FedoraResource object = containerService.findOrCreate(session, pid);
         object.updateProperties(
                 subjects,
@@ -549,7 +548,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testValidSparqlUpdateValidationAltSyntax() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final FedoraResource object = containerService.findOrCreate(session, pid);
         object.updateProperties(subjects,
                 "DELETE WHERE {" +
@@ -562,7 +561,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test (expected = IllegalArgumentException.class)
     public void testInvalidSparqlUpdateValidationAltSyntax() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final FedoraResource object = containerService.findOrCreate(session, pid);
         object.updateProperties(subjects,
                 "DELETE WHERE {" +
@@ -575,7 +574,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testValidSparqlUpdateValidation1() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
         object.updateProperties(
@@ -586,7 +585,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testValidSparqlUpdateValidation2() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
         object.updateProperties(
@@ -637,7 +636,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testGetReferences() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         containerService.findOrCreate(session, pid);
         final Container subject = containerService.findOrCreate(session, pid + "/a");
         final Container object = containerService.findOrCreate(session, pid + "/b");
@@ -657,7 +656,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testReplaceProperties() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
 
         final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class);
@@ -931,7 +930,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testDeletePartOfMultiValueProperty() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid();
         final String relation = "test:fakeRel";
         containerService.findOrCreate(session, pid);
         final Container subject = containerService.findOrCreate(session, pid + "/a");

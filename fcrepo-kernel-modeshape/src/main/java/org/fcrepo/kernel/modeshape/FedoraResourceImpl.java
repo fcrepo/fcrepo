@@ -365,8 +365,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         try {
             if (hasProperty(FEDORA_LASTMODIFIED)) {
+                LOGGER.trace("Using {} date", FEDORA_LASTMODIFIED);
                 return new Date(getProperty(FEDORA_LASTMODIFIED).getDate().getTimeInMillis());
             } else if (hasProperty(JCR_LASTMODIFIED)) {
+                LOGGER.trace("Using {} date", JCR_LASTMODIFIED);
                 return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
             }
         } catch (final PathNotFoundException e) {

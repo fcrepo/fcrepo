@@ -255,28 +255,19 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testTouch() {
+    public void testTouch() throws RepositoryException {
         // test existing JCR_LASTMODIFIED
         final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);
-        try {
-            when(mockProp.getDate()).thenReturn(someDate);
-            when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
-            when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-            when(mockNode.getSession()).thenReturn(mockSession);
-        } catch (final RepositoryException e) {
-            e.printStackTrace();
-        }
+        when(mockProp.getDate()).thenReturn(someDate);
+        when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
+        when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
+        when(mockNode.getSession()).thenReturn(mockSession);
         final Property mockMod = mock(Property.class);
         final Calendar modDate = Calendar.getInstance();
-        try {
-            when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
-            when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
-            when(mockMod.getDate()).thenReturn(modDate);
-        } catch (final RepositoryException e) {
-            System.err.println("What are we doing in the second test?");
-            e.printStackTrace();
-        }
+        when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
+        when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
+        when(mockMod.getDate()).thenReturn(modDate);
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(modDate.getTimeInMillis(), actual.getTime());
     }

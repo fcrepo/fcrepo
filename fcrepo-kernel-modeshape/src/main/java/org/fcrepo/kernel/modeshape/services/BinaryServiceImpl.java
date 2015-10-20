@@ -60,7 +60,13 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 initializeNewDatastreamProperties(dsNode);
             }
 
-            return cast(dsNode.getNode(JCR_CONTENT));
+            final FedoraBinaryImpl binary = cast(dsNode.getNode(JCR_CONTENT));
+
+            if (dsNode.isNew()) {
+                binary.touch();
+            }
+
+            return binary;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -111,7 +117,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      * @return node as datastream
      */
     @Override
-    public FedoraBinary cast(final Node node) {
+    public FedoraBinaryImpl cast(final Node node) {
         assertIsType(node);
         return new FedoraBinaryImpl(node);
     }

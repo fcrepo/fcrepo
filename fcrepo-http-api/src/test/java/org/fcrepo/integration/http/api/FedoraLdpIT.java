@@ -2139,7 +2139,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void inboundLinksDoNotUpdateEtag() throws IOException {
+    public void testInboundLinksDoNotUpdateEtag() throws IOException {
         final String id1 = getRandomUniqueId();
         final HttpPut httpPut = putObjMethod(id1);
         final String oldETag;
