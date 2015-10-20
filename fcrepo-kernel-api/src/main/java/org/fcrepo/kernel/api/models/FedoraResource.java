@@ -97,16 +97,21 @@ public interface FedoraResource {
     void delete();
 
     /**
-     * Get the date this datastream was created
+     * Get the date this resource was created
      * @return created date
      */
     Date getCreatedDate();
 
     /**
-     * Get the date this datastream was last modified
+     * Get the date this resource was last modified
      * @return last modified date
      */
     Date getLastModifiedDate();
+
+    /**
+     * Set the last-modified date of this resource to the current date.
+     */
+    void touch();
 
     /**
      * Check if this object uses a given RDF type
@@ -245,4 +250,5 @@ public interface FedoraResource {
      * @return the node for this object at the version provided
      */
     Node getNodeVersion(String label);
+
 }
