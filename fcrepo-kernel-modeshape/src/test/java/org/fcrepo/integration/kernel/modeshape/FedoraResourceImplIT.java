@@ -40,6 +40,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
@@ -76,6 +77,7 @@ import javax.jcr.version.Version;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -188,6 +190,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Date created = roundDate(obj2.getCreatedDate());
         final Date modified = roundDate(obj2.getLastModifiedDate());
         assertFalse(modified + " should not be before " + created, modified.before(created));
+
+        final Graph graph = obj2.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph();
+        final Node s = createGraphSubjectNode(obj2);
+        final ExtendedIterator<Triple> iter = graph.find(s, LAST_MODIFIED_DATE.asNode(), ANY);
+        assertTrue("Should have one lastModified triple", iter.hasNext());
+        iter.next();
+        assertFalse("Should not have more than one lastModified triple", iter.hasNext());
     }
 
     @Test

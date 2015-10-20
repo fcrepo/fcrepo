@@ -508,6 +508,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         execute(request, model);
 
         listener.assertNoExceptions();
+        touch();
     }
 
     @Override
