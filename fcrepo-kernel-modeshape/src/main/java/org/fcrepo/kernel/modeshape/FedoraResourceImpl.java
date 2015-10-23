@@ -37,6 +37,7 @@ import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunction
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalType;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -68,6 +69,7 @@ import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
+import javax.jcr.NamespaceRegistry;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
@@ -78,6 +80,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -447,6 +450,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 idTranslator.reverse().convert(this).toString());
 
         final Collection<IllegalArgumentException> errors = checkInvalidPredicates(request);
+
+        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(getSession());
+
+        request.getPrefixMapping().getNsPrefixMap().forEach(
+            (k,v) -> {
+                try {
+                    LOGGER.debug("Prefix mapping is key:{} -> value:{}", k, v);
+                    if (Arrays.asList(namespaceRegistry.getPrefixes()).contains(k)
+                        &&  !v.equals(namespaceRegistry.getURI(k))) {
+
+                        final String namespaceURI = namespaceRegistry.getURI(k);
+                        LOGGER.debug("Prefix has already been defined: {}:{}", k, namespaceURI);
+                        throw new InvalidPrefixException("Prefix already exists as: " + k + " -> " + namespaceURI);
+                   }
+
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+           });
 
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
