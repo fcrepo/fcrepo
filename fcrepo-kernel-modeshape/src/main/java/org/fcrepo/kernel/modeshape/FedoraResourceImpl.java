@@ -436,6 +436,19 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         final Collection<IllegalArgumentException> errors = checkInvalidPredicates(request);
 
+        request.getPrefixMapping().getNsPrefixMap().forEach(
+                       (k,v) -> { try {
+                                   LOGGER.info("451: prefix mapping is key -> value: " + k + "->" + v + "\n");
+                  if ( Arrays.asList(getSession().getWorkspace().getNamespaceRegistry().getPrefixes()).contains(k)
+                     && !v.equals(getSession().getWorkspace().getNamespaceRegistry().getURI(k))) {
+                                     LOGGER.info("********451: has exists\n");
+                                    throw new IllegalArgumentException( "prefix has existed");
+
+                                   }
+                                  } catch (RepositoryException e) {
+                                    LOGGER.info("********catch " + e);
+                                  }
+                                 });
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
         }
