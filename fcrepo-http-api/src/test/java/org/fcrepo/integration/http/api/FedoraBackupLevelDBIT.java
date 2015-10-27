@@ -29,7 +29,7 @@ public class FedoraBackupLevelDBIT extends FedoraBackupIT {
 
     @BeforeClass
     public static void beforeClass() {
-        System.setProperty(CACHE_CONFIG_FILE, "config/infinispan/leveldb/infinispan.xml");
+        System.setProperty(CACHE_CONFIG_FILE, "config/infinispan/leveldb-default/infinispan.xml");
     }
 
     @AfterClass
