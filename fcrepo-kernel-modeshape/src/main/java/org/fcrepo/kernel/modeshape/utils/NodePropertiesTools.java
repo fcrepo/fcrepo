@@ -17,6 +17,7 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isExternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
@@ -26,6 +27,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.commons.lang3.StringUtils;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -194,37 +197,55 @@ public class NodePropertiesTools {
      */
     public void removeNodeProperty(final Node node, final String propertyName, final Value valueToRemove)
         throws RepositoryException {
-
+        LOGGER.debug("Request to remove {}", valueToRemove);
         // if the property doesn't exist, we don't need to worry about it.
         if (node.hasProperty(propertyName)) {
 
             final Property property = node.getProperty(propertyName);
+            final String strValueToRemove = valueToRemove.getString();
 
             if (property.isMultiple()) {
                 final AtomicBoolean remove = new AtomicBoolean();
-                final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(v -> {
-                    if (v.equals(valueToRemove)) {
+                final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(uncheck(v -> {
+                    final String strVal = v.getString();
+
+                    LOGGER.debug("v is '{}', valueToRemove is '{}'", v, strValueToRemove );
+                    if (strVal.equals(strValueToRemove)) {
                         remove.set(true);
                         return false;
                     }
+
                     return true;
-                }).toArray(Value[]::new);
+                })).toArray(Value[]::new);
 
                 // we only need to update the property if we did anything.
                 if (remove.get()) {
                     if (newValues.length == 0) {
-                        LOGGER.debug("Removing property {}", propertyName);
+                        LOGGER.debug("Removing property '{}'", propertyName);
                         property.remove();
                     } else {
-                        LOGGER.debug("Removing value {} from property {}", valueToRemove, propertyName);
+                        LOGGER.debug("Removing value '{}' from property '{}'", strValueToRemove, propertyName);
                         property.setValue(newValues);
                     }
+                } else {
+                    LOGGER.debug("Value not removed from property name '{}' (value '{}')", propertyName,
+                            strValueToRemove);
+                    throw new RepositoryException ("Property '" + propertyName + "': Unable to remove value '" +
+                            StringUtils.substring(strValueToRemove, 0, 50) + "...'");
                 }
-
             } else {
-                if (property.getValue().equals(valueToRemove)) {
-                    LOGGER.debug("Removing value from property {}", propertyName);
+
+                final String strPropVal = property.getValue().getString();
+
+                LOGGER.debug("Removing string '{}'", strValueToRemove);
+                if (StringUtils.equals(strPropVal, strValueToRemove)) {
+                    LOGGER.debug("single value: Removing value from property '{}'", propertyName);
                     property.remove();
+                } else {
+                    LOGGER.debug("Value not removed from property name '{}' (property value: '{}';compare value: '{}')",
+                            propertyName, strPropVal, strValueToRemove);
+                    throw new RepositoryException("Property '" + propertyName + "': Unable to remove value '" +
+                            StringUtils.substring(strValueToRemove, 0, 50) + "'");
                 }
             }
         }
