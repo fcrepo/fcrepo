@@ -193,15 +193,10 @@ public class FedoraBinaryImplIT extends AbstractIT {
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
 
-            binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3").setContent(
-                    new ByteArrayInputStream("asdf".getBytes()),
-                    "application/octet-stream",
-                    null,
-                    null,
-                    null
-                    );
-
+            final FedoraBinary orig = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3");
+            orig.setContent(new ByteArrayInputStream("asdf".getBytes()), "application/octet-stream", null, null, null);
             session.save();
+            final long origMod = orig.getLastModifiedDate().getTime();
 
             final FedoraBinary ds = binaryService.findOrCreate(session,
                     "/testDatastreamObject/testDatastreamNode3");
@@ -215,6 +210,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
             assertEquals("0123456789", contentString);
+            assertTrue("Last-modified should be updated", ds.getLastModifiedDate().getTime() > origMod);
         } finally {
             session.logout();
         }
