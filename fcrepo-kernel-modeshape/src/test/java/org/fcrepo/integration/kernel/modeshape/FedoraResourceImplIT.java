@@ -894,40 +894,6 @@ public class FedoraResourceImplIT extends AbstractIT {
                 createResource("info:fedora/" + pid + "/c")));
     }
 
-    @Test
-    public void testDeleteLargeLiteralStoredAsBinary() throws RepositoryException {
-        final FedoraResource resource = containerService.findOrCreate(session, "/testNodeGraph");
-        final String prefix = "dc: <http://purl.org/dc/elements/1.1/>";
-        final String prop = "dc:title";
-        final String longLiteral =   // minimumBinaryInByteSize is currently 40 bytes
-            "01234567890123456789012345678901234567890123456789" +
-            "01234567890123456789012345678901234567890123456789" +
-            "01234567890123456789012345678901234567890123456789" +
-            "01234567890123456789012345678901234567890123456789";
-
-        resource.updateProperties(
-                subjects,
-                "PREFIX " + prefix + "\n" +
-                "INSERT { " +
-                "   <> " + prop +  " \"\"\"" + longLiteral + "\"\"\" ." +
-                "} WHERE { }",
-                new RdfStream());
-
-        assertTrue("Expected Property not found!", resource.getNode().hasProperty(prop));
-        assertEquals(longLiteral, resource.getNode().getProperty(prop).getValues()[0].getString());
-
-        resource.updateProperties(
-                subjects,
-                "PREFIX " + prefix + "\n" +
-                "DELETE WHERE { " +
-                "   <> " + prop + " ?j " +
-                "}",
-                resource.getTriples(subjects, PropertiesRdfContext.class));
-
-        // should be gone now!
-        assertFalse("Found unexpected property: " + prop, resource.getNode().hasProperty(prop));
-    }
-
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
         addVersionLabel(label, session.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
     }
