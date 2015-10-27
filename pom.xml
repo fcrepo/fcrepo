@@ -539,7 +539,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>-XX:MaxMetaspaceSize=128m ${jacoco.agent.it.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.it.arg}</argLine>
         </configuration>
       </plugin>
 
