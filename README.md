@@ -66,12 +66,21 @@ described in the [deployment guide](https://wiki.duraspace.org/display/FEDORA4x/
 If deployed locally using a war file called `fcrepo.war`, the web application will typically be available at
 http://localhost:8080/fcrepo/rest.
 
-In order to *test* the fedora application, it is also possible to launch it from the command line using `mvn jetty:run`:
+There are two convenient methods for *testing* the fedora application by launching it directly from the command line.
+
+One option is to use the "one click" application, which comes with an embedded Jetty servlet. This can be started by
+either double-clicking on the jar file or by running the following command:
+
+    java -jar ./fcrepo-webapp/target/fcrepo-webapp-<version>-jetty-console.jar
+
+An alternative is use the maven command: `mvn jetty:run`
 
 ```
 $ cd fcrepo-webapp
 $ MAVEN_OPTS="-Xmx512m" mvn jetty:run
 ```
+
+For both of these methods, your Fedora repository will be available at: [http://localhost:8080/rest/](http://localhost:8080/rest/)
 
 Note: You may need to set the $JAVA_HOME property, since Maven uses it to find the Java runtime to use, overriding your PATH.
 `mvn --version` will show which version of Java is being used by Maven, e.g.:
@@ -94,5 +103,4 @@ options to the JaCoCo code coverage plugin:
 $ MAVEN_OPTS="-Xmx1024m" mvn -Djacoco.agent.it.arg="-XX:MaxMetaspaceSize=1024m -Xmx1024m" -Djacoco.agent.ut.arg="-XX:MaxMetaspaceSize=1024m -Xmx1024m"  clean install
 ```
 
-Now your Fedora repository will be up and running at: [http://localhost:8080/rest/](http://localhost:8080/rest/)
 
