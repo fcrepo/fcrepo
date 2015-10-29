@@ -125,14 +125,22 @@ public final class ServletContainerAuthenticationProvider implements
 
         final HttpServletRequest servletRequest =
                 ((ServletCredentials) credentials).getRequest();
-        final Principal userPrincipal = servletRequest.getUserPrincipal();
+        Principal userPrincipal = servletRequest.getUserPrincipal();
 
-        if (userPrincipal != null &&
-                servletRequest.isUserInRole(FEDORA_ADMIN_ROLE)) {
-            LOGGER.debug("Returning admin user");
+        if (userPrincipal != null && servletRequest.isUserInRole(FEDORA_ADMIN_ROLE)) {
+            // check if delegation is configured
+            final Principal delegatedPrincipal = getDelegatedPrincipal(credentials);
+            if (delegatedPrincipal != null) {
+                // replace the userPrincipal with the delegated principal
+                // then fall through to the normal user processing
+                userPrincipal = delegatedPrincipal;
+                LOGGER.info("Admin user is delegating to {}", userPrincipal);
 
-            return repositoryContext.with(new FedoraAdminSecurityContext(
-                    userPrincipal.getName()));
+            } else {
+                // delegation is configured, but there is no delegated user set in the header of this request
+                LOGGER.debug("Returning admin user");
+                return repositoryContext.with(new FedoraAdminSecurityContext(userPrincipal.getName()));
+            }
         }
 
         if (userPrincipal != null) {
@@ -168,6 +176,15 @@ public final class ServletContainerAuthenticationProvider implements
 
         return repositoryContext.with(new FedoraUserSecurityContext(
                 userPrincipal, fad));
+    }
+
+    private Principal getDelegatedPrincipal(final Credentials credentials) {
+        for (final PrincipalProvider provider : this.getPrincipalProviders()) {
+            if (provider instanceof DelegateHeaderPrincipalProvider) {
+                return ((DelegateHeaderPrincipalProvider) provider).getDelegate(credentials);
+            }
+        }
+        return null;
     }
 
     /**
