@@ -752,6 +752,13 @@
     </developer>
   </developers>
 
+  <scm>
+    <connection>scm:git:git://github.com/${project_organization}/${project_name}.git</connection>
+    <developerConnection>scm:git:git@github.com:${project_organization}/${project_name}.git</developerConnection>
+    <url>https://github.com/${project_organization}/${project_name}</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <issueManagement>
     <system>GitHub</system>
     <url>https://github.com/fcrepo4/fcrepo4/issues</url>
