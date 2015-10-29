@@ -17,14 +17,14 @@ package org.fcrepo.auth.common;
 
 import static java.util.Collections.emptySet;
 
-import org.modeshape.jcr.api.ServletCredentials;
+import java.security.Principal;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.jcr.Credentials;
 import javax.servlet.http.HttpServletRequest;
 
-import java.security.Principal;
-import java.util.HashSet;
-import java.util.Set;
+import org.modeshape.jcr.api.ServletCredentials;
 
 /**
  * An example principal provider that extracts principals from request headers.
@@ -131,6 +131,21 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
         return principals;
 
+    }
+
+    /**
+     * @param credentials
+     * @return the first principal found
+     */
+    public Principal getFirstPrincipal(final Credentials credentials) {
+        final Set<Principal> principals = getPrincipals(credentials);
+        if (principals != null && principals.size() > 0) {
+            final Principal[] ps = principals.toArray(new Principal[0]);
+            final Principal firstPrincipal = ps[0];
+            return firstPrincipal;
+        } else {
+            return null;
+        }
     }
 
 }

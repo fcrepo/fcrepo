@@ -72,6 +72,12 @@ public class ServletContainerAuthenticationProviderTest {
     @Mock
     private HttpServletRequest request;
 
+    @Mock
+    private HttpHeaderPrincipalProvider delegateProvider;
+
+    @Mock
+    private Principal delegatePrincipal;
+
     private Map<String, Object> sessionAttributes;
 
     @Captor
@@ -134,6 +140,52 @@ public class ServletContainerAuthenticationProviderTest {
         assertEquals(
                 "Resulting security context must exist and belong to adminName",
                 "adminName", result.getSecurityContext().getUserName());
+    }
+
+    @Test
+    public void testDelegatedAuthenticationForAdmins() {
+        final AuthenticationProvider provider =
+                ServletContainerAuthenticationProvider.getInstance();
+
+        when(request.isUserInRole(FEDORA_ADMIN_ROLE)).thenReturn(true);
+
+        when(principal.getName()).thenReturn("adminName");
+
+        when(delegateProvider.getFirstPrincipal(creds)).thenReturn(delegatePrincipal);
+        when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
+
+        ((ServletContainerAuthenticationProvider) provider).setDelegatedPrincipalProvider(delegateProvider);
+
+        final ExecutionContext result =
+                provider.authenticate(creds, "repo", "workspace", context,
+                        sessionAttributes);
+
+        assertEquals(
+                "Resulting security context must exist and belong to delegatedUserName",
+                "delegatedUserName", result.getSecurityContext().getUserName());
+    }
+
+    @Test
+    public void testNoDelegatedAuthenticationForUsers() {
+        final AuthenticationProvider provider =
+                ServletContainerAuthenticationProvider.getInstance();
+
+        when(request.isUserInRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+
+        when(principal.getName()).thenReturn("userName");
+
+        when(delegateProvider.getFirstPrincipal(creds)).thenReturn(delegatePrincipal);
+        when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
+
+        ((ServletContainerAuthenticationProvider) provider).setDelegatedPrincipalProvider(delegateProvider);
+
+        final ExecutionContext result =
+                provider.authenticate(creds, "repo", "workspace", context,
+                        sessionAttributes);
+
+        assertEquals(
+                "Resulting security context must exist and belong to userName (delegated user is ignored)",
+                "userName", result.getSecurityContext().getUserName());
     }
 
     @Test
