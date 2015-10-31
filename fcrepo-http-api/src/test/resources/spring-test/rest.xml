@@ -10,11 +10,6 @@
   <context:property-placeholder />
 
   <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
-  
-  <!-- Mints PIDs-->
-  <bean class="org.fcrepo.mint.UUIDPathMinter"
-        c:length="${fcrepo.uuid.path.length:2}"
-        c:count="${fcrepo.uuid.path.count:4}"/>
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">

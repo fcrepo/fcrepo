@@ -13,7 +13,6 @@
   <properties>
     <osgi.import.packages>
       org.fcrepo.metrics,
-      org.fcrepo.mint,
       org.fcrepo.kernel.api,
       org.fcrepo.kernel.modeshape,
       org.fcrepo.serialization,
@@ -66,11 +65,6 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-metrics</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-mint</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

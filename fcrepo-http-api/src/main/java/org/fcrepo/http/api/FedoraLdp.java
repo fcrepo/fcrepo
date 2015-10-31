@@ -598,8 +598,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (slug != null && !slug.isEmpty()) {
             pid = slug;
-        } else {
+        } else if (pidMinter != null) {
             pid = pidMinter.get();
+        } else {
+            pid = defaultPidMinter.get();
         }
         // reverse translate the proffered or created identifier
         LOGGER.trace("Using external identifier {} to create new resource.", pid);
