@@ -64,8 +64,6 @@ AuthenticationProvider {
 
     private FedoraAuthorizationDelegate fad;
 
-    private HttpHeaderPrincipalProvider delegatedPrincipalProvider;
-
     /**
      * Provides the singleton bean to ModeShape via reflection based on class
      * name.
@@ -131,21 +129,17 @@ AuthenticationProvider {
 
         if (userPrincipal != null && servletRequest.isUserInRole(FEDORA_ADMIN_ROLE)) {
             // check if delegation is configured
-            if (getDelegatedPrincipalProvider() != null) {
-                // if there is a delegated user set in the header, use that user for the request instead
-                final Principal delegatedPrincipal = getDelegatedPrincipalProvider().getFirstPrincipal(credentials);
-                if (delegatedPrincipal != null) {
-                    // replace the userPrincipal with the first header principal
-                    // then fall through to the normal user processing
-                    userPrincipal = delegatedPrincipal;
-                    LOGGER.info("Admin user is delegating to {}", userPrincipal);
-                } else {
-                    // delegation is configured, but there is no delegated user set in the header of this request
-                    return createAdminContext(repositoryContext, userPrincipal);
-                }
+            final Principal delegatedPrincipal = getDelegatedPrincipal(credentials);
+            if (delegatedPrincipal != null) {
+                // replace the userPrincipal with the delegated principal
+                // then fall through to the normal user processing
+                userPrincipal = delegatedPrincipal;
+                LOGGER.info("Admin user is delegating to {}", userPrincipal);
+
             } else {
-                // delegation is not configured
-                return createAdminContext(repositoryContext, userPrincipal);
+                // delegation is configured, but there is no delegated user set in the header of this request
+                LOGGER.debug("Returning admin user");
+                return repositoryContext.with(new FedoraAdminSecurityContext(userPrincipal.getName()));
             }
         }
 
@@ -184,6 +178,15 @@ AuthenticationProvider {
                 userPrincipal, fad));
     }
 
+    private Principal getDelegatedPrincipal(final Credentials credentials) {
+        for (final PrincipalProvider provider : this.getPrincipalProviders()) {
+            if (provider instanceof DelegateHeaderPrincipalProvider) {
+                return ((DelegateHeaderPrincipalProvider) provider).getDelegate(credentials);
+            }
+        }
+        return null;
+    }
+
     /**
      * @return the authorization delegate
      */
@@ -196,33 +199,6 @@ AuthenticationProvider {
      */
     public void setFad(final FedoraAuthorizationDelegate fad) {
         this.fad = fad;
-    }
-
-    /**
-     * @return the delegated principal provider
-     */
-    public HttpHeaderPrincipalProvider getDelegatedPrincipalProvider() {
-        return delegatedPrincipalProvider;
-    }
-
-    /**
-     * @param delegatedPrincipalProvider the delegated principal provider to set
-     */
-    public void setDelegatedPrincipalProvider(final HttpHeaderPrincipalProvider delegatedPrincipalProvider) {
-        this.delegatedPrincipalProvider = delegatedPrincipalProvider;
-    }
-
-    /**
-     * @param repositoryContext
-     * @param userPrincipal
-     * @return execution context with an admin security context
-     */
-    private ExecutionContext createAdminContext(final ExecutionContext repositoryContext,
-            final Principal userPrincipal) {
-        LOGGER.debug("Returning admin user");
-        final ExecutionContext adminContext = repositoryContext.with(new FedoraAdminSecurityContext(
-                userPrincipal.getName()));
-        return adminContext;
     }
 
     private Set<Principal> collectPrincipals(final Credentials credentials) {
