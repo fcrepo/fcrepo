@@ -20,10 +20,9 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -68,7 +67,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(serverAddress + pairtreeName))) {
             assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.",
                     graphStore.contains(ANY, createURI(serverAddress + pairtreeName),
-                            createURI(REPOSITORY_NAMESPACE + "mixinTypes"), createLiteral(FEDORA_PAIRTREE)));
+                            type.asNode(), createURI(REPOSITORY_NAMESPACE + "Pairtree")));
         }
         testRoundtrip(pairtreeName);
     }

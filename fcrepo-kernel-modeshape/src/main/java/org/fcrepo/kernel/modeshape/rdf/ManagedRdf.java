@@ -15,14 +15,20 @@
  */
 package org.fcrepo.kernel.modeshape.rdf;
 
+import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_ACCESS_ROLES_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 
+import java.util.Set;
 import java.util.function.Predicate;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -35,6 +41,10 @@ public final class ManagedRdf {
 
     private static final Model model = createDefaultModel();
 
+    private static final Set<Property> internalProperties = of(
+            HAS_MIXIN_TYPE, HAS_PRIMARY_TYPE,
+            HAS_ACCESS_ROLES_SERVICE);
+
     /**
      * No public constructor on utility class
      */
@@ -46,4 +56,7 @@ public final class ManagedRdf {
 
     public static final Predicate<Resource> isManagedMixin =
         p -> isManagedNamespace.test(p.getNameSpace());
+
+    public static final Predicate<Triple> isInternalTriple =
+        p -> internalProperties.contains(model.asStatement(p).getPredicate());
 }
