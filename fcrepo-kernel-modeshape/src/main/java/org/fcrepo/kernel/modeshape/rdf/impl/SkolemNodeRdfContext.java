@@ -36,11 +36,11 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import static java.util.Arrays.asList;
-import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
 import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isSkolemNode;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

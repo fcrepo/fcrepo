@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.api.utils;
+package org.fcrepo.kernel.modeshape.utils;
 
-import java.util.function.Predicate;
-
+import java.util.function.Function;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -26,35 +25,36 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  * Operations that throw {@link RepositoryException} cannot be used as lambdas without "unchecking" those exceptions.
  *
  * @author ajs6f
- * @param <T> the type of the input to the predicate
+ * @param <T> the type of the input to the function
  */
 @FunctionalInterface
-public interface UncheckedPredicate<T> extends Predicate<T> {
+public interface UncheckedFunction<T, R> extends Function<T, R> {
 
     @Override
-    default boolean test(final T elem) {
+    default R apply(final T elem) {
         try {
-            return testThrows(elem);
+            return applyThrows(elem);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
     /**
-     * The same semantic as {@link #test(Object)}, but allowed to throw a {@link RepositoryException}
+     * The same semantic as {@link #apply(Object)}, but allowed to throw a {@link RepositoryException}
      *
      * @param elem the input argument
-     * @return true if the input matches the predicate, otherwise false
-     * @throws RepositoryException a repository-related exception
+     * @return the function result
+     * @throws RepositoryException the underlying repository error
      */
-    boolean testThrows(T elem) throws RepositoryException;
+    R applyThrows(T elem) throws RepositoryException;
 
     /**
-     * @param <T> the type of the input to the predicate
+     * @param <T> the type of the input to the function
+     * @param <R> the type of the output of the function
      * @param p a lambda expression
      * @return an unchecked version of that lambda
      */
-    static <T> UncheckedPredicate<T> uncheck(final UncheckedPredicate<T> p) {
+    static <T, R> UncheckedFunction<T, R> uncheck(final UncheckedFunction<T, R> p) {
         return p;
     }
 }

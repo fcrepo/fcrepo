@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services.functions;
+package org.fcrepo.kernel.modeshape.services.functions;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Value;
 
-import org.fcrepo.kernel.api.utils.UncheckedFunction;
+import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
 
 import java.util.Iterator;
 import java.util.function.Function;
@@ -29,8 +29,8 @@ import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_NODE;
-import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 
 /**
  * @author cabeer

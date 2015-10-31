@@ -23,8 +23,8 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.RDFS.Class;
 import static com.hp.hpl.jena.vocabulary.RDFS.label;
 import static com.hp.hpl.jena.vocabulary.RDFS.subClassOf;
-import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
