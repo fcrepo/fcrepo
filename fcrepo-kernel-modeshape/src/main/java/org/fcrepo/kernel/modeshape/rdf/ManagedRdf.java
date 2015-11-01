@@ -15,10 +15,16 @@
  */
 package org.fcrepo.kernel.modeshape.rdf;
 
+import static java.net.URI.create;
+import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
 
+import java.net.URI;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import com.hp.hpl.jena.graph.Triple;
@@ -35,11 +41,24 @@ public final class ManagedRdf {
 
     private static final Model model = createDefaultModel();
 
+    private static final Set<URI> managedTypes = of(
+            create(JCR_NT_NAMESPACE + "base"),
+            create(JCR_NT_NAMESPACE + "folder"),
+            create(JCR_NT_NAMESPACE + "hierarchyNode"),
+            create(MIX_NAMESPACE + "created"),
+            create(MIX_NAMESPACE + "lastModified"),
+            create(MIX_NAMESPACE + "referenceable"),
+            create(MIX_NAMESPACE + "simpleVersionable"),
+            create(MIX_NAMESPACE + "versionable"));
+
     /**
      * No public constructor on utility class
      */
     private ManagedRdf() {
     }
+
+    public static final Predicate<URI> isManagedType =
+        p -> managedTypes.contains(p);
 
     public static final Predicate<Triple> isManagedTriple =
         p -> isManagedPredicate.test(model.asStatement(p).getPredicate());

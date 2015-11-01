@@ -31,6 +31,7 @@ import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.prop
 import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedType;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -403,6 +404,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 .map(uncheck(x -> x.getName()))
                 .distinct()
                 .map(nodeTypeNameToURI::apply)
+                .filter(isManagedType.negate()::test)
                 .peek(x -> LOGGER.debug("node has rdf:type {}", x))
                 .collect(Collectors.toList());
 

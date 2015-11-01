@@ -990,14 +990,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final Node resource = createURI(serverAddress + id);
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Container");
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Resource");
-            verifyResource(graph, resource, MIX_NAMESPACE, "created");
-            verifyResource(graph, resource, MIX_NAMESPACE, "lastModified");
-            verifyResource(graph, resource, MIX_NAMESPACE, "referenceable");
-            verifyResource(graph, resource, MIX_NAMESPACE, "simpleVersionable");
-            verifyResource(graph, resource, MIX_NAMESPACE, "versionable");
-            verifyResource(graph, resource, JCR_NT_NAMESPACE, "base");
-            verifyResource(graph, resource, JCR_NT_NAMESPACE, "folder");
-            verifyResource(graph, resource, JCR_NT_NAMESPACE, "hierarchyNode");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "created");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "lastModified");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "referenceable");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "simpleVersionable");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "versionable");
+            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "base");
+            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "folder");
+            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "hierarchyNode");
         }
         logger.trace("Leaving verifyFullSetOfRdfTypes()...");
     }
@@ -1005,6 +1005,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static void verifyResource(final GraphStore g, final Node subject, final String ns, final String type) {
         assertTrue("Should find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
     }
+
+    private static void verifyAbsenceOfResource(final GraphStore g, final Node subject, final String ns,
+            final String type) {
+        assertFalse("Should not find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
+    }
+
 
     @Test
     public void testGetObjectGraphWithChild() throws IOException {
