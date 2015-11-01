@@ -15,9 +15,6 @@
  */
 package org.fcrepo.kernel.api;
 
-import static com.google.common.collect.ImmutableList.of;
-import java.util.List;
-
 /**
  * Convenience class with constants for commonly used JCR types.
  *
@@ -76,6 +73,8 @@ public interface FedoraJcrTypes {
 
     String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
 
+    String FROZEN_PRIMARY_TYPE = "jcr:frozenPrimaryType";
+
     String JCR_PRIMARY_TYPE = "jcr:primaryType";
 
     String JCR_MIXIN_TYPES = "jcr:mixinTypes";
@@ -86,6 +85,4 @@ public interface FedoraJcrTypes {
     String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
     String LDP_MEMBER_RESOURCE = "ldp:membershipResource";
 
-    List<String> EXPOSED_PROTECTED_JCR_TYPES = of(JCR_LASTMODIFIED, JCR_CREATED, JCR_CREATEDBY,
-            JCR_PRIMARY_TYPE, JCR_MIXIN_TYPES);
 }

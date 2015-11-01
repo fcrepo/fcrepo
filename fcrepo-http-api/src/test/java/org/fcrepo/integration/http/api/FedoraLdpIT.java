@@ -57,8 +57,6 @@ import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
@@ -67,6 +65,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
@@ -77,6 +76,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -851,8 +851,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod(pairtreeName))) {
         assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
-                createURI(serverAddress + pairtreeName),  createURI(REPOSITORY_NAMESPACE + "mixinTypes"),
-                createLiteral(FEDORA_PAIRTREE)));
+                createURI(serverAddress + pairtreeName), type.asNode(), createURI(REPOSITORY_NAMESPACE + "Pairtree")));
         }
         // Attempting to POST to the child of the pairtree node...
         final int status = getStatus(postObjMethod(pairtreeName));
@@ -937,8 +936,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetRepositoryGraph() throws IOException {
         try (final CloseableGraphStore graph = getGraphStore(getObjMethod(""))) {
             logger.trace("Retrieved repository graph:\n" + graph);
-            assertTrue("Should find the root type", graph.contains(ANY,
-                    ANY, HAS_PRIMARY_TYPE.asNode(), createLiteral(ROOT)));
+            assertFalse("Should not find the root type", graph.contains(ANY,
+                    ANY, type.asNode(), createURI(MODE_NAMESPACE + "root")));
         }
     }
 
@@ -990,14 +989,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final Node resource = createURI(serverAddress + id);
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Container");
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Resource");
-            verifyResource(graph, resource, MIX_NAMESPACE, "created");
-            verifyResource(graph, resource, MIX_NAMESPACE, "lastModified");
-            verifyResource(graph, resource, MIX_NAMESPACE, "referenceable");
-            verifyResource(graph, resource, MIX_NAMESPACE, "simpleVersionable");
-            verifyResource(graph, resource, MIX_NAMESPACE, "versionable");
-            verifyResource(graph, resource, JCR_NT_NAMESPACE, "base");
-            verifyResource(graph, resource, JCR_NT_NAMESPACE, "folder");
-            verifyResource(graph, resource, JCR_NT_NAMESPACE, "hierarchyNode");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "created");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "lastModified");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "referenceable");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "simpleVersionable");
+            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "versionable");
+            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "base");
+            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "folder");
+            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "hierarchyNode");
         }
         logger.trace("Leaving verifyFullSetOfRdfTypes()...");
     }
@@ -1005,6 +1004,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static void verifyResource(final GraphStore g, final Node subject, final String ns, final String type) {
         assertTrue("Should find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
     }
+
+    private static void verifyAbsenceOfResource(final GraphStore g, final Node subject, final String ns,
+            final String type) {
+        assertFalse("Should not find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
+    }
+
 
     @Test
     public void testGetObjectGraphWithChild() throws IOException {
@@ -1204,6 +1209,28 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final Iterator<Quad> iterator =
                     graphStore.find(ANY, createURI(location), HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
             assertFalse("Graph should not contain a UUID!", iterator.hasNext());
+        }
+    }
+
+    @Test
+    public void testGetObjectGraphLacksPrimaryType() throws Exception {
+        final String location = getLocation(postObjMethod());
+        final HttpGet getObjMethod = new HttpGet(location);
+        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {
+            final Iterator<Quad> iterator =
+                    graphStore.find(ANY, createURI(location), HAS_PRIMARY_TYPE.asNode(), ANY);
+            assertFalse("Graph should not contain a primaryType!", iterator.hasNext());
+        }
+    }
+
+    @Test
+    public void testGetObjectGraphLacksMixinType() throws Exception {
+        final String location = getLocation(postObjMethod());
+        final HttpGet getObjMethod = new HttpGet(location);
+        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {
+            final Iterator<Quad> iterator =
+                    graphStore.find(ANY, createURI(location), HAS_MIXIN_TYPE.asNode(), ANY);
+            assertFalse("Graph should not contain a mixinType!", iterator.hasNext());
         }
     }
 

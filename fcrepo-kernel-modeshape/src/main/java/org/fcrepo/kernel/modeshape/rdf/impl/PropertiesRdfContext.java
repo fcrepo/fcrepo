@@ -16,11 +16,9 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
-import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
-import java.util.function.Predicate;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -47,8 +45,6 @@ public class PropertiesRdfContext extends NodeRdfContext {
 
     private static final Logger LOGGER = getLogger(PropertiesRdfContext.class);
 
-    private static final Predicate<Property> IS_NOT_UUID = uncheck(p -> !p.getName().equals("jcr:uuid"));
-
     /**
      * Default constructor.
      *
@@ -70,7 +66,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
         LOGGER.trace("Creating triples for node: {}", n);
         final Iterator<Property> nodeProps = n.getNode().getProperties();
         final Iterator<Property> properties = Iterators.filter(nodeProps,
-                isInternalProperty.negate().and(IS_NOT_UUID)::test);
+                isInternalProperty.negate()::test);
         return flatMap(properties, property2triple);
     }
 }

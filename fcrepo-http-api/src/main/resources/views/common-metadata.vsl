@@ -1,6 +1,4 @@
 <dl>
-    <dt>UUID</dt> <dd>$esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.HAS_PRIMARY_IDENTIFIER, true))</dd>
-
     <dt>Created at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_DATE, true)
     by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_BY, true))</dd>
 

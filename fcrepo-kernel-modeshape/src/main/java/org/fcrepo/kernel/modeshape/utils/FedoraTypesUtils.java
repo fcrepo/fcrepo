@@ -17,6 +17,7 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.fcrepo.kernel.api.FedoraJcrTypes;
@@ -36,6 +37,18 @@ import javax.jcr.nodetype.PropertyDefinition;
 import static java.util.Arrays.stream;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static com.google.common.collect.ImmutableSet.of;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_PRIMARY_TYPE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_NODE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATED;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATEDBY;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_MIXIN_TYPES;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_PRIMARY_TYPE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.VERSIONABLE;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -52,6 +65,34 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
     public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
 
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
+
+    private static Set<String> privateProperties = of(
+            "jcr:mime",
+            "jcr:mimeType",
+            "jcr:frozenUuid",
+            "jcr:uuid",
+            JCR_CONTENT,
+            JCR_PRIMARY_TYPE,
+            JCR_MIXIN_TYPES,
+            FROZEN_MIXIN_TYPES,
+            FROZEN_PRIMARY_TYPE);
+
+    private static Set<String> protectedProperties = of(
+            JCR_CREATED,
+            JCR_CREATEDBY,
+            JCR_LASTMODIFIED);
+
+    private static Set<String> protectedTypes = of(
+            "mix:created",
+            "mix:lastModified",
+            "mix:referenceable",
+            "mix:simpleVersionable",
+            "nt:base",
+            "nt:folder",
+            "nt:hierarchyNode",
+            VERSIONABLE,
+            ROOT,
+            FROZEN_NODE);
 
     /**
      * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.api.models.Container}.
@@ -93,7 +134,7 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
      * Check whether a property is protected (ie, cannot be modified directly) but
      * is not one we've explicitly chosen to include.
      */
-    public static Predicate<Property> isProtectedAndShouldBeHidden = uncheck(p -> {
+    private static Predicate<Property> isProtectedAndShouldBeHidden = uncheck(p -> {
         if (!p.getDefinition().isProtected()) {
             return false;
         } else if (p.getParent().isNodeType(FROZEN_NODE)) {
@@ -103,22 +144,22 @@ public abstract class FedoraTypesUtils implements FedoraJcrTypes {
             // things cannot be edited.
             return false;
         } else {
-            return !EXPOSED_PROTECTED_JCR_TYPES.stream().anyMatch(p.getName()::equals);
+            return !protectedProperties.contains(p.getName());
         }
     });
-
-    /**
-     * Check if a property is intentionally suppressed.
-     */
-    private static Predicate<Property> isSuppressedProperty = uncheck(p -> p.getName().equals("jcr:mimeType"));
 
     /**
     * Check whether a property is an internal property that should be suppressed
     * from external output.
     */
-    public static Predicate<Property> isInternalProperty = p -> isBinaryContentProperty.test(p) ||
-            isProtectedAndShouldBeHidden.test(p) || isSuppressedProperty.test(p);
+    public static Predicate<Property> isInternalProperty = isBinaryContentProperty
+                            .or(isProtectedAndShouldBeHidden::test)
+                            .or(uncheck(p -> privateProperties.contains(p.getName())));
 
+    /**
+     *  Check whether a type should be internal.
+     */
+    public static Predicate<NodeType> isInternalType = uncheck(p -> protectedTypes.contains(p.getName()));
 
     /**
      * Check if a node is "internal" and should not be exposed e.g. via the REST

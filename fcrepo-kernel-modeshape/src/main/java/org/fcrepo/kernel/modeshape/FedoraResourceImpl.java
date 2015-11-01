@@ -26,6 +26,7 @@ import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
@@ -33,6 +34,7 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalType;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -399,12 +401,19 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
                 .flatMap(Arrays::stream)
                 .forEach(nodeTypes::add);
 
-            return nodeTypes.stream()
-                .map(uncheck(x -> x.getName()))
+            final List<URI> types = nodeTypes.stream()
+                .filter(isInternalType.negate())
+                .map(uncheck(NodeType::getName))
                 .distinct()
                 .map(nodeTypeNameToURI::apply)
                 .peek(x -> LOGGER.debug("node has rdf:type {}", x))
                 .collect(Collectors.toList());
+
+            if (isFrozenResource()) {
+                types.add(URI.create(REPOSITORY_NAMESPACE + "Version"));
+            }
+
+            return types;
 
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
