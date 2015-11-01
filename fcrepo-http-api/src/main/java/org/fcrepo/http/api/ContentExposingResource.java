@@ -40,6 +40,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
+import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isInternalTriple;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
 
 import java.io.IOException;
@@ -217,7 +218,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         rdfStream.concat(filter(getTriples(TypeRdfContext.class), tripleFilter::test));
 
-        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class), tripleFilter::test));
+        rdfStream.concat(filter(getTriples(PropertiesRdfContext.class),
+                    tripleFilter.and(isInternalTriple.negate())::test));
 
         if (!returnPreference.getValue().equals("minimal")) {
 

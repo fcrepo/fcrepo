@@ -32,10 +32,10 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -148,7 +148,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
             logger.debug("Got version profile:");
 
             assertTrue("Didn't find a version triple!", versionResults.contains(ANY,
-                    ANY, HAS_PRIMARY_TYPE.asNode(), createLiteral("nt:frozenNode")));
+                    ANY, type.asNode(), createURI(JCR_NT_NAMESPACE + "frozenNode")));
             assertTrue("Should find a title in historic version", versionResults.contains(ANY,
                     ANY, DC_TITLE.asNode(), ANY));
             assertTrue("Should find original title in historic version", versionResults.contains(ANY,
