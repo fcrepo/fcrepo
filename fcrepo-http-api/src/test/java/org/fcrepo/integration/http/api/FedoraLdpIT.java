@@ -1735,6 +1735,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         createURI(location), createURI("info:some-predicate"), createURI(location + "#abc")));
                 assertTrue(graphStore.contains(ANY,
                         createURI(location + "#abc"), createURI("info:test#label"), createLiteral("asdfg")));
+                assertFalse(graphStore.contains(ANY,
+                        createURI(location + "#abc"), createURI(REPOSITORY_NAMESPACE + "lastModified"), ANY));
+                assertFalse(graphStore.contains(ANY,
+                        createURI(location + "#abc"), rdfType, createURI(REPOSITORY_NAMESPACE + "Resource")));
             }
         }
     }
