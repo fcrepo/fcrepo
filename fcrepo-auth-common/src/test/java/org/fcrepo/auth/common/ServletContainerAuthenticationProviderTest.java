@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.security.Principal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -73,7 +74,7 @@ public class ServletContainerAuthenticationProviderTest {
     private HttpServletRequest request;
 
     @Mock
-    private HttpHeaderPrincipalProvider delegateProvider;
+    private DelegateHeaderPrincipalProvider delegateProvider;
 
     @Mock
     private Principal delegatePrincipal;
@@ -144,17 +145,15 @@ public class ServletContainerAuthenticationProviderTest {
 
     @Test
     public void testDelegatedAuthenticationForAdmins() {
-        final AuthenticationProvider provider =
-                ServletContainerAuthenticationProvider.getInstance();
+        final ServletContainerAuthenticationProvider provider = (ServletContainerAuthenticationProvider) getInstance();
+        provider.setPrincipalProviders(Collections.singleton(delegateProvider));
 
         when(request.isUserInRole(FEDORA_ADMIN_ROLE)).thenReturn(true);
 
         when(principal.getName()).thenReturn("adminName");
 
-        when(delegateProvider.getFirstPrincipal(creds)).thenReturn(delegatePrincipal);
+        when(delegateProvider.getDelegate(creds)).thenReturn(delegatePrincipal);
         when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
-
-        ((ServletContainerAuthenticationProvider) provider).setDelegatedPrincipalProvider(delegateProvider);
 
         final ExecutionContext result =
                 provider.authenticate(creds, "repo", "workspace", context,
@@ -167,17 +166,15 @@ public class ServletContainerAuthenticationProviderTest {
 
     @Test
     public void testNoDelegatedAuthenticationForUsers() {
-        final AuthenticationProvider provider =
-                ServletContainerAuthenticationProvider.getInstance();
+        final ServletContainerAuthenticationProvider provider = (ServletContainerAuthenticationProvider) getInstance();
+        provider.setPrincipalProviders(Collections.singleton(delegateProvider));
 
         when(request.isUserInRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
 
         when(principal.getName()).thenReturn("userName");
 
-        when(delegateProvider.getFirstPrincipal(creds)).thenReturn(delegatePrincipal);
+        when(delegateProvider.getDelegate(creds)).thenReturn(delegatePrincipal);
         when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
-
-        ((ServletContainerAuthenticationProvider) provider).setDelegatedPrincipalProvider(delegateProvider);
 
         final ExecutionContext result =
                 provider.authenticate(creds, "repo", "workspace", context,
