@@ -1326,7 +1326,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPut replaceMethod = new HttpPut(subjectURI + "/" + FCR_METADATA);
         try (final StringWriter w = new StringWriter()) {
             model.write(w, "N-TRIPLE");
-            replaceMethod.setEntity(new StringEntity(w.toString()));
+            final String updatedMetadata = w.toString() +
+                "<" + subjectURI + "> <http://www.w3.org/2000/01/rdf-schema#label> 'foo' .";
+            replaceMethod.setEntity(new StringEntity(updatedMetadata));
             logger.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
         }
         replaceMethod.addHeader("Content-Type", "application/n-triples");
