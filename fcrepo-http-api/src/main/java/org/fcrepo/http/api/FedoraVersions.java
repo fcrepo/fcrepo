@@ -77,7 +77,6 @@ public class FedoraVersions extends ContentExposingResource {
     protected String label;
     protected String pathIntoVersion;
 
-    protected FedoraResource resource;
     protected FedoraResource baseResource;
 
     /**
