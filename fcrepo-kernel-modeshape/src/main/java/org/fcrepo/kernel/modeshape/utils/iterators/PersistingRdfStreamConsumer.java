@@ -16,9 +16,11 @@
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.lang.String.join;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedMixin;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -97,7 +99,8 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
                         || topic.equals(subject)) {
                     LOGGER.debug("Discovered a Fedora-relevant subject in triple: {}.", t);
                     return true;
-                } else if (topic.getURI().equals(subject.getURI() + "/" + FCR_METADATA)) {
+                } else if (topic.getURI().equals(subject.getURI() + "/" + FCR_METADATA)
+                       && isFedoraBinary.test(translator().convert(createResource(subject.getURI())).getNode())) {
                     LOGGER.debug("Discovered a NonRDFSource subject in triple: {}.", t);
                     return true;
                 }
