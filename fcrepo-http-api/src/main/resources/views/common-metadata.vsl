@@ -10,7 +10,7 @@
     <dt>Children <span id="badge" class="badge"> </span></dt>
     <dd>
         <ol id="childList">
-            #foreach($quad in $helpers.getObjects($rdf, $topic, $rdfLexicon.CONTAINS))
+            #foreach($quad in $rdf.find($topic, $rdfLexicon.CONTAINS.asNode(), null))
                 <li><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
             #end
         </ol>

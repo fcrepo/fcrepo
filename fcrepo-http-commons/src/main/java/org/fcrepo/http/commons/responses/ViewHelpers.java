@@ -15,20 +15,25 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.hp.hpl.jena.graph.Node.ANY;
+import static com.hp.hpl.jena.graph.GraphUtil.listObjects;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.SKOS_PREFLABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
@@ -37,20 +42,20 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Optional;
+import java.util.StringJoiner;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.graph.impl.LiteralLabel;
 
 import org.fcrepo.http.commons.api.rdf.TripleOrdering;
-import org.fcrepo.kernel.api.RdfLexicon;
-
 import org.slf4j.Logger;
 
-import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -64,6 +69,7 @@ import com.hp.hpl.jena.vocabulary.RDFS;
  * General view helpers for rendering HTML responses
  *
  * @author awoods
+ * @author ajs6f
  */
 public class ViewHelpers {
 
@@ -71,32 +77,22 @@ public class ViewHelpers {
 
     private static ViewHelpers instance = null;
 
-    protected ViewHelpers() {
+    private static final List<Property>  TITLE_PROPERTIES = asList(RDFS_LABEL, DC_TITLE, DCTERMS_TITLE, SKOS_PREFLABEL);
+
+    private static final Property DC_FORMAT = createProperty(DC_NAMESPACE + "format");
+
+    private static final String DEFAULT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date());
+
+    private ViewHelpers() {
         // Exists only to defeat instantiation.
     }
 
     /**
-     * ViewHelpers are singletons. Initialize or return the existing object
+     * ViewHelpers is a singleton. Initialize or return the existing object
      * @return an instance of ViewHelpers
      */
     public static ViewHelpers getInstance() {
-        if (instance == null) {
-            instance = new ViewHelpers();
-        }
-        return instance;
-    }
-
-    /**
-     * Return an iterator of Triples that match the given subject and predicate
-     *
-     * @param graph the graph
-     * @param subject the subject
-     * @param predicate the predicate
-     * @return iterator
-     */
-    public Iterator<Triple> getObjects(final Graph graph,
-        final Node subject, final Resource predicate) {
-        return graph.find(subject, predicate.asNode(), ANY);
+        return instance == null ? instance = new ViewHelpers() : instance;
     }
 
     /**
@@ -115,26 +111,15 @@ public class ViewHelpers {
      * Return an iterator of Triples for versions in order that
      * they were created.
      *
-     * @param graph the graph
+     * @param g the graph
      * @param subject the subject
      * @param predicate the predicate
      * @return iterator
      */
-    public Iterator<Node> getOrderedVersions(final Graph graph,
-        final Node subject, final Resource predicate) {
-        final Iterator<Triple> versions = getObjects(graph, subject, predicate);
-        final Map<String, Node> map = new TreeMap<>();
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        while (versions.hasNext()) {
-            final Triple triple = versions.next();
-            final String date = getVersionDate(graph, triple.getObject());
-            String key = isNullOrEmpty(date) ? format.format(new Date()) : date;
-            while (map.containsKey(key)) {
-                key = key + "1";
-            }
-            map.put(key, triple.getObject());
-        }
-        return map.values().iterator();
+    public Iterator<Node> getOrderedVersions(final Graph g, final Node subject, final Resource predicate) {
+        final List<Node> vs = listObjects(g, subject, predicate.asNode()).toList();
+        vs.sort((v1, v2) -> getVersionDate(g, v1).orElse(DEFAULT).compareTo(getVersionDate(g, v2).orElse(DEFAULT)));
+        return vs.iterator();
     }
 
     /**
@@ -163,18 +148,10 @@ public class ViewHelpers {
      *
      * @param graph the graph
      * @param subject the subject
-     * @param defaultValue a value to be returned if no label is present in the
-     *                     graph
-     * @return the label of the version if one has been provided; otherwise
-     * the default is returned
+     * @return the label of the version if one has been provided
      */
-    public String getVersionLabel(final Graph graph,
-                                 final Node subject, final String defaultValue) {
-        final Iterator<Triple> objects = getObjects(graph, subject, HAS_VERSION_LABEL);
-        if (objects.hasNext()) {
-            return objects.next().getObject().getLiteralValue().toString();
-        }
-        return defaultValue;
+    public Optional<String> getVersionLabel(final Graph graph, final Node subject) {
+        return getValue(graph, subject, HAS_VERSION_LABEL.asNode());
     }
 
     /**
@@ -182,48 +159,32 @@ public class ViewHelpers {
      *
      * @param graph the graph
      * @param subject the subject
-     * @return the modification date or null if none exists
+     * @return the modification date if it exists
      */
-    public String getVersionDate(final Graph graph,
-                                 final Node subject) {
-        final Iterator<Triple> objects = getObjects(graph, subject, CREATED_DATE);
-        if (objects.hasNext()) {
-            return objects.next().getObject().getLiteralValue().toString();
-        }
-        return "";
+    public Optional<String> getVersionDate(final Graph graph, final Node subject) {
+        return getValue(graph, subject, CREATED_DATE.asNode());
+    }
+
+    private static Optional<String> getValue(final Graph graph, final Node subject, final Node predicate) {
+        final Iterator<Node> objects = listObjects(graph, subject, predicate);
+        return Optional.ofNullable(objects.hasNext() ? objects.next().getLiteralValue().toString() : null);
     }
 
     /**
      * Get the canonical title of a subject from the graph
      *
      * @param graph the graph
-     * @param subject the subject
+     * @param sub the subject
      * @return canonical title of the subject in the graph
      */
-    public String getObjectTitle(final Graph graph, final Node subject) {
-
-        if (subject == null) {
+    public String getObjectTitle(final Graph graph, final Node sub) {
+        if (sub == null) {
             return "";
         }
-
-        final Property[] properties = new Property[] {RDFS_LABEL, DC_TITLE, DCTERMS_TITLE, SKOS_PREFLABEL};
-
-        for (final Property p : properties) {
-            final Iterator<Triple> objects = getObjects(graph, subject, p);
-
-            if (objects.hasNext()) {
-                return objects.next().getObject().getLiteral().getLexicalForm();
-            }
-        }
-
-        if (subject.isURI()) {
-            return subject.getURI();
-        } else if (subject.isBlank()) {
-            return subject.getBlankNodeLabel();
-        } else {
-            return subject.toString();
-        }
-
+        final Optional<String> title = TITLE_PROPERTIES.stream().map(Property::asNode).flatMap(p -> listObjects(
+                graph, sub, p).toList().stream()).filter(Node::isLiteral).map(Node::getLiteral).map(
+                        LiteralLabel::toString).findFirst();
+        return title.orElse(sub.isURI() ? sub.getURI() : sub.isBlank() ? sub.getBlankNodeLabel() : sub.toString());
     }
 
     /**
@@ -233,13 +194,9 @@ public class ViewHelpers {
      * @param subject the subject
      * @return the label for the serialization format
      */
-    public String getSerializationTitle(final Graph graph, final Node subject) {
-        final Property dcFormat = createProperty(DC_NAMESPACE + "format");
-        final Iterator<Triple> formatRDFs = getObjects(graph, subject, dcFormat);
-        if (formatRDFs.hasNext()) {
-            return getObjectTitle(graph, formatRDFs.next().getObject());
-        }
-        return "";
+    public Optional<String> getSerializationTitle(final Graph graph, final Node subject) {
+        final Iterator<Node> formats = listObjects(graph, subject, DC_FORMAT.asNode());
+        return Optional.ofNullable(formats.hasNext() ? getObjectTitle(graph, formats.next()) : null);
     }
 
     /**
@@ -250,8 +207,7 @@ public class ViewHelpers {
      * @return whether the subject is writable
      */
     public boolean isWritable(final Graph graph, final Node subject) {
-        final Iterator<Triple> it = getObjects(graph, subject, RdfLexicon.WRITABLE);
-        return it.hasNext() && it.next().getObject().getLiteralValue().toString().equals("true");
+        return getValue(graph, subject, WRITABLE.asNode()).filter("true"::equals).isPresent();
     }
 
     /**
@@ -262,10 +218,7 @@ public class ViewHelpers {
      * @return whether the subject is frozen node
      */
     public boolean isFrozenNode(final Graph graph, final Node subject) {
-        final Iterator<Triple> objects = getObjects(graph, subject, RdfLexicon.HAS_PRIMARY_TYPE);
-        return objects.hasNext()
-                && objects.next().getObject()
-                .getLiteralValue().toString().equals("nt:frozenNode");
+        return getValue(graph, subject, HAS_PRIMARY_TYPE.asNode()).filter("nt:frozenNode"::equals).isPresent();
     }
 
     /**
@@ -281,23 +234,14 @@ public class ViewHelpers {
     public String getObjectsAsString(final Graph graph,
             final Node subject, final Resource predicate, final boolean uriAsLink) {
         LOGGER.trace("Getting Objects as String: s:{}, p:{}, g:{}", subject, predicate, graph);
-        final Iterator<Triple> iterator = getObjects(graph, subject, predicate);
-
+        final Iterator<Node> iterator = listObjects(graph, subject, predicate.asNode());
         if (iterator.hasNext()) {
-            final Node object = iterator.next().getObject();
-
-            if (object.isLiteral()) {
-                final String s = object.getLiteralValue().toString();
-                if (s.isEmpty()) {
-                    return "<empty>";
-                }
-                return s;
+            final Node obj = iterator.next();
+            if (obj.isLiteral()) {
+                final String lit = obj.getLiteralValue().toString();
+                return lit.isEmpty() ? "<empty>" : lit;
             }
-            if (uriAsLink) {
-                return "&lt;<a href=\"" + object.getURI() + "\">" +
-                           object.getURI() + "</a>&gt;";
-            }
-            return object.getURI();
+            return uriAsLink ? "&lt;<a href=\"" + obj.getURI() + "\">" + obj.getURI() + "</a>&gt;" : obj.getURI();
         }
         return "";
     }
@@ -314,45 +258,18 @@ public class ViewHelpers {
         final String topic = subject.getURI();
 
         LOGGER.trace("Generating breadcrumbs for subject {}", subject);
-        final ImmutableMap.Builder<String, String> builder =
-                ImmutableMap.builder();
-
         final String baseUri = uriInfo.getBaseUri().toString();
 
         if (!topic.startsWith(baseUri)) {
             LOGGER.trace("Topic wasn't part of our base URI {}", baseUri);
-            return builder.build();
+            return emptyMap();
         }
 
         final String salientPath = topic.substring(baseUri.length());
-
-        final String[] split = salientPath.split("/");
-
-        final StringBuilder cumulativePath = new StringBuilder();
-
-        for (final String path : split) {
-
-            if (path.isEmpty()) {
-                continue;
-            }
-
-            cumulativePath.append(path);
-
-            final String uri =
-                    uriInfo.getBaseUriBuilder().path(cumulativePath.toString())
-                            .build().toString();
-
-            LOGGER.trace("Adding breadcrumb for path segment {} => {}", path,
-                    uri);
-
-            builder.put(uri, path);
-
-            cumulativePath.append("/");
-
-        }
-
-        return builder.build();
-
+        final StringJoiner cumulativePath = new StringJoiner("/");
+        return stream(salientPath.split("/")).filter(seg -> !seg.isEmpty()).collect(toMap(seg -> uriInfo
+                .getBaseUriBuilder().path(cumulativePath.add(seg).toString())
+                .build().toString(), seg -> seg, (u, v) -> null, LinkedHashMap::new));
     }
 
     /**
@@ -374,32 +291,20 @@ public class ViewHelpers {
      * available) from a prefix mapping
      *
      * @param mapping the prefix mapping
-     * @param namespace the namespace
+     * @param ns the namespace
      * @param compact the boolean value of compact
      * @return namespace prefix
      */
     public String getNamespacePrefix(final PrefixMapping mapping,
-            final String namespace, final boolean compact) {
-        final String nsURIPrefix = mapping.getNsURIPrefix(namespace);
-
+            final String ns, final boolean compact) {
+        final String nsURIPrefix = mapping.getNsURIPrefix(ns);
         if (nsURIPrefix == null) {
             if (compact) {
-                final int hashIdx = namespace.lastIndexOf('#');
-
-                final int split;
-
-                if (hashIdx > 0) {
-                    split = namespace.substring(0, hashIdx).lastIndexOf('/');
-                } else {
-                    split = namespace.lastIndexOf('/');
-                }
-
-                if (split > 0) {
-                    return "..." + namespace.substring(split);
-                }
-                return namespace;
+                final int hashIdx = ns.lastIndexOf('#');
+                final int split = hashIdx > 0 ? ns.substring(0, hashIdx).lastIndexOf('/') : ns.lastIndexOf('/');
+                return split > 0 ? "..." + ns.substring(split) : ns;
             }
-            return namespace;
+            return ns;
         }
         return nsURIPrefix + ":";
     }
@@ -431,16 +336,6 @@ public class ViewHelpers {
         LOGGER.trace("Is RDF Resource? s:{}, ns:{}, r:{}, g:{}", subject, namespace, resource, graph);
         return graph.find(subject, createResource(RDF_NAMESPACE + "type").asNode(),
                 createResource(namespace + resource).asNode()).hasNext();
-    }
-
-    /**
-     * Convert an RDF resource to an RDF node
-     *
-     * @param r the resource
-     * @return RDF node representation of the given RDF resource
-     */
-    public Node asNode(final Resource r) {
-        return r.asNode();
     }
 
     /**
@@ -493,8 +388,8 @@ public class ViewHelpers {
      * @param subject the subject
      * @return content-bearing node for the given subject
      */
-    public Node getContentNode(final Node subject) {
-        return (null == subject) ? null : createURI(subject.getURI().replace("/" + FCR_METADATA, ""));
+    public static Node getContentNode(final Node subject) {
+        return subject == null ? null : createURI(subject.getURI().replace("/" + FCR_METADATA, ""));
     }
 
     /**
@@ -502,7 +397,7 @@ public class ViewHelpers {
      * @param source the source string
      * @return transformed source string
      */
-    public String parameterize(final String source) {
+    public static String parameterize(final String source) {
         return source.toLowerCase().replaceAll("[^a-z0-9\\-_]+", "_");
     }
 }
