@@ -69,7 +69,7 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.riot.RiotException;
-import org.fcrepo.http.commons.api.HttpHeaderInjection;
+import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -130,7 +130,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private HttpTripleUtil httpTripleUtil;
 
     @Inject
-    private HttpHeaderInjection httpHeaderInject;
+    private HttpHeaderInjector httpHeaderInject;
 
     @BeanParam
     protected MultiPrefer prefer;
