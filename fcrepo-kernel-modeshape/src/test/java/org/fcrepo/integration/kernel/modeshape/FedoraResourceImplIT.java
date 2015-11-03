@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
+import static java.net.URI.create;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -36,6 +37,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
@@ -166,7 +171,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Node s = subjects.reverse().convert(object).asNode();
         final Node p = HAS_PRIMARY_TYPE.asNode();
         final Node o = createLiteral("nt:folder");
-        assertTrue(object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph().contains(s, p, o));
+        assertFalse(object.getTriples(subjects, PropertiesRdfContext.class).asModel().getGraph().contains(s, p, o));
     }
 
     @Test
@@ -219,10 +224,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         s = createGraphSubjectNode(object);
         p = HAS_MIXIN_TYPE.asNode();
         Node o = createLiteral(FEDORA_RESOURCE);
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, o));
 
         o = createLiteral(FEDORA_CONTAINER);
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, o));
 
     }
 
@@ -328,10 +333,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Node s = createGraphSubjectNode(object);
         Node p = HAS_MIXIN_TYPE.asNode();
         Node o = createLiteral(FEDORA_RESOURCE);
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, o));
 
         o = createLiteral(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, o));
 
         // structure
         p = HAS_CHILD_COUNT.asNode();
@@ -379,6 +384,35 @@ public class FedoraResourceImplIT extends AbstractIT {
         o = createPlainLiteral("b");
         assertTrue("could not find new value", model.contains(s, p, o));
 
+    }
+
+    @Test
+    public void testGetRootObjectTypes() throws RepositoryException {
+
+        final FedoraResource object = nodeService.find(session, "/");
+
+        final List<URI> types = object.getTypes();
+
+        assertFalse(types.stream()
+            .map(x -> x.toString())
+            .anyMatch(x -> x.startsWith(JCR_NAMESPACE) || x.startsWith(MIX_NAMESPACE) ||
+                    x.startsWith(MODE_NAMESPACE) || x.startsWith(JCR_NT_NAMESPACE)));
+    }
+
+    @Test
+    public void testGetObjectTypes() throws RepositoryException {
+
+        final FedoraResource object =
+            containerService.findOrCreate(session, "/testObjectVersionGraph");
+
+        final List<URI> types = object.getTypes();
+
+        assertTrue(types.contains(create(REPOSITORY_NAMESPACE + "Container")));
+        assertTrue(types.contains(create(REPOSITORY_NAMESPACE + "Resource")));
+        assertFalse(types.stream()
+            .map(x -> x.toString())
+            .anyMatch(x -> x.startsWith(JCR_NAMESPACE) || x.startsWith(MIX_NAMESPACE) ||
+                    x.startsWith(MODE_NAMESPACE) || x.startsWith(JCR_NT_NAMESPACE)));
     }
 
     @Test
