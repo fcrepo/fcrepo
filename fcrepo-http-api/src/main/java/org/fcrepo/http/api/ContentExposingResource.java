@@ -141,6 +141,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());
+    private static final Predicate<Triple> IS_MANAGED_TRIPLE = IS_MANAGED_TYPE.or(isManagedTriple::test);
 
     protected abstract String externalPath();
 
@@ -209,7 +210,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final RdfStream rdfStream = new RdfStream();
 
         final Predicate<Triple> tripleFilter = ldpPreferences.prefersServerManaged() ? x -> true :
-            IS_MANAGED_TYPE.or(isManagedTriple::test).negate();
+            IS_MANAGED_TRIPLE.negate();
 
         if (ldpPreferences.prefersServerManaged()) {
             rdfStream.concat(getTriples(LdpRdfContext.class));
@@ -241,7 +242,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             // Embed all hash and blank nodes
-            rdfStream.concat(filter(getTriples(HashRdfContext.class), tripleFilter::test));
+            // using IS_MANAGED_TRIPLE directly to avoid Prefer header logic (we never want them for hash fragments)
+            rdfStream.concat(filter(getTriples(HashRdfContext.class), IS_MANAGED_TRIPLE.negate()::test));
             rdfStream.concat(filter(getTriples(SkolemNodeRdfContext.class), tripleFilter::test));
 
             // Include inbound references to this object
