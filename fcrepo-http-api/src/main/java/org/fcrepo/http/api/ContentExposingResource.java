@@ -130,6 +130,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private HttpTripleUtil httpTripleUtil;
 
     @Inject
+    @Optional
     private HttpHeaderInjector httpHeaderInject;
 
     @BeanParam

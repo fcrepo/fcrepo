@@ -24,8 +24,9 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 import org.slf4j.Logger;
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.support.ApplicationObjectSupport;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Multimap;
@@ -37,17 +38,21 @@ import com.google.common.collect.Multimap;
  * @since 2015-10-30
  */
 @Component
-public class HttpHeaderInjector implements ApplicationContextAware {
+public class HttpHeaderInjector extends ApplicationObjectSupport {
 
     private static final Logger LOGGER = getLogger(HttpHeaderInjector.class);
 
     private ApplicationContext applicationContext;
 
     @Override
-    public void setApplicationContext(final ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    protected void initApplicationContext() throws BeansException {
+        applicationContext = getApplicationContext();
     }
 
+    @Override
+    protected boolean isContextRequired() {
+        return true;
+    }
     /**
      * Add additional Http Headers
      *
@@ -70,8 +75,7 @@ public class HttpHeaderInjector implements ApplicationContextAware {
     }
 
     private Map<String, UriAwareHttpHeaderFactory> getUriAwareHttpHeaderFactories() {
-        return applicationContext
-                .getBeansOfType(UriAwareHttpHeaderFactory.class);
+        return applicationContext.getBeansOfType(UriAwareHttpHeaderFactory.class);
     }
 
 }
