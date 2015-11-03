@@ -25,10 +25,10 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ApplicationObjectSupport;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Inject optional headers from external processes
@@ -37,11 +37,16 @@ import com.google.common.collect.ListMultimap;
  * @since 2015-10-30
  */
 @Component
-public class HttpHeaderInjector extends ApplicationObjectSupport {
+public class HttpHeaderInjector implements ApplicationContextAware {
 
     private static final Logger LOGGER = getLogger(HttpHeaderInjector.class);
 
     private ApplicationContext applicationContext;
+
+    @Override
+    public void setApplicationContext(final ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     /**
      * Add additional Http Headers
@@ -55,7 +60,7 @@ public class HttpHeaderInjector extends ApplicationObjectSupport {
 
         getUriAwareHttpHeaderFactories().forEach((bean, factory) -> {
             LOGGER.debug("Adding HTTP headers using: {}", bean);
-            final ListMultimap<String, String> h =
+            final Multimap<String, String> h =
                     factory.createHttpHeadersForResource(uriInfo, resource);
 
             h.entries().forEach(entry -> {
@@ -68,4 +73,5 @@ public class HttpHeaderInjector extends ApplicationObjectSupport {
         return applicationContext
                 .getBeansOfType(UriAwareHttpHeaderFactory.class);
     }
+
 }

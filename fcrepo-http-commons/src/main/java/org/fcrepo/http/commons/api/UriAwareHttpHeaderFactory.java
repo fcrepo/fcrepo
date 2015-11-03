@@ -19,7 +19,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Helper interface to inject Http Headers from external modules.
@@ -36,7 +36,7 @@ public interface UriAwareHttpHeaderFactory {
      * @param resource the resource
      * @return
      */
-    public ListMultimap<String, String> createHttpHeadersForResource(UriInfo uriInfo,
+    public Multimap<String, String> createHttpHeadersForResource(UriInfo uriInfo,
             FedoraResource resource);
 
 }
