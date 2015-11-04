@@ -28,6 +28,7 @@ import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
@@ -244,6 +245,25 @@ public class ViewHelpers {
             return uriAsLink ? "&lt;<a href=\"" + obj.getURI() + "\">" + obj.getURI() + "</a>&gt;" : obj.getURI();
         }
         return "";
+    }
+
+    /**
+     *
+     * @param graph
+     * @param subject
+     * @return
+     */
+    public int getNumChildren(final Graph graph, final Node subject) {
+        LOGGER.trace("Getting number of children: s:{}, g:{}", subject, graph);
+        final Iterator<Node> iterator = listObjects(graph, subject, HAS_CHILD_COUNT.asNode());
+        if (iterator.hasNext()) {
+            final Node obj = iterator.next();
+            if (obj.isLiteral()) {
+                final String lit = obj.getLiteralValue().toString();
+                return lit.isEmpty() ? 0 : Integer.parseInt(lit);
+            }
+        }
+        return 0;
     }
 
     /**

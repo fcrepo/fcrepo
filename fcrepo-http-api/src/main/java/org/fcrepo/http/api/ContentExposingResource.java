@@ -152,6 +152,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected Response getContent(final String rangeValue,
                                   final RdfStream rdfStream) throws IOException {
+        return getContent(rangeValue, -1, rdfStream);
+    }
+
+    protected Response getContent(final String rangeValue,
+                                  final int limit,
+                                  final RdfStream rdfStream) throws IOException {
         if (resource() instanceof FedoraBinary) {
 
             final String contentTypeString = ((FedoraBinary) resource()).getMimeType();
@@ -185,7 +191,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
         } else {
-            rdfStream.concat(getResourceTriples());
+            rdfStream.concat(getResourceTriples(limit));
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
@@ -196,6 +202,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected RdfStream getResourceTriples() {
+        return getResourceTriples(-1);
+    }
+
+    protected RdfStream getResourceTriples(final int limit) {
         // use the thing described, not the description, for the subject of descriptive triples
         if (resource() instanceof NonRdfSourceDescription) {
             resource = ((NonRdfSourceDescription) resource()).getDescribedResource();
@@ -237,7 +247,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
-                rdfStream.concat(getTriples(ChildrenRdfContext.class));
+                rdfStream.concat(getTriples(ChildrenRdfContext.class).limit(limit));
             }
 
             // LDP container membership triples for this resource

@@ -27,6 +27,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
@@ -383,4 +384,25 @@ public class ViewHelpersTest {
         final Literal URIRES = ResourceFactory.createPlainLiteral(uri);
         assertEquals(URIRES.asNode(), testObj.asLiteralStringNode(uri));
     }
+
+    @Test
+    public void testGetNumChildren() {
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), HAS_CHILD_COUNT.asNode(), createTypedLiteral(4).asNode()));
+        assertEquals(4, testObj.getNumChildren(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testGetNumChildrenEmpty() {
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), HAS_CHILD_COUNT.asNode(), createLiteral("")));
+        assertEquals(0, testObj.getNumChildren(mem, createURI("a/b/c")));
+    }
+
+    @Test
+    public void testGetNumChildrenNone() {
+        final Graph mem = createDefaultModel().getGraph();
+        assertEquals(0, testObj.getNumChildren(mem, createURI("a/b/c")));
+    }
+
 }
