@@ -458,7 +458,18 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         // creating a version should succeed
         final HttpPost httpPost = new HttpPost(serverAddress + pid + "/" + dsid + "/fcr:versions");
         httpPost.setHeader("Slug", versionLabel);
-        assertEquals(CREATED.getStatusCode(), getStatus(httpPost));
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            final String dsVersionURI = getLocation(response);
+            assertNotNull("No version location header found", dsVersionURI);
+            // version triples should not have fcr:metadata as the subject
+            try (final CloseableGraphStore dsVersionProperties = getContent(dsVersionURI)) {
+                assertTrue("Should have triples about the datastream", dsVersionProperties.contains(ANY,
+                        createURI(dsVersionURI.replaceAll("/fcr:metadata","")), ANY, ANY));
+                assertFalse("Shouldn't have triples about fcr:metadata", dsVersionProperties.contains(ANY,
+                        createURI(dsVersionURI), ANY, ANY));
+            }
+        }
         // datastream should then have versions endpoint
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
         // datastream should then be versionable
