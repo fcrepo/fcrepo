@@ -18,10 +18,8 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.RdfLexicon.CONTENT_LOCATION_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.FIXITY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
@@ -29,14 +27,12 @@ import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.api.RdfLexicon.EVENT_OUTCOME_INFORMATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CONTENT_LOCATION;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CONTENT_LOCATION_VALUE;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 import java.util.function.Function;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -72,13 +68,11 @@ public class FixityRdfContext extends NodeRdfContext {
         final Function<FixityResult, Iterator<Triple>> f = uncheck(blob -> {
             final com.hp.hpl.jena.graph.Node resultSubject =
                     createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
-            final Set<Triple> b = new HashSet<>();
+            final List<Triple> b = new ArrayList<>();
 
             b.add(create(subject(), HAS_FIXITY_RESULT.asNode(), resultSubject));
             b.add(create(resultSubject, type.asNode(), FIXITY_TYPE.asNode()));
             b.add(create(resultSubject, type.asNode(), EVENT_OUTCOME_INFORMATION.asNode()));
-            final String storeIdentifier = blob.getStoreIdentifier();
-            final com.hp.hpl.jena.graph.Node contentLocation = createResource(storeIdentifier).asNode();
 
             blob.getStatus(size, digest).stream().map(state -> createLiteral(state.toString()))
                     .map(state -> create(resultSubject, HAS_FIXITY_STATE.asNode(), state)).forEach(b::add);
@@ -86,9 +80,7 @@ public class FixityRdfContext extends NodeRdfContext {
             final String checksum = blob.getComputedChecksum().toString();
             b.add(create(resultSubject, HAS_MESSAGE_DIGEST.asNode(), createURI(checksum)));
             b.add(create(resultSubject, HAS_SIZE.asNode(),createTypedLiteral(blob.getComputedSize()).asNode()));
-            b.add(create(resultSubject, HAS_CONTENT_LOCATION.asNode(), contentLocation));
-            b.add(create(contentLocation, type.asNode(), CONTENT_LOCATION_TYPE.asNode()));
-            b.add(create(contentLocation, HAS_CONTENT_LOCATION_VALUE.asNode(), createLiteral(storeIdentifier)));
+
             return b.iterator();
         });
         concat(flatMap(blobs.iterator(), f));
