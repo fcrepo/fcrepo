@@ -20,7 +20,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.http.HttpResponse;
+import java.io.IOException;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
@@ -33,7 +35,7 @@ import org.junit.Test;
 public class FedoraHtmlIT extends AbstractResourceIT {
 
     @Test
-    public void testGetRoot() throws Exception {
+    public void testGetRoot() {
 
         final HttpGet method = new HttpGet(serverAddress);
         method.addHeader("Accept", "text/html");
@@ -41,7 +43,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetNode() throws Exception {
+    public void testGetNode() {
 
         final String pid = getRandomUniqueId();
         createObject(pid);
@@ -52,7 +54,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetDatastreamNode() throws Exception {
+    public void testGetDatastreamNode() throws IOException {
 
         final String pid = getRandomUniqueId();
         createObject(pid);
@@ -67,15 +69,16 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetTemplate() throws Exception {
+    public void testGetTemplate() throws IOException {
         final String pid = getRandomUniqueId();
         createObject(pid);
         addMixin(pid, REPOSITORY_NAMESPACE + "Resource");
 
         final HttpGet method = new HttpGet(serverAddress + pid);
         method.addHeader("Accept", "text/html");
-        final HttpResponse response = execute(method);
-        final String html = EntityUtils.toString(response.getEntity());
-        assertTrue(contains(html, "class=\"nt_folder\""));
+        try (final CloseableHttpResponse response = execute(method)) {
+            final String html = EntityUtils.toString(response.getEntity());
+            assertTrue(contains(html, "class=\"nt_folder\""));
+        }
     }
 }

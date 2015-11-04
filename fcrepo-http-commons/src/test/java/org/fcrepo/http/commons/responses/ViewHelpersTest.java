@@ -24,7 +24,6 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
@@ -208,14 +207,15 @@ public class ViewHelpersTest {
         final String label = "testLabel";
         mem.add(new Triple(createURI("a/b/c"), HAS_VERSION_LABEL.asNode(),
                 createLiteral(label)));
-        assertEquals("Version label should be available.", label, testObj.getVersionLabel(mem, createURI("a/b/c"), ""));
+        assertEquals("Version label should be available.", label, testObj.getVersionLabel(mem, createURI("a/b/c"))
+                .orElse(""));
     }
 
     @Test
     public void testGetUnlabeledVersion() {
         final Graph mem = createDefaultModel().getGraph();
         assertEquals("Default version label should be used.",
-                     "d", testObj.getVersionLabel(mem, createURI("a/b/c"), "d"));
+                     "d", testObj.getVersionLabel(mem, createURI("a/b/c")).orElse("d"));
     }
 
     @Test
@@ -224,13 +224,13 @@ public class ViewHelpersTest {
         final String date = new Date().toString();
         mem.add(new Triple(createURI("a/b/c"), CREATED_DATE.asNode(),
                 createLiteral(date)));
-        assertEquals("Date should be available.", date, testObj.getVersionDate(mem, createURI("a/b/c")));
+        assertEquals("Date should be available.", date, testObj.getVersionDate(mem, createURI("a/b/c")).get());
     }
 
     @Test
     public void testGetMissingVersionDate() {
         final Graph mem = createDefaultModel().getGraph();
-        assertEquals("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")), "");
+        assertFalse("Date should not be available.", testObj.getVersionDate(mem, createURI("a/b/c")).isPresent());
     }
 
     @Test
@@ -281,7 +281,7 @@ public class ViewHelpersTest {
         mem.add(new Triple(formatRDF, RDFS_LABEL.asNode(), createLiteral(serialKey)));
         mem.add(new Triple(subject, dcFormat.asNode(), formatRDF));
 
-        assertEquals("jcr/xml", testObj.getSerializationTitle(mem, subject));
+        assertEquals("jcr/xml", testObj.getSerializationTitle(mem, subject).get());
     }
 
     @Test
@@ -374,11 +374,6 @@ public class ViewHelpersTest {
         final String prefixPreamble = testObj.getPrefixPreamble(model);
 
         assertEquals("PREFIX prefix: <namespace>\n\n", prefixPreamble);
-    }
-
-    @Test
-    public void shouldConvertRdfResourcesToNodes() {
-        assertEquals(CREATED_BY.asNode(), testObj.asNode(CREATED_BY));
     }
 
     @Test

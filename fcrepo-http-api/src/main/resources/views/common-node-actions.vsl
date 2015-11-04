@@ -86,7 +86,7 @@ WHERE { }
 </form>
 #end
 
-#set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
+#set ($serializations = $rdf.find($topic, $rdfLexicon.HAS_SERIALIZATION.asNode(), $nodeany))
 
 #if($serializations.hasNext())
 <div class="btn-group">
@@ -98,7 +98,7 @@ WHERE { }
 
         <ul class="dropdown-menu">
         #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-          <li><a href="$quad.getObject().getURI()">$helpers.getSerializationTitle($rdf, $quad.getObject())</a></li>
+          <li><a href="$quad.getObject().getURI()">$helpers.getSerializationTitle($rdf, $quad.getObject()).orElse("")</a></li>
         #end
         </ul>
     </div>
@@ -108,7 +108,7 @@ WHERE { }
 
 
 #if ($writable == true)
-#set ($serializations = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_SERIALIZATION), $nodeany))
+#set ($serializations = $rdf.find($topic, $rdfLexicon.HAS_SERIALIZATION.asNode(), $nodeany))
 
 #if($serializations.hasNext())
 <form id="action_import" method="POST">
@@ -123,7 +123,7 @@ WHERE { }
     <label class="control-label">Format</label>
     <select id="import_format" name="format" class="form-control">
         #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-            <option>$helpers.getSerializationTitle($rdf, $quad.getObject())</option>
+            <option>$helpers.getSerializationTitle($rdf, $quad.getObject()).orElse("")</option>
         #end
     </select>
         </div>
@@ -133,7 +133,7 @@ WHERE { }
 
 #end
 
-#set ($fedoraresc = $rdf.find($topic, $helpers.asNode($rdfLexicon.HAS_MIXIN_TYPE), $helpers.asLiteralStringNode("fedora:resource")))
+#set ($fedoraresc = $rdf.find($topic, $rdfLexicon.HAS_MIXIN_TYPE.asNode(), $helpers.asLiteralStringNode("fedora:resource")))
 #if($fedoraresc.hasNext())
 <h3>Access Roles</h3>
 <form id="update_rbacl" type="application/json" action="javascript:updateAccessRoles()" method="POST">
