@@ -152,6 +152,21 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected Response getContent(final String rangeValue,
                                   final RdfStream rdfStream) throws IOException {
+        return getContent(rangeValue, -1, rdfStream);
+    }
+
+    /**
+     * This method returns an HTTP response with content body appropriate to the following arguments.
+     *
+     * @param rangeValue starting and ending byte offsets, see {@link Range}
+     * @param limit is the number of child resources returned in the response, -1 for all
+     * @param rdfStream to which response RDF will be concatenated
+     * @return HTTP response
+     * @throws IOException
+     */
+    protected Response getContent(final String rangeValue,
+                                  final int limit,
+                                  final RdfStream rdfStream) throws IOException {
         if (resource() instanceof FedoraBinary) {
 
             final String contentTypeString = ((FedoraBinary) resource()).getMimeType();
@@ -185,7 +200,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
         } else {
-            rdfStream.concat(getResourceTriples());
+            rdfStream.concat(getResourceTriples(limit));
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
@@ -196,6 +211,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected RdfStream getResourceTriples() {
+        return getResourceTriples(-1);
+    }
+
+    /**
+     * This method returns a stream of RDF triples associated with this target resource
+     *
+     * @param limit is the number of child resources returned in the response, -1 for all
+     * @return {@link RdfStream}
+     */
+    protected RdfStream getResourceTriples(final int limit) {
         // use the thing described, not the description, for the subject of descriptive triples
         if (resource() instanceof NonRdfSourceDescription) {
             resource = ((NonRdfSourceDescription) resource()).getDescribedResource();
@@ -237,7 +262,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
-                rdfStream.concat(getTriples(ChildrenRdfContext.class));
+                rdfStream.concat(getTriples(ChildrenRdfContext.class).limit(limit));
             }
 
             // LDP container membership triples for this resource

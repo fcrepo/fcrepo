@@ -30,6 +30,7 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
@@ -50,6 +51,8 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -73,6 +76,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -204,8 +208,31 @@ public class FedoraLdp extends ContentExposingResource {
         final RdfStream rdfStream = new RdfStream().session(session)
                     .topic(translator().reverse().convert(resource()).asNode());
 
-        return getContent(rangeValue, rdfStream);
+        return getContent(rangeValue, getChildrenLimit(), rdfStream);
 
+    }
+
+    private int getChildrenLimit() {
+        final List<String> acceptHeaders = headers.getRequestHeader(HttpHeaders.ACCEPT);
+        if (acceptHeaders != null && acceptHeaders.size() > 0) {
+            final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
+            if (accept.contains(TEXT_HTML) || accept.contains(APPLICATION_XHTML_XML)) {
+                // Magic number '100' is tied to common-metadata.vsl display of ellipses
+                return 100;
+            }
+        }
+
+        final List<String> limits = headers.getRequestHeader("Limit");
+        if (null != limits && limits.size() > 0) {
+            try {
+                return Integer.parseInt(limits.get(0));
+
+            } catch (NumberFormatException e) {
+                LOGGER.warn("Invalid 'Limit' header value: {}", limits.get(0));
+                throw new ClientErrorException("Invalid 'Limit' header value: " + limits.get(0), SC_BAD_REQUEST, e);
+            }
+        }
+        return -1;
     }
 
     /**

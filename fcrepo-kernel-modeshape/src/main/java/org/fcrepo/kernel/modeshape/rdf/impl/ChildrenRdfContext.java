@@ -28,8 +28,11 @@ import javax.jcr.RepositoryException;
 import java.util.Iterator;
 import java.util.function.Function;
 
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDint;
 import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -55,9 +58,25 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
         if (resource.getNode().hasNodes()) {
             LOGGER.trace("Found children of this resource: {}", resource.getPath());
+
+            // Count the number of children
+            final Iterator<FedoraResource> childrenCounter = resource().getChildren();
+            concat(createNumChildrenTriple(Iterators.size(childrenCounter)));
+
             final Iterator<FedoraResource> niceChildren = resource().getChildren();
             concat(Iterators.transform(niceChildren, child2triple::apply));
+
+        } else {
+            concat(createNumChildrenTriple(0));
         }
+
+
+    }
+
+    private Triple createNumChildrenTriple(final int numChildren) {
+        return create(subject(),
+                HAS_CHILD_COUNT.asNode(),
+                createTypedLiteral(Integer.toString(numChildren), XSDint).asNode());
     }
 
     private final Function<FedoraResource, Triple> child2triple = child -> {
