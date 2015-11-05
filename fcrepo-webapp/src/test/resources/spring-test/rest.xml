@@ -14,12 +14,7 @@
   <context:annotation-config/>
 
   <bean class="org.fcrepo.http.commons.session.SessionFactory" />
-   
-  <!-- Mints PIDs-->
-  <bean class="org.fcrepo.mint.UUIDPidMinter"/>
-    
-  <context:annotation-config />
-  
+
   <context:component-scan base-package="org.fcrepo"/>
 
 </beans>

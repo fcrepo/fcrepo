@@ -31,6 +31,8 @@ import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
+import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 
 import org.jvnet.hk2.annotations.Optional;
 
@@ -90,7 +92,10 @@ public class AbstractResource {
      * A resource that can mint new Fedora PIDs.
      */
     @Inject
+    @Optional
     protected Supplier<String> pidMinter;
+
+    protected UniqueValueSupplier defaultPidMinter = new DefaultPathMinter();
 
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
@@ -108,5 +113,7 @@ public class AbstractResource {
 
         return path.isEmpty() ? "/" : path;
     }
+
+    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 
 }
