@@ -15,9 +15,9 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;

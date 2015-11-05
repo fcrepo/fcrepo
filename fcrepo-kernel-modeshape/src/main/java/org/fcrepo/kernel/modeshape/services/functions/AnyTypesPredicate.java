@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services.functions;
+package org.fcrepo.kernel.modeshape.services.functions;
 
 import static com.google.common.collect.ImmutableList.copyOf;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
-import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isFrozen;
-import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.property2values;
-import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
-import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +31,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
-import org.fcrepo.kernel.api.utils.UncheckedPredicate;
+import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 
 
 /**

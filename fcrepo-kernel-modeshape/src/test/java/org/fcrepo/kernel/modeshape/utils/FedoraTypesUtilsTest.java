@@ -16,7 +16,8 @@
 package org.fcrepo.kernel.modeshape.utils;
 
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_SKOLEM;
-import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isSkolemNode;
@@ -60,7 +61,6 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.api.FedoraJcrTypes;
-import org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 import org.junit.Test;
@@ -296,13 +296,12 @@ public class FedoraTypesUtilsTest {
         // single-valued
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        assertEquals("Found wrong Value!", JcrPropertyFunctions.property2values
-                .apply(mockProperty).next(), mockValue);
+        assertEquals("Found wrong Value!", property2values.apply(mockProperty).next(), mockValue);
         // multi-valued
         when(mockProperty.isMultiple()).thenReturn(true);
         when(mockProperty.getValues()).thenReturn(
                 new Value[] {mockValue, mockValue2});
-        final Iterator<Value> testIterator = JcrPropertyFunctions.property2values.apply(mockProperty);
+        final Iterator<Value> testIterator = property2values.apply(mockProperty);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue2);
 

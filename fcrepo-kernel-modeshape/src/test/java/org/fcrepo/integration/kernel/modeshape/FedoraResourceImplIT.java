@@ -43,7 +43,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;

@@ -20,12 +20,12 @@ import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.utils.UncheckedFunction;
-import org.fcrepo.kernel.api.utils.UncheckedPredicate;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
+import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
+import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 
 import org.slf4j.Logger;
 
@@ -46,10 +46,10 @@ import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_INSERTED_CONTENT_RELATION
 import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
-import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 
 import org.fcrepo.kernel.api.FedoraJcrTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.functions.AnyTypesPredicate;
+import org.fcrepo.kernel.modeshape.services.functions.AnyTypesPredicate;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.cache.NodeKey;
 import org.slf4j.Logger;
@@ -49,8 +49,8 @@ import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_MIXIN_TYPES;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.VERSIONABLE;
-import static org.fcrepo.kernel.api.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
-import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

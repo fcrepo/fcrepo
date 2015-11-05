@@ -17,11 +17,11 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
-import static org.fcrepo.kernel.api.utils.UncheckedPredicate.uncheck;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isExternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMultivaluedProperty;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;

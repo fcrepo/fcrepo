@@ -23,10 +23,10 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.FIXITY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
-import static org.fcrepo.kernel.api.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.api.RdfLexicon.EVENT_OUTCOME_INFORMATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 
 import java.net.URI;
 import java.util.ArrayList;
