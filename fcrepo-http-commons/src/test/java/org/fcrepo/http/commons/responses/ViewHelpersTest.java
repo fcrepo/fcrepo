@@ -250,6 +250,7 @@ public class ViewHelpersTest {
     @Test
     public void shouldUseTheObjectUriIfATitleIsNotAvailable() {
         final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), DC_TITLE.asNode(), createURI("d/e/f")));
 
         assertEquals("a/b/c", testObj.getObjectTitle(mem, createURI("a/b/c")));
 
