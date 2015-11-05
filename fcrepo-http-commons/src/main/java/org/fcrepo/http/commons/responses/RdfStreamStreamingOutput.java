@@ -17,7 +17,7 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.Maps.filterEntries;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static org.fcrepo.kernel.api.utils.UncheckedBiConsumer.uncheck;
+import static org.fcrepo.http.commons.utils.UncheckedBiConsumer.uncheck;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;

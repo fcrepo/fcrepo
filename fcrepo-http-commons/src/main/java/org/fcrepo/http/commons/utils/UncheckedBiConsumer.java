@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.fcrepo.kernel.api.utils;
+package org.fcrepo.http.commons.utils;
 
 import java.util.function.BiConsumer;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
