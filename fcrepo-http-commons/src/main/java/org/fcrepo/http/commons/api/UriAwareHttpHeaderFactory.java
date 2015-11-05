@@ -32,9 +32,9 @@ public interface UriAwareHttpHeaderFactory {
     /**
      * Given a resource and session, update the JAX-RS response with any additional headers.
      *
-     * @param uriInfo the UriInfo
-     * @param resource the resource
-     * @return
+     * @param uriInfo contextual information for building URLs
+     * @param resource the resource from the request
+     * @return Multimap of HTTP Header field names and field values
      */
     public Multimap<String, String> createHttpHeadersForResource(UriInfo uriInfo,
             FedoraResource resource);
