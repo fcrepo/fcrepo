@@ -199,7 +199,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             createURI(REPOSITORY_NAMESPACE
                     + "repositoryJcrRepositoryVendorUrl");
         Node o = createLiteral("http://www.modeshape.org");
-        assertTrue(graph.contains(s, p, o));
+        assertFalse(graph.contains(s, p, o));
 
         p = HAS_NODE_TYPE.asNode();
         o = createLiteral(FEDORA_RESOURCE);

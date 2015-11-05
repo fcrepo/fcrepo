@@ -16,29 +16,20 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static com.google.common.collect.ImmutableSet.builder;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.metrics.RegistryService;
 
 import java.util.Map;
-import javax.jcr.Repository;
-import org.fcrepo.kernel.modeshape.services.functions.GetClusterConfiguration;
-import org.modeshape.jcr.JcrRepository;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
@@ -77,39 +68,20 @@ public class RootRdfContext extends NodeRdfContext {
 
     private void concatRepositoryTriples() {
         LOGGER.trace("Creating RDF triples for repository description");
-        final Repository repository = session().getRepository();
 
         final ImmutableSet.Builder<Triple> b = builder();
-        stream(repository.getDescriptorKeys()).forEach(key -> {
-            final String descriptor = repository.getDescriptor(key);
-            if (descriptor != null) {
-                // Create a URI from the jcr.Repository constant values,
-                // converting them from dot notation (identifier.stability)
-                // to the camel case that is more common in RDF properties.
-                final String uri = stream(key.split("\\."))
-                        .map(StringUtils::capitalize).collect(joining("", REPOSITORY_NAMESPACE + "repository", ""));
-                b.add(create(subject(), createURI(uri), createLiteral(descriptor)));
-            }
-        });
 
         /*
             FIXME: removing due to performance problems, esp. w/ many files on federated filesystem
             see: https://www.pivotaltracker.com/story/show/78647248
+
+            final Repository repository = session().getRepository();
 
             b.add(create(subject(), HAS_OBJECT_COUNT.asNode(), createLiteral(String
                     .valueOf(getRepositoryCount(repository)))));
             b.add(create(subject(), HAS_OBJECT_SIZE.asNode(), createLiteral(String
                     .valueOf(getRepositorySize(repository)))));
         */
-
-        // Get the cluster configuration, if available
-        // this ugly test checks to see whether this is an ordinary JCR
-        // repository or a ModeShape repo, which will possess the extra info
-        if (JcrRepository.class.isAssignableFrom(repository.getClass())) {
-            final Map<String, String> config = new GetClusterConfiguration().apply(repository);
-            assert (config != null);
-            config.forEach((k, v) -> b.add(create(subject(), createURI(REPOSITORY_NAMESPACE + k), createLiteral(v))));
-        }
 
         // retrieve the metrics from the service
         final Map<String, Counter> counters = registryService.getMetrics().getCounters();
