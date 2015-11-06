@@ -17,8 +17,8 @@ package org.fcrepo.integration.kernel.modeshape;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

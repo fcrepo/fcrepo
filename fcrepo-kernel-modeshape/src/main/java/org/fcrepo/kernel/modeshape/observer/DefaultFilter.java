@@ -17,10 +17,10 @@ package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.stream;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.PathNotFoundException;

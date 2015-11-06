@@ -27,9 +27,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;

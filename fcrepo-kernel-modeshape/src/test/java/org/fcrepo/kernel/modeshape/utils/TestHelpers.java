@@ -15,9 +15,9 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.CONTENT_DIGEST;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATEDBY;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;

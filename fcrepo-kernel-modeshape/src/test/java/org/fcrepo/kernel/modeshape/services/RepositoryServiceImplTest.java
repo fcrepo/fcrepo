@@ -47,7 +47,7 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +59,7 @@ import org.modeshape.jcr.api.NamespaceRegistry;
  *
  * @author ksclarke
  */
-public class RepositoryServiceImplTest implements FedoraJcrTypes {
+public class RepositoryServiceImplTest implements FedoraTypes {
 
     private static final String TESTPID = "testObj";
 

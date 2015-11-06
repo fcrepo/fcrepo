@@ -15,8 +15,8 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;

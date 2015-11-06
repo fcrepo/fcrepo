@@ -19,7 +19,6 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.singletonMap;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
@@ -28,6 +27,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;

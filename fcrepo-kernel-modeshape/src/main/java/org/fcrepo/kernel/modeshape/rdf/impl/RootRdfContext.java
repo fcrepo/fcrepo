@@ -18,10 +18,10 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static com.google.common.collect.ImmutableSet.builder;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.hp.hpl.jena.rdf.model.Resource;

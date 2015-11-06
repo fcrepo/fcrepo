@@ -34,7 +34,7 @@ import javax.jcr.version.VersionManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.VERSIONABLE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

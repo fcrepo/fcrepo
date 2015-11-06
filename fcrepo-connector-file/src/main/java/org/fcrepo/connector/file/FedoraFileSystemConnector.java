@@ -16,15 +16,15 @@
 package org.fcrepo.connector.file;
 
 import static java.lang.System.currentTimeMillis;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.CONTENT_DIGEST;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.CONTENT_SIZE;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATED;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;

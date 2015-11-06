@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 
 import static com.hp.hpl.jena.graph.Triple.create;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.VERSIONABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

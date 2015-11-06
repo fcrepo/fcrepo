@@ -18,7 +18,7 @@ package org.fcrepo.kernel.modeshape.services.functions;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;

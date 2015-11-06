@@ -27,6 +27,9 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
@@ -70,7 +73,7 @@ import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -102,7 +105,7 @@ import com.hp.hpl.jena.update.UpdateRequest;
  *
  * @author ajs6f
  */
-public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, FedoraResource {
+public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraResource {
 
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 

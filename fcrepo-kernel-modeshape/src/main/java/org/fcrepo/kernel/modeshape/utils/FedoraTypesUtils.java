@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import org.fcrepo.kernel.api.FedoraJcrTypes;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.services.functions.AnyTypesPredicate;
 import org.modeshape.jcr.JcrRepository;
@@ -38,19 +38,20 @@ import static java.util.Arrays.stream;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_MIXIN_TYPES;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_PRIMARY_TYPE;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_NODE;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATED;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATEDBY;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_MIXIN_TYPES;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_PRIMARY_TYPE;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.VERSIONABLE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_FROZEN_NODE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_MIXIN_TYPES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -60,7 +61,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author ajs6f
  * @since Feb 14, 2013
  */
-public abstract class FedoraTypesUtils implements FedoraJcrTypes {
+public abstract class FedoraTypesUtils implements FedoraTypes {
 
     public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
 

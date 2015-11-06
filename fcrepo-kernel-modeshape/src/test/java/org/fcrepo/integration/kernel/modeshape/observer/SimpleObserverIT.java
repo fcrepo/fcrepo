@@ -16,9 +16,9 @@
 package org.fcrepo.integration.kernel.modeshape.observer;
 
 import static java.lang.Thread.sleep;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;

@@ -17,7 +17,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;

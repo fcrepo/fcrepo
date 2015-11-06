@@ -17,8 +17,8 @@ package org.fcrepo.integration.kernel.modeshape.observer;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

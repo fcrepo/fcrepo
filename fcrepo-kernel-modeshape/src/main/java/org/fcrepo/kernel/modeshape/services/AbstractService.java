@@ -24,7 +24,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
@@ -65,7 +65,7 @@ public class AbstractService {
     }
 
     /**
-     * Tag a hierarchy with {@link org.fcrepo.kernel.api.FedoraJcrTypes#FEDORA_PAIRTREE}
+     * Tag a hierarchy with {@link org.fcrepo.kernel.api.FedoraTypes#FEDORA_PAIRTREE}
      * @param baseNode Top most ancestor that should not be tagged
      * @param createdNode Node whose parents should be tagged up to but not including {@code baseNode}
      * @throws RepositoryException if repository exception occurred

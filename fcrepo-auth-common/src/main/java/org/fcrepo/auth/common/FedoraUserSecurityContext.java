@@ -15,7 +15,7 @@
  */
 package org.fcrepo.auth.common;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.security.Principal;
 

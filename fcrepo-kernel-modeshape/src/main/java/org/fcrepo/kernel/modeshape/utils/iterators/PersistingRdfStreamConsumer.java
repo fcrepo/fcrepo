@@ -21,7 +21,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.lang.String.join;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedMixin;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.api.models.FedoraResource;

@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
 

@@ -42,8 +42,8 @@ import javax.jcr.version.VersionManager;
 import javax.ws.rs.core.UriBuilder;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_NODE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;

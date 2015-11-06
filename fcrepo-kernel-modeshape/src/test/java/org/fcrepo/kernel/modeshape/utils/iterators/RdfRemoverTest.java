@@ -23,7 +23,7 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.STRING;
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;

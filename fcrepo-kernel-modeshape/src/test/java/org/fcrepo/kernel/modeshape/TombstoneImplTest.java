@@ -23,7 +23,7 @@ import org.mockito.Mock;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
