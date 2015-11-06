@@ -64,6 +64,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
     private Iterator<Triple> triplesFromProperties(final FedoraResource n)
         throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
+        @SuppressWarnings("unchecked")
         final Iterator<Property> nodeProps = n.getNode().getProperties();
         final Iterator<Property> properties = Iterators.filter(nodeProps,
                 isInternalProperty.negate()::test);
