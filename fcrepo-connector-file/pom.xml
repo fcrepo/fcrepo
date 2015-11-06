@@ -13,11 +13,8 @@
   <properties>
     <osgi.import.packages>
       org.fcrepo.kernel.api.*,
-      org.fcrepo.kernel.modeshape.*,
 
       javax.jcr.*,
-
-      com.google.common.*,
 
       org.infinispan.schematic.*,
       org.modeshape.connector.filesystem,
