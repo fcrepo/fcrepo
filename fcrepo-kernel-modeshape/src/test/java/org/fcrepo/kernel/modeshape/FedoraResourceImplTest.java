@@ -21,6 +21,7 @@ import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.FROZEN_NODE;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_CREATED;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.JCR_LASTMODIFIED;
@@ -352,6 +353,22 @@ public class FedoraResourceImplTest {
         when(mockNode.getPath()).thenReturn("some-path");
         when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
+        when(mockMod.getDate()).thenReturn(modDate);
+
+        assertEquals("W/" + shaHex("some-path"
+                + testObj.getLastModifiedDate().getTime()), testObj
+                .getEtagValue());
+    }
+
+    @Test
+    public void shouldGetEtagForNonRDFObject() throws RepositoryException {
+        final Property mockMod = mock(Property.class);
+        final Calendar modDate = Calendar.getInstance();
+        modDate.set(2013, JULY, 30, 0, 0, 0);
+        when(mockNode.getPath()).thenReturn("some-path");
+        when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
+        when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
+        when(mockNode.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
         when(mockMod.getDate()).thenReturn(modDate);
 
         assertEquals(shaHex("some-path"
