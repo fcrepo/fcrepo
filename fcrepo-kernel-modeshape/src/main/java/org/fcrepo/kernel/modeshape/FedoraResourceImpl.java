@@ -63,6 +63,7 @@ import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
+import javax.jcr.NamespaceRegistry;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
@@ -73,6 +74,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.FedoraInvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -436,19 +438,26 @@ public class FedoraResourceImpl extends JcrTools implements FedoraJcrTypes, Fedo
 
         final Collection<IllegalArgumentException> errors = checkInvalidPredicates(request);
 
+        try {
+        final NamespaceRegistry namespaceRegistry = getSession().getWorkspace().getNamespaceRegistry();
+
         request.getPrefixMapping().getNsPrefixMap().forEach(
-                       (k,v) -> { try {
-                                   LOGGER.info("451: prefix mapping is key -> value: " + k + "->" + v + "\n");
-                  if ( Arrays.asList(getSession().getWorkspace().getNamespaceRegistry().getPrefixes()).contains(k)
-                     && !v.equals(getSession().getWorkspace().getNamespaceRegistry().getURI(k))) {
-                                     LOGGER.info("********451: has exists\n");
-                                    throw new IllegalArgumentException( "prefix has existed");
+                       (k,v) -> {
+                                try {
+                                   LOGGER.debug("prefix mapping is key -> value:{} -> {}", k, v);
+                                   if ( Arrays.asList(namespaceRegistry.getPrefixes()).contains(k)
+                                   && !v.equals(namespaceRegistry.getURI(k))) {
+                                     LOGGER.debug("Prefix has been used\n");
+                                     throw new FedoraInvalidPrefixException( "prefix has existed");
 
                                    }
-                                  } catch (RepositoryException e) {
-                                    LOGGER.info("********catch " + e);
-                                  }
-                                 });
+                                } catch (final RepositoryException e) {
+                                   throw new RepositoryRuntimeException(e);
+                                }
+                               });
+        } catch (RepositoryException e) {
+              throw new RepositoryRuntimeException(e);
+        }
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
         }

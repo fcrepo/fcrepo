@@ -75,6 +75,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.FedoraInvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.Container;
@@ -463,6 +464,23 @@ public class FedoraResourceImplIT extends AbstractIT {
                 "INSERT { <> <http://myurl.org/title/> \"fancy title\" . \n" +
                 " <> <http://myurl.org/title/> \"fancy title 2\" . } WHERE { }",
                 new RdfStream());
+    }
+
+    @Test (expected = FedoraInvalidPrefixException.class)
+    public void testInvalidPrefixSparqlUpdateValidation() throws RepositoryException {
+        final String pid = UUID.randomUUID().toString();
+        final FedoraResource object =
+                containerService.findOrCreate(session, pid);
+        object.updateProperties(
+                subjects,
+                "PREFIX pcdm: <http://pcdm.org/models#>\n"
+                        + "INSERT { <> a pcdm:Object}\n"
+                        + "WHERE { }", new RdfStream());
+        object.updateProperties(
+                subjects,
+                "PREFIX pcdm: <http://garbage.org/models#>\n"
+                        + "INSERT { <> a pcdm:Garbage}\n"
+                        + "WHERE { }", new RdfStream());
     }
 
     @Test
