@@ -58,6 +58,30 @@
 
 [ldp:IndirectContainer] > fedora:Container  mixin
 
+
+<mode = 'http://www.modeshape.org/1.0'>
+<test = 'http://test.com/'>
+
+[mode:unorderedCollection] mixin abstract
+
+// Tiny unordered collection, where the number of range buckets is 16
+[mode:unorderedTinyCollection] > mode:unorderedCollection mixin
+
+// Small unordered collection, where the number of range buckets is 256
+[mode:unorderedSmallCollection] > mode:unorderedCollection mixin
+
+// Large unordered collection, where the number of range buckets is 4096
+[mode:unorderedLargeCollection] > mode:unorderedCollection mixin
+
+// Very large unordered collection, where the number of range buckets is 65536
+[mode:unorderedHugeCollection] > mode:unorderedCollection mixin
+
+[test:NormalContainer] > fedora:Container mixin
+[test:TinyContainer]   > fedora:Container, mode:unorderedTinyCollection mixin
+[test:SmallContainer]  > fedora:Container, mode:unorderedSmallCollection mixin
+[test:LargeContainer]  > fedora:Container, mode:unorderedLargeCollection mixin
+[test:HugeContainer]   > fedora:Container, mode:unorderedHugeCollection mixin
+
 /*
  * A Fedora datastream.
  */
