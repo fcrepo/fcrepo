@@ -346,7 +346,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Date getCreatedDate() {
         try {
             if (hasProperty(JCR_CREATED)) {
-                return new Date(getProperty(JCR_CREATED).getDate().getTimeInMillis());
+                return new Date(getTimestamp(JCR_CREATED, 0L));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -363,13 +363,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Date getLastModifiedDate() {
 
+        final Date createdDate = getCreatedDate();
         try {
+            final long created = createdDate == null ? 0L : createdDate.getTime();
             if (hasProperty(FEDORA_LASTMODIFIED)) {
-                LOGGER.trace("Using {} date", FEDORA_LASTMODIFIED);
-                return new Date(getProperty(FEDORA_LASTMODIFIED).getDate().getTimeInMillis());
+                return new Date(getTimestamp(FEDORA_LASTMODIFIED, created));
             } else if (hasProperty(JCR_LASTMODIFIED)) {
-                LOGGER.trace("Using {} date", JCR_LASTMODIFIED);
-                return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+                return new Date(getTimestamp(JCR_LASTMODIFIED, created));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -378,13 +378,22 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
         LOGGER.debug("Could not get last modified date property for node {}", node);
 
-        final Date createdDate = getCreatedDate();
         if (createdDate != null) {
             LOGGER.trace("Using created date for last modified date for node {}", node);
             return createdDate;
         }
 
         return null;
+    }
+    private long getTimestamp(final String property, final long created) throws RepositoryException {
+        LOGGER.trace("Using {} date", property);
+        final long timestamp = getProperty(property).getDate().getTimeInMillis();
+        if (timestamp < created && created > 0L && !isFrozenResource()) {
+            LOGGER.trace("Updating {} with later created date", property);
+            getNode().setProperty(property, created);
+            return created;
+        }
+        return timestamp;
     }
 
     /**

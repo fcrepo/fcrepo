@@ -21,6 +21,10 @@ import static java.util.Calendar.JULY;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
+import static org.fcrepo.kernel.api.FedoraTypes.FROZEN_NODE;
+import static org.fcrepo.kernel.api.FedoraTypes.JCR_CREATED;
+import static org.fcrepo.kernel.api.FedoraTypes.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.utils.iterators.RdfStream.fromModel;
@@ -209,10 +213,11 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testGetLastModifiedDateDefault() throws RepositoryException {
-        // test missing JCR_LASTMODIFIED
+        // test missing JCR_LASTMODIFIED/FEDORA_LASTMODIFIED
         final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);
         try {
+            when(mockNode.hasProperty(FEDORA_LASTMODIFIED)).thenReturn(false);
             when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(false);
             when(mockProp.getDate()).thenReturn(someDate);
             when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
@@ -229,7 +234,7 @@ public class FedoraResourceImplTest {
 
     @Test
     public void testGetLastModifiedDate() {
-        // test existing JCR_LASTMODIFIED
+        // test existing FEDORA_LASTMODIFIED
         final Calendar someDate = Calendar.getInstance();
         someDate.add(Calendar.DATE, -1);
         try {
@@ -243,31 +248,13 @@ public class FedoraResourceImplTest {
         final Property mockMod = mock(Property.class);
         final Calendar modDate = Calendar.getInstance();
         try {
-            when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
-            when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
+            when(mockNode.hasProperty(FEDORA_LASTMODIFIED)).thenReturn(true);
+            when(mockNode.getProperty(FEDORA_LASTMODIFIED)).thenReturn(mockMod);
             when(mockMod.getDate()).thenReturn(modDate);
         } catch (final RepositoryException e) {
             System.err.println("What are we doing in the second test?");
             e.printStackTrace();
         }
-        final Date actual = testObj.getLastModifiedDate();
-        assertEquals(modDate.getTimeInMillis(), actual.getTime());
-    }
-
-    @Test
-    public void testTouch() throws RepositoryException {
-        // test existing JCR_LASTMODIFIED
-        final Calendar someDate = Calendar.getInstance();
-        someDate.add(Calendar.DATE, -1);
-        when(mockProp.getDate()).thenReturn(someDate);
-        when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
-        when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-        when(mockNode.getSession()).thenReturn(mockSession);
-        final Property mockMod = mock(Property.class);
-        final Calendar modDate = Calendar.getInstance();
-        when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
-        when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
-        when(mockMod.getDate()).thenReturn(modDate);
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(modDate.getTimeInMillis(), actual.getTime());
     }
@@ -368,8 +355,8 @@ public class FedoraResourceImplTest {
         final Calendar modDate = Calendar.getInstance();
         modDate.set(2013, JULY, 30, 0, 0, 0);
         when(mockNode.getPath()).thenReturn("some-path");
-        when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
-        when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
+        when(mockNode.hasProperty(FEDORA_LASTMODIFIED)).thenReturn(true);
+        when(mockNode.getProperty(FEDORA_LASTMODIFIED)).thenReturn(mockMod);
         when(mockMod.getDate()).thenReturn(modDate);
 
         assertEquals(shaHex("some-path"
