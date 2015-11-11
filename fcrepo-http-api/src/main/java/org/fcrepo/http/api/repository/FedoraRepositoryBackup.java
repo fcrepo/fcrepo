@@ -22,6 +22,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -32,8 +34,6 @@ import javax.ws.rs.WebApplicationException;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.api.services.RepositoryService;
-import org.modeshape.jcr.api.Problem;
-import org.modeshape.jcr.api.Problems;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -90,21 +90,16 @@ public class FedoraRepositoryBackup extends AbstractResource {
         }
 
         LOGGER.debug("Backing up to: {}", backupDirectory.getAbsolutePath());
-        final Problems problems = repositoryService.backupRepository(session, backupDirectory);
+        final Collection<Throwable> problems = repositoryService.backupRepository(session, backupDirectory);
 
-        if ( problems.hasProblems() ) {
+        if (!problems.isEmpty()) {
             LOGGER.error("Problems backing up the repository:");
 
-            final StringBuilder problemsOutput = new StringBuilder();
-
             // Report the problems (we'll just print them out) ...
-            for ( final Problem problem : problems ) {
-                LOGGER.error("{}", problem.getMessage());
-                problemsOutput.append(problem.getMessage());
-                problemsOutput.append("\n");
-            }
+            final String output = problems.stream().map(Throwable::getMessage).peek(x -> LOGGER.error("{}", x))
+                    .collect(Collectors.joining("\n"));
 
-            throw new WebApplicationException(serverError().entity(problemsOutput.toString()).build());
+            throw new WebApplicationException(serverError().entity(output).build());
 
         }
         return backupDirectory.getCanonicalPath();

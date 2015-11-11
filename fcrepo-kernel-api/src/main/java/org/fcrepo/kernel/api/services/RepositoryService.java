@@ -16,10 +16,9 @@
 package org.fcrepo.kernel.api.services;
 
 import java.io.File;
+import java.util.Collection;
 
 import javax.jcr.Session;
-
-import org.modeshape.jcr.api.Problems;
 
 /**
  * @author bbpennel
@@ -48,7 +47,7 @@ public interface RepositoryService {
      * @param backupDirectory the backup directory
      * @return problems
      */
-    Problems backupRepository(Session session, File backupDirectory);
+    Collection<Throwable> backupRepository(Session session, File backupDirectory);
 
     /**
      * This methods restores the repository from a backup
@@ -57,6 +56,6 @@ public interface RepositoryService {
      * @param backupDirectory the backup directory
      * @return problems
      */
-    Problems restoreRepository(Session session, File backupDirectory);
+    Collection<Throwable> restoreRepository(Session session, File backupDirectory);
 
 }

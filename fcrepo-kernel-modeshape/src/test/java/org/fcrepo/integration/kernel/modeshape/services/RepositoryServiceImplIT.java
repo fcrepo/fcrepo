@@ -17,10 +17,11 @@ package org.fcrepo.integration.kernel.modeshape.services;
 
 import static com.google.common.io.Files.createTempDir;
 import static org.jgroups.util.Util.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
@@ -33,7 +34,6 @@ import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.RepositoryService;
 
 import org.junit.Test;
-import org.modeshape.jcr.api.Problems;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
@@ -93,8 +93,8 @@ public class RepositoryServiceImplIT extends AbstractIT {
                     );
             session.save();
             final File backupDirectory = createTempDir();
-            final Problems problems = repositoryService.backupRepository(session, backupDirectory);
-            assertFalse(problems.hasProblems());
+            final Collection<Throwable> problems = repositoryService.backupRepository(session, backupDirectory);
+            assertTrue(problems.isEmpty());
         } finally {
             session.logout();
         }
@@ -115,8 +115,8 @@ public class RepositoryServiceImplIT extends AbstractIT {
             session.save();
             final File backupDirectory = createTempDir();
             repositoryService.backupRepository(session, backupDirectory);
-            final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
-            assertFalse(problems.hasProblems());
+            final Collection<Throwable> problems = repositoryService.restoreRepository(session, backupDirectory);
+            assertTrue(problems.isEmpty());
         } finally {
             session.logout();
         }

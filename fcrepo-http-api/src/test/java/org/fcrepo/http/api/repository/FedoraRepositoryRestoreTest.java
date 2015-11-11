@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -29,6 +28,8 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
@@ -38,7 +39,6 @@ import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.Problems;
 
 /**
  * @author Andrew Woods Date: 9/4/13
@@ -65,10 +65,9 @@ public class FedoraRepositoryRestoreTest {
 
     @Test
     public void testRunBackup() throws Exception {
-        final Problems mockProblems = mock(Problems.class);
-        when(mockProblems.hasProblems()).thenReturn(false);
+        final Collection<Throwable> problems = new ArrayList<>();
         when(mockService.backupRepository(any(Session.class), any(File.class)))
-                .thenReturn(mockProblems);
+                .thenReturn(problems);
 
         boolean thrown = false;
         try {
@@ -82,10 +81,9 @@ public class FedoraRepositoryRestoreTest {
 
     @Test
     public void testRunBackupWithDir() throws Exception {
-        final Problems mockProblems = mock(Problems.class);
-        when(mockProblems.hasProblems()).thenReturn(false);
+        final Collection<Throwable> problems = new ArrayList<>();
         when(mockService.restoreRepository(any(Session.class), any(File.class)))
-                .thenReturn(mockProblems);
+                .thenReturn(problems);
 
         final String tmpDir = System.getProperty("java.io.tmpdir");
         final InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
