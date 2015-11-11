@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api.repository;
 
+import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -23,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -86,8 +86,8 @@ public class FedoraRepositoryRestore extends AbstractResource {
             LOGGER.error("Problems restoring up the repository:");
 
             // Report the problems (we'll just print them out) ...
-            final String problemsOutput = problems.stream().map(Throwable::getMessage).peek(x -> LOGGER.error("{}", x))
-                    .collect(Collectors.joining("\n"));
+            final String problemsOutput = problems.stream().map(Throwable::getMessage).peek(LOGGER::error)
+                    .collect(joining("\n"));
 
             throw new WebApplicationException(serverError()
                     .entity(problemsOutput).build());

@@ -16,6 +16,7 @@
 package org.fcrepo.http.api.repository;
 
 import static com.google.common.io.Files.createTempDir;
+import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -23,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -96,8 +96,8 @@ public class FedoraRepositoryBackup extends AbstractResource {
             LOGGER.error("Problems backing up the repository:");
 
             // Report the problems (we'll just print them out) ...
-            final String output = problems.stream().map(Throwable::getMessage).peek(x -> LOGGER.error("{}", x))
-                    .collect(Collectors.joining("\n"));
+            final String output = problems.stream().map(Throwable::getMessage).peek(LOGGER::error)
+                    .collect(joining("\n"));
 
             throw new WebApplicationException(serverError().entity(output).build());
 

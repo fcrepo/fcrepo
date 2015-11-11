@@ -108,7 +108,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
 
             final Collection<Throwable> problems = new ArrayList<>();
 
-            repoMgr.backupRepository(backupDirectory).iterator().forEachRemaining(x -> {
+            repoMgr.backupRepository(backupDirectory).forEach(x -> {
                 problems.add(x.getThrowable());
             });
 
@@ -134,7 +134,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
 
             final Collection<Throwable> problems = new ArrayList<>();
 
-            repoMgr.restoreRepository(backupDirectory).iterator().forEachRemaining(x -> {
+            repoMgr.restoreRepository(backupDirectory).forEach(x -> {
                 problems.add(x.getThrowable());
             });
 
