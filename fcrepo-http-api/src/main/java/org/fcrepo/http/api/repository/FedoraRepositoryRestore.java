@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api.repository;
 
+import static java.util.stream.Collectors.joining;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -22,8 +23,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -35,8 +35,6 @@ import javax.ws.rs.core.Response;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.api.services.RepositoryService;
-import org.modeshape.jcr.api.Problem;
-import org.modeshape.jcr.api.Problems;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -83,17 +81,13 @@ public class FedoraRepositoryRestore extends AbstractResource {
                             + backupDirectory.getAbsolutePath()).build());
         }
 
-        final Problems problems = repositoryService.restoreRepository(session, backupDirectory);
-        if (problems.hasProblems()) {
+        final Collection<Throwable> problems = repositoryService.restoreRepository(session, backupDirectory);
+        if (!problems.isEmpty()) {
             LOGGER.error("Problems restoring up the repository:");
 
-            final List<String> problemsOutput = new ArrayList<>();
-
             // Report the problems (we'll just print them out) ...
-            for (final Problem problem : problems) {
-                LOGGER.error("{}", problem.getMessage());
-                problemsOutput.add(problem.getMessage());
-            }
+            final String problemsOutput = problems.stream().map(Throwable::getMessage).peek(LOGGER::error)
+                    .collect(joining("\n"));
 
             throw new WebApplicationException(serverError()
                     .entity(problemsOutput).build());

@@ -61,8 +61,8 @@
       <artifactId>jena-arq</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.modeshape</groupId>
-      <artifactId>modeshape-jcr-api</artifactId>
+      <groupId>javax.jcr</groupId>
+      <artifactId>jcr</artifactId>
     </dependency>
 
     <!-- test gear -->

@@ -20,7 +20,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -28,6 +27,8 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import javax.jcr.Session;
 
@@ -35,7 +36,6 @@ import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.Problems;
 
 /**
  * @author Andrew Woods
@@ -63,11 +63,10 @@ public class FedoraRepositoryBackupTest {
 
     @Test
     public void testRunBackup() throws Exception {
-        final Problems mockProblems = mock(Problems.class);
-        when(mockProblems.hasProblems()).thenReturn(false);
+        final Collection<Throwable> problems = new ArrayList<>();
         when(mockService.backupRepository(any(Session.class),
                                         any(File.class))).thenReturn(
-                mockProblems);
+                problems);
 
         final String backupPath = repoBackup.runBackup(null);
         assertNotNull(backupPath);
@@ -75,11 +74,10 @@ public class FedoraRepositoryBackupTest {
 
     @Test
     public void testRunBackupWithDir() throws Exception {
-        final Problems mockProblems = mock(Problems.class);
-        when(mockProblems.hasProblems()).thenReturn(false);
+        final Collection<Throwable> problems = new ArrayList<>();
         when(mockService.backupRepository(any(Session.class),
                                         any(File.class))).thenReturn(
-                mockProblems);
+                problems);
 
         final String tmpDir = getProperty("java.io.tmpdir");
         final String tmpDirPath = new File(tmpDir).getCanonicalPath();

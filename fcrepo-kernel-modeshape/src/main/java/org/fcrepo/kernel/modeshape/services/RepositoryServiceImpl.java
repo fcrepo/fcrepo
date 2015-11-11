@@ -23,6 +23,9 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
@@ -30,7 +33,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.services.RepositoryService;
-import org.modeshape.jcr.api.Problems;
 import org.modeshape.jcr.api.RepositoryManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -97,14 +99,18 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * .Session, java.io.File)
      */
     @Override
-    public Problems backupRepository(final Session session,
+    public Collection<Throwable> backupRepository(final Session session,
                                      final File backupDirectory) {
         try {
             final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
                     .getWorkspace()
                     .getRepositoryManager();
 
-            return repoMgr.backupRepository(backupDirectory);
+            final Collection<Throwable> problems = new ArrayList<>();
+
+            repoMgr.backupRepository(backupDirectory).forEach(x -> problems.add(x.getThrowable()));
+
+            return problems;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -117,14 +123,18 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * jcr.Session, java.io.File)
      */
     @Override
-    public Problems restoreRepository(final Session session,
+    public Collection<Throwable> restoreRepository(final Session session,
                                       final File backupDirectory) {
         try {
             final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
                     .getWorkspace()
                     .getRepositoryManager();
 
-            return repoMgr.restoreRepository(backupDirectory);
+            final Collection<Throwable> problems = new ArrayList<>();
+
+            repoMgr.restoreRepository(backupDirectory).forEach(x -> problems.add(x.getThrowable()));
+
+            return problems;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

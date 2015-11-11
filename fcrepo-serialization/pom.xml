@@ -54,6 +54,11 @@
       <artifactId>commons-io</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>javax.jcr</groupId>
+      <artifactId>jcr</artifactId>
+    </dependency>
+
     <!-- test gear -->
     <dependency>
       <groupId>junit</groupId>
