@@ -281,6 +281,13 @@
                 <include>index.html</include>
               </includes>
             </resource>
+            <resource>
+              <directory>src/main/resources</directory>
+              <filtering>true</filtering>
+              <includes>
+                <include>build-info.properties</include>
+              </includes>
+            </resource>
           </webResources>
             <archive>
               <index>true</index>

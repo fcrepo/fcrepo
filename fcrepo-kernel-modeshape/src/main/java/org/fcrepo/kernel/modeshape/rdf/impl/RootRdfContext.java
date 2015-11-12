@@ -129,7 +129,13 @@ public class RootRdfContext extends NodeRdfContext {
                     createTypedLiteral(counters.get(PREFIX + FIXITY_REPAIRED_COUNTER).getCount()).asNode()));
         }
 
+        //add project description triples here
+        final BuildPropertiesLoader buildLoader = new BuildPropertiesLoader();
+        buildLoader.loadSystemProperties();
+        LOGGER.info("The value for property version is {}", System.getProperty("version"));
+
         // offer all these accumulated triples
         concat(b.build());
+
     }
 }
