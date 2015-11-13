@@ -165,6 +165,9 @@
           <version>${license.plugin.version}</version>
           <configuration>
             <header>fcrepo-license/LICENSE_HEADER.txt</header>
+            <mapping>
+                <java>SLASHSTAR_STYLE</java>
+            </mapping>
             <includes>
               <include>**/src/main/java/**</include>
               <include>**/src/test/java/**</include>
