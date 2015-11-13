@@ -131,8 +131,9 @@ public class RootRdfContext extends NodeRdfContext {
 
         //add project description triples here
         final BuildPropertiesLoader buildLoader = new BuildPropertiesLoader();
-        buildLoader.loadSystemProperties();
-        LOGGER.info("The value for property version is {}", System.getProperty("version"));
+        LOGGER.info("The value for build.name is {}", buildLoader.getBuildName());
+        LOGGER.info("The value for build.date is {}", buildLoader.getBuildDate());
+        LOGGER.info("The value for build.revision is {}", buildLoader.getBuildRevision());
 
         // offer all these accumulated triples
         concat(b.build());
