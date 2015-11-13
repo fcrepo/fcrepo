@@ -18,6 +18,8 @@ package org.fcrepo.auth.common;
 import static java.util.Collections.emptySet;
 
 import org.modeshape.jcr.api.ServletCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jcr.Credentials;
 import javax.servlet.http.HttpServletRequest;
@@ -76,6 +78,8 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
 
     private String separator = "";
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpHeaderPrincipalProvider.class);
+
     /**
      * @param headerName The name of the header from which to extract principals
      */
@@ -97,12 +101,17 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
      */
     @Override
     public Set<Principal> getPrincipals(final Credentials credentials) {
+        LOGGER.debug("Checking for principals using {}", HttpHeaderPrincipalProvider.class.getSimpleName());
 
         if (headerName == null || separator == null) {
+            LOGGER.debug("headerName or separator not initialized");
             return emptySet();
         }
 
+        LOGGER.debug("Trying to get principals from header: {}; separator: {}", headerName, separator);
+
         if (!(credentials instanceof ServletCredentials)) {
+            LOGGER.debug("Credentials is not an instanceof ServletCredentials");
             return emptySet();
         }
 
@@ -112,12 +121,14 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
         final HttpServletRequest request = servletCredentials.getRequest();
 
         if (request == null) {
+            LOGGER.debug("Servlet request from servletCredentials was null");
             return emptySet();
         }
 
         final String value = request.getHeader(headerName);
 
         if (value == null) {
+            LOGGER.debug("Value for header {} is null", headerName);
             return emptySet();
         }
 
@@ -126,6 +137,7 @@ public class HttpHeaderPrincipalProvider implements PrincipalProvider {
         final Set<Principal> principals = new HashSet<>();
 
         for (final String name : names) {
+            LOGGER.debug("Adding HTTP header-provided principal: {}", name.trim());
             principals.add(new HttpHeaderPrincipal(name.trim()));
         }
 
