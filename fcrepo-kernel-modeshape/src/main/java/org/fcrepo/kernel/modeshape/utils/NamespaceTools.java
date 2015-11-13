@@ -75,7 +75,13 @@ public final class NamespaceTools {
                     try {
                         namespaceRegistry.getURI(prefix);
                     } catch (final NamespaceException e) {
-                        throw new FedoraInvalidNamespaceException("Prefix " + prefix + " has not been registered", e);
+                        if (segment.indexOf("fcr:backup") >= 0) {
+                            throw new FedoraInvalidNamespaceException(
+                                    "Backup must be performed on the root of the repository", e);
+                        } else {
+                            throw new FedoraInvalidNamespaceException(
+                                    "Prefix " + prefix + " has not been registered", e);
+                        }
                     } catch (final RepositoryException e) {
                         throw new RepositoryRuntimeException(e);
                     }
