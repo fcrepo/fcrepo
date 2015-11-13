@@ -162,6 +162,8 @@ public final class ServletContainerAuthenticationProvider implements
                     FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
                     principals);
 
+            LOGGER.debug("All principals: {}", principals);
+
         } else {
             LOGGER.debug("No user-principal found.");
 
