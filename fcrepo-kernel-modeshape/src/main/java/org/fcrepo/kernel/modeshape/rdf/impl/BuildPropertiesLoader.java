@@ -27,41 +27,61 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Properties;
 import java.io.InputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
 
 public class BuildPropertiesLoader {
 
     private static final Logger LOGGER = getLogger(BuildPropertiesLoader.class);
 
+    // The following keys come from: fcrepo-webapp/src/main/resources/build-info.properties
+    private static final String BUILD_NAME_KEY = "build.name";
+    private static final String BUILD_DATE_KEY = "build.date";
+    private static final String BUILD_REVISION_KEY = "build.revision";
+
+    private String buildName;
+    private String buildDate;
+    private String buildRevision;
+
     /**
      * This method loads build System Properties
      */
 
-    public void loadSystemProperties() {
+    public BuildPropertiesLoader() {
 
         final Properties buildProperties = new Properties();
         try (final InputStream pStream = getClass().getResource("/build-info.properties").openStream()) {
             buildProperties.load(pStream);
-            final String projectVersion = buildProperties.getProperty("version");
-            if (projectVersion != null ) {
-                LOGGER.debug("project version is {}", projectVersion);
-                setProperty("version", projectVersion);
-            } else {
-                setProperty("version", "Unknown");
-            }
 
-        } catch (final FileNotFoundException e) {
-           LOGGER.info("File not Found");
-           //set unknown value for all the build properties here
-           setProperty("version", "Unknown");
         } catch (final IOException e) {
            LOGGER.info("IOException for property file");
            e.printStackTrace();
         }
+
+        buildName = buildProperties.getProperty(BUILD_NAME_KEY, "unknown");
+        buildDate = buildProperties.getProperty(BUILD_DATE_KEY, "unknown");
+        buildRevision = buildProperties.getProperty(BUILD_REVISION_KEY, "unknown");
     }
 
-    private static void setProperty(final String prop, final String propValue) {
-        System.setProperty(prop, propValue);
+    /**
+     * Get build name
+     * @return build name
+     */
+    public String getBuildName() {
+        return buildName;
     }
 
+    /**
+     * Get build date
+     * @return build date
+     */
+    public String getBuildDate() {
+        return buildDate;
+    }
+
+    /**
+     * Get build revision
+     * @return build revision
+     */
+    public String getBuildRevision() {
+        return buildRevision;
+    }
 }

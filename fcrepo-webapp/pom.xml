@@ -246,6 +246,7 @@
     <resources>
       <resource>
         <directory>src/main/resources</directory>
+        <filtering>true</filtering>
       </resource>
       <resource>
         <directory>${project.build.directory}/maven-shared-archive-resources</directory>
@@ -279,13 +280,6 @@
               <filtering>true</filtering>
               <includes>
                 <include>index.html</include>
-              </includes>
-            </resource>
-            <resource>
-              <directory>src/main/resources</directory>
-              <filtering>true</filtering>
-              <includes>
-                <include>build-info.properties</include>
               </includes>
             </resource>
           </webResources>
