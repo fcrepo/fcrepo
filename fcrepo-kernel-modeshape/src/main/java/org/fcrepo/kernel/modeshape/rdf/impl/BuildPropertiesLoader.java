@@ -42,18 +42,21 @@ public class BuildPropertiesLoader {
     private String buildRevision;
 
     /**
-     * This method loads build System Properties
+     * This method loads build Properties
      */
 
     public BuildPropertiesLoader() {
 
         final Properties buildProperties = new Properties();
-        try (final InputStream pStream = getClass().getResource("/build-info.properties").openStream()) {
+        try (final InputStream pStream = getClass().getResourceAsStream("/build-info.properties")) {
             buildProperties.load(pStream);
 
         } catch (final IOException e) {
-           LOGGER.info("IOException for property file");
-           e.printStackTrace();
+           LOGGER.info("IOException for build-info.properties file");
+        //   e.printStackTrace();
+        buildName = buildProperties.getProperty(BUILD_NAME_KEY, "unknown");
+        buildDate = buildProperties.getProperty(BUILD_DATE_KEY, "unknown");
+        buildRevision = buildProperties.getProperty(BUILD_REVISION_KEY, "unknown");
         }
 
         buildName = buildProperties.getProperty(BUILD_NAME_KEY, "unknown");

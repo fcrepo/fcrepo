@@ -83,6 +83,12 @@ public final class RdfLexicon {
             "http://www.w3.org/ns/sparql-service-description#";
 
     /**
+     * DOAP namespace.
+     */
+    public static final String DOAP_NAMESPACE =
+            "http://usefulinc.com/ns/doap#";
+
+    /**
      * The namespaces that the repository manages internally.
      */
     public static final Set<String> managedNamespaces = of(
@@ -316,6 +322,10 @@ public final class RdfLexicon {
 
     private static Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
+
+    // DOAP release decribes fedora build information
+    public static final Property DOAP_RELEASE =
+            createProperty(DOAP_NAMESPACE + "release");
 
     /**
      * Detects whether an RDF property is managed by the repository.

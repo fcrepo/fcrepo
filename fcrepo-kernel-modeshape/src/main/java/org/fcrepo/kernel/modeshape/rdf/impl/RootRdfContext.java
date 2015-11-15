@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.api.FedoraJcrTypes.ROOT;
@@ -27,6 +28,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.DOAP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.DOAP_RELEASE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -132,8 +135,21 @@ public class RootRdfContext extends NodeRdfContext {
         //add project description triples here
         final BuildPropertiesLoader buildLoader = new BuildPropertiesLoader();
         LOGGER.info("The value for build.name is {}", buildLoader.getBuildName());
+        final com.hp.hpl.jena.graph.Node releaseSubject = createURI(REPOSITORY_NAMESPACE + "release");
+            b.add(create(subject(), DOAP_RELEASE.asNode(), releaseSubject));
+            b.add(create(releaseSubject, type.asNode(), createURI(DOAP_NAMESPACE + "Version")));
+            b.add(create(releaseSubject, createURI(DOAP_NAMESPACE + "name"),
+                         createLiteral(buildLoader.getBuildName())));
+
         LOGGER.info("The value for build.date is {}", buildLoader.getBuildDate());
-        LOGGER.info("The value for build.revision is {}", buildLoader.getBuildRevision());
+            b.add(create(releaseSubject, createURI(DOAP_NAMESPACE + "created"),
+                         createLiteral(buildLoader.getBuildDate())));
+       LOGGER.info("The value for build.revision is {}", buildLoader.getBuildRevision());
+            b.add(create(releaseSubject, createURI(DOAP_NAMESPACE + "revision"),
+                         createLiteral(buildLoader.getBuildRevision())));
+        // offer all these accumulated triples
+        concat(b.build());
+
 
         // offer all these accumulated triples
         concat(b.build());
