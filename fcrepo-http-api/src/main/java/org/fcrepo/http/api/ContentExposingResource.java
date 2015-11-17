@@ -48,7 +48,7 @@ import static org.fcrepo.kernel.api.RdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
+import static org.fcrepo.kernel.api.FedoraJcrTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -480,7 +480,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Date date = mutableResource.getLastModifiedDate();
 
         if (!etag.getValue().isEmpty()) {
-            servletResponse.addHeader("ETag", etag.toString());
+            servletResponse.addHeader("ETag", mutableResource.hasType(FEDORA_NON_RDF_SOURCE_DESCRIPTION) ?
+               etag.toString() : "W/" + etag.toString());
         }
 
         if (date != null) {

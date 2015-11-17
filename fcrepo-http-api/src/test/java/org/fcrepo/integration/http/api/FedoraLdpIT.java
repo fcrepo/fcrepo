@@ -2073,7 +2073,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // PUT properly formatted etag
         final HttpPut httpPut = putObjMethod(id);
-        httpPut.addHeader("If-Match", etag);
+        httpPut.addHeader("If-None-Match", etag);
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(response));
