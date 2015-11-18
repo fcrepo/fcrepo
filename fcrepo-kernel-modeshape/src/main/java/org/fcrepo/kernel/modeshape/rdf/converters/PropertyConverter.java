@@ -128,7 +128,10 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
         }
 
         final String rdfLocalname = predicate.getLocalName();
-
+        if (rdfLocalname.isEmpty()) {
+          LOGGER.info("predicate local name is null");
+          throw new RepositoryException("Illegal predicate local name ");
+        }
         final String prefix;
 
         assert (namespaceRegistry != null);
