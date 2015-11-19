@@ -252,12 +252,6 @@
         <directory>${project.build.directory}/maven-shared-archive-resources</directory>
       </resource>
     </resources>
-    <testResources>
-       <testResource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </testResource>
-    </testResources>
     <plugins>
       <plugin>
         <artifactId>maven-remote-resources-plugin</artifactId>

@@ -132,19 +132,17 @@ public class RootRdfContext extends NodeRdfContext {
                     createTypedLiteral(counters.get(PREFIX + FIXITY_REPAIRED_COUNTER).getCount()).asNode()));
         }
 
-        //add project description triples here
+        //add project build description triples here
         final BuildPropertiesLoader buildLoader = new BuildPropertiesLoader();
-        LOGGER.info("The value for build.name is {}", buildLoader.getBuildName());
+
         final com.hp.hpl.jena.graph.Node releaseSubject = createURI(REPOSITORY_NAMESPACE + "release");
             b.add(create(subject(), DOAP_RELEASE.asNode(), releaseSubject));
             b.add(create(releaseSubject, type.asNode(), createURI(DOAP_NAMESPACE + "Version")));
             b.add(create(releaseSubject, createURI(DOAP_NAMESPACE + "name"),
                          createLiteral(buildLoader.getBuildName())));
 
-        LOGGER.info("The value for build.date is {}", buildLoader.getBuildDate());
             b.add(create(releaseSubject, createURI(DOAP_NAMESPACE + "created"),
                          createLiteral(buildLoader.getBuildDate())));
-       LOGGER.info("The value for build.revision is {}", buildLoader.getBuildRevision());
             b.add(create(releaseSubject, createURI(DOAP_NAMESPACE + "revision"),
                          createLiteral(buildLoader.getBuildRevision())));
         // offer all these accumulated triples

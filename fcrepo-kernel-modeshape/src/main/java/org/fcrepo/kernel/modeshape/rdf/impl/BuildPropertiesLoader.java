@@ -48,15 +48,16 @@ public class BuildPropertiesLoader {
     public BuildPropertiesLoader() {
 
         final Properties buildProperties = new Properties();
-        try (final InputStream pStream = getClass().getResourceAsStream("/build-info.properties")) {
-            buildProperties.load(pStream);
 
+        try (final InputStream pStream = getClass().getResourceAsStream("/build-info.properties")) {
+          if (pStream != null) {
+            buildProperties.load(pStream);
+          }
         } catch (final IOException e) {
            LOGGER.info("IOException for build-info.properties file");
-        //   e.printStackTrace();
-        buildName = buildProperties.getProperty(BUILD_NAME_KEY, "unknown");
-        buildDate = buildProperties.getProperty(BUILD_DATE_KEY, "unknown");
-        buildRevision = buildProperties.getProperty(BUILD_REVISION_KEY, "unknown");
+           buildName = buildProperties.getProperty(BUILD_NAME_KEY, "unknown");
+           buildDate = buildProperties.getProperty(BUILD_DATE_KEY, "unknown");
+           buildRevision = buildProperties.getProperty(BUILD_REVISION_KEY, "unknown");
         }
 
         buildName = buildProperties.getProperty(BUILD_NAME_KEY, "unknown");
