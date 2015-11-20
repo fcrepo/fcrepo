@@ -130,7 +130,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
 
         final String rdfLocalname = predicate.getLocalName();
         if (rdfLocalname.isEmpty()) {
-          LOGGER.info("predicate local name is empty");
+          LOGGER.error("predicate local name is empty");
           throw new RepositoryRuntimeException(
               "Illegal predicate local name: The localName argument may not be empty or starting with digit!");
         }

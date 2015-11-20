@@ -45,7 +45,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-
+import com.google.common.collect.ImmutableMap;
 /**
  * @author cabeer
  * @author ajs6f
@@ -119,8 +119,7 @@ public class PropertyConverterTest {
     @Test(expected = RuntimeException.class)
     public final void IllegalPredicateLocalname() throws RepositoryException {
         final Property p = createProperty(mockUri, "1234");
-        final Map<String, String> nsMap = new HashMap<String, String>();
-        nsMap.put("example", mockUri);
+        final Map<String, String> nsMap = ImmutableMap.of("example", mockUri);
         PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
     }
 
