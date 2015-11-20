@@ -116,6 +116,14 @@ public class PropertyConverterTest {
         PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
     }
 
+    @Test(expected = RuntimeException.class)
+    public final void IllegalPredicateLocalname() throws RepositoryException {
+        final Property p = createProperty(mockUri, "1234");
+        final Map<String, String> nsMap = new HashMap<String, String>();
+        nsMap.put("example", mockUri);
+        PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
+    }
+
     @Test
     public final void shouldReuseRegisteredNamespaces() throws RepositoryException {
         final Property p = createProperty(mockUri, "uuid");
