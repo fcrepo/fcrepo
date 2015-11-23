@@ -86,6 +86,8 @@ public class SimpleObserverTest {
         when(mockRepository.login()).thenReturn((org.modeshape.jcr.api.Session) mockSession);
         when(mockEvents.hasNext()).thenReturn(true, false);
         when(mockEvents.next()).thenReturn(mockEvent);
+        when(mockEvent.getType()).thenReturn(1);
+        when(mockEvent.getPath()).thenReturn("/foo");
         testObserver = new SimpleObserver();
         setField(testObserver, "repository", mockRepository);
         setField(testObserver, "eventMapper", new OneToOne());

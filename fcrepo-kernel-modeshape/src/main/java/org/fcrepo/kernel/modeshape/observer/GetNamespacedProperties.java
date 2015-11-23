@@ -55,7 +55,7 @@ public class GetNamespacedProperties implements Function<FedoraEvent, FedoraEven
     public FedoraEvent apply(final FedoraEvent evt) {
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
 
-        final FedoraEvent event = new FedoraEvent(evt);
+        final FedoraEvent event = new FedoraEventImpl(evt);
         for (final String property : evt.getProperties()) {
             final String[] parts = property.split(":", 2);
             if (parts.length == 2) {

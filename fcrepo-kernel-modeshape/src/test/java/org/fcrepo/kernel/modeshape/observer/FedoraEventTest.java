@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.observer;
+package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.collect.Iterators.contains;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static org.fcrepo.kernel.api.utils.EventType.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -28,6 +29,8 @@ import java.util.Map;
 import javax.jcr.observation.Event;
 
 import org.junit.Test;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.utils.EventType;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -38,25 +41,25 @@ import com.google.common.collect.ImmutableMap;
  */
 public class FedoraEventTest {
 
-    FedoraEvent e = new FedoraEvent(new TestEvent(1, "Path/Child", "UserId", "Identifier",
+    FedoraEvent e = new FedoraEventImpl(new TestEvent(1, "Path/Child", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
 
 
     @SuppressWarnings("unused")
     @Test(expected = java.lang.IllegalArgumentException.class)
     public void testWrapNullEvent() {
-        new FedoraEvent((Event)null);
+        new FedoraEventImpl((Event)null);
     }
 
     @SuppressWarnings("unused")
     @Test(expected = java.lang.IllegalArgumentException.class)
     public void testWrapNullFedoraEvent() {
-        new FedoraEvent((FedoraEvent)null);
+        new FedoraEventImpl((FedoraEvent)null);
     }
 
     @Test
     public void testGetType() {
-        assertEquals(singleton(1), e.getTypes());
+        assertEquals(singleton(valueOf(1)), e.getTypes());
     }
 
     @Test
@@ -67,7 +70,7 @@ public class FedoraEventTest {
 
     @Test
     public void testGetPathWithProperties() {
-        final FedoraEvent e = new FedoraEvent(new TestEvent(PROPERTY_CHANGED,
+        final FedoraEvent e = new FedoraEventImpl(new TestEvent(PROPERTY_CHANGED,
                                                             "Path/Child",
                                                             "UserId",
                                                             "Identifier",
@@ -92,13 +95,6 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testGetInfo() {
-        final Map<?, ?> m = e.getInfo();
-
-        assertEquals("2", m.get("1"));
-    }
-
-    @Test
     public void testGetUserData() {
 
         assertEquals("data", e.getUserData());
@@ -113,11 +109,12 @@ public class FedoraEventTest {
 
     @Test
     public void testAddType() {
-        e.addType(PROPERTY_CHANGED);
+        final EventType type = valueOf(PROPERTY_CHANGED);
+        e.addType(type);
         assertEquals(2, e.getTypes().size());
 
-        assertTrue("Should contain: " + PROPERTY_CHANGED, contains(e.getTypes().iterator(), PROPERTY_CHANGED));
-        assertTrue("Should contain: 1", contains(e.getTypes().iterator(), 1));
+        assertTrue("Should contain: " + type, contains(e.getTypes().iterator(), type));
+        assertTrue("Should contain: NODE_ADDED", contains(e.getTypes().iterator(), valueOf(1)));
     }
 
     @Test
@@ -131,9 +128,8 @@ public class FedoraEventTest {
     public void testToString() {
         final String text = e.toString();
         assertTrue("Should contain path: " + text, text.contains(e.getPath()));
-        assertTrue("Should contain info: " + text, text.contains(e.getInfo().toString()));
 
-        assertTrue("Should contain types: " + text, text.contains(Integer.toString(e.getTypes().iterator().next())));
+        assertTrue("Should contain types: " + text, text.contains(e.getTypes().iterator().next().getName()));
         assertTrue("Should contain date: " + text, text.contains(Long.toString(e.getDate())));
 
         assertFalse("Should not contain user-data: " + text, text.contains(e.getUserData()));

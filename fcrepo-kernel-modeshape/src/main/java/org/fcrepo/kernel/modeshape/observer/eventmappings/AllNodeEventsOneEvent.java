@@ -18,6 +18,7 @@ package org.fcrepo.kernel.modeshape.observer.eventmappings;
 import static com.google.common.collect.Multimaps.index;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static java.util.Arrays.asList;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
@@ -33,6 +34,8 @@ import javax.jcr.observation.Event;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.observer.eventmappings.InternalExternalEventMapper;
+import org.fcrepo.kernel.api.utils.EventType;
+import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
 
 import org.slf4j.Logger;
 
@@ -57,11 +60,12 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
      * Extracts an identifier from a JCR {@link Event} by building an id from nodepath and user to collapse multiple
      * events from repository mutations
      */
-    private static final Function<Event, String> EXTRACT_NODE_ID = ev -> {
-            final String id = FedoraEvent.getPath(ev).replaceAll("/" + JCR_CONTENT,"") + "-" + ev.getUserID();
+    private static final Function<Event, String> EXTRACT_NODE_ID = uncheck(ev -> {
+            final FedoraEvent event = new FedoraEventImpl(ev);
+            final String id = event.getPath() + "-" + event.getUserID();
             LOGGER.debug("Sorting an event by identifier: {}", id);
             return id;
-    };
+    });
 
     @Override
     public Iterator<FedoraEvent> apply(final Iterator<Event> events) {
@@ -91,14 +95,15 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
             // we can safely call next() immediately on nodeSpecificEvents because if there was no event at all, there
             // would appear no entry in our Multimap under this key
             final Event firstEvent = nodeSpecificEvents.next();
-            final FedoraEvent fedoraEvent = new FedoraEvent(firstEvent);
+
+            final FedoraEvent fedoraEvent = new FedoraEventImpl(firstEvent);
 
             addProperty(fedoraEvent, firstEvent);
             while (nodeSpecificEvents.hasNext()) {
                 // add the event type and property name to the event we are building up to emit
                 // we could aggregate other information here if that seems useful
                 final Event otherEvent = nodeSpecificEvents.next();
-                fedoraEvent.addType(otherEvent.getType());
+                fedoraEvent.addType(EventType.valueOf(otherEvent.getType()));
                 addProperty(fedoraEvent, otherEvent);
             }
             return fedoraEvent;
