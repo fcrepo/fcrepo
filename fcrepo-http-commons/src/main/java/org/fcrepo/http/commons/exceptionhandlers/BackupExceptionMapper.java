@@ -27,10 +27,9 @@ import org.fcrepo.kernel.api.exception.BackupException;
 import org.slf4j.Logger;
 
 /**
- * For invalid namespace exceptions on CRUD actions for nodes/datastreams
+ * For backup exception on backup action does not perform on the root of the repository
  *
  * @author yinlinchen
- * @since September 12, 2015
  */
 @Provider
 public class BackupExceptionMapper implements ExceptionMapper<BackupException> {

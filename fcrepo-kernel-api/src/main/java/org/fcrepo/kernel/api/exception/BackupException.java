@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.api.exception;
 
 /**
- * Represents the condition that an attempt has.
+ * Represents the condition that backup action does not perform on the root of the repository.
  *
  * @author yinlinchen
  */
