@@ -22,6 +22,7 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.api.exception.BackupException;
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
@@ -75,8 +76,8 @@ public final class NamespaceTools {
                     try {
                         namespaceRegistry.getURI(prefix);
                     } catch (final NamespaceException e) {
-                        if (segment.indexOf("fcr:backup") >= 0) {
-                            throw new FedoraInvalidNamespaceException(
+                        if (segment.equals("fcr:backup")) {
+                            throw new BackupException(
                                     "Backup must be performed on the root of the repository", e);
                         } else {
                             throw new FedoraInvalidNamespaceException(
