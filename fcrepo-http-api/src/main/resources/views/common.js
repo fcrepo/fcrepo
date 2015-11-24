@@ -1,5 +1,6 @@
 $(document).ready(function() {
   $("#new_id").attr("placeholder", "(auto-generated identifier)");
+  $("#version_id").attr("placeholder", "(auto-generated name)");
 });
 
 function removeTrailingSlash(origURI) {
@@ -280,6 +281,26 @@ function sendCndUpdate() {
     }, error: ajaxErrorHandler});
 
     return false;
+}
+
+function createVersionSnapshot()
+{
+    var uri = $('#main').attr('resource');
+    var name = $("#version_id").val().trim();
+    if (!name) {
+        d = new Date();
+        name = "version." + d.getFullYear().toString() + (d.getMonth()+1).toString() + d.getDate().toString() + d.getHours() + d.getMinutes() + d.getSeconds();
+    } 
+    var postURI = uri + "/fcr:versions";
+      $.ajax({
+        type: "POST",
+        beforeSend: function (request)
+        {
+          request.setRequestHeader("Slug", name);
+        },
+        url: postURI,
+        success: function() { window.location = postURI }
+      }).fail( ajaxErrorHandler);
 }
 
 function deleteItem()
