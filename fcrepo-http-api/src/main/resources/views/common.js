@@ -301,6 +301,9 @@ function createVersionSnapshot()
         url: postURI,
         success: function() { window.location = postURI }
       }).fail( ajaxErrorHandler);
+
+    return false;
+
 }
 
 function deleteItem()
