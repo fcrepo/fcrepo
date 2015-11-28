@@ -46,6 +46,7 @@ import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
@@ -63,6 +64,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
@@ -109,6 +111,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Variant;
 
+import com.google.common.collect.Iterators;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
@@ -1021,9 +1024,56 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableGraphStore graph = getGraphStore(response)) {
                 assertTrue("Didn't find child node!", graph.contains(ANY,
                         createURI(location), createURI(LDP_NAMESPACE + "contains"), createURI(location + "/c")));
+
                 final Collection<String> links = getLinkHeaders(response);
                 assertTrue("Didn't find LDP resource link header!", links.contains(LDP_RESOURCE_LINK_HEADER));
             }
+        }
+    }
+
+    @Test
+    public void testGetObjectGraphWithChildren() throws IOException {
+        final String id = getRandomUniqueId();
+        final String location = getLocation(createObject(id));
+
+        // Create some children
+        final int CHILDREN_TOTAL = 20;
+        for (int x = 0; x < CHILDREN_TOTAL; ++x) {
+            createObjectAndClose(id + "/child-" + x);
+        }
+
+        final int CHILDREN_LIMIT = 12;
+        final HttpGet httpGet = getObjMethod(id);
+        httpGet.setHeader("Limit", Integer.toString(CHILDREN_LIMIT));
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            try (final CloseableGraphStore graph = getGraphStore(response)) {
+                assertTrue("Should contain child count!",
+                        graph.contains(ANY, createURI(location), HAS_CHILD_COUNT.asNode(), ANY));
+
+                final Iterator<Quad> children = graph.find(ANY, createURI(location), HAS_CHILD_COUNT.asNode(), ANY);
+                assertTrue("Should have a child count triple!", children.hasNext());
+
+                // Total child count should be provided
+                final Node child = children.next().getObject();
+                assertTrue("Object should be a literal!", child.isLiteral());
+                assertEquals(CHILDREN_TOTAL, Integer.parseInt(child.getLiteralValue().toString()));
+
+                final Iterator<Quad> contains = graph.find(ANY, createURI(location), CONTAINS.asNode(), ANY);
+                assertTrue("Should find contained child!", contains.hasNext());
+                assertEquals(CHILDREN_LIMIT - 1, Iterators.size(contains));
+            }
+        }
+    }
+
+    @Test
+    public void testGetObjectGraphWithBadLimit() throws IOException {
+        final String id = getRandomUniqueId();
+        getLocation(createObject(id));
+
+        final HttpGet httpGet = getObjMethod(id);
+        httpGet.setHeader("Limit", "not-an-integer");
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            assertEquals(SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
         }
     }
 

@@ -137,8 +137,6 @@ $(function() {
     $('#action_revert').submit(patchAndReload);
     $('#action_remove_version').submit(removeVersion);
 
-    var ldpContains = $('#childList li').length;
-    $('#badge').text(ldpContains);
     $('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a').click(checkIfNonRdfResource);
 
 });
