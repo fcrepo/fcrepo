@@ -77,6 +77,12 @@ WHERE { }
     <hr />
 </form>
 
+<form id="action_create_version" name="action_create_version" action="javascript:createVersionSnapshot()" method="POST">
+    <h3>Create Version Snapshot</h3>
+    <input type="text" id="version_id" name="version_name"/>
+    <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
+    <hr />
+</form>
 
 <form id="action_delete" name="action_delete" action="javascript:deleteItem()" method="POST">
     <input type="hidden" name="_method" value="DELETE" />
