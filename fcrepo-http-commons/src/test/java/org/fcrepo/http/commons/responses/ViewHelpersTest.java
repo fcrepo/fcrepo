@@ -60,6 +60,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
  * <p>ViewHelpersTest class.</p>
@@ -163,17 +164,17 @@ public class ViewHelpersTest {
     }
 
     @Test
-    public void testIsFrozenNode() {
+    public void testIsVersionedNode() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(), createLiteral("nt:frozenNode")));
-        assertTrue("Node is a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
+        mem.add(new Triple(createURI("a/b/c"), RDF.type.asNode(), createURI(REPOSITORY_NAMESPACE + "Version")));
+        assertTrue("Node is a versioned node.", testObj.isVersionedNode(mem, createURI("a/b/c")));
     }
 
     @Test
-    public void testIsNotFrozenNode() {
+    public void testIsNotVersionedNode() {
         final Graph mem = createDefaultModel().getGraph();
         mem.add(new Triple(createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(), createLiteral("nt:file")));
-        assertFalse("Node is not a frozen node.", testObj.isFrozenNode(mem, createURI("a/b/c")));
+        assertFalse("Node is not a versioned node.", testObj.isVersionedNode(mem, createURI("a/b/c")));
     }
 
     @Test

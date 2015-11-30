@@ -1,6 +1,6 @@
 #set ($content = $helpers.getContentNode($topic))
 #set ($writable = $helpers.isWritable($rdf, $topic))
-#set ($frozen = $helpers.isFrozenNode($rdf, $topic))
+#set ($frozen = $helpers.isVersionedNode($rdf, $topic))
 
 #if ($frozen == true)
 <div class="alert alert-warning">

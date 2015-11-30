@@ -28,10 +28,10 @@ import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.SKOS_PREFLABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
@@ -211,14 +211,15 @@ public class ViewHelpers {
     }
 
     /**
-     * Determines whether the subject is of type nt:frozenNode.
-     * true if node has type nt:frozen
+     * Determines whether the subject is of type fedora:Version.
+     * true if node has type fedora:Version
      * @param graph the graph
      * @param subject the subject
-     * @return whether the subject is frozen node
+     * @return whether the subject is a versioned node
      */
-    public boolean isFrozenNode(final Graph graph, final Node subject) {
-        return getValue(graph, subject, HAS_PRIMARY_TYPE.asNode()).filter("nt:frozenNode"::equals).isPresent();
+    public boolean isVersionedNode(final Graph graph, final Node subject) {
+        return listObjects(graph, subject, RDF.type.asNode()).toList().stream().map(Node::getURI)
+            .anyMatch((REPOSITORY_NAMESPACE + "Version")::equals);
     }
 
     /**
