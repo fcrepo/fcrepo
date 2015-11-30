@@ -50,6 +50,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -96,6 +97,9 @@ import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+
+import static com.google.common.base.Strings.nullToEmpty;
 
 /**
  * @author cabeer
@@ -112,6 +116,10 @@ public class FedoraLdp extends ContentExposingResource {
     protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
+
+    private static final Splitter.MapSplitter RFC3230_SPLITTER =
+        Splitter.on(',').omitEmptyStrings().trimResults().
+        withKeyValueSeparator(Splitter.on('=').limit(2));
 
     @PathParam("path") protected String externalPath;
 
@@ -222,7 +230,6 @@ public class FedoraLdp extends ContentExposingResource {
         return noContent().build();
     }
 
-
     /**
      * Create a resource at a specified path, or replace triples with provided RDF.
      * @param requestContentType the request content type
@@ -235,9 +242,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
      */
-    @PUT
-    @Consumes
-    @Timed
     public Response createOrReplaceObjectRdf(
             @HeaderParam("Content-Type") final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream,
@@ -246,6 +250,45 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam("Link") final String link)
             throws InvalidChecksumException, MalformedRdfException {
+        return createOrReplaceObjectRdf(requestContentType, requestBodyStream,
+            checksum, contentDisposition, ifMatch, link, null);
+    }
+
+    /**
+     * Create a resource at a specified path, or replace triples with provided RDF.
+     *
+     * Temporary 6 parameter version of this function to allow for backwards
+     * compatability during a period of transition from a digest hash being
+     * provided via non-standard 'checksum' query parameter to RFC-3230 compliant
+     * 'Digest' header.
+     *
+     * TODO: Remove this function in favour of the 5 parameter version that takes
+     *       the Digest header in lieu of the checksum parameter
+     *       https://jira.duraspace.org/browse/FCREPO-1851
+     *
+     * @param requestContentType the request content type
+     * @param requestBodyStream the request body stream
+     * @param checksumDeprecated the deprecated digest hash
+     * @param contentDisposition the content disposition value
+     * @param ifMatch the if-match value
+     * @param link the link value
+     * @param digest the digest header
+     * @return 204
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    @PUT
+    @Consumes
+    @Timed
+    public Response createOrReplaceObjectRdf(
+            @HeaderParam("Content-Type") final MediaType requestContentType,
+            @ContentLocation final InputStream requestBodyStream,
+            @QueryParam("checksum") final String checksumDeprecated,
+            @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
+            @HeaderParam("If-Match") final String ifMatch,
+            @HeaderParam("Link") final String link,
+            @HeaderParam("Digest") final String digest)
+            throws InvalidChecksumException, MalformedRdfException {
 
         checkLinkForLdpResourceCreation(link);
 
@@ -253,6 +296,10 @@ public class FedoraLdp extends ContentExposingResource {
         final Response.ResponseBuilder response;
 
         final String path = toPath(translator(), externalPath);
+
+        // TODO: Add final when deprecated checksum Query paramater is removed
+        // https://jira.duraspace.org/browse/FCREPO-1851
+        String checksum = parseDigestHeader(digest);
 
         final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -285,6 +332,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("PUT resource '{}'", externalPath);
         if (resource instanceof FedoraBinary) {
+            if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
+                addChecksumDeprecationHeader(resource);
+                checksum = checksumDeprecated;
+            }
             replaceResourceBinaryWithStream((FedoraBinary) resource,
                     requestBodyStream, contentDisposition, requestContentType, checksum);
         } else if (isRdfContentType(contentType.toString())) {
@@ -399,15 +450,44 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws AccessDeniedException if access denied in creating resource
      */
-    @POST
-    @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
-    @Timed
     public Response createObject(@QueryParam("checksum") final String checksum,
                                  @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam("Link") final String link)
+            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+        return createObject(checksum, contentDisposition, requestContentType, slug, requestBodyStream, link, null);
+    }
+    /**
+     * Creates a new object.
+     *
+     * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
+     * requests without a Content-Type get routed here.
+     *
+     * @param checksumDeprecated the checksum value
+     * @param contentDisposition the content Disposition value
+     * @param requestContentType the request content type
+     * @param slug the slug value
+     * @param requestBodyStream the request body stream
+     * @param link the link value
+     * @param digest the digest header
+     * @return 201
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws IOException if IO exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws AccessDeniedException if access denied in creating resource
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", MediaType.WILDCARD})
+    @Timed
+    public Response createObject(@QueryParam("checksum") final String checksumDeprecated,
+                                 @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
+                                 @HeaderParam("Content-Type") final MediaType requestContentType,
+                                 @HeaderParam("Slug") final String slug,
+                                 @ContentLocation final InputStream requestBodyStream,
+                                 @HeaderParam("Link") final String link,
+                                 @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
 
         checkLinkForLdpResourceCreation(link);
@@ -423,6 +503,10 @@ public class FedoraLdp extends ContentExposingResource {
         final String contentTypeString = contentType.toString();
 
         final String newObjectPath = mintNewPid(slug);
+
+        // TODO: Add final when deprecated checksum Query paramater is removed
+        // https://jira.duraspace.org/browse/FCREPO-1851
+        String checksum = parseDigestHeader(digest);
 
         LOGGER.info("Ingest with path: {}", newObjectPath);
 
@@ -451,7 +535,10 @@ public class FedoraLdp extends ContentExposingResource {
                 replaceResourceWithStream(result, requestBodyStream, contentType, resourceTriples);
             } else if (result instanceof FedoraBinary) {
                 LOGGER.trace("Created a datastream and have a binary payload.");
-
+                if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
+                    addChecksumDeprecationHeader(resource);
+                    checksum = checksumDeprecated;
+                }
                 replaceResourceBinaryWithStream((FedoraBinary) result,
                         requestBodyStream, contentDisposition, requestContentType, checksum);
 
@@ -554,6 +641,13 @@ public class FedoraLdp extends ContentExposingResource {
 
 
     }
+    /**
+     * Add a deprecation notice via the Warning header as per
+     * RFC-7234 https://tools.ietf.org/html/rfc7234#section-5.5
+     */
+    private void addChecksumDeprecationHeader(final FedoraResource resource) {
+        servletResponse.addHeader("Warning", "Specifying a SHA-1 Checksum via query parameter is deprecated.");
+    }
 
     private static String getRequestedObjectType(final MediaType requestContentType,
                                           final ContentDisposition contentDisposition) {
@@ -645,4 +739,27 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
+    /**
+     * Parse the RFC-3230 Digest response header value.  Look for a
+     * sha1 checksum and return it as a urn, if missing or malformed
+     * an empty string is returned.
+     * @param digest The Digest header value
+     * @return the sha1 checksum value
+     */
+    private String parseDigestHeader(final String digest) {
+        try {
+            final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
+            return digestPairs.entrySet().stream()
+                .filter(s -> s.getKey().toLowerCase().equals("sha1"))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .map("urn:sha1:"::concat)
+                .orElse("");
+        } catch (RuntimeException e) {
+            if (e instanceof IllegalArgumentException) {
+                throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
+            }
+            throw e;
+        }
+    }
 }
