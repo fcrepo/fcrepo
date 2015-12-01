@@ -99,6 +99,8 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 
+import static com.google.common.base.Strings.nullToEmpty;
+
 /**
  * @author cabeer
  * @author ajs6f
@@ -727,23 +729,18 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Parse the RFC-3230 Digest response header value.  Look for a
-     * sha1 checksum and return it as a urn, if missing an empty string is
-     * returned.
+     * sha1 checksum and return it as a urn, if missing or malformed
+     * an empty string is returned.
      * @param digest The Digest header value
      * @return the sha1 checksum value
      */
     private String parseDigestHeader(final String digest) {
-        if (digest != null) {
-            final Map<String,String> digestPairs = RFC3230_SPLITTER.split(digest);
-            for (Map.Entry<String, String> digestPair : digestPairs.entrySet()) {
-                switch(digestPair.getKey().toLowerCase()) {
-                    case "sha1":
-                        return "urn:sha1:" + digestPair.getValue();
-                    default:
-                        LOGGER.info("Unimplemented digest hash: '{}'", digestPair.getKey());
-                }
-            }
-        }
-        return "";
+        final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
+        final String hash = digestPairs.entrySet().stream()
+                    .filter(s -> s.getKey().toLowerCase().equals("sha1"))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .orElse("");
+        return StringUtils.isBlank(hash) ? "" : "urn:sha1:" + hash;
     }
 }
