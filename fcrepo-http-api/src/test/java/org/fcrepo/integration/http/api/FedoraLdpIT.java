@@ -844,10 +844,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader("Digest", "SHA1=f0b632679fab4f22e031010bd81a3b0544294730");
         method.setEntity(new FileEntity(img));
 
-        try (final CloseableHttpResponse response = execute(method)) {
-            final int status = getStatus(response);
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), status);
-        }
+        final int status = getStatus(method);
+        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), status);
     }
 
     /**
@@ -865,10 +863,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader("Digest", "SHA1=fedoraicon");
         method.setEntity(new FileEntity(img));
 
-        try (final CloseableHttpResponse response = execute(method)) {
-            final int status = getStatus(response);
-            assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), status);
-        }
+        final int status = getStatus(method);
+        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), status);
     }
 
     @Test
