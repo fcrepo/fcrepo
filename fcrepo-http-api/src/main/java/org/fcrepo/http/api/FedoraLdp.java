@@ -256,9 +256,18 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Create a resource at a specified path, or replace triples with provided RDF.
+     *
+     * Temporary 6 parameter version of this function to allow for backwards
+     * compatability during a period of transition from a digest hash being
+     * provided via non-standard 'checksum' query parameter to RFC-3230 compliant
+     * 'Digest' header.
+     *
+     * TODO: Remove this function in favour of the 5 parameter version that takes
+     *       the Digest header in lieu of the checksum parameter
+     *
      * @param requestContentType the request content type
      * @param requestBodyStream the request body stream
-     * @param checksumDeprecated the deprecated checksum value
+     * @param checksumDeprecated the deprecated digest hash
      * @param contentDisposition the content disposition value
      * @param ifMatch the if-match value
      * @param link the link value
