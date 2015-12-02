@@ -60,7 +60,6 @@ function addChild()
             xhr.send(data.buffer);
         };
         reader.readAsBinaryString(update_file);
-
     } else {
       $.ajax({
         type: id == "" ? "POST" : "PUT",
