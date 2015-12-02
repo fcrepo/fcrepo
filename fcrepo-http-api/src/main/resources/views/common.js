@@ -50,6 +50,7 @@ function addChild()
             xhr.open( "PUT", newURI );
         }
 
+        xhr.setRequestHeader("Content-Disposition", "attachment; filename=\"" + update_file.name + "\"");
         xhr.setRequestHeader("Content-type", update_file.type || "application/octet-stream");
         reader.onload = function(e) {
             var result = e.target.result;
@@ -336,6 +337,8 @@ function updateFile()
         }
     }
     xhr.open( "PUT", url );
+
+    xhr.setRequestHeader("Content-Disposition", "attachment; filename=\"" + update_file.name + "\"");
     xhr.setRequestHeader("Content-type", update_file.type);
     reader.onload = function(e) {
         var result = e.target.result;
