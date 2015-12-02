@@ -51,6 +51,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -745,11 +746,10 @@ public class FedoraLdp extends ContentExposingResource {
      */
     private String parseDigestHeader(final String digest) {
         final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-        final String hash = digestPairs.entrySet().stream()
+        final Optional<String> hash = digestPairs.entrySet().stream()
                     .filter(s -> s.getKey().toLowerCase().equals("sha1"))
                     .map(Map.Entry::getValue)
-                    .findFirst()
-                    .orElse("");
-        return StringUtils.isBlank(hash) ? "" : "urn:sha1:" + hash;
+                    .findFirst();
+        return hash.map("urn:sha1:"::concat).orElse("");
     }
 }
