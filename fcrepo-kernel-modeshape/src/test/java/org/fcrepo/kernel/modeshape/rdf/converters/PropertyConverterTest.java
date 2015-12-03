@@ -16,9 +16,11 @@
 package org.fcrepo.kernel.modeshape.rdf.converters;
 
 import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.shared.InvalidPropertyURIException;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyMock;
 
 import org.junit.Before;
@@ -35,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -116,11 +119,18 @@ public class PropertyConverterTest {
         PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = RepositoryRuntimeException.class)
     public final void IllegalPredicateLocalname() throws RepositoryException {
-        final Property p = createProperty(mockUri, "1234");
+        final Resource p = createResource("http://example.com/1234");
         final Map<String, String> nsMap = ImmutableMap.of("example", mockUri);
         PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
+    }
+
+    @Test
+    public final void IllegalPredicateLocalname2() throws RepositoryException {
+        final Property p = createProperty(mockUri, "1a234");
+        final Map<String, String> nsMap = ImmutableMap.of("example", mockUri);
+        assertEquals("null:a234", PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap));
     }
 
     @Test
