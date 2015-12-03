@@ -15,189 +15,65 @@
  */
 package org.fcrepo.kernel.api.observer;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Sets.union;
-import static java.util.Collections.singleton;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.observation.Event;
-
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
-import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.api.utils.EventType;
 
 /**
- * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
- * on a JCR interface {@link Event}. Can represent either a single JCR event or several.
+ * A very simple abstraction to support downstream event-related machinery.
  *
  * @author ajs6f
+ * @author acoburn
  * @since Feb 19, 2013
  */
-public class FedoraEvent {
-
-    private Event e;
-    private final String eventID;
-
-    private Set<Integer> eventTypes = new HashSet<>();
-    private Set<String> eventProperties = new HashSet<>();
-
-    private static final UniqueValueSupplier pidMinter = new DefaultPathMinter();
+public interface FedoraEvent {
 
     /**
-     * Wrap a JCR Event with our FedoraEvent decorators
-     *
-     * @param e the JCR event
+     * @return the event types associated with this event.
      */
-    public FedoraEvent(final Event e) {
-        checkArgument(e != null, "null cannot support a FedoraEvent!");
-        eventID = pidMinter.get();
-        this.e = e;
-    }
-
-    /**
-     * Create a FedoraEvent from an existing FedoraEvent object
-     * Note: Only the wrapped JCR event is passed on to the new object.
-     *
-     * @param e the given fedora event
-     */
-    public FedoraEvent(final FedoraEvent e) {
-        checkArgument(e != null, "null cannot support a FedoraEvent!");
-        eventID = e.getEventID();
-        this.e = e.e;
-    }
-
-    /**
-     * @return the event types of the underlying JCR {@link Event}s
-     */
-    public Set<Integer> getTypes() {
-        return eventTypes != null ? union(singleton(e.getType()), eventTypes) : singleton(e.getType());
-    }
+    Set<EventType> getTypes();
 
     /**
      * @param type the type
      * @return this object for continued use
      */
-    public FedoraEvent addType(final Integer type) {
-        eventTypes.add(type);
-        return this;
-    }
+    FedoraEvent addType(final EventType type);
 
     /**
-     * @return the property names of the underlying JCR property {@link Event}s
+     * @return the property names associated with this event.
     **/
-    public Set<String> getProperties() {
-        return eventProperties;
-    }
+    Set<String> getProperties();
 
     /**
      * Add a property name to this event
      * @param property property name
      * @return this object for continued use
     **/
-    public FedoraEvent addProperty( final String property ) {
-        eventProperties.add(property);
-        return this;
-    }
+    FedoraEvent addProperty(final String property);
 
     /**
-     * @return the path of the underlying JCR {@link Event}s
+     * @return the path to the {@link org.fcrepo.kernel.api.models.FedoraResource}
      */
-    public String getPath() {
-        return getPath(e);
-    }
+    String getPath();
 
     /**
-     * Get the path of the node related to this event (removing property names
-     * from the end of property nodes).
-     * @param e JCR Event
-     * @return the node path for this event
-    **/
-    public static String getPath(final Event e) {
-        try {
-            // TODO: It would be better for this test to use a constant collection of:
-            // - PROPERTY_ADDED, PROPERTY_CHANGED, PROPERTY_REMOVED and Collection.contains().
-            if (e.getType() == PROPERTY_ADDED   ||
-                e.getType() == PROPERTY_CHANGED ||
-                e.getType() == PROPERTY_REMOVED) {
-                return e.getPath().substring(0, e.getPath().lastIndexOf("/"));
-            }
-            return e.getPath();
-        } catch (RepositoryException e1) {
-            throw new RepositoryRuntimeException("Error getting event path!", e1);
-        }
-    }
-
-    /**
-     * @return the user ID of the underlying JCR {@link Event}s
+     * @return the user ID associated with this event.
      */
-    public String getUserID() {
-        return e.getUserID();
-    }
+    String getUserID();
 
     /**
-     * @return the info map of the underlying JCR {@link Event}s
+     * @return the user data associated with this event.
      */
-    @SuppressWarnings("unchecked")
-    public Map<Object, Object> getInfo() {
-        try {
-            return e.getInfo();
-        } catch (RepositoryException e1) {
-            throw new RepositoryRuntimeException("Error getting event info!", e1);
-        }
-    }
+    String getUserData();
 
     /**
-     * @return the user data of the underlying JCR {@link Event}s
+     * @return the date of this event.
      */
-    public String getUserData() {
-        try {
-            return e.getUserData();
-        } catch (RepositoryException e1) {
-            throw new RepositoryRuntimeException("Error getting event userData!", e1);
-        }
-    }
-
-    /**
-     * @return the date of the underlying JCR {@link Event}s
-     */
-    public long getDate() {
-        try {
-            return e.getDate();
-        } catch (RepositoryException e1) {
-            throw new RepositoryRuntimeException("Error getting event date!", e1);
-        }
-    }
+    long getDate();
 
     /**
      * Get the event ID.
      * @return Event identifier to use for building event URIs (e.g., in an external triplestore).
     **/
-    public String getEventID() {
-        return eventID;
-    }
-
-    @Override
-    public String toString() {
-
-        return toStringHelper(this)
-            .add("Event types:", String.join(",", getTypes().stream()
-                            .map(x -> EventType.valueOf(x).getName())
-                            .collect(Collectors.toList())))
-            .add("Event properties:", String.join(",", eventProperties))
-            .add("Path:", getPath())
-            .add("Date: ", getDate())
-            .add("Info:", getInfo()).toString();
-    }
-
-    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
+    String getEventID();
 }

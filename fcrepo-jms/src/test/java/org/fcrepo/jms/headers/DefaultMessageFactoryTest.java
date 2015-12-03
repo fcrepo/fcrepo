@@ -30,7 +30,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.util.Set;
 
@@ -89,12 +88,6 @@ public class DefaultMessageFactoryTest {
         final Message msg = doTestBuildMessage(null, null, testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
-    @Test
-    public void testBuildMessageContent() throws JMSException {
-        final String testPath = "/path/to/resource";
-        final Message msg = doTestBuildMessage("base-url/", "Test UserAgent", testPath + "/" + JCR_CONTENT);
-        assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
-    }
 
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
             throws JMSException {
@@ -109,7 +102,7 @@ public class DefaultMessageFactoryTest {
         final String testUser = "testUser";
         when(mockEvent.getUserID()).thenReturn(testUser);
         when(mockEvent.getPath()).thenReturn(id);
-        final Set<Integer> testTypes = singleton(NODE_ADDED);
+        final Set<EventType> testTypes = singleton(EventType.valueOf(NODE_ADDED));
         final String testReturnType = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
         when(mockEvent.getTypes()).thenReturn(testTypes);
         final String prop = "test-property";

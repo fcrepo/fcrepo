@@ -27,6 +27,7 @@ import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.observer.eventmappings.InternalExternalEventMapper;
+import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
 
 /**
  * Maps each JCR {@link Event} to a single {@link FedoraEvent}
@@ -38,6 +39,6 @@ public class OneToOne implements InternalExternalEventMapper {
 
     @Override
     public Iterator<FedoraEvent> apply(final Iterator<Event> jcrEvents) {
-        return transform(jcrEvents, FedoraEvent::new);
+        return transform(jcrEvents, FedoraEventImpl::new);
     }
 }

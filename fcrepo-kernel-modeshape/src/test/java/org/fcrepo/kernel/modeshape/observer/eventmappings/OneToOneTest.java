@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import java.util.Iterator;
 
+import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.junit.Before;
@@ -51,9 +52,15 @@ public class OneToOneTest {
     private Iterator<Event> mockIterator;
 
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         when(mockIterator.next()).thenReturn(mockEvent1, mockEvent2, mockEvent3);
         when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mockEvent1.getPath()).thenReturn("/foo");
+        when(mockEvent2.getPath()).thenReturn("/foo");
+        when(mockEvent3.getPath()).thenReturn("/foo");
+        when(mockEvent1.getType()).thenReturn(1);
+        when(mockEvent2.getType()).thenReturn(1);
+        when(mockEvent3.getType()).thenReturn(1);
     }
 
     @Test

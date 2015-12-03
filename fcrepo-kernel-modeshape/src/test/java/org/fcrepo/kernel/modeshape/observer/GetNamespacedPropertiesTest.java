@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.modeshape.observer;
 
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.utils.EventType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -37,6 +38,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.utils.EventType.valueOf;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIXIN_TYPES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -67,6 +69,10 @@ public class GetNamespacedPropertiesTest {
         initMocks(this);
 
         when(event.getType()).thenReturn(PERSIST);
+        when(event.getPath()).thenReturn("/foo");
+        when(event.getDate()).thenReturn(0L);
+        when(event.getUserID()).thenReturn("user");
+        when(event.getUserData()).thenReturn("data");
 
         final Workspace workspace = Mockito.mock(Workspace.class);
         when(session.getWorkspace()).thenReturn(workspace);
@@ -82,27 +88,27 @@ public class GetNamespacedPropertiesTest {
 
     @Test
     public void testApply() {
-        final FedoraEvent fedoraEvent = new FedoraEvent(event);
+        final FedoraEvent fedoraEvent = new FedoraEventImpl(event);
 
         fedoraEvent.addProperty(FEDORA_CONTAINER);
         fedoraEvent.addProperty(FEDORA_TOMBSTONE);
         fedoraEvent.addProperty(LDP_BASIC_CONTAINER);
         fedoraEvent.addProperty(JCR_MIXIN_TYPES);
 
-        fedoraEvent.addType(PROPERTY_ADDED);
-        fedoraEvent.addType(NODE_ADDED);
+        fedoraEvent.addType(valueOf(PROPERTY_ADDED));
+        fedoraEvent.addType(valueOf(NODE_ADDED));
 
         // Perform test
         final FedoraEvent result = function.apply(fedoraEvent);
         assertNotNull(result);
 
         // Verify types
-        final Set<Integer> types = result.getTypes();
+        final Set<EventType> types = result.getTypes();
         assertEquals(3, types.size());
 
-        assertTrue("Should contain: " + PROPERTY_ADDED + ", " + types, types.contains(PROPERTY_ADDED));
-        assertTrue("Should contain: " + NODE_ADDED + ", " + types, types.contains(NODE_ADDED));
-        assertTrue("Should contain: " + PERSIST + ", " + types, types.contains(PERSIST));
+        assertTrue("Should contain: " + PROPERTY_ADDED + ", " + types, types.contains(valueOf(PROPERTY_ADDED)));
+        assertTrue("Should contain: " + NODE_ADDED + ", " + types, types.contains(valueOf(NODE_ADDED)));
+        assertTrue("Should contain: " + PERSIST + ", " + types, types.contains(valueOf(PERSIST)));
 
         // Verify properties
         final Set<String> properties = result.getProperties();
