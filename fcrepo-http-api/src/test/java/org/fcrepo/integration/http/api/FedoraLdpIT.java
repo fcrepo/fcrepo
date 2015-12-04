@@ -844,8 +844,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader("Digest", "SHA1=f0b632679fab4f22e031010bd81a3b0544294730");
         method.setEntity(new FileEntity(img));
 
-        final int status = getStatus(method);
-        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), status);
+        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(method));
     }
 
     /**
@@ -863,8 +862,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader("Digest", "SHA1=fedoraicon");
         method.setEntity(new FileEntity(img));
 
-        final int status = getStatus(method);
-        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), status);
+        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(method));
+    }
+
+    /**
+     * Ensure that the a malformed Digest header returns a 400 Bad Request
+     *
+     * @throws IOException in case of IOException
+     */
+    @Test
+    public void testIngestWithBinaryAndMalformedDigestHeader() throws IOException {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader("Digest", "md5=not a valid hash,SHA1:thisisbadtoo");
+        method.setEntity(new FileEntity(img));
+
+        assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(method));
     }
 
     @Test
