@@ -264,6 +264,7 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * TODO: Remove this function in favour of the 5 parameter version that takes
      *       the Digest header in lieu of the checksum parameter
+     *       https://jira.duraspace.org/browse/FCREPO-1851
      *
      * @param requestContentType the request content type
      * @param requestBodyStream the request body stream
@@ -297,6 +298,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String path = toPath(translator(), externalPath);
 
         // TODO: Add final when deprecated checksum Query paramater is removed
+        // https://jira.duraspace.org/browse/FCREPO-1851
         String checksum = parseDigestHeader(digest);
 
         final MediaType contentType = getSimpleContentType(requestContentType);
@@ -503,6 +505,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String newObjectPath = mintNewPid(slug);
 
         // TODO: Add final when deprecated checksum Query paramater is removed
+        // https://jira.duraspace.org/browse/FCREPO-1851
         String checksum = parseDigestHeader(digest);
 
         LOGGER.info("Ingest with path: {}", newObjectPath);
