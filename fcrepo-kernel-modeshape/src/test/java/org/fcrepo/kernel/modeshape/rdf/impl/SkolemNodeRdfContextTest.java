@@ -17,7 +17,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 
 import org.junit.Before;
@@ -42,6 +42,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -158,6 +159,7 @@ public class SkolemNodeRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("some")).thenReturn("info:some#");
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{"some"});
 
         when(mockReferenceProperty.getType()).thenReturn(REFERENCE);
         when(mockReferenceProperty.getValue()).thenReturn(mockReferenceValue);
@@ -172,21 +174,21 @@ public class SkolemNodeRdfContextTest {
     public void testWithoutProperties() throws RepositoryException {
         when(mockNode.getProperties()).thenReturn(new TestPropertyIterator());
         testObj = new SkolemNodeRdfContext(mockResource, subjects);
-        assertTrue("Expected no triples", testObj.asModel().isEmpty());
+        assertTrue("Expected no triples", testObj.collect(toModel()).isEmpty());
     }
 
     @Test
     public void testWithoutReferenceProperties() throws RepositoryException {
         when(mockNode.getProperties()).thenReturn(new TestPropertyIterator(mockProperty));
         testObj = new SkolemNodeRdfContext(mockResource, subjects);
-        assertTrue("Expected no triples", testObj.asModel().isEmpty());
+        assertTrue("Expected no triples", testObj.collect(toModel()).isEmpty());
     }
 
     @Test
     public void testWithoutBlanknodeReferences() throws RepositoryException {
         when(mockNode.getProperties()).thenReturn(new TestPropertyIterator(mockReferenceProperty));
         testObj = new SkolemNodeRdfContext(mockResource, subjects);
-        assertTrue("Expected no triples", testObj.asModel().isEmpty());
+        assertTrue("Expected no triples", testObj.collect(toModel()).isEmpty());
     }
 
     @Test
@@ -202,7 +204,7 @@ public class SkolemNodeRdfContextTest {
 
         testObj = new SkolemNodeRdfContext(mockResource, subjects);
 
-        final Model actual = testObj.asModel();
+        final Model actual = testObj.collect(toModel());
 
         assertTrue(actual.contains(subjects.toDomain("/.well-known/gen/xxxx"),
                 type,
@@ -232,7 +234,7 @@ public class SkolemNodeRdfContextTest {
 
         testObj = new SkolemNodeRdfContext(mockResource, subjects);
 
-        final Model actual = testObj.asModel();
+        final Model actual = testObj.collect(toModel());
 
         assertTrue(actual.contains(subjects.toDomain("/.well-known/gen/xxxx"),
                 type,

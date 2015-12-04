@@ -21,7 +21,7 @@ import java.io.InputStream;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 
 /**
  * @author bbpennel

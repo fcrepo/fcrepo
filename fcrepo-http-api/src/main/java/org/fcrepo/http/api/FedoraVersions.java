@@ -48,7 +48,8 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -148,8 +149,7 @@ public class FedoraVersions extends ContentExposingResource {
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
-        final RdfStream rdfStream = new RdfStream().session(session).topic(
-                translator().reverse().convert(resource()).asNode());
+        final RdfStream rdfStream = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
         return getContent(rangeValue, rdfStream);
     }
 

@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.utils.iterators;
+package org.fcrepo.kernel.api;
 
+import java.util.stream.Stream;
+
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * {@link IteratorConsumer} specific to {@link RdfStream}s.
+ * A context-bearing RDF Stream interface
  *
- * @author ajs6f
- * @since Oct 24, 2013
+ * @author acoburn
+ * @since Dec 4, 2015
  */
-public interface RdfStreamConsumer extends IteratorConsumer<Triple, Boolean> {
+public interface RdfStream extends Stream<Triple> {
 
+    /**
+     * @return the topic node for this stream
+     */
+    Node topic();
 }

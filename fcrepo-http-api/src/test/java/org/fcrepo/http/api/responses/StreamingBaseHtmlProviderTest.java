@@ -15,7 +15,7 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static com.google.common.collect.ImmutableMap.of;
+import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.Collections.singletonMap;
@@ -23,6 +23,7 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -49,10 +50,13 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.velocity.Template;
 import org.apache.velocity.context.Context;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -71,8 +75,8 @@ public class StreamingBaseHtmlProviderTest {
 
     private final StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();
 
-    private final RdfStream testData = new RdfStream();
-    private final RdfStream testData2 = new RdfStream();
+    private RdfNamespacedStream testData;
+    private RdfNamespacedStream testData2;
 
     @Mock
     private Session mockSession;
@@ -91,24 +95,22 @@ public class StreamingBaseHtmlProviderTest {
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{ });
 
+        testData = new RdfNamespacedStream(
+                new DefaultRdfStream(createURI("test:subject"), of(
+                    new Triple(createURI("test:subject"),
+                            createURI("test:predicate"),
+                            createLiteral("test:object")),
+                    new Triple(createURI("test:subject"),
+                            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "primaryType"),
+                            createLiteral("nt:file")))),
+                getNamespaces(mockSession));
 
-        testData.session(mockSession);
-        testData.topic(createURI("test:subject"));
-        testData.concat(
-                new Triple(createURI("test:subject"),
-                        createURI("test:predicate"),
-                        createLiteral("test:object")));
-        testData.concat(
-                new Triple(createURI("test:subject"),
-                        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "primaryType"),
-                        createLiteral("nt:file")));
-
-        testData2.session(mockSession);
-        testData2.topic(createURI("test:subject2"));
-        testData2.concat(
-                new Triple(createURI("test:subject2"),
-                        createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "mixinTypes"),
-                        createLiteral("childOf:ntFile")));
+        testData2 = new RdfNamespacedStream(
+                new DefaultRdfStream(createURI("test:subject2"), of(
+                    new Triple(createURI("test:subject2"),
+                            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "mixinTypes"),
+                            createLiteral("childOf:ntFile")))),
+                getNamespaces(mockSession));
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
     }
@@ -117,15 +119,19 @@ public class StreamingBaseHtmlProviderTest {
     public void testIsWriteable() {
         assertTrue(
                 "Gave false response to HtmlProvider.isWriteable() that contained legitimate combination of parameters",
+                testProvider.isWriteable(RdfNamespacedStream.class, RdfNamespacedStream.class,
+                        null, TEXT_HTML_TYPE));
+        assertFalse(
+                "Gave true response to HtmlProvider.isWriteable() with an incorrect combination of parameters",
                 testProvider.isWriteable(RdfStream.class, RdfStream.class,
                         null, TEXT_HTML_TYPE));
         assertFalse(
-                "HtmlProvider.isWriteable() should return false if asked to serialize anything other than a RdfStream!",
+                "HtmlProvider.isWriteable() should return false if asked to serialize a non-RdfNamespacedStream!",
                 testProvider.isWriteable(StreamingBaseHtmlProvider.class,
                         StreamingBaseHtmlProvider.class, null, TEXT_HTML_TYPE));
         assertFalse(
                 "HtmlProvider.isWriteable() should return false to text/plain!",
-                testProvider.isWriteable(RdfStream.class, RdfStream.class,
+                testProvider.isWriteable(RdfNamespacedStream.class, RdfNamespacedStream.class,
                         null, TEXT_PLAIN_TYPE));
     }
 
@@ -153,7 +159,7 @@ public class StreamingBaseHtmlProviderTest {
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
         setField(testProvider, "templatesMap", singletonMap("nt:file",
                 mockTemplate));
-        testProvider.writeTo(testData, RdfStream.class, mock(Type.class),
+        testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[]{}, MediaType.valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
@@ -178,10 +184,10 @@ public class StreamingBaseHtmlProviderTest {
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
 
         setField(testProvider, "templatesMap",
-                of("some:file", mockTemplate));
+                ImmutableMap.of("some:file", mockTemplate));
         final HtmlTemplate mockAnnotation = mock(HtmlTemplate.class);
         when(mockAnnotation.value()).thenReturn("some:file");
-        testProvider.writeTo(testData, RdfStream.class, mock(Type.class),
+        testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[]{mockAnnotation}, MediaType
                         .valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
@@ -207,9 +213,9 @@ public class StreamingBaseHtmlProviderTest {
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
 
         setField(testProvider, "templatesMap",
-                 of("childOf:ntFile", mockTemplate,
+                 ImmutableMap.of("childOf:ntFile", mockTemplate,
                     "grandchildOf:ntFile", mockTemplate));
-        testProvider.writeTo(testData2, RdfStream.class, mock(Type.class),
+        testProvider.writeTo(testData2, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[] {}, MediaType
                         .valueOf("text/html"),
                 (MultivaluedMap) new MultivaluedHashMap<>(), outStream);

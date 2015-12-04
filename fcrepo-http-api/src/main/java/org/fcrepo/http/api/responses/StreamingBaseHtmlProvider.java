@@ -25,6 +25,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -49,7 +50,6 @@ import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeIterator;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
@@ -67,24 +67,23 @@ import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
-import org.fcrepo.kernel.modeshape.rdf.impl.NamespaceRdfContext;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Simple HTML provider for RdfStreams
+ * Simple HTML provider for RdfNamespacedStreams
  *
  * @author ajs6f
  * @since Nov 19, 2013
  */
 @Provider
 @Produces({TEXT_HTML, APPLICATION_XHTML_XML})
-public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
+public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
 
     @Autowired
@@ -187,35 +186,26 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
     }
 
     @Override
-    public void writeTo(final RdfStream rdfStream, final Class<?> type,
+    public void writeTo(final RdfNamespacedStream nsStream, final Class<?> type,
                         final Type genericType, final Annotation[] annotations,
                         final MediaType mediaType,
                         final MultivaluedMap<String, Object> httpHeaders,
                         final OutputStream entityStream) throws IOException {
 
-        try {
-            final RdfStream nsRdfStream = new NamespaceRdfContext(rdfStream.session());
+        final Node subject = VIEW_HELPERS.getContentNode(nsStream.stream.topic());
 
-            rdfStream.namespaces(nsRdfStream.namespaces());
+        final Model model = nsStream.stream.collect(toModel());
+        model.setNsPrefixes(nsStream.namespaces);
 
-            final Node subject = VIEW_HELPERS.getContentNode(rdfStream.topic());
+        final Template nodeTypeTemplate = getTemplate(model, subject, Arrays.asList(annotations));
 
-            final Model model = rdfStream.asModel();
+        final Context context = getContext(model, subject);
 
-            final Template nodeTypeTemplate = getTemplate(model, subject, Arrays.asList(annotations));
-
-            final Context context = getContext(model, subject);
-
-            // the contract of MessageBodyWriter<T> is _not_ to close the stream
-            // after writing to it
-            final Writer outWriter = new OutputStreamWriter(entityStream);
-            nodeTypeTemplate.merge(context, outWriter);
-            outWriter.flush();
-
-        } catch (final RepositoryException e) {
-            throw new WebApplicationException(e);
-        }
-
+        // the contract of MessageBodyWriter<T> is _not_ to close the stream
+        // after writing to it
+        final Writer outWriter = new OutputStreamWriter(entityStream);
+        nodeTypeTemplate.merge(context, outWriter);
+        outWriter.flush();
     }
 
     protected Context getContext(final Model model, final Node subject) {
@@ -282,11 +272,11 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfStream> {
                 type.getName(), mediaType);
         return (mediaType.equals(TEXT_HTML_TYPE) || mediaType
                 .equals(APPLICATION_XHTML_XML_TYPE))
-                && RdfStream.class.isAssignableFrom(type);
+                && RdfNamespacedStream.class.isAssignableFrom(type);
     }
 
     @Override
-    public long getSize(final RdfStream t, final Class<?> type,
+    public long getSize(final RdfNamespacedStream t, final Class<?> type,
                         final Type genericType, final Annotation[] annotations,
                         final MediaType mediaType) {
         // we don't know in advance how large the result might be

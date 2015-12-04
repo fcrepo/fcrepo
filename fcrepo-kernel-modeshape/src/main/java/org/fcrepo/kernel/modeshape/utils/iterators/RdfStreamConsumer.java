@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * 
- */
-/**
- * @author ajs6f
- * @since Jan 16, 2014
- */
+package org.fcrepo.kernel.modeshape.utils.iterators;
 
-package org.fcrepo.kernel.api.utils.iterators;
+import com.hp.hpl.jena.graph.Triple;
+
+/**
+ * {@link IteratorConsumer} specific to {@link org.fcrepo.kernel.api.RdfStream}s.
+ *
+ * @author ajs6f
+ * @since Oct 24, 2013
+ */
+public interface RdfStreamConsumer extends IteratorConsumer<Triple, Boolean> {
+
+}

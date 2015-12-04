@@ -35,6 +35,7 @@ import java.security.AccessControlException;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -76,7 +77,7 @@ public class AclRdfContextTest {
 
     @Test
     public void testWritableNode() throws RepositoryException {
-        final Model actual = new AclRdfContext(resource, idTranslator).asModel();
+        final Model actual = new AclRdfContext(resource, idTranslator).collect(toModel());
         final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
         assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanTrue));
     }
@@ -86,7 +87,7 @@ public class AclRdfContextTest {
 
         doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
                 eq(path), eq("add_node,set_property,remove"));
-        final Model actual = new AclRdfContext(resource, idTranslator).asModel();
+        final Model actual = new AclRdfContext(resource, idTranslator).collect(toModel());
         logRdf("Constructed RDF: ", actual);
         final Literal booleanFalse = actual.createTypedLiteral(false, XSDboolean);
         assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanFalse));

@@ -23,10 +23,10 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.utils.iterators.RdfStream.fromModel;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.fcrepo.kernel.modeshape.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -64,19 +64,15 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
-import org.fcrepo.kernel.modeshape.testutilities.TestTriplesContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -253,21 +249,6 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetTriples() {
-
-        final RdfStream triples = testObj.getTriples(mockSubjects, TestTriplesContext.class);
-
-        final Model model = triples.asModel();
-
-        final ResIterator resIterator = model.listSubjects();
-
-        final ImmutableSet<String> resources = ImmutableSet.copyOf(
-                Iterators.transform(resIterator, x -> x.getURI()));
-
-        assertTrue(resources.contains("MockTriplesContextClass"));
-    }
-
-    @Test
     public void testGetBaseVersion() throws RepositoryException {
 
         final Version mockVersion = mock(Version.class);
@@ -331,7 +312,7 @@ public class FedoraResourceImplTest {
             propertiesModel.createProperty("b"),
             "c");
 
-        final RdfStream propertiesStream = fromModel(propertiesModel).topic(createURI("info:fedora/xyz"));
+        final RdfStream propertiesStream = fromModel(createURI("info:fedora/xyz"), propertiesModel);
 
         final Model replacementModel = createDefaultModel();
 

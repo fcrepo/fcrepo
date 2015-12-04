@@ -16,8 +16,11 @@
 package org.fcrepo.integration.kernel.modeshape;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static java.util.EnumSet.noneOf;
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.io.IOUtils.toInputStream;
+import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -37,9 +40,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.RdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -86,7 +88,7 @@ public class ContainerImplIT extends AbstractIT {
     public void testObjectGraph() throws Exception {
         final Container object =
             containerService.findOrCreate(session, "/graphObject");
-        final Model model = object.getTriples(subjects, PropertiesRdfContext.class).asModel();
+        final Model model = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
         final Resource graphSubject = subjects.reverse().convert(object);
 
@@ -98,7 +100,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
             "INSERT { <" + graphSubject + "> dc:title " +
-            "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+            "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
 
         final Value[] values = object.getNode().getProperty("dc:title").getValues();
@@ -112,7 +114,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX myurn: <info:myurn/>\n" +
                 "INSERT { <" + graphSubject + "> myurn:info " +
-                "\"This is some example data\"} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+                "\"This is some example data\"} WHERE {}", object.getTriples(subjects, PROPERTIES));
 
         final Value value =
             object.getNode().getProperty(object.getNode().getSession()
@@ -123,7 +125,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
                 "INSERT { <" + graphSubject + "> dcterms:" +
-                "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+                "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
         final Value refValue = object.getNode().getProperty("dcterms:isPartOf_ref").getValues()[0];
         assertTrue(refValue.getString(), refValue.getString().equals(object.getNode().getIdentifier()));
@@ -131,7 +133,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "DELETE { <" + graphSubject + "> dc:title " +
-                "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+                "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
         assertFalse("Found unexpected dc:title",
                     object.getNode().hasProperty("dc:title"));
@@ -139,7 +141,7 @@ public class ContainerImplIT extends AbstractIT {
         object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
                 "DELETE { <" + graphSubject + "> " +
                 "dcterms:isPartOf <" + graphSubject + "> " +
-                "} WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+                "} WHERE {}", object.getTriples(subjects, PROPERTIES));
         assertFalse("found unexpected reference",
                     object.getNode().hasProperty("dcterms:isPartOf"));
 
@@ -155,7 +157,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT { <" + graphSubject + "> some:urlProperty " +
-                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
         final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
         final String propertyName = prefix + ":urlProperty";
@@ -169,7 +171,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "DELETE { <" + graphSubject + "> some:urlProperty " +
-                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+                "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
 
         assertFalse(object.getNode().hasProperty(referencePropertyName));
@@ -178,7 +180,7 @@ public class ContainerImplIT extends AbstractIT {
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
                 "       some:urlProperty <info:somewhere/else> . }",
-                object.getTriples(subjects, PropertiesRdfContext.class));
+                object.getTriples(subjects, PROPERTIES));
 
 
         assertTrue(object.getNode().hasProperty(referencePropertyName));
@@ -198,7 +200,8 @@ public class ContainerImplIT extends AbstractIT {
         MalformedRdfException e = null;
         try {
             object.updateProperties(subjects, "INSERT DATA { <> <info:some-property> <relative-url> . \n" +
-                    "<> <info:some-other-property> <another-relative-url> }", new RdfStream());
+                    "<> <info:some-other-property> <another-relative-url> }",
+                    object.getTriples(subjects, noneOf(RdfContext.class)));
         } catch (final MalformedRdfException ex) {
             e = ex;
         }
@@ -221,7 +224,7 @@ public class ContainerImplIT extends AbstractIT {
                 "TTL");
         MalformedRdfException e = null;
         try {
-            object.replaceProperties(subjects, model, new RdfStream());
+            object.replaceProperties(subjects, model, object.getTriples(subjects, noneOf(RdfContext.class)));
         } catch (final MalformedRdfException ex) {
             e = ex;
         }
@@ -239,7 +242,7 @@ public class ContainerImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
           "INSERT { <http://example/egbook> dc:title " + "\"This is an example of an update that will be " +
-          "ignored\" } WHERE {}", object.getTriples(subjects, PropertiesRdfContext.class));
+          "ignored\" } WHERE {}", object.getTriples(subjects, PROPERTIES));
     }
 
 }

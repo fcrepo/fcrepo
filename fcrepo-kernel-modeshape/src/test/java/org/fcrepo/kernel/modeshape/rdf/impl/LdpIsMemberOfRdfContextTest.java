@@ -43,6 +43,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -132,7 +133,7 @@ public class LdpIsMemberOfRdfContextTest {
     public void testIsMemberOfRelationWithRootResource() throws RepositoryException {
         testObj = new LdpIsMemberOfRdfContext(mockContainer, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
@@ -141,7 +142,7 @@ public class LdpIsMemberOfRdfContextTest {
     public void testIsMemberOfRelationWithoutIsMemberOfResource() throws RepositoryException {
         testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
@@ -160,7 +161,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockRelationProperty.getString()).thenReturn(property);
         testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to contain triple",
                 model.contains(subjects.reverse().convert(mockResource),
@@ -183,7 +184,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockRelationProperty.getString()).thenReturn(property);
         testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         final Converter<FedoraResource, Resource> nodeSubjects = subjects.reverse();
 
@@ -208,7 +209,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockRelationProperty.getString()).thenReturn(property);
         testObj = new LdpIsMemberOfRdfContext(mockBinary, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         final Converter<FedoraResource, Resource> nodeSubjects = subjects.reverse();
 
@@ -246,7 +247,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockRelationProperty.getString()).thenReturn(property);
         testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
         assertTrue("Expected stream to contain triple",
                 model.contains(subjects.toDomain("/a/#/hash-uri"),
                         createProperty(property),
@@ -282,7 +283,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockRelationProperty.getString()).thenReturn(property);
         testObj = new LdpIsMemberOfRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
 

@@ -16,7 +16,9 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import static com.google.common.collect.ImmutableBiMap.of;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +30,8 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,9 +91,11 @@ public class HttpTripleUtilTest {
                         eq(mockUriInfo), eq(mockSubjects))).thenReturn(
                 createDefaultModel());
 
-        final RdfStream rdfStream = new RdfStream();
-        testObj.addHttpComponentModelsForResourceToStream(rdfStream, mockResource,
-                mockUriInfo, mockSubjects);
+        final RdfStream rdfStream = new DefaultRdfStream(createURI("info:subject"));
+
+        assertTrue(testObj.addHttpComponentModelsForResourceToStream(rdfStream, mockResource,
+                mockUriInfo, mockSubjects).count() >= 0);
+
         verify(mockBean1).createModelForResource(eq(mockResource),
                 eq(mockUriInfo), eq(mockSubjects));
         verify(mockBean2).createModelForResource(eq(mockResource),

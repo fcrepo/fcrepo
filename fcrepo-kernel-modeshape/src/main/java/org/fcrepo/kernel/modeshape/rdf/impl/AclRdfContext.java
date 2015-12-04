@@ -22,6 +22,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import javax.jcr.RepositoryException;
 import java.security.AccessControlException;
 
+import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -50,6 +51,6 @@ public class AclRdfContext extends NodeRdfContext {
         } catch ( final AccessControlException ex ) {
             writable = false;
         }
-        concat(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean)));
+        concat(of(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean))));
     }
 }

@@ -18,16 +18,17 @@ package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.ItemDefinition;
 import javax.jcr.nodetype.NodeType;
-import java.util.Iterator;
+
+import java.util.stream.Stream;
 import java.util.function.Function;
 
+import static java.util.stream.Stream.of;
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -49,7 +50,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  *
  * @param <T> the property of T
  */
-public class ItemDefinitionToTriples<T extends ItemDefinition> implements Function<T, Iterator<Triple>> {
+public class ItemDefinitionToTriples<T extends ItemDefinition> implements Function<T, Stream<Triple>> {
 
     private static final Logger LOGGER = getLogger(ItemDefinitionToTriples.class);
 
@@ -65,7 +66,7 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
     }
 
     @Override
-    public Iterator<Triple> apply(final T input) {
+    public Stream<Triple> apply(final T input) {
 
         try {
             final Node propertyDefinitionNode = getResource(input).asNode();
@@ -74,7 +75,7 @@ public class ItemDefinitionToTriples<T extends ItemDefinition> implements Functi
                          context.getURI(),
                          propertyDefinitionNode.getURI());
 
-            return new RdfStream(
+            return of(
                     create(propertyDefinitionNode, type.asNode(), Property.asNode()),
                     create(propertyDefinitionNode, domain.asNode(), context),
                     create(propertyDefinitionNode, label.asNode(), createLiteral(input.getName())));

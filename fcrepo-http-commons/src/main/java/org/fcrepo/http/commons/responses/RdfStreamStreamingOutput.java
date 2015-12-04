@@ -15,21 +15,22 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static com.google.common.collect.Maps.filterEntries;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static org.fcrepo.http.commons.utils.UncheckedBiConsumer.uncheck;
 import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
 import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.RdfStream;
 
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
@@ -76,13 +77,16 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private final RdfStream rdfStream;
 
+    private final Map<String, String> namespaces;
+
     /**
      * Normal constructor
      *
      * @param rdfStream the rdf stream
+     * @param namespaces a namespace mapping
      * @param mediaType the media type
      */
-    public RdfStreamStreamingOutput(final RdfStream rdfStream,
+    public RdfStreamStreamingOutput(final RdfStream rdfStream, final Map<String, String> namespaces,
             final MediaType mediaType) {
         super();
 
@@ -102,13 +106,14 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         }
 
         this.rdfStream = rdfStream;
+        this.namespaces = namespaces;
     }
 
     @Override
     public void write(final OutputStream output) {
         LOGGER.debug("Serializing RDF stream in: {}", format);
         try {
-            write(() -> rdfStream.transform(toStatement::apply), output, format, mediaType);
+            write(rdfStream.map(toStatement), output, format, mediaType, namespaces);
         } catch (final RDFHandlerException e) {
             setException(e);
             LOGGER.debug("Error serializing RDF", e);
@@ -116,10 +121,11 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         }
     }
 
-    private void write(final Iterable<Statement> model,
+    private void write(final Stream<Statement> model,
                        final OutputStream output,
                        final RDFFormat dataFormat,
-                       final MediaType dataMediaType)
+                       final MediaType dataMediaType,
+                       final Map<String, String> nsPrefixes)
             throws RDFHandlerException {
         final WriterConfig settings = WriterConfigHelper.apply(dataMediaType);
         final RDFWriter writer = Rio.createWriter(dataFormat, output);
@@ -130,10 +136,16 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
          *  - xmlns, which Sesame helpfully serializes, but normal parsers may complain
          *     about in some serializations (e.g. RDF/XML where xmlns:xmlns is forbidden by XML);
          */
-        filterEntries(rdfStream.namespaces(), e -> !e.getKey().equals("xmlns"))
-                .forEach(uncheck(writer::handleNamespace));
+        nsPrefixes.entrySet().stream().filter(e -> !e.getKey().equals("xmlns"))
+                .forEach(x -> {
+                    try {
+                        writer.handleNamespace(x.getKey(), x.getValue());
+                    } catch (final RDFHandlerException e) {
+                        throw new RepositoryRuntimeException(e);
+                    }
+                });
 
-        Rio.write(model, writer);
+        Rio.write((Iterable<Statement>)model::iterator, writer);
     }
 
     protected static final Function<? super Triple, Statement> toStatement = t -> {

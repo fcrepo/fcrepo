@@ -15,7 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 
-import static com.google.common.collect.ImmutableSet.copyOf;
+import static java.util.stream.Collectors.toSet;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -77,7 +77,7 @@ public class ItemDefinitionToTriplesTest {
     @Test
     public void testGoodDefinition() throws RepositoryException {
         final Set<Triple> results =
-            copyOf(testMapper.apply(mockItemDefinition));
+            testMapper.apply(mockItemDefinition).collect(toSet());
         LOGGER.debug("Created RDF: ");
         for (final Triple t : results) {
             LOGGER.debug("{}", t);

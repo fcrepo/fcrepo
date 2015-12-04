@@ -27,6 +27,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -37,6 +38,7 @@ import javax.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
@@ -62,7 +64,9 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     @Timed
     @HtmlTemplate("jcr:nodetypes")
     public Response getNodeTypes() {
-        return ok(nodeService.getNodeTypes(session).session(session))
+        return ok(new RdfNamespacedStream(
+                      nodeService.getNodeTypes(session),
+                      getNamespaces(session)))
             .header("Warning", "This endpoint is deprecated and will be removed in the 4.6.0 release.").build();
     }
 

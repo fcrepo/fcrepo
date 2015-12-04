@@ -91,7 +91,8 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -205,8 +206,7 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.info("GET resource '{}'", externalPath);
         addResourceHttpHeaders(resource());
 
-        final RdfStream rdfStream = new RdfStream().session(session)
-                    .topic(translator().reverse().convert(resource()).asNode());
+        final RdfStream rdfStream = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
 
         return getContent(rangeValue, getChildrenLimit(), rdfStream);
 
@@ -352,7 +352,7 @@ public class FedoraLdp extends ContentExposingResource {
         final RdfStream resourceTriples;
 
         if (resource.isNew()) {
-            resourceTriples = new RdfStream();
+            resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
         } else {
             resourceTriples = getResourceTriples();
         }
@@ -429,7 +429,7 @@ public class FedoraLdp extends ContentExposingResource {
             final RdfStream resourceTriples;
 
             if (resource().isNew()) {
-                resourceTriples = new RdfStream();
+                resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
             } else {
                 resourceTriples = getResourceTriples();
             }
@@ -547,7 +547,7 @@ public class FedoraLdp extends ContentExposingResource {
         final RdfStream resourceTriples;
 
         if (result.isNew()) {
-            resourceTriples = new RdfStream();
+            resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
         } else {
             resourceTriples = getResourceTriples();
         }

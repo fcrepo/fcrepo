@@ -15,13 +15,12 @@
  */
 package org.fcrepo.kernel.modeshape.testutilities;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
-
-import com.google.common.collect.Lists;
 
 /**
  * A simple {@link PropertyIterator} for test purposes.
@@ -38,7 +37,7 @@ public class TestPropertyIterator implements PropertyIterator {
     }
 
     public TestPropertyIterator(final Property... properties) {
-        this.iterator = Lists.newArrayList(properties).iterator();
+        this.iterator = Arrays.asList(properties).iterator();
     }
 
     @Override

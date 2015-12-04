@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static com.google.common.collect.ImmutableSet.builder;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
@@ -30,10 +29,11 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.metrics.RegistryService;
 
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
-import com.google.common.collect.ImmutableSet;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -62,14 +62,14 @@ public class RootRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         if (resource().hasType(ROOT)) {
-            concatRepositoryTriples();
+            concat(getRepositoryTriples());
         }
     }
 
-    private void concatRepositoryTriples() {
+    private Stream<Triple> getRepositoryTriples() {
         LOGGER.trace("Creating RDF triples for repository description");
 
-        final ImmutableSet.Builder<Triple> b = builder();
+        final Stream.Builder<Triple> b = Stream.builder();
 
         /*
             FIXME: removing due to performance problems, esp. w/ many files on federated filesystem
@@ -87,21 +87,21 @@ public class RootRdfContext extends NodeRdfContext {
         final Map<String, Counter> counters = registryService.getMetrics().getCounters();
         // and add the repository metrics to the RDF model
         if (counters.containsKey(FIXITY_CHECK_COUNTER)) {
-            b.add(create(subject(), HAS_FIXITY_CHECK_COUNT.asNode(),
+            b.accept(create(subject(), HAS_FIXITY_CHECK_COUNT.asNode(),
                     createTypedLiteral(counters.get(PREFIX + FIXITY_CHECK_COUNTER).getCount()).asNode()));
         }
 
         if (counters.containsKey(FIXITY_ERROR_COUNTER)) {
-            b.add(create(subject(), HAS_FIXITY_ERROR_COUNT.asNode(),
+            b.accept(create(subject(), HAS_FIXITY_ERROR_COUNT.asNode(),
                     createTypedLiteral(counters.get(PREFIX + FIXITY_ERROR_COUNTER).getCount()).asNode()));
         }
 
         if (counters.containsKey(FIXITY_REPAIRED_COUNTER)) {
-            b.add(create(subject(), HAS_FIXITY_REPAIRED_COUNT.asNode(),
+            b.accept(create(subject(), HAS_FIXITY_REPAIRED_COUNT.asNode(),
                     createTypedLiteral(counters.get(PREFIX + FIXITY_REPAIRED_COUNTER).getCount()).asNode()));
         }
 
         // offer all these accumulated triples
-        concat(b.build());
+        return b.build();
     }
 }

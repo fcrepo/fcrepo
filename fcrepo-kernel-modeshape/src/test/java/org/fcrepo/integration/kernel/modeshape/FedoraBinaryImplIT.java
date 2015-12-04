@@ -20,6 +20,7 @@ import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -295,7 +296,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             final FedoraBinary ds = binaryService.findOrCreate(session, pid + "/testRepositoryContent");
 
-            final Model fixityResults = ds.getFixity(idTranslator).asModel();
+            final Model fixityResults = ds.getFixity(idTranslator).collect(toModel());
 
             assertNotEquals(0, fixityResults.size());
 
@@ -331,7 +332,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testMemoryContent");
 
-            final Model fixityResults = ds.getFixity(idTranslator).asModel();
+            final Model fixityResults = ds.getFixity(idTranslator).collect(toModel());
 
             assertNotEquals(0, fixityResults.size());
 
@@ -363,7 +364,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testRandomContent");
 
-            final Model fixityResults = ds.getFixity(idTranslator).asModel();
+            final Model fixityResults = ds.getFixity(idTranslator).collect(toModel());
 
             assertNotEquals(0, fixityResults.size());
 

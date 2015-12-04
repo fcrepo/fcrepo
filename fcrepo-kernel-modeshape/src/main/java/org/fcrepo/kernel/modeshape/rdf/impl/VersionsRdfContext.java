@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
@@ -24,10 +23,12 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Iterator;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
@@ -36,9 +37,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -46,19 +47,17 @@ import org.slf4j.Logger;
 
 
 /**
- * {@link RdfStream} that supplies {@link Triple}s concerning
+ * {@link org.fcrepo.kernel.api.RdfStream} that supplies {@link Triple}s concerning
  * the versions of a selected {@link Node}.
  *
  * @author ajs6f
  * @since Oct 15, 2013
  */
-public class VersionsRdfContext extends RdfStream {
+public class VersionsRdfContext extends DefaultRdfStream {
 
     private final VersionHistory versionHistory;
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
-
-    private final Node subject;
 
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
@@ -72,64 +71,40 @@ public class VersionsRdfContext extends RdfStream {
     public VersionsRdfContext(final FedoraResource resource,
                               final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
-        super();
+        super(idTranslator.reverse().convert(resource).asNode());
         this.idTranslator = idTranslator;
-        this.subject = idTranslator.reverse().convert(resource).asNode();
-        versionHistory = resource.getVersionHistory();
-
+        this.versionHistory = resource.getVersionHistory();
         concat(versionTriples());
     }
 
     @SuppressWarnings("unchecked")
-    private Iterator<Triple> versionTriples() throws RepositoryException {
-        final Iterator<Version> allVersions = versionHistory.getAllVersions();
-        return Iterators.concat(Iterators.transform(allVersions, version2triples::apply));
-    }
-
-    private final Function<Version, Iterator<Triple>> version2triples = new Function<Version, Iterator<Triple>> () {
-
-        @Override
-        public Iterator<Triple> apply(final Version version) {
-
-            try {
-                    /* Discard jcr:rootVersion */
-                if (version.getName().equals(versionHistory.getRootVersion().getName())) {
-                    LOGGER.trace("Skipped root version from triples");
-                    return new RdfStream();
-                }
-
-                final String[] labels = versionHistory.getVersionLabels(version);
+    private Stream<Triple> versionTriples() throws RepositoryException {
+        return iteratorToStream(versionHistory.getAllVersions())
+            /* Discard jcr:rootVersion */
+            .filter(uncheck((final Version v) -> !v.getName().equals(versionHistory.getRootVersion().getName())))
+            /* Omit unlabelled versions */
+            .filter(uncheck((final Version v) -> {
+                final String[] labels = versionHistory.getVersionLabels(v);
                 if (labels.length == 0) {
                     LOGGER.warn("An unlabeled version for {} was found!  Omitting from version listing!",
-                            subject.getURI());
-                    return new RdfStream();
+                        topic().getURI());
                 } else if (labels.length > 1) {
-                    LOGGER.info("Multiple version labels found for {}!  Using first label, \"{}\".",
-                            subject.getURI(), labels[0]);
+                    LOGGER.info("Multiple version labels found for {}!  Using first label, \"{}\".", topic().getURI());
                 }
+                return labels.length > 0;
+            }))
+            .flatMap(UncheckedFunction.uncheck((final Version v) -> {
+                final String[] labels = versionHistory.getVersionLabels(v);
                 final Node versionSubject
-                        = createProperty(subject + "/" + FCR_VERSIONS + "/" + labels[0]).asNode();
+                        = createProperty(topic() + "/" + FCR_VERSIONS + "/" + labels[0]).asNode();
 
+                return Stream.concat(
+                        Arrays.stream(labels).map(x -> create(versionSubject, HAS_VERSION_LABEL.asNode(),
+                                createLiteral(x))),
 
-                final RdfStream results = new RdfStream();
-
-                results.concat(create(subject, HAS_VERSION.asNode(),
-                        versionSubject));
-
-                for (final String label : labels) {
-                    results.concat(create(versionSubject, HAS_VERSION_LABEL
-                            .asNode(), createLiteral(label)));
-                }
-                results.concat(create(versionSubject, CREATED_DATE.asNode(),
-                        createTypedLiteral(version.getCreated()).asNode()));
-
-                return results;
-
-            } catch (final RepositoryException e) {
-                throw propagate(e);
-            }
-        }
-    };
-
-
+                        Stream.of(create(topic(), HAS_VERSION.asNode(), versionSubject),
+                            create(versionSubject, CREATED_DATE.asNode(),
+                                createTypedLiteral(v.getCreated()).asNode())));
+            }));
+    }
 }

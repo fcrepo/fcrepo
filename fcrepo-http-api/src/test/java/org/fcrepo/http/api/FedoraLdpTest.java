@@ -20,6 +20,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Lists.transform;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
@@ -41,6 +42,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -59,9 +61,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.text.ParseException;
+import java.util.EnumSet;
 import java.util.List;
 
 import javax.jcr.AccessDeniedException;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -80,6 +84,7 @@ import javax.ws.rs.core.UriBuilder;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -87,11 +92,12 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
-import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -156,11 +162,17 @@ public class FedoraLdpTest {
     @Mock
     private HttpHeaders mockHeaders;
 
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
     @Before
-    public void setUp() {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         testObj = spy(new FedoraLdp(path));
 
@@ -182,6 +194,10 @@ public class FedoraLdpTest {
         setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
 
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{});
+
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
         when(mockContainer.getEtagValue()).thenReturn("");
@@ -201,21 +217,24 @@ public class FedoraLdpTest {
     @SuppressWarnings("unchecked")
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
         final FedoraResource mockResource = mock(klass);
+        final Answer answer = new Answer<RdfStream>() {
+            @Override
+            public RdfStream answer(final InvocationOnMock invocationOnMock) {
+                return new DefaultRdfStream(createURI(invocationOnMock.getMock().toString()),
+                        of(Triple.create(createURI(invocationOnMock.getMock().toString()),
+                                                   createURI("called"),
+                                                   createURI(invocationOnMock.getArguments()[1].toString()))
+                        ));
+            }
+        };
 
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockResource.getPath()).thenReturn(path);
         when(mockNode.getPath()).thenReturn(path);
         when(mockResource.getEtagValue()).thenReturn("");
-        when(mockResource.getTriples(eq(idTranslator), any(Class.class))).thenAnswer(new Answer<RdfStream>() {
-            @Override
-            public RdfStream answer(final InvocationOnMock invocationOnMock) {
-                return new RdfStream(Triple.create(createURI(invocationOnMock.getMock().toString()),
-                                                   createURI("called"),
-                                                   createURI(invocationOnMock.getArguments()[1].toString())
-                        ));
-            }
-        });
+        when(mockResource.getTriples(eq(idTranslator), any(EnumSet.class))).thenAnswer(answer);
+        when(mockResource.getTriples(eq(idTranslator), any(RdfContext.class))).thenAnswer(answer);
 
         return mockResource;
     }
@@ -368,21 +387,12 @@ public class FedoraLdpTest {
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
 
-        final RdfStream entity = (RdfStream) actual.getEntity();
-        final Model model = entity.asModel();
+        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
+        final Model model = entity.stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext"
-        )));
-
+                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
     }
 
     @Test
@@ -393,21 +403,12 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
 
-        final RdfStream entity = (RdfStream) actual.getEntity();
-        final Model model = entity.asModel();
+        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
+        final Model model = entity.stream.collect(toModel());
 
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext"
-        )));
-
+                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
     }
 
 
@@ -449,20 +450,18 @@ public class FedoraLdpTest {
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfStream entity = (RdfStream) actual.getEntity();
-        final Model model = entity.asModel();
+        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
+        final Model model = entity.stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
-        assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext"
-        )));
+        assertTrue("Expected RDF contexts missing", rdfNodes.stream()
+                .filter(x -> x.contains("PROPERTIES") && x.contains("MINIMAL")).findFirst().isPresent());
 
         assertFalse("Included non-minimal contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
+                rdfNodes.contains("LDP_MEMBERSHIP"));
 
         assertFalse("Included non-minimal contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext"));
+                rdfNodes.contains("LDP_CONTAINMENT"));
 
     }
 
@@ -475,14 +474,14 @@ public class FedoraLdpTest {
                 null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfStream entity = (RdfStream) actual.getEntity();
-        final Model model = entity.asModel();
+        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
+        final Model model = entity.stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         assertTrue("Should include membership contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
+                rdfNodes.contains("LDP_MEMBERSHIP"));
 
         assertFalse("Should not include containment contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext"));
+                rdfNodes.contains("LDP_CONTAINMENT"));
 
     }
 
@@ -494,18 +493,15 @@ public class FedoraLdpTest {
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfStream entity = (RdfStream) actual.getEntity();
-        final Model model = entity.asModel();
+        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
+        final Model model = entity.stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
         assertFalse("Should not include membership contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext"));
-        assertFalse("Should not include membership contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext"));
+                rdfNodes.contains("LDP_MEMBERSHIP"));
 
         assertTrue("Should include containment contexts",
-                rdfNodes.contains("class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext"));
-
+                rdfNodes.contains("LDP_CONTAINMENT"));
     }
 
     @Test
@@ -515,14 +511,13 @@ public class FedoraLdpTest {
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfStream entity = (RdfStream) actual.getEntity();
-        final Model model = entity.asModel();
+        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
+        final Model model = entity.stream.collect(toModel());
 
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         log.debug("Received RDF nodes: {}", rdfNodes);
-        final String referencesContextClassName = ReferencesRdfContext.class.getName();
         assertTrue("Should include references contexts",
-                rdfNodes.stream().anyMatch(containsPattern(referencesContextClassName)::apply));
+                rdfNodes.stream().anyMatch(containsPattern("REFERENCES")::apply));
     }
 
     @Test
@@ -566,9 +561,11 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
-        when(mockBinary.getTriples(eq(idTranslator), any(Class.class))).thenReturn(new RdfStream());
-        when(mockBinary.getTriples(eq(idTranslator), any(List.class))).thenReturn(new RdfStream(new Triple
-                (createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
+        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
+        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
+                (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource",
@@ -579,19 +576,11 @@ public class FedoraLdpTest {
                 mockResponse.getHeaders("Link")
                         .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
 
-        final Model model = ((RdfStream) actual.getEntity()).asModel();
+        final Model model = ((RdfNamespacedStream) actual.getEntity()).stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         log.info("Found RDF objects\n{}", rdfNodes);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext",
-                "class org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext"
-        )));
+                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
 
     }
 
@@ -606,6 +595,8 @@ public class FedoraLdpTest {
     @Test
     public void testPutNewObject() throws Exception {
         setField(testObj, "externalPath", "some/path");
+        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
@@ -626,6 +617,8 @@ public class FedoraLdpTest {
     public void testPutNewObjectWithRdf() throws Exception {
 
         setField(testObj, "externalPath", "some/path");
+        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
@@ -641,6 +634,8 @@ public class FedoraLdpTest {
     @Test
     public void testPutNewBinary() throws Exception {
         setField(testObj, "externalPath", "some/path");
+        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        doReturn(mockObject).when(testObj).resource();
         when(mockBinary.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
@@ -701,9 +696,12 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(eq(idTranslator), any(Class.class))).thenReturn(new RdfStream());
-        when(mockBinary.getTriples(eq(idTranslator), any(List.class))).thenReturn(
-                new RdfStream(new Triple(createURI("mockBinary"), createURI("called"), createURI("child:properties"))));
+        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
+        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary"),
+                        of(new Triple(createURI("mockBinary"), createURI("called"),
+                            createURI("child:properties")))));
 
         doReturn(mockObject).when(testObj).resource();
 
@@ -818,8 +816,6 @@ public class FedoraLdpTest {
     @Test
     public void testSetUpJMSBaseURIs() throws RepositoryException {
         final ObservationManager mockManager = mock(ObservationManager.class);
-        final Workspace mockWorkspace = mock(Workspace.class);
-        doReturn(mockWorkspace).when(mockSession).getWorkspace();
         doReturn(mockManager).when(mockWorkspace).getObservationManager();
         final String json = "{\"baseURL\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
         testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
@@ -831,8 +827,6 @@ public class FedoraLdpTest {
         System.setProperty(BASEURL_PROP, "https://localhome:8443");
 
         final ObservationManager mockManager = mock(ObservationManager.class);
-        final Workspace mockWorkspace = mock(Workspace.class);
-        doReturn(mockWorkspace).when(mockSession).getWorkspace();
         doReturn(mockManager).when(mockWorkspace).getObservationManager();
         final String json = "{\"baseURL\":\"https://localhome:8443/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
 

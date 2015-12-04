@@ -18,6 +18,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -56,8 +57,7 @@ public class ContentRdfContextTest {
 
     @Test
     public void testForLowLevelStorageTriples() throws IOException {
-        final Model results =
-            new ContentRdfContext(mockResource, idTranslator).asModel();
+        final Model results = new ContentRdfContext(mockResource, idTranslator).collect(toModel());
         logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
         assertTrue("Didn't find triple showing node has content!", results
                 .contains(mockSubject, DESCRIBES, mockContentSubject));
@@ -66,8 +66,7 @@ public class ContentRdfContextTest {
     @Test
     public void testFedoraBinaryTriples() {
 
-        final Model results =
-                new ContentRdfContext(mockBinary, idTranslator).asModel();
+        final Model results = new ContentRdfContext(mockBinary, idTranslator).collect(toModel());
         assertTrue("Didn't find triple showing content has node!", results
                 .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
     }

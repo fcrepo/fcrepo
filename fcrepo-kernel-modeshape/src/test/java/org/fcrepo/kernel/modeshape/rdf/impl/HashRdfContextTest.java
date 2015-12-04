@@ -21,8 +21,6 @@ import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -39,6 +37,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.STRING;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -61,6 +60,9 @@ public class HashRdfContextTest {
     private Session mockSession;
 
     private DefaultIdentifierTranslator subjects;
+
+    @Mock
+    private PropertyIterator mockPropertyIterator;
 
     @Mock
     private Node mockChildNode;
@@ -102,6 +104,7 @@ public class HashRdfContextTest {
 
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{});
         subjects = new DefaultIdentifierTranslator(mockSession);
     }
 
@@ -110,7 +113,7 @@ public class HashRdfContextTest {
 
         when(mockNode.hasNode("#")).thenReturn(false);
 
-        final Model actual = new HashRdfContext(mockResource, subjects).asModel();
+        final Model actual = new HashRdfContext(mockResource, subjects).collect(toModel());
 
         assertTrue("Expected the result to be empty", actual.isEmpty());
     }
@@ -123,12 +126,7 @@ public class HashRdfContextTest {
 
         when(mockChildNode.getPath()).thenReturn("/a/#/123");
         when(mockChildNode.hasProperties()).thenReturn(true);
-        when(mockChildNode.getProperties()).thenAnswer(new Answer<PropertyIterator>() {
-            @Override
-            public PropertyIterator answer(final InvocationOnMock invocationOnMock) {
-                return new TestPropertyIterator(mockProperty);
-            }
-        });
+        when(mockChildNode.getProperties()).thenReturn(new TestPropertyIterator(mockProperty));
         when(mockChildNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockChildNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
 
@@ -140,9 +138,10 @@ public class HashRdfContextTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn("x");
 
-        final Model actual = new HashRdfContext(mockResource, subjects).asModel();
+        final Model actual = new HashRdfContext(mockResource, subjects).collect(toModel());
 
         assertFalse("Expected the result to not be empty", actual.isEmpty());
+
         assertTrue("Expected to find child properties",
                 actual.contains(createResource("info:fedora/a#123"),
                         createProperty("info:y"),

@@ -31,9 +31,8 @@ import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -42,7 +41,7 @@ import org.fcrepo.kernel.api.utils.FixityResult;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * An {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} containing information about the fixity of a
+ * An {@link org.fcrepo.kernel.api.RdfStream} containing information about the fixity of a
  * {@link org.fcrepo.kernel.api.models.FedoraBinary}.
  *
  * @author ajs6f
@@ -65,7 +64,8 @@ public class FixityRdfContext extends NodeRdfContext {
                             final URI digest,
                             final long size) {
         super(resource, idTranslator);
-        final Function<FixityResult, Iterator<Triple>> f = uncheck(blob -> {
+
+        concat(StreamSupport.stream(blobs.spliterator(), false).flatMap(uncheck(blob -> {
             final com.hp.hpl.jena.graph.Node resultSubject =
                     createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
             final List<Triple> b = new ArrayList<>();
@@ -77,12 +77,11 @@ public class FixityRdfContext extends NodeRdfContext {
             blob.getStatus(size, digest).stream().map(state -> createLiteral(state.toString()))
                     .map(state -> create(resultSubject, HAS_FIXITY_STATE.asNode(), state)).forEach(b::add);
 
-            final String checksum = blob.getComputedChecksum().toString();
-            b.add(create(resultSubject, HAS_MESSAGE_DIGEST.asNode(), createURI(checksum)));
+            b.add(create(resultSubject, HAS_MESSAGE_DIGEST.asNode(), createURI(blob.getComputedChecksum().toString())));
             b.add(create(resultSubject, HAS_SIZE.asNode(),createTypedLiteral(blob.getComputedSize()).asNode()));
 
-            return b.iterator();
-        });
-        concat(flatMap(blobs.iterator(), f));
+            return b.stream();
+        })));
     }
+
 }

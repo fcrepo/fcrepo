@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
+import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -27,7 +28,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import java.util.Iterator;
+import java.util.stream.Stream;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,21 +49,19 @@ public class ManagedRdfTest {
     private final static Triple unManagedTriple = create(createAnon(),
             createAnon(), createAnon());
 
-    private RdfStream testStream;
+    private Stream<Triple> testStream;
 
     @Before
     public void setUp() {
         initMocks(this);
-        testStream =
-            new RdfStream(managedTriple, unManagedTriple)
-                    .filter(isManagedTriple.negate());
+        testStream = of(managedTriple, unManagedTriple).filter(isManagedTriple.negate());
     }
 
     @Test
     public void testFiltering() {
-        assertEquals("Didn't get unmanaged triple!", unManagedTriple,
-                testStream.next());
-        assertFalse("Failed to filter managed triple!", testStream.hasNext());
+        final Iterator<Triple> iter = testStream.iterator();
+        assertEquals("Didn't get unmanaged triple!", unManagedTriple, iter.next());
+        assertFalse("Failed to filter managed triple!", iter.hasNext());
     }
 
     @Test

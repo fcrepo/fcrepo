@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.singletonIterator;
@@ -24,10 +23,15 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
+import static java.util.EnumSet.of;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Stream.empty;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfContext.MINIMAL;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
@@ -39,20 +43,22 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalType;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -74,6 +80,7 @@ import javax.jcr.NamespaceRegistry;
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.graph.Triple;
 
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -85,9 +92,25 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.iterators.GraphDifferencingIterator;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
+import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
@@ -114,6 +137,76 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
+
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getDefaultTriples = resource -> translator -> uncheck(minimal -> {
+        final Stream<Stream<Triple>> min = Stream.of(
+            new TypeRdfContext(resource, translator),
+            new PropertiesRdfContext(resource, translator));
+        if (!minimal) {
+            final Stream<Stream<Triple>> extra = Stream.of(
+                new HashRdfContext(resource, translator),
+                new SkolemNodeRdfContext(resource, translator));
+            return Stream.concat(min, extra).reduce(empty(), Stream::concat);
+        }
+        return min.reduce(empty(), Stream::concat);
+    });
+
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getEmbeddedResourceTriples = resource -> translator -> uncheck(_minimal -> {
+        return iteratorToStream(resource.getChildren())
+                .flatMap(child -> child.getTriples(translator, RdfContext.PROPERTIES));
+    });
+
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getInboundTriples = resource -> translator -> uncheck(_minimal -> {
+        return new ReferencesRdfContext(resource, translator);
+    });
+
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getLdpContainsTriples = resource -> translator -> uncheck(_minimal -> {
+        return new ChildrenRdfContext(resource, translator);
+    });
+
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getVersioningTriples = resource -> translator -> uncheck(_minimal -> {
+        return new VersionsRdfContext(resource, translator);
+    });
+
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getServerManagedTriples = resource -> translator -> uncheck(minimal -> {
+        if (minimal) {
+            return new LdpRdfContext(resource, translator);
+        } else {
+            final Stream<Stream<Triple>> streams = Stream.of(
+                new LdpRdfContext(resource, translator),
+                new AclRdfContext(resource, translator),
+                new RootRdfContext(resource, translator),
+                new ContentRdfContext(resource, translator),
+                new ParentRdfContext(resource, translator));
+            return streams.reduce(empty(), Stream::concat);
+        }
+    });
+
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getLdpMembershipTriples = resource -> translator -> uncheck(_minimal -> {
+        final Stream<Stream<Triple>> streams = Stream.of(
+            new LdpContainerRdfContext(resource, translator),
+            new LdpIsMemberOfRdfContext(resource, translator));
+        return streams.reduce(empty(), Stream::concat);
+    });
+
+    private static final Map<RdfContext, Function<FedoraResource,
+            Function<IdentifierConverter<Resource, FedoraResource>,
+            Function<Boolean, Stream<Triple>>>>> contextMap = Collections.unmodifiableMap(Stream.of(
+                new SimpleEntry<>(RdfContext.PROPERTIES, getDefaultTriples),
+                new SimpleEntry<>(RdfContext.VERSIONS, getVersioningTriples),
+                new SimpleEntry<>(RdfContext.EMBED_RESOURCES, getEmbeddedResourceTriples),
+                new SimpleEntry<>(RdfContext.INBOUND_REFERENCES, getInboundTriples),
+                new SimpleEntry<>(RdfContext.SERVER_MANAGED, getServerManagedTriples),
+                new SimpleEntry<>(RdfContext.LDP_MEMBERSHIP, getLdpMembershipTriples),
+                new SimpleEntry<>(RdfContext.LDP_CONTAINMENT, getLdpContainsTriples))
+                .collect(toMap(x -> x.getKey(), x -> x.getValue())));
 
     protected Node node;
 
@@ -421,7 +514,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
             throws MalformedRdfException, AccessDeniedException {
 
-        final Model model = originalTriples.asModel();
+        final Model model = originalTriples.collect(toModel());
 
         final UpdateRequest request = create(sparqlUpdateStatement,
                 idTranslator.reverse().convert(this).toString());
@@ -466,39 +559,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Class<? extends RdfStream> context) {
-        return getTriples(idTranslator, Collections.singleton(context));
+                                final RdfContext context) {
+        return getTriples(idTranslator, of(context));
     }
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Iterable<? extends Class<? extends RdfStream>> contexts) {
-        final RdfStream stream = new RdfStream();
+                                final EnumSet<RdfContext> contexts) {
 
-        for (final Class<? extends RdfStream> context : contexts) {
-            try {
-                final Constructor<? extends RdfStream> declaredConstructor
-                        = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
-
-                final RdfStream rdfStream = declaredConstructor.newInstance(this, idTranslator);
-                rdfStream.session(getSession());
-
-                stream.concat(rdfStream);
-            } catch (final NoSuchMethodException |
-                    InstantiationException |
-                    IllegalAccessException e) {
-                // Shouldn't happen.
-                throw propagate(e);
-            } catch (final InvocationTargetException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof RepositoryException) {
-                    throw new RepositoryRuntimeException(cause);
-                }
-                throw propagate(cause);
-            }
-        }
-
-        return stream;
+        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), contexts.stream()
+                .filter(contextMap::containsKey)
+                .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
+                .reduce(empty(), Stream::concat));
     }
 
     /*
@@ -543,16 +615,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
-        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap())
-                .topic(idTranslator.reverse().convert(this).asNode());
+        final RdfStream replacementStream = new DefaultRdfStream(idTranslator.reverse().convert(this).asNode());
 
-        final GraphDifferencingIterator differencer =
-            new GraphDifferencingIterator(inputModel, originalTriples);
+        final GraphDifferencer differencer =
+            new GraphDifferencer(inputModel, originalTriples);
 
         final StringBuilder exceptions = new StringBuilder();
         try {
-            new RdfRemover(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer)).consume();
+            new RdfRemover(idTranslator, getSession(), new DefaultRdfStream(replacementStream.topic(),
+                        differencer.difference())).consume();
         } catch (final ConstraintViolationException e) {
             throw e;
         } catch (final MalformedRdfException e) {
@@ -561,8 +632,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
 
         try {
-            new RdfAdder(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer.notCommon())).consume();
+            new RdfAdder(idTranslator, getSession(), new DefaultRdfStream(replacementStream.topic(),
+                        differencer.notCommon())).consume();
         } catch (final ConstraintViolationException e) {
             throw e;
         } catch (final MalformedRdfException e) {
@@ -576,6 +647,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void removeEmptyFragments() {
         try {
             if (node.hasNode("#")) {
@@ -732,7 +804,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     } else if (x instanceof UpdateDeleteWhere) {
                         return ((UpdateDeleteWhere)x).getQuads().stream();
                     } else {
-                        return Stream.empty();
+                        return empty();
                     }
                 })
                 .filter(x -> x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/"))

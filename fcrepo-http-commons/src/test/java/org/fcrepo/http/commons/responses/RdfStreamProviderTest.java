@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -27,6 +28,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
@@ -35,7 +38,8 @@ import javax.jcr.Workspace;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -78,6 +82,9 @@ public class RdfStreamProviderTest {
     @Test
     public void testIsWriteable() {
         assertTrue("Should be able to serialize this!", testProvider
+                .isWriteable(RdfNamespacedStream.class, null, null, MediaType
+                        .valueOf("application/rdf+xml")));
+        assertFalse("Should not be able to serialize this!", testProvider
                 .isWriteable(RdfStream.class, null, null, MediaType
                         .valueOf("application/rdf+xml")));
         assertFalse("Should not be able to serialize this!", testProvider
@@ -94,10 +101,12 @@ public class RdfStreamProviderTest {
         final Triple t =
             create(createURI("info:test"), createURI("property:test"),
                     createURI("info:test"));
-        final RdfStream rdfStream = new RdfStream(t).session(mockSession);
+        final RdfStream rdfStream = new DefaultRdfStream(createURI("info:test"), of(t));
+        final Map<String, String> namespaces = new HashMap<>();
+        final RdfNamespacedStream nsStream = new RdfNamespacedStream(rdfStream, namespaces);
         byte[] result;
         try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream();) {
-            testProvider.writeTo(rdfStream, RdfStream.class, null, null,
+            testProvider.writeTo(nsStream, RdfNamespacedStream.class, null, null,
                     MediaType.valueOf("application/rdf+xml"), null,
                     entityStream);
             result = entityStream.toByteArray();

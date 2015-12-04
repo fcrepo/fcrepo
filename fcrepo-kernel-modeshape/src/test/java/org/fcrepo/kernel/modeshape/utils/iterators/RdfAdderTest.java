@@ -31,8 +31,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import java.util.Iterator;
+
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.Node;
@@ -50,7 +51,8 @@ import javax.jcr.nodetype.PropertyDefinition;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -110,6 +112,7 @@ public class RdfAdderTest {
     private static final Triple mixinTriple = create(mockNodeSubject.asNode(),
             type.asNode(), mixinObject.asNode());
 
+    private static final com.hp.hpl.jena.graph.Node testSubject = createURI("subject");
 
     private static final Statement mixinStmnt = m.asStatement(mixinTriple);
 
@@ -135,15 +138,13 @@ public class RdfAdderTest {
         testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
         when(mockNode.isNodeType(mixinShortName)).thenReturn(true);
         testAdder.operateOnMixin(createResource(mixinLongName), resource);
-
-
         verify(mockNode, never()).addMixin(mixinShortName);
     }
 
     @Test
     public void testAddingWithNotYetDefinedNamespace() throws Exception {
         // we drop our stream namespace map
-        testStream = new RdfStream(mockTriples);
+        testStream = new DefaultRdfStream(testSubject, mockTriples);
         when(
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
@@ -155,7 +156,7 @@ public class RdfAdderTest {
     @Test
     public void testAddingWithRepoNamespace() throws Exception {
         // we drop our stream namespace map
-        testStream = new RdfStream(mockTriples);
+        testStream = new DefaultRdfStream(testSubject, mockTriples);
         when(
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
@@ -204,6 +205,7 @@ public class RdfAdderTest {
                 .thenReturn(true);
         when(mockNamespaceRegistry.isRegisteredUri(type.getNameSpace()))
         .thenReturn(true);
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{propertyNamespaceUri, type.getNameSpace()});
         when(mockNamespaceRegistry.getPrefix(propertyNamespaceUri)).thenReturn(
                 propertyNamespacePrefix);
         when(mockNamespaceRegistry.getPrefix(type.getNameSpace())).thenReturn(
@@ -225,11 +227,8 @@ public class RdfAdderTest {
         when(mockProperty.getName()).thenReturn(propertyShortName);
         when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
         //TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
-        when(mockTriples.hasNext()).thenReturn(true, true, false);
-        when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         resource = new FedoraResourceImpl(mockNode);
-        testStream = new RdfStream(mockTriples);
-        testStream.namespaces(mockNamespaceMap);
+        testStream = new DefaultRdfStream(testSubject, mockTriples);
     }
 
     private FedoraResource resource;
@@ -265,7 +264,7 @@ public class RdfAdderTest {
     private Session mockSession;
 
     @Mock
-    private Iterator<Triple> mockTriples;
+    private Stream<Triple> mockTriples;
 
     private RdfStream testStream;
 

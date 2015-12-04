@@ -31,8 +31,8 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -45,10 +45,11 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -147,6 +148,8 @@ public class RdfRemoverTest {
                 .thenReturn(true);
         when(mockNamespaceRegistry.isRegisteredUri(type.getNameSpace()))
         .thenReturn(true);
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(
+                new String[] {propertyNamespaceUri, type.getNameSpace()});
         when(mockNamespaceRegistry.getPrefix(propertyNamespaceUri)).thenReturn(
                 propertyNamespacePrefix);
         when(mockNamespaceRegistry.getPrefix(type.getNameSpace())).thenReturn(
@@ -166,11 +169,8 @@ public class RdfRemoverTest {
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
         when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
         // TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
-        when(mockTriples.hasNext()).thenReturn(true, true, false);
-        when(mockTriples.next()).thenReturn(descriptiveTriple, mixinTriple);
         resource = new FedoraResourceImpl(mockNode);
-        testStream = new RdfStream(mockTriples);
-        testStream.namespaces(mockNamespaceMap);
+        testStream = new DefaultRdfStream(createURI("subject"), mockTriples);
     }
 
 
@@ -212,7 +212,7 @@ public class RdfRemoverTest {
     private Session mockSession;
 
     @Mock
-    private Iterator<Triple> mockTriples;
+    private Stream<Triple> mockTriples;
 
 
     private RdfStream testStream;

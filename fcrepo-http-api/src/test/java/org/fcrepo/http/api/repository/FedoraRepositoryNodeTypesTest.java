@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api.repository;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
@@ -27,13 +28,18 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.io.InputStream;
 import java.net.URI;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.graph.Node;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.NodeService;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -52,7 +58,9 @@ public class FedoraRepositoryNodeTypesTest {
     @Mock
     private InputStream mockInputStream;
 
-    private final RdfStream mockRdfStream = new RdfStream();
+    private final Node testSubject = createURI("subject");
+
+    private final RdfStream mockRdfStream = new DefaultRdfStream(testSubject);
 
     private Session mockSession;
 
@@ -61,6 +69,12 @@ public class FedoraRepositoryNodeTypesTest {
 
     @Mock
     private UriBuilder mockUriBuilder;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
 
     @Before
     public void setUp() throws Exception {
@@ -72,8 +86,10 @@ public class FedoraRepositoryNodeTypesTest {
         setField(testObj, "session", mockSession);
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(mockUriBuilder);
         when(mockUriBuilder.path(any(Class.class))).thenReturn(mockUriBuilder);
-        when(mockUriBuilder.build(any(String.class))).thenReturn(
-                URI.create("mock:uri"));
+        when(mockUriBuilder.build(any(String.class))).thenReturn(URI.create("mock:uri"));
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{});
     }
 
     @Test
@@ -81,10 +97,10 @@ public class FedoraRepositoryNodeTypesTest {
         when(mockNodes.getNodeTypes(mockSession)).thenReturn(mockRdfStream);
 
         final Response response = testObj.getNodeTypes();
-        final RdfStream nodeTypes = (RdfStream) response.getEntity();
+        final RdfNamespacedStream nodeTypes = (RdfNamespacedStream) response.getEntity();
 
         assertTrue("Contains Warning header", response.getHeaders().containsKey("Warning"));
-        assertEquals("Got wrong triples!", mockRdfStream, nodeTypes);
+        assertEquals("Got wrong triples!", mockRdfStream, nodeTypes.stream);
 
     }
 
