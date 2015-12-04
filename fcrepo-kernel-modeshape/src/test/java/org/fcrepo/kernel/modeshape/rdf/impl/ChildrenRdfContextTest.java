@@ -35,6 +35,7 @@ import javax.jcr.Session;
 
 import java.util.Iterator;
 
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -85,7 +86,7 @@ public class ChildrenRdfContextTest {
     public void testNoChildren() throws RepositoryException {
         when(mockResourceNode.hasNodes()).thenReturn(false);
 
-        final Model results = new ChildrenRdfContext(mockResource, idTranslator).asModel();
+        final Model results = new ChildrenRdfContext(mockResource, idTranslator).collect(toModel());
         final Resource subject = idTranslator.reverse().convert(mockResource);
 
         final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);
@@ -103,7 +104,7 @@ public class ChildrenRdfContextTest {
         when(mockResourceNode.hasNodes()).thenReturn(true);
         when(mockResource.getChildren()).thenReturn(childrenIterator());
 
-        final Model results = new ChildrenRdfContext(mockResource, idTranslator).asModel();
+        final Model results = new ChildrenRdfContext(mockResource, idTranslator).collect(toModel());
         final Resource subject = idTranslator.reverse().convert(mockResource);
 
         final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);

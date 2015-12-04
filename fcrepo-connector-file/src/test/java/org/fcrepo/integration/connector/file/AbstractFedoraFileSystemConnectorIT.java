@@ -27,6 +27,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -300,7 +301,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
         final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(repo.login());
-        final Model results = binary.getFixity(graphSubjects).asModel();
+        final Model results = binary.getFixity(graphSubjects).collect(toModel());
         assertNotNull(results);
 
         assertFalse("Found no results!", results.isEmpty());

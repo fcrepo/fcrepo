@@ -26,6 +26,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.inject.Inject;
@@ -38,8 +39,9 @@ import javax.ws.rs.Produces;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.models.FedoraBinary;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -92,17 +94,17 @@ public class FedoraFixity extends ContentExposingResource {
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
-    public RdfStream getDatastreamFixity() {
+    public RdfNamespacedStream getDatastreamFixity() {
 
         if (!(resource() instanceof FedoraBinary)) {
             throw new NotFoundException(resource() + " is not a binary");
         }
 
         LOGGER.info("Get fixity for '{}'", externalPath);
-        return ((FedoraBinary)resource()).getFixity(translator())
-                .topic(translator().reverse().convert(resource()).asNode())
-                .session(session);
-
+        return new RdfNamespacedStream(
+                new DefaultRdfStream(translator().reverse().convert(resource()).asNode(),
+                    ((FedoraBinary)resource()).getFixity(translator())),
+                getNamespaces(session()));
     }
 
     @Override

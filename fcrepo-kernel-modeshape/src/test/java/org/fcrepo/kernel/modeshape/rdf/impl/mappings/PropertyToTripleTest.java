@@ -18,6 +18,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static java.util.stream.Collectors.toList;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
 import static javax.jcr.PropertyType.DECIMAL;
@@ -35,7 +36,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
-import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
@@ -77,10 +79,11 @@ public class PropertyToTripleTest {
         when(mockValue.getType()).thenReturn(STRING);
         when(mockValue2.getString()).thenReturn(TEST_VALUE);
         when(mockValue2.getType()).thenReturn(STRING);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
-        final Triple t1 = ts.next();
+        final Stream<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final List<Triple> tl = ts.collect(toList());
+        final Triple t1 = tl.get(0);
         LOGGER.debug("Constructed triple: {}", t1);
-        final Triple t2 = ts.next();
+        final Triple t2 = tl.get(1);
         LOGGER.debug("Constructed triple: {}", t2);
 
         assertEquals("Got wrong RDF object!", TEST_VALUE, t1.getObject()
@@ -107,8 +110,8 @@ public class PropertyToTripleTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn(TEST_NODE_PATH);
         when(mockValue.getType()).thenReturn(PATH);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
-        final Triple t = ts.next();
+        final Stream<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Triple t = ts.findFirst().get();
         LOGGER.debug("Constructed triple: {}", t);
         assertEquals("Got wrong RDF object!", testSubject, t
                 .getObject());
@@ -257,12 +260,13 @@ public class PropertyToTripleTest {
         when(mockValue.getType()).thenReturn(PATH);
         when(mockValue2.getString()).thenReturn(TEST_NODE_PATH);
         when(mockValue2.getType()).thenReturn(PATH);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
-        final Triple t1 = ts.next();
+        final Stream<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final List<Triple> tl = ts.collect(toList());
+        final Triple t1 = tl.get(0);
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
                 t1);
-        final Triple t2 = ts.next();
+        final Triple t2 = tl.get(1);
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
                 t2);
@@ -299,12 +303,13 @@ public class PropertyToTripleTest {
         when(mockSession.getNodeByIdentifier(TEST_NODE_PATH)).thenReturn(
                 mockNode);
 
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
-        final Triple t1 = ts.next();
+        final Stream<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final List<Triple> tl = ts.collect(toList());
+        final Triple t1 = tl.get(0);
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
                 t1);
-        final Triple t2 = ts.next();
+        final Triple t2 = tl.get(1);
         LOGGER.debug(
                 "Constructed triple for testMultiValuedResourceTriple(): {}",
                 t2);
@@ -339,8 +344,8 @@ public class PropertyToTripleTest {
 
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        final Iterator<Triple> ts = testPropertyToTriple.apply(mockProperty);
-        final Triple t = ts.next();
+        final Stream<Triple> ts = testPropertyToTriple.apply(mockProperty);
+        final Triple t = ts.findFirst().get();
         LOGGER.debug("Constructed triple: {}", t);
         return t;
     }

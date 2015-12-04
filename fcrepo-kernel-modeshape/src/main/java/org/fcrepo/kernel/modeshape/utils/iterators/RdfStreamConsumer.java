@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.utils.iterators;
+package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * {@link IteratorConsumer} specific to {@link RdfStream}s.
+ * {@link IteratorConsumer} specific to {@link org.fcrepo.kernel.api.rdf.RdfStream}s.
  *
  * @author ajs6f
  * @since Oct 24, 2013

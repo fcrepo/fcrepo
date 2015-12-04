@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2015 DuraSpace, Inc.
  *
@@ -13,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.utils.iterators;
+package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;

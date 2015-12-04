@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * 
- */
-/**
- * @author ajs6f
- * @since Jan 16, 2014
- */
+package org.fcrepo.kernel.api.rdf;
 
-package org.fcrepo.kernel.api.utils.iterators;
+import java.util.stream.Stream;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+
+/**
+ * A context-bearing RDF Stream interface
+ *
+ * @author acoburn
+ * @since Dec 4, 2015
+ */
+public interface RdfStream extends Stream<Triple> {
+
+    /**
+     * @return the topic node for this stream
+     */
+    Node topic();
+}

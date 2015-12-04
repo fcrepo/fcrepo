@@ -16,6 +16,10 @@
 package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Arrays.stream;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.NamespaceRegistry;
@@ -82,5 +86,29 @@ public final class NamespaceTools {
                 }
             }
         }
+    }
+
+    /**
+     * Retrieve the namespaces as a Map
+     *
+     * @param session the JCR session to use
+     * @return a mapping of the prefix to URI
+     */
+    public static Map<String, String> getNamespaces(final Session session) {
+        final NamespaceRegistry registry = getNamespaceRegistry(session);
+        final Map<String, String> namespaces = new HashMap<>();
+
+        try {
+            stream(registry.getPrefixes()).filter(x -> !x.isEmpty()).forEach(x -> {
+                try {
+                    namespaces.put(x, registry.getURI(x));
+                } catch (final RepositoryException e) {
+                    throw new RepositoryRuntimeException(e);
+                }
+            });
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        return namespaces;
     }
 }

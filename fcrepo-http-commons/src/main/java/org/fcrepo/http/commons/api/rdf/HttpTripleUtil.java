@@ -15,7 +15,8 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static org.fcrepo.kernel.api.utils.iterators.RdfStream.fromModel;
+import static java.util.stream.Stream.concat;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
@@ -26,14 +27,13 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfStream;
 
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
-
-import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * Utility for injecting HTTP-contextual data into an RdfStream
@@ -59,17 +59,19 @@ public class HttpTripleUtil implements ApplicationContextAware {
      * @param resource the FedoraResourceImpl in question
      * @param uriInfo a JAX-RS UriInfo object to build URIs to resources
      * @param idTranslator the id translator
+     * @return an RdfStream with the added triples
      */
-    public void addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
+    public RdfStream addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
             final FedoraResource resource, final UriInfo uriInfo,
             final IdentifierConverter<Resource,FedoraResource> idTranslator) {
 
         LOGGER.debug("Adding additional HTTP context triples to stream");
-        getUriAwareTripleFactories().forEach((bean, factory) -> {
-            LOGGER.debug("Adding response information using: {}", bean);
-            final Model m = factory.createModelForResource(resource, uriInfo, idTranslator);
-            rdfStream.concat(fromModel(m));
-        });
+        final Map<String, UriAwareResourceModelFactory> foo = getUriAwareTripleFactories();
+        return new DefaultRdfStream(rdfStream.topic(), concat(rdfStream, getUriAwareTripleFactories().entrySet()
+                    .stream().flatMap(e -> {
+            LOGGER.debug("Adding response information using: {}", e.getKey());
+            return fromModel(e.getValue().createModelForResource(resource, uriInfo, idTranslator));
+        })));
     }
 
     private Map<String, UriAwareResourceModelFactory> getUriAwareTripleFactories() {

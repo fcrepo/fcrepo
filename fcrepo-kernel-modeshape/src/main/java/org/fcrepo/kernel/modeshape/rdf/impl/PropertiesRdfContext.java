@@ -16,11 +16,11 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Iterator;
+import java.util.stream.Stream;
 
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -29,7 +29,6 @@ import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 
 import org.slf4j.Logger;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -40,8 +39,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @since Oct 10, 2013
  */
 public class PropertiesRdfContext extends NodeRdfContext {
-
-    private final PropertyToTriple property2triple;
 
     private static final Logger LOGGER = getLogger(PropertiesRdfContext.class);
 
@@ -57,17 +54,17 @@ public class PropertiesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        property2triple = new PropertyToTriple(session(), translator());
-        concat(triplesFromProperties(resource()));
+        this.stream = triplesFromProperties(resource,
+                new PropertyToTriple(resource.getNode().getSession(), translator()));
     }
 
-    private Iterator<Triple> triplesFromProperties(final FedoraResource n)
-        throws RepositoryException {
-        LOGGER.trace("Creating triples for node: {}", n);
-        @SuppressWarnings("unchecked")
-        final Iterator<Property> nodeProps = n.getNode().getProperties();
-        final Iterator<Property> properties = Iterators.filter(nodeProps,
-                isInternalProperty.negate()::test);
-        return flatMap(properties, property2triple);
+    @SuppressWarnings("unchecked")
+    private static Stream<Triple> triplesFromProperties(final FedoraResource n, final PropertyToTriple propertyToTriple)
+            throws RepositoryException {
+        LOGGER.warn("Creating triples for node: {}", n);
+        return iteratorToStream(n.getNode().getProperties())
+            .peek(x -> LOGGER.warn("Property: {}", x))
+            .filter(isInternalProperty.negate())
+            .flatMap(propertyToTriple);
     }
 }

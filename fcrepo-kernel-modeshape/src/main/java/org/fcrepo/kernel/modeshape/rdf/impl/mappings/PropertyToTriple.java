@@ -19,15 +19,16 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
-import java.util.Iterator;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import com.google.common.base.Converter;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.impl.LiteralLabel;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -44,7 +45,7 @@ import com.hp.hpl.jena.graph.Triple;
  * @author ajs6f
  * @since Oct 10, 2013
  */
-public class PropertyToTriple implements Function<Property, Iterator<Triple>> {
+public class PropertyToTriple implements Function<Property, Stream<Triple>> {
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
     private final ValueConverter valueConverter;
@@ -62,13 +63,13 @@ public class PropertyToTriple implements Function<Property, Iterator<Triple>> {
     }
 
     @Override
-    public Iterator<Triple> apply(final Property p) {
+    public Stream<Triple> apply(final Property p) {
         try {
             final com.hp.hpl.jena.graph.Node subject = translator.convert(p.getParent()).asNode();
             final com.hp.hpl.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();
             final String propertyName = p.getName();
 
-            return Iterators.transform(new PropertyValueIterator(p), v -> {
+            return iteratorToStream(new PropertyValueIterator(p)).map(v -> {
                 final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
                 if (object.isLiteral()) {
                     // unpack the name of the property for information about what kind of literal

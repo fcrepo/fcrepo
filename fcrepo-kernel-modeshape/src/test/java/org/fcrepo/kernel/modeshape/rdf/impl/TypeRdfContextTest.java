@@ -41,6 +41,7 @@ import java.util.List;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -120,7 +121,7 @@ public class TypeRdfContextTest {
         final Resource mockNodeSubject = idTranslator.reverse().convert(mockResource);
 
         final Model actual =
-                new TypeRdfContext(mockResource, idTranslator).asModel();
+                new TypeRdfContext(mockResource, idTranslator).collect(toModel());
         final Resource expectedRdfTypePrimary =
                 createResource(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName);
         final Resource expectedRdfTypeMixin =

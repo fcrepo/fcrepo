@@ -25,7 +25,7 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDFS.range;
-import static java.util.Collections.emptyIterator;
+import static java.util.stream.Stream.of;
 import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
@@ -41,13 +41,12 @@ import static javax.jcr.PropertyType.nameFromValue;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Iterator;
+import java.util.stream.Stream;
 import java.util.Map;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.slf4j.Logger;
 
 import com.google.common.collect.ImmutableMap;
@@ -96,15 +95,14 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
     }
 
     @Override
-    public Iterator<Triple> apply(final PropertyDefinition input) {
+    public Stream<Triple> apply(final PropertyDefinition input) {
 
         if (!input.getName().contains(":")) {
             LOGGER.debug("Received property definition with no namespace: {}",
                     input.getName());
             LOGGER.debug("This cannot be serialized into several RDF formats, " +
                                  "so we assume it is internal and discard it.");
-            // TODO find a better way...
-            return emptyIterator();
+            return Stream.empty();
         }
 
         try {
@@ -119,7 +117,7 @@ public class PropertyDefinitionToTriples extends ItemDefinitionToTriples<Propert
                 final Triple propertyTriple =
                     create(getResource(input).asNode(), range.asNode(),
                             rangeForJcrType);
-                return new RdfStream(propertyTriple).concat(super.apply(input));
+                return Stream.concat(of(propertyTriple), super.apply(input));
             }
             LOGGER.trace(
                     "Skipping RDFS:range for property: {} with unmappable type: {}",

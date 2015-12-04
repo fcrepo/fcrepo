@@ -15,27 +15,28 @@
  */
 package org.fcrepo.kernel.modeshape.testutilities;
 
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
+import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.graph.Triple.create;
 
 /**
  * @author cabeer
  * @since 9/16/14
  */
-public class TestTriplesContext extends RdfStream {
+public class TestTriplesContext extends DefaultRdfStream {
     /**
      * Add a triple that says we've been there..
-     * @param resource a FedoraREsource
+     * @param resource a FedoraResource
      * @param idTranslator an IdentifierConvertor
      */
     public TestTriplesContext(final FedoraResource resource,
                               final IdentifierConverter<Resource, FedoraResource> idTranslator) {
-        concat(Triple.create(createURI("MockTriplesContextClass"), createURI("isAThing"), createLiteral("n")));
+        this.stream = of(create(createURI("MockTriplesContextClass"), createURI("isAThing"), createLiteral("n")));
     }
 }

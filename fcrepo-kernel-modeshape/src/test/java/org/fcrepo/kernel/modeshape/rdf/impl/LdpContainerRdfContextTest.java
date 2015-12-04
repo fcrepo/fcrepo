@@ -39,6 +39,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -109,7 +110,7 @@ public class LdpContainerRdfContextTest {
         when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(mockReferences);
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
@@ -122,7 +123,7 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getNodes()).thenReturn(new TestNodeIterator());
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to be empty", model.isEmpty());
 
@@ -138,7 +139,7 @@ public class LdpContainerRdfContextTest {
         when(mockChild.getPath()).thenReturn("/b");
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
@@ -154,7 +155,7 @@ public class LdpContainerRdfContextTest {
         when(mockChild.getPath()).thenReturn("/b");
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
 
@@ -174,7 +175,7 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(mockRelation);
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
@@ -210,7 +211,7 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(mockRelation);
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
@@ -247,7 +248,7 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(mockRelation);
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
@@ -279,7 +280,7 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(mockRelation);
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
 
@@ -299,7 +300,7 @@ public class LdpContainerRdfContextTest {
         when(mockContainerNode.getProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(mockRelation);
         testObj = new LdpContainerRdfContext(mockResource, subjects);
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
         assertTrue("Expected stream to be empty", model.isEmpty());
     }
 

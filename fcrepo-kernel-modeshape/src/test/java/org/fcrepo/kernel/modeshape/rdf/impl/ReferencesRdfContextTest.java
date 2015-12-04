@@ -33,6 +33,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -113,7 +114,7 @@ public class ReferencesRdfContextTest {
 
     @Test
     public void testStrongReferences() {
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
         assertTrue(model.contains(createResource("info:fedora/b"),
                 createProperty("info:strong"),
                 createResource("info:fedora/a")));
@@ -122,7 +123,7 @@ public class ReferencesRdfContextTest {
     @Test
     public void testWeakReferences() {
 
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
         assertTrue(model.contains(createResource("info:fedora/b"),
                 createProperty("info:weak"),
                 createResource("info:fedora/a")));

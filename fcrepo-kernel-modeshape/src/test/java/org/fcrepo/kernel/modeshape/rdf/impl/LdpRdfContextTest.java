@@ -20,6 +20,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -82,7 +83,7 @@ public class LdpRdfContextTest {
     @Test
     public void shouldIncludeRdfTypeAssertions() {
         testObj = new LdpRdfContext(mockResource, subjects);
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue(model.contains(subject(), RDF.type, RDF_SOURCE));
     }
@@ -90,7 +91,7 @@ public class LdpRdfContextTest {
     @Test
     public void shouldIncludeBinaryTypeAssertions() {
         testObj = new LdpRdfContext(mockBinary, subjects);
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue(model.contains(subject(), RDF.type, NON_RDF_SOURCE));
     }
@@ -98,7 +99,7 @@ public class LdpRdfContextTest {
     @Test
     public void shouldIncludeRdfContainerAssertions() {
         testObj = new LdpRdfContext(mockContainer, subjects);
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue(model.contains(subject(), RDF.type, RDF_SOURCE));
         assertTrue(model.contains(subject(), RDF.type, CONTAINER));
@@ -107,7 +108,7 @@ public class LdpRdfContextTest {
     @Test
     public void shouldIncludeRdfDefaultContainerAssertion() {
         testObj = new LdpRdfContext(mockContainer, subjects);
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertTrue(model.contains(subject(), RDF.type, BASIC_CONTAINER));
     }
@@ -116,7 +117,7 @@ public class LdpRdfContextTest {
     public void shouldNotIncludeRdfDefaultContainerAssertionIfContainerSet() {
         when(mockContainer.hasType(FEDORA_CONTAINER)).thenReturn(true);
         testObj = new LdpRdfContext(mockContainer, subjects);
-        final Model model = testObj.asModel();
+        final Model model = testObj.collect(toModel());
 
         assertFalse(model.contains(subject(), RDF.type, BASIC_CONTAINER));
     }

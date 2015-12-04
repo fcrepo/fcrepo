@@ -15,15 +15,16 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static java.util.stream.Stream.concat;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -36,10 +37,9 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Accumulate inbound references to a given resource
@@ -66,33 +66,33 @@ public class ReferencesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         super(resource, idTranslator);
         property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        putReferencesIntoContext(resource.getNode());
+        this.stream = putReferencesIntoContext(resource.getNode());
     }
 
     private final Predicate<Triple> INBOUND = t -> {
         return t.getObject().getURI().equals(uriFor(resource()).getURI());
     };
 
-    @SuppressWarnings("unchecked")
-    private void putReferencesIntoContext(final Node node) throws RepositoryException {
-        Iterator<Property> references = node.getReferences();
-        Iterator<Property> weakReferences = node.getWeakReferences();
-        Iterator<Property> allReferences = Iterators.concat(references, weakReferences);
-        concat(flatMap(allReferences, property2triple));
-
-        references = node.getReferences();
-        weakReferences = node.getWeakReferences();
-        allReferences = Iterators.concat(references, weakReferences);
-        concat(Iterators.filter(flatMap(flatMap( allReferences, potentialProxies), triplesForValue), INBOUND::test));
-    }
-
     /* References from LDP indirect containers are generated dynamically by LdpContainerRdfContext, so they won't
        show up in getReferences()/getWeakReferences().  Instead, we should check referencers to see if they are
        members of an IndirectContainer and generate the appropriate inbound references. */
     @SuppressWarnings("unchecked")
-    private final Function<Property, Iterator<Value>> potentialProxies = uncheck(p -> Iterators.filter(
-            new PropertyValueIterator(p.getParent().getProperties()), v -> REFERENCE_TYPES.contains(v.getType())));
+    private Stream<Triple> putReferencesIntoContext(final Node node) throws RepositoryException {
+        return concat(
+            getAllReferences(node).flatMap(property2triple),
+            getAllReferences(node).flatMap(uncheck((final Property x) -> {
+                    return iteratorToStream(new PropertyValueIterator(x.getParent().getProperties()))
+                        .filter((final Value y) -> REFERENCE_TYPES.contains(y.getType()));
+                }))
+                .flatMap(uncheck((final Value x) -> {
+                    return new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(node.getSession(), x)),
+                        translator());
+                }))
+                .filter(INBOUND));
+    }
 
-    private final Function<Value, Iterator<Triple>> triplesForValue = uncheck(v ->
-        new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(session(), v)), translator()));
+    @SuppressWarnings("unchecked")
+    private Stream<Property> getAllReferences(final Node node) throws RepositoryException {
+        return concat(iteratorToStream(node.getReferences()), iteratorToStream(node.getWeakReferences()));
+    }
 }

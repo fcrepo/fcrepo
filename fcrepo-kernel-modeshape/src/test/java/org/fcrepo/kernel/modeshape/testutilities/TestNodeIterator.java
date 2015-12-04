@@ -15,17 +15,15 @@
  */
 package org.fcrepo.kernel.modeshape.testutilities;
 
-import static com.google.common.collect.Iterators.advance;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 
 import org.slf4j.Logger;
-
-import com.google.common.collect.Iterators;
 
 /**
  * <p>TestNodeIterator class.</p>
@@ -36,13 +34,13 @@ public class TestNodeIterator implements NodeIterator {
 
     private static final Logger LOGGER = getLogger(TestNodeIterator.class);
 
-    private Iterator<Node> i;
+    private Iterator<Node> iter;
 
     private int counter;
 
     public TestNodeIterator(final Node... nodes) {
         this.counter = 0;
-        this.i = Iterators.forArray(nodes);
+        this.iter = Arrays.asList(nodes).iterator();
     }
 
     public static TestNodeIterator nodeIterator(final Node... nodes) {
@@ -51,8 +49,9 @@ public class TestNodeIterator implements NodeIterator {
 
     @Override
     public void skip(final long skipNum) {
-        advance(i, (int) skipNum);
-
+        for (int i = 0; i < skipNum; i++) {
+            iter.next();
+        }
     }
 
     @Override
@@ -67,20 +66,20 @@ public class TestNodeIterator implements NodeIterator {
 
     @Override
     public void remove() {
-        i.remove();
+        iter.remove();
     }
 
     @Override
     public Node nextNode() {
         counter++;
-        final Node n = i.next();
+        final Node n = iter.next();
         LOGGER.debug("Returning node: {}", n);
         return n;
     }
 
     @Override
     public boolean hasNext() {
-        return i.hasNext();
+        return iter.hasNext();
     }
 
     @Override

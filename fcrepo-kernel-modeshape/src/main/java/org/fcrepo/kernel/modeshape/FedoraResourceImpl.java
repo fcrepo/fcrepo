@@ -24,10 +24,13 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
+import static java.util.EnumSet.of;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
@@ -46,13 +49,16 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -85,9 +91,27 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.iterators.GraphDifferencingIterator;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
+import org.fcrepo.kernel.api.rdf.RdfContext;
+import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
+>>>>>>> Replace Iterator-based RdfStream with Stream-based RdfStream
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
@@ -114,6 +138,24 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
+
+    private static final Map<RdfContext, Class<? extends RdfStream>> contextMap = Collections.unmodifiableMap(Stream.of(
+           new SimpleEntry<>(RdfContext.ACL, AclRdfContext.class),
+           new SimpleEntry<>(RdfContext.CHILDREN, ChildrenRdfContext.class),
+           new SimpleEntry<>(RdfContext.CONTENT, ContentRdfContext.class),
+           new SimpleEntry<>(RdfContext.FIXITY, FixityRdfContext.class),
+           new SimpleEntry<>(RdfContext.HASH_URI, HashRdfContext.class),
+           new SimpleEntry<>(RdfContext.LDP_CONTAINMENT, LdpContainerRdfContext.class),
+           new SimpleEntry<>(RdfContext.LDP_MEMBERSHIP, LdpIsMemberOfRdfContext.class),
+           new SimpleEntry<>(RdfContext.LDP, LdpRdfContext.class),
+           new SimpleEntry<>(RdfContext.PARENT, ParentRdfContext.class),
+           new SimpleEntry<>(RdfContext.PROPERTIES, PropertiesRdfContext.class),
+           new SimpleEntry<>(RdfContext.RDF_TYPE, TypeRdfContext.class),
+           new SimpleEntry<>(RdfContext.REFERENCES, ReferencesRdfContext.class),
+           new SimpleEntry<>(RdfContext.ROOT, RootRdfContext.class),
+           new SimpleEntry<>(RdfContext.SKOLEM, SkolemNodeRdfContext.class),
+           new SimpleEntry<>(RdfContext.VERSIONS, VersionsRdfContext.class))
+            .collect(toMap(x -> x.getKey(), x -> x.getValue())));
 
     protected Node node;
 
@@ -421,7 +463,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                                  final String sparqlUpdateStatement, final RdfStream originalTriples)
             throws MalformedRdfException, AccessDeniedException {
 
-        final Model model = originalTriples.asModel();
+        final Model model = originalTriples.collect(toModel());
 
         final UpdateRequest request = create(sparqlUpdateStatement,
                 idTranslator.reverse().convert(this).toString());
@@ -466,24 +508,23 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Class<? extends RdfStream> context) {
-        return getTriples(idTranslator, Collections.singleton(context));
+                                final RdfContext context) {
+        return getTriples(idTranslator, of(context));
     }
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Iterable<? extends Class<? extends RdfStream>> contexts) {
-        final RdfStream stream = new RdfStream();
+                                final EnumSet<RdfContext> contexts) {
 
-        for (final Class<? extends RdfStream> context : contexts) {
+        final com.hp.hpl.jena.graph.Node uri = idTranslator.reverse().convert(this).asNode();
+        final Map<String, String> namespaces;
+
+        return new DefaultRdfStream(uri, contexts.stream().map(contextMap::get).flatMap(x -> {
             try {
                 final Constructor<? extends RdfStream> declaredConstructor
-                        = context.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
+                        = x.getDeclaredConstructor(FedoraResource.class, IdentifierConverter.class);
 
-                final RdfStream rdfStream = declaredConstructor.newInstance(this, idTranslator);
-                rdfStream.session(getSession());
-
-                stream.concat(rdfStream);
+                return declaredConstructor.newInstance(this, idTranslator);
             } catch (final NoSuchMethodException |
                     InstantiationException |
                     IllegalAccessException e) {
@@ -496,9 +537,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
                 throw propagate(cause);
             }
-        }
-
-        return stream;
+        }));
     }
 
     /*
@@ -543,16 +582,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
-        final RdfStream replacementStream = new RdfStream().namespaces(inputModel.getNsPrefixMap())
-                .topic(idTranslator.reverse().convert(this).asNode());
+        final RdfStream replacementStream = new DefaultRdfStream(idTranslator.reverse().convert(this).asNode());
 
-        final GraphDifferencingIterator differencer =
-            new GraphDifferencingIterator(inputModel, originalTriples);
+        final GraphDifferencer differencer =
+            new GraphDifferencer(inputModel, originalTriples);
 
         final StringBuilder exceptions = new StringBuilder();
         try {
-            new RdfRemover(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer)).consume();
+            new RdfRemover(idTranslator, getSession(), new DefaultRdfStream(replacementStream.topic(),
+                        differencer.difference())).consume();
         } catch (final ConstraintViolationException e) {
             throw e;
         } catch (final MalformedRdfException e) {
@@ -561,8 +599,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
 
         try {
-            new RdfAdder(idTranslator, getSession(), replacementStream
-                    .withThisContext(differencer.notCommon())).consume();
+            new RdfAdder(idTranslator, getSession(), new DefaultRdfStream(replacementStream.topic(),
+                        differencer.notCommon())).consume();
         } catch (final ConstraintViolationException e) {
             throw e;
         } catch (final MalformedRdfException e) {

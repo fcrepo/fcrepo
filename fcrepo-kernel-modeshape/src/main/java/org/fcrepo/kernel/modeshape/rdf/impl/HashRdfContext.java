@@ -17,15 +17,21 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.RdfContext;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import java.util.Iterator;
-import java.util.List;
-import static java.util.Arrays.asList;
+import java.util.EnumSet;
+import java.util.stream.Stream;
+
+import static java.util.EnumSet.of;
+import static org.fcrepo.kernel.api.rdf.RdfContext.RDF_TYPE;
+import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.rdf.RdfContext.SKOLEM;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 
 /**
@@ -36,8 +42,7 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 public class HashRdfContext extends NodeRdfContext {
 
 
-    private static final List<Class<? extends NodeRdfContext>> contexts = asList(TypeRdfContext.class,
-            PropertiesRdfContext.class, SkolemNodeRdfContext.class);
+    private static final EnumSet<RdfContext> contexts = of(RDF_TYPE, PROPERTIES, SKOLEM);
 
     /**
      * Default constructor.
@@ -51,11 +56,17 @@ public class HashRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        final Node node = resource().getNode();
+        this.stream = getNodeStream(resource)
+                .flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator, contexts));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Stream<Node> getNodeStream(final FedoraResource resource) throws RepositoryException {
+        final Node node = resource.getNode();
         if (node.hasNode("#")) {
-            @SuppressWarnings("unchecked")
-            final Iterator<Node> hashChildrenNodes = node.getNode("#").getNodes();
-            concat(flatMap(hashChildrenNodes, n -> nodeConverter.convert(n).getTriples(idTranslator, contexts)));
+            return iteratorToStream(node.getNode("#").getNodes());
+        } else {
+            return Stream.empty();
         }
     }
 }

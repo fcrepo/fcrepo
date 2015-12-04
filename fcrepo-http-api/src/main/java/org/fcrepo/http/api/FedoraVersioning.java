@@ -24,6 +24,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.fcrepo.kernel.api.rdf.RdfContext.VERSIONS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -32,6 +33,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -54,11 +56,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
-import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -170,14 +172,15 @@ public class FedoraVersioning extends FedoraBaseResource {
     @HtmlTemplate(value = "fcr:versions")
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8", N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN,
             TURTLE_X, TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
-    public RdfStream getVersionList() {
+    public RdfNamespacedStream getVersionList() {
         if (!resource().isVersioned()) {
             throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
         }
 
-        return resource().getTriples(translator(), VersionsRdfContext.class)
-                .session(session)
-                .topic(translator().reverse().convert(resource()).asNode());
+        return new RdfNamespacedStream(new DefaultRdfStream(
+                translator().reverse().convert(resource()).asNode(),
+                resource().getTriples(translator(), VERSIONS)),
+                getNamespaces(session()));
     }
 
     protected FedoraResource resource() {

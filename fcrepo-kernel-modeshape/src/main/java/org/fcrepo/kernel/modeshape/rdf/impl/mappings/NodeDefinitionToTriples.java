@@ -17,14 +17,16 @@ package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.slf4j.Logger;
+
+import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.nodetype.NodeDefinition;
 import javax.jcr.nodetype.NodeType;
-import java.util.Iterator;
 
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
 import static com.google.common.base.Throwables.propagate;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDFS.range;
@@ -48,7 +50,7 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
     }
 
     @Override
-    public Iterator<Triple> apply(final NodeDefinition input) {
+    public Stream<Triple> apply(final NodeDefinition input) {
 
         try {
 
@@ -65,9 +67,10 @@ public class NodeDefinitionToTriples extends ItemDefinitionToTriples<NodeDefinit
                 LOGGER.trace("Adding RDFS:range for {} with primary types {}",
                              input.getName(),
                              requiredPrimaryTypes[0].getName());
-                return new RdfStream(create(propertyDefinitionNode, range
-                        .asNode(), getResource(requiredPrimaryTypes[0])
-                        .asNode())).concat(super.apply(input));
+                return concat(
+                        of(create(propertyDefinitionNode, range.asNode(),
+                                getResource(requiredPrimaryTypes[0]).asNode())),
+                        super.apply(input));
             } else {
                 LOGGER.trace("Skipping RDFS:range for {} with no required primary types");
             }

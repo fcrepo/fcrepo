@@ -18,30 +18,27 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * {@link RdfStream} that holds contexts related to a specific {@link Node}.
+ * {@link org.fcrepo.kernel.api.rdf.RdfStream} that holds contexts related to a specific {@link Node}.
  *
  * @author ajs6f
  * @since Oct 10, 2013
  */
-public class NodeRdfContext extends RdfStream {
+public class NodeRdfContext extends DefaultRdfStream {
 
     private final FedoraResource resource;
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private final com.hp.hpl.jena.graph.Node subject;
-
 
     /**
      * Default constructor.
@@ -51,15 +48,10 @@ public class NodeRdfContext extends RdfStream {
      */
     public NodeRdfContext(final FedoraResource resource,
                           final IdentifierConverter<Resource, FedoraResource> idTranslator) {
-        super();
+        super(idTranslator.reverse().convert(resource).asNode());
         this.resource = resource;
         this.idTranslator = idTranslator;
         this.subject = uriFor(resource);
-        try {
-            session(resource.getNode().getSession());
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
     }
 
     /**

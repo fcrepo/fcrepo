@@ -17,9 +17,8 @@ package org.fcrepo.integration.connector.file;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 import org.junit.Test;
 
 import javax.jcr.PathNotFoundException;
@@ -28,6 +27,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -71,7 +71,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                     "'some-test-name' }";
 
             // Write the properties
-            object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new RdfStream());
+            object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new DefaultRdfStream());
 
             // Verify
             final Property property = object.getNode().getProperty("fedora:name");
@@ -99,7 +99,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
             // Write the properties
             final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
-            object.updateProperties(graphSubjects, sparql, new RdfStream());
+            object.updateProperties(graphSubjects, sparql, new DefaultRdfStream());
 
             // Verify property exists
             final Property property = object.getNode().getProperty("fedora:remove");
@@ -116,7 +116,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
             // Remove the properties
             object.updateProperties(graphSubjects,
                     sparqlRemove,
-                    object.getTriples(graphSubjects, PropertiesRdfContext.class));
+                    object.getTriples(graphSubjects, PROPERTIES));
 
             // Persist the object (although the propery will be removed from memory without this.)
             session.save();

@@ -15,21 +15,22 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.RdfStream;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
- * Consumes an {@link org.fcrepo.kernel.api.utils.iterators.RdfStream} by removing its contents from the
+ * Consumes an {@link RdfStream} by removing its contents from the
  * JCR.
  *
  * @see RdfAdder
@@ -56,7 +57,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     protected void operateOnMixin(final Resource mixinResource,
         final FedoraResource resource) throws RepositoryException {
 
-        jcrRdfTools().removeMixin(resource, mixinResource, stream().namespaces());
+        jcrRdfTools().removeMixin(resource, mixinResource, getNamespaces(resource.getNode().getSession()));
     }
 
     @Override
@@ -64,7 +65,8 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
         throws RepositoryException {
         LOGGER.debug("Trying to remove property from triple: {} on resource: {}.", t, resource
                 .getPath());
-        jcrRdfTools().removeProperty(resource, t.getPredicate(), t.getObject(), stream().namespaces());
-
+        jcrRdfTools().removeProperty(resource, t.getPredicate(), t.getObject(),
+                getNamespaces(resource.getNode().getSession()));
     }
+
 }

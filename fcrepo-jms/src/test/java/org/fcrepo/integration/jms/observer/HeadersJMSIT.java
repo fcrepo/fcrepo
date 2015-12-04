@@ -26,6 +26,7 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
 import static org.jgroups.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -51,7 +52,6 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 
 import org.junit.After;
 import org.junit.Before;
@@ -170,14 +170,14 @@ public class HeadersJMSIT implements MessageListener {
         try {
             final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
-            resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PropertiesRdfContext.class));
+            resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PROPERTIES));
             session.save();
             awaitMessageOrFail(testMeta, PROP_ADDED_EVENT_TYPE, "http://foo.com/prop");
 
             final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                 + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
-            resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PropertiesRdfContext.class));
+            resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PROPERTIES));
             session.save();
             awaitMessageOrFail(testMeta, PROP_CHANGED_EVENT_TYPE, "http://foo.com/prop");
         } finally {

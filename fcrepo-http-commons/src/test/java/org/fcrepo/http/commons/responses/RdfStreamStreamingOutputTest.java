@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static java.util.stream.Stream.of;
 import static com.google.common.util.concurrent.Futures.addCallback;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
@@ -38,14 +39,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -77,10 +82,15 @@ public class RdfStreamStreamingOutputTest {
     @Mock
     private Node mockNode;
 
-    private final RdfStream testRdfStream = new RdfStream(triple);
+    private final RdfStream testRdfStream = new DefaultRdfStream(of(triple));
+
+    private final Map<String, String> testNamespaces = new HashMap<>();
 
     @Mock
     private RdfStream mockRdfStream;
+
+    @Mock
+    private Session mockSession;
 
     private final MediaType testMediaType = valueOf("application/rdf+xml");
 
@@ -93,7 +103,7 @@ public class RdfStreamStreamingOutputTest {
     public void setUp() {
         initMocks(this);
         testRdfStreamStreamingOutput =
-            new RdfStreamStreamingOutput(testRdfStream, testMediaType);
+            new RdfStreamStreamingOutput(testRdfStream, testNamespaces, testMediaType);
     }
 
     @Test
@@ -116,9 +126,9 @@ public class RdfStreamStreamingOutputTest {
     }
 
     public void assertOutputContainsTriple(final Triple expected) throws IOException {
-        final RdfStream input = new RdfStream(expected);
+        final RdfStream input = new DefaultRdfStream(of(expected));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, testMediaType).write(output);
+            new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
             try (
                 final InputStream resultStream =
                     new ByteArrayInputStream(output.toByteArray())) {
@@ -132,9 +142,11 @@ public class RdfStreamStreamingOutputTest {
 
     @Test
     public void testWriteWithNamespace() throws IOException {
-        final RdfStream input = new RdfStream().namespace("a", "info:a");
+        final Map<String, String> namespaces = new HashMap<>();
+        namespaces.put("a", "info:a");
+        final RdfStream input = new DefaultRdfStream();
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, RDFMediaType.TURTLE_TYPE).write(output);
+            new RdfStreamStreamingOutput(input, namespaces, RDFMediaType.TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
             assertTrue(s.contains("@prefix a: <info:a>"));
         }
@@ -143,9 +155,11 @@ public class RdfStreamStreamingOutputTest {
 
     @Test
     public void testWriteWithXmlnsNamespace() throws IOException {
-        final RdfStream input = new RdfStream().namespace("xmlns", "info:a");
+        final Map<String, String> namespaces = new HashMap<>();
+        namespaces.put("xmlns", "info:a");
+        final RdfStream input = new DefaultRdfStream();
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, RDFMediaType.TURTLE_TYPE).write(output);
+            new RdfStreamStreamingOutput(input, namespaces, RDFMediaType.TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
             assertFalse(s.contains("@prefix xmlns"));
         }
@@ -161,11 +175,11 @@ public class RdfStreamStreamingOutputTest {
     @Test
     public void testWriteWithBlankSubject() throws IOException {
 
-        final RdfStream input = new RdfStream(create(createResource().asNode(),
+        final RdfStream input = new DefaultRdfStream(of(create(createResource().asNode(),
                 createURI("info:testPredicate"),
-                createTypedLiteral(0).asNode()));
+                createTypedLiteral(0).asNode())));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, testMediaType).write(output);
+            new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
 
             try (final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
                 final Model result = createDefaultModel().read(resultStream, null);
@@ -179,11 +193,11 @@ public class RdfStreamStreamingOutputTest {
     @Test
     public void testWriteWithBlankObject() throws IOException {
 
-        final RdfStream input = new RdfStream(create(createResource().asNode(),
+        final RdfStream input = new DefaultRdfStream(of(create(createResource().asNode(),
                 createURI("info:testPredicate"),
-                createResource().asNode()));
+                createResource().asNode())));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, testMediaType).write(output);
+            new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
 
             try (final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
                 final Model result = createDefaultModel().read(resultStream, null);

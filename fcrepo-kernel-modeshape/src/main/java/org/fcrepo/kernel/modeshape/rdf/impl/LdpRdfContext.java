@@ -23,6 +23,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 
+import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
+
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -48,21 +51,22 @@ public class LdpRdfContext extends NodeRdfContext {
                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
 
+        final Stream.Builder<Triple> builder = Stream.builder();
 
         if (resource instanceof NonRdfSource) {
-            concat(nonRdfSourceContext());
+            builder.accept(nonRdfSourceContext());
         } else {
-            concat(typeContext());
+            builder.accept(typeContext());
         }
 
         if (resource instanceof Container) {
-            concat(containerContext());
+            builder.accept(containerContext());
 
             if (!resource.hasType(FEDORA_CONTAINER)) {
-                concat(defaultContainerContext());
+                builder.accept(defaultContainerContext());
             }
         }
-
+        this.stream = builder.build();
     }
 
     private Triple typeContext() {

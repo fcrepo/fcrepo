@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
+import static java.util.stream.Stream.of;
 import static com.google.common.collect.Sets.newHashSet;
 import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -25,19 +26,18 @@ import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import javax.jcr.Node;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -62,7 +62,7 @@ public class PersistingRdfStreamConsumerTest {
     @Test
     public void testConsumeAsync() {
 
-        final RdfStream testStream = new RdfStream(profferedStatements);
+        final RdfStream testStream = new DefaultRdfStream(of(profferedStatements).map(Statement::asTriple));
 
         final Set<Statement> rejectedStatements =
             newHashSet(profferedStatements);
@@ -104,28 +104,6 @@ public class PersistingRdfStreamConsumerTest {
                 && !rejectedMixins.contains(mixinStatement.getObject()
                         .asResource()));
 
-    }
-
-    @Test(expected = ExecutionException.class)
-    public void testBadStream() throws Exception {
-        when(mockTriples.hasNext())
-                .thenThrow(new RuntimeException("Expected."));
-        testPersister =
-            new PersistingRdfStreamConsumer(idTranslator, mockSession,
-                    new RdfStream(mockTriples)) {
-
-                    @Override
-                    protected void operateOnProperty(final Statement s,
-                        final FedoraResource resource) {
-                    }
-
-                    @Override
-                    protected void operateOnMixin(final Resource mixinResource,
-                            final FedoraResource resource) {
-                    }
-                };
-        // this should blow out when we try to retrieve the result
-        testPersister.consumeAsync().get();
     }
 
     @Before
@@ -200,7 +178,7 @@ public class PersistingRdfStreamConsumerTest {
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
-    private Iterator<Triple> mockTriples;
+    private Stream<Triple> mockTriples;
 
     private PersistingRdfStreamConsumer testPersister;
 

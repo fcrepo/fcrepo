@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
@@ -49,11 +50,11 @@ public class ContentRdfContext extends NodeRdfContext {
             final Node subject = uriFor(resource());
             final Node contentSubject = uriFor(contentNode);
             // add triples representing parent-to-content-child relationship
-            concat(create(subject, DESCRIBES.asNode(), contentSubject));
+            this.stream = of(create(subject, DESCRIBES.asNode(), contentSubject));
 
         } else if (resource instanceof FedoraBinary) {
             final FedoraResource description = ((FedoraBinary) resource).getDescription();
-            concat(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description)));
+            this.stream = of(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description)));
         }
     }
 }

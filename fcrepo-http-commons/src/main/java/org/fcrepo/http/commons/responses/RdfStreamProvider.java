@@ -36,16 +36,12 @@ import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
 import javax.annotation.PostConstruct;
-import javax.jcr.RepositoryException;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
-import org.fcrepo.kernel.modeshape.rdf.impl.NamespaceRdfContext;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFWriterRegistry;
 import org.openrdf.rio.ntriples.NTriplesWriterFactory;
@@ -59,7 +55,7 @@ import org.slf4j.Logger;
  */
 @Provider
 @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X, JSON_LD})
-public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
+public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
     private static final Logger LOGGER = getLogger(RdfStreamProvider.class);
 
@@ -69,7 +65,7 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
         LOGGER.debug(
                 "Checking to see if we can serialize type: {} to mimeType: {}",
                 type.getName(), mediaType.toString());
-        if (!RdfStream.class.isAssignableFrom(type)) {
+        if (!RdfNamespacedStream.class.isAssignableFrom(type)) {
             return false;
         }
         if (mediaType.equals(TEXT_HTML_TYPE)
@@ -84,7 +80,7 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
     }
 
     @Override
-    public long getSize(final RdfStream t, final Class<?> type,
+    public long getSize(final RdfNamespacedStream t, final Class<?> type,
             final Type genericType, final Annotation[] annotations,
             final MediaType mediaType) {
         // We do not know how long the stream is
@@ -92,26 +88,16 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfStream> {
     }
 
     @Override
-    public void writeTo(final RdfStream rdfStream, final Class<?> type,
+    public void writeTo(final RdfNamespacedStream nsStream, final Class<?> type,
         final Type genericType, final Annotation[] annotations,
         final MediaType mediaType,
         final MultivaluedMap<String, Object> httpHeaders,
         final OutputStream entityStream) {
 
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
-        try {
-            if (rdfStream.namespaces().isEmpty()) {
-                final RdfStream namespaceRdfContext = new NamespaceRdfContext(rdfStream.session());
-                rdfStream.namespaces(namespaceRdfContext.namespaces());
-            }
-
-            final RdfStreamStreamingOutput streamOutput = new RdfStreamStreamingOutput(rdfStream, mediaType);
-            streamOutput.write(entityStream);
-        } catch (final RepositoryException e) {
-            throw new WebApplicationException(e);
-        }
-
-
+        final RdfStreamStreamingOutput streamOutput = new RdfStreamStreamingOutput(nsStream.stream,
+                nsStream.namespaces, mediaType);
+        streamOutput.write(entityStream);
     }
 
     /**

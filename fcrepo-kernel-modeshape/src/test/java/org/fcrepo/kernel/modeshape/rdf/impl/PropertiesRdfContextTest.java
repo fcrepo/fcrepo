@@ -18,6 +18,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
+import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -27,6 +28,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
 import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -74,6 +76,9 @@ public class PropertiesRdfContextTest {
     @Mock
     private Session mockSession;
 
+    @Mock
+    private PropertyIterator mockPropertyIterator;
+
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private static final String RDF_PROPERTY_NAME = "rdf-property-name";
@@ -107,20 +112,6 @@ public class PropertiesRdfContextTest {
         when(mockResourceNode.getSession()).thenReturn(mockSession);
         when(mockResource.getPath()).thenReturn(RDF_PATH);
 
-        final Property mockResourceProperty = mock(Property.class);
-        final PropertyDefinition mockPropertyDefinition = mock(PropertyDefinition.class);
-        when(mockPropertyDefinition.isProtected()).thenReturn(false);
-        when(mockResourceProperty.getDefinition()).thenReturn(mockPropertyDefinition);
-
-        when(mockResourceProperty.getParent()).thenReturn(mockResourceNode);
-        final Value mockResourcePropertyValue = mock(Value.class);
-
-        when(mockResourcePropertyValue.getType()).thenReturn(PropertyType.URI);
-        when(mockResourceProperty.getValue()).thenReturn(mockResourcePropertyValue);
-        when(mockResourceProperty.getName()).thenReturn(RDF_PROPERTY_NAME);
-        when(mockResourcePropertyValue.getString()).thenReturn(RDF_PROPERTY_VALUE);
-
-        when(mockResourceNode.getProperties()).thenReturn(new TestPropertyIterator(mockResourceProperty));
         when(mockResourceNode.getPath()).thenReturn(RDF_PATH);
 
         // Mock NonRDF Source
@@ -131,6 +122,13 @@ public class PropertiesRdfContextTest {
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockNonRdfSourceDescription.getNode()).thenReturn(mockResourceNode);
 
+        when(mockBinaryNode.getPath()).thenReturn(BINARY_PATH);
+
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
+    }
+
+    @Test
+    public void testFedoraBinaryProperties() throws RepositoryException {
         final Property mockNonRdfProperty = mock(Property.class);
         final PropertyDefinition mockNonRdfPropertyDefinition = mock(PropertyDefinition.class);
         when(mockNonRdfPropertyDefinition.isProtected()).thenReturn(false);
@@ -145,15 +143,12 @@ public class PropertiesRdfContextTest {
         when(mockNonRdfPropertyValue.getString()).thenReturn(BINARY_PROPERTY_VALUE);
 
         when(mockBinaryNode.getProperties()).thenReturn(new TestPropertyIterator(mockNonRdfProperty));
-        when(mockBinaryNode.getPath()).thenReturn(BINARY_PATH);
+        when(mockPropertyIterator.next()).thenReturn(mockNonRdfProperty);
+        when(mockPropertyIterator.hasNext()).thenReturn(true, false);
 
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
-    }
-
-    @Test
-    public void testFedoraBinaryProperties() throws RepositoryException {
-        final Model results = new PropertiesRdfContext(mockBinary, idTranslator).asModel();
+        final Model results = new PropertiesRdfContext(mockBinary, idTranslator).collect(toModel());
         final Resource correctSubject = idTranslator.reverse().convert(mockBinary);
+
         results.listStatements().forEachRemaining(stmnt -> {
             assertEquals("All subjects in triples created should be the resource processed!",
                     correctSubject, stmnt.getSubject());
@@ -164,7 +159,23 @@ public class PropertiesRdfContextTest {
 
     @Test
     public void testFedoraResourceProperties() throws RepositoryException {
-        final Model results = new PropertiesRdfContext(mockResource, idTranslator).asModel();
+        final Property mockResourceProperty = mock(Property.class);
+        final PropertyDefinition mockPropertyDefinition = mock(PropertyDefinition.class);
+        when(mockPropertyDefinition.isProtected()).thenReturn(false);
+        when(mockResourceProperty.getDefinition()).thenReturn(mockPropertyDefinition);
+
+        when(mockResourceProperty.getParent()).thenReturn(mockResourceNode);
+        final Value mockResourcePropertyValue = mock(Value.class);
+
+        when(mockResourcePropertyValue.getType()).thenReturn(PropertyType.URI);
+        when(mockResourceProperty.getValue()).thenReturn(mockResourcePropertyValue);
+        when(mockResourceProperty.getName()).thenReturn(RDF_PROPERTY_NAME);
+        when(mockResourcePropertyValue.getString()).thenReturn(RDF_PROPERTY_VALUE);
+        when(mockResourceNode.getProperties()).thenReturn(new TestPropertyIterator(mockResourceProperty));
+        when(mockPropertyIterator.next()).thenReturn(mockResourceProperty);
+        when(mockPropertyIterator.hasNext()).thenReturn(true, false);
+
+        final Model results = new PropertiesRdfContext(mockResource, idTranslator).collect(toModel());
 
         assertTrue("Should contain RdfSource statement: " + results + " -- " + RDF_SOURCE_STMT,
                 results.contains(RDF_SOURCE_STMT));

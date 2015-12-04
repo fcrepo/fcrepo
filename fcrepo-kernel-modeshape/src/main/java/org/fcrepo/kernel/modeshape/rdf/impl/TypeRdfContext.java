@@ -16,11 +16,15 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.graph.Triple;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSource;
 import org.slf4j.Logger;
+
+import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
 
 import javax.jcr.RepositoryException;
 
@@ -51,15 +55,15 @@ public class TypeRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        //include rdf:type for primaryType, mixins, and their supertypes
-        concat(resource().getTypes().stream()
-                .map(uri -> create(subject(), type.asNode(), createURI(uri.toString())))
-                .iterator());
-        if (resource() instanceof NonRdfSource) {
+        final Stream.Builder<Triple> other = Stream.builder();
+        if (resource instanceof NonRdfSource) {
             // gather versionability info from the parent
-            if (resource().getNode().getParent().isNodeType("mix:versionable")) {
-                concat(create(subject(), type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+            if (resource.getNode().getParent().isNodeType("mix:versionable")) {
+                other.accept(create(subject(), type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
             }
         }
+        this.stream = Stream.concat(
+                resource.getTypes().stream().map(uri -> create(subject(), type.asNode(), createURI(uri.toString()))),
+                other.build());
     }
 }

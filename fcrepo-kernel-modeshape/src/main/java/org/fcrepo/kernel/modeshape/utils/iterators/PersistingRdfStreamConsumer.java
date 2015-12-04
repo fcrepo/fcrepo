@@ -36,9 +36,9 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
-import org.fcrepo.kernel.api.utils.iterators.RdfStreamConsumer;
+import org.fcrepo.kernel.api.rdf.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -118,25 +118,30 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             return true;
         };
         // we fail on non-Fedora RDF
-        this.stream = stream.withThisContext(stream.filter(isFedoraSubjectTriple::test));
+//new RdfAdder(idTranslator, getSession(), replacementStream
+        //-                    .withThisContext(differencer.notCommon())).consume();
+//+            new RdfAdder(idTranslator, getSession(), new DefaultRdfStream(replacementStream.topic(),
+            //+                        differencer.notCommon())).consume();
+
+        this.stream = new DefaultRdfStream(stream.topic(), stream.filter(isFedoraSubjectTriple));
 
         this.exceptions = new ArrayList<>();
     }
 
     @Override
     public void consume() throws MalformedRdfException {
-        while (stream.hasNext()) {
-            final Statement t = m.asStatement(stream.next());
-            LOGGER.debug("Operating triple {}.", t);
+        stream.forEach(t -> {
+            final Statement s = m.asStatement(t);
+            LOGGER.debug("Operating triple {}.", s);
 
             try {
-                operateOnTriple(t);
+                operateOnTriple(s);
             } catch (final ConstraintViolationException e) {
                 throw e;
             } catch (final MalformedRdfException e) {
                 exceptions.add(e.getMessage());
             }
-        }
+        });
 
         if (!exceptions.isEmpty()) {
             throw new MalformedRdfException(join("\n", exceptions));
