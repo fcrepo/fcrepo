@@ -248,10 +248,12 @@ public class ViewHelpers {
     }
 
     /**
+     * Get the number of child resources associated with the arg 'subject' as specified by the triple found in the arg
+     * 'graph' with the predicate RdfLexicon.HAS_CHILD_COUNT.
      *
-     * @param graph
-     * @param subject
-     * @return
+     * @param graph   of triples
+     * @param subject for which child resources is sought
+     * @return number of child resources
      */
     public int getNumChildren(final Graph graph, final Node subject) {
         LOGGER.trace("Getting number of children: s:{}, g:{}", subject, graph);

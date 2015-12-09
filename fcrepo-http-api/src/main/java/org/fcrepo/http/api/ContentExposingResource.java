@@ -155,6 +155,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return getContent(rangeValue, -1, rdfStream);
     }
 
+    /**
+     * This method returns an HTTP response with content body appropriate to the following arguments.
+     *
+     * @param rangeValue starting and ending byte offsets, see {@link Range}
+     * @param limit is the number of child resources returned in the response, -1 for all
+     * @param rdfStream to which response RDF will be concatenated
+     * @return HTTP response
+     * @throws IOException
+     */
     protected Response getContent(final String rangeValue,
                                   final int limit,
                                   final RdfStream rdfStream) throws IOException {
@@ -205,6 +214,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return getResourceTriples(-1);
     }
 
+    /**
+     * This method returns a stream of RDF triples associated with this target resource
+     *
+     * @param limit is the number of child resources returned in the response, -1 for all
+     * @return {@link RdfStream}
+     */
     protected RdfStream getResourceTriples(final int limit) {
         // use the thing described, not the description, for the subject of descriptive triples
         if (resource() instanceof NonRdfSourceDescription) {
