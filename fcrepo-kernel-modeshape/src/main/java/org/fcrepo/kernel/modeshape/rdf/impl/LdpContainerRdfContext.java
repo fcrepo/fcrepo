@@ -58,7 +58,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 9/25/14
  */
 public class LdpContainerRdfContext extends NodeRdfContext {
-    private static final Logger LOGGER = getLogger(ChildrenRdfContext.class);
+    private static final Logger LOGGER = getLogger(LdpContainerRdfContext.class);
 
     /**
      * Default constructor.
