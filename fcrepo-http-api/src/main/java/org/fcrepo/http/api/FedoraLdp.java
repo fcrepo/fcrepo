@@ -21,14 +21,15 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
@@ -81,6 +82,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
+import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -102,8 +104,8 @@ import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.base.Splitter;
-
 import static com.google.common.base.Strings.nullToEmpty;
 
 /**
@@ -193,23 +195,35 @@ public class FedoraLdp extends ContentExposingResource {
      * Retrieve the node profile
      *
      * @param rangeValue the range value
-     * @return triples for the specified node
+     * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
      */
     @GET
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
-    public Response describe(@HeaderParam("Range") final String rangeValue) throws IOException {
+            TEXT_HTML, APPLICATION_XHTML_XML})
+    public Response getResource(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
-        addResourceHttpHeaders(resource());
 
         final RdfStream rdfStream = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
 
-        return getContent(rangeValue, getChildrenLimit(), rdfStream);
+        // If requesting a binary, check the mime-type if "Accept:" header is present.
+        // (This needs to be done before setting up response headers, as getContent
+        // returns a response - so changing headers after that won't work so nicely.)
+        final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers.getAcceptableMediaTypes());
 
+        if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
+            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+
+            if (!acceptableMediaTypes.stream().anyMatch(t -> t.isCompatible(mediaType))) {
+                return notAcceptable( Variant.VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
+            }
+        }
+
+        addResourceHttpHeaders(resource());
+        return getContent(rangeValue, getChildrenLimit(), rdfStream);
     }
 
     private int getChildrenLimit() {
