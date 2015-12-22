@@ -415,9 +415,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet get = new HttpGet(serverAddress + id);
         get.addHeader("Accept", "application/turtle");
 
-        try (final CloseableHttpResponse response = execute(get)) {
-            assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
-        }
+        assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(get));
     }
 
 
