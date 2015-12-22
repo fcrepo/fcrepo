@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.slf4j.Logger;
@@ -53,34 +54,40 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     private static final Pattern invalidLabelPattern = Pattern.compile("[~#@*+%{}<>\\[\\]|\"^]");
 
     @Override
-    public String createVersion(final Session session,
-                              final String absPath, final String label) throws RepositoryException {
-        final Node node = session.getNode(absPath);
-        if (!isVersioningEnabled(node)) {
-            enableVersioning(node);
+    public String createVersion(final Session session, final String absPath, final String label) {
+        try {
+            final Node node = session.getNode(absPath);
+            if (!isVersioningEnabled(node)) {
+                enableVersioning(node);
+            }
+            return checkpoint(session, absPath, label);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return checkpoint(session, absPath, label);
     }
 
     @Override
-    public void revertToVersion(final Session session, final String absPath,
-                                final String label) throws RepositoryException {
+    public void revertToVersion(final Session session, final String absPath, final String label) {
         final Workspace workspace = session.getWorkspace();
-        final Version v = getVersionForLabel(workspace, absPath, label);
-        if (v == null) {
-            throw new PathNotFoundException("Unknown version \"" + label + "\"!");
-        }
-        final VersionManager versionManager = workspace.getVersionManager();
-        final Version preRevertVersion = versionManager.checkin(absPath);
-
         try {
-            preRevertVersion.getContainingHistory().addVersionLabel(preRevertVersion.getName(),
-                    getPreRevertVersionLabel(label, preRevertVersion.getContainingHistory()), false);
-        } catch (final LabelExistsVersionException e) {
-            // fall-back behavior is to leave an unlabeled version
+            final Version v = getVersionForLabel(workspace, absPath, label);
+            if (v == null) {
+                throw new PathNotFoundException("Unknown version \"" + label + "\"!");
+            }
+            final VersionManager versionManager = workspace.getVersionManager();
+            final Version preRevertVersion = versionManager.checkin(absPath);
+
+            try {
+                preRevertVersion.getContainingHistory().addVersionLabel(preRevertVersion.getName(),
+                        getPreRevertVersionLabel(label, preRevertVersion.getContainingHistory()), false);
+            } catch (final LabelExistsVersionException e) {
+                // fall-back behavior is to leave an unlabeled version
+            }
+            versionManager.restore(v, true);
+            versionManager.checkout(absPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        versionManager.restore(v, true);
-        versionManager.checkout(absPath);
     }
 
     /**
@@ -105,24 +112,26 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     @Override
-    public void removeVersion(final Session session, final String absPath,
-                              final String label) throws RepositoryException {
+    public void removeVersion(final Session session, final String absPath, final String label) {
         final Workspace workspace = session.getWorkspace();
-        final Version v = getVersionForLabel(workspace, absPath, label);
-
-        if (v == null) {
-            throw new PathNotFoundException("Unknown version \"" + label + "\"!");
-        } else if (workspace.getVersionManager().getBaseVersion(absPath).equals(v) ) {
-            throw new VersionException("Cannot remove most recent version snapshot.");
-        } else {
-            // remove labels
-            final VersionHistory history = v.getContainingHistory();
-            final String[] versionLabels = history.getVersionLabels(v);
-            for ( final String versionLabel : versionLabels ) {
-                LOGGER.debug("Removing label: {}", versionLabel);
-                history.removeVersionLabel( versionLabel );
+        try {
+            final Version v = getVersionForLabel(workspace, absPath, label);
+            if (v == null) {
+                throw new PathNotFoundException("Unknown version \"" + label + "\"!");
+            } else if (workspace.getVersionManager().getBaseVersion(absPath).equals(v) ) {
+                throw new VersionException("Cannot remove most recent version snapshot.");
+            } else {
+                // remove labels
+                final VersionHistory history = v.getContainingHistory();
+                final String[] versionLabels = history.getVersionLabels(v);
+                for ( final String versionLabel : versionLabels ) {
+                    LOGGER.debug("Removing label: {}", versionLabel);
+                    history.removeVersionLabel( versionLabel );
+                }
+                history.removeVersion( v.getName() );
             }
-            history.removeVersion( v.getName() );
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
     }
 

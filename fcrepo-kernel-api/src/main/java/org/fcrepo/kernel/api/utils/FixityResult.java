@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.api.utils;
 
-import javax.jcr.RepositoryException;
 import java.net.URI;
 import java.util.Set;
 
@@ -35,9 +34,8 @@ public interface FixityResult {
     /**
      * Get the identifier for the entry's store
      * @return String
-     * @throws RepositoryException if repository exception occurred
      */
-    String getStoreIdentifier() throws RepositoryException;
+    String getStoreIdentifier();
 
     /**
      * Check if the fixity result matches the given checksum URI

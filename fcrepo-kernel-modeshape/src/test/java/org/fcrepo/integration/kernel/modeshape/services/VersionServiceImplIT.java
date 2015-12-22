@@ -18,6 +18,7 @@ package org.fcrepo.integration.kernel.modeshape.services;
 import static org.junit.Assert.assertEquals;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -26,7 +27,6 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.inject.Inject;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -114,7 +114,7 @@ public class VersionServiceImplIT extends AbstractIT {
         assertEquals(label, currentVersion(session,resource));
     }
 
-    @Test( expected = PathNotFoundException.class )
+    @Test( expected = RepositoryRuntimeException.class )
     public void testRevertToInvalidVersion() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();
@@ -131,7 +131,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.save();
     }
 
-    @Test( expected = PathNotFoundException.class )
+    @Test( expected = RepositoryRuntimeException.class )
     public void testRemoveInvalidVersion() throws RepositoryException {
         final Session session = repository.login();
         final String pid = getRandomPid();

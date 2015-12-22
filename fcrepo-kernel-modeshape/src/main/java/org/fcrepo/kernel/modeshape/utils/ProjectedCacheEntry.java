@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
 import org.modeshape.connector.filesystem.FileSystemConnector;
 
 import javax.jcr.Property;
@@ -36,8 +38,11 @@ public class ProjectedCacheEntry extends BinaryCacheEntry {
     }
 
     @Override
-    public String getExternalIdentifier() throws RepositoryException {
-        return "/" + FileSystemConnector.class.getName() + ":projections:" + property().getPath();
+    public String getExternalIdentifier() {
+        try {
+            return "/" + FileSystemConnector.class.getName() + ":projections:" + property().getPath();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
-
 }

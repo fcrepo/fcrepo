@@ -53,11 +53,9 @@ public abstract class BasicCacheEntry implements CacheEntry {
      *
      * @param digest the digest
      * @return the fixity of this cache entry
-     * @throws RepositoryException if repository exception occurred
      */
     @Override
-    public Collection<FixityResult> checkFixity(final String digest)
-        throws RepositoryException {
+    public Collection<FixityResult> checkFixity(final String digest) {
 
         try (FixityInputStream fixityInputStream = new FixityInputStream(this.getInputStream(),
                 MessageDigest.getInstance(digest))) {
@@ -77,9 +75,8 @@ public abstract class BasicCacheEntry implements CacheEntry {
         } catch (final IOException e) {
             LOGGER.debug("Got error closing input stream: {}", e);
             throw new RepositoryRuntimeException(e);
-        } catch (final NoSuchAlgorithmException e1) {
+        } catch (final NoSuchAlgorithmException | RepositoryException e1) {
             throw new RepositoryRuntimeException(e1);
         }
-
     }
 }
