@@ -36,6 +36,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -401,6 +402,24 @@ public class FedoraLdpIT extends AbstractResourceIT {
             });
         }
     }
+
+    /**
+     * Test that a 406 gets returned in the event of an invalid or unsupported
+     * format being requested.
+     */
+    @Test
+    public void testGetRDFSourceWrongAccept() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        get.addHeader("Accept", "application/turtle");
+
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
+        }
+    }
+
 
     @Test
     public void testDeleteObject() {
