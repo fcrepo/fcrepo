@@ -17,8 +17,6 @@ package org.fcrepo.kernel.api.observer;
 
 import java.util.Set;
 
-import org.fcrepo.kernel.api.utils.EventType;
-
 /**
  * A very simple abstraction to support downstream event-related machinery.
  *

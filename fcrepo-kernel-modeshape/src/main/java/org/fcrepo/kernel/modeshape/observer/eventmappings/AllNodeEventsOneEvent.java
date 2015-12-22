@@ -34,7 +34,6 @@ import javax.jcr.observation.Event;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.observer.eventmappings.InternalExternalEventMapper;
-import org.fcrepo.kernel.api.utils.EventType;
 import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
 
 import org.slf4j.Logger;
@@ -103,7 +102,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
                 // add the event type and property name to the event we are building up to emit
                 // we could aggregate other information here if that seems useful
                 final Event otherEvent = nodeSpecificEvents.next();
-                fedoraEvent.addType(EventType.valueOf(otherEvent.getType()));
+                fedoraEvent.addType(FedoraEventImpl.valueOf(otherEvent.getType()));
                 addProperty(fedoraEvent, otherEvent);
             }
             return fedoraEvent;

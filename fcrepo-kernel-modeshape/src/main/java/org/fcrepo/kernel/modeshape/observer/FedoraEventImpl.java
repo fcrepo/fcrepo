@@ -15,20 +15,25 @@
  */
 package org.fcrepo.kernel.modeshape.observer;
 
+import static com.google.common.base.Functions.forMap;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.union;
-import static org.fcrepo.kernel.api.utils.EventType.valueOf;
+import static org.fcrepo.kernel.api.observer.EventType.NODE_ADDED;
+import static org.fcrepo.kernel.api.observer.EventType.NODE_MOVED;
+import static org.fcrepo.kernel.api.observer.EventType.NODE_REMOVED;
+import static org.fcrepo.kernel.api.observer.EventType.PERSIST;
+import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_ADDED;
+import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_CHANGED;
+import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_REMOVED;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jcr.RepositoryException;
@@ -38,7 +43,10 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
-import org.fcrepo.kernel.api.utils.EventType;
+
+import com.google.common.collect.ImmutableMap;
+
+import org.fcrepo.kernel.api.observer.EventType;
 
 /**
  * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
@@ -49,13 +57,15 @@ import org.fcrepo.kernel.api.utils.EventType;
  */
 public class FedoraEventImpl implements FedoraEvent {
 
-    private Event e;
+    private final Event e;
     private final String eventID;
 
-    private Set<EventType> eventTypes = new HashSet<>();
-    private Set<String> eventProperties = new HashSet<>();
-    private static final List<Integer> PROPERTY_TYPES = Arrays.asList(PROPERTY_ADDED, PROPERTY_CHANGED,
-            PROPERTY_REMOVED);
+    private final Set<EventType> eventTypes = new HashSet<>();
+    private final Set<String> eventProperties = new HashSet<>();
+
+    private static final List<Integer> PROPERTY_TYPES = asList(javax.jcr.observation.Event.PROPERTY_ADDED,
+            javax.jcr.observation.Event.PROPERTY_CHANGED,
+            javax.jcr.observation.Event.PROPERTY_REMOVED);
 
     private static final UniqueValueSupplier pidMinter = new DefaultPathMinter();
 
@@ -143,7 +153,7 @@ public class FedoraEventImpl implements FedoraEvent {
                 path = e.getPath();
             }
             return path.replaceAll("/" + JCR_CONTENT, "");
-        } catch (RepositoryException e1) {
+        } catch (final RepositoryException e1) {
             throw new RepositoryRuntimeException("Error getting event path!", e1);
         }
     }
@@ -163,7 +173,7 @@ public class FedoraEventImpl implements FedoraEvent {
     public String getUserData() {
         try {
             return e.getUserData();
-        } catch (RepositoryException e1) {
+        } catch (final RepositoryException e1) {
             throw new RepositoryRuntimeException("Error getting event userData!", e1);
         }
     }
@@ -175,7 +185,7 @@ public class FedoraEventImpl implements FedoraEvent {
     public long getDate() {
         try {
             return e.getDate();
-        } catch (RepositoryException e1) {
+        } catch (final RepositoryException e1) {
             throw new RepositoryRuntimeException("Error getting event date!", e1);
         }
     }
@@ -199,6 +209,25 @@ public class FedoraEventImpl implements FedoraEvent {
             .add("Event properties:", String.join(",", eventProperties))
             .add("Path:", getPath())
             .add("Date: ", getDate()).toString();
+    }
+
+    private static final Map<Integer, EventType> translation = ImmutableMap.<Integer, EventType>builder()
+            .put(javax.jcr.observation.Event.NODE_ADDED, NODE_ADDED)
+            .put(javax.jcr.observation.Event.NODE_REMOVED, NODE_REMOVED)
+            .put(javax.jcr.observation.Event.PROPERTY_ADDED, PROPERTY_ADDED)
+            .put(javax.jcr.observation.Event.PROPERTY_REMOVED, PROPERTY_REMOVED)
+            .put(javax.jcr.observation.Event.PROPERTY_CHANGED, PROPERTY_CHANGED)
+            .put(javax.jcr.observation.Event.NODE_MOVED, NODE_MOVED)
+            .put(javax.jcr.observation.Event.PERSIST, PERSIST).build();
+
+    /**
+     * Get the Fedora event type for a JCR type
+     *
+     * @param i the integer value of a JCR type
+     * @return EventType
+     */
+    public static EventType valueOf(final Integer i) {
+        return forMap(translation).apply(i);
     }
 
     private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }

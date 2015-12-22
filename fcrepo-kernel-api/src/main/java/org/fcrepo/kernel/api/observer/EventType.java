@@ -13,35 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.utils;
-
-import static javax.jcr.observation.Event.NODE_ADDED;
-import static org.fcrepo.kernel.api.utils.EventType.valueOf;
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
+package org.fcrepo.kernel.api.observer;
 
 /**
- * <p>EventTypeTest class.</p>
+ * A convenient abstraction over JCR's integer-typed events.
  *
  * @author ajs6f
+ * @since Feb 7, 2013
  */
-public class EventTypeTest {
+public enum EventType {
+    NODE_ADDED("node added"),
+    NODE_REMOVED("node removed"),
+    PROPERTY_ADDED("property added"),
+    PROPERTY_REMOVED("property removed"),
+    PROPERTY_CHANGED("property changed"),
+    NODE_MOVED("node moved"),
+    PERSIST("persist");
 
-    @Test
-    public void testGetEventName() {
-        assertEquals("node added", valueOf(NODE_ADDED).getName());
+    private final String eventName;
+
+    EventType(final String eventName) {
+        this.eventName = eventName;
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testBadEvent() {
-        valueOf(9999999);
+    /**
+     * @return a human-readable name for this event
+     */
+    public String getName() {
+        return this.eventName;
     }
-
-    @Test()
-    public void testValueOf() {
-        assertEquals(EventType.PERSIST, EventType.valueOf("PERSIST"));
-    }
-
-
 }

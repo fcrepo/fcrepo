@@ -18,11 +18,6 @@ package org.fcrepo.integration.jms.observer;
 import static com.google.common.base.Throwables.propagate;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
-import static javax.jcr.observation.Event.NODE_ADDED;
-import static javax.jcr.observation.Event.NODE_REMOVED;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
@@ -51,10 +46,10 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.api.utils.EventType;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 
@@ -95,15 +90,15 @@ public class HeadersJMSIT implements MessageListener {
     private static final String testMeta = "/testMessageFromMetadata-" + randomUUID();
 
     private static final String NODE_ADDED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
+            = REPOSITORY_NAMESPACE + EventType.NODE_ADDED;
     private static final String NODE_REMOVED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_REMOVED).toString();
+            = REPOSITORY_NAMESPACE + EventType.NODE_REMOVED;
     private static final String PROP_ADDED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.valueOf(PROPERTY_ADDED).toString();
+            = REPOSITORY_NAMESPACE + EventType.PROPERTY_ADDED;
     private static final String PROP_CHANGED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.valueOf(PROPERTY_CHANGED).toString();
+            = REPOSITORY_NAMESPACE + EventType.PROPERTY_CHANGED;
     private static final String PROP_REMOVED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.valueOf(PROPERTY_REMOVED).toString();
+            = REPOSITORY_NAMESPACE + EventType.PROPERTY_REMOVED;
 
     @Inject
     private Repository repository;

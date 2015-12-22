@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.modeshape.observer;
 
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.utils.EventType;
+import org.fcrepo.kernel.api.observer.EventType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -38,7 +38,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.utils.EventType.valueOf;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.valueOf;
 import static org.modeshape.jcr.api.JcrConstants.JCR_MIXIN_TYPES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
