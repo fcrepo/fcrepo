@@ -17,7 +17,6 @@ package org.fcrepo.jms.headers;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Collections.singleton;
-import static javax.jcr.observation.Event.NODE_ADDED;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
@@ -38,8 +37,9 @@ import javax.jms.Message;
 import javax.jms.Session;
 
 import org.apache.activemq.command.ActiveMQObjectMessage;
+
+import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.utils.EventType;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -102,8 +102,8 @@ public class DefaultMessageFactoryTest {
         final String testUser = "testUser";
         when(mockEvent.getUserID()).thenReturn(testUser);
         when(mockEvent.getPath()).thenReturn(id);
-        final Set<EventType> testTypes = singleton(EventType.valueOf(NODE_ADDED));
-        final String testReturnType = REPOSITORY_NAMESPACE + EventType.valueOf(NODE_ADDED).toString();
+        final Set<EventType> testTypes = singleton(EventType.NODE_ADDED);
+        final String testReturnType = REPOSITORY_NAMESPACE + EventType.NODE_ADDED;
         when(mockEvent.getTypes()).thenReturn(testTypes);
         final String prop = "test-property";
         when(mockEvent.getProperties()).thenReturn(singleton(prop));

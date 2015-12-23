@@ -26,8 +26,8 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 
 import org.fcrepo.jms.observer.JMSEventMessageFactory;
+import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.utils.EventType;
 
 import org.slf4j.Logger;
 

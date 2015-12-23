@@ -17,8 +17,9 @@ package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.collect.Iterators.contains;
 import static java.util.Collections.singleton;
+import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static org.fcrepo.kernel.api.utils.EventType.valueOf;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -30,7 +31,7 @@ import javax.jcr.observation.Event;
 
 import org.junit.Test;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.utils.EventType;
+import org.fcrepo.kernel.api.observer.EventType;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -39,7 +40,7 @@ import com.google.common.collect.ImmutableMap;
  *
  * @author ksclarke
  */
-public class FedoraEventTest {
+public class FedoraEventImplTest {
 
     FedoraEvent e = new FedoraEventImpl(new TestEvent(1, "Path/Child", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
@@ -50,6 +51,17 @@ public class FedoraEventTest {
     public void testWrapNullEvent() {
         new FedoraEventImpl((Event)null);
     }
+
+    @Test
+    public void testGetEventName() {
+        assertEquals("node added", valueOf(NODE_ADDED).getName());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBadEvent() {
+        valueOf(9999999);
+    }
+
 
     @SuppressWarnings("unused")
     @Test(expected = java.lang.IllegalArgumentException.class)
